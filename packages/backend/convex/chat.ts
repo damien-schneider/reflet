@@ -57,6 +57,11 @@ export const generateResponseAsync = internalAction({
     promptMessageId: v.string(),
   },
   handler: async (ctx, { threadId, promptMessageId }) => {
-    await chatAgent.streamText(ctx, { threadId }, { promptMessageId }, { saveStreamDeltas: true });
+    await chatAgent.streamText(
+      ctx,
+      { threadId },
+      { promptMessageId },
+      { saveStreamDeltas: true }
+    );
   },
 });
