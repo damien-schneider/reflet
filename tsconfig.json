@@ -1,0 +1,6 @@
+{
+  "extends": "@reflet-v2/config/tsconfig.base.json",
+  "compilerOptions": {
+    "strictNullChecks": true
+  }
+}
