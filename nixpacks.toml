@@ -1,0 +1,8 @@
+# Nixpacks configuration for Dokploy
+# Documentation: https://nixpacks.com/docs/configuration/file
+
+[phases.build]
+dependsOn = ['install']
+# We deploy the Convex backend first, which then triggers the frontend build
+# with the correct production URL automatically injected as VITE_CONVEX_URL.
+cmds = ['cd packages/backend && bun x convex deploy -y --cmd-url-env-var-name VITE_CONVEX_URL --cmd "cd ../.. && bun run build"']
