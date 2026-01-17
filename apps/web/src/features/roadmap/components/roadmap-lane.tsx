@@ -107,7 +107,7 @@ export function RoadmapLaneColumn({
               key={item._id}
               onClick={onItemClick}
               onDragEnd={onDragEnd}
-              onDragStart={(e) => onDragStart(e, item)}
+              onDragStart={onDragStart}
             />
           ))}
 
