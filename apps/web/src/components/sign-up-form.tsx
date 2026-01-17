@@ -1,5 +1,7 @@
+import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
+import { useMutation } from "convex/react";
 import { toast } from "sonner";
 import z from "zod";
 
@@ -9,14 +11,21 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
+interface SignUpFormProps {
+  onSwitchToSignIn: () => void;
+  onSuccess?: () => void;
+}
+
 export default function SignUpForm({
   onSwitchToSignIn,
-}: {
-  onSwitchToSignIn: () => void;
-}) {
+  onSuccess,
+}: SignUpFormProps) {
   const navigate = useNavigate({
     from: "/",
   });
+  const ensurePersonalOrganization = useMutation(
+    api.organizations_personal.ensurePersonalOrganization
+  );
 
   const form = useForm({
     defaultValues: {
@@ -32,10 +41,27 @@ export default function SignUpForm({
           name: value.name,
         },
         {
-          onSuccess: () => {
-            navigate({
-              to: "/dashboard",
-            });
+          onSuccess: async () => {
+            onSuccess?.();
+            try {
+              const org = await ensurePersonalOrganization({
+                name: value.name,
+              });
+              if (org?.slug) {
+                navigate({
+                  to: "/dashboard/$orgSlug",
+                  params: { orgSlug: org.slug },
+                });
+              } else {
+                navigate({
+                  to: "/dashboard",
+                });
+              }
+            } catch {
+              navigate({
+                to: "/dashboard",
+              });
+            }
             toast.success("Sign up successful");
           },
           onError: (error) => {
@@ -71,6 +97,7 @@ export default function SignUpForm({
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Name</Label>
                 <Input
+                  data-testid="name-input"
                   id={field.name}
                   name={field.name}
                   onBlur={field.handleBlur}
@@ -93,6 +120,7 @@ export default function SignUpForm({
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Email</Label>
                 <Input
+                  data-testid="email-input"
                   id={field.name}
                   name={field.name}
                   onBlur={field.handleBlur}
@@ -116,6 +144,7 @@ export default function SignUpForm({
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Password</Label>
                 <Input
+                  data-testid="password-input"
                   id={field.name}
                   name={field.name}
                   onBlur={field.handleBlur}

@@ -10,11 +10,37 @@
 
 import type * as agent from "../agent.js";
 import type * as auth from "../auth.js";
+import type * as boards from "../boards.js";
+import type * as boards_actions from "../boards_actions.js";
+import type * as changelog from "../changelog.js";
+import type * as changelog_actions from "../changelog_actions.js";
+import type * as changelog_subscriptions from "../changelog_subscriptions.js";
 import type * as chat from "../chat.js";
+import type * as comments from "../comments.js";
+import type * as feedback from "../feedback.js";
+import type * as feedback_actions from "../feedback_actions.js";
+import type * as feedback_list from "../feedback_list.js";
+import type * as feedback_roadmap from "../feedback_roadmap.js";
 import type * as healthCheck from "../healthCheck.js";
 import type * as http from "../http.js";
+import type * as invitations from "../invitations.js";
+import type * as members from "../members.js";
+import type * as notifications from "../notifications.js";
+import type * as organizations from "../organizations.js";
+import type * as organizations_actions from "../organizations_actions.js";
+import type * as organizations_personal from "../organizations_personal.js";
+import type * as polar from "../polar.js";
+import type * as polar_user from "../polar_user.js";
 import type * as privateData from "../privateData.js";
+import type * as releases from "../releases.js";
+import type * as subscriptions from "../subscriptions.js";
+import type * as subscriptions_actions from "../subscriptions_actions.js";
+import type * as tag_manager from "../tag_manager.js";
+import type * as tag_manager_actions from "../tag_manager_actions.js";
+import type * as tags from "../tags.js";
 import type * as todos from "../todos.js";
+import type * as utils from "../utils.js";
+import type * as votes from "../votes.js";
 
 import type {
   ApiFromModules,
@@ -25,11 +51,37 @@ import type {
 declare const fullApi: ApiFromModules<{
   agent: typeof agent;
   auth: typeof auth;
+  boards: typeof boards;
+  boards_actions: typeof boards_actions;
+  changelog: typeof changelog;
+  changelog_actions: typeof changelog_actions;
+  changelog_subscriptions: typeof changelog_subscriptions;
   chat: typeof chat;
+  comments: typeof comments;
+  feedback: typeof feedback;
+  feedback_actions: typeof feedback_actions;
+  feedback_list: typeof feedback_list;
+  feedback_roadmap: typeof feedback_roadmap;
   healthCheck: typeof healthCheck;
   http: typeof http;
+  invitations: typeof invitations;
+  members: typeof members;
+  notifications: typeof notifications;
+  organizations: typeof organizations;
+  organizations_actions: typeof organizations_actions;
+  organizations_personal: typeof organizations_personal;
+  polar: typeof polar;
+  polar_user: typeof polar_user;
   privateData: typeof privateData;
+  releases: typeof releases;
+  subscriptions: typeof subscriptions;
+  subscriptions_actions: typeof subscriptions_actions;
+  tag_manager: typeof tag_manager;
+  tag_manager_actions: typeof tag_manager_actions;
+  tags: typeof tags;
   todos: typeof todos;
+  utils: typeof utils;
+  votes: typeof votes;
 }>;
 
 /**
@@ -4885,6 +4937,683 @@ export declare const components: {
           null
         >;
       };
+    };
+  };
+  polar: {
+    lib: {
+      createProduct: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          product: {
+            createdAt: string;
+            description: string | null;
+            id: string;
+            isArchived: boolean;
+            isRecurring: boolean;
+            medias: Array<{
+              checksumEtag: string | null;
+              checksumSha256Base64: string | null;
+              checksumSha256Hex: string | null;
+              createdAt: string;
+              id: string;
+              isUploaded: boolean;
+              lastModifiedAt: string | null;
+              mimeType: string;
+              name: string;
+              organizationId: string;
+              path: string;
+              publicUrl: string;
+              service?: string;
+              size: number;
+              sizeReadable: string;
+              storageVersion: string | null;
+              version: string | null;
+            }>;
+            metadata?: Record<string, any>;
+            modifiedAt: string | null;
+            name: string;
+            organizationId: string;
+            prices: Array<{
+              amountType?: string;
+              createdAt: string;
+              id: string;
+              isArchived: boolean;
+              maximumAmount?: number | null;
+              minimumAmount?: number | null;
+              modifiedAt: string | null;
+              presetAmount?: number | null;
+              priceAmount?: number;
+              priceCurrency?: string;
+              productId: string;
+              recurringInterval?: "day" | "week" | "month" | "year" | null;
+              type?: string;
+            }>;
+            recurringInterval?: "day" | "week" | "month" | "year" | null;
+          };
+        },
+        any
+      >;
+      createSubscription: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          subscription: {
+            amount: number | null;
+            cancelAtPeriodEnd: boolean;
+            checkoutId: string | null;
+            createdAt: string;
+            currency: string | null;
+            currentPeriodEnd: string | null;
+            currentPeriodStart: string;
+            customerCancellationComment?: string | null;
+            customerCancellationReason?: string | null;
+            customerId: string;
+            endedAt: string | null;
+            id: string;
+            metadata: Record<string, any>;
+            modifiedAt: string | null;
+            priceId?: string;
+            productId: string;
+            recurringInterval: "day" | "week" | "month" | "year" | null;
+            startedAt: string | null;
+            status: string;
+          };
+        },
+        any
+      >;
+      getCurrentSubscription: FunctionReference<
+        "query",
+        "internal",
+        { userId: string },
+        {
+          amount: number | null;
+          cancelAtPeriodEnd: boolean;
+          checkoutId: string | null;
+          createdAt: string;
+          currency: string | null;
+          currentPeriodEnd: string | null;
+          currentPeriodStart: string;
+          customerCancellationComment?: string | null;
+          customerCancellationReason?: string | null;
+          customerId: string;
+          endedAt: string | null;
+          id: string;
+          metadata: Record<string, any>;
+          modifiedAt: string | null;
+          priceId?: string;
+          product: {
+            createdAt: string;
+            description: string | null;
+            id: string;
+            isArchived: boolean;
+            isRecurring: boolean;
+            medias: Array<{
+              checksumEtag: string | null;
+              checksumSha256Base64: string | null;
+              checksumSha256Hex: string | null;
+              createdAt: string;
+              id: string;
+              isUploaded: boolean;
+              lastModifiedAt: string | null;
+              mimeType: string;
+              name: string;
+              organizationId: string;
+              path: string;
+              publicUrl: string;
+              service?: string;
+              size: number;
+              sizeReadable: string;
+              storageVersion: string | null;
+              version: string | null;
+            }>;
+            metadata?: Record<string, any>;
+            modifiedAt: string | null;
+            name: string;
+            organizationId: string;
+            prices: Array<{
+              amountType?: string;
+              createdAt: string;
+              id: string;
+              isArchived: boolean;
+              maximumAmount?: number | null;
+              minimumAmount?: number | null;
+              modifiedAt: string | null;
+              presetAmount?: number | null;
+              priceAmount?: number;
+              priceCurrency?: string;
+              productId: string;
+              recurringInterval?: "day" | "week" | "month" | "year" | null;
+              type?: string;
+            }>;
+            recurringInterval?: "day" | "week" | "month" | "year" | null;
+          };
+          productId: string;
+          recurringInterval: "day" | "week" | "month" | "year" | null;
+          startedAt: string | null;
+          status: string;
+        } | null
+      >;
+      getCustomerByUserId: FunctionReference<
+        "query",
+        "internal",
+        { userId: string },
+        { id: string; metadata?: Record<string, any>; userId: string } | null
+      >;
+      getProduct: FunctionReference<
+        "query",
+        "internal",
+        { id: string },
+        {
+          createdAt: string;
+          description: string | null;
+          id: string;
+          isArchived: boolean;
+          isRecurring: boolean;
+          medias: Array<{
+            checksumEtag: string | null;
+            checksumSha256Base64: string | null;
+            checksumSha256Hex: string | null;
+            createdAt: string;
+            id: string;
+            isUploaded: boolean;
+            lastModifiedAt: string | null;
+            mimeType: string;
+            name: string;
+            organizationId: string;
+            path: string;
+            publicUrl: string;
+            service?: string;
+            size: number;
+            sizeReadable: string;
+            storageVersion: string | null;
+            version: string | null;
+          }>;
+          metadata?: Record<string, any>;
+          modifiedAt: string | null;
+          name: string;
+          organizationId: string;
+          prices: Array<{
+            amountType?: string;
+            createdAt: string;
+            id: string;
+            isArchived: boolean;
+            maximumAmount?: number | null;
+            minimumAmount?: number | null;
+            modifiedAt: string | null;
+            presetAmount?: number | null;
+            priceAmount?: number;
+            priceCurrency?: string;
+            productId: string;
+            recurringInterval?: "day" | "week" | "month" | "year" | null;
+            type?: string;
+          }>;
+          recurringInterval?: "day" | "week" | "month" | "year" | null;
+        } | null
+      >;
+      getSubscription: FunctionReference<
+        "query",
+        "internal",
+        { id: string },
+        {
+          amount: number | null;
+          cancelAtPeriodEnd: boolean;
+          checkoutId: string | null;
+          createdAt: string;
+          currency: string | null;
+          currentPeriodEnd: string | null;
+          currentPeriodStart: string;
+          customerCancellationComment?: string | null;
+          customerCancellationReason?: string | null;
+          customerId: string;
+          endedAt: string | null;
+          id: string;
+          metadata: Record<string, any>;
+          modifiedAt: string | null;
+          priceId?: string;
+          productId: string;
+          recurringInterval: "day" | "week" | "month" | "year" | null;
+          startedAt: string | null;
+          status: string;
+        } | null
+      >;
+      insertCustomer: FunctionReference<
+        "mutation",
+        "internal",
+        { id: string; metadata?: Record<string, any>; userId: string },
+        string
+      >;
+      listCustomerSubscriptions: FunctionReference<
+        "query",
+        "internal",
+        { customerId: string },
+        Array<{
+          amount: number | null;
+          cancelAtPeriodEnd: boolean;
+          checkoutId: string | null;
+          createdAt: string;
+          currency: string | null;
+          currentPeriodEnd: string | null;
+          currentPeriodStart: string;
+          customerCancellationComment?: string | null;
+          customerCancellationReason?: string | null;
+          customerId: string;
+          endedAt: string | null;
+          id: string;
+          metadata: Record<string, any>;
+          modifiedAt: string | null;
+          priceId?: string;
+          productId: string;
+          recurringInterval: "day" | "week" | "month" | "year" | null;
+          startedAt: string | null;
+          status: string;
+        }>
+      >;
+      listProducts: FunctionReference<
+        "query",
+        "internal",
+        { includeArchived?: boolean },
+        Array<{
+          createdAt: string;
+          description: string | null;
+          id: string;
+          isArchived: boolean;
+          isRecurring: boolean;
+          medias: Array<{
+            checksumEtag: string | null;
+            checksumSha256Base64: string | null;
+            checksumSha256Hex: string | null;
+            createdAt: string;
+            id: string;
+            isUploaded: boolean;
+            lastModifiedAt: string | null;
+            mimeType: string;
+            name: string;
+            organizationId: string;
+            path: string;
+            publicUrl: string;
+            service?: string;
+            size: number;
+            sizeReadable: string;
+            storageVersion: string | null;
+            version: string | null;
+          }>;
+          metadata?: Record<string, any>;
+          modifiedAt: string | null;
+          name: string;
+          organizationId: string;
+          priceAmount?: number;
+          prices: Array<{
+            amountType?: string;
+            createdAt: string;
+            id: string;
+            isArchived: boolean;
+            maximumAmount?: number | null;
+            minimumAmount?: number | null;
+            modifiedAt: string | null;
+            presetAmount?: number | null;
+            priceAmount?: number;
+            priceCurrency?: string;
+            productId: string;
+            recurringInterval?: "day" | "week" | "month" | "year" | null;
+            type?: string;
+          }>;
+          recurringInterval?: "day" | "week" | "month" | "year" | null;
+        }>
+      >;
+      listUserSubscriptions: FunctionReference<
+        "query",
+        "internal",
+        { userId: string },
+        Array<{
+          amount: number | null;
+          cancelAtPeriodEnd: boolean;
+          checkoutId: string | null;
+          createdAt: string;
+          currency: string | null;
+          currentPeriodEnd: string | null;
+          currentPeriodStart: string;
+          customerCancellationComment?: string | null;
+          customerCancellationReason?: string | null;
+          customerId: string;
+          endedAt: string | null;
+          id: string;
+          metadata: Record<string, any>;
+          modifiedAt: string | null;
+          priceId?: string;
+          product: {
+            createdAt: string;
+            description: string | null;
+            id: string;
+            isArchived: boolean;
+            isRecurring: boolean;
+            medias: Array<{
+              checksumEtag: string | null;
+              checksumSha256Base64: string | null;
+              checksumSha256Hex: string | null;
+              createdAt: string;
+              id: string;
+              isUploaded: boolean;
+              lastModifiedAt: string | null;
+              mimeType: string;
+              name: string;
+              organizationId: string;
+              path: string;
+              publicUrl: string;
+              service?: string;
+              size: number;
+              sizeReadable: string;
+              storageVersion: string | null;
+              version: string | null;
+            }>;
+            metadata?: Record<string, any>;
+            modifiedAt: string | null;
+            name: string;
+            organizationId: string;
+            prices: Array<{
+              amountType?: string;
+              createdAt: string;
+              id: string;
+              isArchived: boolean;
+              maximumAmount?: number | null;
+              minimumAmount?: number | null;
+              modifiedAt: string | null;
+              presetAmount?: number | null;
+              priceAmount?: number;
+              priceCurrency?: string;
+              productId: string;
+              recurringInterval?: "day" | "week" | "month" | "year" | null;
+              type?: string;
+            }>;
+            recurringInterval?: "day" | "week" | "month" | "year" | null;
+          } | null;
+          productId: string;
+          recurringInterval: "day" | "week" | "month" | "year" | null;
+          startedAt: string | null;
+          status: string;
+        }>
+      >;
+      syncProducts: FunctionReference<
+        "action",
+        "internal",
+        { polarAccessToken: string; server: "sandbox" | "production" },
+        any
+      >;
+      updateProduct: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          product: {
+            createdAt: string;
+            description: string | null;
+            id: string;
+            isArchived: boolean;
+            isRecurring: boolean;
+            medias: Array<{
+              checksumEtag: string | null;
+              checksumSha256Base64: string | null;
+              checksumSha256Hex: string | null;
+              createdAt: string;
+              id: string;
+              isUploaded: boolean;
+              lastModifiedAt: string | null;
+              mimeType: string;
+              name: string;
+              organizationId: string;
+              path: string;
+              publicUrl: string;
+              service?: string;
+              size: number;
+              sizeReadable: string;
+              storageVersion: string | null;
+              version: string | null;
+            }>;
+            metadata?: Record<string, any>;
+            modifiedAt: string | null;
+            name: string;
+            organizationId: string;
+            prices: Array<{
+              amountType?: string;
+              createdAt: string;
+              id: string;
+              isArchived: boolean;
+              maximumAmount?: number | null;
+              minimumAmount?: number | null;
+              modifiedAt: string | null;
+              presetAmount?: number | null;
+              priceAmount?: number;
+              priceCurrency?: string;
+              productId: string;
+              recurringInterval?: "day" | "week" | "month" | "year" | null;
+              type?: string;
+            }>;
+            recurringInterval?: "day" | "week" | "month" | "year" | null;
+          };
+        },
+        any
+      >;
+      updateProducts: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          polarAccessToken: string;
+          products: Array<{
+            createdAt: string;
+            description: string | null;
+            id: string;
+            isArchived: boolean;
+            isRecurring: boolean;
+            medias: Array<{
+              checksumEtag: string | null;
+              checksumSha256Base64: string | null;
+              checksumSha256Hex: string | null;
+              createdAt: string;
+              id: string;
+              isUploaded: boolean;
+              lastModifiedAt: string | null;
+              mimeType: string;
+              name: string;
+              organizationId: string;
+              path: string;
+              publicUrl: string;
+              service?: string;
+              size: number;
+              sizeReadable: string;
+              storageVersion: string | null;
+              version: string | null;
+            }>;
+            metadata?: Record<string, any>;
+            modifiedAt: string | null;
+            name: string;
+            organizationId: string;
+            prices: Array<{
+              amountType?: string;
+              createdAt: string;
+              id: string;
+              isArchived: boolean;
+              maximumAmount?: number | null;
+              minimumAmount?: number | null;
+              modifiedAt: string | null;
+              presetAmount?: number | null;
+              priceAmount?: number;
+              priceCurrency?: string;
+              productId: string;
+              recurringInterval?: "day" | "week" | "month" | "year" | null;
+              type?: string;
+            }>;
+            recurringInterval?: "day" | "week" | "month" | "year" | null;
+          }>;
+        },
+        any
+      >;
+      updateSubscription: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          subscription: {
+            amount: number | null;
+            cancelAtPeriodEnd: boolean;
+            checkoutId: string | null;
+            createdAt: string;
+            currency: string | null;
+            currentPeriodEnd: string | null;
+            currentPeriodStart: string;
+            customerCancellationComment?: string | null;
+            customerCancellationReason?: string | null;
+            customerId: string;
+            endedAt: string | null;
+            id: string;
+            metadata: Record<string, any>;
+            modifiedAt: string | null;
+            priceId?: string;
+            productId: string;
+            recurringInterval: "day" | "week" | "month" | "year" | null;
+            startedAt: string | null;
+            status: string;
+          };
+        },
+        any
+      >;
+      upsertCustomer: FunctionReference<
+        "mutation",
+        "internal",
+        { id: string; metadata?: Record<string, any>; userId: string },
+        string
+      >;
+    };
+  };
+  rateLimiter: {
+    lib: {
+      checkRateLimit: FunctionReference<
+        "query",
+        "internal",
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          count?: number;
+          key?: string;
+          name: string;
+          reserve?: boolean;
+          throws?: boolean;
+        },
+        { ok: true; retryAfter?: number } | { ok: false; retryAfter: number }
+      >;
+      clearAll: FunctionReference<
+        "mutation",
+        "internal",
+        { before?: number },
+        null
+      >;
+      getServerTime: FunctionReference<"mutation", "internal", {}, number>;
+      getValue: FunctionReference<
+        "query",
+        "internal",
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          key?: string;
+          name: string;
+          sampleShards?: number;
+        },
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          shard: number;
+          ts: number;
+          value: number;
+        }
+      >;
+      rateLimit: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          count?: number;
+          key?: string;
+          name: string;
+          reserve?: boolean;
+          throws?: boolean;
+        },
+        { ok: true; retryAfter?: number } | { ok: false; retryAfter: number }
+      >;
+      resetRateLimit: FunctionReference<
+        "mutation",
+        "internal",
+        { key?: string; name: string },
+        null
+      >;
+    };
+    time: {
+      getServerTime: FunctionReference<"mutation", "internal", {}, number>;
     };
   };
 };

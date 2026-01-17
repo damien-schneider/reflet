@@ -1,4 +1,3 @@
-// biome-ignore lint/style/useFilenamingConvention: TanStack Router catch-all route convention
 import { createFileRoute } from "@tanstack/react-router";
 
 import { handler } from "@/lib/auth-server";

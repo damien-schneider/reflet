@@ -9,11 +9,15 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
+interface SignInFormProps {
+  onSwitchToSignUp: () => void;
+  onSuccess?: () => void;
+}
+
 export default function SignInForm({
   onSwitchToSignUp,
-}: {
-  onSwitchToSignUp: () => void;
-}) {
+  onSuccess,
+}: SignInFormProps) {
   const navigate = useNavigate({
     from: "/",
   });
@@ -31,6 +35,7 @@ export default function SignInForm({
         },
         {
           onSuccess: () => {
+            onSuccess?.();
             navigate({
               to: "/dashboard",
             });
@@ -68,6 +73,7 @@ export default function SignInForm({
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Email</Label>
                 <Input
+                  data-testid="email-input"
                   id={field.name}
                   name={field.name}
                   onBlur={field.handleBlur}
@@ -91,6 +97,7 @@ export default function SignInForm({
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Password</Label>
                 <Input
+                  data-testid="password-input"
                   id={field.name}
                   name={field.name}
                   onBlur={field.handleBlur}

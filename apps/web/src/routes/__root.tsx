@@ -15,7 +15,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { authClient } from "@/lib/auth-client";
 import { getToken } from "@/lib/auth-server";
 
-import Header from "../components/header";
 import appCss from "../index.css?url";
 
 const getAuth = createServerFn({ method: "GET" }).handler(async () => {
@@ -73,10 +72,10 @@ function RootDocument() {
       <html className="dark" lang="en">
         <head>
           <HeadContent />
+          <script defer src="//unpkg.com/react-grab/dist/index.global.js" />
         </head>
         <body>
           <div className="grid h-svh grid-rows-[auto_1fr]">
-            <Header />
             <Outlet />
           </div>
           <Toaster richColors />

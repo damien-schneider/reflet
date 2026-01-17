@@ -12,6 +12,8 @@
     "@ai-sdk/google": "^2.0.52",
     "@convex-dev/agent": "catalog:",
     "@convex-dev/better-auth": "catalog:",
+    "@convex-dev/polar": "^0.7.3",
+    "@convex-dev/rate-limiter": "^0.3.2",
     "ai": "^5.0.117",
     "better-auth": "catalog:",
     "convex": "catalog:",

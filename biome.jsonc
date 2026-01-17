@@ -1,9 +1,45 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": ["ultracite/biome/core", "ultracite/biome/react"],
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "ultracite/biome/remix"
+  ],
   "overrides": [
     {
+      "includes": [
+        "apps/web/src/routeTree.gen.ts",
+        "packages/backend/convex/_generated/**/*",
+        "apps/web/playwright-report/**/*",
+        "apps/web/test-results/**/*",
+        "**/node_modules/**",
+        "**/*.gen.ts"
+      ],
+      "linter": {
+        "enabled": false
+      },
+      "formatter": {
+        "enabled": false
+      }
+    },
+    {
+      "includes": ["apps/web/src/components/ui/**/*"],
+      "linter": {
+        "enabled": false
+      }
+    },
+    {
       "includes": ["packages/backend/convex/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/src/routes/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {
