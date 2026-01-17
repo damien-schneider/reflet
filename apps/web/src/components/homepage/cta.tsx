@@ -11,7 +11,7 @@ export default function CTA() {
           Ready to build better products?
         </h2>
         <p className="mb-10 max-w-2xl text-lg text-muted-foreground">
-          Join hundreds of teams using Reflect to listen to their users and ship
+          Join hundreds of teams using Reflet to listen to their users and ship
           the right features, faster.
         </p>
 
@@ -27,7 +27,7 @@ export default function CTA() {
           </Link>
           <a
             className="flex items-center justify-center font-medium text-foreground text-sm transition-opacity hover:opacity-70 sm:justify-start"
-            href="https://github.com/damien-schneider/reflect-os"
+            href="https://github.com/damien-schneider/reflet"
             rel="noopener noreferrer"
             target="_blank"
           >

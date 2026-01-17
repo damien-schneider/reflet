@@ -54,7 +54,7 @@ export default function Features() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 text-left sm:px-6 lg:px-8">
         <div className="mb-4">
           <span className="font-semibold text-muted-foreground text-sm uppercase tracking-wide">
-            Why Reflect?
+            Why Reflet?
           </span>
         </div>
 
@@ -101,7 +101,7 @@ function OpenSourceCard() {
   return (
     <a
       className="flex flex-col justify-between rounded-2xl border border-primary bg-primary p-8 text-primary-foreground shadow-sm transition-shadow hover:shadow-md"
-      href="https://github.com/damien-schneider/reflect-os"
+      href="https://github.com/damien-schneider/reflet"
       rel="noopener noreferrer"
       target="_blank"
     >

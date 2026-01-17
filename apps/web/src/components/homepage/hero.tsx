@@ -9,12 +9,12 @@ export default function Hero() {
       {/* Announcement Pill */}
       <a
         className="group mb-8 inline-flex cursor-pointer items-center gap-2 rounded-full bg-muted/50 px-3 py-1 transition-colors hover:bg-muted"
-        href="https://github.com/damien-schneider/reflect-os"
+        href="https://github.com/damien-schneider/reflet"
         rel="noopener noreferrer"
         target="_blank"
       >
         <span className="font-medium text-foreground text-sm">
-          Reflect is now Open Source
+          Reflet is now Open Source
         </span>
         <span className="text-muted-foreground">|</span>
         <span className="flex items-center font-medium text-muted-foreground text-sm group-hover:text-foreground">
@@ -82,7 +82,7 @@ function MockupSidebar() {
             <div className="flex h-5 w-5 items-center justify-center rounded bg-primary font-bold text-[10px] text-primary-foreground">
               R
             </div>
-            <span className="font-semibold text-sm">Reflect App</span>
+            <span className="font-semibold text-sm">Reflet App</span>
           </div>
           <ChevronRight className="rotate-90 text-muted-foreground" size={14} />
         </div>

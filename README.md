@@ -1,60 +1,120 @@
-# reflet-v2
+# Reflet
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Start, Convex, and more.
+A modern product feedback and roadmap platform that helps you collect feedback, prioritize features, and keep your users in the loop.
 
-## Features
+## ✨ Why Reflet?
 
-- **TypeScript** - For type safety and improved developer experience
-- **TanStack Start** - SSR framework with TanStack Router
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **shadcn/ui** - Reusable UI components
-- **Convex** - Reactive backend-as-a-service platform
-- **Authentication** - Better-Auth
-- **Turborepo** - Optimized monorepo build system
+Reflet transforms chaotic feedback into actionable product insights. Build products your users actually love through transparent collaboration.
 
-## Getting Started
+### Core Features
 
-First, install the dependencies:
+**📊 Feedback Management**
+Collect and organize user feedback with upvoting, comments, and tags. Prioritize what matters most to your users with intuitive filtering and search.
+
+**🗺️ Roadmap Planning**
+Visualize your product roadmap with a beautiful kanban-style board. Drag-and-drop items between stages: Backlog → Planned → In Progress → Done.
+
+**📝 Changelog & Releases**
+Keep users informed with beautiful release notes. Link updates directly to the features they requested, creating a virtuous feedback loop.
+
+**⚡ Real-Time Collaboration**
+Multiple users can work simultaneously without conflicts. Every change syncs across all connected devices in milliseconds.
+
+**👥 Team Management**
+Multi-tenant architecture with organizations, team invitations, and role-based access control (Owner, Admin, Member).
+
+**🎨 Branding & Customization**
+Customize your public-facing pages with your brand colors, custom CSS, and domain.
+
+**🔒 Flexible Privacy**
+Choose what's public and what's private. Create private boards for internal discussions while keeping public feedback transparent.
+
+**🔔 Smart Notifications**
+Get notified about status changes, new comments, and vote milestones. Stay in the loop without drowning in noise.
+
+**🔍 Powerful Search**
+Full-text search across all feedback items with intelligent filtering by status, tags, and more.
+
+---
+
+## 🚀 Getting Started
+
+### Quick Start (Free Tier)
+
+The fastest way to get started is at [reflet.app](https://reflet.app).
+
+### Self-Host
+
+Reflet is open source and can be self-hosted on your own infrastructure.
 
 ```bash
+# Clone the repository
+git clone https://github.com/damien-schneider/reflet.git
+cd reflet
+
+# Install dependencies
 bun install
-```
 
-## Convex Setup
-
-This project uses Convex as a backend. You'll need to set up Convex before running the app:
-
-```bash
+# Set up Convex backend
 bun run dev:setup
-```
 
-Follow the prompts to create a new Convex project and connect it to your application.
-
-Copy environment variables from `packages/backend/.env.local` to `apps/*/.env`.
-
-Then, run the development server:
-
-```bash
+# Start the development server
 bun run dev
 ```
 
-Open [http://localhost:3003](http://localhost:3003) in your browser to see the web application.
-Your app will connect to the Convex cloud backend automatically.
+Open [http://localhost:3003](http://localhost:3003) in your browser.
 
-## Project Structure
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup.
 
-```
-reflet-v2/
-├── apps/
-│   ├── web/         # Frontend application (React + TanStack Start)
-├── packages/
-│   ├── backend/     # Convex backend functions and schema
-```
+---
 
-## Available Scripts
+## 🎯 Use Cases
 
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run dev:setup`: Setup and configure your Convex project
-- `bun run check-types`: Check TypeScript types across all apps
+- **Startups**: Get early feedback and build features users actually want
+- **SaaS Companies**: Transparent roadmap builds trust and reduces churn
+- **Open Source Projects**: Community-driven feature requests with voting
+- **Agencies**: Client collaboration boards with private workspaces
+- **Enterprise**: Role-based access, SSO, and private boards
+
+---
+
+## 🛠️ Tech Stack
+
+Reflet is built with modern, developer-friendly technologies:
+
+- **Frontend**: React 19, TanStack Start (SSR), TanStack Router
+- **Backend**: Convex (real-time reactive backend)
+- **UI**: TailwindCSS, shadcn/ui
+- **Auth**: Better-Auth
+- **Build**: Turborepo, Bun
+- **Linting**: Ultracite (Biome)
+
+---
+
+## 🤝 Contributing
+
+We love contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to get started.
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+## 🌟 Star Us
+
+If you find Reflet useful, please star us on [GitHub](https://github.com/damien-schneider/reflet)!
+
+---
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/damien-schneider/reflet/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/damien-schneider/reflet/discussions)
+<!-- - **Email**: support@reflet.app -->
+
+---
+
+Built with ❤️ by the Reflet team

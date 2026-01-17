@@ -26,7 +26,7 @@ export default function Navbar() {
                 className="font-serif text-2xl text-foreground tracking-tight"
                 to="/"
               >
-                Reflect.
+                Reflet.
               </Link>
             </div>
 
@@ -48,7 +48,7 @@ export default function Navbar() {
               </button>
               <a
                 className="font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
-                href="https://github.com/damien-schneider/reflect-os"
+                href="https://github.com/damien-schneider/reflet"
                 rel="noopener noreferrer"
                 target="_blank"
               >
@@ -106,7 +106,7 @@ export default function Navbar() {
             </button>
             <a
               className="block rounded-md px-3 py-2 font-medium text-base text-foreground hover:bg-muted"
-              href="https://github.com/damien-schneider/reflect-os"
+              href="https://github.com/damien-schneider/reflet"
               rel="noopener noreferrer"
               target="_blank"
             >
