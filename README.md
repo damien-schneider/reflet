@@ -2,6 +2,8 @@
 
 A modern product feedback and roadmap platform that helps you collect feedback, prioritize features, and keep your users in the loop.
 
+**Website**: [reflet.app](https://reflet.app) | **GitHub**: [damien-schneider/reflet](https://github.com/damien-schneider/reflet)
+
 ## ✨ Why Reflet?
 
 Reflet transforms chaotic feedback into actionable product insights. Build products your users actually love through transparent collaboration.
