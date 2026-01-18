@@ -1,5 +1,4 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
-import { Link } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import {
   ChevronsUpDown,
@@ -12,6 +11,7 @@ import {
   User,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { OrganizationSwitcher } from "@/components/organization-switcher";
 import {
   Collapsible,
@@ -46,6 +46,13 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
 
   const buildPath = (path: string) =>
     orgSlug ? path.replace("$orgSlug", orgSlug) : "";
+
+  const buildHref = (path: string) => {
+    if (!orgSlug) {
+      return "#";
+    }
+    return path.replace("$orgSlug", orgSlug);
+  };
 
   const mainNavItems = orgSlug
     ? [
@@ -120,7 +127,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                       <SidebarMenuButton
                         isActive={isActive(item.href)}
                         render={(props) => (
-                          <Link {...props} to={buildPath(item.href)}>
+                          <Link href={buildHref(item.href)} {...props}>
                             <item.icon className="h-4 w-4" />
                             <span>{item.label}</span>
                           </Link>
@@ -141,7 +148,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                       <SidebarMenuButton
                         isActive={isActive(item.href)}
                         render={(props) => (
-                          <Link {...props} to={buildPath(item.href)}>
+                          <Link href={buildHref(item.href)} {...props}>
                             <item.icon className="h-4 w-4" />
                             <span>{item.label}</span>
                           </Link>

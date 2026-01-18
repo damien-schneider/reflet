@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
@@ -112,7 +112,7 @@ function PricingCard({ tier }: PricingCardProps) {
           ))}
         </ul>
 
-        <Link to="/dashboard">
+        <Link href="/dashboard">
           <Button
             className="w-full rounded-full"
             size="default"
@@ -150,7 +150,7 @@ function PricingCard({ tier }: PricingCardProps) {
         ))}
       </ul>
 
-      <Link to="/dashboard">
+      <Link href="/dashboard">
         <Button
           className="w-full rounded-full"
           size="default"

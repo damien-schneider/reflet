@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import { ArrowRight, ArrowUp, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
@@ -35,7 +35,7 @@ export default function Hero() {
 
       {/* Buttons */}
       <div className="mb-20 flex flex-col items-center gap-4 sm:flex-row">
-        <Link to="/dashboard">
+        <Link href="/dashboard">
           <Button
             className="w-full rounded-full sm:w-auto"
             size="lg"
@@ -46,7 +46,7 @@ export default function Hero() {
         </Link>
         <Link
           className="flex w-full items-center justify-center font-medium text-foreground transition-opacity hover:opacity-70 sm:w-auto sm:justify-start"
-          to="/dashboard"
+          href="/dashboard"
         >
           View Demo <ArrowRight className="ml-2" size={18} />
         </Link>

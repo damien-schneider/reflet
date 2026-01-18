@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
@@ -16,7 +16,7 @@ export default function CTA() {
         </p>
 
         <div className="flex flex-col items-center gap-6 sm:flex-row">
-          <Link to="/dashboard">
+          <Link href="/dashboard">
             <Button
               className="w-full rounded-full sm:w-auto"
               size="lg"

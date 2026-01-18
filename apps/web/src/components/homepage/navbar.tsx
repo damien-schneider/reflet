@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ export default function Navbar() {
             <div className="flex flex-shrink-0 items-center">
               <Link
                 className="font-serif text-2xl text-foreground tracking-tight"
-                to="/"
+                href="/"
               >
                 Reflet.
               </Link>
@@ -61,11 +61,11 @@ export default function Navbar() {
           <div className="hidden items-center space-x-6 md:flex">
             <Link
               className="font-medium text-foreground text-sm hover:text-muted-foreground"
-              to="/dashboard"
+              href="/dashboard"
             >
               Log in
             </Link>
-            <Link to="/dashboard">
+            <Link href="/dashboard">
               <Button size="default" variant="default">
                 Get started
               </Button>
@@ -114,13 +114,13 @@ export default function Navbar() {
             </a>
             <Link
               className="block rounded-md px-3 py-2 font-medium text-base text-foreground hover:bg-muted"
+              href="/dashboard"
               onClick={() => setIsOpen(false)}
-              to="/dashboard"
             >
               Log in
             </Link>
             <div className="px-3 py-2">
-              <Link onClick={() => setIsOpen(false)} to="/dashboard">
+              <Link href="/dashboard" onClick={() => setIsOpen(false)}>
                 <Button className="w-full" size="default" variant="default">
                   Get started
                 </Button>

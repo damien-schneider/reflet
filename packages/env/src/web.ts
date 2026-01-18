@@ -2,11 +2,14 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const env = createEnv({
-  clientPrefix: "VITE_",
+  clientPrefix: "NEXT_PUBLIC_",
   client: {
-    VITE_CONVEX_URL: z.url(),
-    VITE_CONVEX_SITE_URL: z.url(),
+    NEXT_PUBLIC_CONVEX_URL: z.url(),
+    NEXT_PUBLIC_CONVEX_SITE_URL: z.url(),
   },
-  runtimeEnv: (import.meta as { env: Record<string, string | undefined> }).env,
+  runtimeEnv: {
+    NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
+    NEXT_PUBLIC_CONVEX_SITE_URL: process.env.NEXT_PUBLIC_CONVEX_SITE_URL,
+  },
   emptyStringAsUndefined: true,
 });

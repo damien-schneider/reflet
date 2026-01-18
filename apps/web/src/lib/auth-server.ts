@@ -1,4 +1,4 @@
-import { convexBetterAuthReactStart } from "@convex-dev/better-auth/react-start";
+import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
 import { env } from "@reflet-v2/env/web";
 
 export const {
@@ -7,7 +7,7 @@ export const {
   fetchAuthQuery,
   fetchAuthMutation,
   fetchAuthAction,
-} = convexBetterAuthReactStart({
-  convexUrl: env.VITE_CONVEX_URL,
-  convexSiteUrl: env.VITE_CONVEX_SITE_URL,
+} = convexBetterAuthNextJs({
+  convexUrl: env.NEXT_PUBLIC_CONVEX_URL,
+  convexSiteUrl: env.NEXT_PUBLIC_CONVEX_SITE_URL,
 });
