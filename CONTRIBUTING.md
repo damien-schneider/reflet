@@ -131,7 +131,7 @@ reflet-v2/
 │       │   │   ├── homepage/    # Landing page components
 │       │   │   └── ...
 │       │   ├── lib/             # Utilities and helpers
-│       │   ├── routes/          # TanStack Router routes
+│       │   ├── app/              # Next.js App Router routes
 │       │   │   ├── dashboard/   # Dashboard routes
 │       │   │   ├── $orgSlug/    # Organization public pages
 │       │   │   └── ...
@@ -167,12 +167,12 @@ reflet-v2/
 
 ## Architecture Overview
 
-### Frontend (TanStack Start + React)
+### Frontend (Next.js + React)
 
-- **Routing**: TanStack Router with file-based routing
+- **Routing**: Next.js App Router with file-based routing
 - **State Management**: Jotai (atomic state)
 - **UI Components**: shadcn/ui (Radix UI + Tailwind)
-- **Server Components**: TanStack Start SSR capabilities
+- **Server Components**: Next.js Server Components and SSR
 - **Client-Server Sync**: Convex React hooks for real-time data
 
 ### Backend (Convex)
@@ -346,7 +346,7 @@ For complete style guidelines, see [AGENTS.md](AGENTS.md).
 
 ## Resources
 
-- [TanStack Start Docs](https://tanstack.com/start/latest)
+- [Next.js Docs](https://nextjs.org/docs)
 - [Convex Docs](https://docs.convex.dev)
 - [shadcn/ui](https://ui.shadcn.com)
 - [Biome Docs](https://biomejs.dev)

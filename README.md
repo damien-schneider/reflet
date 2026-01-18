@@ -84,7 +84,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup.
 
 Reflet is built with modern, developer-friendly technologies:
 
-- **Frontend**: React 19, TanStack Start (SSR), TanStack Router
+- **Frontend**: React 19, Next.js (App Router)
 - **Backend**: Convex (real-time reactive backend)
 - **UI**: TailwindCSS, shadcn/ui
 - **Auth**: Better-Auth

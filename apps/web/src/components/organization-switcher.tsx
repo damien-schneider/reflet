@@ -1,7 +1,7 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
-import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { Building2, Check, ChevronsUpDown, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +30,7 @@ interface OrganizationSwitcherProps {
 export function OrganizationSwitcher({
   currentOrgSlug,
 }: OrganizationSwitcherProps) {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const organizations = useQuery(api.organizations.list);
@@ -52,7 +52,7 @@ export function OrganizationSwitcher({
       setShowCreateDialog(false);
       setNewOrgName("");
       // Navigate to dashboard - list will refresh with new org
-      navigate({ to: "/dashboard" });
+      router.push("/dashboard");
     } catch {
       // Error handling - could show toast here
     } finally {
@@ -61,10 +61,7 @@ export function OrganizationSwitcher({
   };
 
   const handleSelectOrg = (orgSlug: string) => {
-    navigate({
-      to: "/dashboard/$orgSlug",
-      params: { orgSlug },
-    });
+    router.push(`/dashboard/${orgSlug}`);
   };
 
   if (!organizations) {

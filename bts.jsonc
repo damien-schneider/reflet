@@ -9,7 +9,7 @@
   "orm": "none",
   "backend": "convex",
   "runtime": "none",
-  "frontend": ["tanstack-start"],
+  "frontend": ["next"],
   "addons": ["turborepo", "ultracite"],
   "examples": ["ai", "todo"],
   "auth": "better-auth",

@@ -1,7 +1,7 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { useNavigate } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ export function ReleaseEditor({
   className,
   onSuccess,
 }: ReleaseEditorProps) {
-  const navigate = useNavigate();
+  const router = useRouter();
   const createRelease = useMutation(api.changelog.create);
   const updateRelease = useMutation(api.changelog.update);
   const publishRelease = useMutation(api.changelog_actions.publish);
@@ -71,10 +71,7 @@ export function ReleaseEditor({
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate({
-          to: "/$orgSlug/changelog",
-          params: { orgSlug },
-        });
+        router.push(`/${orgSlug}/changelog`);
       }
     } catch (error) {
       toast.error(
@@ -172,12 +169,7 @@ export function ReleaseEditor({
         <div className="flex gap-2">
           <Button
             disabled={isSubmitting}
-            onClick={() =>
-              navigate({
-                to: "/$orgSlug/changelog",
-                params: { orgSlug },
-              })
-            }
+            onClick={() => router.push(`/${orgSlug}/changelog`)}
             type="button"
             variant="outline"
           >

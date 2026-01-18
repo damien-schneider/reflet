@@ -1,5 +1,6 @@
-import { Link, useParams, useRouterState } from "@tanstack/react-router";
 import { CalendarCheck, Kanban, MessageSquare, Settings } from "lucide-react";
+import Link from "next/link";
+import { useParams, usePathname } from "next/navigation";
 import { OrganizationSwitcher } from "@/components/organization-switcher";
 import {
   Sidebar,
@@ -53,12 +54,10 @@ const adminItems = [
 const TRAILING_SLASH_REGEX = /\/$/;
 
 export function AppSidebar({ className }: AppSidebarProps) {
-  const { orgSlug } = useParams({ strict: false }) as {
-    orgSlug?: string;
-  };
+  const params = useParams();
+  const orgSlug = params?.orgSlug as string | undefined;
 
-  const routerState = useRouterState();
-  const currentPath = routerState.location.pathname;
+  const currentPath = usePathname();
 
   const isActive = (to: string) => {
     const toPath = to.replace("$orgSlug", orgSlug ?? "");
@@ -84,17 +83,19 @@ export function AppSidebar({ className }: AppSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
-                const to = item.to.replace("$orgSlug", orgSlug ?? "");
+                const href = item.to.replace("$orgSlug", orgSlug ?? "");
 
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
+                      asChild
                       isActive={isActive(item.to)}
-                      render={<Link to={to} />}
                       tooltip={item.title}
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <Link href={href}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -108,16 +109,18 @@ export function AppSidebar({ className }: AppSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               {adminItems.map((item) => {
-                const to = item.to.replace("$orgSlug", orgSlug ?? "");
+                const href = item.to.replace("$orgSlug", orgSlug ?? "");
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
+                      asChild
                       isActive={isActive(item.to)}
-                      render={<Link to={to} />}
                       tooltip={item.title}
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <Link href={href}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import {
   ChevronUp,
   MessageSquare,
@@ -6,6 +5,7 @@ import {
   Pin,
   Trash2,
 } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -69,12 +69,7 @@ export function FeedbackCard({
               <div>
                 <Link
                   className="font-semibold transition-colors hover:text-primary hover:underline"
-                  params={{
-                    orgSlug,
-                    boardSlug,
-                    feedbackId: feedback._id,
-                  }}
-                  to="/dashboard/$orgSlug/boards/$boardSlug/feedback/$feedbackId"
+                  href={`/dashboard/${orgSlug}/boards/${boardSlug}/feedback/${feedback._id}`}
                 >
                   {feedback.isPinned && (
                     <Pin className="mr-1 inline h-4 w-4 text-primary" />

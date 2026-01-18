@@ -19,7 +19,6 @@
 .vinxi
 .output
 .react-router/
-.tanstack/
 .nitro/
 
 # Deployment

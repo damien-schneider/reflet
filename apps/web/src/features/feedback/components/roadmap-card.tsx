@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import { ChevronUp } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -21,8 +21,7 @@ export function RoadmapCard({
 }: RoadmapCardProps) {
   return (
     <Link
-      params={{ orgSlug, boardSlug, feedbackId: feedback._id }}
-      to="/dashboard/$orgSlug/boards/$boardSlug/feedback/$feedbackId"
+      href={`/dashboard/${orgSlug}/boards/${boardSlug}/feedback/${feedback._id}`}
     >
       <Card className="group cursor-pointer transition-all hover:border-primary hover:bg-accent/50">
         <CardContent className="p-3">
