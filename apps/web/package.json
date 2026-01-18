@@ -4,7 +4,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev -p 3003",
-    "start": "next start -p 3003",
+    "start": "next start -p ${PORT:-3003}",
     "lint": "next lint",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",

@@ -25,6 +25,7 @@
     "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F @reflet-v2/backend dev",
     "dev:setup": "turbo -F @reflet-v2/backend dev:setup",
+    "start": "turbo -F web start",
     "prepare": "husky",
     "clean": "rm -rf node_modules .turbo .next bun.lock && bun install"
   },
