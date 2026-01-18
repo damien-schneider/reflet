@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "packages": {
+    "bun": "1.3"
+  },
+  "steps": {
+    "install": {
+      "commands": ["cd ../.. && bun install --frozen-lockfile"]
+    },
+    "build": {
+      "inputs": [{ "step": "install" }],
+      "commands": ["cd ../.. && bun run build"]
+    }
+  },
+  "deploy": {
+    "startCommand": "bun run start"
+  }
+}
