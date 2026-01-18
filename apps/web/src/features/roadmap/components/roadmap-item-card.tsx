@@ -1,5 +1,6 @@
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { MessageSquare } from "lucide-react";
+import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/features/feedback/components/status-badge";
 import { VoteButton } from "@/features/feedback/components/vote-button";
@@ -27,11 +28,16 @@ interface RoadmapItemCardProps {
   isDragging?: boolean;
   isAdmin?: boolean;
   onClick?: (feedbackId: string) => void;
-  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragStart?: (
+    e: React.DragEvent<HTMLDivElement>,
+    item: RoadmapItemData
+  ) => void;
   onDragEnd?: () => void;
 }
 
-export function RoadmapItemCard({
+// Optimized with memo to prevent unnecessary re-renders during drag operations.
+// The onDragStart handler is passed down stably, and the item binding happens inside.
+export const RoadmapItemCard = memo(function RoadmapItemCard({
   item,
   isDragging = false,
   isAdmin = false,
@@ -52,7 +58,7 @@ export function RoadmapItemCard({
       )}
       draggable={isAdmin}
       onDragEnd={onDragEnd}
-      onDragStart={onDragStart}
+      onDragStart={(e) => onDragStart?.(e, item)}
       role={isAdmin ? "option" : undefined}
       tabIndex={isAdmin ? 0 : undefined}
     >
@@ -114,4 +120,4 @@ export function RoadmapItemCard({
       </div>
     </div>
   );
-}
+});

@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -33,7 +34,8 @@ interface RoadmapLaneProps {
   onItemClick?: (feedbackId: string) => void;
 }
 
-export function RoadmapLaneColumn({
+// Optimized with memo to prevent re-rendering all lanes when one item is dragged.
+export const RoadmapLaneColumn = memo(function RoadmapLaneColumn({
   lane,
   laneConfig,
   items,
@@ -107,7 +109,7 @@ export function RoadmapLaneColumn({
               key={item._id}
               onClick={onItemClick}
               onDragEnd={onDragEnd}
-              onDragStart={(e) => onDragStart(e, item)}
+              onDragStart={onDragStart}
             />
           ))}
 
@@ -120,4 +122,4 @@ export function RoadmapLaneColumn({
       </ScrollArea>
     </div>
   );
-}
+});
