@@ -2,6 +2,7 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
+import DOMPurify from "isomorphic-dompurify";
 import { Bell, Calendar, Check, Mail } from "lucide-react";
 import { useState } from "react";
 
@@ -116,8 +117,10 @@ function PublicChangelogPage() {
                 {release.description && (
                   <div
                     className="prose prose-neutral dark:prose-invert max-w-none"
-                    // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted changelog content
-                    dangerouslySetInnerHTML={{ __html: release.description }}
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized changelog content
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(release.description),
+                    }}
                   />
                 )}
                 {release.feedback && release.feedback.length > 0 && (

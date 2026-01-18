@@ -1,5 +1,6 @@
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { format } from "date-fns";
+import DOMPurify from "isomorphic-dompurify";
 import { CalendarDays, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -69,8 +70,10 @@ export function ReleaseCard({
         <div className={cn("prose prose-sm dark:prose-invert mb-4 max-w-none")}>
           {showFullContent ? (
             <div
-              // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted markdown content
-              dangerouslySetInnerHTML={{ __html: release.description }}
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized markdown content
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(release.description),
+              }}
             />
           ) : (
             <p className="line-clamp-3 text-muted-foreground">
