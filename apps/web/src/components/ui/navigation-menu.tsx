@@ -35,7 +35,7 @@ function NavigationMenuList({
         className
       )}
       data-slot="navigation-menu-list"
-      {...props}
+      {...(props as React.ComponentPropsWithoutRef<"ul">)}
     />
   );
 }
@@ -48,7 +48,7 @@ function NavigationMenuItem({
     <NavigationMenuPrimitive.Item
       className={cn("relative", className)}
       data-slot="navigation-menu-item"
-      {...props}
+      {...(props as React.ComponentPropsWithoutRef<"li">)}
     />
   );
 }
@@ -151,7 +151,7 @@ function NavigationMenuIndicator({
         className
       )}
       data-slot="navigation-menu-indicator"
-      {...props}
+      {...(props as React.ComponentPropsWithoutRef<"span">)}
     >
       <div className="bg-border rounded-tl-sm shadow-md relative top-[60%] h-2 w-2 rotate-45" />
     </NavigationMenuPrimitive.Icon>

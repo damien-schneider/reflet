@@ -88,15 +88,15 @@ export function AppSidebar({ className }: AppSidebarProps) {
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
-                      asChild
                       isActive={isActive(item.to)}
+                      render={(props) => (
+                        <Link href={href} {...props}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      )}
                       tooltip={item.title}
-                    >
-                      <Link href={href}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                    />
                   </SidebarMenuItem>
                 );
               })}
@@ -113,15 +113,15 @@ export function AppSidebar({ className }: AppSidebarProps) {
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
-                      asChild
                       isActive={isActive(item.to)}
+                      render={(props) => (
+                        <Link href={href} {...props}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      )}
                       tooltip={item.title}
-                    >
-                      <Link href={href}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                    />
                   </SidebarMenuItem>
                 );
               })}
