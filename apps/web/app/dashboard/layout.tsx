@@ -4,8 +4,7 @@ import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import SignInForm from "@/components/sign-in-form";
-import SignUpForm from "@/components/sign-up-form";
+import UnifiedAuthForm from "@/components/unified-auth-form";
 import { DashboardContent } from "./dashboard-content";
 
 export default function DashboardLayout({
@@ -13,7 +12,6 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [showSignIn, setShowSignIn] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -33,11 +31,7 @@ export default function DashboardLayout({
       </Authenticated>
       <Unauthenticated>
         <div className="flex h-full items-center justify-center">
-          {showSignIn ? (
-            <SignInForm onSwitchToSignUp={() => setShowSignIn(false)} />
-          ) : (
-            <SignUpForm onSwitchToSignIn={() => setShowSignIn(true)} />
-          )}
+          <UnifiedAuthForm />
         </div>
       </Unauthenticated>
       <AuthLoading>
