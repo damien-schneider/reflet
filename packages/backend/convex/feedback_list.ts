@@ -51,16 +51,21 @@ export const list = query({
     }
 
     // Build query
-    const feedbackQuery = ctx.db
-      .query("feedback")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId));
+    let feedbackQuery;
+
+    if (args.status) {
+      feedbackQuery = ctx.db
+        .query("feedback")
+        .withIndex("by_board_status", (q) =>
+          q.eq("boardId", args.boardId).eq("status", args.status!)
+        );
+    } else {
+      feedbackQuery = ctx.db
+        .query("feedback")
+        .withIndex("by_board", (q) => q.eq("boardId", args.boardId));
+    }
 
     let feedbackItems = await feedbackQuery.collect();
-
-    // Filter by status
-    if (args.status) {
-      feedbackItems = feedbackItems.filter((f) => f.status === args.status);
-    }
 
     // Filter non-approved for non-members
     if (!isMember) {
