@@ -11,6 +11,7 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Spinner } from "./ui/spinner";
 
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -86,9 +87,17 @@ export default function SignUpForm({
         <div>
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
-            <Input data-testid="name-input" id="name" {...register("name")} />
+            <Input
+              aria-describedby={errors.name ? "name-error" : undefined}
+              aria-invalid={!!errors.name}
+              data-testid="name-input"
+              id="name"
+              {...register("name")}
+            />
             {errors.name && (
-              <p className="text-red-500">{errors.name.message}</p>
+              <p className="text-red-500 text-sm" id="name-error" role="alert">
+                {errors.name.message}
+              </p>
             )}
           </div>
         </div>
@@ -97,13 +106,17 @@ export default function SignUpForm({
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
+              aria-describedby={errors.email ? "email-error" : undefined}
+              aria-invalid={!!errors.email}
               data-testid="email-input"
               id="email"
               type="email"
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-red-500">{errors.email.message}</p>
+              <p className="text-red-500 text-sm" id="email-error" role="alert">
+                {errors.email.message}
+              </p>
             )}
           </div>
         </div>
@@ -112,19 +125,34 @@ export default function SignUpForm({
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input
+              aria-describedby={errors.password ? "password-error" : undefined}
+              aria-invalid={!!errors.password}
               data-testid="password-input"
               id="password"
               type="password"
               {...register("password")}
             />
             {errors.password && (
-              <p className="text-red-500">{errors.password.message}</p>
+              <p
+                className="text-red-500 text-sm"
+                id="password-error"
+                role="alert"
+              >
+                {errors.password.message}
+              </p>
             )}
           </div>
         </div>
 
         <Button className="w-full" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Submitting..." : "Sign Up"}
+          {isSubmitting ? (
+            <>
+              <Spinner className="mr-2" />
+              Signing Up...
+            </>
+          ) : (
+            "Sign Up"
+          )}
         </Button>
       </form>
 
