@@ -10,6 +10,7 @@
 
 import type * as agent from "../agent.js";
 import type * as auth from "../auth.js";
+import type * as auth_helpers from "../auth_helpers.js";
 import type * as boards from "../boards.js";
 import type * as boards_actions from "../boards_actions.js";
 import type * as changelog from "../changelog.js";
@@ -51,6 +52,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   agent: typeof agent;
   auth: typeof auth;
+  auth_helpers: typeof auth_helpers;
   boards: typeof boards;
   boards_actions: typeof boards_actions;
   changelog: typeof changelog;
