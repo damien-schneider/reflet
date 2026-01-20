@@ -3,6 +3,7 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import { useAtomValue } from "jotai";
 import { ChevronUp, GripVertical, MessageSquare } from "lucide-react";
 import { useCallback, useState } from "react";
 
@@ -11,6 +12,12 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import {
+  feedbackSearchAtom,
+  feedbackSortAtom,
+  selectedStatusesAtom,
+  selectedTagIdsAtom,
+} from "@/store/feedback";
 
 interface RoadmapKanbanProps {
   boardId: Id<"boards">;
@@ -26,23 +33,74 @@ export function RoadmapKanban({
   const statuses = useQuery(api.board_statuses.list, { boardId });
   const feedback = useQuery(api.feedback_list.listForRoadmap, { boardId });
   const counts = useQuery(api.board_statuses.getCounts, { boardId });
+
+  // Get filter state from Jotai atoms for optimistic updates
+  const search = useAtomValue(feedbackSearchAtom);
+  const sortBy = useAtomValue(feedbackSortAtom);
+  const selectedStatuses = useAtomValue(selectedStatusesAtom);
+  const selectedTagIds = useAtomValue(selectedTagIdsAtom);
+
+  // Map sort option to Convex sort type
+  const convexSortBy = (() => {
+    switch (sortBy) {
+      case "most_votes":
+        return "votes" as const;
+      case "most_comments":
+        return "comments" as const;
+      default:
+        return sortBy as "newest" | "oldest";
+    }
+  })();
+
   const updateFeedbackStatus = useMutation(
     api.feedback_actions.updateStatus
   ).withOptimisticUpdate((localStore, args) => {
     const { feedbackId, statusId } = args;
-    const currentList = localStore.getQuery(api.feedback_list.listForRoadmap, {
-      boardId,
-    });
 
-    if (currentList) {
-      const updatedList = currentList.map((item) =>
+    // 1. Update Roadmap List
+    const currentRoadmapList = localStore.getQuery(
+      api.feedback_list.listForRoadmap,
+      {
+        boardId,
+      }
+    );
+
+    if (currentRoadmapList) {
+      const updatedRoadmapList = currentRoadmapList.map((item) =>
         item._id === feedbackId ? { ...item, statusId } : item
       );
       localStore.setQuery(
         api.feedback_list.listForRoadmap,
         { boardId },
-        updatedList
+        updatedRoadmapList
       );
+    }
+
+    // 2. Update Main Feedback List
+    const listArgs = {
+      boardId,
+      search: search || undefined,
+      sortBy: convexSortBy,
+      status: selectedStatuses[0] as Doc<"feedback">["status"],
+      tagIds:
+        selectedTagIds.length > 0
+          ? (selectedTagIds as Id<"tags">[])
+          : undefined,
+    };
+
+    const currentMainList = localStore.getQuery(api.feedback_list.list, listArgs);
+
+    // We need the new status name to update the feedback item correctly
+    // statuses might be undefined if not loaded yet, but we can't drag if it's not loaded
+    const newStatusName = statuses?.find((s) => s._id === statusId)?.name;
+
+    if (currentMainList && newStatusName) {
+      const updatedMainList = currentMainList.map((item) =>
+        item._id === feedbackId
+          ? { ...item, statusId, status: newStatusName }
+          : item
+      );
+      localStore.setQuery(api.feedback_list.list, listArgs, updatedMainList);
     }
   });
 
