@@ -59,7 +59,9 @@ export function VoteButton({
 
   const toggleVote = useMutation(api.votes.toggle).withOptimisticUpdate(
     (localStore) => {
-      if (!boardId) return;
+      if (!boardId) {
+        return;
+      }
 
       // Update list query
       const listArgs = {

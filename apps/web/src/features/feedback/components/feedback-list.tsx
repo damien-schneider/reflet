@@ -100,12 +100,12 @@ export function FeedbackList({
         <div className="space-y-3">
           {feedbackList.map((feedback) => (
             <FeedbackListItem
+              boardId={boardId}
               feedback={feedback}
               isAdmin={isAdmin}
               isAuthor={feedback.authorId === userId}
               key={feedback._id}
               onClick={onFeedbackClick}
-              boardId={boardId}
             />
           ))}
         </div>

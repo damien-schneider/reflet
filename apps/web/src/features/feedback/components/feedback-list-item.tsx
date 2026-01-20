@@ -86,11 +86,11 @@ export function FeedbackListItem({
         >
           {/* Vote button */}
           <VoteButton
+            boardId={boardId}
             feedbackId={feedback._id}
             hasVoted={feedback.hasVoted}
             size="md"
             voteCount={feedback.voteCount ?? 0}
-            boardId={boardId}
           />
 
           {/* Content */}

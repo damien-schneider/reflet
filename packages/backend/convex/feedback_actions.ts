@@ -411,18 +411,62 @@ export const updateStatus = mutation({
     }
 
     // Validate statusId belongs to the same board
+    let newStatus = feedback.status;
     if (args.statusId) {
       const status = await ctx.db.get(args.statusId);
       if (!status || status.boardId !== feedback.boardId) {
         throw new Error("Invalid status for this board");
       }
+
+      // Map custom status name to enum value for the status field
+      // This ensures the list view badge displays correctly
+      newStatus = mapStatusNameToEnum(status.name);
     }
 
     await ctx.db.patch(args.feedbackId, {
       statusId: args.statusId,
+      status: newStatus,
       updatedAt: Date.now(),
     });
 
     return args.feedbackId;
   },
 });
+
+/**
+ * Map custom status name to the corresponding enum value
+ * This ensures the status field stays in sync with statusId
+ */
+function mapStatusNameToEnum(
+  statusName: string
+):
+  | "open"
+  | "under_review"
+  | "planned"
+  | "in_progress"
+  | "completed"
+  | "closed" {
+  const normalizedName = statusName.toLowerCase().replace(/[\s_-]/g, "");
+
+  // Map common status names to enum values
+  const statusMap: Record<
+    string,
+    "open" | "under_review" | "planned" | "in_progress" | "completed" | "closed"
+  > = {
+    open: "open",
+    underreview: "under_review",
+    "under review": "under_review",
+    "under-review": "under_review",
+    planned: "planned",
+    inprogress: "in_progress",
+    "in progress": "in_progress",
+    "in-progress": "in_progress",
+    completed: "completed",
+    done: "completed",
+    closed: "closed",
+    resolved: "closed",
+    archived: "closed",
+  };
+
+  return statusMap[normalizedName] ?? "open";
+}

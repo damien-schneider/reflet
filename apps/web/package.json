@@ -31,6 +31,8 @@
     "@reflet-v2/backend": "workspace:*",
     "@reflet-v2/env": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
+    "@tanstack/pacer": "^0.17.3",
+    "@tanstack/react-pacer": "^0.19.3",
     "@tanstack/react-query": "^5.80.6",
     "better-auth": "catalog:",
     "class-variance-authority": "^0.7.1",

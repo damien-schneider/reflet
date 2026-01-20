@@ -88,21 +88,65 @@ export function RoadmapKanban({
           : undefined,
     };
 
-    const currentMainList = localStore.getQuery(api.feedback_list.list, listArgs);
+    const currentMainList = localStore.getQuery(
+      api.feedback_list.list,
+      listArgs
+    );
 
-    // We need the new status name to update the feedback item correctly
-    // statuses might be undefined if not loaded yet, but we can't drag if it's not loaded
+    // Map custom status name to enum value for optimistic update
+    // This ensures the status field matches the enum type
     const newStatusName = statuses?.find((s) => s._id === statusId)?.name;
+    const newStatusEnum = mapStatusNameToEnum(newStatusName ?? "open");
 
-    if (currentMainList && newStatusName) {
+    if (currentMainList) {
       const updatedMainList = currentMainList.map((item) =>
         item._id === feedbackId
-          ? { ...item, statusId, status: newStatusName }
+          ? { ...item, statusId, status: newStatusEnum }
           : item
       );
       localStore.setQuery(api.feedback_list.list, listArgs, updatedMainList);
     }
   });
+
+  // Helper function to map status name to enum value
+  // Matches the backend logic in feedback_actions.ts
+  function mapStatusNameToEnum(
+    statusName: string
+  ):
+    | "open"
+    | "under_review"
+    | "planned"
+    | "in_progress"
+    | "completed"
+    | "closed" {
+    const normalizedName = statusName.toLowerCase().replace(/[\s_-]/g, "");
+
+    const statusMap: Record<
+      string,
+      | "open"
+      | "under_review"
+      | "planned"
+      | "in_progress"
+      | "completed"
+      | "closed"
+    > = {
+      open: "open",
+      underreview: "under_review",
+      "under review": "under_review",
+      "under-review": "under_review",
+      planned: "planned",
+      inprogress: "in_progress",
+      "in progress": "in_progress",
+      "in-progress": "in_progress",
+      completed: "completed",
+      done: "completed",
+      closed: "closed",
+      resolved: "closed",
+      archived: "closed",
+    };
+
+    return statusMap[normalizedName] ?? "open";
+  }
 
   const [draggedItem, setDraggedItem] = useState<Id<"feedback"> | null>(null);
 

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
+import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -9,9 +10,8 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
+import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
-
 import { Button } from "./ui/button";
 import { Field, FieldError, FieldLabel } from "./ui/field";
 import { Input } from "./ui/input";
@@ -24,14 +24,21 @@ const signInSchema = z.object({
     .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
 });
 
-// Schema for sign-up (email + password + name)
-const signUpSchema = z.object({
-  email: z.string().email("Adresse email invalide"),
-  password: z
-    .string()
-    .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
-  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-});
+// Schema for sign-up (email + password + confirm password)
+const signUpSchema = z
+  .object({
+    email: z.string().email("Adresse email invalide"),
+    password: z
+      .string()
+      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    confirmPassword: z
+      .string()
+      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Les mots de passe ne correspondent pas",
+    path: ["confirmPassword"],
+  });
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
@@ -57,6 +64,8 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   const [emailChecked, setEmailChecked] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [mode, setMode] = useState<"signIn" | "signUp" | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [lastCheckedEmail, setLastCheckedEmail] = useState<string>("");
 
   const ensurePersonalOrganization = useMutation(
     api.organizations_personal.ensurePersonalOrganization
@@ -71,51 +80,60 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
     watch,
     setValue,
   } = useForm<SignUpFormData>({
-    resolver: zodResolver(mode === "signUp" ? signUpSchema : signInSchema),
+    resolver: async (data, context, options) => {
+      try {
+        const result = await zodResolver(
+          mode === "signUp" ? signUpSchema : signInSchema
+        )(data, context, options);
+        return result;
+      } catch {
+        return { errors: {}, values: data };
+      }
+    },
+    mode: "onBlur",
     defaultValues: {
       email: "",
       password: "",
-      name: "",
+      confirmPassword: "",
     },
   });
 
   const watchedEmail = watch("email");
+  const [debouncedEmail] = useDebouncedValue(watchedEmail, { wait: 800 });
 
   useEffect(() => {
     if (emailExistsData !== undefined && emailChecked) {
       const exists = emailExistsData.exists;
       setMode(exists ? "signIn" : "signUp");
       setIsCheckingEmail(false);
+      setLastCheckedEmail(email);
     }
-  }, [emailExistsData, emailChecked]);
+  }, [emailExistsData, emailChecked, email]);
 
-  const handleEmailBlur = () => {
-    const currentEmail = watchedEmail.trim();
+  useEffect(() => {
+    const currentEmail = debouncedEmail.trim();
 
-    // Only check if email is valid and different from last checked
-    if (currentEmail?.includes("@") && currentEmail !== email) {
+    if (currentEmail?.includes("@") && currentEmail !== lastCheckedEmail) {
       setEmail(currentEmail);
       setIsCheckingEmail(true);
       setEmailChecked(true);
     }
-  };
+  }, [debouncedEmail, lastCheckedEmail]);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setApiError(null);
     setValue("email", e.target.value);
-    // Reset mode if user changes email significantly
-    if (mode && emailChecked) {
-      setMode(null);
-      setEmailChecked(false);
-    }
   };
 
   const onSubmit = async (data: SignUpFormData) => {
+    setApiError(null);
+
     if (!mode) {
-      toast.error("Veuillez vérifier votre email");
+      setApiError("Veuillez vérifier votre email");
       return;
     }
 
@@ -132,7 +150,7 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
             toast.success("Connexion réussie");
           },
           onError: (error) => {
-            toast.error(
+            setApiError(
               error.error.message ||
                 error.error.statusText ||
                 "Erreur de connexion"
@@ -145,15 +163,13 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
         {
           email: data.email,
           password: data.password,
-          name: data.name,
+          name: "",
         },
         {
           onSuccess: async () => {
             onSuccess?.();
             try {
-              const org = await ensurePersonalOrganization({
-                name: data.name,
-              });
+              const org = await ensurePersonalOrganization({});
               if (org?.slug) {
                 router.push(`/dashboard/${org.slug}`);
               } else {
@@ -165,7 +181,7 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
             toast.success("Inscription réussie");
           },
           onError: (error) => {
-            toast.error(
+            setApiError(
               error.error.message ||
                 error.error.statusText ||
                 "Erreur d'inscription"
@@ -196,11 +212,18 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
     if (isSubmitting) {
       return "Chargement...";
     }
+    if (!mode) {
+      return "Continuer";
+    }
     return mode === "signIn" ? "Se connecter" : "Créer mon compte";
   };
 
+  const isFormValid = () => {
+    return isValid;
+  };
+
   return (
-    <div className="mx-auto w-full max-w-md p-6">
+    <div className="absolute top-[35%] left-1/2 w-full max-w-md -translate-x-1/2 p-6">
       <AnimatePresence mode="wait">
         <motion.div
           animate="animate"
@@ -218,27 +241,56 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
       </AnimatePresence>
 
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <div className="relative mb-4">
+          <FieldError
+            className="absolute top-0 left-0"
+            errors={apiError ? [{ message: apiError }] : undefined}
+          />
+        </div>
         {/* Email Field - Always visible */}
-        <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
+        <Field className="relative">
+          <FieldLabel className="justify-between" htmlFor="email">
+            Email
+            {isCheckingEmail && (
+              <div className="inline-flex w-fit! gap-1 text-muted-foreground text-xs">
+                <Spinner />
+
+                <p className="">Vérification de l'email...</p>
+              </div>
+            )}
+          </FieldLabel>
           <Input
             data-testid="email-input"
             id="email"
             type="email"
             {...register("email")}
             disabled={isSubmitting}
-            onBlur={handleEmailBlur}
             onChange={handleEmailChange}
           />
-          <FieldError errors={errors.email ? [errors.email] : undefined} />
-          {isCheckingEmail && (
-            <p className="text-muted-foreground text-sm">
-              Vérification de l'email...
-            </p>
-          )}
+          <FieldError
+            className="absolute top-full left-0"
+            errors={errors.email ? [errors.email] : undefined}
+          />
         </Field>
 
-        {/* Name Field - Only for sign-up */}
+        {/* Password Field - Always visible */}
+        <Field className="relative">
+          <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
+          <Input
+            data-testid="password-input"
+            id="password"
+            type="password"
+            {...register("password")}
+            disabled={isSubmitting}
+            onChange={() => setApiError(null)}
+          />
+          <FieldError
+            className="absolute top-full left-0"
+            errors={errors.password ? [errors.password] : undefined}
+          />
+        </Field>
+
+        {/* Confirm Password Field - Only for sign-up */}
         <AnimatePresence>
           {mode === "signUp" && (
             <motion.div
@@ -248,67 +300,40 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               variants={animationVariants}
             >
-              <Field>
-                <FieldLabel htmlFor="name">Nom</FieldLabel>
+              <Field className="relative">
+                <FieldLabel htmlFor="confirmPassword">
+                  Confirmer le mot de passe
+                </FieldLabel>
                 <Input
-                  data-testid="name-input"
-                  id="name"
-                  {...register("name")}
-                  disabled={isSubmitting}
-                />
-                <FieldError errors={errors.name ? [errors.name] : undefined} />
-              </Field>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Password Field - Shown after email check */}
-        <AnimatePresence>
-          {mode && (
-            <motion.div
-              animate="animate"
-              exit="exit"
-              initial="initial"
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              variants={animationVariants}
-            >
-              <Field>
-                <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
-                <Input
-                  data-testid="password-input"
-                  id="password"
+                  data-testid="confirm-password-input"
+                  id="confirmPassword"
                   type="password"
-                  {...register("password")}
+                  {...register("confirmPassword")}
                   disabled={isSubmitting}
+                  onChange={() => setApiError(null)}
                 />
                 <FieldError
-                  errors={errors.password ? [errors.password] : undefined}
+                  className="absolute top-full left-0"
+                  errors={
+                    errors.confirmPassword
+                      ? [errors.confirmPassword]
+                      : undefined
+                  }
                 />
               </Field>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Submit Button - Shown after email check */}
-        <AnimatePresence>
-          {mode && (
-            <motion.div
-              animate="animate"
-              exit="exit"
-              initial="initial"
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              variants={animationVariants}
-            >
-              <Button
-                className="w-full"
-                disabled={isSubmitting || isCheckingEmail}
-                type="submit"
-              >
-                {getButtonText()}
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Submit Button - Always visible */}
+        <Button
+          className="w-full"
+          data-testid="submit-button"
+          disabled={isSubmitting || isCheckingEmail || !isFormValid()}
+          type="submit"
+        >
+          {getButtonText()}
+        </Button>
 
         {/* Helper text */}
         <AnimatePresence>
