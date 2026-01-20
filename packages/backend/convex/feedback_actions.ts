@@ -381,3 +381,48 @@ export const remove = mutation({
     return true;
   },
 });
+
+/**
+ * Update feedback status (for drag & drop in roadmap)
+ */
+export const updateStatus = mutation({
+  args: {
+    feedbackId: v.id("feedback"),
+    statusId: v.optional(v.id("boardStatuses")),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      throw new Error("Feedback not found");
+    }
+
+    // Check membership (members can update status)
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership) {
+      throw new Error("You are not a member of this organization");
+    }
+
+    // Validate statusId belongs to the same board
+    if (args.statusId) {
+      const status = await ctx.db.get(args.statusId);
+      if (!status || status.boardId !== feedback.boardId) {
+        throw new Error("Invalid status for this board");
+      }
+    }
+
+    await ctx.db.patch(args.feedbackId, {
+      statusId: args.statusId,
+      updatedAt: Date.now(),
+    });
+
+    return args.feedbackId;
+  },
+});

@@ -150,3 +150,84 @@ export const list = query({
     return feedbackItems.map((f) => ({ ...f, hasVoted: false }));
   },
 });
+
+/**
+ * List feedback for roadmap view (grouped by status)
+ */
+export const listForRoadmap = query({
+  args: { boardId: v.id("boards") },
+  handler: async (ctx, args) => {
+    const user = await authComponent.safeGetAuthUser(ctx);
+
+    const board = await ctx.db.get(args.boardId);
+    if (!board) {
+      return [];
+    }
+
+    const org = await ctx.db.get(board.organizationId);
+    if (!org) {
+      return [];
+    }
+
+    // Check access
+    let isMember = false;
+    if (user) {
+      const membership = await ctx.db
+        .query("organizationMembers")
+        .withIndex("by_org_user", (q) =>
+          q.eq("organizationId", board.organizationId).eq("userId", user._id)
+        )
+        .unique();
+      isMember = !!membership;
+    }
+
+    if (!(isMember || (board.isPublic && org.isPublic))) {
+      return [];
+    }
+
+    // Get all feedback for the board
+    const feedbackItems = await ctx.db
+      .query("feedback")
+      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
+      .collect();
+
+    // Filter to only approved items for non-members
+    const filteredItems = isMember
+      ? feedbackItems
+      : feedbackItems.filter((f) => f.isApproved);
+
+    // Add vote status and tags
+    const feedbackWithDetails = await Promise.all(
+      filteredItems.map(async (f) => {
+        // Get tags
+        const feedbackTags = await ctx.db
+          .query("feedbackTags")
+          .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
+          .collect();
+        const tags = await Promise.all(
+          feedbackTags.map(async (ft) => ctx.db.get(ft.tagId))
+        );
+
+        // Check if user voted
+        let hasVoted = false;
+        if (user) {
+          const vote = await ctx.db
+            .query("feedbackVotes")
+            .withIndex("by_feedback_user", (q) =>
+              q.eq("feedbackId", f._id).eq("userId", user._id)
+            )
+            .unique();
+          hasVoted = !!vote;
+        }
+
+        return {
+          ...f,
+          tags: tags.filter(Boolean),
+          hasVoted,
+        };
+      })
+    );
+
+    return feedbackWithDetails;
+  },
+});

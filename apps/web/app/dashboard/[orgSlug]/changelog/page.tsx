@@ -27,18 +27,19 @@ export default function ChangelogPage({
     api.members.getCurrentMember,
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
-  const createRelease = useMutation(api.changelog_actions.create);
-  const updateRelease = useMutation(api.changelog_actions.update);
+  const createRelease = useMutation(api.changelog.create);
+  const updateRelease = useMutation(api.changelog.update);
   const deleteRelease = useMutation(api.changelog_actions.remove);
   const publishRelease = useMutation(api.changelog_actions.publish);
   const unpublishRelease = useMutation(api.changelog_actions.unpublish);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingRelease, setEditingRelease] = useState<
-    (typeof releases extends Array<infer T> ? T : never) | null
+    NonNullable<typeof releases>[number] | null
   >(null);
   const [deletingRelease, setDeletingRelease] = useState<
-    (typeof releases extends Array<infer T> ? T : never) | null
+    NonNullable<typeof releases>[number] | null
   >(null);
 
   const isAdmin =
@@ -59,48 +60,62 @@ export default function ChangelogPage({
 
   const handleCreateRelease = async (data: {
     title: string;
-    version?: string;
-    description?: string;
+    version: string;
+    content: string;
   }) => {
     if (!org?._id) {
       return;
     }
-    await createRelease({
-      organizationId: org._id as Id<"organizations">,
-      ...data,
-    });
-    setIsCreateDialogOpen(false);
+    setIsSubmitting(true);
+    try {
+      await createRelease({
+        organizationId: org._id as Id<"organizations">,
+        title: data.title,
+        version: data.version,
+        description: data.content,
+      });
+      setIsCreateDialogOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleUpdateRelease = async (data: {
     title: string;
-    version?: string;
-    description?: string;
+    version: string;
+    content: string;
   }) => {
     if (!editingRelease) {
       return;
     }
-    await updateRelease({
-      releaseId: editingRelease._id,
-      ...data,
-    });
-    setEditingRelease(null);
+    setIsSubmitting(true);
+    try {
+      await updateRelease({
+        id: editingRelease._id,
+        title: data.title,
+        version: data.version,
+        description: data.content,
+      });
+      setEditingRelease(null);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteRelease = async () => {
     if (!deletingRelease) {
       return;
     }
-    await deleteRelease({ releaseId: deletingRelease._id });
+    await deleteRelease({ id: deletingRelease._id });
     setDeletingRelease(null);
   };
 
   const handlePublish = async (releaseId: Id<"releases">) => {
-    await publishRelease({ releaseId });
+    await publishRelease({ id: releaseId });
   };
 
   const handleUnpublish = async (releaseId: Id<"releases">) => {
-    await unpublishRelease({ releaseId });
+    await unpublishRelease({ id: releaseId });
   };
 
   return (
@@ -153,34 +168,31 @@ export default function ChangelogPage({
       )}
 
       <ReleaseFormDialog
-        onOpenChange={setIsCreateDialogOpen}
+        isSubmitting={isSubmitting}
+        onClose={() => setIsCreateDialogOpen(false)}
         onSubmit={handleCreateRelease}
         open={isCreateDialogOpen}
       />
 
       {editingRelease ? (
         <ReleaseFormDialog
-          initialValues={editingRelease}
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditingRelease(null);
-            }
-          }}
+          isSubmitting={isSubmitting}
+          onClose={() => setEditingRelease(null)}
           onSubmit={handleUpdateRelease}
           open={Boolean(editingRelease)}
+          release={{
+            version: editingRelease.version ?? "",
+            title: editingRelease.title,
+            content: editingRelease.description ?? "",
+          }}
         />
       ) : null}
 
       {deletingRelease ? (
         <DeleteReleaseDialog
+          onClose={() => setDeletingRelease(null)}
           onConfirm={handleDeleteRelease}
-          onOpenChange={(open) => {
-            if (!open) {
-              setDeletingRelease(null);
-            }
-          }}
           open={Boolean(deletingRelease)}
-          releaseTitle={deletingRelease.title}
         />
       ) : null}
     </div>

@@ -2,7 +2,7 @@
 
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { Plus, Tag as TagIcon } from "lucide-react";
 import { use, useState } from "react";
 
@@ -27,15 +27,14 @@ export default function TagsPage({
     api.members.getCurrentMember,
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
-  const createTag = useMutation(api.tag_manager_actions.create);
-  const updateTag = useMutation(api.tag_manager_actions.update);
-  const deleteTag = useMutation(api.tag_manager_actions.remove);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingTag, setEditingTag] =
-    useState<typeof tags extends Array<infer T> ? T : never | null>(null);
-  const [deletingTag, setDeletingTag] =
-    useState<typeof tags extends Array<infer T> ? T : never | null>(null);
+  const [editingTag, setEditingTag] = useState<
+    NonNullable<typeof tags>[number] | null
+  >(null);
+  const [deletingTag, setDeletingTag] = useState<
+    NonNullable<typeof tags>[number] | null
+  >(null);
 
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
@@ -52,46 +51,6 @@ export default function TagsPage({
       </div>
     );
   }
-
-  const handleCreateTag = async (data: {
-    name: string;
-    color: string;
-    isDoneStatus: boolean;
-    isRoadmapLane: boolean;
-  }) => {
-    if (!org?._id) {
-      return;
-    }
-    await createTag({
-      organizationId: org._id as Id<"organizations">,
-      ...data,
-    });
-    setIsCreateDialogOpen(false);
-  };
-
-  const handleUpdateTag = async (data: {
-    name: string;
-    color: string;
-    isDoneStatus: boolean;
-    isRoadmapLane: boolean;
-  }) => {
-    if (!editingTag) {
-      return;
-    }
-    await updateTag({
-      tagId: editingTag._id,
-      ...data,
-    });
-    setEditingTag(null);
-  };
-
-  const handleDeleteTag = async () => {
-    if (!deletingTag) {
-      return;
-    }
-    await deleteTag({ tagId: deletingTag._id });
-    setDeletingTag(null);
-  };
 
   return (
     <div className="p-6">
@@ -141,34 +100,42 @@ export default function TagsPage({
       )}
 
       <TagFormDialog
+        editingTag={null}
         onOpenChange={setIsCreateDialogOpen}
-        onSubmit={handleCreateTag}
+        onSuccess={() => setIsCreateDialogOpen(false)}
         open={isCreateDialogOpen}
+        organizationId={org._id as Id<"organizations">}
       />
 
       {editingTag ? (
         <TagFormDialog
-          initialValues={editingTag}
+          editingTag={{
+            _id: editingTag._id,
+            name: editingTag.name,
+            color: editingTag.color,
+            isDoneStatus: editingTag.isDoneStatus,
+            isRoadmapLane: editingTag.isRoadmapLane,
+          }}
           onOpenChange={(open) => {
             if (!open) {
               setEditingTag(null);
             }
           }}
-          onSubmit={handleUpdateTag}
+          onSuccess={() => setEditingTag(null)}
           open={Boolean(editingTag)}
+          organizationId={org._id as Id<"organizations">}
         />
       ) : null}
 
       {deletingTag ? (
         <DeleteTagDialog
-          onConfirm={handleDeleteTag}
           onOpenChange={(open) => {
             if (!open) {
               setDeletingTag(null);
             }
           }}
-          open={Boolean(deletingTag)}
-          tagName={deletingTag.name}
+          onSuccess={() => setDeletingTag(null)}
+          tagId={deletingTag._id}
         />
       ) : null}
     </div>

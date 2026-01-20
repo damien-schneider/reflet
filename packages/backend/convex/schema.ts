@@ -135,6 +135,7 @@ export default defineSchema({
     slug: v.string(),
     description: v.optional(v.string()),
     isPublic: v.boolean(),
+    defaultView: v.optional(v.union(v.literal("roadmap"), v.literal("feed"))),
     settings: v.optional(
       v.object({
         allowAnonymousVoting: v.optional(v.boolean()),
@@ -147,6 +148,21 @@ export default defineSchema({
   })
     .index("by_organization", ["organizationId"])
     .index("by_org_slug", ["organizationId", "slug"]),
+
+  // ============================================
+  // BOARD STATUSES
+  // ============================================
+  boardStatuses: defineTable({
+    boardId: v.id("boards"),
+    name: v.string(),
+    color: v.string(),
+    icon: v.optional(v.string()),
+    order: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_board", ["boardId"])
+    .index("by_board_order", ["boardId", "order"]),
 
   // ============================================
   // TAGS
@@ -170,6 +186,7 @@ export default defineSchema({
     title: v.string(),
     description: v.string(), // Rich text (Tiptap JSON or markdown)
     status: feedbackStatus,
+    statusId: v.optional(v.id("boardStatuses")),
     authorId: v.string(), // Better Auth user ID
     voteCount: v.number(),
     commentCount: v.number(),
@@ -187,6 +204,7 @@ export default defineSchema({
     .index("by_author", ["authorId"])
     .index("by_status", ["status"])
     .index("by_board_status", ["boardId", "status"])
+    .index("by_status_id", ["statusId"])
     .searchIndex("search_title", {
       searchField: "title",
       filterFields: ["boardId", "organizationId"],

@@ -2,6 +2,16 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUser } from "./utils";
 
+// Default statuses to create for new boards
+const DEFAULT_STATUSES = [
+  { name: "Open", color: "#6b7280", icon: "circle", order: 0 },
+  { name: "Under Review", color: "#f59e0b", icon: "eye", order: 1 },
+  { name: "Planned", color: "#3b82f6", icon: "calendar", order: 2 },
+  { name: "In Progress", color: "#8b5cf6", icon: "loader", order: 3 },
+  { name: "Completed", color: "#22c55e", icon: "check-circle", order: 4 },
+  { name: "Closed", color: "#ef4444", icon: "x-circle", order: 5 },
+] as const;
+
 /**
  * Create a new board (admin/owner only)
  */
@@ -43,15 +53,29 @@ export const create = mutation({
 
     const finalSlug = existingBoard ? `${slug}-${Date.now()}` : slug;
 
+    const now = Date.now();
     const boardId = await ctx.db.insert("boards", {
       organizationId: args.organizationId,
       name: args.name,
       slug: finalSlug,
       description: args.description,
       isPublic: true,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     });
+
+    // Create default statuses for the board
+    for (const status of DEFAULT_STATUSES) {
+      await ctx.db.insert("boardStatuses", {
+        boardId,
+        name: status.name,
+        color: status.color,
+        icon: status.icon,
+        order: status.order,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
     return boardId;
   },

@@ -63,10 +63,11 @@ export default function MembersSettingsPage({
   }
 
   const handleRemoveMember = async () => {
-    if (!removingMember) {
+    if (!(removingMember && org?._id)) {
       return;
     }
     await removeMember({
+      organizationId: org._id as Id<"organizations">,
       memberId: removingMember.id as Id<"organizationMembers">,
     });
     setRemovingMember(null);
@@ -120,7 +121,7 @@ export default function MembersSettingsPage({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <InvitationList invitations={invitations} isAdmin={isAdmin} />
+              <InvitationList invitations={invitations} />
             </CardContent>
           </Card>
         ) : null}
@@ -134,14 +135,9 @@ export default function MembersSettingsPage({
 
       {removingMember ? (
         <RemoveMemberDialog
-          memberName={removingMember.name}
+          member={removingMember}
+          onClose={() => setRemovingMember(null)}
           onConfirm={handleRemoveMember}
-          onOpenChange={(open) => {
-            if (!open) {
-              setRemovingMember(null);
-            }
-          }}
-          open={Boolean(removingMember)}
         />
       ) : null}
     </div>

@@ -90,11 +90,9 @@ export default function BoardsPage({
           </p>
         </div>
         <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Board
-            </Button>
+          <DialogTrigger render={<Button />}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Board
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

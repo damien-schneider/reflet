@@ -264,6 +264,7 @@ export const update = mutation({
     slug: v.optional(v.string()),
     description: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
+    defaultView: v.optional(v.union(v.literal("roadmap"), v.literal("feed"))),
     settings: v.optional(
       v.object({
         allowAnonymousVoting: v.optional(v.boolean()),

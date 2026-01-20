@@ -5,7 +5,7 @@ import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { ChevronUp, Globe, MessageSquare } from "lucide-react";
 import type { ReactNode } from "react";
-import { use, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  type BoardView,
+  BoardViewToggle,
+} from "@/features/feedback/components/board-view-toggle";
+import { RoadmapKanban } from "@/features/feedback/components/roadmap-kanban";
 
 export default function PublicOrgPage({
   params,
@@ -49,15 +54,28 @@ export default function PublicOrgPage({
     email: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [view, setView] = useState<BoardView>("feed");
 
   const createFeedback = useMutation(api.feedback_actions.createPublic);
   const toggleVote = useMutation(api.votes.toggle);
 
   const activeBoardId = selectedBoardId || publicBoards?.[0]?._id || null;
+  const activeBoard = publicBoards?.find((b) => b._id === activeBoardId);
   const feedback = useQuery(
     api.feedback_actions.listPublic,
     activeBoardId ? { boardId: activeBoardId as Id<"boards"> } : "skip"
   );
+
+  // Set default view from board when it loads
+  useEffect(() => {
+    if (activeBoard?.defaultView) {
+      setView(activeBoard.defaultView as BoardView);
+    }
+  }, [activeBoard?.defaultView]);
+
+  const handleViewChange = useCallback((newView: BoardView) => {
+    setView(newView);
+  }, []);
 
   const handleSubmitFeedback = async () => {
     if (!(newFeedback.title.trim() && activeBoardId)) {
@@ -236,6 +254,7 @@ export default function PublicOrgPage({
           {publicBoards && publicBoards.length === 1 && (
             <h2 className="font-semibold text-lg">{publicBoards[0].name}</h2>
           )}
+          <BoardViewToggle onChange={handleViewChange} view={view} />
         </div>
         <Button
           onClick={() => setShowSubmitDialog(true)}
@@ -245,7 +264,14 @@ export default function PublicOrgPage({
         </Button>
       </div>
 
-      {feedbackContent}
+      {view === "roadmap" && activeBoardId ? (
+        <RoadmapKanban
+          boardId={activeBoardId as Id<"boards">}
+          isMember={false}
+        />
+      ) : (
+        feedbackContent
+      )}
 
       <Dialog onOpenChange={setShowSubmitDialog} open={showSubmitDialog}>
         <DialogContent>
