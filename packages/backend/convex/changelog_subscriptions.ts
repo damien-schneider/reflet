@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { getAuthUser } from "./utils";
+import { isValidEmail } from "./validators";
 
 /**
  * Check if user is subscribed to changelog
@@ -92,6 +93,10 @@ export const subscribeByEmail = mutation({
     email: v.string(),
   },
   handler: async (ctx, args) => {
+    if (!isValidEmail(args.email)) {
+      throw new Error("Invalid email address");
+    }
+
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
       throw new Error("Organization not found");
