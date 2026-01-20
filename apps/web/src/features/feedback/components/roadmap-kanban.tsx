@@ -8,6 +8,7 @@ import { useCallback, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +26,25 @@ export function RoadmapKanban({
   const statuses = useQuery(api.board_statuses.list, { boardId });
   const feedback = useQuery(api.feedback_list.listForRoadmap, { boardId });
   const counts = useQuery(api.board_statuses.getCounts, { boardId });
-  const updateFeedbackStatus = useMutation(api.feedback_actions.updateStatus);
+  const updateFeedbackStatus = useMutation(
+    api.feedback_actions.updateStatus
+  ).withOptimisticUpdate((localStore, args) => {
+    const { feedbackId, statusId } = args;
+    const currentList = localStore.getQuery(api.feedback_list.listForRoadmap, {
+      boardId,
+    });
+
+    if (currentList) {
+      const updatedList = currentList.map((item) =>
+        item._id === feedbackId ? { ...item, statusId } : item
+      );
+      localStore.setQuery(
+        api.feedback_list.listForRoadmap,
+        { boardId },
+        updatedList
+      );
+    }
+  });
 
   const [draggedItem, setDraggedItem] = useState<Id<"feedback"> | null>(null);
 
@@ -70,44 +89,47 @@ export function RoadmapKanban({
   const unassignedFeedback = feedback.filter((f) => !f.statusId);
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {statuses.map((status) => (
-        <KanbanColumn
-          count={counts?.[status._id] ?? 0}
-          draggedItem={draggedItem}
-          feedback={feedbackByStatus[status._id] || []}
-          isMember={isMember}
-          key={status._id}
-          onDragStart={setDraggedItem}
-          onDrop={(feedbackId) => handleDrop(feedbackId, status._id)}
-          onFeedbackClick={onFeedbackClick}
-          status={status}
-        />
-      ))}
-      {unassignedFeedback.length > 0 && (
-        <div className="flex w-72 shrink-0 flex-col gap-3 rounded-lg bg-muted/30 p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-muted-foreground text-sm">
-                Unassigned
-              </span>
-              <Badge variant="secondary">{unassignedFeedback.length}</Badge>
+    <ScrollArea className="pb-4">
+      <div className="flex gap-4">
+        {statuses.map((status) => (
+          <KanbanColumn
+            count={counts?.[status._id] ?? 0}
+            draggedItem={draggedItem}
+            feedback={feedbackByStatus[status._id] || []}
+            isMember={isMember}
+            key={status._id}
+            onDragStart={setDraggedItem}
+            onDrop={(feedbackId) => handleDrop(feedbackId, status._id)}
+            onFeedbackClick={onFeedbackClick}
+            status={status}
+          />
+        ))}
+        {unassignedFeedback.length > 0 && (
+          <div className="flex w-72 shrink-0 flex-col gap-3 rounded-lg bg-muted/30 p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-muted-foreground text-sm">
+                  Unassigned
+                </span>
+                <Badge variant="secondary">{unassignedFeedback.length}</Badge>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              {unassignedFeedback.map((item) => (
+                <KanbanCard
+                  feedback={item}
+                  isMember={isMember}
+                  key={item._id}
+                  onClick={onFeedbackClick}
+                  onDragStart={setDraggedItem}
+                />
+              ))}
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            {unassignedFeedback.map((item) => (
-              <KanbanCard
-                feedback={item}
-                isMember={isMember}
-                key={item._id}
-                onClick={onFeedbackClick}
-                onDragStart={setDraggedItem}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
   );
 }
 

@@ -105,6 +105,7 @@ export function FeedbackList({
               isAuthor={feedback.authorId === userId}
               key={feedback._id}
               onClick={onFeedbackClick}
+              boardId={boardId}
             />
           ))}
         </div>

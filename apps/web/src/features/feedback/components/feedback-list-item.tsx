@@ -35,6 +35,7 @@ interface FeedbackListItemProps {
   className?: string;
   isAdmin?: boolean;
   isAuthor?: boolean;
+  boardId?: Id<"boards">;
 }
 
 export function FeedbackListItem({
@@ -43,6 +44,7 @@ export function FeedbackListItem({
   className,
   isAdmin = false,
   isAuthor = false,
+  boardId,
 }: FeedbackListItemProps) {
   const deleteFeedback = useMutation(api.feedback_actions.remove);
   const tags = feedback.tags ?? [];
@@ -88,6 +90,7 @@ export function FeedbackListItem({
             hasVoted={feedback.hasVoted}
             size="md"
             voteCount={feedback.voteCount ?? 0}
+            boardId={boardId}
           />
 
           {/* Content */}

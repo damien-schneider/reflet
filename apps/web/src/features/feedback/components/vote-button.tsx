@@ -1,7 +1,7 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,12 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { authDialogOpenAtom } from "@/store/auth";
+import {
+  feedbackSearchAtom,
+  feedbackSortAtom,
+  selectedStatusesAtom,
+  selectedTagIdsAtom,
+} from "@/store/feedback";
 
 interface VoteButtonProps {
   feedbackId: Id<"feedback">;
@@ -19,6 +25,7 @@ interface VoteButtonProps {
   hasVoted?: boolean;
   size?: "sm" | "md" | "lg";
   className?: string;
+  boardId?: Id<"boards">;
 }
 
 export function VoteButton({
@@ -27,12 +34,87 @@ export function VoteButton({
   hasVoted = false,
   size = "md",
   className,
+  boardId,
 }: VoteButtonProps) {
   const setAuthDialogOpen = useSetAtom(authDialogOpenAtom);
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
 
-  const toggleVote = useMutation(api.votes.toggle);
+  const search = useAtomValue(feedbackSearchAtom);
+  const sortBy = useAtomValue(feedbackSortAtom);
+  const selectedStatuses = useAtomValue(selectedStatusesAtom);
+  const selectedTagIds = useAtomValue(selectedTagIdsAtom);
+
+  // Map sort option to Convex sort type
+  const convexSortBy = (() => {
+    switch (sortBy) {
+      case "most_votes":
+        return "votes" as const;
+      case "most_comments":
+        return "comments" as const;
+      default:
+        return sortBy as "newest" | "oldest";
+    }
+  })();
+
+  const toggleVote = useMutation(api.votes.toggle).withOptimisticUpdate(
+    (localStore) => {
+      if (!boardId) return;
+
+      // Update list query
+      const listArgs = {
+        boardId,
+        search: search || undefined,
+        sortBy: convexSortBy,
+        status: selectedStatuses[0] as Doc<"feedback">["status"],
+        tagIds:
+          selectedTagIds.length > 0
+            ? (selectedTagIds as Id<"tags">[])
+            : undefined,
+      };
+
+      const currentList = localStore.getQuery(api.feedback_list.list, listArgs);
+      if (currentList) {
+        const updatedList = currentList.map((item) => {
+          if (item._id === feedbackId) {
+            const newHasVoted = !item.hasVoted;
+            return {
+              ...item,
+              hasVoted: newHasVoted,
+              voteCount: (item.voteCount ?? 0) + (newHasVoted ? 1 : -1),
+            };
+          }
+          return item;
+        });
+        localStore.setQuery(api.feedback_list.list, listArgs, updatedList);
+      }
+
+      // Update roadmap list query
+      const roadmapArgs = { boardId };
+      const currentRoadmapList = localStore.getQuery(
+        api.feedback_list.listForRoadmap,
+        roadmapArgs
+      );
+      if (currentRoadmapList) {
+        const updatedRoadmapList = currentRoadmapList.map((item) => {
+          if (item._id === feedbackId) {
+            const newHasVoted = !item.hasVoted;
+            return {
+              ...item,
+              hasVoted: newHasVoted,
+              voteCount: (item.voteCount ?? 0) + (newHasVoted ? 1 : -1),
+            };
+          }
+          return item;
+        });
+        localStore.setQuery(
+          api.feedback_list.listForRoadmap,
+          roadmapArgs,
+          updatedRoadmapList
+        );
+      }
+    }
+  );
 
   const handleVote = async () => {
     if (!userId) {
