@@ -20,6 +20,13 @@
     "dev:setup": {
       "cache": false,
       "persistent": true
+    },
+    "test:e2e": {
+      "cache": false,
+      "outputs": []
+    },
+    "test:unit": {
+      "cache": false
     }
   }
 }

@@ -3,6 +3,39 @@ import { mutation, query } from "./_generated/server";
 import { getAuthUser } from "./utils";
 
 /**
+ * Update organization settings (admin/owner only)
+ */
+export const update = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    name: v.string(),
+    isPublic: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    // Check admin/owner permission
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role === "member") {
+      throw new Error("Only admins can update organization settings");
+    }
+
+    await ctx.db.patch(args.organizationId, {
+      name: args.name,
+      isPublic: args.isPublic ?? false,
+    });
+
+    return args.organizationId;
+  },
+});
+
+/**
  * Get organization stats (boards count, members count, feedback count)
  */
 export const getStats = query({

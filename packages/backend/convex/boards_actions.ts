@@ -3,6 +3,61 @@ import { mutation, query } from "./_generated/server";
 import { getAuthUser } from "./utils";
 
 /**
+ * Create a new board (admin/owner only)
+ */
+export const create = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    name: v.string(),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    // Check admin/owner permission
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role === "member") {
+      throw new Error("Only admins can create boards");
+    }
+
+    // Generate slug from name
+    const slug = args.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    // Check for duplicate slug
+    const existingBoard = await ctx.db
+      .query("boards")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .filter((q) => q.eq(q.field("slug"), slug))
+      .first();
+
+    const finalSlug = existingBoard ? `${slug}-${Date.now()}` : slug;
+
+    const boardId = await ctx.db.insert("boards", {
+      organizationId: args.organizationId,
+      name: args.name,
+      slug: finalSlug,
+      description: args.description,
+      isPublic: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return boardId;
+  },
+});
+
+/**
  * Get board stats
  */
 export const getStats = query({

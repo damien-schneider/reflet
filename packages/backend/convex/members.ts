@@ -80,6 +80,28 @@ export const getMembership = query({
 });
 
 /**
+ * Get current user's membership in an organization (alias for getMembership)
+ */
+export const getCurrentMember = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await authComponent.safeGetAuthUser(ctx);
+    if (!user) {
+      return null;
+    }
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    return membership;
+  },
+});
+
+/**
  * Remove a member from the organization
  */
 export const remove = mutation({

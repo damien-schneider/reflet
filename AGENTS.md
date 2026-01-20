@@ -105,6 +105,15 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
 
 ## Testing
 
+### Running Tests
+
+- **End-to-end tests**: Use `bun run test:e2e` to run Playwright tests in headless mode across Firefox, Chromium, and Safari
+- **Unit tests**: Use `bun run test:unit` to run unit tests (when configured)
+
+The e2e tests run on multiple browsers (Firefox, Chromium, and Safari/WebKit) to ensure cross-browser compatibility.
+
+### Writing Tests
+
 - Write assertions inside `it()` or `test()` blocks
 - Avoid done callbacks in async tests - use async/await instead
 - Don't use `.only` or `.skip` in committed code
@@ -229,6 +238,15 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
 ---
 
 ## Testing
+
+### Running Tests
+
+- **End-to-end tests**: Use `bun run test:e2e` to run Playwright tests in headless mode across Firefox, Chromium, and Safari
+- **Unit tests**: Use `bun run test:unit` to run unit tests (when configured)
+
+The e2e tests run on multiple browsers (Firefox, Chromium, and Safari/WebKit) to ensure cross-browser compatibility.
+
+### Writing Tests
 
 - Write assertions inside `it()` or `test()` blocks
 - Avoid done callbacks in async tests - use async/await instead

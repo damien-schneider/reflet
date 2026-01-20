@@ -27,7 +27,9 @@
     "dev:setup": "turbo -F @reflet-v2/backend dev:setup",
     "start": "turbo -F web start",
     "prepare": "husky",
-    "clean": "rm -rf node_modules .turbo .next bun.lock && bun install"
+    "clean": "rm -rf node_modules .turbo .next bun.lock && bun install",
+    "test:e2e": "cd apps/web && bunx playwright test --reporter=list",
+    "test:unit": "turbo run test:unit --filter=web"
   },
   "dependencies": {
     "@reflet-v2/env": "workspace:*",
