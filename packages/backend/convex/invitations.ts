@@ -1,9 +1,9 @@
 import { v } from "convex/values";
+import { z } from "zod";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { PLAN_LIMITS } from "./organizations";
 import { getAuthUser } from "./utils";
-import { isValidEmail } from "./validators";
 
 /**
  * List pending invitations for an organization
@@ -79,7 +79,8 @@ export const create = mutation({
     role: v.union(v.literal("admin"), v.literal("member")),
   },
   handler: async (ctx, args) => {
-    if (!isValidEmail(args.email)) {
+    const emailValidation = z.string().email().safeParse(args.email);
+    if (!emailValidation.success) {
       throw new Error("Invalid email address");
     }
 
