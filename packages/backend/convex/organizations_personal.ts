@@ -1,4 +1,3 @@
-import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { getAuthUser } from "./utils";
 
@@ -14,10 +13,8 @@ const generateSlug = (name: string): string => {
  * Ensure the current user has a personal organization
  */
 export const ensurePersonalOrganization = mutation({
-  args: {
-    name: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
     const user = await getAuthUser(ctx);
 
     const memberships = await ctx.db
@@ -37,10 +34,7 @@ export const ensurePersonalOrganization = mutation({
       }
     }
 
-    const trimmedName = args.name?.trim();
-    const orgName = trimmedName
-      ? `${trimmedName}'s Workspace`
-      : "My Organization";
+    const orgName = "Mon Organisation";
 
     let slug = generateSlug(orgName);
 

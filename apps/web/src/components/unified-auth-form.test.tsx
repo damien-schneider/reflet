@@ -130,4 +130,8 @@ describe("UnifiedAuthForm", () => {
       screen.queryByText("Le mot de passe doit contenir au moins 8 caractères")
     ).not.toBeInTheDocument();
   });
+
+  // Note: Password confirmation validation is tested in e2e tests (e2e/auth.e2e.ts)
+  // because it requires the full application context with debounced email checking
+  // and mode switching which is difficult to mock in unit tests.
 });

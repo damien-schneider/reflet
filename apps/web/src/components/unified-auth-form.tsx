@@ -58,6 +58,59 @@ const titleVariants = {
   exit: { opacity: 0, y: 10 },
 };
 
+const BODY_FIELD_REGEX = /\[body\.(.*?)\]/;
+
+const formatAuthError = (message: string): string => {
+  if (!message) {
+    return "";
+  }
+
+  // Better Auth validation errors often look like: "[body.email] Invalid email"
+  let cleaned = message;
+
+  // Field mapping for French localization
+  const fieldMap: Record<string, string> = {
+    email: "L'email",
+    password: "Le mot de passe",
+  };
+
+  // Replace [body.fieldName] with the readable field name
+  cleaned = cleaned.replace(BODY_FIELD_REGEX, (_, field) => {
+    const label = fieldMap[field] || field;
+    return `${label}`;
+  });
+
+  // Localize common validation messages
+  const lowerCleaned = cleaned.toLowerCase();
+
+  if (lowerCleaned.includes("invalid email")) {
+    return "Adresse email invalide";
+  }
+
+  if (lowerCleaned.includes("incorrect email or password")) {
+    return "Email ou mot de passe incorrect";
+  }
+
+  if (lowerCleaned.includes("user already exists")) {
+    return "Un compte avec cet email existe déjà";
+  }
+
+  if (
+    lowerCleaned.includes("too small") ||
+    lowerCleaned.includes("expected string")
+  ) {
+    if (cleaned.includes("L'email")) {
+      return "L'email est requis";
+    }
+    if (cleaned.includes("Le mot de passe")) {
+      return "Le mot de passe est requis";
+    }
+    return "Ce champ est requis";
+  }
+
+  return cleaned;
+};
+
 export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -66,6 +119,9 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   const [mode, setMode] = useState<"signIn" | "signUp" | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [lastCheckedEmail, setLastCheckedEmail] = useState<string>("");
+  const [passwordMismatchError, setPasswordMismatchError] = useState<
+    string | null
+  >(null);
 
   const ensurePersonalOrganization = useMutation(
     api.organizations_personal.ensurePersonalOrganization
@@ -80,9 +136,10 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isValid },
+    formState: { errors, isSubmitting },
     watch,
     setValue,
+    trigger,
   } = useForm<SignUpFormData>({
     resolver: async (data, context, options) => {
       try {
@@ -94,7 +151,7 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
         return { errors: {}, values: data };
       }
     },
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
@@ -103,7 +160,36 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   });
 
   const watchedEmail = watch("email");
+  const watchedPassword = watch("password");
+  const watchedConfirmPassword = watch("confirmPassword");
   const [debouncedEmail] = useDebouncedValue(watchedEmail, { wait: 800 });
+
+  // Revalidate confirmPassword when password changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: watchedPassword triggers revalidation intentionally
+  useEffect(() => {
+    if (mode === "signUp" && watchedConfirmPassword) {
+      trigger("confirmPassword");
+    }
+  }, [watchedPassword, mode, trigger, watchedConfirmPassword]);
+
+  // Ensure validation errors are visible when passwords don't match
+  // This covers the case where user types rapidly without triggering blur events
+  // We use local state to guarantee the error is always displayed
+  useEffect(() => {
+    if (mode !== "signUp") {
+      setPasswordMismatchError(null);
+      return;
+    }
+
+    const hasConfirmPassword = watchedConfirmPassword.length > 0;
+    const passwordsMatch = watchedPassword === watchedConfirmPassword;
+
+    if (hasConfirmPassword && !passwordsMatch) {
+      setPasswordMismatchError("Les mots de passe ne correspondent pas");
+    } else {
+      setPasswordMismatchError(null);
+    }
+  }, [mode, watchedPassword, watchedConfirmPassword]);
 
   useEffect(() => {
     if (emailExistsData !== undefined && emailChecked) {
@@ -151,19 +237,24 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
           },
           onError: (error) => {
             setApiError(
-              error.error.message ||
-                error.error.statusText ||
-                "Erreur de connexion"
+              formatAuthError(
+                error.error.message ||
+                  error.error.statusText ||
+                  "Erreur de connexion"
+              )
             );
           },
         }
       );
     } else {
+      // Better Auth requires a non-empty name; use email prefix as placeholder
+      // The user can update their name later in account settings
+      const placeholderName = data.email.split("@")[0] || "Utilisateur";
       await authClient.signUp.email(
         {
           email: data.email,
           password: data.password,
-          name: "",
+          name: placeholderName,
         },
         {
           onSuccess: async () => {
@@ -182,9 +273,11 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
           },
           onError: (error) => {
             setApiError(
-              error.error.message ||
-                error.error.statusText ||
-                "Erreur d'inscription"
+              formatAuthError(
+                error.error.message ||
+                  error.error.statusText ||
+                  "Erreur d'inscription"
+              )
             );
           },
         }
@@ -219,7 +312,32 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   };
 
   const isFormValid = () => {
-    return isValid;
+    const hasErrors = Object.keys(errors).length > 0;
+    if (hasErrors) {
+      return false;
+    }
+
+    if (mode === "signUp") {
+      return (
+        watchedPassword.length >= 8 &&
+        watchedConfirmPassword.length >= 8 &&
+        watchedPassword === watchedConfirmPassword
+      );
+    }
+
+    return watchedPassword.length >= 8;
+  };
+
+  const getConfirmPasswordErrors = ():
+    | Array<{ message?: string }>
+    | undefined => {
+    if (passwordMismatchError) {
+      return [{ message: passwordMismatchError }];
+    }
+    if (errors.confirmPassword) {
+      return [errors.confirmPassword];
+    }
+    return undefined;
   };
 
   return (
@@ -241,12 +359,6 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
       </AnimatePresence>
 
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-        <div className="relative mb-4">
-          <FieldError
-            className="absolute top-0 left-0"
-            errors={apiError ? [{ message: apiError }] : undefined}
-          />
-        </div>
         {/* Email Field - Always visible */}
         <Field className="relative">
           <FieldLabel className="justify-between" htmlFor="email">
@@ -282,7 +394,11 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
             type="password"
             {...register("password")}
             disabled={isSubmitting}
-            onChange={() => setApiError(null)}
+            onChange={(e) => {
+              setApiError(null);
+              setValue("password", e.target.value);
+              trigger("password");
+            }}
           />
           <FieldError
             className="absolute top-full left-0"
@@ -310,15 +426,16 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
                   type="password"
                   {...register("confirmPassword")}
                   disabled={isSubmitting}
-                  onChange={() => setApiError(null)}
+                  onChange={(e) => {
+                    setApiError(null);
+                    setValue("confirmPassword", e.target.value);
+                    trigger("confirmPassword");
+                  }}
                 />
                 <FieldError
                   className="absolute top-full left-0"
-                  errors={
-                    errors.confirmPassword
-                      ? [errors.confirmPassword]
-                      : undefined
-                  }
+                  data-testid="confirm-password-error"
+                  errors={getConfirmPasswordErrors()}
                 />
               </Field>
             </motion.div>
@@ -326,8 +443,11 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
         </AnimatePresence>
 
         {/* Submit Button - Always visible */}
+        {apiError && (
+          <FieldError className="absolute" errors={[{ message: apiError }]} />
+        )}
         <Button
-          className="w-full"
+          className="mt-6 w-full"
           data-testid="submit-button"
           disabled={isSubmitting || isCheckingEmail || !isFormValid()}
           type="submit"

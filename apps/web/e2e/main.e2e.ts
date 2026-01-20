@@ -11,12 +11,12 @@ const AUTH_SIGNIN_HEADING = "Bon retour parmi nous";
  * Helper to complete sign-up flow with the new unified auth form
  * 1. Enter email and blur to trigger email check
  * 2. Wait for sign-up mode to activate
- * 3. Fill name and password
+ * 3. Fill password and confirm password
  * 4. Submit
  */
 async function signUpNewUser(
   page: import("@playwright/test").Page,
-  user: { name: string; email: string; password: string }
+  user: { email: string; password: string }
 ) {
   // Enter email and blur to trigger email check
   await page.getByTestId("email-input").fill(user.email);
@@ -27,9 +27,9 @@ async function signUpNewUser(
     timeout: 10_000,
   });
 
-  // Fill name and password fields (they appear after email check)
-  await page.getByTestId("name-input").fill(user.name);
+  // Fill password and confirm password fields
   await page.getByTestId("password-input").fill(user.password);
+  await page.getByTestId("confirm-password-input").fill(user.password);
 
   // Submit
   await page.getByRole("button", { name: "Créer mon compte" }).click();
@@ -66,7 +66,6 @@ test.describe("Core Authentication Flows", () => {
   test("should allow sign up and redirect to dashboard", async ({ page }) => {
     const timestamp = Date.now();
     const testUser = {
-      name: `Test User ${timestamp}`,
       email: `test-${timestamp}@example.com`,
       password: "password123",
     };
@@ -89,7 +88,6 @@ test.describe("Core Authentication Flows", () => {
   test("should allow sign in and redirect to dashboard", async ({ page }) => {
     const timestamp = Date.now();
     const testUser = {
-      name: `SignIn Test ${timestamp}`,
       email: `signin-test-${timestamp}@example.com`,
       password: "password123",
     };
@@ -119,7 +117,6 @@ test.describe("Core Authentication Flows", () => {
   test("should allow sign out and redirect to auth form", async ({ page }) => {
     const timestamp = Date.now();
     const testUser = {
-      name: `SignOut Test ${timestamp}`,
       email: `signout-test-${timestamp}@example.com`,
       password: "password123",
     };
@@ -182,7 +179,6 @@ test.describe("UI Components - No Console Errors", () => {
   }) => {
     const timestamp = Date.now();
     const testUser = {
-      name: `Console Test ${timestamp}`,
       email: `console-test-${timestamp}@example.com`,
       password: "password123",
     };
