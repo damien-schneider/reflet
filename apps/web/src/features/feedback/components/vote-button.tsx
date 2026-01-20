@@ -3,7 +3,9 @@ import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useSetAtom } from "jotai";
 import { ChevronUp } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Tooltip,
   TooltipContent,
@@ -31,6 +33,7 @@ export function VoteButton({
   const setAuthDialogOpen = useSetAtom(authDialogOpenAtom);
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
+  const [isVoting, setIsVoting] = useState(false);
 
   const toggleVote = useMutation(api.votes.toggle);
 
@@ -40,7 +43,12 @@ export function VoteButton({
       return;
     }
 
-    await toggleVote({ feedbackId });
+    try {
+      setIsVoting(true);
+      await toggleVote({ feedbackId });
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   const sizeClasses = {
@@ -57,16 +65,27 @@ export function VoteButton({
 
   const button = (
     <Button
+      aria-label={
+        hasVoted
+          ? `Remove vote (current count: ${voteCount})`
+          : `Upvote (current count: ${voteCount})`
+      }
+      aria-pressed={hasVoted}
       className={cn(
         "flex flex-col items-center justify-center gap-0.5 font-semibold",
         sizeClasses[size],
         hasVoted && "bg-primary text-primary-foreground",
         className
       )}
+      disabled={isVoting}
       onClick={handleVote}
       variant={hasVoted ? "default" : "outline"}
     >
-      <ChevronUp className={iconSizes[size]} />
+      {isVoting ? (
+        <Spinner className={iconSizes[size]} />
+      ) : (
+        <ChevronUp className={iconSizes[size]} />
+      )}
       <span>{voteCount}</span>
     </Button>
   );
