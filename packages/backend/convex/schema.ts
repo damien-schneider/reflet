@@ -223,6 +223,32 @@ export default defineSchema({
     .index("by_feedback_user", ["feedbackId", "userId"]),
 
   // ============================================
+  // FEEDBACK IMPORTANCE VOTES
+  // ============================================
+  feedbackImportanceVotes: defineTable({
+    feedbackId: v.id("feedback"),
+    userId: v.string(), // Better Auth user ID
+    importance: v.number(), // 1-4 scale: 1=Not important, 2=Nice to have, 3=Important, 4=Essential
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_feedback", ["feedbackId"])
+    .index("by_user", ["userId"])
+    .index("by_feedback_user", ["feedbackId", "userId"]),
+
+  // ============================================
+  // FEEDBACK SUBSCRIPTIONS
+  // ============================================
+  feedbackSubscriptions: defineTable({
+    feedbackId: v.id("feedback"),
+    userId: v.string(), // Better Auth user ID
+    createdAt: v.number(),
+  })
+    .index("by_feedback", ["feedbackId"])
+    .index("by_user", ["userId"])
+    .index("by_feedback_user", ["feedbackId", "userId"]),
+
+  // ============================================
   // FEEDBACK TAGS (Junction table)
   // ============================================
   feedbackTags: defineTable({

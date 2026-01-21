@@ -18,9 +18,9 @@ const getAuthUser = async (ctx: { auth: unknown }) => {
 // ============================================
 
 /**
- * Check if current user has voted on a feedback
+ * Check if current user is subscribed to a feedback
  */
-export const hasVoted = query({
+export const isSubscribed = query({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
@@ -28,32 +28,36 @@ export const hasVoted = query({
       return false;
     }
 
-    const vote = await ctx.db
-      .query("feedbackVotes")
+    const subscription = await ctx.db
+      .query("feedbackSubscriptions")
       .withIndex("by_feedback_user", (q) =>
         q.eq("feedbackId", args.feedbackId).eq("userId", user._id)
       )
       .unique();
 
-    return !!vote;
+    return !!subscription;
   },
 });
 
 /**
- * Get vote count for feedback
+ * Get subscriber count for a feedback
  */
-export const getCount = query({
+export const getSubscriberCount = query({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    const feedback = await ctx.db.get(args.feedbackId);
-    return feedback?.voteCount ?? 0;
+    const subscriptions = await ctx.db
+      .query("feedbackSubscriptions")
+      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
+      .collect();
+
+    return subscriptions.length;
   },
 });
 
 /**
- * Get voters for a feedback (admin only)
+ * Get all subscribers for a feedback (admin only)
  */
-export const getVoters = query({
+export const getSubscribers = query({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
@@ -78,19 +82,19 @@ export const getVoters = query({
       return [];
     }
 
-    const votes = await ctx.db
-      .query("feedbackVotes")
+    const subscriptions = await ctx.db
+      .query("feedbackSubscriptions")
       .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
       .collect();
 
-    // Get user info for each voter
-    const voters = await Promise.all(
-      votes.map(async (vote) => {
-        const userData = await authComponent.getAnyUserById(ctx, vote.userId);
+    // Get user info for each subscriber
+    const subscribers = await Promise.all(
+      subscriptions.map(async (sub) => {
+        const userData = await authComponent.getAnyUserById(ctx, sub.userId);
         return {
-          id: vote._id,
-          userId: vote.userId,
-          votedAt: vote.createdAt,
+          id: sub._id,
+          userId: sub.userId,
+          subscribedAt: sub.createdAt,
           user: userData
             ? {
                 name: userData.name ?? null,
@@ -102,7 +106,7 @@ export const getVoters = query({
       })
     );
 
-    return voters;
+    return subscribers;
   },
 });
 
@@ -111,7 +115,7 @@ export const getVoters = query({
 // ============================================
 
 /**
- * Toggle vote on feedback
+ * Toggle subscription for feedback
  */
 export const toggle = mutation({
   args: { feedbackId: v.id("feedback") },
@@ -144,50 +148,90 @@ export const toggle = mutation({
     const isMember = !!membership;
 
     if (!(isMember || (board.isPublic && org.isPublic))) {
-      throw new Error("You don't have access to vote on this feedback");
+      throw new Error("You don't have access to subscribe to this feedback");
     }
 
-    // Check if already voted
-    const existingVote = await ctx.db
-      .query("feedbackVotes")
+    // Check if already subscribed
+    const existingSubscription = await ctx.db
+      .query("feedbackSubscriptions")
       .withIndex("by_feedback_user", (q) =>
         q.eq("feedbackId", args.feedbackId).eq("userId", user._id)
       )
       .unique();
 
-    if (existingVote) {
-      // Remove vote
-      await ctx.db.delete(existingVote._id);
-      await ctx.db.patch(args.feedbackId, {
-        voteCount: Math.max(0, feedback.voteCount - 1),
-      });
-      return { voted: false, voteCount: Math.max(0, feedback.voteCount - 1) };
+    if (existingSubscription) {
+      // Unsubscribe
+      await ctx.db.delete(existingSubscription._id);
+      return { subscribed: false };
     }
-    // Add vote
-    await ctx.db.insert("feedbackVotes", {
+
+    // Subscribe
+    await ctx.db.insert("feedbackSubscriptions", {
       feedbackId: args.feedbackId,
       userId: user._id,
       createdAt: Date.now(),
     });
-    await ctx.db.patch(args.feedbackId, {
-      voteCount: feedback.voteCount + 1,
-    });
 
-    // Check for vote milestones and create notifications
-    const newVoteCount = feedback.voteCount + 1;
-    const milestones = [10, 25, 50, 100, 250, 500, 1000];
-    if (milestones.includes(newVoteCount)) {
-      await ctx.db.insert("notifications", {
-        userId: feedback.authorId,
-        type: "vote_milestone",
-        title: "Vote milestone reached!",
-        message: `Your feedback "${feedback.title}" has reached ${newVoteCount} votes!`,
-        feedbackId: args.feedbackId,
-        isRead: false,
-        createdAt: Date.now(),
-      });
+    return { subscribed: true };
+  },
+});
+
+/**
+ * Subscribe to feedback (idempotent)
+ */
+export const subscribe = mutation({
+  args: { feedbackId: v.id("feedback") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      throw new Error("Feedback not found");
     }
 
-    return { voted: true, voteCount: newVoteCount };
+    // Check if already subscribed
+    const existingSubscription = await ctx.db
+      .query("feedbackSubscriptions")
+      .withIndex("by_feedback_user", (q) =>
+        q.eq("feedbackId", args.feedbackId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (existingSubscription) {
+      return { subscribed: true, alreadySubscribed: true };
+    }
+
+    // Subscribe
+    await ctx.db.insert("feedbackSubscriptions", {
+      feedbackId: args.feedbackId,
+      userId: user._id,
+      createdAt: Date.now(),
+    });
+
+    return { subscribed: true, alreadySubscribed: false };
+  },
+});
+
+/**
+ * Unsubscribe from feedback (idempotent)
+ */
+export const unsubscribe = mutation({
+  args: { feedbackId: v.id("feedback") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    const existingSubscription = await ctx.db
+      .query("feedbackSubscriptions")
+      .withIndex("by_feedback_user", (q) =>
+        q.eq("feedbackId", args.feedbackId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (existingSubscription) {
+      await ctx.db.delete(existingSubscription._id);
+      return { unsubscribed: true };
+    }
+
+    return { unsubscribed: false };
   },
 });

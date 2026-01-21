@@ -37,7 +37,7 @@ import {
   type BoardView as BoardViewType,
 } from "@/features/feedback/components/board-view-toggle";
 import { FeedbackCardWithMorphingDialog } from "@/features/feedback/components/feedback-card-with-morphing-dialog";
-import { FeedbackDetailDialog } from "@/features/feedback/components/feedback-detail-dialog";
+import { FeedbackDetailDialog } from "@/features/feedback/components/feedback-detail";
 import { RoadmapKanban } from "@/features/feedback/components/roadmap-kanban";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
 

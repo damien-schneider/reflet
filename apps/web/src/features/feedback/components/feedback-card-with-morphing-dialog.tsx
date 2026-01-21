@@ -9,9 +9,8 @@ import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { PublicFeedbackDetailContent } from "./public-feedback-detail-content";
+import { FeedbackDetailDialog } from "./feedback-detail";
 
 interface FeedbackCardWithMorphingDialogProps {
   feedback: {
@@ -161,17 +160,13 @@ export function FeedbackCardWithMorphingDialog({
         </Card>
       </button>
 
-      <Dialog onOpenChange={setIsOpen} open={isOpen}>
-        <DialogContent className="max-w-2xl p-0">
-          <PublicFeedbackDetailContent
-            boardId={boardId}
-            feedbackId={feedback._id as Id<"feedback">}
-            isAdmin={isAdmin}
-            isMember={isMember}
-            primaryColor={primaryColor}
-          />
-        </DialogContent>
-      </Dialog>
+      <FeedbackDetailDialog
+        boardId={boardId}
+        feedbackId={isOpen ? (feedback._id as Id<"feedback">) : null}
+        isAdmin={isAdmin}
+        isMember={isMember}
+        onClose={() => setIsOpen(false)}
+      />
     </>
   );
 }
