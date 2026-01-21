@@ -6,15 +6,10 @@ import {
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-import {
-  MorphingDialog,
-  MorphingDialogClose,
-  MorphingDialogContainer,
-  MorphingDialogContent,
-  MorphingDialogTrigger,
-} from "@/components/morphing-dialog";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { PublicFeedbackDetailContent } from "./public-feedback-detail-content";
 
@@ -49,11 +44,16 @@ export function FeedbackCardWithMorphingDialog({
   isAdmin = false,
   onVote,
 }: FeedbackCardWithMorphingDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const status = statuses.find((s) => s._id === feedback.statusId);
 
   return (
-    <MorphingDialog>
-      <MorphingDialogTrigger className="w-full text-left">
+    <>
+      <button
+        className="w-full text-left"
+        onClick={() => setIsOpen(true)}
+        type="button"
+      >
         <Card
           className={cn(
             "feedback-card cursor-pointer transition-all hover:shadow-md",
@@ -74,7 +74,10 @@ export function FeedbackCardWithMorphingDialog({
                   feedback.hasVoted &&
                     "border-primary bg-primary/10 text-primary"
                 )}
-                onClick={(e) => onVote(e, feedback._id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVote(e, feedback._id);
+                }}
                 style={
                   feedback.hasVoted
                     ? {
@@ -156,11 +159,10 @@ export function FeedbackCardWithMorphingDialog({
             </div>
           </CardHeader>
         </Card>
-      </MorphingDialogTrigger>
+      </button>
 
-      <MorphingDialogContainer>
-        <MorphingDialogContent className="max-w-2xl rounded-lg bg-background p-0 shadow-lg">
-          <MorphingDialogClose />
+      <Dialog onOpenChange={setIsOpen} open={isOpen}>
+        <DialogContent className="max-w-2xl p-0">
           <PublicFeedbackDetailContent
             boardId={boardId}
             feedbackId={feedback._id as Id<"feedback">}
@@ -168,8 +170,8 @@ export function FeedbackCardWithMorphingDialog({
             isMember={isMember}
             primaryColor={primaryColor}
           />
-        </MorphingDialogContent>
-      </MorphingDialogContainer>
-    </MorphingDialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

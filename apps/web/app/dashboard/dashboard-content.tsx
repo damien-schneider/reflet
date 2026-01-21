@@ -8,8 +8,6 @@ import { useAtom } from "jotai";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-import { OrganizationSwitcher } from "@/components/organization-switcher";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -25,6 +23,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
+import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 
 const routeLabels: Record<string, string> = {

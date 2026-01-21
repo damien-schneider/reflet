@@ -10,11 +10,11 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
-import { Button } from "./ui/button";
-import { Field, FieldError, FieldLabel } from "./ui/field";
-import { Input } from "./ui/input";
 
 // Schema for sign-in (email + password)
 const signInSchema = z.object({

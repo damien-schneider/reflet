@@ -1,12 +1,12 @@
 "use client";
 
 import type * as React from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { ChartAreaInteractive } from "@/components/chart-area-interactive";
-import { DataTable } from "@/components/data-table";
-import { SectionCards } from "@/components/section-cards";
-import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/features/app-shell/components/app-sidebar";
+import { SiteHeader } from "@/features/navigation/components/site-header";
+import { ChartAreaInteractive } from "@/shared/components/chart-area-interactive";
+import { DataTable } from "@/shared/components/data-table";
+import { SectionCards } from "@/shared/components/section-cards";
 
 import data from "./data.json";
 

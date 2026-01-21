@@ -1,10 +1,10 @@
-import { AppSidebar } from "@/components/app-sidebar";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { AppSidebar } from "./app-sidebar";
 
 interface AppShellProps {
   children: React.ReactNode;

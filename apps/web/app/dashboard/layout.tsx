@@ -4,7 +4,7 @@ import { Spinner } from "@phosphor-icons/react";
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { useEffect, useState } from "react";
 
-import UnifiedAuthForm from "@/components/unified-auth-form";
+import { UnifiedAuthForm } from "@/features/auth/components/unified-auth-form";
 import { DashboardContent } from "./dashboard-content";
 
 export default function DashboardLayout({

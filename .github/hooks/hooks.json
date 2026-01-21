@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": "bun run x ultracite fix --unsafe && bun run check-types && cd packages/backend && bun run convex dev --once",
+        "cwd": "."
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "bun x ultracite fix --unsafe",
+        "cwd": "."
+      }
+    ]
+  }
+}

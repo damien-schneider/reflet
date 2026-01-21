@@ -13,7 +13,7 @@ import { usePathname } from "next/navigation";
 import type { CSSProperties } from "react";
 import { use } from "react";
 
-import { PublicViewToolbar } from "@/components/public-view-toolbar";
+import { PublicViewToolbar } from "@/features/feedback/components/public-view-toolbar";
 
 export default function PublicOrgLayout({
   children,

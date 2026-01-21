@@ -1,6 +1,7 @@
 import { SignOut, User } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownList,
   DropdownListContent,
@@ -11,8 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSidebar } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
-
-import { Button } from "./ui/button";
 
 export default function UserList() {
   const user = useQuery(api.auth.getCurrentUser);

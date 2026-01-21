@@ -6,8 +6,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import UnifiedAuthForm from "@/components/unified-auth-form";
 import { authDialogOpenAtom, closeAuthDialogAtom } from "@/store/auth";
+import UnifiedAuthForm from "./unified-auth-form";
 
 export function AuthDialog() {
   const [isOpen, setIsOpen] = useAtom(authDialogOpenAtom);

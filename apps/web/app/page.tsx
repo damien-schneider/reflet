@@ -5,7 +5,7 @@ import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-import Homepage from "@/components/homepage/homepage";
+import Homepage from "@/features/homepage/components/homepage";
 
 /**
  * Root index route

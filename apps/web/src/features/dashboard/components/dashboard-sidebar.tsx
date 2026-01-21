@@ -18,7 +18,6 @@ import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import type * as React from "react";
 import { useState } from "react";
-import { OrganizationSwitcher } from "@/components/organization-switcher";
 import { Button } from "@/components/ui/button";
 import {
   DropdownList,
@@ -40,6 +39,7 @@ import {
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { authClient } from "@/lib/auth-client";
 
 interface DashboardSidebarProps {

@@ -3,7 +3,12 @@
   "hooks": {
     "afterFileEdit": [
       {
-        "command": "bun x ultracite fix"
+        "command": "bun x ultracite fix --unsafe"
+      }
+    ],
+    "beforeSubmit": [
+      {
+        "command": "bun x ultracite fix --unsafe && bun run check-types && cd packages/backend && bun run convex dev --once"
       }
     ]
   }
