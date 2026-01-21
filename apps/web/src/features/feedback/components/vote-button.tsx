@@ -2,7 +2,8 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useSetAtom } from "jotai";
-import { ChevronUp } from "lucide-react";
+import { ChevronUp, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -31,16 +32,25 @@ export function VoteButton({
   const setAuthDialogOpen = useSetAtom(authDialogOpenAtom);
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
+  const [isPending, setIsPending] = useState(false);
 
   const toggleVote = useMutation(api.votes.toggle);
 
-  const handleVote = async () => {
+  const handleVote = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!userId) {
       setAuthDialogOpen(true);
       return;
     }
 
-    await toggleVote({ feedbackId });
+    setIsPending(true);
+    try {
+      await toggleVote({ feedbackId });
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const sizeClasses = {
@@ -57,16 +67,27 @@ export function VoteButton({
 
   const button = (
     <Button
+      aria-label={
+        hasVoted
+          ? `Remove vote, currently ${voteCount} votes`
+          : `Vote, currently ${voteCount} votes`
+      }
+      aria-pressed={hasVoted}
       className={cn(
-        "flex flex-col items-center justify-center gap-0.5 font-semibold",
+        "flex flex-col items-center justify-center gap-0.5 font-semibold transition-all",
         sizeClasses[size],
         hasVoted && "bg-primary text-primary-foreground",
         className
       )}
+      disabled={isPending}
       onClick={handleVote}
       variant={hasVoted ? "default" : "outline"}
     >
-      <ChevronUp className={iconSizes[size]} />
+      {isPending ? (
+        <Loader2 className={cn("animate-spin", iconSizes[size])} />
+      ) : (
+        <ChevronUp className={iconSizes[size]} />
+      )}
       <span>{voteCount}</span>
     </Button>
   );
@@ -75,7 +96,7 @@ export function VoteButton({
   if (!userId) {
     return (
       <Tooltip>
-        <TooltipTrigger>{button}</TooltipTrigger>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
         <TooltipContent>
           <p>Sign in to vote</p>
         </TooltipContent>
@@ -83,5 +104,13 @@ export function VoteButton({
     );
   }
 
-  return button;
+  // Show helpful tooltip for authenticated users too
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent>
+        <p>{hasVoted ? "Remove vote" : "Upvote feedback"}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
 }
