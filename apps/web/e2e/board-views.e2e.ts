@@ -294,6 +294,79 @@ test.describe("Board Views Feature", () => {
     const columns = page.locator('[role="listbox"]');
     await expect(columns.first()).toBeVisible({ timeout: 10_000 });
   });
+
+  test("should keep roadmap scrolling within its scroll area on small screens", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 600, height: 500 });
+
+    // Navigate to boards
+    const boardsLink = page.getByRole("link", { name: BOARDS_LINK_NAME });
+    await expect(boardsLink).toBeVisible({ timeout: 10_000 });
+    await boardsLink.click();
+    await expect(page).toHaveURL(BOARDS_URL_REGEX, { timeout: 10_000 });
+
+    // Create a board
+    const createButton = page.getByRole("button", {
+      name: CREATE_BUTTON_NAME,
+    });
+    await expect(createButton).toBeVisible({ timeout: 10_000 });
+    await createButton.click();
+
+    const boardNameInput = page.getByLabel(NAME_LABEL);
+    await expect(boardNameInput).toBeVisible({ timeout: 5000 });
+    await boardNameInput.fill("Scroll Area Test Board");
+
+    const submitButton = page.getByRole("button", { name: CREATE_LABEL });
+    await submitButton.click();
+
+    await page.waitForTimeout(2000);
+
+    // Navigate to board detail
+    const boardCard = page.getByText("Scroll Area Test Board");
+    await expect(boardCard).toBeVisible({ timeout: 10_000 });
+    await boardCard.click();
+
+    await expect(page).toHaveURL(BOARD_DETAIL_REGEX, { timeout: 10_000 });
+
+    // Switch to roadmap view
+    const roadmapButton = page.getByRole("button", {
+      name: ROADMAP_BUTTON_NAME,
+    });
+    await expect(roadmapButton).toBeVisible({ timeout: 10_000 });
+    await roadmapButton.click();
+
+    const scrollArea = page.getByTestId("roadmap-kanban-scrollarea");
+    await expect(scrollArea).toBeVisible({ timeout: 10_000 });
+
+    const viewport = scrollArea.locator("[data-slot='scroll-area-viewport']");
+    await expect(viewport).toBeVisible({ timeout: 10_000 });
+
+    await expect(page.locator('[role="listbox"]').first()).toBeVisible({
+      timeout: 10_000,
+    });
+
+    const { scrollWidth, clientWidth } = await viewport.evaluate((el) => ({
+      scrollWidth: el.scrollWidth,
+      clientWidth: el.clientWidth,
+    }));
+
+    expect(scrollWidth).toBeGreaterThan(clientWidth);
+
+    const initialWindowScroll = await page.evaluate(() => window.scrollY);
+    const initialScrollLeft = await viewport.evaluate((el) => el.scrollLeft);
+
+    await viewport.scrollIntoViewIfNeeded();
+    await viewport.hover();
+    await page.mouse.wheel(0, 600);
+
+    await expect
+      .poll(async () => viewport.evaluate((el) => el.scrollLeft))
+      .toBeGreaterThan(initialScrollLeft);
+
+    const finalWindowScroll = await page.evaluate(() => window.scrollY);
+    expect(finalWindowScroll).toBe(initialWindowScroll);
+  });
 });
 
 test.describe("Board Views - No Console Errors", () => {

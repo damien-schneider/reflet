@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useMutation, useQuery } from "convex/react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";

@@ -1,10 +1,6 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
-import {
-  ArrowRight01Icon,
-  MoreHorizontalCircle01Icon,
-} from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { CaretRightIcon, DotsThreeIcon } from "@phosphor-icons/react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
@@ -88,7 +84,7 @@ function BreadcrumbSeparator({
       role="presentation"
       {...props}
     >
-      {children ?? <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />}
+      {children ?? <CaretRightIcon />}
     </li>
   );
 }
@@ -108,7 +104,7 @@ function BreadcrumbEllipsis({
       role="presentation"
       {...props}
     >
-      <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+      <DotsThreeIcon />
       <span className="sr-only">More</span>
     </span>
   );

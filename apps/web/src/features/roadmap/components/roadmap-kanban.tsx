@@ -1,7 +1,7 @@
+import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Plus } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,17 +20,11 @@ import {
   type LaneConfig,
   RoadmapLaneColumn,
 } from "@/features/roadmap/components/roadmap-lane";
-import {
-  COLOR_PALETTE,
-  LANE_CONFIG,
-  ROADMAP_LANES,
-  type RoadmapLaneWithBacklog,
-} from "@/lib/constants";
+import { COLOR_PALETTE, type RoadmapLaneWithBacklog } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface RoadmapKanbanProps {
   boardId: Id<"boards">;
-  organizationId: Id<"organizations">;
   isAdmin?: boolean;
   onAddItem?: (laneId: string) => void;
   onItemClick?: (feedbackId: string) => void;
@@ -38,7 +32,6 @@ interface RoadmapKanbanProps {
 
 export function RoadmapKanban({
   boardId,
-  organizationId,
   isAdmin = false,
   onAddItem,
   onItemClick,
@@ -54,48 +47,33 @@ export function RoadmapKanban({
   const [newColumnIsDone, setNewColumnIsDone] = useState(false);
   const [isCreatingColumn, setIsCreatingColumn] = useState(false);
 
-  // Fetch roadmap data
-  const roadmapData = useQuery(api.feedback_roadmap.getRoadmap, {
-    boardId,
-    includeBacklog: isAdmin,
-  });
+  // Fetch board statuses (the single source of truth for columns)
+  const boardStatuses = useQuery(api.board_statuses.list, { boardId });
 
-  // Fetch tags for custom lanes (using organizationId, not boardId)
-  const tags = useQuery(api.tag_manager.list, { organizationId });
+  // Fetch roadmap data (feedback items)
+  const roadmapData = useQuery(api.feedback_list.listForRoadmap, { boardId });
 
   // Mutations
-  const moveToLane = useMutation(api.feedback_roadmap.roadmapMoveToLane);
-  const createTag = useMutation(api.tag_manager_actions.create);
+  const updateFeedbackStatus = useMutation(api.feedback_actions.updateStatus);
+  const createStatus = useMutation(api.board_statuses.create);
 
-  // Build lane configuration from custom lanes or use defaults
+  // Build lane configuration from board statuses
   const laneConfigs = useMemo((): LaneConfig[] => {
-    const roadmapLaneTags = tags?.filter((t) => t.isRoadmapLane) ?? [];
-
-    if (roadmapLaneTags.length > 0) {
-      return roadmapLaneTags
-        .sort((a, b) => (a.laneOrder ?? 0) - (b.laneOrder ?? 0))
-        .map((t) => ({
-          id: t._id,
-          label: t.name,
-          color: t.color,
-          bgColor: `bg-[${t.color}]/10`,
-          isDoneStatus: t.isDoneStatus,
-          laneOrder: t.laneOrder ?? 0,
-        }));
+    if (!boardStatuses || boardStatuses.length === 0) {
+      return [];
     }
 
-    // Use default lanes
-    return ROADMAP_LANES.map((lane) => ({
-      id: lane,
-      label: LANE_CONFIG[lane].label,
-      color: LANE_CONFIG[lane].color,
-      bgColor: LANE_CONFIG[lane].bgColor,
-      isDoneStatus: false,
-      laneOrder: ROADMAP_LANES.indexOf(lane),
+    return boardStatuses.map((status) => ({
+      id: status._id,
+      label: status.name,
+      color: status.color,
+      bgColor: `bg-[${status.color}]/10`,
+      isDoneStatus: status.name.toLowerCase() === "completed",
+      laneOrder: status.order,
     }));
-  }, [tags]);
+  }, [boardStatuses]);
 
-  // Transform data for display
+  // Transform data for display - group by statusId
   const itemsByLane = useMemo(() => {
     if (!roadmapData) {
       return { backlog: [] as RoadmapItemData[] };
@@ -105,20 +83,19 @@ export function RoadmapKanban({
       backlog: [],
     };
 
-    // Initialize lanes
+    // Initialize lanes from board statuses
     for (const lane of laneConfigs) {
       grouped[lane.id] = [];
     }
 
-    // Add backlog items
-    for (const item of roadmapData.backlog ?? []) {
-      grouped.backlog.push(item as unknown as RoadmapItemData);
-    }
-
-    // Add roadmap items to their lanes
-    for (const { lane, items } of roadmapData.lanes ?? []) {
-      if (lane && grouped[lane._id]) {
-        grouped[lane._id] = items as unknown as RoadmapItemData[];
+    // Group feedback by statusId
+    for (const item of roadmapData) {
+      const feedbackItem = item as unknown as RoadmapItemData;
+      if (item.statusId && grouped[item.statusId]) {
+        grouped[item.statusId].push(feedbackItem);
+      } else {
+        // Items without statusId go to backlog
+        grouped.backlog.push(feedbackItem);
       }
     }
 
@@ -153,18 +130,6 @@ export function RoadmapKanban({
     []
   );
 
-  const calculateNewSortOrder = useCallback(
-    (targetLane: string, draggedItemId: string): number => {
-      const laneItems = (itemsByLane[targetLane] ?? []).filter(
-        (i) => i._id !== draggedItemId
-      );
-      return laneItems.length === 0
-        ? 1000
-        : (laneItems.at(-1)?.roadmapOrder ?? 0) + 1000;
-    },
-    [itemsByLane]
-  );
-
   const handleDrop = useCallback(
     async (e: React.DragEvent<HTMLDivElement>, targetLane: string) => {
       e.preventDefault();
@@ -179,28 +144,25 @@ export function RoadmapKanban({
         return;
       }
 
-      // If dropping into backlog, remove from roadmap
+      // If dropping into backlog, remove statusId
       if (targetLane === "backlog") {
-        await moveToLane({
+        await updateFeedbackStatus({
           feedbackId: draggedItemId as Id<"feedback">,
-          laneId: undefined,
-          order: 0,
+          statusId: undefined,
         });
         return;
       }
 
-      const newSortOrder = calculateNewSortOrder(targetLane, draggedItemId);
-
-      await moveToLane({
+      // Update feedback with new statusId
+      await updateFeedbackStatus({
         feedbackId: draggedItemId as Id<"feedback">,
-        laneId: targetLane,
-        order: newSortOrder,
+        statusId: targetLane as Id<"boardStatuses">,
       });
     },
-    [isAdmin, getDraggedItemId, calculateNewSortOrder, moveToLane]
+    [isAdmin, getDraggedItemId, updateFeedbackStatus]
   );
 
-  // Handle creating a new column
+  // Handle creating a new column (board status)
   const handleCreateColumn = async () => {
     if (!newColumnName.trim()) {
       return;
@@ -209,12 +171,11 @@ export function RoadmapKanban({
     setIsCreatingColumn(true);
 
     try {
-      await createTag({
-        organizationId,
+      await createStatus({
+        boardId,
         name: newColumnName.trim(),
         color: newColumnColor,
-        isDoneStatus: newColumnIsDone,
-        isRoadmapLane: true,
+        icon: newColumnIsDone ? "check-circle" : undefined,
       });
 
       setNewColumnName("");
@@ -281,7 +242,7 @@ export function RoadmapKanban({
           {isAdmin && (
             <button
               className={cn(
-                "flex min-h-[400px] min-w-[280px] flex-col items-center justify-center gap-2 rounded-lg border-2 border-muted-foreground/30 border-dashed bg-muted/10 text-muted-foreground transition-all hover:border-primary/50 hover:bg-muted/30 hover:text-foreground"
+                "flex min-h-100 min-w-70 flex-col items-center justify-center gap-2 rounded-lg border-2 border-muted-foreground/30 border-dashed bg-muted/10 text-muted-foreground transition-all hover:border-primary/50 hover:bg-muted/30 hover:text-foreground"
               )}
               onClick={() => setShowAddColumnModal(true)}
               type="button"

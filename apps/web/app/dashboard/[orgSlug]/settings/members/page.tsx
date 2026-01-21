@@ -1,9 +1,9 @@
 "use client";
 
+import { Plus, Users } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Plus, Users } from "lucide-react";
 import { use, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { InviteMemberDialog } from "@/features/members/components/invite-member-
 import { MemberList } from "@/features/members/components/member-list";
 import { RemoveMemberDialog } from "@/features/members/components/remove-member-dialog";
 
-export default function MembersSettingsPage({
+export default function MembersGearPage({
   params,
 }: {
   params: Promise<{ orgSlug: string }>;

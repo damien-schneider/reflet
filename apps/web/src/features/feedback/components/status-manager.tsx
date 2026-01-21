@@ -1,9 +1,9 @@
 "use client";
 
+import { DotsSixVertical, Pencil, Plus, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { GripVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -142,7 +142,7 @@ export function StatusManager({ boardId }: StatusManagerProps) {
             className="flex items-center gap-3 rounded-lg border p-3"
             key={status._id}
           >
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
+            <DotsSixVertical className="h-4 w-4 text-muted-foreground" />
             <div
               className="h-4 w-4 shrink-0 rounded-full"
               style={{ backgroundColor: status.color }}
@@ -162,7 +162,7 @@ export function StatusManager({ boardId }: StatusManagerProps) {
               size="icon-xs"
               variant="ghost"
             >
-              <Trash2 className="h-3 w-3" />
+              <Trash className="h-3 w-3" />
             </Button>
           </div>
         ))}

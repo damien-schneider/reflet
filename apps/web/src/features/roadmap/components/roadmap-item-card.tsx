@@ -1,7 +1,6 @@
+import { Chat } from "@phosphor-icons/react";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/features/feedback/components/status-badge";
 import { VoteButton } from "@/features/feedback/components/vote-button";
 import { cn } from "@/lib/utils";
 
@@ -78,7 +77,7 @@ export function RoadmapItemCard({
 
           {/* Comment count */}
           <div className="mt-1 flex items-center gap-1 text-muted-foreground text-xs">
-            <MessageSquare className="h-3 w-3" />
+            <Chat className="h-3 w-3" />
             <span>{item.commentCount}</span>
           </div>
         </div>
@@ -107,11 +106,6 @@ export function RoadmapItemCard({
           )}
         </div>
       )}
-
-      {/* Status badge at bottom */}
-      <div className="mt-2">
-        <StatusBadge className="text-xs" status={item.status} />
-      </div>
     </div>
   );
 }

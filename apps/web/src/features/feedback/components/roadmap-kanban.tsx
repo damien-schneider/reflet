@@ -1,11 +1,11 @@
 "use client";
 
+import { CaretUp, Chat, DotsSixVertical } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useAtomValue } from "jotai";
-import { ChevronUp, GripVertical, MessageSquare } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -13,9 +13,9 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
-  feedbackSearchAtom,
+  feedbackMagnifyingGlassAtom,
   feedbackSortAtom,
-  selectedStatusesAtom,
+  selectedStatusIdsAtom,
   selectedTagIdsAtom,
 } from "@/store/feedback";
 
@@ -35,9 +35,9 @@ export function RoadmapKanban({
   const counts = useQuery(api.board_statuses.getCounts, { boardId });
 
   // Get filter state from Jotai atoms for optimistic updates
-  const search = useAtomValue(feedbackSearchAtom);
+  const search = useAtomValue(feedbackMagnifyingGlassAtom);
   const sortBy = useAtomValue(feedbackSortAtom);
-  const selectedStatuses = useAtomValue(selectedStatusesAtom);
+  const selectedStatusIds = useAtomValue(selectedStatusIdsAtom);
   const selectedTagIds = useAtomValue(selectedTagIdsAtom);
 
   // Map sort option to Convex sort type
@@ -81,7 +81,10 @@ export function RoadmapKanban({
       boardId,
       search: search || undefined,
       sortBy: convexSortBy,
-      status: selectedStatuses[0] as Doc<"feedback">["status"],
+      statusId:
+        selectedStatusIds.length > 0
+          ? (selectedStatusIds[0] as Id<"boardStatuses">)
+          : undefined,
       tagIds:
         selectedTagIds.length > 0
           ? (selectedTagIds as Id<"tags">[])
@@ -93,15 +96,26 @@ export function RoadmapKanban({
       listArgs
     );
 
+    // Get board status info for optimistic update
+    const newBoardStatus = statuses?.find((s) => s._id === statusId);
+    const newBoardStatusInfo = newBoardStatus
+      ? { name: newBoardStatus.name, color: newBoardStatus.color }
+      : null;
+
     // Map custom status name to enum value for optimistic update
     // This ensures the status field matches the enum type
-    const newStatusName = statuses?.find((s) => s._id === statusId)?.name;
-    const newStatusEnum = mapStatusNameToEnum(newStatusName ?? "open");
+    const newStatusName = newBoardStatus?.name ?? "open";
+    const newStatusEnum = mapStatusNameToEnum(newStatusName);
 
     if (currentMainList) {
       const updatedMainList = currentMainList.map((item) =>
         item._id === feedbackId
-          ? { ...item, statusId, status: newStatusEnum }
+          ? {
+              ...item,
+              statusId,
+              status: newStatusEnum,
+              boardStatus: newBoardStatusInfo,
+            }
           : item
       );
       localStore.setQuery(api.feedback_list.list, listArgs, updatedMainList);
@@ -161,6 +175,33 @@ export function RoadmapKanban({
     [isMember, updateFeedbackStatus]
   );
 
+  const handleWheel = useCallback((event: React.WheelEvent) => {
+    const viewport = event.currentTarget.querySelector<HTMLDivElement>(
+      "[data-slot='scroll-area-viewport']"
+    );
+
+    if (!viewport) {
+      return;
+    }
+
+    const canScrollHorizontally = viewport.scrollWidth > viewport.clientWidth;
+    if (!canScrollHorizontally) {
+      return;
+    }
+
+    const delta =
+      Math.abs(event.deltaX) > Math.abs(event.deltaY)
+        ? event.deltaX
+        : event.deltaY;
+
+    if (delta === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    viewport.scrollLeft += delta;
+  }, []);
+
   if (!(statuses && feedback)) {
     return (
       <div className="flex gap-4 overflow-x-auto pb-4">
@@ -191,7 +232,11 @@ export function RoadmapKanban({
   const unassignedFeedback = feedback.filter((f) => !f.statusId);
 
   return (
-    <ScrollArea className="pb-4">
+    <ScrollArea
+      className="pb-4"
+      data-testid="roadmap-kanban-scrollarea"
+      onWheel={handleWheel}
+    >
       <div className="flex gap-4">
         {statuses.map((status) => (
           <KanbanColumn
@@ -354,6 +399,11 @@ function KanbanCard({
   onClick,
   onDragStart,
 }: KanbanCardProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
   const handleDragStart = useCallback(
     (e: React.DragEvent) => {
       if (!isMember) {
@@ -362,12 +412,14 @@ function KanbanCard({
       }
       e.dataTransfer.setData("text/plain", feedback._id);
       e.dataTransfer.effectAllowed = "move";
+      setIsDragging(true);
       onDragStart(feedback._id);
     },
     [isMember, feedback._id, onDragStart]
   );
 
   const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
     onDragStart(null);
   }, [onDragStart]);
 
@@ -385,23 +437,109 @@ function KanbanCard({
     [onClick, feedback._id]
   );
 
+  // Mobile long press handlers
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isMember) {
+        return;
+      }
+      const touch = e.touches[0];
+      if (!touch) {
+        return;
+      }
+      touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+
+      longPressTimerRef.current = setTimeout(() => {
+        // Trigger drag mode on long press
+        setIsDragging(true);
+        onDragStart(feedback._id);
+        // Add visual feedback
+        if (cardRef.current) {
+          cardRef.current.style.opacity = "0.7";
+          cardRef.current.style.transform = "scale(1.02)";
+        }
+      }, 500); // 500ms for long press
+    },
+    [isMember, feedback._id, onDragStart]
+  );
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!(touch && touchStartRef.current)) {
+      return;
+    }
+
+    // Cancel long press if user moves finger too much
+    const moveThreshold = 10;
+    const deltaX = Math.abs(touch.clientX - touchStartRef.current.x);
+    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+
+    if (
+      (deltaX > moveThreshold || deltaY > moveThreshold) &&
+      longPressTimerRef.current
+    ) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    touchStartRef.current = null;
+
+    if (isDragging) {
+      // End drag mode
+      setIsDragging(false);
+      onDragStart(null);
+      if (cardRef.current) {
+        cardRef.current.style.opacity = "";
+        cardRef.current.style.transform = "";
+      }
+    }
+  }, [isDragging, onDragStart]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <Card
       className={cn(
         "cursor-pointer p-3 transition-all hover:shadow-md",
-        isMember && "cursor-grab active:cursor-grabbing"
+        isDragging && "opacity-70 ring-2 ring-primary"
       )}
-      draggable={isMember}
       onClick={handleClick}
-      onDragEnd={handleDragEnd}
-      onDragStart={handleDragStart}
       onKeyDown={handleKeyDown}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
+      onTouchStart={handleTouchStart}
+      ref={cardRef}
       role="button"
       tabIndex={0}
     >
       <div className="flex items-start gap-2">
+        {/* Drag handle - hidden on mobile (touch devices), only visible on desktop */}
         {isMember && (
-          <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          // biome-ignore lint/a11y/useSemanticElements: drag handle needs div for draggable behavior
+          <div
+            aria-label="Drag to reorder"
+            className="mt-0.5 hidden shrink-0 cursor-grab touch-none active:cursor-grabbing md:block"
+            draggable
+            onDragEnd={handleDragEnd}
+            onDragStart={handleDragStart}
+            role="button"
+            tabIndex={-1}
+          >
+            <DotsSixVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
         )}
         <div className="min-w-0 flex-1">
           <h4 className="line-clamp-2 font-medium text-sm">{feedback.title}</h4>
@@ -422,11 +560,11 @@ function KanbanCard({
           )}
           <div className="mt-2 flex items-center gap-3 text-muted-foreground text-xs">
             <span className="flex items-center gap-1">
-              <ChevronUp className="h-3 w-3" />
+              <CaretUp className="h-3 w-3" />
               {feedback.voteCount}
             </span>
             <span className="flex items-center gap-1">
-              <MessageSquare className="h-3 w-3" />
+              <Chat className="h-3 w-3" />
               {feedback.commentCount}
             </span>
           </div>

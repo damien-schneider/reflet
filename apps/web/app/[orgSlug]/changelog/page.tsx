@@ -1,11 +1,10 @@
 "use client";
 
+import { Bell, Calendar, Check, Envelope as Mail } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import DOMPurify from "isomorphic-dompurify";
-
-import { Bell, Calendar, Check, Mail } from "lucide-react";
 import { use, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -201,7 +200,9 @@ export default function PublicChangelogPage({
                   <Label htmlFor="email">Email address</Label>
                   <Input
                     id="email"
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setEmail(e.target.value)
+                    }
                     placeholder="your@email.com"
                     type="email"
                     value={email}

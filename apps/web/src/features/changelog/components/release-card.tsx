@@ -1,7 +1,7 @@
+import { Calendar, CaretRight } from "@phosphor-icons/react";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { format } from "date-fns";
 import DOMPurify from "isomorphic-dompurify";
-import { CalendarDays, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +51,7 @@ export function ReleaseCard({
 
         {publishDate && (
           <div className="flex shrink-0 items-center gap-1 text-muted-foreground text-sm">
-            <CalendarDays className="h-4 w-4" />
+            <Calendar className="h-4 w-4" />
             <time
               dateTime={
                 release.publishedAt
@@ -95,7 +95,7 @@ export function ReleaseCard({
               .slice(0, showFullContent ? undefined : 3)
               .map((item: LinkedFeedback) => (
                 <li className="flex items-center gap-2" key={item._id}>
-                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                  <CaretRight className="h-3 w-3 text-muted-foreground" />
                   <span className="text-sm">{item.title}</span>
                 </li>
               ))}
@@ -113,7 +113,7 @@ export function ReleaseCard({
         <div className="mt-4">
           <span className="inline-flex items-center gap-1 text-primary text-sm hover:underline">
             Read more
-            <ChevronRight className="h-4 w-4" />
+            <CaretRight className="h-4 w-4" />
           </span>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { ChevronUp } from "lucide-react";
+import { CaretUp } from "@phosphor-icons/react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,7 +45,7 @@ export function RoadmapCard({
                 ))}
             </div>
             <div className="flex items-center gap-1 text-muted-foreground text-xs">
-              <ChevronUp className="h-3 w-3" />
+              <CaretUp className="h-3 w-3" />
               {feedback.voteCount}
             </div>
           </div>

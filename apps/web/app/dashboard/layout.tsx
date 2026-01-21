@@ -1,7 +1,7 @@
 "use client";
 
+import { Spinner } from "@phosphor-icons/react";
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
-import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import UnifiedAuthForm from "@/components/unified-auth-form";
@@ -25,7 +25,7 @@ export default function DashboardLayout({
           <DashboardContent>{children}</DashboardContent>
         ) : (
           <div className="flex h-full items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <Spinner className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         )}
       </Authenticated>
@@ -36,7 +36,7 @@ export default function DashboardLayout({
       </Unauthenticated>
       <AuthLoading>
         <div className="flex h-full items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Spinner className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       </AuthLoading>
     </div>

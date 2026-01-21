@@ -1,17 +1,16 @@
+import { Chat, PushPin, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { MessageSquare, Pin, Trash2 } from "lucide-react";
 import { useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
+  ContextList,
+  ContextListContent,
+  ContextListItem,
+  ContextListTrigger,
 } from "@/components/ui/context-menu";
-import { StatusBadge } from "@/features/feedback/components/status-badge";
 import { VoteButton } from "@/features/feedback/components/vote-button";
 import { cn } from "@/lib/utils";
 
@@ -21,10 +20,16 @@ interface FeedbackTag {
   color: string;
 }
 
+interface BoardStatusInfo {
+  name: string;
+  color: string;
+}
+
 interface FeedbackListItemProps {
   feedback: Doc<"feedback"> & {
     hasVoted?: boolean;
     tags?: FeedbackTag[];
+    boardStatus?: BoardStatusInfo | null;
     author?: {
       name: string | null;
       email: string;
@@ -73,8 +78,8 @@ export function FeedbackListItem({
   }, [onClick, feedback._id]);
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger>
+    <ContextList>
+      <ContextListTrigger>
         <button
           className={cn(
             "flex w-full gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-accent/50",
@@ -100,7 +105,7 @@ export function FeedbackListItem({
                 {/* Title */}
                 <h3 className="line-clamp-2 font-semibold text-base transition-colors group-hover:text-primary">
                   {feedback.isPinned && (
-                    <Pin className="mr-1 inline h-4 w-4 text-primary" />
+                    <PushPin className="mr-1 inline h-4 w-4 text-primary" />
                   )}
                   {feedback.title}
                 </h3>
@@ -116,7 +121,7 @@ export function FeedbackListItem({
                   </span>
                   <span>•</span>
                   <span className="flex items-center gap-1">
-                    <MessageSquare className="h-3 w-3" />
+                    <Chat className="h-3 w-3" />
                     {feedback.commentCount}
                   </span>
                 </div>
@@ -141,23 +146,35 @@ export function FeedbackListItem({
                 )}
               </div>
 
-              {/* Status */}
-              <StatusBadge status={feedback.status ?? "open"} />
+              {/* Status Badge from boardStatus */}
+              {feedback.boardStatus && (
+                <Badge
+                  className="shrink-0"
+                  style={{
+                    backgroundColor: `${feedback.boardStatus.color}20`,
+                    color: feedback.boardStatus.color,
+                    borderColor: feedback.boardStatus.color,
+                  }}
+                  variant="outline"
+                >
+                  {feedback.boardStatus.name}
+                </Badge>
+              )}
             </div>
           </div>
         </button>
-      </ContextMenuTrigger>
+      </ContextListTrigger>
       {canDelete && (
-        <ContextMenuContent>
-          <ContextMenuItem
+        <ContextListContent>
+          <ContextListItem
             className="text-destructive focus:text-destructive"
             onClick={handleDelete}
           >
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash className="mr-2 h-4 w-4" />
             Delete
-          </ContextMenuItem>
-        </ContextMenuContent>
+          </ContextListItem>
+        </ContextListContent>
       )}
-    </ContextMenu>
+    </ContextList>
   );
 }

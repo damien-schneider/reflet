@@ -1,27 +1,27 @@
+import { SignOut, User } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { LogOut, User } from "lucide-react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownList,
+  DropdownListContent,
+  DropdownListItem,
+  DropdownListLabel,
+  DropdownListSeparator,
+  DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSidebar } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 
 import { Button } from "./ui/button";
 
-export default function UserMenu() {
+export default function UserList() {
   const user = useQuery(api.auth.getCurrentUser);
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
+    <DropdownList>
+      <DropdownListTrigger
         render={
           <Button
             className="w-full justify-start group-data-[collapsible=icon]:p-2"
@@ -33,15 +33,15 @@ export default function UserMenu() {
           <User className="h-4 w-4 shrink-0" />
           {!isCollapsed && <span className="truncate">{user?.name}</span>}
         </span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 bg-card">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-muted-foreground">
+      </DropdownListTrigger>
+      <DropdownListContent className="w-56 bg-card">
+        <DropdownListLabel>My Account</DropdownListLabel>
+        <DropdownListSeparator />
+        <DropdownListItem className="text-muted-foreground">
           {user?.email}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
+        </DropdownListItem>
+        <DropdownListSeparator />
+        <DropdownListItem
           onClick={() => {
             authClient.signOut({
               fetchOptions: {
@@ -53,10 +53,10 @@ export default function UserMenu() {
           }}
           variant="destructive"
         >
-          <LogOut className="mr-2 h-4 w-4" />
+          <SignOut className="mr-2 h-4 w-4" />
           Sign Out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownListItem>
+      </DropdownListContent>
+    </DropdownList>
   );
 }

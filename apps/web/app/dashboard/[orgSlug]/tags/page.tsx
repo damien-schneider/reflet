@@ -1,9 +1,9 @@
 "use client";
 
+import { Plus, Tag as TagIcon } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { Plus, Tag as TagIcon } from "lucide-react";
 import { use, useState } from "react";
 
 import { Button } from "@/components/ui/button";

@@ -1,7 +1,7 @@
 "use client";
 
+import { Spinner } from "@phosphor-icons/react";
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -25,7 +25,7 @@ export default function Index() {
       </Unauthenticated>
       <AuthLoading>
         <div className="flex min-h-screen items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <Spinner className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       </AuthLoading>
     </>

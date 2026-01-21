@@ -1,16 +1,16 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useAtomValue } from "jotai";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FeedbackFilters } from "@/features/feedback/components/feedback-filters";
+import { FeedbackFunnels } from "@/features/feedback/components/feedback-filters";
 import { FeedbackListItem } from "@/features/feedback/components/feedback-list-item";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import {
-  feedbackSearchAtom,
+  feedbackMagnifyingGlassAtom,
   feedbackSortAtom,
-  selectedStatusesAtom,
+  selectedStatusIdsAtom,
   selectedTagIdsAtom,
 } from "@/store/feedback";
 
@@ -33,9 +33,9 @@ export function FeedbackList({
   const userId = session?.user?.id;
 
   // Get filter state from Jotai atoms
-  const search = useAtomValue(feedbackSearchAtom);
+  const search = useAtomValue(feedbackMagnifyingGlassAtom);
   const sortBy = useAtomValue(feedbackSortAtom);
-  const selectedStatuses = useAtomValue(selectedStatusesAtom);
+  const selectedStatusIds = useAtomValue(selectedStatusIdsAtom);
   const selectedTagIds = useAtomValue(selectedTagIdsAtom);
 
   // Map sort option to Convex sort type
@@ -55,7 +55,10 @@ export function FeedbackList({
     boardId,
     search: search || undefined,
     sortBy: convexSortBy,
-    status: selectedStatuses[0] as Doc<"feedback">["status"],
+    statusId:
+      selectedStatusIds.length > 0
+        ? (selectedStatusIds[0] as Id<"boardStatuses">)
+        : undefined,
     tagIds:
       selectedTagIds.length > 0 ? (selectedTagIds as Id<"tags">[]) : undefined,
   });
@@ -67,7 +70,11 @@ export function FeedbackList({
 
   return (
     <div className={cn("space-y-6", className)}>
-      <FeedbackFilters organizationId={organizationId} tags={tags ?? []} />
+      <FeedbackFunnels
+        boardId={boardId}
+        organizationId={organizationId}
+        tags={tags ?? []}
+      />
 
       {/* Loading state */}
       {isLoading && (
@@ -88,7 +95,7 @@ export function FeedbackList({
       {!isLoading && feedbackList?.length === 0 && (
         <div className="py-12 text-center">
           <p className="text-muted-foreground">
-            {search || selectedStatuses.length > 0 || selectedTagIds.length > 0
+            {search || selectedStatusIds.length > 0 || selectedTagIds.length > 0
               ? "No feedback matches your filters"
               : "No feedback yet. Be the first to share your thoughts!"}
           </p>
@@ -98,16 +105,22 @@ export function FeedbackList({
       {/* Feedback list */}
       {!isLoading && feedbackList && feedbackList.length > 0 && (
         <div className="space-y-3">
-          {feedbackList.map((feedback) => (
-            <FeedbackListItem
-              boardId={boardId}
-              feedback={feedback}
-              isAdmin={isAdmin}
-              isAuthor={feedback.authorId === userId}
-              key={feedback._id}
-              onClick={onFeedbackClick}
-            />
-          ))}
+          {feedbackList.map((feedback) => {
+            // Filter out null tags for type safety
+            const nonNullTags = feedback.tags?.filter(
+              (tag): tag is NonNullable<typeof tag> => tag !== null
+            );
+            return (
+              <FeedbackListItem
+                boardId={boardId}
+                feedback={{ ...feedback, tags: nonNullTags }}
+                isAdmin={isAdmin}
+                isAuthor={feedback.authorId === userId}
+                key={feedback._id}
+                onClick={onFeedbackClick}
+              />
+            );
+          })}
         </div>
       )}
     </div>

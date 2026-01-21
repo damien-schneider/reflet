@@ -1,9 +1,9 @@
 "use client";
 
+import { CaretUp as ChevronUp } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { ChevronUp } from "lucide-react";
 import { use } from "react";
 
 import { Badge } from "@/components/ui/badge";

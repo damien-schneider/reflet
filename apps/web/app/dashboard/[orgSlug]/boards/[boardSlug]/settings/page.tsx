@@ -1,9 +1,9 @@
 "use client";
 
+import { ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { use, useCallback } from "react";
 
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { StatusManager } from "@/features/feedback/components/status-manager";
 
-export default function BoardSettingsPage({
+export default function BoardGearPage({
   params,
 }: {
   params: Promise<{ orgSlug: string; boardSlug: string }>;
@@ -107,7 +107,7 @@ export default function BoardSettingsPage({
       <div className="mb-6">
         <Link
           className="mb-4 inline-flex items-center text-muted-foreground text-sm hover:text-foreground"
-          href={`/dashboard/${orgSlug}/boards/${boardSlug}`}
+          href={`/${orgSlug}/boards/${boardSlug}`}
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
           Back to Board
@@ -115,7 +115,7 @@ export default function BoardSettingsPage({
       </div>
 
       <div className="mb-8">
-        <h1 className="font-bold text-2xl">Board Settings</h1>
+        <h1 className="font-bold text-2xl">Board Gear</h1>
         <p className="text-muted-foreground">
           Configure settings for {board.name}
         </p>

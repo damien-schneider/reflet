@@ -1,13 +1,19 @@
 "use client";
 
+import {
+  FileText,
+  MapTrifold as MapIcon,
+  Chat as MessageSquare,
+} from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { FileText, Map as MapIcon, MessageSquare } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { CSSProperties } from "react";
 import { use } from "react";
+
+import { PublicViewToolbar } from "@/components/public-view-toolbar";
 
 export default function PublicOrgLayout({
   children,
@@ -120,6 +126,9 @@ export default function PublicOrgLayout({
           </p>
         </div>
       </footer>
+
+      {/* Floating toolbar for team members */}
+      <PublicViewToolbar orgSlug={orgSlug} />
     </div>
   );
 }

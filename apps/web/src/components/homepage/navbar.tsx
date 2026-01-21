@@ -1,4 +1,4 @@
-import { Menu, X } from "lucide-react";
+import { List, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -80,7 +80,7 @@ export default function Navbar() {
               onClick={() => setIsOpen(!isOpen)}
               type="button"
             >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
+              {isOpen ? <X size={24} /> : <List size={24} />}
             </button>
           </div>
         </div>

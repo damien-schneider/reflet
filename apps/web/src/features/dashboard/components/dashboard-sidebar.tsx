@@ -1,23 +1,31 @@
-import { api } from "@reflet-v2/backend/convex/_generated/api";
-import { useQuery } from "convex/react";
 import {
-  ChevronsUpDown,
+  ArrowUpRight,
+  CaretUpDown,
+  Chat,
   CreditCard,
   FileText,
-  LogOut,
-  MessageSquare,
-  Settings,
+  Gear,
+  Globe,
+  SignOut,
+  Spinner,
   Tag,
   User,
   Users,
-} from "lucide-react";
+} from "@phosphor-icons/react";
+import { api } from "@reflet-v2/backend/convex/_generated/api";
+import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
+import type * as React from "react";
+import { useState } from "react";
 import { OrganizationSwitcher } from "@/components/organization-switcher";
+import { Button } from "@/components/ui/button";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+  DropdownList,
+  DropdownListContent,
+  DropdownListItem,
+  DropdownListTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -26,13 +34,11 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
+  SidebarList,
+  SidebarListButton,
+  SidebarListItem,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 
@@ -42,7 +48,16 @@ interface DashboardSidebarProps {
 }
 
 export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
+  const { isMobile } = useSidebar();
   const currentUser = useQuery(api.auth.getCurrentUser);
+  const org = useQuery(
+    api.organizations.getBySlug,
+    orgSlug ? { slug: orgSlug } : "skip"
+  );
+  const updateOrg = useMutation(api.organizations.update);
+  const [isMakingPublic, setIsMakingPublic] = useState(false);
+
+  const isAdmin = org?.role === "admin" || org?.role === "owner";
 
   const buildPath = (path: string) =>
     orgSlug ? path.replace("$orgSlug", orgSlug) : "";
@@ -58,13 +73,13 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     ? [
         {
           href: "/dashboard/$orgSlug/boards",
-          icon: MessageSquare,
+          icon: Chat,
           label: "Boards",
         },
         {
           href: "/dashboard/$orgSlug/settings",
-          icon: Settings,
-          label: "Settings",
+          icon: Gear,
+          label: "Gear",
         },
       ]
     : [];
@@ -109,9 +124,25 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     });
   };
 
+  const handleMakePublic = async () => {
+    if (!(org?._id && isAdmin)) {
+      return;
+    }
+
+    setIsMakingPublic(true);
+    try {
+      await updateOrg({
+        id: org._id as Id<"organizations">,
+        isPublic: true,
+      });
+    } finally {
+      setIsMakingPublic(false);
+    }
+  };
+
   return (
     <Sidebar collapsible="icon" variant="inset">
-      <SidebarHeader className="border-b p-4">
+      <SidebarHeader>
         <OrganizationSwitcher currentOrgSlug={orgSlug} />
       </SidebarHeader>
 
@@ -121,10 +152,10 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
             <SidebarGroup>
               <SidebarGroupLabel>Navigation</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarList>
                   {mainNavItems.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
+                    <SidebarListItem key={item.href}>
+                      <SidebarListButton
                         isActive={isActive(item.href)}
                         render={(props) => (
                           <Link href={buildHref(item.href)} {...props}>
@@ -133,19 +164,19 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                           </Link>
                         )}
                       />
-                    </SidebarMenuItem>
+                    </SidebarListItem>
                   ))}
-                </SidebarMenu>
+                </SidebarList>
               </SidebarGroupContent>
             </SidebarGroup>
 
             <SidebarGroup>
               <SidebarGroupLabel>Admin</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarList>
                   {adminNavItems.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
+                    <SidebarListItem key={item.href}>
+                      <SidebarListButton
                         isActive={isActive(item.href)}
                         render={(props) => (
                           <Link href={buildHref(item.href)} {...props}>
@@ -154,9 +185,9 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                           </Link>
                         )}
                       />
-                    </SidebarMenuItem>
+                    </SidebarListItem>
                   ))}
-                </SidebarMenu>
+                </SidebarList>
               </SidebarGroupContent>
             </SidebarGroup>
           </>
@@ -171,18 +202,65 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
         )}
       </SidebarContent>
 
+      {orgSlug && org ? (
+        <div className="px-2 pb-2 group-data-[collapsible=icon]:hidden">
+          {org.isPublic && (
+            <Link href={`/${orgSlug}`} rel="noopener" target="_blank">
+              <Button
+                className="w-full justify-start"
+                size="sm"
+                variant="outline"
+              >
+                <Globe className="mr-2 size-4" />
+                <span>Voir la page publique</span>
+                <ArrowUpRight className="ml-auto size-4" />
+              </Button>
+            </Link>
+          )}
+          {!org.isPublic && isAdmin && (
+            <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <div className="flex items-center gap-2">
+                <Globe className="size-4 shrink-0 text-primary" />
+                <h3 className="font-medium text-primary text-sm">
+                  Rendre l&apos;organisation publique
+                </h3>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Partagez votre roadmap et votre changelog avec le monde entier.
+              </p>
+              <Button
+                className="h-7 w-full text-xs"
+                disabled={isMakingPublic}
+                onClick={handleMakePublic}
+                size="sm"
+                variant="default"
+              >
+                {isMakingPublic ? (
+                  <>
+                    <Spinner className="mr-2 h-3 w-3 animate-spin" />
+                    En cours...
+                  </>
+                ) : (
+                  "Rendre publique"
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : null}
+
       <SidebarFooter>
-        <SidebarSeparator />
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <Collapsible className="group/collapsible">
-              <CollapsibleTrigger
-                render={(props) => (
-                  <SidebarMenuButton {...props} size="lg">
+        <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
+        <SidebarList>
+          <SidebarListItem>
+            <DropdownList>
+              <DropdownListTrigger
+                render={(props: React.ComponentProps<"button">) => (
+                  <SidebarListButton {...props} size="lg">
                     <div className="flex size-8 items-center justify-center rounded-none bg-muted text-muted-foreground">
                       <User className="size-4" />
                     </div>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
+                    <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                       <span className="truncate font-medium">
                         {currentUser?.name ?? "Account"}
                       </span>
@@ -190,23 +268,24 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                         {currentUser?.email ?? ""}
                       </span>
                     </div>
-                    <ChevronsUpDown className="ml-auto size-4" />
-                  </SidebarMenuButton>
+                    <CaretUpDown className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
+                  </SidebarListButton>
                 )}
               />
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton onClick={handleSignOut}>
-                      <LogOut className="mr-2 size-4" />
-                      <span>Sign out</span>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </Collapsible>
-          </SidebarMenuItem>
-        </SidebarMenu>
+              <DropdownListContent
+                align="end"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                side={isMobile ? "bottom" : "right"}
+                sideOffset={4}
+              >
+                <DropdownListItem onClick={handleSignOut}>
+                  <SignOut className="mr-2 size-4" />
+                  <span>Sign out</span>
+                </DropdownListItem>
+              </DropdownListContent>
+            </DropdownList>
+          </SidebarListItem>
+        </SidebarList>
       </SidebarFooter>
     </Sidebar>
   );

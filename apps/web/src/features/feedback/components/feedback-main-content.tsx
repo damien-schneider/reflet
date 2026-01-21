@@ -1,12 +1,19 @@
-import { ChevronUp, Edit, MoreVertical, Pin, Trash2 } from "lucide-react";
+import {
+  CaretUp,
+  DotsThreeVertical,
+  Pencil,
+  PushPin,
+  Trash,
+} from "@phosphor-icons/react";
+import type * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownList,
+  DropdownListContent,
+  DropdownListItem,
+  DropdownListSeparator,
+  DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -63,7 +70,7 @@ export function FeedbackMainContent({
             onClick={handleToggleVote}
             type="button"
           >
-            <ChevronUp className="h-5 w-5" />
+            <CaretUp className="h-5 w-5" />
             <span className="font-bold text-lg">{feedback.voteCount}</span>
           </button>
 
@@ -71,34 +78,34 @@ export function FeedbackMainContent({
             <div className="flex items-start justify-between">
               <h1 className="font-bold text-xl">
                 {feedback.isPinned && (
-                  <Pin className="mr-2 inline h-5 w-5 text-primary" />
+                  <PushPin className="mr-2 inline h-5 w-5 text-primary" />
                 )}
                 {feedback.title}
               </h1>
               {isAdmin && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={(props) => (
+                <DropdownList>
+                  <DropdownListTrigger
+                    render={(props: React.ComponentProps<"button">) => (
                       <Button {...props} size="icon" variant="ghost">
-                        <MoreVertical className="h-4 w-4" />
+                        <DotsThreeVertical className="h-4 w-4" />
                       </Button>
                     )}
                   />
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleTogglePin}>
-                      <Pin className="mr-2 h-4 w-4" />
+                  <DropdownListContent align="end">
+                    <DropdownListItem onClick={handleTogglePin}>
+                      <PushPin className="mr-2 h-4 w-4" />
                       {feedback.isPinned ? "Unpin" : "Pin"}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
+                    </DropdownListItem>
+                    <DropdownListSeparator />
+                    <DropdownListItem
                       className="text-destructive"
                       onClick={handleDeleteFeedback}
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash className="mr-2 h-4 w-4" />
                       Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </DropdownListItem>
+                  </DropdownListContent>
+                </DropdownList>
               )}
             </div>
             <div className="mt-2 flex items-center gap-2 text-muted-foreground text-sm">
@@ -154,7 +161,7 @@ export function FeedbackMainContent({
                 size="icon"
                 variant="ghost"
               >
-                <Edit className="h-4 w-4" />
+                <Pencil className="h-4 w-4" />
               </Button>
             )}
           </div>

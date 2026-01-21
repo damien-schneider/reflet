@@ -1,4 +1,4 @@
-import { Send, Trash2, X } from "lucide-react";
+import { PaperPlaneRight, Trash, X } from "@phosphor-icons/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,7 +77,7 @@ export function CommentItem({
                   size="icon"
                   variant="ghost"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash className="h-4 w-4" />
                 </Button>
               )}
             </div>
@@ -100,7 +100,7 @@ export function CommentItem({
                   onClick={() => onSubmitReply(comment._id)}
                   size="icon"
                 >
-                  <Send className="h-4 w-4" />
+                  <PaperPlaneRight className="h-4 w-4" />
                 </Button>
                 <Button
                   onClick={() => setReplyingTo(null)}
@@ -151,7 +151,7 @@ export function CommentItem({
                         size="icon"
                         variant="ghost"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash className="h-3 w-3" />
                       </Button>
                     )}
                   </div>

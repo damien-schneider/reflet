@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUp, ChevronRight } from "lucide-react";
+import { ArrowRight, ArrowUp, CaretRight } from "@phosphor-icons/react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ export default function Hero() {
         </span>
         <span className="text-muted-foreground">|</span>
         <span className="flex items-center font-medium text-muted-foreground text-sm group-hover:text-foreground">
-          Star on GitHub <ChevronRight className="ml-1" size={14} />
+          Star on GitHub <CaretRight className="ml-1" size={14} />
         </span>
       </a>
 
@@ -84,7 +84,7 @@ function MockupSidebar() {
             </div>
             <span className="font-semibold text-sm">Reflet App</span>
           </div>
-          <ChevronRight className="rotate-90 text-muted-foreground" size={14} />
+          <CaretRight className="rotate-90 text-muted-foreground" size={14} />
         </div>
       </div>
       <div className="p-4">
@@ -127,7 +127,7 @@ function MockupSidebar() {
         </div>
 
         <div className="mb-2 px-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-          Filters
+          Funnels
         </div>
         <div className="space-y-1">
           <div className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground text-sm hover:bg-muted">

@@ -1,14 +1,15 @@
 "use client";
 
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import {
   Calendar,
-  Edit,
+  DotsThreeVertical,
   Eye,
-  EyeOff,
-  MoreVertical,
-  Trash2,
-} from "lucide-react";
+  EyeSlash,
+  Pencil,
+  Trash,
+} from "@phosphor-icons/react";
+import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,11 +20,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownList,
+  DropdownListContent,
+  DropdownListItem,
+  DropdownListSeparator,
+  DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
 
 interface AdminReleaseCardProps {
@@ -64,46 +65,46 @@ export function AdminReleaseCard({
               </Badge>
             ) : (
               <Badge variant="outline">
-                <EyeOff className="mr-1 h-3 w-3" />
+                <EyeSlash className="mr-1 h-3 w-3" />
                 Draft
               </Badge>
             )}
           </div>
           {isAdmin && (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={(props) => (
+            <DropdownList>
+              <DropdownListTrigger
+                render={(props: React.ComponentProps<"button">) => (
                   <Button {...props} size="icon" variant="ghost">
-                    <MoreVertical className="h-4 w-4" />
+                    <DotsThreeVertical className="h-4 w-4" />
                   </Button>
                 )}
               />
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onEdit}>
-                  <Edit className="mr-2 h-4 w-4" />
+              <DropdownListContent align="end">
+                <DropdownListItem onClick={onEdit}>
+                  <Pencil className="mr-2 h-4 w-4" />
                   Edit
-                </DropdownMenuItem>
+                </DropdownListItem>
                 {release.publishedAt ? (
-                  <DropdownMenuItem onClick={onUnpublish}>
-                    <EyeOff className="mr-2 h-4 w-4" />
+                  <DropdownListItem onClick={onUnpublish}>
+                    <EyeSlash className="mr-2 h-4 w-4" />
                     Unpublish
-                  </DropdownMenuItem>
+                  </DropdownListItem>
                 ) : (
-                  <DropdownMenuItem onClick={onPublish}>
+                  <DropdownListItem onClick={onPublish}>
                     <Eye className="mr-2 h-4 w-4" />
                     Publish
-                  </DropdownMenuItem>
+                  </DropdownListItem>
                 )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
+                <DropdownListSeparator />
+                <DropdownListItem
                   className="text-destructive"
                   onClick={onDelete}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash className="mr-2 h-4 w-4" />
                   Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownListItem>
+              </DropdownListContent>
+            </DropdownList>
           )}
         </div>
         <CardDescription className="flex items-center gap-4">

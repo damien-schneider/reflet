@@ -1,7 +1,7 @@
+import { Shield, User } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { Shield, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -115,7 +115,9 @@ export function InviteMemberDialog({
             Cancel
           </Button>
           <Button disabled={isSubmitting} onClick={handleInvite}>
-            {isSubmitting ? "Sending..." : "Send invitation"}
+            {isSubmitting
+              ? "PaperPlaneRighting..."
+              : "PaperPlaneRight invitation"}
           </Button>
         </DialogFooter>
       </DialogContent>

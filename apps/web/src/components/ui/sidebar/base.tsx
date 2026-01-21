@@ -1,6 +1,6 @@
 "use client";
 
-import { PanelLeftIcon } from "lucide-react";
+import { Sidebar as SidebarIcon } from "@phosphor-icons/react";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -140,7 +140,7 @@ export function SidebarTrigger({
       variant="ghost"
       {...props}
     >
-      <PanelLeftIcon />
+      <SidebarIcon />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

@@ -16,12 +16,24 @@ export const selectedFeedbackIdAtom = atom<string | null>(null);
 export const feedbackSearchAtom = atom<string>("");
 
 /**
+ * @deprecated Use feedbackSearchAtom instead
+ * Legacy alias for backward compatibility
+ */
+export const feedbackMagnifyingGlassAtom = feedbackSearchAtom;
+
+/**
  * Sort option for feedback list
  */
 export const feedbackSortAtom = atom<SortOption>("most_votes");
 
 /**
- * Selected status filters
+ * Selected board status IDs for filtering (uses boardStatuses table)
+ */
+export const selectedStatusIdsAtom = atom<string[]>([]);
+
+/**
+ * @deprecated Use selectedStatusIdsAtom instead
+ * Selected status filters (legacy - kept for backward compatibility)
  */
 export const selectedStatusesAtom = atom<string[]>([]);
 

@@ -1,6 +1,6 @@
+import { Buildings, CaretUpDown, Check, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
-import { Building2, Check, ChevronsUpDown, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownList,
+  DropdownListContent,
+  DropdownListItem,
+  DropdownListSeparator,
+  DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,10 +51,9 @@ export function OrganizationSwitcher({
       await createOrg({ name: newOrgName.trim() });
       setShowCreateDialog(false);
       setNewOrgName("");
-      // Navigate to dashboard - list will refresh with new org
       router.push("/dashboard");
     } catch {
-      // Error handling - could show toast here
+      // Error handling - organization creation failed
     } finally {
       setIsCreating(false);
     }
@@ -72,7 +71,7 @@ export function OrganizationSwitcher({
         variant="outline"
       >
         <span className="flex items-center gap-2">
-          <Building2 className="h-4 w-4" />
+          <Buildings className="h-4 w-4" />
           {!isCollapsed && <span>Loading...</span>}
         </span>
       </Button>
@@ -81,24 +80,33 @@ export function OrganizationSwitcher({
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 group-data-[collapsible=icon]:p-2">
+      <DropdownList>
+        <DropdownListTrigger
+          className="w-full justify-between"
+          render={
+            <Button
+              className="w-full justify-between group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+              size="lg"
+              variant="outline"
+            />
+          }
+        >
           <span className="flex items-center gap-2 truncate">
-            <Building2 className="h-4 w-4 shrink-0" />
+            <Buildings className="h-4 w-4 shrink-0" />
             {!isCollapsed && (
-              <span className="truncate">
+              <span className="truncate group-data-[collapsible=icon]:hidden">
                 {currentOrg?.name || "Select organization"}
               </span>
             )}
           </span>
           {!isCollapsed && (
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           )}
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-50">
+        </DropdownListTrigger>
+        <DropdownListContent align="start" className="w-50">
           {organizations.map((org) =>
             org ? (
-              <DropdownMenuItem
+              <DropdownListItem
                 className="flex items-center justify-between"
                 key={org._id}
                 onSelect={() => handleSelectOrg(org.slug)}
@@ -107,16 +115,16 @@ export function OrganizationSwitcher({
                 {org.slug === currentOrgSlug && (
                   <Check className="h-4 w-4 shrink-0" />
                 )}
-              </DropdownMenuItem>
+              </DropdownListItem>
             ) : null
           )}
-          {organizations.length > 0 && <DropdownMenuSeparator />}
-          <DropdownMenuItem onSelect={() => setShowCreateDialog(true)}>
+          {organizations.length > 0 && <DropdownListSeparator />}
+          <DropdownListItem onSelect={() => setShowCreateDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create organization
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </DropdownListItem>
+        </DropdownListContent>
+      </DropdownList>
 
       <Dialog onOpenChange={setShowCreateDialog} open={showCreateDialog}>
         <DialogContent>

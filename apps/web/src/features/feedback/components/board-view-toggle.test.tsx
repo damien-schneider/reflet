@@ -4,7 +4,7 @@ import { type BoardView, BoardViewToggle } from "./board-view-toggle";
 
 // Mock lucide-react icons
 vi.mock("lucide-react", () => ({
-  LayoutGrid: () => <svg data-testid="layout-grid-icon" />,
+  GridFour: () => <svg data-testid="layout-grid-icon" />,
   List: () => <svg data-testid="list-icon" />,
 }));
 

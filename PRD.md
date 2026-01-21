@@ -1,0 +1,1 @@
+- [ ] move and refactor all the apps/web/components/ except the components/ui into a clean feature architecture with well splitted files

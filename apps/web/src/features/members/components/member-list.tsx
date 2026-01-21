@@ -1,7 +1,13 @@
+import {
+  Crown,
+  DotsThreeVertical,
+  Shield,
+  Trash,
+  User,
+} from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { Crown, MoreVertical, Shield, Trash2, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -99,9 +105,9 @@ export function MemberList({
               {isOwner && member.role !== "owner" && (
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    render={(props) => (
+                    render={(props: React.ComponentProps<"button">) => (
                       <Button {...props} size="icon" variant="ghost">
-                        <MoreVertical className="h-4 w-4" />
+                        <DotsThreeVertical className="h-4 w-4" />
                       </Button>
                     )}
                   />
@@ -128,7 +134,7 @@ export function MemberList({
                         )
                       }
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash className="mr-2 h-4 w-4" />
                       Remove
                     </DropdownMenuItem>
                   </DropdownMenuContent>

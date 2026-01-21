@@ -1,6 +1,15 @@
+import {
+  Funnel,
+  MagnifyingGlass,
+  Plus,
+  SortAscending,
+  SortDescending,
+  X,
+} from "@phosphor-icons/react";
+import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { useQuery } from "convex/react";
 import { useAtom } from "jotai";
-import { Filter, Plus, Search, SortAsc, SortDesc, X } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,16 +26,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type SortOption, STATUS_OPTIONS } from "@/lib/constants";
+import type { SortOption } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import {
-  feedbackSearchAtom,
+  feedbackMagnifyingGlassAtom,
   feedbackSortAtom,
-  selectedStatusesAtom,
+  selectedStatusIdsAtom,
   selectedTagIdsAtom,
 } from "@/store/feedback";
 
-interface FeedbackFiltersProps {
+interface FeedbackFunnelsProps {
+  boardId: Id<"boards">;
   organizationId: Id<"organizations">;
   className?: string;
   showSubmitButton?: boolean;
@@ -38,27 +48,33 @@ interface FeedbackFiltersProps {
  * Feedback filter controls component.
  * Uses Jotai atoms internally for state management - no props drilling needed.
  */
-export function FeedbackFilters({
+export function FeedbackFunnels({
+  boardId,
   className,
   showSubmitButton = true,
   tags = [],
   onSubmitClick,
-}: FeedbackFiltersProps) {
-  const [filterOpen, setFilterOpen] = useState(false);
+}: FeedbackFunnelsProps) {
+  const [filterOpen, setFunnelOpen] = useState(false);
 
-  const [search, setSearch] = useAtom(feedbackSearchAtom);
+  const [search, setMagnifyingGlass] = useAtom(feedbackMagnifyingGlassAtom);
   const [sortBy, setSortBy] = useAtom(feedbackSortAtom);
-  const [selectedStatuses, setSelectedStatuses] = useAtom(selectedStatusesAtom);
+  const [selectedStatusIds, setSelectedStatusIds] = useAtom(
+    selectedStatusIdsAtom
+  );
   const [selectedTagIds, setSelectedTagIds] = useAtom(selectedTagIdsAtom);
 
-  const hasFilters = selectedStatuses.length > 0 || selectedTagIds.length > 0;
-  const filterCount = selectedStatuses.length + selectedTagIds.length;
+  // Get board statuses for the filter options
+  const boardStatuses = useQuery(api.board_statuses.list, { boardId });
 
-  const toggleStatus = (status: string) => {
-    setSelectedStatuses((prev: string[]) =>
-      prev.includes(status)
-        ? prev.filter((s: string) => s !== status)
-        : [...prev, status]
+  const hasFunnels = selectedStatusIds.length > 0 || selectedTagIds.length > 0;
+  const filterCount = selectedStatusIds.length + selectedTagIds.length;
+
+  const toggleStatus = (statusId: string) => {
+    setSelectedStatusIds((prev: string[]) =>
+      prev.includes(statusId)
+        ? prev.filter((s: string) => s !== statusId)
+        : [...prev, statusId]
     );
   };
 
@@ -70,34 +86,34 @@ export function FeedbackFilters({
     );
   };
 
-  const clearStatusAndTagFilters = () => {
-    setSelectedStatuses([]);
+  const clearStatusAndTagFunnels = () => {
+    setSelectedStatusIds([]);
     setSelectedTagIds([]);
   };
 
   return (
     <div className={cn("space-y-3", className)}>
-      {/* Search and main controls */}
+      {/* MagnifyingGlass and main controls */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          {/* Search */}
+          {/* MagnifyingGlass */}
           <div className="relative max-w-sm flex-1">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <MagnifyingGlass className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="pl-9"
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search feedback..."
+              onChange={(e) => setMagnifyingGlass(e.target.value)}
+              placeholder="MagnifyingGlass feedback..."
               type="search"
               value={search}
             />
           </div>
 
-          {/* Filter button */}
-          <Popover onOpenChange={setFilterOpen} open={filterOpen}>
+          {/* Funnel button */}
+          <Popover onOpenChange={setFunnelOpen} open={filterOpen}>
             <PopoverTrigger>
               <Button className="gap-2" variant="outline">
-                <Filter className="h-4 w-4" />
-                Filter
+                <Funnel className="h-4 w-4" />
+                Funnel
                 {filterCount > 0 && (
                   <Badge
                     className="ml-1 flex h-5 w-5 items-center justify-center p-0"
@@ -110,24 +126,40 @@ export function FeedbackFilters({
             </PopoverTrigger>
             <PopoverContent align="end" className="w-72">
               <div className="space-y-4">
-                {/* Status filters */}
+                {/* Status filters - dynamic from boardStatuses */}
                 <div>
                   <h4 className="mb-2 font-medium text-sm">Status</h4>
                   <div className="flex flex-wrap gap-1">
-                    {STATUS_OPTIONS.map((option) => (
+                    {boardStatuses?.map((status) => (
                       <Badge
                         className="cursor-pointer"
-                        key={option.value}
-                        onClick={() => toggleStatus(option.value)}
+                        key={status._id}
+                        onClick={() => toggleStatus(status._id)}
+                        style={
+                          selectedStatusIds.includes(status._id)
+                            ? {
+                                backgroundColor: status.color,
+                                borderColor: status.color,
+                              }
+                            : {
+                                borderColor: status.color,
+                                color: status.color,
+                              }
+                        }
                         variant={
-                          selectedStatuses.includes(option.value)
+                          selectedStatusIds.includes(status._id)
                             ? "default"
                             : "outline"
                         }
                       >
-                        {option.label}
+                        {status.name}
                       </Badge>
                     ))}
+                    {!boardStatuses && (
+                      <span className="text-muted-foreground text-sm">
+                        Loading...
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -166,10 +198,10 @@ export function FeedbackFilters({
                 )}
 
                 {/* Clear button */}
-                {hasFilters && (
+                {hasFunnels && (
                   <Button
                     className="w-full"
-                    onClick={clearStatusAndTagFilters}
+                    onClick={clearStatusAndTagFunnels}
                     size="sm"
                     variant="ghost"
                   >
@@ -187,9 +219,9 @@ export function FeedbackFilters({
           >
             <SelectTrigger className="w-40">
               {sortBy === "newest" || sortBy === "oldest" ? (
-                <SortDesc className="mr-2 h-4 w-4" />
+                <SortDescending className="mr-2 h-4 w-4" />
               ) : (
-                <SortAsc className="mr-2 h-4 w-4" />
+                <SortAscending className="mr-2 h-4 w-4" />
               )}
               <SelectValue />
             </SelectTrigger>
@@ -211,19 +243,26 @@ export function FeedbackFilters({
       </div>
 
       {/* Active filter tags */}
-      {hasFilters && (
+      {hasFunnels && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-muted-foreground text-sm">Active filters:</span>
-          {selectedStatuses.map((status: string) => {
-            const option = STATUS_OPTIONS.find((o) => o.value === status);
+          {selectedStatusIds.map((statusId: string) => {
+            const status = boardStatuses?.find((s) => s._id === statusId);
+            if (!status) {
+              return null;
+            }
             return (
               <Badge
                 className="cursor-pointer gap-1"
-                key={status}
-                onClick={() => toggleStatus(status)}
+                key={statusId}
+                onClick={() => toggleStatus(statusId)}
+                style={{
+                  backgroundColor: `${status.color}20`,
+                  color: status.color,
+                }}
                 variant="secondary"
               >
-                {option?.label ?? status}
+                {status.name}
                 <X className="h-3 w-3" />
               </Badge>
             );
@@ -251,7 +290,7 @@ export function FeedbackFilters({
           })}
           <Button
             className="h-6 text-xs"
-            onClick={clearStatusAndTagFilters}
+            onClick={clearStatusAndTagFunnels}
             size="sm"
             variant="ghost"
           >
@@ -262,3 +301,5 @@ export function FeedbackFilters({
     </div>
   );
 }
+
+export type { FeedbackFunnelsProps as FeedbackFiltersProps };

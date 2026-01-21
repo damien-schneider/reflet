@@ -1,16 +1,16 @@
 import {
-  BarChart3,
-  History,
+  ChartBar,
+  ClockCounterClockwise,
+  Lightning,
   Lock,
-  Map as MapIcon,
+  MapTrifold as MapIcon,
   Users,
-  Zap,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 
 const FEATURES = [
   {
     id: "feedback-management",
-    icon: BarChart3,
+    icon: ChartBar,
     title: "Feedback Management",
     description:
       "Collect and organize user feedback with voting, comments, and tags. Prioritize what matters most to your users.",
@@ -24,14 +24,14 @@ const FEATURES = [
   },
   {
     id: "changelog-releases",
-    icon: History,
+    icon: ClockCounterClockwise,
     title: "Changelog & Releases",
     description:
       "Keep users informed with beautiful release notes. Link updates directly to the features they requested.",
   },
   {
     id: "real-time-collaboration",
-    icon: Zap,
+    icon: Lightning,
     title: "Real-Time Collaboration",
     description:
       "Multiple users can work simultaneously without conflicts. Every change syncs instantly across all connected devices.",

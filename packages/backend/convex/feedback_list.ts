@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { authComponent } from "./auth";
-import { feedbackStatus } from "./feedback";
 
 /**
  * List feedback for a board with filtering and sorting
@@ -9,7 +8,7 @@ import { feedbackStatus } from "./feedback";
 export const list = query({
   args: {
     boardId: v.id("boards"),
-    status: v.optional(feedbackStatus),
+    statusId: v.optional(v.id("boardStatuses")),
     tagIds: v.optional(v.array(v.id("tags"))),
     search: v.optional(v.string()),
     sortBy: v.optional(
@@ -50,6 +49,13 @@ export const list = query({
       return [];
     }
 
+    // Get all board statuses for enrichment
+    const boardStatuses = await ctx.db
+      .query("boardStatuses")
+      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
+      .collect();
+    const statusMap = new Map(boardStatuses.map((s) => [s._id, s]));
+
     // Build query
     const feedbackQuery = ctx.db
       .query("feedback")
@@ -57,9 +63,9 @@ export const list = query({
 
     let feedbackItems = await feedbackQuery.collect();
 
-    // Filter by status
-    if (args.status) {
-      feedbackItems = feedbackItems.filter((f) => f.status === args.status);
+    // Filter by statusId
+    if (args.statusId) {
+      feedbackItems = feedbackItems.filter((f) => f.statusId === args.statusId);
     }
 
     // Filter non-approved for non-members
@@ -131,23 +137,43 @@ export const list = query({
       feedbackItems = feedbackItems.slice(0, args.limit);
     }
 
-    // Add user vote status
-    if (user) {
-      const feedbackWithVoteStatus = await Promise.all(
-        feedbackItems.map(async (f) => {
-          const vote = await ctx.db
-            .query("feedbackVotes")
-            .withIndex("by_feedback_user", (q) =>
-              q.eq("feedbackId", f._id).eq("userId", user._id)
-            )
-            .unique();
-          return { ...f, hasVoted: !!vote };
-        })
+    // Enrich with board status info and user vote status
+    const enrichFeedback = async (f: (typeof feedbackItems)[0]) => {
+      // Get tags
+      const feedbackTags = await ctx.db
+        .query("feedbackTags")
+        .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
+        .collect();
+      const tags = await Promise.all(
+        feedbackTags.map(async (ft) => ctx.db.get(ft.tagId))
       );
-      return feedbackWithVoteStatus;
-    }
 
-    return feedbackItems.map((f) => ({ ...f, hasVoted: false }));
+      // Get user vote status
+      let hasVoted = false;
+      if (user) {
+        const vote = await ctx.db
+          .query("feedbackVotes")
+          .withIndex("by_feedback_user", (q) =>
+            q.eq("feedbackId", f._id).eq("userId", user._id)
+          )
+          .unique();
+        hasVoted = !!vote;
+      }
+
+      // Get board status info
+      const boardStatus = f.statusId ? statusMap.get(f.statusId) : null;
+
+      return {
+        ...f,
+        hasVoted,
+        tags: tags.filter(Boolean),
+        boardStatus: boardStatus
+          ? { name: boardStatus.name, color: boardStatus.color }
+          : null,
+      };
+    };
+
+    return Promise.all(feedbackItems.map(enrichFeedback));
   },
 });
 

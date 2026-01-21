@@ -1,8 +1,8 @@
 "use client";
 
+import { Envelope, SignOut, User } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { LogOut, Mail, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,13 +49,13 @@ export default function AccountPage() {
             <div className="flex-1">
               <p className="font-medium">{user?.name ?? "User"}</p>
               <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                <Mail className="h-3 w-3" />
+                <Envelope className="h-3 w-3" />
                 <span>{user?.email ?? ""}</span>
               </div>
             </div>
           </div>
           <Button onClick={handleSignOut} variant="destructive">
-            <LogOut className="mr-2 h-4 w-4" />
+            <SignOut className="mr-2 h-4 w-4" />
             Sign out
           </Button>
         </CardContent>

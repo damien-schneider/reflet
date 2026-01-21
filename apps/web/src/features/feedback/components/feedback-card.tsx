@@ -1,11 +1,12 @@
 import {
-  ChevronUp,
-  MessageSquare,
-  MoreVertical,
-  Pin,
-  Trash2,
-} from "lucide-react";
+  CaretUp,
+  Chat,
+  DotsThreeVertical,
+  PushPin,
+  Trash,
+} from "@phosphor-icons/react";
 import Link from "next/link";
+import type * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -60,7 +61,7 @@ export function FeedbackCard({
             onClick={() => onToggleVote(feedback._id)}
             type="button"
           >
-            <ChevronUp className="h-4 w-4" />
+            <CaretUp className="h-4 w-4" />
             <span className="font-semibold text-sm">{feedback.voteCount}</span>
           </button>
 
@@ -72,7 +73,7 @@ export function FeedbackCard({
                   href={`/dashboard/${orgSlug}/boards/${boardSlug}/feedback/${feedback._id}`}
                 >
                   {feedback.isPinned && (
-                    <Pin className="mr-1 inline h-4 w-4 text-primary" />
+                    <PushPin className="mr-1 inline h-4 w-4 text-primary" />
                   )}
                   {feedback.title}
                 </Link>
@@ -91,20 +92,20 @@ export function FeedbackCard({
               {isAdmin && (
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    render={(props) => (
+                    render={(props: React.ComponentProps<"button">) => (
                       <Button
                         {...props}
                         className="h-8 w-8"
                         size="icon"
                         variant="ghost"
                       >
-                        <MoreVertical className="h-4 w-4" />
+                        <DotsThreeVertical className="h-4 w-4" />
                       </Button>
                     )}
                   />
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => onTogglePin(feedback._id)}>
-                      <Pin className="mr-2 h-4 w-4" />
+                      <PushPin className="mr-2 h-4 w-4" />
                       {feedback.isPinned ? "Unpin" : "Pin"}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -112,7 +113,7 @@ export function FeedbackCard({
                       className="text-destructive"
                       onClick={onDelete}
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash className="mr-2 h-4 w-4" />
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -126,7 +127,7 @@ export function FeedbackCard({
             )}
             <div className="mt-3 flex items-center gap-4 text-muted-foreground text-sm">
               <span className="flex items-center gap-1">
-                <MessageSquare className="h-4 w-4" />
+                <Chat className="h-4 w-4" />
                 {feedback.commentCount}
               </span>
               <span>

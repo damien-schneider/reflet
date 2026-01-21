@@ -1,9 +1,9 @@
 "use client";
 
+import { CreditCard, Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { CreditCard, Sparkles } from "lucide-react";
 import { use } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function BillingSettingsPage({
+export default function BillingGearPage({
   params,
 }: {
   params: Promise<{ orgSlug: string }>;
@@ -56,7 +56,7 @@ export default function BillingSettingsPage({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
+              <Sparkle className="h-5 w-5" />
               Current Plan
             </CardTitle>
             <CardDescription>
@@ -100,7 +100,7 @@ export default function BillingSettingsPage({
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
+              <Sparkle className="h-5 w-5 text-primary" />
               Upgrade to Pro
             </CardTitle>
             <CardDescription>
@@ -117,7 +117,7 @@ export default function BillingSettingsPage({
             </ul>
             {isAdmin ? (
               <Button>
-                <Sparkles className="mr-2 h-4 w-4" />
+                <Sparkle className="mr-2 h-4 w-4" />
                 Upgrade to Pro
               </Button>
             ) : null}

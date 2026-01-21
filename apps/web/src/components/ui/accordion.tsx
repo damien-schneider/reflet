@@ -1,6 +1,7 @@
+"use client";
+
 import { Accordion as AccordionPrimitive } from "@base-ui/react/accordion";
-import { ArrowDown01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { CaretDownIcon, CaretUpIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 function Accordion({ className, ...props }: AccordionPrimitive.Root.Props) {
@@ -39,17 +40,13 @@ function AccordionTrigger({
         {...props}
       >
         {children}
-        <HugeiconsIcon
+        <CaretDownIcon
           className="pointer-events-none shrink-0 group-aria-expanded/accordion-trigger:hidden"
           data-slot="accordion-trigger-icon"
-          icon={ArrowDown01Icon}
-          strokeWidth={2}
         />
-        <HugeiconsIcon
+        <CaretUpIcon
           className="pointer-events-none hidden shrink-0 group-aria-expanded/accordion-trigger:inline"
           data-slot="accordion-trigger-icon"
-          icon={ArrowUp01Icon}
-          strokeWidth={2}
         />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>

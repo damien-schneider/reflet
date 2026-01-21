@@ -173,6 +173,15 @@ export const create = mutation({
       );
     }
 
+    // Get the default status (first status by order, usually "Open")
+    const boardStatuses = await ctx.db
+      .query("boardStatuses")
+      .withIndex("by_board_order", (q) => q.eq("boardId", args.boardId))
+      .collect();
+    const defaultBoardStatus = boardStatuses.sort(
+      (a, b) => a.order - b.order
+    )[0];
+
     const now = Date.now();
     const feedbackId = await ctx.db.insert("feedback", {
       boardId: args.boardId,
@@ -180,6 +189,7 @@ export const create = mutation({
       title: args.title,
       description: args.description,
       status: board.settings?.defaultStatus || "open",
+      statusId: defaultBoardStatus?._id,
       authorId: user._id,
       voteCount: 1, // Auto-vote for author
       commentCount: 0,

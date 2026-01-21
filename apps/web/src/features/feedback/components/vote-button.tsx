@@ -1,8 +1,8 @@
+import { CaretUp } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -13,7 +13,7 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { authDialogOpenAtom } from "@/store/auth";
 import {
-  feedbackSearchAtom,
+  feedbackMagnifyingGlassAtom,
   feedbackSortAtom,
   selectedStatusesAtom,
   selectedTagIdsAtom,
@@ -40,7 +40,7 @@ export function VoteButton({
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
 
-  const search = useAtomValue(feedbackSearchAtom);
+  const search = useAtomValue(feedbackMagnifyingGlassAtom);
   const sortBy = useAtomValue(feedbackSortAtom);
   const selectedStatuses = useAtomValue(selectedStatusesAtom);
   const selectedTagIds = useAtomValue(selectedTagIdsAtom);
@@ -150,7 +150,7 @@ export function VoteButton({
       onClick={handleVote}
       variant={hasVoted ? "default" : "outline"}
     >
-      <ChevronUp className={iconSizes[size]} />
+      <CaretUp className={iconSizes[size]} />
       <span>{voteCount}</span>
     </Button>
   );

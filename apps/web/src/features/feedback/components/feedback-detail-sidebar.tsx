@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {

@@ -13,7 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./context";
 
-export function SidebarMenu({
+export function SidebarList({
   className,
   ...props
 }: React.ComponentProps<"ul">) {
@@ -27,7 +27,7 @@ export function SidebarMenu({
   );
 }
 
-export function SidebarMenuItem({
+export function SidebarListItem({
   className,
   ...props
 }: React.ComponentProps<"li">) {
@@ -41,7 +41,7 @@ export function SidebarMenuItem({
   );
 }
 
-export const sidebarMenuButtonVariants = cva(
+export const sidebarListButtonVariants = cva(
   "peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-none p-2 text-left text-xs outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-active:bg-sidebar-accent data-[active=true]:font-semibold data-active:font-semibold data-[active=true]:text-sidebar-accent-foreground data-active:text-sidebar-accent-foreground data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
@@ -63,7 +63,7 @@ export const sidebarMenuButtonVariants = cva(
   }
 );
 
-export function SidebarMenuButton({
+export function SidebarListButton({
   render,
   isActive = false,
   variant = "default",
@@ -75,13 +75,13 @@ export function SidebarMenuButton({
   React.ComponentProps<"button"> & {
     isActive?: boolean;
     tooltip?: string | React.ComponentProps<typeof TooltipContent>;
-  } & VariantProps<typeof sidebarMenuButtonVariants>) {
+  } & VariantProps<typeof sidebarListButtonVariants>) {
   const { isMobile, state } = useSidebar();
   const comp = useRender({
     defaultTagName: "button",
     props: mergeProps<"button">(
       {
-        className: cn(sidebarMenuButtonVariants({ variant, size }), className),
+        className: cn(sidebarListButtonVariants({ variant, size }), className),
       },
       props
     ),
@@ -117,7 +117,7 @@ export function SidebarMenuButton({
   );
 }
 
-export function SidebarMenuAction({
+export function SidebarListAction({
   className,
   render,
   showOnHover = false,
@@ -147,7 +147,7 @@ export function SidebarMenuAction({
   });
 }
 
-export function SidebarMenuBadge({
+export function SidebarListBadge({
   className,
   ...props
 }: React.ComponentProps<"div">) {
@@ -164,7 +164,7 @@ export function SidebarMenuBadge({
   );
 }
 
-export function SidebarMenuSkeleton({
+export function SidebarListSkeleton({
   className,
   showIcon = false,
   ...props
@@ -202,7 +202,7 @@ export function SidebarMenuSkeleton({
   );
 }
 
-export function SidebarMenuSub({
+export function SidebarListSub({
   className,
   ...props
 }: React.ComponentProps<"ul">) {
@@ -219,7 +219,7 @@ export function SidebarMenuSub({
   );
 }
 
-export function SidebarMenuSubItem({
+export function SidebarListSubItem({
   className,
   ...props
 }: React.ComponentProps<"li">) {
@@ -233,7 +233,7 @@ export function SidebarMenuSubItem({
   );
 }
 
-export function SidebarMenuSubButton({
+export function SidebarListSubButton({
   render,
   size = "md",
   isActive = false,

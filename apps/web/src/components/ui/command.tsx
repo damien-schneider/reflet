@@ -1,5 +1,6 @@
-import { SearchIcon, Tick02Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+"use client";
+
+import { CheckIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { Command as CommandPrimitive } from "cmdk";
 import * as React from "react";
 import {
@@ -30,7 +31,7 @@ function Command({
 
 function CommandDialog({
   title = "Command Palette",
-  description = "Search for a command to run...",
+  description = "MagnifyingGlass for a command to run...",
   children,
   className,
   showCloseButton = false,
@@ -49,7 +50,10 @@ function CommandDialog({
         <DialogDescription>{description}</DialogDescription>
       </DialogHeader>
       <DialogContent
-        className={cn("rounded-xl! overflow-hidden p-0", className)}
+        className={cn(
+          "rounded-xl! top-1/3 translate-y-0 overflow-hidden p-0",
+          className
+        )}
         showCloseButton={showCloseButton}
       >
         {children}
@@ -74,11 +78,7 @@ function CommandInput({
           {...props}
         />
         <InputGroupAddon>
-          <HugeiconsIcon
-            className="size-4 shrink-0 opacity-50"
-            icon={SearchIcon}
-            strokeWidth={2}
-          />
+          <MagnifyingGlassIcon className="size-4 shrink-0 opacity-50" />
         </InputGroupAddon>
       </InputGroup>
     </div>
@@ -158,11 +158,7 @@ function CommandItem({
       {...props}
     >
       {children}
-      <HugeiconsIcon
-        className="ml-auto opacity-0 group-has-[[data-slot=command-shortcut]]/command-item:hidden group-data-[checked=true]/command-item:opacity-100"
-        icon={Tick02Icon}
-        strokeWidth={2}
-      />
+      <CheckIcon className="ml-auto opacity-0 group-has-[[data-slot=command-shortcut]]/command-item:hidden group-data-[checked=true]/command-item:opacity-100" />
     </CommandPrimitive.Item>
   );
 }

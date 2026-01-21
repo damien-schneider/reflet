@@ -1,7 +1,7 @@
+import { Bell, BellSlash, Envelope } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Bell, BellOff, Mail } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -93,7 +93,7 @@ export function ChangelogSubscribe({
       >
         {isSubscribed ? (
           <>
-            <BellOff className="h-4 w-4" />
+            <BellSlash className="h-4 w-4" />
             Unsubscribe
           </>
         ) : (
@@ -113,7 +113,7 @@ export function ChangelogSubscribe({
       onSubmit={handleEmailSubscribe}
     >
       <div className="relative flex-1">
-        <Mail className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Envelope className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           className="pl-9"
           disabled={isSubmitting}

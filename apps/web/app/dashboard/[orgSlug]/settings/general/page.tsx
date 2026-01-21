@@ -1,9 +1,9 @@
 "use client";
 
+import { Buildings, Check, Globe, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Building2, Check, Globe, Loader2 } from "lucide-react";
 import { use, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
-export default function GeneralSettingsPage({
+export default function GeneralGearPage({
   params,
 }: {
   params: Promise<{ orgSlug: string }>;
@@ -82,7 +82,7 @@ export default function GeneralSettingsPage({
     if (isSaving) {
       return (
         <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Spinner className="mr-2 h-4 w-4 animate-spin" />
           Saving...
         </>
       );
@@ -101,7 +101,7 @@ export default function GeneralSettingsPage({
   return (
     <div className="p-6">
       <div className="mb-8">
-        <h1 className="font-bold text-2xl">General Settings</h1>
+        <h1 className="font-bold text-2xl">General Gear</h1>
         <p className="text-muted-foreground">
           Manage your organization&apos;s basic settings
         </p>
@@ -111,7 +111,7 @@ export default function GeneralSettingsPage({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
+              <Buildings className="h-5 w-5" />
               Organization Details
             </CardTitle>
             <CardDescription>Update your organization name</CardDescription>

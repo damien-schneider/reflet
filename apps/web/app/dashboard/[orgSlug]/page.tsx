@@ -1,9 +1,14 @@
 "use client";
 
+import {
+  ArrowUpRight,
+  Chat as MessageSquare,
+  TrendUp,
+  Users,
+} from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { ArrowUpRight, MessageSquare, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 
@@ -106,7 +111,7 @@ export default function OrgDashboard({
             <CardTitle className="font-medium text-sm">
               Total Feedback
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="font-bold text-2xl">

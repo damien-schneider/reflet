@@ -1,9 +1,9 @@
 "use client";
 
+import { Chat as MessageSquare, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { MessageSquare, Plus } from "lucide-react";
 import Link from "next/link";
 import { use, useState } from "react";
 

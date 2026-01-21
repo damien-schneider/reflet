@@ -1,13 +1,13 @@
 "use client";
 
+import {
+  Buildings,
+  CreditCard,
+  Gear as GearIcon,
+  Users,
+} from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import {
-  Building2,
-  CreditCard,
-  Settings as SettingsIcon,
-  Users,
-} from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 
@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function SettingsPage({
+export default function GearPage({
   params,
 }: {
   params: Promise<{ orgSlug: string }>;
@@ -45,7 +45,7 @@ export default function SettingsPage({
     {
       title: "General",
       description: "Manage organization name, description, and visibility",
-      icon: Building2,
+      icon: Buildings,
       href: `/dashboard/${orgSlug}/settings/general`,
     },
     {
@@ -66,9 +66,9 @@ export default function SettingsPage({
     <div className="p-6">
       <div className="mb-8">
         <div className="flex items-center gap-3">
-          <SettingsIcon className="h-8 w-8 text-muted-foreground" />
+          <GearIcon className="h-8 w-8 text-muted-foreground" />
           <div>
-            <h1 className="font-bold text-2xl">Settings</h1>
+            <h1 className="font-bold text-2xl">Gear</h1>
             <p className="text-muted-foreground">
               Manage settings for {org.name}
             </p>

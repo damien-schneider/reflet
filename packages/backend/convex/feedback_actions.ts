@@ -150,12 +150,22 @@ export const createPublic = mutation({
     const user = await authComponent.safeGetAuthUser(ctx);
     const now = Date.now();
 
+    // Get the default status (first status by order, usually "Open")
+    const boardStatuses = await ctx.db
+      .query("boardStatuses")
+      .withIndex("by_board_order", (q) => q.eq("boardId", args.boardId))
+      .collect();
+    const defaultBoardStatus = boardStatuses.sort(
+      (a, b) => a.order - b.order
+    )[0];
+
     const feedbackId = await ctx.db.insert("feedback", {
       boardId: args.boardId,
       organizationId: board.organizationId,
       title: args.title,
       description: args.description || "",
       status: board.settings?.defaultStatus || "open",
+      statusId: defaultBoardStatus?._id,
       authorId: user?._id || `anonymous:${args.email || "unknown"}`,
       voteCount: 0,
       commentCount: 0,

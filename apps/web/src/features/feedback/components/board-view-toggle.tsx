@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, List } from "lucide-react";
+import { GridFour, List } from "@phosphor-icons/react";
 import { useCallback } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,7 @@ export function BoardViewToggle({
             />
           }
         >
-          <LayoutGrid className="h-4 w-4" />
+          <GridFour className="h-4 w-4" />
         </TooltipTrigger>
         <TooltipContent>Roadmap (Kanban)</TooltipContent>
       </Tooltip>

@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react";
+import { CaretRight } from "@phosphor-icons/react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export default function CTA() {
             rel="noopener noreferrer"
             target="_blank"
           >
-            Read the docs <ChevronRight className="ml-1" size={16} />
+            Read the docs <CaretRight className="ml-1" size={16} />
           </a>
         </div>
       </div>
