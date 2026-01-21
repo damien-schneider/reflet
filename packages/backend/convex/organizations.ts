@@ -29,6 +29,20 @@ const generateSlug = (name: string): string => {
     .replace(/^-|-$/g, "");
 };
 
+// Helper to validate slug format
+const isValidSlug = (slug: string): boolean => {
+  return /^[a-z0-9-]+$/.test(slug);
+};
+
+// Helper to validate color (prevent CSS injection)
+const isValidColor = (color: string): boolean => {
+  // Allow hex, rgb, rgba, hsl, hsla, and named colors
+  // Block characters that could break out of CSS property context
+  if (color.length > 50) return false;
+  if (/[;{}"'<>]/.test(color)) return false;
+  return true;
+};
+
 // ============================================
 // QUERIES
 // ============================================
@@ -174,7 +188,16 @@ export const create = mutation({
     const user = await getAuthUser(ctx);
 
     // Generate or validate slug
-    let slug = args.slug || generateSlug(args.name);
+    let slug = args.slug;
+    if (slug) {
+      if (!isValidSlug(slug)) {
+        throw new Error(
+          "Invalid slug format. Use lowercase letters, numbers, and hyphens only."
+        );
+      }
+    } else {
+      slug = generateSlug(args.name);
+    }
 
     // Ensure slug is unique
     const existingOrg = await ctx.db
@@ -183,6 +206,9 @@ export const create = mutation({
       .unique();
 
     if (existingOrg) {
+      if (args.slug) {
+        throw new Error("This slug is already taken");
+      }
       // Add random suffix
       slug = `${slug}-${Math.random().toString(36).substring(2, 8)}`;
     }
@@ -257,9 +283,20 @@ export const update = mutation({
       throw new Error("Custom branding requires a Pro subscription");
     }
 
+    // Validate color
+    if (args.primaryColor && !isValidColor(args.primaryColor)) {
+      throw new Error("Invalid primary color format");
+    }
+
     // Validate slug uniqueness if changing
     const newSlug = args.slug;
     if (newSlug && newSlug !== org.slug) {
+      if (!isValidSlug(newSlug)) {
+        throw new Error(
+          "Invalid slug format. Use lowercase letters, numbers, and hyphens only."
+        );
+      }
+
       const existingOrg = await ctx.db
         .query("organizations")
         .withIndex("by_slug", (q) => q.eq("slug", newSlug))

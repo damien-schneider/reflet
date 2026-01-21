@@ -7,3 +7,8 @@
 **Vulnerability:** Missing default security headers in Next.js applications (Clickjacking, MIME sniffing).
 **Learning:** Next.js requires manual configuration of security headers in `next.config.ts` as they are not enabled by default. `Permissions-Policy` is especially important for limiting feature access.
 **Prevention:** Implement `async headers()` in `next.config.ts` returning strict policies for `X-Frame-Options`, `HSTS`, and `Permissions-Policy`.
+
+## 2026-02-24 - CSS Injection via Style Props
+**Vulnerability:** User-controlled inputs (like `primaryColor`) rendered directly into React `style` props can allow CSS injection (e.g., `red; background-image: ...`) if not validated.
+**Learning:** While React escapes text content, it does not fully sanitize `style` object values against valid CSS syntax that might introduce unexpected properties or payloads.
+**Prevention:** Implement strict regex validation for CSS values (e.g., allow-listing specific formats or blocking `;`, `}`, `{`) in the backend before storage.
