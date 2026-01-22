@@ -3,7 +3,7 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useAtomValue } from "jotai";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -117,7 +117,9 @@ export function VoteButton({
     }
   );
 
-  const handleVote = () => {
+  const handleVote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     authGuard(async () => {
       await toggleVote({ feedbackId, voteType: "upvote" });
     });
@@ -135,33 +137,41 @@ export function VoteButton({
     lg: "h-5 w-5",
   };
 
-  const button = (
-    <Button
+  const label = hasVoted
+    ? `Remove vote (${voteCount})`
+    : `Upvote (${voteCount})`;
+
+  const tooltipText = (() => {
+    if (!isAuthenticated) {
+      return "Sign in to vote";
+    }
+    return hasVoted ? "Remove vote" : "Upvote";
+  })();
+
+  const trigger = (
+    <TooltipTrigger
+      aria-label={label}
+      aria-pressed={hasVoted}
       className={cn(
+        buttonVariants({ variant: hasVoted ? "default" : "outline" }),
         "flex flex-col items-center justify-center gap-0.5 font-semibold",
         sizeClasses[size],
         hasVoted && "bg-primary text-primary-foreground",
         className
       )}
       onClick={handleVote}
-      variant={hasVoted ? "default" : "outline"}
     >
-      <CaretUp className={iconSizes[size]} />
+      <CaretUp aria-hidden="true" className={iconSizes[size]} />
       <span>{voteCount}</span>
-    </Button>
+    </TooltipTrigger>
   );
 
-  // Show tooltip for unauthenticated users
-  if (!isAuthenticated) {
-    return (
-      <Tooltip>
-        <TooltipTrigger>{button}</TooltipTrigger>
-        <TooltipContent>
-          <p>Sign in to vote</p>
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return button;
+  return (
+    <Tooltip>
+      {trigger}
+      <TooltipContent>
+        <p>{tooltipText}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
 }
