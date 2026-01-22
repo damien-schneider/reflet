@@ -44,7 +44,7 @@ export function ReleaseCard({
             {!isPublished && <Badge variant="secondary">Draft</Badge>}
           </div>
 
-          <h2 className="font-semibold text-xl transition-colors group-hover:text-primary">
+          <h2 className="font-semibold text-xl transition-colors group-hover:text-olive-600">
             {release.title}
           </h2>
         </div>
@@ -111,7 +111,7 @@ export function ReleaseCard({
       {/* Read more link */}
       {!showFullContent && onClick && (
         <div className="mt-4">
-          <span className="inline-flex items-center gap-1 text-primary text-sm hover:underline">
+          <span className="inline-flex items-center gap-1 text-olive-600 text-sm hover:underline">
             Read more
             <CaretRight className="h-4 w-4" />
           </span>

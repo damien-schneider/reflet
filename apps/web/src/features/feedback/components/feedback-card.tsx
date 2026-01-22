@@ -49,14 +49,14 @@ export function FeedbackCard({
   boardSlug,
 }: FeedbackCardProps) {
   return (
-    <Card className="transition-all hover:border-primary/50">
+    <Card className="transition-all hover:border-olive-600/50">
       <CardHeader className="pb-3">
         <div className="flex items-start gap-4">
           <button
             className={`flex flex-col items-center rounded-lg border p-2 transition-colors ${
               feedback.hasVoted
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border hover:border-primary"
+                ? "border-olive-600 bg-olive-600/10 text-olive-600"
+                : "border-border hover:border-olive-600"
             }`}
             onClick={() => onToggleVote(feedback._id)}
             type="button"
@@ -69,11 +69,11 @@ export function FeedbackCard({
             <div className="flex items-start justify-between">
               <div>
                 <Link
-                  className="font-semibold transition-colors hover:text-primary hover:underline"
+                  className="font-semibold transition-colors hover:text-olive-600 hover:underline"
                   href={`/dashboard/${orgSlug}/boards/${boardSlug}/feedback/${feedback._id}`}
                 >
                   {feedback.isPinned && (
-                    <PushPin className="mr-1 inline h-4 w-4 text-primary" />
+                    <PushPin className="mr-1 inline h-4 w-4 text-olive-600" />
                   )}
                   {feedback.title}
                 </Link>

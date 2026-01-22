@@ -97,10 +97,10 @@ export default function BillingGearPage({
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-primary/5">
+        <Card className="border-olive-600/20 bg-olive-600/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkle className="h-5 w-5 text-primary" />
+              <Sparkle className="h-5 w-5 text-olive-600" />
               Upgrade to Pro
             </CardTitle>
             <CardDescription>

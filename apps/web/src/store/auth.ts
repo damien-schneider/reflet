@@ -15,12 +15,30 @@ export const authDialogOpenAtom = atom(false);
 export const authDialogModeAtom = atom<"signIn" | "signUp">("signIn");
 
 /**
- * Helper atom to open auth dialog in a specific mode
+ * Custom message to show in the auth dialog (e.g., explaining why auth is required)
+ */
+export const authDialogMessageAtom = atom<string | null>(null);
+
+/**
+ * Helper atom to open auth dialog in a specific mode with optional message
  */
 export const openAuthDialogAtom = atom(
   null,
-  (_get, set, mode?: "signIn" | "signUp") => {
-    set(authDialogModeAtom, mode ?? "signIn");
+  (
+    _get,
+    set,
+    options?:
+      | { mode?: "signIn" | "signUp"; message?: string }
+      | "signIn"
+      | "signUp"
+  ) => {
+    if (typeof options === "string") {
+      set(authDialogModeAtom, options);
+      set(authDialogMessageAtom, null);
+    } else {
+      set(authDialogModeAtom, options?.mode ?? "signIn");
+      set(authDialogMessageAtom, options?.message ?? null);
+    }
     set(authDialogOpenAtom, true);
   }
 );
@@ -30,4 +48,5 @@ export const openAuthDialogAtom = atom(
  */
 export const closeAuthDialogAtom = atom(null, (_get, set) => {
   set(authDialogOpenAtom, false);
+  set(authDialogMessageAtom, null);
 });

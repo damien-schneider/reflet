@@ -125,7 +125,7 @@ export function FeedbackDetailDialog({
     if (!feedbackId) {
       return;
     }
-    await toggleVote({ feedbackId });
+    await toggleVote({ feedbackId, voteType: "upvote" });
   }, [feedbackId, toggleVote]);
 
   const handleTogglePin = useCallback(async () => {
@@ -234,7 +234,7 @@ export function FeedbackDetailDialog({
     setCommentToDelete(null);
   }, [commentToDelete, deleteComment]);
 
-  if (!feedbackId) {
+  if (!(feedbackId && feedback)) {
     return null;
   }
 
@@ -255,13 +255,14 @@ export function FeedbackDetailDialog({
         <button
           className={cn(
             "flex flex-col items-center rounded-lg border p-3 transition-colors hover:bg-accent",
-            feedback.hasVoted && "border-primary bg-primary/10 text-primary"
+            feedback?.hasVoted &&
+              "border-olive-600 bg-olive-600/10 text-olive-600"
           )}
           onClick={handleVote}
           type="button"
         >
           <CaretUp className="h-5 w-5" />
-          <span className="font-bold text-lg">{feedback.voteCount}</span>
+          <span className="font-bold text-lg">{feedback?.voteCount}</span>
         </button>
 
         <div className="flex-1">
@@ -297,15 +298,16 @@ export function FeedbackDetailDialog({
             <button
               className={cn(
                 "text-left font-semibold text-xl",
-                canEdit && "cursor-pointer transition-colors hover:text-primary"
+                canEdit &&
+                  "cursor-pointer transition-colors hover:text-olive-600"
               )}
               disabled={!canEdit}
               onClick={() => canEdit && setIsEditingTitle(true)}
               type="button"
             >
-              {feedback.title}
-              {feedback.isPinned && (
-                <PushPin className="ml-2 inline h-4 w-4 text-primary" />
+              {feedback?.title}
+              {feedback?.isPinned && (
+                <PushPin className="ml-2 inline h-4 w-4 text-olive-600" />
               )}
             </button>
           )}
@@ -314,13 +316,13 @@ export function FeedbackDetailDialog({
           <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {formatDistanceToNow(feedback.createdAt, {
+              {formatDistanceToNow(feedback?.createdAt || 0, {
                 addSuffix: true,
               })}
             </span>
             <span className="flex items-center gap-1">
               <Chat className="h-3 w-3" />
-              {feedback.commentCount} comments
+              {feedback?.commentCount} comments
             </span>
           </div>
         </div>
@@ -334,7 +336,7 @@ export function FeedbackDetailDialog({
             onValueChange={(val) =>
               handleStatusChange(val as Id<"boardStatuses">)
             }
-            value={feedback.statusId || undefined}
+            value={feedback?.statusId || undefined}
           >
             <SelectTrigger className="w-35">
               <SelectValue placeholder="Set status">
@@ -381,7 +383,7 @@ export function FeedbackDetailDialog({
               {effectiveIsAdmin && (
                 <DropdownListItem onClick={handleTogglePin}>
                   <PushPin className="mr-2 h-4 w-4" />
-                  {feedback.isPinned ? "Unpin" : "Pin"} feedback
+                  {feedback?.isPinned ? "Unpin" : "Pin"} feedback
                 </DropdownListItem>
               )}
               <DropdownListSeparator />
@@ -433,13 +435,13 @@ export function FeedbackDetailDialog({
             onClick={() => canEdit && setIsEditingDescription(true)}
             type="button"
           >
-            {feedback.description || "No description provided."}
+            {feedback?.description || "No description provided."}
           </button>
         )}
       </div>
 
       {/* Tags */}
-      {feedback.tags && feedback.tags.length > 0 && (
+      {feedback?.tags && feedback.tags.length > 0 && (
         <div className="mb-6">
           <h3 className="mb-2 font-medium">Tags</h3>
           <div className="flex flex-wrap gap-2">

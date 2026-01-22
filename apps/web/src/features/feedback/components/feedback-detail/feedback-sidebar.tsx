@@ -65,7 +65,7 @@ export function FeedbackSidebar({
   const currentStatus = boardStatuses?.find((s) => s._id === feedback.statusId);
 
   const handleVote = useCallback(async () => {
-    await toggleVote({ feedbackId });
+    await toggleVote({ feedbackId, voteType: "upvote" });
   }, [feedbackId, toggleVote]);
 
   const handleStatusChange = useCallback(
@@ -89,7 +89,8 @@ export function FeedbackSidebar({
         <Button
           className={cn(
             "w-full justify-start gap-3",
-            feedback.hasVoted && "border-primary bg-primary/10 text-primary"
+            feedback.hasVoted &&
+              "border-olive-600 bg-olive-600/10 text-olive-600"
           )}
           onClick={handleVote}
           variant="outline"

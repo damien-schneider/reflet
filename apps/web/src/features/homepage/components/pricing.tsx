@@ -2,6 +2,7 @@ import { Check } from "@phosphor-icons/react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { H2, H3 } from "@/components/ui/typography";
 
 const PRICING_TIERS = [
   {
@@ -61,9 +62,9 @@ export default function Pricing() {
   return (
     <section className="bg-background py-24" id="pricing">
       <div className="mx-auto max-w-7xl px-4 text-left sm:px-6 lg:px-8">
-        <h2 className="mb-20 font-bold text-4xl tracking-tight sm:text-5xl">
+        <H2 className="mb-20 font-bold text-4xl tracking-tight sm:text-5xl">
           Simple pricing for teams of all sizes.
-        </h2>
+        </H2>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {PRICING_TIERS.map((tier) => (
@@ -88,7 +89,7 @@ function PricingCard({ tier }: PricingCardProps) {
             {tier.badge}
           </div>
         )}
-        <h3 className="mb-2 font-medium text-xl">{tier.name}</h3>
+        <H3 className="mb-2 font-medium text-xl">{tier.name}</H3>
         <div className="mb-2 flex items-baseline gap-1">
           <span className="font-semibold text-2xl">{tier.price}</span>
           <span className="text-primary-foreground/70">{tier.period}</span>
@@ -127,7 +128,7 @@ function PricingCard({ tier }: PricingCardProps) {
 
   return (
     <div className="flex flex-col rounded-xl border border-transparent bg-secondary p-8 transition-colors hover:border-border">
-      <h3 className="mb-2 font-medium text-foreground text-xl">{tier.name}</h3>
+      <H3 className="mb-2 font-medium text-foreground text-xl">{tier.name}</H3>
       <div className="mb-2 flex items-baseline gap-1">
         <span className="font-semibold text-2xl text-foreground">
           {tier.price}

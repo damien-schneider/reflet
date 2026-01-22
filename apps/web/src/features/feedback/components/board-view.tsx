@@ -12,7 +12,7 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -39,6 +39,7 @@ import {
 import { FeedbackCardWithMorphingDialog } from "@/features/feedback/components/feedback-card-with-morphing-dialog";
 import { FeedbackDetailDialog } from "@/features/feedback/components/feedback-detail";
 import { RoadmapKanban } from "@/features/feedback/components/roadmap-kanban";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
 
 type SortOption = "votes" | "newest" | "oldest" | "comments";
@@ -53,8 +54,57 @@ interface FeedbackItem {
   statusId?: string;
   isPinned?: boolean;
   hasVoted?: boolean;
+  userVoteType?: "upvote" | "downvote" | null;
+  upvoteCount?: number;
+  downvoteCount?: number;
   boardId: string;
   tags?: Array<{ _id: string; name: string; color: string } | null>;
+}
+
+function getVoteValue(
+  voteType: "upvote" | "downvote" | null | undefined
+): number {
+  if (voteType === "upvote") {
+    return 1;
+  }
+  if (voteType === "downvote") {
+    return -1;
+  }
+  return 0;
+}
+
+function applyOptimisticVote(
+  item: FeedbackItem,
+  optimistic:
+    | { voteType: "upvote" | "downvote" | null; pending: boolean }
+    | undefined
+): FeedbackItem {
+  if (!optimistic) {
+    return item;
+  }
+
+  const originalVoteType = item.userVoteType;
+  const newVoteType = optimistic.voteType;
+
+  // Calculate deltas
+  const oldUpvote = originalVoteType === "upvote" ? 1 : 0;
+  const oldDownvote = originalVoteType === "downvote" ? 1 : 0;
+  const newUpvote = newVoteType === "upvote" ? 1 : 0;
+  const newDownvote = newVoteType === "downvote" ? 1 : 0;
+
+  const upvoteDelta = newUpvote - oldUpvote;
+  const downvoteDelta = newDownvote - oldDownvote;
+  const voteCountDelta =
+    getVoteValue(newVoteType) - getVoteValue(originalVoteType);
+
+  return {
+    ...item,
+    userVoteType: newVoteType,
+    hasVoted: newVoteType !== null,
+    upvoteCount: (item.upvoteCount ?? 0) + upvoteDelta,
+    downvoteCount: (item.downvoteCount ?? 0) + downvoteDelta,
+    voteCount: item.voteCount + voteCountDelta,
+  };
 }
 
 function sortFeedback(
@@ -122,10 +172,21 @@ export function BoardView({
   const [sortBy, setSortBy] = useState<SortOption>("votes");
   const [selectedStatusIds, setSelectedStatusIds] = useState<string[]>([]);
 
+  // Track optimistic vote updates
+  const [optimisticVotes, setOptimisticVotes] = useState<
+    Map<string, { voteType: "upvote" | "downvote" | null; pending: boolean }>
+  >(new Map());
+  const pendingVotesRef = useRef<Set<string>>(new Set());
+
+  // Auth guard for protected actions
+  const { guard: authGuard, isAuthenticated } = useAuthGuard({
+    message: "Connectez-vous pour voter sur ce feedback",
+  });
+
   // Mutations - use different API based on membership
   const createFeedbackPublic = useMutation(api.feedback_actions.createPublic);
   const createFeedbackMember = useMutation(api.feedback.create);
-  const toggleVote = useMutation(api.votes.toggle);
+  const toggleVoteMutation = useMutation(api.votes.toggle);
 
   // Queries - use unified API that handles member vs non-member filtering
   const feedback = useQuery(
@@ -165,13 +226,16 @@ export function BoardView({
     }
   }, []);
 
-  // Filter and sort feedback
+  // Filter, apply optimistic updates, and sort feedback
   const filteredFeedback = useMemo(() => {
     if (!feedback) {
       return [];
     }
 
-    let result = [...feedback];
+    // Apply optimistic vote updates
+    let result = feedback.map((item) =>
+      applyOptimisticVote(item, optimisticVotes.get(item._id))
+    );
 
     // Status filter (for multiple statuses - API only handles one)
     if (selectedStatusIds.length > 0) {
@@ -182,7 +246,7 @@ export function BoardView({
 
     // Sort (API handles basic sorting, but we ensure pinned items are first)
     return sortFeedback(result, sortBy);
-  }, [feedback, selectedStatusIds, sortBy]);
+  }, [feedback, selectedStatusIds, sortBy, optimisticVotes]);
 
   // Handlers
   const handleSubmitFeedback = async () => {
@@ -215,14 +279,66 @@ export function BoardView({
     }
   };
 
-  const handleToggleVote = async (e: React.MouseEvent, feedbackId: string) => {
-    e.stopPropagation();
-    try {
-      await toggleVote({ feedbackId: feedbackId as Id<"feedback"> });
-    } catch {
-      // Error handling
-    }
-  };
+  const handleToggleVote = useCallback(
+    async (
+      e: React.MouseEvent,
+      feedbackId: string,
+      voteType: "upvote" | "downvote"
+    ) => {
+      e.stopPropagation();
+
+      // Guard: show auth dialog if not authenticated
+      if (!isAuthenticated) {
+        authGuard(() => undefined);
+        return;
+      }
+
+      // Find current state from server data or optimistic state
+      const currentFeedback = feedback?.find((f) => f._id === feedbackId);
+      const optimisticState = optimisticVotes.get(feedbackId);
+      const currentVoteType =
+        optimisticState?.voteType ?? currentFeedback?.userVoteType ?? null;
+
+      // Prevent duplicate requests
+      if (pendingVotesRef.current.has(feedbackId)) {
+        return;
+      }
+      pendingVotesRef.current.add(feedbackId);
+
+      // Calculate new vote type (toggle behavior)
+      const newVoteType = currentVoteType === voteType ? null : voteType;
+
+      // Apply optimistic update
+      setOptimisticVotes((prev) => {
+        const next = new Map(prev);
+        next.set(feedbackId, { voteType: newVoteType, pending: true });
+        return next;
+      });
+
+      try {
+        await toggleVoteMutation({
+          feedbackId: feedbackId as Id<"feedback">,
+          voteType,
+        });
+      } catch {
+        // Revert optimistic update on error
+        setOptimisticVotes((prev) => {
+          const next = new Map(prev);
+          next.delete(feedbackId);
+          return next;
+        });
+      } finally {
+        pendingVotesRef.current.delete(feedbackId);
+        // Clear optimistic state after server confirms (data will refresh)
+        setOptimisticVotes((prev) => {
+          const next = new Map(prev);
+          next.delete(feedbackId);
+          return next;
+        });
+      }
+    },
+    [feedback, optimisticVotes, toggleVoteMutation, isAuthenticated, authGuard]
+  );
 
   const handleFeedbackClick = useCallback((feedbackId: Id<"feedback">) => {
     setSelectedFeedbackId(feedbackId);
@@ -249,6 +365,19 @@ export function BoardView({
 
   return (
     <>
+      {/* Search bar - always visible, centered */}
+      <div className="mx-auto mb-6 flex max-w-md justify-center">
+        <div className="relative w-full">
+          <MagnifyingGlassIcon className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="h-10 rounded-full border-0 bg-muted pr-4 pl-11 focus-visible:ring-2"
+            onChange={(e) => setMagnifyingGlassQuery(e.target.value)}
+            placeholder="Search feedback..."
+            value={searchQuery}
+          />
+        </div>
+      </div>
+
       {/* Toolbar */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
@@ -273,10 +402,7 @@ export function BoardView({
             </Link>
           )}
           {/* Submit feedback button */}
-          <Button
-            onClick={() => setShowSubmitDialog(true)}
-            style={{ backgroundColor: primaryColor }}
-          >
+          <Button onClick={() => setShowSubmitDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Submit Feedback
           </Button>
@@ -285,18 +411,7 @@ export function BoardView({
 
       {/* Filters bar (only in feed view) */}
       {view === "feed" && (
-        <div className="mb-6 flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:items-center">
-          {/* Search */}
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-9"
-              onChange={(e) => setMagnifyingGlassQuery(e.target.value)}
-              placeholder="Search feedback..."
-              value={searchQuery}
-            />
-          </div>
-
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           {/* Sort */}
           <Select
             onValueChange={(v) => setSortBy(v as SortOption)}
@@ -360,7 +475,7 @@ export function BoardView({
       )}
 
       {/* Content */}
-      <div className="board-view-content">
+      <div className="board-view-content mx-auto max-w-3xl">
         {view === "roadmap" ? (
           <RoadmapKanban
             boardId={activeBoardId}
@@ -418,6 +533,9 @@ interface FeedbackFeedViewProps {
     statusId?: string;
     isPinned?: boolean;
     hasVoted?: boolean;
+    userVoteType?: "upvote" | "downvote" | null;
+    upvoteCount?: number;
+    downvoteCount?: number;
     boardId: string;
     tags?: Array<{ _id: string; name: string; color: string } | null>;
   }>;
@@ -428,7 +546,11 @@ interface FeedbackFeedViewProps {
   activeBoardId: Id<"boards">;
   isMember: boolean;
   isAdmin: boolean;
-  onVote: (e: React.MouseEvent, feedbackId: string) => void;
+  onVote: (
+    e: React.MouseEvent,
+    feedbackId: string,
+    voteType: "upvote" | "downvote"
+  ) => void;
   onSubmitClick: () => void;
 }
 

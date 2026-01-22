@@ -1,0 +1,118 @@
+Server Side Public License (SSPL) v1
+
+Copyright (c) 2024-2026 Reflet
+
+1. Definitions
+
+"This License" refers to Server Side Public License.
+
+"The Program" refers to any copyrightable work licensed under this License.
+
+"You" (or "Your") means an individual or a legal entity exercising permissions
+granted by this License.
+
+"Source form" shall mean the preferred form for making modifications, including
+but not limited to software source code, documentation source, and configuration
+files.
+
+"Object form" shall mean any form resulting from mechanical transformation or
+translation of a Source form.
+
+"Contribution" shall mean any work of authorship that is submitted to the
+Licensor for inclusion in the Program.
+
+"Service Source Code" means Source form of the Program and all programs that
+you use to make the Program available as a service, including management
+software, user interfaces, application program interfaces, automation software,
+monitoring software, backup software, storage software, and hosting software.
+
+2. Grant of Rights
+
+Subject to the terms and conditions of this License, each Contributor hereby
+grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free,
+irrevocable copyright license to:
+
+a) use, copy, modify, and prepare derivative works of the Program;
+b) publicly display and publicly perform the Program;
+c) distribute copies of the Program and derivative works thereof in Source or
+   Object form.
+
+3. Copyleft for Network Use
+
+If you make the functionality of the Program or a modified version available to
+third parties as a service, you must make the Service Source Code available via
+network download to everyone at no charge, under the terms of this License.
+Making the functionality of the Program available to third parties as a service
+includes, without limitation, enabling third parties to interact with the
+functionality of the Program remotely through a computer network, offering a
+service the value of which entirely or primarily derives from the value of the
+Program, or offering a service that accomplishes for users the primary purpose
+of the Program or modified version.
+
+4. Contribution Requirements
+
+All Contributions to the Program must be submitted under this License. By
+submitting a Contribution, you represent that you have the necessary rights to
+grant the license and that your Contribution does not infringe any third party's
+rights.
+
+5. Commercial Use Restriction
+
+You may not use the Program or any derivative works:
+
+a) To create a commercial product or service that competes with Reflet or any
+   similar product or service offered by the Licensor;
+b) To offer a hosted or managed service based primarily on the Program's
+   functionality without explicit written permission from the Licensor.
+
+For commercial licensing options, contact: licensing@reflet.app
+
+6. Attribution
+
+You must retain all copyright, patent, trademark, and attribution notices from
+the Source form of the Program in any copies or derivative works.
+
+7. Disclaimer of Warranty
+
+THE PROGRAM IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE PROGRAM OR THE USE OR OTHER DEALINGS IN THE PROGRAM.
+
+8. Limitation of Liability
+
+IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING WILL ANY
+COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS THE PROGRAM AS
+PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL,
+INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE PROGRAM.
+
+9. Acceptance
+
+You are not required to accept this License, since you have not signed it.
+However, nothing else grants you permission to modify or distribute the Program
+or its derivative works. These actions are prohibited by law if you do not
+accept this License. Therefore, by modifying or distributing the Program (or any
+work based on the Program), you indicate your acceptance of this License.
+
+10. Termination
+
+Your rights under this License will terminate automatically if you fail to
+comply with any of its terms. However, parties who have received copies, or
+rights, from you under this License will not have their licenses terminated so
+long as such parties remain in full compliance.
+
+---
+
+ADDITIONAL TERMS FOR REFLET
+
+The Reflet project welcomes contributions! By contributing to this project, you
+agree that:
+
+1. Your contributions will be licensed under this same license
+2. You have the right to license your contribution
+3. Your contribution does not infringe upon anyone else's rights
+
+For questions about licensing or commercial use, please contact: licensing@reflet.app

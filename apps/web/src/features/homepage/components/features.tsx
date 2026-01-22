@@ -7,6 +7,8 @@ import {
   Users,
 } from "@phosphor-icons/react";
 
+import { H2, H3 } from "@/components/ui/typography";
+
 const FEATURES = [
   {
     id: "feedback-management",
@@ -58,9 +60,9 @@ export default function Features() {
           </span>
         </div>
 
-        <h2 className="mb-16 max-w-2xl font-bold text-4xl tracking-tight sm:text-5xl">
+        <H2 className="mb-16 max-w-2xl text-4xl tracking-tight sm:text-5xl">
           Everything you need to build products users love.
-        </h2>
+        </H2>
 
         <div className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((feature) => (
@@ -87,9 +89,9 @@ function FeatureCard({ feature }: FeatureCardProps) {
       <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-foreground">
         <Icon size={24} />
       </div>
-      <h3 className="mb-3 font-medium text-foreground text-xl">
+      <H3 className="mb-3 font-medium text-foreground text-xl">
         {feature.title}
-      </h3>
+      </H3>
       <p className="text-muted-foreground text-sm leading-relaxed">
         {feature.description}
       </p>
@@ -109,13 +111,13 @@ function OpenSourceCard() {
         <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-foreground/10 text-primary-foreground">
           <Lock size={24} />
         </div>
-        <h3 className="mb-3 font-medium text-xl">Open Source</h3>
+        <H3 className="mb-3 font-medium text-xl">Open Source</H3>
         <p className="mb-6 text-primary-foreground/70 text-sm leading-relaxed">
           Audit our code, host it yourself, or contribute to the community. Your
           data is yours.
         </p>
       </div>
-      <span className="self-start font-medium text-primary-foreground text-sm underline underline-offset-4 hover:text-primary-foreground/80">
+      <span className="self-start font-medium text-olive-100 text-sm underline underline-offset-4 hover:text-olive-100/80">
         View on GitHub
       </span>
     </a>

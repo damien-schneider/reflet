@@ -471,7 +471,7 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
                   <>
                     Vous n'avez pas de compte ?{" "}
                     <button
-                      className="font-medium text-primary hover:underline"
+                      className="font-medium text-olive-600 hover:underline"
                       onClick={() => {
                         setMode(null);
                         setEmailChecked(false);
@@ -486,7 +486,7 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
                   <>
                     Vous avez déjà un compte ?{" "}
                     <button
-                      className="font-medium text-primary hover:underline"
+                      className="font-medium text-olive-600 hover:underline"
                       onClick={() => {
                         setMode(null);
                         setEmailChecked(false);

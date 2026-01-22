@@ -2,16 +2,15 @@ import { CaretUp } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { authClient } from "@/lib/auth-client";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { cn } from "@/lib/utils";
-import { authDialogOpenAtom } from "@/store/auth";
 import {
   feedbackMagnifyingGlassAtom,
   feedbackSortAtom,
@@ -36,9 +35,9 @@ export function VoteButton({
   className,
   boardId,
 }: VoteButtonProps) {
-  const setAuthDialogOpen = useSetAtom(authDialogOpenAtom);
-  const { data: session } = authClient.useSession();
-  const userId = session?.user?.id;
+  const { guard: authGuard, isAuthenticated } = useAuthGuard({
+    message: "Connectez-vous pour voter sur ce feedback",
+  });
 
   const search = useAtomValue(feedbackMagnifyingGlassAtom);
   const sortBy = useAtomValue(feedbackSortAtom);
@@ -118,13 +117,10 @@ export function VoteButton({
     }
   );
 
-  const handleVote = async () => {
-    if (!userId) {
-      setAuthDialogOpen(true);
-      return;
-    }
-
-    await toggleVote({ feedbackId });
+  const handleVote = () => {
+    authGuard(async () => {
+      await toggleVote({ feedbackId, voteType: "upvote" });
+    });
   };
 
   const sizeClasses = {
@@ -156,7 +152,7 @@ export function VoteButton({
   );
 
   // Show tooltip for unauthenticated users
-  if (!userId) {
+  if (!isAuthenticated) {
     return (
       <Tooltip>
         <TooltipTrigger>{button}</TooltipTrigger>

@@ -203,6 +203,7 @@ export const create = mutation({
     await ctx.db.insert("feedbackVotes", {
       feedbackId,
       userId: user._id,
+      voteType: "upvote",
       createdAt: now,
     });
 

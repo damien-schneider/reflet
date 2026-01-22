@@ -5624,4 +5624,28 @@ export declare const components: {
       getServerTime: FunctionReference<"mutation", "internal", {}, number>;
     };
   };
+  shardedCounter: {
+    public: {
+      add: FunctionReference<
+        "mutation",
+        "internal",
+        { count: number; name: string; shard?: number; shards?: number },
+        number
+      >;
+      count: FunctionReference<"query", "internal", { name: string }, number>;
+      estimateCount: FunctionReference<
+        "query",
+        "internal",
+        { name: string; readFromShards?: number; shards?: number },
+        any
+      >;
+      rebalance: FunctionReference<
+        "mutation",
+        "internal",
+        { name: string; shards?: number },
+        any
+      >;
+      reset: FunctionReference<"mutation", "internal", { name: string }, any>;
+    };
+  };
 };

@@ -16,6 +16,7 @@ import {
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
+import { H3 } from "@/components/ui/typography";
 
 interface FeedbackMainContentProps {
   feedback: {
@@ -64,8 +65,8 @@ export function FeedbackMainContent({
           <button
             className={`flex flex-col items-center rounded-lg border p-3 transition-colors ${
               feedback.hasVoted
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border hover:border-primary"
+                ? "border-olive-600 bg-olive-600/10 text-olive-600"
+                : "border-border hover:border-olive-600"
             }`}
             onClick={handleToggleVote}
             type="button"
@@ -76,12 +77,12 @@ export function FeedbackMainContent({
 
           <div className="flex-1">
             <div className="flex items-start justify-between">
-              <h1 className="font-bold text-xl">
+              <H3 variant="card">
                 {feedback.isPinned && (
-                  <PushPin className="mr-2 inline h-5 w-5 text-primary" />
+                  <PushPin className="mr-2 inline h-5 w-5 text-olive-600" />
                 )}
                 {feedback.title}
-              </h1>
+              </H3>
               {isAdmin && (
                 <DropdownList>
                   <DropdownListTrigger

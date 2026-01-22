@@ -216,6 +216,7 @@ export default defineSchema({
   feedbackVotes: defineTable({
     feedbackId: v.id("feedback"),
     userId: v.string(), // Better Auth user ID
+    voteType: v.union(v.literal("upvote"), v.literal("downvote")),
     createdAt: v.number(),
   })
     .index("by_feedback", ["feedbackId"])

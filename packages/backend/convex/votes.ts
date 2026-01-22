@@ -1,6 +1,12 @@
+import { ShardedCounter } from "@convex-dev/sharded-counter";
 import { v } from "convex/values";
+import { components } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+
+const voteCounters = new ShardedCounter(components.shardedCounter, {
+  defaultShards: 8,
+});
 
 // Helper to get authenticated user
 const getAuthUser = async (ctx: { auth: unknown }) => {
@@ -45,8 +51,8 @@ export const hasVoted = query({
 export const getCount = query({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    const feedback = await ctx.db.get(args.feedbackId);
-    return feedback?.voteCount ?? 0;
+    const count = await voteCounters.count(ctx, args.feedbackId);
+    return Math.round(count);
   },
 });
 
@@ -66,7 +72,6 @@ export const getVoters = query({
       return [];
     }
 
-    // Check admin permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -83,13 +88,13 @@ export const getVoters = query({
       .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
       .collect();
 
-    // Get user info for each voter
     const voters = await Promise.all(
       votes.map(async (vote) => {
         const userData = await authComponent.getAnyUserById(ctx, vote.userId);
         return {
           id: vote._id,
           userId: vote.userId,
+          voteType: vote.voteType,
           votedAt: vote.createdAt,
           user: userData
             ? {
@@ -110,30 +115,31 @@ export const getVoters = query({
 // MUTATIONS
 // ============================================
 
+const VOTE_MILESTONES = [10, 25, 50, 100, 250, 500, 1000] as const;
+
 /**
- * Toggle vote on feedback
+ * Toggle vote on feedback (support upvote, downvote, and remove)
  */
 export const toggle = mutation({
-  args: { feedbackId: v.id("feedback") },
+  args: {
+    feedbackId: v.id("feedback"),
+    voteType: v.union(v.literal("upvote"), v.literal("downvote")),
+  },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
-
     const feedback = await ctx.db.get(args.feedbackId);
+
     if (!feedback) {
       throw new Error("Feedback not found");
     }
 
     const board = await ctx.db.get(feedback.boardId);
-    if (!board) {
-      throw new Error("Board not found");
-    }
-
     const org = await ctx.db.get(feedback.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
+
+    if (!(board && org)) {
+      throw new Error("Board or organization not found");
     }
 
-    // Check access - member or public board
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -141,13 +147,11 @@ export const toggle = mutation({
       )
       .unique();
 
-    const isMember = !!membership;
-
-    if (!(isMember || (board.isPublic && org.isPublic))) {
+    const hasAccess = !!membership || (board.isPublic && org.isPublic);
+    if (!hasAccess) {
       throw new Error("You don't have access to vote on this feedback");
     }
 
-    // Check if already voted
     const existingVote = await ctx.db
       .query("feedbackVotes")
       .withIndex("by_feedback_user", (q) =>
@@ -155,39 +159,50 @@ export const toggle = mutation({
       )
       .unique();
 
-    if (existingVote) {
-      // Remove vote
-      await ctx.db.delete(existingVote._id);
-      await ctx.db.patch(args.feedbackId, {
-        voteCount: Math.max(0, feedback.voteCount - 1),
-      });
-      return { voted: false, voteCount: Math.max(0, feedback.voteCount - 1) };
-    }
-    // Add vote
-    await ctx.db.insert("feedbackVotes", {
-      feedbackId: args.feedbackId,
-      userId: user._id,
-      createdAt: Date.now(),
-    });
-    await ctx.db.patch(args.feedbackId, {
-      voteCount: feedback.voteCount + 1,
-    });
+    const counter = voteCounters.for(args.feedbackId);
+    const isUpvote = args.voteType === "upvote";
 
-    // Check for vote milestones and create notifications
-    const newVoteCount = feedback.voteCount + 1;
-    const milestones = [10, 25, 50, 100, 250, 500, 1000];
-    if (milestones.includes(newVoteCount)) {
+    // Handle vote toggle logic
+    if (existingVote) {
+      const isSameVoteType = existingVote.voteType === args.voteType;
+      if (isSameVoteType) {
+        // Remove vote
+        await ctx.db.delete(existingVote._id);
+        await (isUpvote ? counter.dec(ctx) : counter.inc(ctx));
+      } else {
+        // Change vote type
+        await ctx.db.patch(existingVote._id, { voteType: args.voteType });
+        await (isUpvote ? counter.add(ctx, 2) : counter.subtract(ctx, 2));
+      }
+    } else {
+      // Add new vote
+      await ctx.db.insert("feedbackVotes", {
+        feedbackId: args.feedbackId,
+        userId: user._id,
+        voteType: args.voteType,
+        createdAt: Date.now(),
+      });
+      await (isUpvote ? counter.inc(ctx) : counter.dec(ctx));
+    }
+
+    const newVoteCount = await voteCounters.count(ctx, args.feedbackId);
+    const roundedCount = Math.round(newVoteCount);
+
+    // Check for milestone notification
+    if (
+      VOTE_MILESTONES.includes(roundedCount as (typeof VOTE_MILESTONES)[number])
+    ) {
       await ctx.db.insert("notifications", {
         userId: feedback.authorId,
         type: "vote_milestone",
         title: "Vote milestone reached!",
-        message: `Your feedback "${feedback.title}" has reached ${newVoteCount} votes!`,
+        message: `Your feedback "${feedback.title}" has reached ${roundedCount} votes!`,
         feedbackId: args.feedbackId,
         isRead: false,
         createdAt: Date.now(),
       });
     }
 
-    return { voted: true, voteCount: newVoteCount };
+    return { voted: true, voteCount: roundedCount };
   },
 });

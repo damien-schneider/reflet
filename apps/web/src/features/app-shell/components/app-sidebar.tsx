@@ -17,6 +17,7 @@ import {
   IconSettings,
   IconUsers,
 } from "@tabler/icons-react";
+import Link from "next/link";
 import type * as React from "react";
 import {
   Sidebar,
@@ -158,10 +159,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarListButton
               className="data-[slot=sidebar-menu-button]:!p-1.5"
               render={(props) => (
-                <a href="/" {...props}>
+                <Link href="/" {...props}>
                   <IconInnerShadowTop className="!size-5" />
                   <span className="font-semibold text-base">Acme Inc.</span>
-                </a>
+                </Link>
               )}
             />
           </SidebarListItem>

@@ -70,7 +70,7 @@ export function RoadmapItemCard({
             onClick={() => onClick?.(item._id)}
             type="button"
           >
-            <h4 className="line-clamp-2 font-medium text-sm transition-colors group-hover:text-primary">
+            <h4 className="line-clamp-2 font-medium text-sm transition-colors group-hover:text-olive-600">
               {item.title}
             </h4>
           </button>

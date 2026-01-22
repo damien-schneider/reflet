@@ -2,6 +2,7 @@ import { ArrowRight, ArrowUp, CaretRight } from "@phosphor-icons/react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { H1, H2, H3, Lead } from "@/components/ui/typography";
 
 export default function Hero() {
   return (
@@ -23,15 +24,15 @@ export default function Hero() {
       </a>
 
       {/* Headings */}
-      <h1 className="mb-6 font-bold text-4xl tracking-tight sm:text-5xl md:text-6xl">
+      <H1 className="mb-6 w-2/3 text-7xl text-balanced">
         A modern product feedback and roadmap platform.
-      </h1>
+      </H1>
 
-      <p className="mb-10 max-w-2xl font-light text-lg text-muted-foreground leading-relaxed md:text-xl">
+      <Lead className="mb-10 max-w-2xl">
         Collect feedback, prioritize features, and keep your users in the loop
         with a real-time collaborative board. Changes appear across all devices
         in milliseconds.
-      </p>
+      </Lead>
 
       {/* Buttons */}
       <div className="mb-20 flex flex-col items-center gap-4 sm:flex-row">
@@ -79,7 +80,7 @@ function MockupSidebar() {
       <div className="border-border border-b p-4">
         <div className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card px-3 py-2 shadow-sm">
           <div className="flex items-center gap-2">
-            <div className="flex h-5 w-5 items-center justify-center rounded bg-primary font-bold text-[10px] text-primary-foreground">
+            <div className="flex h-5 w-5 items-center justify-center rounded bg-olive-600 font-bold text-[10px] text-olive-100">
               R
             </div>
             <span className="font-semibold text-sm">Reflet App</span>
@@ -192,7 +193,7 @@ function MockupListView() {
   return (
     <div className="hidden w-96 flex-col border-border border-r bg-card lg:flex">
       <div className="flex items-center justify-between border-border border-b bg-muted/30 p-4">
-        <h3 className="font-semibold text-foreground">Feature Requests</h3>
+        <H3 className="font-semibold text-foreground">Feature Requests</H3>
         <div className="flex gap-2 text-xs">
           <span className="cursor-pointer font-medium text-foreground">
             Top
@@ -264,11 +265,9 @@ function MockupDetailView() {
             </span>
             <span className="text-muted-foreground text-xs">Oct 24, 2024</span>
           </div>
-          <h2 className="mb-2 font-bold text-foreground text-xl">
-            Dark mode support
-          </h2>
+          <H2 className="mb-2 text-foreground text-xl">Dark mode support</H2>
           <div className="flex items-center gap-2">
-            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 font-bold text-primary text-xs">
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-olive-600/20 font-bold text-olive-600 text-xs">
               A
             </div>
             <span className="text-muted-foreground text-xs">
@@ -332,7 +331,7 @@ function ActivitySection() {
   return (
     <div className="space-y-6">
       <div className="flex gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 font-bold text-primary text-xs">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-olive-600/10 font-bold text-olive-600 text-xs">
           TM
         </div>
         <div className="flex-1">
@@ -356,7 +355,7 @@ function ActivitySection() {
         </div>
       </div>
       <div className="flex gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 font-bold text-primary text-xs">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-olive-600/10 font-bold text-olive-600 text-xs">
           S
         </div>
         <div className="flex-1">

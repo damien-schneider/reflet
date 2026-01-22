@@ -148,16 +148,26 @@ export const list = query({
         feedbackTags.map(async (ft) => ctx.db.get(ft.tagId))
       );
 
+      // Get all votes for this feedback to calculate upvote/downvote counts
+      const allVotes = await ctx.db
+        .query("feedbackVotes")
+        .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
+        .collect();
+
+      const upvoteCount = allVotes.filter(
+        (v) => v.voteType === "upvote"
+      ).length;
+      const downvoteCount = allVotes.filter(
+        (v) => v.voteType === "downvote"
+      ).length;
+
       // Get user vote status
       let hasVoted = false;
+      let userVoteType: "upvote" | "downvote" | null = null;
       if (user) {
-        const vote = await ctx.db
-          .query("feedbackVotes")
-          .withIndex("by_feedback_user", (q) =>
-            q.eq("feedbackId", f._id).eq("userId", user._id)
-          )
-          .unique();
-        hasVoted = !!vote;
+        const userVote = allVotes.find((v) => v.userId === user._id);
+        hasVoted = !!userVote;
+        userVoteType = userVote?.voteType ?? null;
       }
 
       // Get board status info
@@ -166,6 +176,9 @@ export const list = query({
       return {
         ...f,
         hasVoted,
+        userVoteType,
+        upvoteCount,
+        downvoteCount,
         tags: tags.filter(Boolean),
         boardStatus: boardStatus
           ? { name: boardStatus.name, color: boardStatus.color }
@@ -234,22 +247,35 @@ export const listForRoadmap = query({
           feedbackTags.map(async (ft) => ctx.db.get(ft.tagId))
         );
 
+        // Get all votes for this feedback
+        const allVotes = await ctx.db
+          .query("feedbackVotes")
+          .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
+          .collect();
+
+        const upvoteCount = allVotes.filter(
+          (v) => v.voteType === "upvote"
+        ).length;
+        const downvoteCount = allVotes.filter(
+          (v) => v.voteType === "downvote"
+        ).length;
+
         // Check if user voted
         let hasVoted = false;
+        let userVoteType: "upvote" | "downvote" | null = null;
         if (user) {
-          const vote = await ctx.db
-            .query("feedbackVotes")
-            .withIndex("by_feedback_user", (q) =>
-              q.eq("feedbackId", f._id).eq("userId", user._id)
-            )
-            .unique();
-          hasVoted = !!vote;
+          const userVote = allVotes.find((v) => v.userId === user._id);
+          hasVoted = !!userVote;
+          userVoteType = userVote?.voteType ?? null;
         }
 
         return {
           ...f,
           tags: tags.filter(Boolean),
           hasVoted,
+          userVoteType,
+          upvoteCount,
+          downvoteCount,
         };
       })
     );

@@ -103,9 +103,9 @@ export function FeedbackListItem({
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 {/* Title */}
-                <h3 className="line-clamp-2 font-semibold text-base transition-colors group-hover:text-primary">
+                <h3 className="line-clamp-2 font-semibold text-base transition-colors group-hover:text-olive-600">
                   {feedback.isPinned && (
-                    <PushPin className="mr-1 inline h-4 w-4 text-primary" />
+                    <PushPin className="mr-1 inline h-4 w-4 text-olive-600" />
                   )}
                   {feedback.title}
                 </h3>

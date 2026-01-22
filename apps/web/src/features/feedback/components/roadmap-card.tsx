@@ -23,9 +23,9 @@ export function RoadmapCard({
     <Link
       href={`/dashboard/${orgSlug}/boards/${boardSlug}/feedback/${feedback._id}`}
     >
-      <Card className="group cursor-pointer transition-all hover:border-primary hover:bg-accent/50">
+      <Card className="group cursor-pointer transition-all hover:border-olive-600 hover:bg-accent/50">
         <CardContent className="p-3">
-          <h4 className="font-medium text-sm transition-colors group-hover:text-primary">
+          <h4 className="font-medium text-sm transition-colors group-hover:text-olive-600">
             {feedback.title}
           </h4>
           <div className="mt-2 flex items-center justify-between">

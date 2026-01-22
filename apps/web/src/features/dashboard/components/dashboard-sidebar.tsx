@@ -25,6 +25,7 @@ import {
   DropdownListItem,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationsPopover } from "@/components/ui/notifications-popover";
 import {
   Sidebar,
   SidebarContent,
@@ -37,8 +38,8 @@ import {
   SidebarListButton,
   SidebarListItem,
   SidebarSeparator,
-  useSidebar,
 } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { authClient } from "@/lib/auth-client";
 
@@ -48,7 +49,6 @@ interface DashboardSidebarProps {
 }
 
 export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
-  const { isMobile } = useSidebar();
   const currentUser = useQuery(api.auth.getCurrentUser);
   const org = useQuery(
     api.organizations.getBySlug,
@@ -205,23 +205,24 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
       {orgSlug && org ? (
         <div className="px-2 pb-2 group-data-[collapsible=icon]:hidden">
           {org.isPublic && (
-            <Link href={`/${orgSlug}`} rel="noopener" target="_blank">
-              <Button
-                className="w-full justify-start"
-                size="sm"
-                variant="outline"
-              >
+            <Link
+              className="group/linkPublic"
+              href={`/${orgSlug}`}
+              rel="noopener"
+              target="_blank"
+            >
+              <Button className="w-full justify-start" variant="ghost">
                 <Globe className="mr-2 size-4" />
                 <span>Voir la page publique</span>
-                <ArrowUpRight className="ml-auto size-4" />
+                <ArrowUpRight className="ml-auto size-4 translate-y-2 opacity-0 transition group-hover/linkPublic:translate-y-0 group-hover/linkPublic:opacity-100" />
               </Button>
             </Link>
           )}
           {!org.isPublic && isAdmin && (
-            <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <div className="space-y-2 rounded-lg border border-olive-600/20 bg-olive-600/5 p-3">
               <div className="flex items-center gap-2">
-                <Globe className="size-4 shrink-0 text-primary" />
-                <h3 className="font-medium text-primary text-sm">
+                <Globe className="size-4 shrink-0 text-olive-600" />
+                <h3 className="font-medium text-olive-600 text-sm">
                   Rendre l&apos;organisation publique
                 </h3>
               </div>
@@ -251,6 +252,14 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
 
       <SidebarFooter>
         <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
+
+        {/* Quick actions row */}
+        <div className="flex items-center justify-end gap-1 px-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+          <NotificationsPopover />
+          <ThemeToggle />
+        </div>
+
+        {/* User menu */}
         <SidebarList>
           <SidebarListItem>
             <DropdownList>
@@ -275,9 +284,17 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
               <DropdownListContent
                 align="end"
                 className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
+                side="top"
                 sideOffset={4}
               >
+                <DropdownListItem
+                  render={(props) => (
+                    <Link href="/dashboard/account" {...props}>
+                      <User className="mr-2 size-4" />
+                      <span>My Account</span>
+                    </Link>
+                  )}
+                />
                 <DropdownListItem onClick={handleSignOut}>
                   <SignOut className="mr-2 size-4" />
                   <span>Sign out</span>

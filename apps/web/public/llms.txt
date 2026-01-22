@@ -1,0 +1,78 @@
+# Reflet
+
+> A modern product feedback and roadmap platform that helps you collect feedback, prioritize features, and keep your users in the loop.
+
+## Overview
+
+Reflet transforms chaotic feedback into actionable product insights. Build products your users actually love through transparent collaboration.
+
+## Core Features
+
+### Feedback Management
+Collect and organize user feedback with upvoting, comments, and tags. Prioritize what matters most to your users with intuitive filtering and search.
+
+### Roadmap Planning
+Visualize your product roadmap with a beautiful kanban-style board. Drag-and-drop items between stages: Backlog → Planned → In Progress → Done.
+
+### Changelog & Releases
+Keep users informed with beautiful release notes. Link updates directly to the features they requested, creating a virtuous feedback loop.
+
+### Real-Time Collaboration
+Multiple users can work simultaneously without conflicts. Every change syncs across all connected devices in milliseconds.
+
+### Team Management
+Multi-tenant architecture with organizations, team invitations, and role-based access control (Owner, Admin, Member).
+
+### Branding & Customization
+Customize your public-facing pages with your brand colors, custom CSS, and domain.
+
+### Flexible Privacy
+Choose what's public and what's private. Create private boards for internal discussions while keeping public feedback transparent.
+
+### Smart Notifications
+Get notified about status changes, new comments, and vote milestones. Stay in the loop without drowning in noise.
+
+### Powerful Search
+Full-text search across all feedback items with intelligent filtering by status, tags, and more.
+
+## Use Cases
+
+- **Startups**: Get early feedback and build features users actually want
+- **SaaS Companies**: Transparent roadmap builds trust and reduces churn
+- **Open Source Projects**: Community-driven feature requests with voting
+- **Agencies**: Client collaboration boards with private workspaces
+- **Enterprise**: Role-based access, SSO, and private boards
+
+## Tech Stack
+
+- **Frontend**: React 19, Next.js (App Router)
+- **Backend**: Convex (real-time reactive backend)
+- **UI**: TailwindCSS, shadcn/ui
+- **Auth**: Better-Auth
+- **Build**: Turborepo, Bun
+
+## Getting Started
+
+Visit [reflet.app](https://reflet.app) to get started for free.
+
+### Self-Hosting
+
+Reflet is open source and can be self-hosted:
+
+```bash
+git clone https://github.com/damien-schneider/reflet.git
+cd reflet
+bun install
+bun run dev:setup
+bun run dev
+```
+
+## Links
+
+- Website: https://reflet.app
+- GitHub: https://github.com/damien-schneider/reflet
+- Documentation: https://reflet.app/docs
+
+## License
+
+Server Side Public License (SSPL) - See LICENSE file for details.

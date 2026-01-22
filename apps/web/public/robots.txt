@@ -1,3 +1,21 @@
 # https://www.robotstxt.org/robotstxt.html
+# Reflet - Product feedback and roadmap platform
+
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /dashboard-demo/
+
+# Allow search engines to crawl public organization pages
+Allow: /*/
+Allow: /*/roadmap
+Allow: /*/changelog
+Allow: /*/boards/
+
+# Sitemaps
+Sitemap: https://reflet.app/sitemap.xml
+
+# LLM-friendly content
+# See https://llmstxt.org/
+LLMs-Txt: https://reflet.app/llms.txt

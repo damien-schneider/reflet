@@ -6,6 +6,7 @@ import {
   IconShare,
   IconTrash,
 } from "@tabler/icons-react";
+import Link from "next/link";
 import type * as React from "react";
 
 import {
@@ -49,10 +50,10 @@ export function NavDocuments({
             <SidebarListItem key={displayTitle}>
               <SidebarListButton
                 render={(props) => (
-                  <a href={item.url} {...props}>
+                  <Link href={item.url} {...props}>
                     <item.icon />
                     <span>{displayTitle}</span>
-                  </a>
+                  </Link>
                 )}
               />
               <DropdownList>

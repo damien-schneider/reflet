@@ -101,7 +101,14 @@ We love contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on 
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details.
+Server Side Public License (SSPL) - Contributions welcome! See [LICENSE](LICENSE) for details.
+
+**Key points:**
+- ✅ Free to use, modify, and self-host
+- ✅ Contributions must be submitted under the same license
+- ⚠️ Cannot be used to create a competing commercial product or hosted service without permission
+
+For commercial licensing options, contact: licensing@reflet.app
 
 ---
 

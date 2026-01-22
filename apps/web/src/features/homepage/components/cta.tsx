@@ -3,17 +3,18 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
+import { H2, Lead } from "@/components/ui/typography";
 export default function CTA() {
   return (
     <section className="bg-background py-24">
       <div className="mx-auto max-w-7xl px-4 text-left sm:px-6 lg:px-8">
-        <h2 className="mb-6 max-w-3xl font-bold text-4xl tracking-tight sm:text-5xl">
+        <H2 className="mb-6 max-w-3xl font-bold text-4xl tracking-tight sm:text-5xl">
           Ready to build better products?
-        </h2>
-        <p className="mb-10 max-w-2xl text-lg text-muted-foreground">
+        </H2>
+        <Lead className="mb-10 max-w-2xl text-lg">
           Join hundreds of teams using Reflet to listen to their users and ship
           the right features, faster.
-        </p>
+        </Lead>
 
         <div className="flex flex-col items-center gap-6 sm:flex-row">
           <Link href="/dashboard">

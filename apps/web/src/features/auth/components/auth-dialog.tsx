@@ -1,4 +1,6 @@
-import { useAtom, useSetAtom } from "jotai";
+"use client";
+
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import {
   Dialog,
   DialogContent,
@@ -6,12 +8,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { authDialogOpenAtom, closeAuthDialogAtom } from "@/store/auth";
+import {
+  authDialogMessageAtom,
+  authDialogOpenAtom,
+  closeAuthDialogAtom,
+} from "@/store/auth";
 import UnifiedAuthForm from "./unified-auth-form";
 
 export function AuthDialog() {
   const [isOpen, setIsOpen] = useAtom(authDialogOpenAtom);
   const closeDialog = useSetAtom(closeAuthDialogAtom);
+  const message = useAtomValue(authDialogMessageAtom);
 
   return (
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
@@ -22,6 +29,15 @@ export function AuthDialog() {
             Connectez-vous ou créez un compte
           </DialogDescription>
         </DialogHeader>
+        {message && (
+          <div className="px-6 pt-6 pb-0">
+            <div className="rounded-lg border border-olive-200 bg-olive-50 p-4 dark:border-olive-800 dark:bg-olive-950/50">
+              <p className="text-center text-muted-foreground text-sm">
+                {message}
+              </p>
+            </div>
+          </div>
+        )}
         <UnifiedAuthForm onSuccess={closeDialog} />
       </DialogContent>
     </Dialog>

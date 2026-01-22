@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { H1, Lead } from "@/components/ui/typography";
 import { BoardView as BoardViewComponent } from "@/features/feedback/components/board-view";
 
 export default function PublicOrgPage({
@@ -102,11 +103,11 @@ export default function PublicOrgPage({
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="font-bold text-3xl">Feature Requests & Feedback</h1>
-          <p className="mt-2 text-muted-foreground">
+          <H1 variant="page">Feature Requests & Feedback</H1>
+          <Lead>
             Help us improve by sharing your ideas and voting on features
             you&apos;d like to see.
-          </p>
+          </Lead>
         </div>
 
         {/* Board selector for multiple boards */}

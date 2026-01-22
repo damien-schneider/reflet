@@ -4,6 +4,7 @@ import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { env } from "@reflet-v2/env/web";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import { useEffect, useMemo } from "react";
 
 import { authClient } from "./auth-client";
@@ -43,12 +44,21 @@ export function Providers({
   }, [convexQueryClient, queryClient, initialToken]);
 
   return (
-    <ConvexBetterAuthProvider
-      authClient={authClient}
-      client={convexQueryClient.convexClient}
-      initialToken={initialToken}
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      disableTransitionOnChange
+      enableSystem
     >
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </ConvexBetterAuthProvider>
+      <ConvexBetterAuthProvider
+        authClient={authClient}
+        client={convexQueryClient.convexClient}
+        initialToken={initialToken}
+      >
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      </ConvexBetterAuthProvider>
+    </ThemeProvider>
   );
 }

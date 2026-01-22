@@ -65,7 +65,7 @@ export function PublicFeedbackDetailContent({
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleVote = useCallback(async () => {
-    await toggleVote({ feedbackId });
+    await toggleVote({ feedbackId, voteType: "upvote" });
   }, [feedbackId, toggleVote]);
 
   const handleStatusChange = useCallback(

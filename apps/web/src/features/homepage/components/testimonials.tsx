@@ -1,3 +1,5 @@
+import { H2, Lead } from "@/components/ui/typography";
+
 const REVIEWS = [
   {
     id: "sarah-j",
@@ -23,12 +25,12 @@ export default function Testimonials() {
   return (
     <section className="bg-muted py-24">
       <div className="mx-auto max-w-7xl px-4 text-left sm:px-6 lg:px-8">
-        <h2 className="mb-6 font-bold text-4xl tracking-tight sm:text-5xl">
+        <H2 className="mb-6 font-bold text-4xl tracking-tight sm:text-5xl">
           Loved by product teams
-        </h2>
-        <p className="mb-16 text-lg text-muted-foreground">
+        </H2>
+        <Lead className="mb-16 text-lg">
           Join thousands of teams building better products with Reflect.
-        </p>
+        </Lead>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {REVIEWS.map((review) => (

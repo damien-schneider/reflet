@@ -1,6 +1,7 @@
 "use client";
 
 import { IconPlus, IconSearch } from "@tabler/icons-react";
+import Link from "next/link";
 import type * as React from "react";
 
 import {
@@ -30,10 +31,10 @@ export function NavMain({
             <SidebarListItem key={item.title}>
               <SidebarListButton
                 render={(props: React.ComponentProps<"a">) => (
-                  <a href={item.url} {...props}>
+                  <Link href={item.url} {...props}>
                     <item.icon />
                     <span>{item.title}</span>
-                  </a>
+                  </Link>
                 )}
                 tooltip={item.title}
               />
