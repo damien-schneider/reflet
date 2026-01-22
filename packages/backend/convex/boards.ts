@@ -4,6 +4,7 @@ import { authComponent } from "./auth";
 import { feedbackStatus } from "./feedback";
 import { PLAN_LIMITS } from "./organizations";
 import { getAuthUser } from "./utils";
+import { validateBoard } from "./validation";
 
 // Helper to generate slug from name
 const generateSlug = (name: string): string => {
@@ -184,6 +185,7 @@ export const create = mutation({
     isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    validateBoard(args.name, args.description);
     const user = await getAuthUser(ctx);
 
     // Check membership
@@ -274,6 +276,9 @@ export const update = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    if (args.name || args.description) {
+      validateBoard(args.name, args.description);
+    }
     const user = await getAuthUser(ctx);
 
     const board = await ctx.db.get(args.id);

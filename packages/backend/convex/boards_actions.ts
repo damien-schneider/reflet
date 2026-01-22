@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUser } from "./utils";
+import { validateBoard } from "./validation";
 
 // Default statuses to create for new boards
 const DEFAULT_STATUSES = [
@@ -22,6 +23,7 @@ export const create = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    validateBoard(args.name, args.description);
     const user = await getAuthUser(ctx);
 
     // Check admin/owner permission

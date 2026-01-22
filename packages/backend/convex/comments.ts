@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { validateComment } from "./validation";
 
 // Helper to get authenticated user
 const getAuthUser = async (ctx: { auth: unknown }) => {
@@ -155,6 +156,7 @@ export const create = mutation({
     parentId: v.optional(v.id("comments")),
   },
   handler: async (ctx, args) => {
+    validateComment(args.body);
     const user = await getAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
@@ -236,6 +238,7 @@ export const update = mutation({
     body: v.string(),
   },
   handler: async (ctx, args) => {
+    validateComment(args.body);
     const user = await getAuthUser(ctx);
 
     const comment = await ctx.db.get(args.id);

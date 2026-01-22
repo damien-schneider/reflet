@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { PLAN_LIMITS } from "./organizations";
 import { getAuthUser } from "./utils";
+import { validateFeedback } from "./validation";
 
 // Feedback status type - matching schema
 export const feedbackStatus = v.union(
@@ -134,6 +135,7 @@ export const create = mutation({
     description: v.string(),
   },
   handler: async (ctx, args) => {
+    validateFeedback(args.title, args.description);
     const user = await getAuthUser(ctx);
 
     const board = await ctx.db.get(args.boardId);
@@ -251,6 +253,9 @@ export const update = mutation({
 
     // Authors can only update title and description
     if (isAdmin) {
+      if (args.title || args.description) {
+        validateFeedback(args.title, args.description);
+      }
       const { id, ...updates } = args;
 
       // If status changed to completed, set completedAt
@@ -268,6 +273,9 @@ export const update = mutation({
       });
     } else {
       const { id, title, description } = args;
+      if (title || description) {
+        validateFeedback(title, description);
+      }
       if (
         args.status !== undefined ||
         args.isApproved !== undefined ||
