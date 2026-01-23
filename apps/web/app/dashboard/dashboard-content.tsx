@@ -22,6 +22,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { H2, Muted } from "@/components/ui/typography";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
@@ -34,6 +35,7 @@ const routeLabels: Record<string, string> = {
   general: "General",
   billing: "Billing",
   members: "Members",
+  inbox: "Inbox",
 };
 
 function getRelevantPathSegments(pathname: string): string[] {
@@ -262,10 +264,10 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           {!orgSlug && hasOrganizations ? (
             <main className="flex h-full items-center justify-center p-6">
               <div className="max-w-md text-center">
-                <h2 className="font-bold text-2xl">Select an organization</h2>
-                <p className="mt-2 text-muted-foreground">
+                <H2 variant="section">Select an organization</H2>
+                <Muted className="mt-2">
                   Choose an organization from the sidebar or select one below.
-                </p>
+                </Muted>
                 <div className="mt-8 flex flex-col gap-3">
                   {organizations.map((org) =>
                     org ? (
@@ -288,10 +290,10 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           {!orgSlug && organizations?.length === 0 ? (
             <main className="flex h-full items-center justify-center p-6">
               <div className="max-w-md text-center">
-                <h2 className="font-bold text-2xl">Welcome to Reflet!</h2>
-                <p className="mt-2 text-muted-foreground">
+                <H2 variant="section">Welcome to Reflet!</H2>
+                <Muted className="mt-2">
                   Create your first organization to start collecting feedback.
-                </p>
+                </Muted>
                 <div className="mt-8">
                   <OrganizationSwitcher currentOrgSlug={undefined} />
                 </div>

@@ -8,6 +8,7 @@ import { use, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag-dialog";
 import { TagCard } from "@/features/tags/components/tag-card";
 import { TagFormDialog } from "@/features/tags/components/tag-form-dialog";
@@ -43,23 +44,21 @@ export default function TagsPage({
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <h2 className="font-semibold text-xl">Organization not found</h2>
-          <p className="mt-2 text-muted-foreground">
+          <H2 variant="card">Organization not found</H2>
+          <Muted className="mt-2">
             The organization you&apos;re looking for doesn&apos;t exist.
-          </p>
+          </Muted>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className="admin-container">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="font-bold text-2xl">Tags</h1>
-          <p className="text-muted-foreground">
-            Manage tags to categorize feedback
-          </p>
+          <H1>Tags</H1>
+          <Text variant="bodySmall">Manage tags to categorize feedback</Text>
         </div>
         {isAdmin ? (
           <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -85,10 +84,12 @@ export default function TagsPage({
         <Card>
           <CardContent className="py-12 text-center">
             <TagIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 font-semibold text-lg">No tags yet</h3>
-            <p className="mb-4 text-muted-foreground">
+            <H3 className="mb-2" variant="card">
+              No tags yet
+            </H3>
+            <Muted className="mb-4">
               Create tags to categorize and organize your feedback.
-            </p>
+            </Muted>
             {isAdmin ? (
               <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />

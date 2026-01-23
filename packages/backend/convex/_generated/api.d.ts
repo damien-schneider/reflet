@@ -39,6 +39,8 @@ import type * as privateData from "../privateData.js";
 import type * as releases from "../releases.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as subscriptions_actions from "../subscriptions_actions.js";
+import type * as support_conversations from "../support_conversations.js";
+import type * as support_messages from "../support_messages.js";
 import type * as tag_manager from "../tag_manager.js";
 import type * as tag_manager_actions from "../tag_manager_actions.js";
 import type * as tags from "../tags.js";
@@ -84,6 +86,8 @@ declare const fullApi: ApiFromModules<{
   releases: typeof releases;
   subscriptions: typeof subscriptions;
   subscriptions_actions: typeof subscriptions_actions;
+  support_conversations: typeof support_conversations;
+  support_messages: typeof support_messages;
   tag_manager: typeof tag_manager;
   tag_manager_actions: typeof tag_manager_actions;
   tags: typeof tags;

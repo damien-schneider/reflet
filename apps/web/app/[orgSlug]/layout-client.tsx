@@ -1,11 +1,13 @@
 "use client";
 
 import {
+  ChatCircle,
   FileText,
   MapTrifold as MapIcon,
   Chat as MessageSquare,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
+import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -29,6 +31,13 @@ export default function PublicOrgLayoutClient({
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const pathname = usePathname();
+
+  const supportSettings = useQuery(
+    api.support_conversations.getSupportSettings,
+    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+  );
+
+  const supportEnabled = supportSettings?.supportEnabled ?? false;
 
   if (org === undefined) {
     return (
@@ -57,7 +66,6 @@ export default function PublicOrgLayoutClient({
 
   return (
     <div className="min-h-screen">
-      {/* Header - Logo only on mobile, full nav on desktop */}
       <header className="fixed z-40 mx-auto flex w-full items-center justify-between px-4 py-4">
         <div className="flex items-center gap-3">
           {org.logo ? (
@@ -72,7 +80,6 @@ export default function PublicOrgLayoutClient({
             <H2 variant="card">{org.name}</H2>
           )}
         </div>
-        {/* Desktop navigation */}
         <nav className="hidden items-center gap-4 md:flex">
           <Link
             className={`flex items-center gap-2 font-medium text-sm hover:text-olive-600 ${
@@ -101,10 +108,20 @@ export default function PublicOrgLayoutClient({
             <FileText className="h-4 w-4" />
             Changelog
           </Link>
+          {supportEnabled && (
+            <Link
+              className={`flex items-center gap-2 font-medium text-sm hover:text-olive-600 ${
+                pathname === `/${orgSlug}/support` ? "text-olive-600" : ""
+              }`}
+              href={`/${orgSlug}/support`}
+            >
+              <ChatCircle className="h-4 w-4" />
+              Support
+            </Link>
+          )}
         </nav>
       </header>
 
-      {/* Mobile bottom navigation bar */}
       <nav className="fixed inset-x-4 bottom-4 z-50 flex items-center justify-around rounded-full border border-border bg-background/95 px-2 py-3 shadow-lg backdrop-blur-md md:hidden">
         <Link
           className={`flex flex-col items-center gap-1 rounded-full px-4 py-1 font-medium text-xs transition-colors ${
@@ -139,12 +156,23 @@ export default function PublicOrgLayoutClient({
           <FileText className="h-5 w-5" />
           Changelog
         </Link>
+        {supportEnabled && (
+          <Link
+            className={`flex flex-col items-center gap-1 rounded-full px-4 py-1 font-medium text-xs transition-colors ${
+              pathname === `/${orgSlug}/support`
+                ? "bg-olive-100 text-olive-600 dark:bg-olive-900/30"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+            href={`/${orgSlug}/support`}
+          >
+            <ChatCircle className="h-5 w-5" />
+            Support
+          </Link>
+        )}
       </nav>
 
-      {/* Content */}
       <main className="min-h-[80vh] pt-22 pb-24 md:pb-0">{children}</main>
 
-      {/* Footer */}
       <footer className="py-8">
         <div className="container mx-auto flex items-center justify-center px-4 text-muted-foreground text-sm">
           <TypographyText variant="bodySmall">
@@ -161,7 +189,6 @@ export default function PublicOrgLayoutClient({
         </div>
       </footer>
 
-      {/* Floating toolbar for team members */}
       <PublicViewToolbar orgSlug={orgSlug} />
     </div>
   );

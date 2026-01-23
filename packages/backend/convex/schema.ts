@@ -39,8 +39,20 @@ const feedbackStatus = v.union(
 const notificationType = v.union(
   v.literal("status_change"),
   v.literal("new_comment"),
-  v.literal("vote_milestone")
+  v.literal("vote_milestone"),
+  v.literal("new_support_message")
 );
+
+// Support conversation status
+const supportConversationStatus = v.union(
+  v.literal("open"),
+  v.literal("awaiting_reply"),
+  v.literal("resolved"),
+  v.literal("closed")
+);
+
+// Support message sender type
+const supportMessageSenderType = v.union(v.literal("user"), v.literal("admin"));
 
 export default defineSchema({
   // ============================================
@@ -67,6 +79,8 @@ export default defineSchema({
     subscriptionTier,
     subscriptionStatus,
     subscriptionId: v.optional(v.string()),
+    // Support settings
+    supportEnabled: v.optional(v.boolean()),
   })
     .index("by_slug", ["slug"])
     .searchIndex("search_name", { searchField: "name" }),
@@ -353,4 +367,52 @@ export default defineSchema({
     text: v.string(),
     completed: v.boolean(),
   }),
+
+  // ============================================
+  // SUPPORT CONVERSATIONS (Inbox)
+  // ============================================
+  supportConversations: defineTable({
+    organizationId: v.id("organizations"),
+    userId: v.string(),
+    subject: v.optional(v.string()),
+    status: supportConversationStatus,
+    assignedTo: v.optional(v.string()),
+    lastMessageAt: v.number(),
+    userUnreadCount: v.number(),
+    adminUnreadCount: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_user", ["userId"])
+    .index("by_org_user", ["organizationId", "userId"])
+    .index("by_org_status", ["organizationId", "status"])
+    .index("by_assigned", ["assignedTo"]),
+
+  // ============================================
+  // SUPPORT MESSAGES
+  // ============================================
+  supportMessages: defineTable({
+    conversationId: v.id("supportConversations"),
+    senderId: v.string(),
+    senderType: supportMessageSenderType,
+    body: v.string(),
+    isRead: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_conversation", ["conversationId"])
+    .index("by_conversation_created", ["conversationId", "createdAt"]),
+
+  // ============================================
+  // MESSAGE REACTIONS
+  // ============================================
+  messageReactions: defineTable({
+    messageId: v.id("supportMessages"),
+    userId: v.string(),
+    emoji: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_message", ["messageId"])
+    .index("by_user", ["userId"])
+    .index("by_message_user", ["messageId", "userId"]),
 });

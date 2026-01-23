@@ -1,3 +1,5 @@
+"use client";
+
 import { ArrowRight, ArrowUp, CaretRight } from "@phosphor-icons/react";
 import Link from "next/link";
 
@@ -24,7 +26,7 @@ export default function Hero() {
       </a>
 
       {/* Headings */}
-      <H1 className="mb-6 w-2/3 text-7xl text-balanced">
+      <H1 className="mb-6 w-2/3" variant="hero">
         A modern product feedback and roadmap platform.
       </H1>
 
@@ -193,7 +195,7 @@ function MockupListView() {
   return (
     <div className="hidden w-96 flex-col border-border border-r bg-card lg:flex">
       <div className="flex items-center justify-between border-border border-b bg-muted/30 p-4">
-        <H3 className="font-semibold text-foreground">Feature Requests</H3>
+        <H3 variant="card">Feature Requests</H3>
         <div className="flex gap-2 text-xs">
           <span className="cursor-pointer font-medium text-foreground">
             Top
@@ -265,7 +267,9 @@ function MockupDetailView() {
             </span>
             <span className="text-muted-foreground text-xs">Oct 24, 2024</span>
           </div>
-          <H2 className="mb-2 text-foreground text-xl">Dark mode support</H2>
+          <H2 className="mb-2" variant="card">
+            Dark mode support
+          </H2>
           <div className="flex items-center gap-2">
             <div className="flex h-5 w-5 items-center justify-center rounded-full bg-olive-600/20 font-bold text-olive-600 text-xs">
               A

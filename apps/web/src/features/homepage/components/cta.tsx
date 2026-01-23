@@ -1,3 +1,5 @@
+"use client";
+
 import { CaretRight } from "@phosphor-icons/react";
 import Link from "next/link";
 
@@ -8,10 +10,10 @@ export default function CTA() {
   return (
     <section className="bg-background py-24">
       <div className="mx-auto max-w-7xl px-4 text-left sm:px-6 lg:px-8">
-        <H2 className="mb-6 max-w-3xl font-bold text-4xl tracking-tight sm:text-5xl">
+        <H2 className="mb-6 max-w-3xl" variant="section">
           Ready to build better products?
         </H2>
-        <Lead className="mb-10 max-w-2xl text-lg">
+        <Lead className="mb-10 max-w-2xl">
           Join hundreds of teams using Reflet to listen to their users and ship
           the right features, faster.
         </Lead>

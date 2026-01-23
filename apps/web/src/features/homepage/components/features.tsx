@@ -60,7 +60,7 @@ export default function Features() {
           </span>
         </div>
 
-        <H2 className="mb-16 max-w-2xl text-4xl tracking-tight sm:text-5xl">
+        <H2 className="mb-16 max-w-2xl" variant="section">
           Everything you need to build products users love.
         </H2>
 
@@ -89,7 +89,7 @@ function FeatureCard({ feature }: FeatureCardProps) {
       <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-foreground">
         <Icon size={24} />
       </div>
-      <H3 className="mb-3 font-medium text-foreground text-xl">
+      <H3 className="mb-3" variant="card">
         {feature.title}
       </H3>
       <p className="text-muted-foreground text-sm leading-relaxed">
@@ -111,7 +111,9 @@ function OpenSourceCard() {
         <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-foreground/10 text-primary-foreground">
           <Lock size={24} />
         </div>
-        <H3 className="mb-3 font-medium text-xl">Open Source</H3>
+        <H3 className="mb-3" variant="card">
+          Open Source
+        </H3>
         <p className="mb-6 text-primary-foreground/70 text-sm leading-relaxed">
           Audit our code, host it yourself, or contribute to the community. Your
           data is yours.

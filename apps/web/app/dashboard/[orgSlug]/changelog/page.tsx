@@ -8,6 +8,7 @@ import { use, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
 import { AdminReleaseCard } from "@/features/changelog/components/admin-release-card";
 import { DeleteReleaseDialog } from "@/features/changelog/components/delete-release-dialog";
 import { ReleaseFormDialog } from "@/features/changelog/components/release-form-dialog";
@@ -49,10 +50,10 @@ export default function ChangelogPage({
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <h2 className="font-semibold text-xl">Organization not found</h2>
-          <p className="mt-2 text-muted-foreground">
+          <H2 variant="card">Organization not found</H2>
+          <Muted className="mt-2">
             The organization you&apos;re looking for doesn&apos;t exist.
-          </p>
+          </Muted>
         </div>
       </div>
     );
@@ -119,13 +120,13 @@ export default function ChangelogPage({
   };
 
   return (
-    <div className="p-6">
+    <div className="admin-container">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="font-bold text-2xl">Changelog</h1>
-          <p className="text-muted-foreground">
+          <H1>Changelog</H1>
+          <Text variant="bodySmall">
             Manage release notes and product updates
-          </p>
+          </Text>
         </div>
         {isAdmin ? (
           <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -153,10 +154,12 @@ export default function ChangelogPage({
         <Card>
           <CardContent className="py-12 text-center">
             <Megaphone className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 font-semibold text-lg">No releases yet</h3>
-            <p className="mb-4 text-muted-foreground">
+            <H3 className="mb-2" variant="card">
+              No releases yet
+            </H3>
+            <Muted className="mb-4">
               Create your first release to share product updates.
-            </p>
+            </Muted>
             {isAdmin ? (
               <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />

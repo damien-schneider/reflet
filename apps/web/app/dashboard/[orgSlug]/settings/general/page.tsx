@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { H1, Text } from "@/components/ui/typography";
 
 export default function GeneralGearPage({
   params,
@@ -99,15 +100,15 @@ export default function GeneralGearPage({
   };
 
   return (
-    <div className="p-6">
+    <div className="admin-container">
       <div className="mb-8">
-        <h1 className="font-bold text-2xl">General Gear</h1>
-        <p className="text-muted-foreground">
+        <H1>General Gear</H1>
+        <Text variant="bodySmall">
           Manage your organization&apos;s basic settings
-        </p>
+        </Text>
       </div>
 
-      <div className="max-w-2xl space-y-6">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

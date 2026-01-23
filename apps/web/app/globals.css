@@ -254,3 +254,9 @@
     }
   }
 }
+
+@layer components {
+  .admin-container {
+    @apply mx-auto max-w-3xl px-4 pt-12 pb-8;
+  }
+}

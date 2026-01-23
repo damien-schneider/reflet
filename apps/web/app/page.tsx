@@ -1,44 +1,21 @@
-"use client";
-
-import { Spinner } from "@phosphor-icons/react";
-import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { redirect } from "next/navigation";
 
 import Homepage from "@/features/homepage/components/homepage";
+import { getToken } from "@/lib/auth-server";
 
 /**
  * Root index route
  * - If logged in → redirect to /dashboard (which handles org selection)
  * - If not logged in → show homepage
  */
-export default function Index() {
-  const router = useRouter();
+export default async function Index() {
+  const token = await getToken();
 
-  return (
-    <>
-      <Authenticated>
-        <RedirectToDashboard router={router} />
-      </Authenticated>
-      <Unauthenticated>
-        <Homepage />
-      </Unauthenticated>
-      <AuthLoading>
-        <div className="flex min-h-screen items-center justify-center">
-          <Spinner className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
-      </AuthLoading>
-    </>
-  );
-}
+  // If authenticated, redirect to dashboard
+  if (token) {
+    redirect("/dashboard");
+  }
 
-function RedirectToDashboard({
-  router,
-}: {
-  router: ReturnType<typeof useRouter>;
-}) {
-  useEffect(() => {
-    router.replace("/dashboard");
-  }, [router]);
-  return null;
+  // Otherwise, show homepage
+  return <Homepage />;
 }

@@ -25,10 +25,10 @@ export default function Testimonials() {
   return (
     <section className="bg-muted py-24">
       <div className="mx-auto max-w-7xl px-4 text-left sm:px-6 lg:px-8">
-        <H2 className="mb-6 font-bold text-4xl tracking-tight sm:text-5xl">
+        <H2 className="mb-6" variant="section">
           Loved by product teams
         </H2>
-        <Lead className="mb-16 text-lg">
+        <Lead className="mb-16">
           Join thousands of teams building better products with Reflect.
         </Lead>
 

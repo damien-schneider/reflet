@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { H1, Text } from "@/components/ui/typography";
 import { InvitationList } from "@/features/members/components/invitation-list";
 import { InviteMemberDialog } from "@/features/members/components/invite-member-dialog";
 import { MemberList } from "@/features/members/components/member-list";
@@ -74,13 +75,13 @@ export default function MembersGearPage({
   };
 
   return (
-    <div className="p-6">
+    <div className="admin-container">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="font-bold text-2xl">Members</h1>
-          <p className="text-muted-foreground">
+          <H1>Members</H1>
+          <Text variant="bodySmall">
             Manage your organization&apos;s team members
-          </p>
+          </Text>
         </div>
         {isAdmin ? (
           <Button onClick={() => setIsInviteDialogOpen(true)}>
@@ -90,7 +91,7 @@ export default function MembersGearPage({
         ) : null}
       </div>
 
-      <div className="max-w-3xl space-y-6">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

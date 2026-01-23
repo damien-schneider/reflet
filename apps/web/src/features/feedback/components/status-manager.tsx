@@ -59,6 +59,7 @@ export function StatusManager({ boardId }: StatusManagerProps) {
   const [newStatusColor, setNewStatusColor] = useState(PRESET_COLORS[0].value);
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
+  const [shouldSaveOnClose, setShouldSaveOnClose] = useState(true);
 
   const handleCreate = useCallback(async () => {
     if (!newStatusName.trim()) {
@@ -80,8 +81,12 @@ export function StatusManager({ boardId }: StatusManagerProps) {
     setEditColor(status.color);
   }, []);
 
-  const handleUpdate = useCallback(async () => {
-    if (!editingStatus) {
+  const handleDialogClose = useCallback(async () => {
+    if (!(editingStatus && shouldSaveOnClose)) {
+      setEditingStatus(null);
+      setEditName("");
+      setEditColor("");
+      setShouldSaveOnClose(true);
       return;
     }
     await updateStatus({
@@ -92,7 +97,7 @@ export function StatusManager({ boardId }: StatusManagerProps) {
     setEditingStatus(null);
     setEditName("");
     setEditColor("");
-  }, [editingStatus, updateStatus, editName, editColor]);
+  }, [editingStatus, updateStatus, editName, editColor, shouldSaveOnClose]);
 
   const handleStartDelete = useCallback((status: Doc<"boardStatuses">) => {
     setDeletingStatus(status);
@@ -225,7 +230,7 @@ export function StatusManager({ boardId }: StatusManagerProps) {
 
       {/* Edit Dialog */}
       <Dialog
-        onOpenChange={(open) => !open && setEditingStatus(null)}
+        onOpenChange={(open) => !open && handleDialogClose()}
         open={!!editingStatus}
       >
         <DialogContent>
@@ -270,10 +275,15 @@ export function StatusManager({ boardId }: StatusManagerProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => setEditingStatus(null)} variant="outline">
+            <Button
+              onClick={() => {
+                setShouldSaveOnClose(false);
+                setEditingStatus(null);
+              }}
+              variant="outline"
+            >
               Cancel
             </Button>
-            <Button onClick={handleUpdate}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

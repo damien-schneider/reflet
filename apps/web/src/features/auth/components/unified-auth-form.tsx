@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { H1, Muted } from "@/components/ui/typography";
 import { authClient } from "@/lib/auth-client";
 
 // Schema for sign-in (email + password)
@@ -351,10 +352,10 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
           transition={{ duration: 0.3, ease: "easeInOut" }}
           variants={titleVariants}
         >
-          <h1 className="mb-2 text-center font-bold text-3xl">{getTitle()}</h1>
-          <p className="mb-6 text-center text-muted-foreground text-sm">
-            {getDescription()}
-          </p>
+          <H1 className="mb-2 text-center" variant="page">
+            {getTitle()}
+          </H1>
+          <Muted className="mb-6 text-center">{getDescription()}</Muted>
         </motion.div>
       </AnimatePresence>
 

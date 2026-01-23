@@ -1,3 +1,5 @@
+"use client";
+
 import CTA from "./cta";
 import Features from "./features";
 import Footer from "./footer";

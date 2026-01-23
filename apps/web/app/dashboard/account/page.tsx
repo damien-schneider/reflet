@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
+import Image from "next/image";
 import { useState } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -28,6 +29,7 @@ import {
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { H1, Muted } from "@/components/ui/typography";
 import { authClient } from "@/lib/auth-client";
 
 const updateProfileSchema = z.object({
@@ -226,10 +228,8 @@ export default function AccountPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="font-semibold text-2xl">Account Settings</h1>
-          <p className="text-muted-foreground text-sm">
-            Manage your personal account settings
-          </p>
+          <H1 variant="page">Account Settings</H1>
+          <Muted>Manage your personal account settings</Muted>
         </div>
         <Button className="gap-2" onClick={handleSignOut} variant="outline">
           <SignOut className="size-4" />
@@ -341,7 +341,7 @@ export default function AccountPage() {
 
                   {currentAvatar && (
                     <div className="flex items-center gap-4 rounded-lg border p-4">
-                      <img
+                      <Image
                         alt="Avatar preview"
                         className="size-16 rounded-none object-cover"
                         height={64}

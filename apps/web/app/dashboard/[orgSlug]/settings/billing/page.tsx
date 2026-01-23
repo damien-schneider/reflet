@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
 
 export default function BillingGearPage({
   params,
@@ -34,25 +35,25 @@ export default function BillingGearPage({
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <h2 className="font-semibold text-xl">Organization not found</h2>
-          <p className="mt-2 text-muted-foreground">
+          <H2 variant="card">Organization not found</H2>
+          <Muted className="mt-2">
             The organization you&apos;re looking for doesn&apos;t exist.
-          </p>
+          </Muted>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className="admin-container">
       <div className="mb-8">
-        <h1 className="font-bold text-2xl">Billing</h1>
-        <p className="text-muted-foreground">
+        <H1>Billing</H1>
+        <Text variant="bodySmall">
           Manage your subscription and billing details
-        </p>
+        </Text>
       </div>
 
-      <div className="max-w-2xl space-y-6">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -65,7 +66,9 @@ export default function BillingGearPage({
           </CardHeader>
           <CardContent>
             <div className="rounded-lg border bg-muted/50 p-4">
-              <h3 className="mb-2 font-semibold">Free Plan</h3>
+              <H3 className="mb-2" variant="card">
+                Free Plan
+              </H3>
               <ul className="space-y-1 text-muted-foreground text-sm">
                 <li>• Unlimited feedback boards</li>
                 <li>• Public roadmap and changelog</li>
@@ -90,9 +93,9 @@ export default function BillingGearPage({
                 Add Payment Method
               </Button>
             ) : (
-              <p className="text-muted-foreground text-sm">
+              <Text variant="bodySmall">
                 Contact an admin to manage billing settings.
-              </p>
+              </Text>
             )}
           </CardContent>
         </Card>

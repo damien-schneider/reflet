@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { H1, Text } from "@/components/ui/typography";
 
 export default function GearPage({
   params,
@@ -63,15 +64,13 @@ export default function GearPage({
   ];
 
   return (
-    <div className="p-6">
+    <div className="admin-container">
       <div className="mb-8">
         <div className="flex items-center gap-3">
           <GearIcon className="h-8 w-8 text-muted-foreground" />
           <div>
-            <h1 className="font-bold text-2xl">Gear</h1>
-            <p className="text-muted-foreground">
-              Manage settings for {org.name}
-            </p>
+            <H1>Gear</H1>
+            <Text variant="bodySmall">Manage settings for {org.name}</Text>
           </div>
         </div>
       </div>

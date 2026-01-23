@@ -2,6 +2,7 @@ import {
   ArrowUpRight,
   CaretUpDown,
   Chat,
+  ChatCircle,
   CreditCard,
   FileText,
   Gear,
@@ -57,6 +58,11 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   const updateOrg = useMutation(api.organizations.update);
   const [isMakingPublic, setIsMakingPublic] = useState(false);
 
+  const adminUnreadCount = useQuery(
+    api.support_conversations.getUnreadCountForAdmin,
+    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+  );
+
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
   const buildPath = (path: string) =>
@@ -75,11 +81,13 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           href: "/dashboard/$orgSlug/boards",
           icon: Chat,
           label: "Boards",
+          badge: undefined,
         },
         {
           href: "/dashboard/$orgSlug/settings",
           icon: Gear,
-          label: "Gear",
+          label: "Settings",
+          badge: undefined,
         },
       ]
     : [];
@@ -90,21 +98,34 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           href: "/dashboard/$orgSlug/tags",
           icon: Tag,
           label: "Tags",
+          badge: undefined,
         },
         {
           href: "/dashboard/$orgSlug/changelog",
           icon: FileText,
           label: "Changelog",
+          badge: undefined,
+        },
+        {
+          href: "/dashboard/$orgSlug/inbox",
+          icon: ChatCircle,
+          label: "Inbox",
+          badge:
+            adminUnreadCount && adminUnreadCount > 0
+              ? adminUnreadCount
+              : undefined,
         },
         {
           href: "/dashboard/$orgSlug/settings/members",
           icon: Users,
           label: "Members",
+          badge: undefined,
         },
         {
           href: "/dashboard/$orgSlug/settings/billing",
           icon: CreditCard,
           label: "Billing",
+          badge: undefined,
         },
       ]
     : [];
@@ -160,7 +181,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                         render={(props) => (
                           <Link href={buildHref(item.href)} {...props}>
                             <item.icon className="h-4 w-4" />
-                            <span>{item.label}</span>
+                            <span className="flex-1">{item.label}</span>
+                            {item.badge !== undefined && (
+                              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
+                                {item.badge > 99 ? "99+" : item.badge}
+                              </span>
+                            )}
                           </Link>
                         )}
                       />
@@ -181,7 +207,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                         render={(props) => (
                           <Link href={buildHref(item.href)} {...props}>
                             <item.icon className="h-4 w-4" />
-                            <span>{item.label}</span>
+                            <span className="flex-1">{item.label}</span>
+                            {item.badge !== undefined && (
+                              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
+                                {item.badge > 99 ? "99+" : item.badge}
+                              </span>
+                            )}
                           </Link>
                         )}
                       />

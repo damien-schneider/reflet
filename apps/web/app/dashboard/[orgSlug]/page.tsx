@@ -21,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { H1, H2, Muted } from "@/components/ui/typography";
 
 export default function OrgDashboard({
   params,
@@ -42,11 +43,11 @@ export default function OrgDashboard({
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <h2 className="font-semibold text-xl">Organization not found</h2>
-          <p className="mt-2 text-muted-foreground">
+          <H2 variant="card">Organization not found</H2>
+          <Muted className="mt-2">
             The organization you&apos;re looking for doesn&apos;t exist or you
             don&apos;t have access.
-          </p>
+          </Muted>
         </div>
       </div>
     );
@@ -57,10 +58,8 @@ export default function OrgDashboard({
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-bold text-2xl">{org.name}</h1>
-            <p className="text-muted-foreground">
-              {org.isPublic ? "Public" : "Private"} organization
-            </p>
+            <H1 variant="page">{org.name}</H1>
+            <Muted>{org.isPublic ? "Public" : "Private"} organization</Muted>
           </div>
           <div className="flex items-center gap-2">
             <Badge
@@ -125,7 +124,7 @@ export default function OrgDashboard({
       {/* Boards Section */}
       <div>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-semibold text-lg">Boards</h2>
+          <H2 variant="card">Boards</H2>
           <Link href={`/dashboard/${orgSlug}/boards`}>
             <Button size="sm" variant="outline">
               View all boards
