@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
+import { H2, H3, Muted, Text } from "@/components/ui/typography";
 
 export default function BillingGearPage({
   params,
@@ -45,88 +45,84 @@ export default function BillingGearPage({
   }
 
   return (
-    <div className="admin-container">
-      <div className="mb-8">
-        <H1>Billing</H1>
-        <Text variant="bodySmall">
-          Manage your subscription and billing details
-        </Text>
-      </div>
+    <>
+      <H2 className="font-semibold text-lg">Billing</H2>
+      <div className="admin-container">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkle className="h-5 w-5" />
+                Current Plan
+              </CardTitle>
+              <CardDescription>
+                You are currently on the free plan
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <H3 className="mb-2" variant="card">
+                  Free Plan
+                </H3>
+                <ul className="space-y-1 text-muted-foreground text-sm">
+                  <li>• Unlimited feedback boards</li>
+                  <li>• Public roadmap and changelog</li>
+                  <li>• Up to 3 team members</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkle className="h-5 w-5" />
-              Current Plan
-            </CardTitle>
-            <CardDescription>
-              You are currently on the free plan
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-lg border bg-muted/50 p-4">
-              <H3 className="mb-2" variant="card">
-                Free Plan
-              </H3>
-              <ul className="space-y-1 text-muted-foreground text-sm">
-                <li>• Unlimited feedback boards</li>
-                <li>• Public roadmap and changelog</li>
-                <li>• Up to 3 team members</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Payment Method
+              </CardTitle>
+              <CardDescription>No payment method on file</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isAdmin ? (
+                <Button variant="outline">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Add Payment Method
+                </Button>
+              ) : (
+                <Text variant="bodySmall">
+                  Contact an admin to manage billing settings.
+                </Text>
+              )}
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Payment Method
-            </CardTitle>
-            <CardDescription>No payment method on file</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isAdmin ? (
-              <Button variant="outline">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Add Payment Method
-              </Button>
-            ) : (
-              <Text variant="bodySmall">
-                Contact an admin to manage billing settings.
-              </Text>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-olive-600/20 bg-olive-600/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkle className="h-5 w-5 text-olive-600" />
-              Upgrade to Pro
-            </CardTitle>
-            <CardDescription>
-              Get more features and unlimited team members
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="mb-4 space-y-1 text-muted-foreground text-sm">
-              <li>• Everything in Free</li>
-              <li>• Unlimited team members</li>
-              <li>• Custom branding</li>
-              <li>• Priority support</li>
-              <li>• Advanced analytics</li>
-            </ul>
-            {isAdmin ? (
-              <Button>
-                <Sparkle className="mr-2 h-4 w-4" />
+          <Card className="border-olive-600/20 bg-olive-600/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkle className="h-5 w-5 text-olive-600" />
                 Upgrade to Pro
-              </Button>
-            ) : null}
-          </CardContent>
-        </Card>
+              </CardTitle>
+              <CardDescription>
+                Get more features and unlimited team members
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="mb-4 space-y-1 text-muted-foreground text-sm">
+                <li>• Everything in Free</li>
+                <li>• Unlimited team members</li>
+                <li>• Custom branding</li>
+                <li>• Priority support</li>
+                <li>• Advanced analytics</li>
+              </ul>
+              {isAdmin ? (
+                <Button>
+                  <Sparkle className="mr-2 h-4 w-4" />
+                  Upgrade to Pro
+                </Button>
+              ) : null}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -52,3 +52,6 @@ temp
 # Playwright
 playwright-report
 test-results
+
+# Widget build output
+apps/web/public/widget/

@@ -1,0 +1,21 @@
+{
+  "name": "@reflet-v2/widget",
+  "version": "1.0.0",
+  "description": "Embeddable chat widget for Reflet",
+  "type": "module",
+  "main": "dist/widget.js",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "convex": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "terser": "^5.37.0",
+    "typescript": "catalog:",
+    "vite": "^6.3.5"
+  }
+}

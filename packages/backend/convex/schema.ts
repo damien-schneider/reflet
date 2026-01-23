@@ -54,6 +54,12 @@ const supportConversationStatus = v.union(
 // Support message sender type
 const supportMessageSenderType = v.union(v.literal("user"), v.literal("admin"));
 
+// Widget position
+const widgetPosition = v.union(
+  v.literal("bottom-right"),
+  v.literal("bottom-left")
+);
+
 export default defineSchema({
   // ============================================
   // ORGANIZATIONS
@@ -415,4 +421,46 @@ export default defineSchema({
     .index("by_message", ["messageId"])
     .index("by_user", ["userId"])
     .index("by_message_user", ["messageId", "userId"]),
+
+  // ============================================
+  // EMBEDDABLE CHAT WIDGETS
+  // ============================================
+  widgets: defineTable({
+    organizationId: v.id("organizations"),
+    widgetId: v.string(),
+    name: v.string(),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_widget_id", ["widgetId"])
+    .index("by_organization", ["organizationId"]),
+
+  widgetSettings: defineTable({
+    widgetId: v.id("widgets"),
+    primaryColor: v.string(),
+    position: widgetPosition,
+    welcomeMessage: v.string(),
+    greetingMessage: v.optional(v.string()),
+    showLauncher: v.boolean(),
+    autoOpen: v.boolean(),
+    zIndex: v.number(),
+  }).index("by_widget", ["widgetId"]),
+
+  widgetConversations: defineTable({
+    widgetId: v.id("widgets"),
+    conversationId: v.id("supportConversations"),
+    visitorId: v.string(),
+    metadata: v.optional(
+      v.object({
+        userAgent: v.optional(v.string()),
+        url: v.optional(v.string()),
+        referrer: v.optional(v.string()),
+      })
+    ),
+    lastSeenAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_widget_visitor", ["widgetId", "visitorId"])
+    .index("by_conversation", ["conversationId"]),
 });

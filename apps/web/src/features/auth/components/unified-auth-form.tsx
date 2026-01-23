@@ -342,7 +342,7 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   };
 
   return (
-    <div className="absolute top-[35%] left-1/2 w-full max-w-md -translate-x-1/2 p-6">
+    <div className="w-full max-w-md p-6">
       <AnimatePresence mode="wait">
         <motion.div
           animate="animate"

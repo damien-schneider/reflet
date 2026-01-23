@@ -47,6 +47,8 @@ import type * as tags from "../tags.js";
 import type * as todos from "../todos.js";
 import type * as utils from "../utils.js";
 import type * as votes from "../votes.js";
+import type * as widget_admin from "../widget_admin.js";
+import type * as widget_public from "../widget_public.js";
 
 import type {
   ApiFromModules,
@@ -94,6 +96,8 @@ declare const fullApi: ApiFromModules<{
   todos: typeof todos;
   utils: typeof utils;
   votes: typeof votes;
+  widget_admin: typeof widget_admin;
+  widget_public: typeof widget_public;
 }>;
 
 /**

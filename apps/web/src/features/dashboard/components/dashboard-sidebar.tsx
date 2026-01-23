@@ -3,6 +3,7 @@ import {
   CaretUpDown,
   Chat,
   ChatCircle,
+  Code,
   CreditCard,
   FileText,
   Gear,
@@ -114,6 +115,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
             adminUnreadCount && adminUnreadCount > 0
               ? adminUnreadCount
               : undefined,
+        },
+        {
+          href: "/dashboard/$orgSlug/widgets",
+          icon: Code,
+          label: "Widgets",
+          badge: undefined,
         },
         {
           href: "/dashboard/$orgSlug/settings/members",
