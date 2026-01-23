@@ -52,7 +52,7 @@ export default async function RootLayout({
         <script
           data-website-id="f4232b19-0136-4892-95b5-05801c29715d"
           defer
-          src="http://self-hosted-app-umami-8d8473-37-59-125-21.traefik.me/script.js"
+          src="https://umami.damien-schneider.pro/script.js"
         />
         <JsonLd data={jsonLd} />
       </head>
