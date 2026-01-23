@@ -17,10 +17,29 @@ const nextConfig: NextConfig = {
   },
   // biome-ignore lint/suspicious/useAwait: Next.js headers function is async
   async headers() {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+    const convexSiteUrl = process.env.NEXT_PUBLIC_CONVEX_SITE_URL;
+    const umamiUrl = process.env.NEXT_PUBLIC_UMAMI_URL;
+
+    const cspHeader = `
+      default-src 'self';
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://unpkg.com ${umamiUrl || ""};
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' blob: data: https:;
+      font-src 'self' data:;
+      connect-src 'self' ${convexUrl || ""} ${convexSiteUrl || ""} https://auth.convex.dev ${umamiUrl || ""};
+    `
+      .replace(/\s{2,}/g, " ")
+      .trim();
+
     return [
       {
         source: "/:path*",
         headers: [
+          {
+            key: "Content-Security-Policy",
+            value: cspHeader,
+          },
           {
             key: "X-DNS-Prefetch-Control",
             value: "on",

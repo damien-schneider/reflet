@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Inter } from "next/font/google";
+import { env } from "@reflet-v2/env/web";
 import { JsonLd } from "@/components/json-ld";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthDialog } from "@/features/auth/components/auth-dialog";
@@ -49,11 +50,13 @@ export default async function RootLayout({
         <link href="/apple-touch-icon.png" rel="apple-touch-icon" />
         <link href="/manifest.json" rel="manifest" />
         <script defer src="//unpkg.com/react-grab/dist/index.global.js" />
-        <script
-          data-website-id="f4232b19-0136-4892-95b5-05801c29715d"
-          defer
-          src="http://self-hosted-app-umami-8d8473-37-59-125-21.traefik.me/script.js"
-        />
+        {env.NEXT_PUBLIC_UMAMI_URL && (
+          <script
+            data-website-id="f4232b19-0136-4892-95b5-05801c29715d"
+            defer
+            src={`${env.NEXT_PUBLIC_UMAMI_URL}/script.js`}
+          />
+        )}
         <JsonLd data={jsonLd} />
       </head>
       <body>
