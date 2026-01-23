@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeSlash } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useMutation, useQuery } from "convex/react";
@@ -123,6 +124,8 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   const [passwordMismatchError, setPasswordMismatchError] = useState<
     string | null
   >(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const ensurePersonalOrganization = useMutation(
     api.organizations_personal.ensurePersonalOrganization
@@ -389,18 +392,38 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
         {/* Password Field - Always visible */}
         <Field className="relative">
           <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
-          <Input
-            data-testid="password-input"
-            id="password"
-            type="password"
-            {...register("password")}
-            disabled={isSubmitting}
-            onChange={(e) => {
-              setApiError(null);
-              setValue("password", e.target.value);
-              trigger("password");
-            }}
-          />
+          <div className="relative">
+            <Input
+              className="pr-10"
+              data-testid="password-input"
+              id="password"
+              type={showPassword ? "text" : "password"}
+              {...register("password")}
+              disabled={isSubmitting}
+              onChange={(e) => {
+                setApiError(null);
+                setValue("password", e.target.value);
+                trigger("password");
+              }}
+            />
+            <Button
+              aria-label={
+                showPassword
+                  ? "Masquer le mot de passe"
+                  : "Afficher le mot de passe"
+              }
+              className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:bg-transparent hover:text-foreground"
+              onClick={() => setShowPassword(!showPassword)}
+              type="button"
+              variant="ghost"
+            >
+              {showPassword ? (
+                <EyeSlash className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
           <FieldError
             className="absolute top-full left-0"
             errors={errors.password ? [errors.password] : undefined}
@@ -421,18 +444,38 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
                 <FieldLabel htmlFor="confirmPassword">
                   Confirmer le mot de passe
                 </FieldLabel>
-                <Input
-                  data-testid="confirm-password-input"
-                  id="confirmPassword"
-                  type="password"
-                  {...register("confirmPassword")}
-                  disabled={isSubmitting}
-                  onChange={(e) => {
-                    setApiError(null);
-                    setValue("confirmPassword", e.target.value);
-                    trigger("confirmPassword");
-                  }}
-                />
+                <div className="relative">
+                  <Input
+                    className="pr-10"
+                    data-testid="confirm-password-input"
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    {...register("confirmPassword")}
+                    disabled={isSubmitting}
+                    onChange={(e) => {
+                      setApiError(null);
+                      setValue("confirmPassword", e.target.value);
+                      trigger("confirmPassword");
+                    }}
+                  />
+                  <Button
+                    aria-label={
+                      showConfirmPassword
+                        ? "Masquer le mot de passe"
+                        : "Afficher le mot de passe"
+                    }
+                    className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    type="button"
+                    variant="ghost"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeSlash className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
                 <FieldError
                   className="absolute top-full left-0"
                   data-testid="confirm-password-error"
