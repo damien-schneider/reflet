@@ -19,6 +19,7 @@
     "better-auth": "catalog:",
     "convex": "catalog:",
     "dotenv": "catalog:",
+    "resend": "^6.8.0",
     "zod": "catalog:"
   },
   "devDependencies": {

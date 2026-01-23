@@ -97,6 +97,13 @@ const formatAuthError = (message: string): string => {
   }
 
   if (
+    lowerCleaned.includes("email not verified") ||
+    lowerCleaned.includes("verify your email")
+  ) {
+    return "Veuillez vérifier votre email avant de vous connecter.";
+  }
+
+  if (
     lowerCleaned.includes("too small") ||
     lowerCleaned.includes("expected string")
   ) {
@@ -256,21 +263,36 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
           email: data.email,
           password: data.password,
           name: placeholderName,
+          callbackURL: "/auth/verify-email",
         },
         {
           onSuccess: async () => {
             onSuccess?.();
-            try {
-              const org = await ensurePersonalOrganization({});
-              if (org?.slug) {
-                router.push(`/dashboard/${org.slug}`);
-              } else {
+
+            // Check if user is signed in (only happens in dev without email verification)
+            const session = await authClient.getSession();
+            if (session?.data?.user) {
+              // User is signed in - dev mode or email already verified
+              try {
+                const org = await ensurePersonalOrganization({});
+                if (org?.slug) {
+                  router.push(`/dashboard/${org.slug}`);
+                } else {
+                  router.push("/dashboard");
+                }
+              } catch {
                 router.push("/dashboard");
               }
-            } catch {
-              router.push("/dashboard");
+              toast.success("Inscription réussie");
+            } else {
+              // User not signed in - email verification required (production)
+              router.push(
+                `/auth/check-email?email=${encodeURIComponent(data.email)}`
+              );
+              toast.success(
+                "Inscription réussie. Vérifiez votre email pour activer votre compte."
+              );
             }
-            toast.success("Inscription réussie");
           },
           onError: (error) => {
             setApiError(
