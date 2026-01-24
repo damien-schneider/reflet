@@ -1,0 +1,20 @@
+{
+  "name": "@reflet-v2/email",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./templates/base-layout": "./src/templates/base-layout.tsx",
+    "./templates/verification-email": "./src/templates/verification-email.tsx",
+    "./templates/welcome-email": "./src/templates/welcome-email.tsx"
+  },
+  "dependencies": {
+    "@react-email/components": "^0.0.35",
+    "react": "^19.1.0"
+  },
+  "devDependencies": {
+    "@reflet-v2/config": "workspace:*",
+    "@types/react": "^19.1.0",
+    "typescript": "catalog:"
+  }
+}
