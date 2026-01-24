@@ -1,0 +1,3 @@
+## 2025-02-28 - Nested Interactive Elements Pattern
+**Learning:** Detected a pattern of nested interactive elements (button inside button) in `FeedbackListItem` > `VoteButton` and potentially `TooltipTrigger` > `Button`. This creates invalid HTML and accessibility issues for screen readers. The project uses Base UI for Tooltips which renders a trigger element (often a button) by default without `asChild` support (or configured differently), complicating the "wrap everything in a tooltip" pattern.
+**Action:** When adding tooltips to interactive elements, verify if `asChild` is supported to merge elements. If not, avoid wrapping buttons in buttons. For list items, consider using `div` with click handlers or separating actions from the row click.
