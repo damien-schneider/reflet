@@ -60,6 +60,21 @@ const widgetPosition = v.union(
   v.literal("bottom-left")
 );
 
+// GitHub connection status
+const githubConnectionStatus = v.union(
+  v.literal("connected"),
+  v.literal("pending"),
+  v.literal("error")
+);
+
+// GitHub sync status
+const githubSyncStatus = v.union(
+  v.literal("idle"),
+  v.literal("syncing"),
+  v.literal("success"),
+  v.literal("error")
+);
+
 export default defineSchema({
   // ============================================
   // ORGANIZATIONS
@@ -305,11 +320,16 @@ export default defineSchema({
     description: v.optional(v.string()), // Rich text
     version: v.optional(v.string()), // e.g., "v1.2.0"
     publishedAt: v.optional(v.number()), // null = draft
+    // GitHub sync fields
+    githubReleaseId: v.optional(v.string()), // Original GitHub release ID if synced
+    githubHtmlUrl: v.optional(v.string()), // Link to GitHub release
+    syncedFromGithub: v.optional(v.boolean()), // Whether this was created from GitHub sync
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_organization", ["organizationId"])
-    .index("by_published", ["organizationId", "publishedAt"]),
+    .index("by_published", ["organizationId", "publishedAt"])
+    .index("by_github_release", ["organizationId", "githubReleaseId"]),
 
   // ============================================
   // RELEASE FEEDBACK (Junction table)
@@ -463,4 +483,80 @@ export default defineSchema({
   })
     .index("by_widget_visitor", ["widgetId", "visitorId"])
     .index("by_conversation", ["conversationId"]),
+
+  // ============================================
+  // GITHUB CONNECTIONS
+  // ============================================
+  githubConnections: defineTable({
+    organizationId: v.id("organizations"),
+    // GitHub App installation details
+    installationId: v.string(), // GitHub App installation ID
+    accountType: v.union(v.literal("user"), v.literal("organization")),
+    accountLogin: v.string(), // GitHub username or org name
+    accountAvatarUrl: v.optional(v.string()),
+    // Connection status
+    status: githubConnectionStatus,
+    // Connected repository (optional - can connect later)
+    repositoryId: v.optional(v.string()), // GitHub repo ID
+    repositoryFullName: v.optional(v.string()), // e.g., "owner/repo"
+    repositoryDefaultBranch: v.optional(v.string()),
+    // Webhook configuration
+    webhookId: v.optional(v.string()),
+    webhookSecret: v.optional(v.string()),
+    // CI/GitHub Action configuration
+    ciEnabled: v.optional(v.boolean()),
+    ciBranch: v.optional(v.string()), // Branch to watch for releases
+    ciWorkflowCreated: v.optional(v.boolean()),
+    // Sync settings
+    autoSyncReleases: v.optional(v.boolean()),
+    lastSyncAt: v.optional(v.number()),
+    lastSyncStatus: v.optional(githubSyncStatus),
+    lastSyncError: v.optional(v.string()),
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_installation", ["installationId"]),
+
+  // ============================================
+  // GITHUB RELEASES (Synced from GitHub)
+  // ============================================
+  githubReleases: defineTable({
+    organizationId: v.id("organizations"),
+    githubConnectionId: v.id("githubConnections"),
+    // GitHub release data
+    githubReleaseId: v.string(), // GitHub's release ID
+    tagName: v.string(),
+    name: v.optional(v.string()),
+    body: v.optional(v.string()), // Release notes markdown
+    htmlUrl: v.string(),
+    isDraft: v.boolean(),
+    isPrerelease: v.boolean(),
+    publishedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    // Link to Reflet release (if imported)
+    refletReleaseId: v.optional(v.id("releases")),
+    // Sync metadata
+    lastSyncedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_connection", ["githubConnectionId"])
+    .index("by_github_release_id", ["githubConnectionId", "githubReleaseId"]),
+
+  // ============================================
+  // GITHUB WEBHOOK EVENTS (for debugging/audit)
+  // ============================================
+  githubWebhookEvents: defineTable({
+    organizationId: v.id("organizations"),
+    githubConnectionId: v.id("githubConnections"),
+    eventType: v.string(), // e.g., "release", "push"
+    action: v.optional(v.string()), // e.g., "published", "created"
+    payload: v.string(), // JSON stringified payload (truncated)
+    processedAt: v.optional(v.number()),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_connection", ["githubConnectionId"])
+    .index("by_organization", ["organizationId"]),
 });

@@ -1,9 +1,10 @@
 "use client";
 
-import { Megaphone, Plus } from "@phosphor-icons/react";
+import { GithubLogo, Megaphone, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import Link from "next/link";
 import { use, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,10 @@ export default function ChangelogPage({
   );
   const currentMember = useQuery(
     api.members.getCurrentMember,
+    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+  );
+  const githubStatus = useQuery(
+    api.github.getConnectionStatus,
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
   const createRelease = useMutation(api.changelog.create);
@@ -129,10 +134,27 @@ export default function ChangelogPage({
           </Text>
         </div>
         {isAdmin ? (
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Release
-          </Button>
+          <div className="flex items-center gap-2">
+            {githubStatus?.isConnected ? (
+              <Link href={`/dashboard/${orgSlug}/settings/github`}>
+                <Button variant="outline">
+                  <GithubLogo className="mr-2 h-4 w-4" />
+                  Sync from GitHub
+                </Button>
+              </Link>
+            ) : (
+              <Link href={`/dashboard/${orgSlug}/settings/github`}>
+                <Button variant="outline">
+                  <GithubLogo className="mr-2 h-4 w-4" />
+                  Connect GitHub
+                </Button>
+              </Link>
+            )}
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Release
+            </Button>
+          </div>
         ) : null}
       </div>
 
