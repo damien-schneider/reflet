@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { MAX_COMMENT_LENGTH } from "./constants";
 
 // Helper to get authenticated user
 const getAuthUser = async (ctx: { auth: unknown }) => {
@@ -186,6 +187,12 @@ export const create = mutation({
       throw new Error("You don't have access to comment on this feedback");
     }
 
+    if (args.body.length > MAX_COMMENT_LENGTH) {
+      throw new Error(
+        `Comment must be less than ${MAX_COMMENT_LENGTH} characters`
+      );
+    }
+
     // Validate parent comment if provided
     if (args.parentId) {
       const parentComment = await ctx.db.get(args.parentId);
@@ -246,6 +253,12 @@ export const update = mutation({
     // Only author can edit
     if (comment.authorId !== user._id) {
       throw new Error("You can only edit your own comments");
+    }
+
+    if (args.body.length > MAX_COMMENT_LENGTH) {
+      throw new Error(
+        `Comment must be less than ${MAX_COMMENT_LENGTH} characters`
+      );
     }
 
     await ctx.db.patch(args.id, {

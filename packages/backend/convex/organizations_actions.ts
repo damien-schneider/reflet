@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { MAX_NAME_LENGTH } from "./constants";
 import { getAuthUser } from "./utils";
 
 /**
@@ -24,6 +25,10 @@ export const update = mutation({
 
     if (!membership || membership.role === "member") {
       throw new Error("Only admins can update organization settings");
+    }
+
+    if (args.name.length > MAX_NAME_LENGTH) {
+      throw new Error(`Name must be less than ${MAX_NAME_LENGTH} characters`);
     }
 
     await ctx.db.patch(args.organizationId, {

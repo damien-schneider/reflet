@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "./constants";
 import { PLAN_LIMITS } from "./organizations";
 import { getAuthUser } from "./utils";
 
@@ -132,6 +133,18 @@ export const createPublic = mutation({
     const org = await ctx.db.get(board.organizationId);
     if (!org) {
       throw new Error("Organization not found");
+    }
+
+    if (args.title.length > MAX_TITLE_LENGTH) {
+      throw new Error(`Title must be less than ${MAX_TITLE_LENGTH} characters`);
+    }
+    if (
+      args.description !== undefined &&
+      args.description.length > MAX_DESCRIPTION_LENGTH
+    ) {
+      throw new Error(
+        `Description must be less than ${MAX_DESCRIPTION_LENGTH} characters`
+      );
     }
 
     // Check feedback limit

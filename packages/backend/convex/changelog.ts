@@ -1,6 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import {
+  MAX_DESCRIPTION_LENGTH,
+  MAX_TITLE_LENGTH,
+  MAX_VERSION_LENGTH,
+} from "./constants";
 import { getAuthUser } from "./utils";
 
 // ============================================
@@ -228,6 +233,26 @@ export const create = mutation({
       throw new Error("Only admins can create releases");
     }
 
+    if (args.title.length > MAX_TITLE_LENGTH) {
+      throw new Error(`Title must be less than ${MAX_TITLE_LENGTH} characters`);
+    }
+    if (
+      args.description !== undefined &&
+      args.description.length > MAX_DESCRIPTION_LENGTH
+    ) {
+      throw new Error(
+        `Description must be less than ${MAX_DESCRIPTION_LENGTH} characters`
+      );
+    }
+    if (
+      args.version !== undefined &&
+      args.version.length > MAX_VERSION_LENGTH
+    ) {
+      throw new Error(
+        `Version must be less than ${MAX_VERSION_LENGTH} characters`
+      );
+    }
+
     const now = Date.now();
     const releaseId = await ctx.db.insert("releases", {
       organizationId: args.organizationId,
@@ -271,6 +296,26 @@ export const update = mutation({
 
     if (!membership || membership.role === "member") {
       throw new Error("Only admins can update releases");
+    }
+
+    if (args.title !== undefined && args.title.length > MAX_TITLE_LENGTH) {
+      throw new Error(`Title must be less than ${MAX_TITLE_LENGTH} characters`);
+    }
+    if (
+      args.description !== undefined &&
+      args.description.length > MAX_DESCRIPTION_LENGTH
+    ) {
+      throw new Error(
+        `Description must be less than ${MAX_DESCRIPTION_LENGTH} characters`
+      );
+    }
+    if (
+      args.version !== undefined &&
+      args.version.length > MAX_VERSION_LENGTH
+    ) {
+      throw new Error(
+        `Version must be less than ${MAX_VERSION_LENGTH} characters`
+      );
     }
 
     const { id, ...updates } = args;
