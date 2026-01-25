@@ -429,6 +429,27 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
           />
         </Field>
 
+        {/* Forgot Password Link - Only for sign-in */}
+        <AnimatePresence>
+          {mode === "signIn" && (
+            <motion.div
+              animate="animate"
+              className="text-right"
+              exit="exit"
+              initial="initial"
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              variants={animationVariants}
+            >
+              <a
+                className="font-medium text-olive-600 text-sm hover:underline"
+                href="/auth/forgot-password"
+              >
+                Mot de passe oublié ?
+              </a>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Confirm Password Field - Only for sign-up */}
         <AnimatePresence>
           {mode === "signUp" && (

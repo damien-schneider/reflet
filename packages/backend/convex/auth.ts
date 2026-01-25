@@ -45,6 +45,26 @@ function createAuth(ctx: GenericCtx<DataModel>) {
             console.error("Failed to schedule verification email:", error);
           });
       },
+      sendResetPassword: ({ user, url }) => {
+        // Skip email sending in development
+        if (!isProduction) {
+          // Log reset URL in development for testing
+          console.log("[DEV] Password reset URL:", url);
+          console.log("[DEV] User:", user.email);
+          return;
+        }
+
+        // Schedule the email action to run immediately
+        ctx.scheduler
+          .runAfter(0, internal.email_renderer.sendPasswordResetEmail, {
+            to: user.email,
+            userName: user.name,
+            resetUrl: url,
+          })
+          .catch((error: unknown) => {
+            console.error("Failed to schedule password reset email:", error);
+          });
+      },
     },
     plugins: [
       convex({

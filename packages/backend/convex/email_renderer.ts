@@ -35,6 +35,34 @@ export const sendVerificationEmail = internalAction({
   },
 });
 
+// Send password reset email using react-email template
+export const sendPasswordResetEmail = internalAction({
+  args: {
+    to: v.string(),
+    userName: v.optional(v.string()),
+    resetUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { PasswordResetEmail } = await import(
+      "@reflet-v2/email/templates/password-reset-email"
+    );
+
+    const html = await render(
+      PasswordResetEmail({
+        userName: args.userName,
+        resetUrl: args.resetUrl,
+      })
+    );
+
+    await ctx.runMutation(internal.email.sendEmail, {
+      from: defaultFrom,
+      to: args.to,
+      subject: "Réinitialisez votre mot de passe",
+      html,
+    });
+  },
+});
+
 // Send welcome email using react-email template
 export const sendWelcomeEmail = internalAction({
   args: {
