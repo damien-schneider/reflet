@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 
 interface SubmitFeedbackDialogProps {
@@ -51,63 +52,88 @@ export function SubmitFeedbackDialog({
             Share your ideas, report bugs, or request features.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              onChange={(e) =>
-                onFeedbackChange({ ...feedback, title: e.target.value })
-              }
-              placeholder="Short summary of your feedback"
-              value={feedback.title}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              onChange={(e) =>
-                onFeedbackChange({
-                  ...feedback,
-                  description: e.target.value,
-                })
-              }
-              placeholder="Provide more details..."
-              rows={4}
-              value={feedback.description}
-            />
-          </div>
-          {!isMember && (
+        <form
+          className="grid gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit();
+          }}
+        >
+          <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email (optional)</Label>
+              <Label htmlFor="title">Title *</Label>
               <Input
-                id="email"
+                autoFocus
+                disabled={isSubmitting}
+                id="title"
                 onChange={(e) =>
-                  onFeedbackChange({ ...feedback, email: e.target.value })
+                  onFeedbackChange({ ...feedback, title: e.target.value })
                 }
-                placeholder="your@email.com"
-                type="email"
-                value={feedback.email}
+                placeholder="Short summary of your feedback"
+                required
+                value={feedback.title}
               />
-              <p className="text-muted-foreground text-xs">
-                We&apos;ll notify you when there are updates to your feedback.
-              </p>
             </div>
-          )}
-        </div>
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
-            Cancel
-          </Button>
-          <Button
-            disabled={isSubmitting || !feedback.title.trim()}
-            onClick={onSubmit}
-            style={{ backgroundColor: primaryColor }}
-          >
-            {isSubmitting ? "Submitting..." : "Submit"}
-          </Button>
-        </DialogFooter>
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                disabled={isSubmitting}
+                id="description"
+                onChange={(e) =>
+                  onFeedbackChange({
+                    ...feedback,
+                    description: e.target.value,
+                  })
+                }
+                placeholder="Provide more details..."
+                rows={4}
+                value={feedback.description}
+              />
+            </div>
+            {!isMember && (
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email (optional)</Label>
+                <Input
+                  disabled={isSubmitting}
+                  id="email"
+                  onChange={(e) =>
+                    onFeedbackChange({ ...feedback, email: e.target.value })
+                  }
+                  placeholder="your@email.com"
+                  type="email"
+                  value={feedback.email}
+                />
+                <p className="text-muted-foreground text-xs">
+                  We&apos;ll notify you when there are updates to your feedback.
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              disabled={isSubmitting}
+              onClick={() => onOpenChange(false)}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={isSubmitting || !feedback.title.trim()}
+              style={{ backgroundColor: primaryColor }}
+              type="submit"
+            >
+              {isSubmitting ? (
+                <>
+                  <Spinner className="mr-2" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
