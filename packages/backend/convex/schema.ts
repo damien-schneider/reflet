@@ -231,6 +231,11 @@ export default defineSchema({
     roadmapLane: v.optional(v.string()), // Tag ID or "now"/"next"/"later"
     roadmapOrder: v.optional(v.number()),
     completedAt: v.optional(v.number()),
+    // GitHub issue sync fields
+    githubIssueId: v.optional(v.string()), // Original GitHub issue ID if synced
+    githubIssueNumber: v.optional(v.number()), // GitHub issue number (#123)
+    githubHtmlUrl: v.optional(v.string()), // Link to GitHub issue
+    syncedFromGithub: v.optional(v.boolean()), // Whether this was created from GitHub sync
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -240,6 +245,7 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_board_status", ["boardId", "status"])
     .index("by_status_id", ["statusId"])
+    .index("by_github_issue", ["organizationId", "githubIssueId"])
     .searchIndex("search_title", {
       searchField: "title",
       filterFields: ["boardId", "organizationId"],
@@ -507,11 +513,17 @@ export default defineSchema({
     ciEnabled: v.optional(v.boolean()),
     ciBranch: v.optional(v.string()), // Branch to watch for releases
     ciWorkflowCreated: v.optional(v.boolean()),
-    // Sync settings
+    // Release sync settings
     autoSyncReleases: v.optional(v.boolean()),
     lastSyncAt: v.optional(v.number()),
     lastSyncStatus: v.optional(githubSyncStatus),
     lastSyncError: v.optional(v.string()),
+    // Issue sync settings
+    autoSyncIssues: v.optional(v.boolean()),
+    issuesSyncEnabled: v.optional(v.boolean()),
+    lastIssuesSyncAt: v.optional(v.number()),
+    lastIssuesSyncStatus: v.optional(githubSyncStatus),
+    lastIssuesSyncError: v.optional(v.string()),
     // Timestamps
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -550,8 +562,8 @@ export default defineSchema({
   githubWebhookEvents: defineTable({
     organizationId: v.id("organizations"),
     githubConnectionId: v.id("githubConnections"),
-    eventType: v.string(), // e.g., "release", "push"
-    action: v.optional(v.string()), // e.g., "published", "created"
+    eventType: v.string(), // e.g., "release", "push", "issues"
+    action: v.optional(v.string()), // e.g., "published", "created", "opened"
     payload: v.string(), // JSON stringified payload (truncated)
     processedAt: v.optional(v.number()),
     error: v.optional(v.string()),
@@ -559,4 +571,65 @@ export default defineSchema({
   })
     .index("by_connection", ["githubConnectionId"])
     .index("by_organization", ["organizationId"]),
+
+  // ============================================
+  // GITHUB LABEL MAPPINGS (Maps GitHub labels to Reflet boards/tags)
+  // ============================================
+  githubLabelMappings: defineTable({
+    organizationId: v.id("organizations"),
+    githubConnectionId: v.id("githubConnections"),
+    // GitHub label info
+    githubLabelName: v.string(), // The GitHub label name to match
+    githubLabelColor: v.optional(v.string()), // Label color from GitHub
+    // Mapping target
+    targetBoardId: v.optional(v.id("boards")), // Board to sync issues to
+    targetTagId: v.optional(v.id("tags")), // Tag to apply to synced feedback
+    // Sync options
+    autoSync: v.boolean(), // Whether to auto-sync issues with this label
+    syncClosedIssues: v.optional(v.boolean()), // Whether to sync closed issues
+    defaultStatus: v.optional(feedbackStatus), // Default status for synced issues
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_connection", ["githubConnectionId"])
+    .index("by_connection_label", ["githubConnectionId", "githubLabelName"]),
+
+  // ============================================
+  // GITHUB ISSUES (Synced from GitHub)
+  // ============================================
+  githubIssues: defineTable({
+    organizationId: v.id("organizations"),
+    githubConnectionId: v.id("githubConnections"),
+    // GitHub issue data
+    githubIssueId: v.string(), // GitHub's issue ID
+    githubIssueNumber: v.number(), // Issue number (#123)
+    title: v.string(),
+    body: v.optional(v.string()), // Issue body markdown
+    htmlUrl: v.string(),
+    state: v.union(v.literal("open"), v.literal("closed")),
+    // GitHub metadata
+    githubLabels: v.array(v.string()), // Array of label names
+    githubAuthor: v.optional(v.string()), // GitHub username
+    githubAuthorAvatarUrl: v.optional(v.string()),
+    githubMilestone: v.optional(v.string()),
+    githubAssignees: v.optional(v.array(v.string())), // Array of usernames
+    // Timestamps from GitHub
+    githubCreatedAt: v.number(),
+    githubUpdatedAt: v.number(),
+    githubClosedAt: v.optional(v.number()),
+    // Link to Reflet feedback (if imported)
+    refletFeedbackId: v.optional(v.id("feedback")),
+    // Sync metadata
+    lastSyncedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_connection", ["githubConnectionId"])
+    .index("by_github_issue_id", ["githubConnectionId", "githubIssueId"])
+    .index("by_github_issue_number", [
+      "githubConnectionId",
+      "githubIssueNumber",
+    ])
+    .index("by_reflet_feedback", ["refletFeedbackId"]),
 });

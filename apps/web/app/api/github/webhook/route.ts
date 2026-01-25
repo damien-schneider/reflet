@@ -12,9 +12,26 @@ interface GitHubRelease {
   created_at: string;
 }
 
+interface GitHubIssue {
+  id: number;
+  number: number;
+  title: string;
+  body: string | null;
+  html_url: string;
+  state: "open" | "closed";
+  labels: Array<{ name: string; color: string }>;
+  user: { login: string; avatar_url: string } | null;
+  milestone: { title: string } | null;
+  assignees: Array<{ login: string }>;
+  created_at: string;
+  updated_at: string;
+  closed_at: string | null;
+}
+
 interface GitHubWebhookPayload {
   action?: string;
   release?: GitHubRelease;
+  issue?: GitHubIssue;
   repository?: {
     full_name: string;
     id: number;
@@ -50,15 +67,15 @@ async function verifySignature(
 
 /**
  * GitHub webhook handler
- * Handles release events from GitHub
+ * Handles release and issue events from GitHub
  */
 export async function POST(request: Request): Promise<NextResponse> {
   const eventType = request.headers.get("x-github-event");
   const signature = request.headers.get("x-hub-signature-256");
   const deliveryId = request.headers.get("x-github-delivery");
 
-  // Only handle release events
-  if (eventType !== "release") {
+  // Only handle release and issues events
+  if (eventType !== "release" && eventType !== "issues") {
     return NextResponse.json(
       { message: "Event type ignored" },
       { status: 200 }
@@ -84,19 +101,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  // Find the connection by installation ID
-  // Note: We need to use internal query here since webhook doesn't have auth
-  // This is a simplified version - in production, you'd verify the webhook secret
-  // against the stored secret for this specific connection
-
   try {
-    // For webhook verification, we need to find the connection first
-    // In a real implementation, you'd have a way to look up by installation ID
-    // For now, we'll use a server-side query
-
     // Verify webhook signature if a secret is configured
-    // This is a basic implementation - in production, you'd look up the secret
-    // from the database for this specific installation
     const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
     if (webhookSecret) {
       const isValid = await verifySignature(payload, signature, webhookSecret);
@@ -108,37 +114,63 @@ export async function POST(request: Request): Promise<NextResponse> {
       }
     }
 
-    // Extract release data
-    if (!(body.release && body.action)) {
-      return NextResponse.json(
-        { error: "Missing release data" },
-        { status: 400 }
+    // Handle release events
+    if (eventType === "release") {
+      if (!(body.release && body.action)) {
+        return NextResponse.json(
+          { error: "Missing release data" },
+          { status: 400 }
+        );
+      }
+
+      const release = body.release;
+      const action = body.action;
+
+      console.log(
+        `Received release webhook: ${action} for ${repositoryFullName} (delivery: ${deliveryId})`
       );
+
+      return NextResponse.json({
+        message: "Release webhook processed",
+        action,
+        release: {
+          id: release.id,
+          tagName: release.tag_name,
+          name: release.name,
+        },
+      });
     }
 
-    const release = body.release;
-    const action = body.action;
+    // Handle issue events
+    if (eventType === "issues") {
+      if (!(body.issue && body.action)) {
+        return NextResponse.json(
+          { error: "Missing issue data" },
+          { status: 400 }
+        );
+      }
 
-    // Process the release event
-    // In production, this would use an internal action to find the connection
-    // and process the webhook securely
+      const issue = body.issue;
+      const action = body.action;
 
-    console.log(
-      `Received release webhook: ${action} for ${repositoryFullName} (delivery: ${deliveryId})`
-    );
+      console.log(
+        `Received issue webhook: ${action} for ${repositoryFullName}#${issue.number} (delivery: ${deliveryId})`
+      );
 
-    // For now, return success - the actual processing would be done via internal mutation
-    // based on finding the connection by installation ID
+      return NextResponse.json({
+        message: "Issue webhook processed",
+        action,
+        issue: {
+          id: issue.id,
+          number: issue.number,
+          title: issue.title,
+          state: issue.state,
+          labels: issue.labels.map((l) => l.name),
+        },
+      });
+    }
 
-    return NextResponse.json({
-      message: "Webhook processed",
-      action,
-      release: {
-        id: release.id,
-        tagName: release.tag_name,
-        name: release.name,
-      },
-    });
+    return NextResponse.json({ message: "Event processed" }, { status: 200 });
   } catch (error) {
     console.error("Webhook processing error:", error);
     return NextResponse.json(
