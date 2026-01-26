@@ -1,6 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import {
+  MAX_BOARD_DESCRIPTION_LENGTH,
+  MAX_BOARD_NAME_LENGTH,
+  MAX_SLUG_LENGTH,
+} from "./constants";
 import { feedbackStatus } from "./feedback";
 import { PLAN_LIMITS } from "./organizations";
 import { getAuthUser } from "./utils";
@@ -204,6 +209,25 @@ export const create = mutation({
       throw new Error("Organization not found");
     }
 
+    if (args.name.length > MAX_BOARD_NAME_LENGTH) {
+      throw new Error(
+        `Board name must be less than ${MAX_BOARD_NAME_LENGTH} characters.`
+      );
+    }
+    if (args.slug && args.slug.length > MAX_SLUG_LENGTH) {
+      throw new Error(
+        `Slug must be less than ${MAX_SLUG_LENGTH} characters.`
+      );
+    }
+    if (
+      args.description &&
+      args.description.length > MAX_BOARD_DESCRIPTION_LENGTH
+    ) {
+      throw new Error(
+        `Description must be less than ${MAX_BOARD_DESCRIPTION_LENGTH} characters.`
+      );
+    }
+
     // Check board limit
     const existingBoards = await ctx.db
       .query("boards")
@@ -291,6 +315,25 @@ export const update = mutation({
 
     if (!membership) {
       throw new Error("You are not a member of this organization");
+    }
+
+    if (args.name && args.name.length > MAX_BOARD_NAME_LENGTH) {
+      throw new Error(
+        `Board name must be less than ${MAX_BOARD_NAME_LENGTH} characters.`
+      );
+    }
+    if (args.slug && args.slug.length > MAX_SLUG_LENGTH) {
+      throw new Error(
+        `Slug must be less than ${MAX_SLUG_LENGTH} characters.`
+      );
+    }
+    if (
+      args.description &&
+      args.description.length > MAX_BOARD_DESCRIPTION_LENGTH
+    ) {
+      throw new Error(
+        `Description must be less than ${MAX_BOARD_DESCRIPTION_LENGTH} characters.`
+      );
     }
 
     // Validate slug uniqueness if changing

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "./constants";
 import { PLAN_LIMITS } from "./organizations";
 import { getAuthUser } from "./utils";
 
@@ -160,6 +161,18 @@ export const create = mutation({
       throw new Error("You don't have access to this board");
     }
 
+    // Check input lengths
+    if (args.title.length > MAX_TITLE_LENGTH) {
+      throw new Error(
+        `Title must be less than ${MAX_TITLE_LENGTH} characters.`
+      );
+    }
+    if (args.description.length > MAX_DESCRIPTION_LENGTH) {
+      throw new Error(
+        `Description must be less than ${MAX_DESCRIPTION_LENGTH} characters.`
+      );
+    }
+
     // Check feedback limit
     const existingFeedback = await ctx.db
       .query("feedback")
@@ -247,6 +260,17 @@ export const update = mutation({
 
     if (!(isAdmin || isAuthor)) {
       throw new Error("You don't have permission to update this feedback");
+    }
+
+    if (args.title && args.title.length > MAX_TITLE_LENGTH) {
+      throw new Error(
+        `Title must be less than ${MAX_TITLE_LENGTH} characters.`
+      );
+    }
+    if (args.description && args.description.length > MAX_DESCRIPTION_LENGTH) {
+      throw new Error(
+        `Description must be less than ${MAX_DESCRIPTION_LENGTH} characters.`
+      );
     }
 
     // Authors can only update title and description

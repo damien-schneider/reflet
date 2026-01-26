@@ -1,0 +1,6 @@
+export const MAX_TITLE_LENGTH = 100;
+export const MAX_DESCRIPTION_LENGTH = 20000;
+export const MAX_COMMENT_LENGTH = 5000;
+export const MAX_BOARD_NAME_LENGTH = 100;
+export const MAX_BOARD_DESCRIPTION_LENGTH = 500;
+export const MAX_SLUG_LENGTH = 100;
