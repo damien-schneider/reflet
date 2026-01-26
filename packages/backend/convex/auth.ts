@@ -7,7 +7,6 @@ import { query } from "./_generated/server";
 import authConfig from "./auth.config";
 
 const siteUrl = process.env.SITE_URL ?? "";
-const isProduction = process.env.NODE_ENV === "production";
 
 export const authComponent = createClient<DataModel>(components.betterAuth);
 
@@ -18,52 +17,83 @@ function createAuth(ctx: GenericCtx<DataModel>) {
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: true,
-      // Only require email verification in production
-      requireEmailVerification: isProduction,
-      // Send verification email on signup in production
-      sendOnSignUp: isProduction,
-      // Automatically sign in user after email verification
-      autoSignInAfterVerification: true,
-      sendVerificationEmail: ({ user, url }) => {
-        // Skip email sending in development
-        if (!isProduction) {
-          // Log verification URL in development for testing
-          console.log("[DEV] Email verification URL:", url);
-          console.log("[DEV] User:", user.email);
+      // Require email verification in all environments
+      requireEmailVerification: true,
+      // Password reset callback
+      sendResetPassword: async ({
+        user,
+        url,
+      }: {
+        user: { email: string; name: string };
+        url: string;
+      }) => {
+        console.log("=== PASSWORD RESET EMAIL CALLBACK INVOKED ===");
+        console.log("[Auth] User:", user.email);
+        console.log("[Auth] Reset URL:", url);
+
+        if (!("scheduler" in ctx)) {
+          console.error("[Auth] ERROR: Context does not have scheduler");
           return;
         }
 
-        // Schedule the email action to run immediately
-        // This uses the Convex Resend component for reliable delivery
-        ctx.scheduler
-          .runAfter(0, internal.email_renderer.sendVerificationEmail, {
-            to: user.email,
-            userName: user.name,
-            verificationUrl: url,
-          })
-          .catch((error: unknown) => {
-            console.error("Failed to schedule verification email:", error);
-          });
+        try {
+          await ctx.scheduler.runAfter(
+            0,
+            internal.email_renderer.sendPasswordResetEmail,
+            {
+              to: user.email,
+              userName: user.name,
+              resetUrl: url,
+            }
+          );
+          console.log("[Auth] Password reset email scheduled successfully");
+        } catch (error: unknown) {
+          console.error(
+            "[Auth] Failed to schedule password reset email:",
+            error
+          );
+        }
       },
-      sendResetPassword: ({ user, url }) => {
-        // Skip email sending in development
-        if (!isProduction) {
-          // Log reset URL in development for testing
-          console.log("[DEV] Password reset URL:", url);
-          console.log("[DEV] User:", user.email);
+    },
+    // Email verification config is separate from emailAndPassword
+    emailVerification: {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: async ({
+        user,
+        url,
+      }: {
+        user: { email: string; name: string };
+        url: string;
+      }) => {
+        console.log("=== VERIFICATION EMAIL CALLBACK INVOKED ===");
+        console.log("[Auth] User:", JSON.stringify(user));
+        console.log("[Auth] URL:", url);
+        console.log("[Auth] Context has scheduler:", "scheduler" in ctx);
+
+        if (!("scheduler" in ctx)) {
+          console.error(
+            "[Auth] ERROR: Context does not have scheduler - cannot send email"
+          );
+          console.error("[Auth] Context keys:", Object.keys(ctx));
           return;
         }
 
-        // Schedule the email action to run immediately
-        ctx.scheduler
-          .runAfter(0, internal.email_renderer.sendPasswordResetEmail, {
-            to: user.email,
-            userName: user.name,
-            resetUrl: url,
-          })
-          .catch((error: unknown) => {
-            console.error("Failed to schedule password reset email:", error);
-          });
+        try {
+          console.log("[Auth] Scheduling verification email via Resend...");
+          await ctx.scheduler.runAfter(
+            0,
+            internal.email_renderer.sendVerificationEmail,
+            {
+              to: user.email,
+              userName: user.name,
+              verificationUrl: url,
+            }
+          );
+          console.log("[Auth] Verification email scheduled successfully");
+        } catch (error: unknown) {
+          console.error("[Auth] Failed to schedule verification email:", error);
+        }
       },
     },
     plugins: [

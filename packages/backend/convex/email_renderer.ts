@@ -19,19 +19,34 @@ export const sendVerificationEmail = internalAction({
     verificationUrl: v.string(),
   },
   handler: async (ctx, args) => {
+    console.log("=== EMAIL RENDERER: sendVerificationEmail called ===");
+    console.log("[Email] To:", args.to);
+    console.log("[Email] From:", defaultFrom);
+    console.log(
+      "[Email] RESEND_FROM_EMAIL env:",
+      process.env.RESEND_FROM_EMAIL
+    );
+
     const html = await render(
       VerificationEmail({
         userName: args.userName,
         verificationUrl: args.verificationUrl,
       })
     );
+    console.log("[Email] HTML rendered, length:", html.length);
 
-    await ctx.runMutation(internal.email.sendEmail, {
-      from: defaultFrom,
-      to: args.to,
-      subject: "Vérifiez votre adresse email",
-      html,
-    });
+    try {
+      await ctx.runMutation(internal.email.sendEmail, {
+        from: defaultFrom,
+        to: args.to,
+        subject: "Vérifiez votre adresse email",
+        html,
+      });
+      console.log("[Email] sendEmail mutation called successfully");
+    } catch (error) {
+      console.error("[Email] Error calling sendEmail:", error);
+      throw error;
+    }
   },
 });
 

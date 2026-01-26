@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useDebouncedValue } from "@tanstack/react-pacer";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -130,10 +130,6 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   const [passwordMismatchError, setPasswordMismatchError] = useState<
     string | null
   >(null);
-
-  const ensurePersonalOrganization = useMutation(
-    api.organizations_personal.ensurePersonalOrganization
-  );
 
   // Check if email exists when user blurs the email field
   const emailExistsData = useQuery(
@@ -266,33 +262,16 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
           callbackURL: "/auth/verify-email",
         },
         {
-          onSuccess: async () => {
+          onSuccess: () => {
             onSuccess?.();
-
-            // Check if user is signed in (only happens in dev without email verification)
-            const session = await authClient.getSession();
-            if (session?.data?.user) {
-              // User is signed in - dev mode or email already verified
-              try {
-                const org = await ensurePersonalOrganization({});
-                if (org?.slug) {
-                  router.push(`/dashboard/${org.slug}`);
-                } else {
-                  router.push("/dashboard");
-                }
-              } catch {
-                router.push("/dashboard");
-              }
-              toast.success("Inscription réussie");
-            } else {
-              // User not signed in - email verification required (production)
-              router.push(
-                `/auth/check-email?email=${encodeURIComponent(data.email)}`
-              );
-              toast.success(
-                "Inscription réussie. Vérifiez votre email pour activer votre compte."
-              );
-            }
+            // Email verification is always required
+            // Redirect immediately to check-email page for better UX
+            router.push(
+              `/auth/check-email?email=${encodeURIComponent(data.email)}`
+            );
+            toast.success(
+              "Inscription réussie. Vérifiez votre email pour activer votre compte."
+            );
           },
           onError: (error) => {
             setApiError(
