@@ -1,0 +1,3 @@
+## 2025-02-18 - Nested Interactive Components
+**Learning:** The `FeedbackListItem` component wraps its entire content in a `<button>`, causing accessibility and interaction issues when nested components (like `VoteButton`) are also buttons. This leads to invalid HTML and requires explicit event management.
+**Action:** When working with nested interactive elements in this codebase, always ensure `e.stopPropagation()` and `e.preventDefault()` are applied to the inner handlers to prevent bubbling to the parent container. Future refactors should replace the outer `<button>` with a `<div>` or `<a>` to improve semantic validity.

@@ -3,6 +3,7 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useAtomValue } from "jotai";
+import { type MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -117,7 +118,9 @@ export function VoteButton({
     }
   );
 
-  const handleVote = () => {
+  const handleVote = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     authGuard(async () => {
       await toggleVote({ feedbackId, voteType: "upvote" });
     });
@@ -137,6 +140,10 @@ export function VoteButton({
 
   const button = (
     <Button
+      aria-label={
+        hasVoted ? `Remove vote (${voteCount})` : `Vote (${voteCount})`
+      }
+      aria-pressed={hasVoted}
       className={cn(
         "flex flex-col items-center justify-center gap-0.5 font-semibold",
         sizeClasses[size],
@@ -144,6 +151,7 @@ export function VoteButton({
         className
       )}
       onClick={handleVote}
+      title={hasVoted ? "Remove vote" : "Vote"}
       variant={hasVoted ? "default" : "outline"}
     >
       <CaretUp className={iconSizes[size]} />
