@@ -1,0 +1,8 @@
+{
+  "extends": "@reflet-v2/config/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "strictNullChecks": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

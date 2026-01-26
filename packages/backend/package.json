@@ -14,11 +14,15 @@
     "@convex-dev/better-auth": "catalog:",
     "@convex-dev/polar": "^0.7.3",
     "@convex-dev/rate-limiter": "^0.3.2",
+    "@convex-dev/resend": "^0.2.3",
     "@convex-dev/sharded-counter": "^0.2.0",
+    "@react-email/render": "^2.0.4",
+    "@reflet-v2/email": "workspace:*",
     "ai": "^5.0.117",
     "better-auth": "catalog:",
     "convex": "catalog:",
     "dotenv": "catalog:",
+    "resend": "^6.8.0",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useDebouncedValue } from "@tanstack/react-pacer";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -97,6 +97,13 @@ const formatAuthError = (message: string): string => {
   }
 
   if (
+    lowerCleaned.includes("email not verified") ||
+    lowerCleaned.includes("verify your email")
+  ) {
+    return "Veuillez vérifier votre email avant de vous connecter.";
+  }
+
+  if (
     lowerCleaned.includes("too small") ||
     lowerCleaned.includes("expected string")
   ) {
@@ -123,10 +130,6 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   const [passwordMismatchError, setPasswordMismatchError] = useState<
     string | null
   >(null);
-
-  const ensurePersonalOrganization = useMutation(
-    api.organizations_personal.ensurePersonalOrganization
-  );
 
   // Check if email exists when user blurs the email field
   const emailExistsData = useQuery(
@@ -256,21 +259,19 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
           email: data.email,
           password: data.password,
           name: placeholderName,
+          callbackURL: "/auth/verify-email",
         },
         {
-          onSuccess: async () => {
+          onSuccess: () => {
             onSuccess?.();
-            try {
-              const org = await ensurePersonalOrganization({});
-              if (org?.slug) {
-                router.push(`/dashboard/${org.slug}`);
-              } else {
-                router.push("/dashboard");
-              }
-            } catch {
-              router.push("/dashboard");
-            }
-            toast.success("Inscription réussie");
+            // Email verification is always required
+            // Redirect immediately to check-email page for better UX
+            router.push(
+              `/auth/check-email?email=${encodeURIComponent(data.email)}`
+            );
+            toast.success(
+              "Inscription réussie. Vérifiez votre email pour activer votre compte."
+            );
           },
           onError: (error) => {
             setApiError(
@@ -406,6 +407,27 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
             errors={errors.password ? [errors.password] : undefined}
           />
         </Field>
+
+        {/* Forgot Password Link - Only for sign-in */}
+        <AnimatePresence>
+          {mode === "signIn" && (
+            <motion.div
+              animate="animate"
+              className="text-right"
+              exit="exit"
+              initial="initial"
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              variants={animationVariants}
+            >
+              <a
+                className="font-medium text-olive-600 text-sm hover:underline"
+                href="/auth/forgot-password"
+              >
+                Mot de passe oublié ?
+              </a>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Confirm Password Field - Only for sign-up */}
         <AnimatePresence>
