@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { MAX_COMMENT_LENGTH } from "./constants";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 
@@ -194,6 +195,10 @@ export const create = mutation({
       }
     }
 
+    if (args.body.length > MAX_COMMENT_LENGTH) {
+      throw new Error(`Comment cannot exceed ${MAX_COMMENT_LENGTH} characters`);
+    }
+
     const now = Date.now();
     const commentId = await ctx.db.insert("comments", {
       feedbackId: args.feedbackId,
@@ -246,6 +251,10 @@ export const update = mutation({
     // Only author can edit
     if (comment.authorId !== user._id) {
       throw new Error("You can only edit your own comments");
+    }
+
+    if (args.body.length > MAX_COMMENT_LENGTH) {
+      throw new Error(`Comment cannot exceed ${MAX_COMMENT_LENGTH} characters`);
     }
 
     await ctx.db.patch(args.id, {

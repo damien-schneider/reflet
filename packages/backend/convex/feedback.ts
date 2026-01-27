@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "./constants";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { PLAN_LIMITS } from "./organizations";
@@ -173,6 +174,15 @@ export const create = mutation({
       );
     }
 
+    if (args.title.length > MAX_TITLE_LENGTH) {
+      throw new Error(`Title cannot exceed ${MAX_TITLE_LENGTH} characters`);
+    }
+    if (args.description.length > MAX_DESCRIPTION_LENGTH) {
+      throw new Error(
+        `Description cannot exceed ${MAX_DESCRIPTION_LENGTH} characters`
+      );
+    }
+
     // Get the default status (first status by order, usually "Open")
     const boardStatuses = await ctx.db
       .query("boardStatuses")
@@ -268,6 +278,16 @@ export const update = mutation({
       });
     } else {
       const { id, title, description } = args;
+
+      if (title && title.length > MAX_TITLE_LENGTH) {
+        throw new Error(`Title cannot exceed ${MAX_TITLE_LENGTH} characters`);
+      }
+      if (description && description.length > MAX_DESCRIPTION_LENGTH) {
+        throw new Error(
+          `Description cannot exceed ${MAX_DESCRIPTION_LENGTH} characters`
+        );
+      }
+
       if (
         args.status !== undefined ||
         args.isApproved !== undefined ||
