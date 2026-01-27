@@ -5,6 +5,8 @@ import "@reflet-v2/env/web";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  reactCompiler: true,
+
   transpilePackages: ["@reflet-v2/backend", "@reflet-v2/env"],
   serverExternalPackages: ["isomorphic-dompurify"],
   turbopack: {
