@@ -10,7 +10,10 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
-    // GitHub App configuration (optional)
+    // GitHub OAuth configuration (optional - for user auth)
+    GITHUB_CLIENT_ID: z.string().optional(),
+    GITHUB_CLIENT_SECRET: z.string().optional(),
+    // GitHub App configuration (optional - for org integration)
     GITHUB_APP_ID: z.string().optional(),
     GITHUB_APP_SLUG: z.string().optional(),
     GITHUB_APP_PRIVATE_KEY: z.string().optional(),

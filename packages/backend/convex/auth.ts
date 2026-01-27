@@ -6,6 +6,10 @@ import type { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import authConfig from "./auth.config";
 
+// GitHub OAuth configuration (optional)
+const githubClientId = process.env.GITHUB_CLIENT_ID;
+const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
+
 const siteUrl = process.env.SITE_URL ?? "";
 const additionalOrigins =
   process.env.ADDITIONAL_TRUSTED_ORIGINS?.split(",").filter(Boolean) ?? [];
@@ -13,10 +17,21 @@ const additionalOrigins =
 export const authComponent = createClient<DataModel>(components.betterAuth);
 
 function createAuth(ctx: GenericCtx<DataModel>) {
+  // Build social providers configuration conditionally
+  const githubProvider =
+    githubClientId && githubClientSecret
+      ? {
+          id: "github" as const,
+          clientId: githubClientId,
+          clientSecret: githubClientSecret,
+        }
+      : null;
+
   return betterAuth({
     baseURL: siteUrl,
     trustedOrigins: [siteUrl, ...additionalOrigins],
     database: authComponent.adapter(ctx),
+    socialProviders: githubProvider ? [githubProvider] : undefined,
     emailAndPassword: {
       enabled: true,
       // Require email verification in all environments
