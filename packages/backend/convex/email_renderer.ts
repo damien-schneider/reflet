@@ -1,6 +1,7 @@
 "use node";
 
 import { render } from "@react-email/render";
+import { InvitationEmail } from "@reflet-v2/email/templates/invitation-email";
 import { VerificationEmail } from "@reflet-v2/email/templates/verification-email";
 import { WelcomeEmail } from "@reflet-v2/email/templates/welcome-email";
 import { v } from "convex/values";
@@ -102,6 +103,34 @@ export const sendWelcomeEmail = internalAction({
       from: defaultFrom,
       to: args.to,
       subject: "Bienvenue sur Reflet",
+      html,
+    });
+  },
+});
+
+// Send invitation email using react-email template
+export const sendInvitationEmail = internalAction({
+  args: {
+    to: v.string(),
+    organizationName: v.string(),
+    inviterName: v.string(),
+    role: v.union(v.literal("admin"), v.literal("member")),
+    acceptUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const html = await render(
+      InvitationEmail({
+        organizationName: args.organizationName,
+        inviterName: args.inviterName,
+        role: args.role,
+        acceptUrl: args.acceptUrl,
+      })
+    );
+
+    await ctx.runMutation(internal.email.sendEmail, {
+      from: defaultFrom,
+      to: args.to,
+      subject: `Invitation à rejoindre ${args.organizationName}`,
       html,
     });
   },
