@@ -32,6 +32,7 @@ interface UseGitHubSettingsProps {
   orgSlug: string | undefined;
   isConnected: boolean;
   hasRepository: boolean;
+  hasWebhook?: boolean;
   selectRepository: (args: {
     organizationId: Id<"organizations">;
     repositoryId: string;
@@ -68,6 +69,7 @@ export function useGitHubSettings({
   orgSlug,
   isConnected,
   hasRepository,
+  hasWebhook,
   selectRepository,
   toggleAutoSync,
   disconnect,
@@ -263,9 +265,53 @@ export function useGitHubSettings({
       if (!orgId) {
         return;
       }
+
+      // When enabling auto-sync and webhook doesn't exist, set it up first
+      if (enabled && !hasWebhook) {
+        setIsSettingUp(true);
+        setWebhookSetupError(null);
+        try {
+          const response = await fetch("/api/github/setup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              organizationId: orgId,
+              setupWebhook: true,
+              setupCi: false,
+            }),
+          });
+
+          const data = (await response.json()) as {
+            success?: boolean;
+            error?: string;
+            code?: string;
+            message?: string;
+          };
+
+          if (!response.ok || data.error) {
+            setWebhookSetupError({
+              code: data.code ?? "UNKNOWN_ERROR",
+              message:
+                data.message ?? data.error ?? "An unknown error occurred",
+            });
+            setIsSettingUp(false);
+            return; // Don't enable auto-sync if webhook setup failed
+          }
+        } catch (error) {
+          console.error("Error setting up webhook:", error);
+          setWebhookSetupError({
+            code: "NETWORK_ERROR",
+            message: "Failed to connect to the server. Please try again.",
+          });
+          setIsSettingUp(false);
+          return; // Don't enable auto-sync if webhook setup failed
+        }
+        setIsSettingUp(false);
+      }
+
       await toggleAutoSync({ organizationId: orgId, enabled });
     },
-    [orgId, toggleAutoSync]
+    [orgId, toggleAutoSync, hasWebhook]
   );
 
   const handleToggleIssuesSync = useCallback(

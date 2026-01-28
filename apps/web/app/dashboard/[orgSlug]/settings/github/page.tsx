@@ -12,7 +12,6 @@ import { LabelMappingsCard } from "@/features/github/components/label-mappings-c
 import { RepositorySelectorCard } from "@/features/github/components/repository-selector-card";
 import { SyncSettingsCard } from "@/features/github/components/sync-settings-card";
 import { SyncedReleasesCard } from "@/features/github/components/synced-releases-card";
-import { WebhookSetupCard } from "@/features/github/components/webhook-setup-card";
 import { useGitHubSettings } from "@/features/github/hooks/use-github-settings";
 import { useGitHubSettingsMutations } from "@/features/github/hooks/use-github-settings-mutations";
 import { useGitHubSettingsQueries } from "@/features/github/hooks/use-github-settings-queries";
@@ -40,6 +39,7 @@ export default function GitHubSettingsPage({
     orgSlug,
     isConnected: queries.connectionStatus?.isConnected ?? false,
     hasRepository: queries.connectionStatus?.hasRepository ?? false,
+    hasWebhook: queries.connectionStatus?.hasWebhook ?? false,
     selectRepository: async (
       args: Parameters<typeof mutations.selectRepositoryMutation>[0]
     ) => {
@@ -138,7 +138,6 @@ export default function GitHubSettingsPage({
             boards={queries.boards ?? []}
             githubLabels={settings.githubLabels}
             githubReleases={queries.githubReleases}
-            hasWebhook={queries.connectionStatus.hasWebhook}
             isAdmin={isAdmin}
             isLoadingLabels={settings.isLoadingLabels}
             isSettingUp={settings.isSettingUp}
@@ -159,7 +158,6 @@ export default function GitHubSettingsPage({
             onDeleteMapping={settings.handleDeleteLabelMapping}
             onFetchLabels={settings.fetchLabels}
             onResyncGitHub={settings.handleConnectGitHub}
-            onSetup={settings.handleSetup}
             onSyncIssues={settings.handleSyncIssues}
             onSyncReleases={settings.handleSyncReleases}
             onToggleAutoSync={settings.handleToggleAutoSync}
@@ -193,7 +191,6 @@ interface RepositorySettingsSectionProps {
         publishedAt?: number;
       }>
     | undefined;
-  hasWebhook: boolean;
   isAdmin: boolean;
   isLoadingLabels: boolean;
   isSettingUp: boolean;
@@ -249,7 +246,6 @@ interface RepositorySettingsSectionProps {
   onDeleteMapping: (mappingId: string) => void;
   onFetchLabels: () => void;
   onResyncGitHub: () => void;
-  onSetup: () => void;
   onSyncIssues: () => void;
   onSyncReleases: () => void;
   onToggleAutoSync: (enabled: boolean) => void;
@@ -263,7 +259,6 @@ function RepositorySettingsSection({
   boards,
   githubLabels,
   githubReleases,
-  hasWebhook,
   isAdmin,
   isLoadingLabels,
   isSettingUp,
@@ -277,7 +272,6 @@ function RepositorySettingsSection({
   onDeleteMapping,
   onFetchLabels,
   onResyncGitHub,
-  onSetup,
   onSyncIssues,
   onSyncReleases,
   onToggleAutoSync,
@@ -290,9 +284,13 @@ function RepositorySettingsSection({
       <H3 className="mt-8 border-t pt-4">Releases</H3>
       <SyncSettingsCard
         autoSyncEnabled={autoSyncEnabled}
+        error={webhookSetupError}
         isAdmin={isAdmin}
+        isSettingUp={isSettingUp}
         isSyncing={isSyncing}
         lastSyncAt={lastSyncAt}
+        onClearError={onClearWebhookError}
+        onResyncGitHub={onResyncGitHub}
         onSyncNow={onSyncReleases}
         onToggleAutoSync={onToggleAutoSync}
       />
@@ -331,17 +329,6 @@ function RepositorySettingsSection({
         onDeleteMapping={onDeleteMapping}
         onFetchLabels={onFetchLabels}
         tags={tags}
-      />
-
-      <H3 className="mt-8 border-t pt-4">Webhook</H3>
-      <WebhookSetupCard
-        error={webhookSetupError}
-        hasWebhook={hasWebhook}
-        isAdmin={isAdmin}
-        isSettingUp={isSettingUp}
-        onClearError={onClearWebhookError}
-        onResync={onResyncGitHub}
-        onSetup={onSetup}
       />
     </>
   );
