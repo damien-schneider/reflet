@@ -224,7 +224,11 @@ export const create = mutation({
 
     // Validate input lengths
     validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
-    validateInputLength(args.description, MAX_DESCRIPTION_LENGTH, "Description");
+    validateInputLength(
+      args.description,
+      MAX_DESCRIPTION_LENGTH,
+      "Description"
+    );
     validateInputLength(args.version, MAX_CHANGELOG_VERSION_LENGTH, "Version");
 
     // Check admin permission
@@ -279,7 +283,11 @@ export const update = mutation({
       );
     }
     if (args.version !== undefined) {
-      validateInputLength(args.version, MAX_CHANGELOG_VERSION_LENGTH, "Version");
+      validateInputLength(
+        args.version,
+        MAX_CHANGELOG_VERSION_LENGTH,
+        "Version"
+      );
     }
 
     const release = await ctx.db.get(args.id);

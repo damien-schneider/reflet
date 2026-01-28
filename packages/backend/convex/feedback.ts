@@ -140,7 +140,11 @@ export const create = mutation({
 
     // Validate input lengths
     validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
-    validateInputLength(args.description, MAX_DESCRIPTION_LENGTH, "Description");
+    validateInputLength(
+      args.description,
+      MAX_DESCRIPTION_LENGTH,
+      "Description"
+    );
 
     const board = await ctx.db.get(args.boardId);
     if (!board) {
