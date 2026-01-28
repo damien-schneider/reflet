@@ -3,6 +3,7 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useAtomValue } from "jotai";
+import type { MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -117,7 +118,9 @@ export function VoteButton({
     }
   );
 
-  const handleVote = () => {
+  const handleVote = (e: MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     authGuard(async () => {
       await toggleVote({ feedbackId, voteType: "upvote" });
     });
@@ -135,33 +138,35 @@ export function VoteButton({
     lg: "h-5 w-5",
   };
 
-  const button = (
-    <Button
-      className={cn(
-        "flex flex-col items-center justify-center gap-0.5 font-semibold",
-        sizeClasses[size],
-        hasVoted && "bg-primary text-primary-foreground",
-        className
-      )}
-      onClick={handleVote}
-      variant={hasVoted ? "default" : "outline"}
-    >
-      <CaretUp className={iconSizes[size]} />
-      <span>{voteCount}</span>
-    </Button>
-  );
+  const label = hasVoted ? "Remove vote" : "Upvote";
 
-  // Show tooltip for unauthenticated users
-  if (!isAuthenticated) {
-    return (
-      <Tooltip>
-        <TooltipTrigger>{button}</TooltipTrigger>
-        <TooltipContent>
-          <p>Sign in to vote</p>
-        </TooltipContent>
-      </Tooltip>
-    );
+  let tooltipText = "Sign in to vote";
+  if (isAuthenticated) {
+    tooltipText = hasVoted ? "Remove vote" : "Upvote";
   }
 
-  return button;
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <Button
+          aria-label={label}
+          aria-pressed={hasVoted}
+          className={cn(
+            "flex flex-col items-center justify-center gap-0.5 font-semibold",
+            sizeClasses[size],
+            hasVoted && "bg-primary text-primary-foreground",
+            className
+          )}
+          onClick={handleVote}
+          variant={hasVoted ? "default" : "outline"}
+        >
+          <CaretUp className={iconSizes[size]} />
+          <span>{voteCount}</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{tooltipText}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
 }
