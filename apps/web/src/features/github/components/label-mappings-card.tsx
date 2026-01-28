@@ -50,6 +50,14 @@ interface RefletTag {
   color: string;
 }
 
+type IssueStatus =
+  | "open"
+  | "under_review"
+  | "planned"
+  | "in_progress"
+  | "completed"
+  | "closed";
+
 interface LabelMapping {
   _id: string;
   githubLabelName: string;
@@ -58,7 +66,7 @@ interface LabelMapping {
   targetTagId?: string;
   autoSync: boolean;
   syncClosedIssues?: boolean;
-  defaultStatus?: string;
+  defaultStatus?: IssueStatus;
   boardName?: string;
   tagName?: string;
   tagColor?: string;
@@ -78,7 +86,7 @@ interface LabelMappingsCardProps {
     targetTagId?: string;
     autoSync: boolean;
     syncClosedIssues?: boolean;
-    defaultStatus?: string;
+    defaultStatus?: IssueStatus;
   }) => void;
   onDeleteMapping: (mappingId: string) => void;
   onFetchLabels: () => void;

@@ -60,10 +60,14 @@ export default function GitHubSettingsPage({
     ) => {
       await mutations.toggleIssuesSyncMutation(args);
     },
-    upsertLabelMapping: async (args: unknown) => {
+    upsertLabelMapping: async (
+      args: Parameters<typeof mutations.upsertLabelMappingMutation>[0]
+    ) => {
       await mutations.upsertLabelMappingMutation(args);
     },
-    deleteLabelMapping: async (args: unknown) => {
+    deleteLabelMapping: async (
+      args: Parameters<typeof mutations.deleteLabelMappingMutation>[0]
+    ) => {
       await mutations.deleteLabelMappingMutation(args);
     },
   });
@@ -214,7 +218,13 @@ interface RepositorySettingsSectionProps {
     targetTagId?: string;
     autoSync: boolean;
     syncClosedIssues?: boolean;
-    defaultStatus?: string;
+    defaultStatus?:
+      | "open"
+      | "under_review"
+      | "planned"
+      | "in_progress"
+      | "completed"
+      | "closed";
     boardName?: string;
     tagName?: string;
     tagColor?: string;
@@ -227,7 +237,13 @@ interface RepositorySettingsSectionProps {
     targetTagId?: string;
     autoSync: boolean;
     syncClosedIssues?: boolean;
-    defaultStatus?: string;
+    defaultStatus?:
+      | "open"
+      | "under_review"
+      | "planned"
+      | "in_progress"
+      | "completed"
+      | "closed";
   }) => void;
   onClearWebhookError: () => void;
   onDeleteMapping: (mappingId: string) => void;

@@ -53,32 +53,6 @@ function extractRepositoryName(fullName: string): string {
   return fullName.split("/")[1] ?? fullName;
 }
 
-function _groupRepositoriesByOwner(
-  repositories: Repository[]
-): Map<string, { public: Repository[]; private: Repository[] }> {
-  const grouped = new Map<
-    string,
-    { public: Repository[]; private: Repository[] }
-  >();
-
-  for (const repo of repositories) {
-    const owner = extractOwner(repo.fullName);
-    if (!grouped.has(owner)) {
-      grouped.set(owner, { public: [], private: [] });
-    }
-    const group = grouped.get(owner);
-    if (group) {
-      if (repo.isPrivate) {
-        group.private.push(repo);
-      } else {
-        group.public.push(repo);
-      }
-    }
-  }
-
-  return grouped;
-}
-
 function getRepositoryDisplayText(repo: Repository): string {
   return formatRepositoryName(extractRepositoryName(repo.fullName));
 }

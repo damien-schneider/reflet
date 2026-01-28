@@ -3,6 +3,14 @@
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useCallback, useState } from "react";
 
+type IssueStatus =
+  | "open"
+  | "under_review"
+  | "planned"
+  | "in_progress"
+  | "completed"
+  | "closed";
+
 interface Repository {
   id: string;
   fullName: string;
@@ -48,7 +56,7 @@ interface UseGitHubSettingsProps {
     targetTagId?: Id<"tags">;
     autoSync: boolean;
     syncClosedIssues?: boolean;
-    defaultStatus?: string;
+    defaultStatus?: IssueStatus;
   }) => Promise<void>;
   deleteLabelMapping: (args: {
     mappingId: Id<"githubLabelMappings">;
@@ -278,7 +286,7 @@ export function useGitHubSettings({
       targetTagId?: string;
       autoSync: boolean;
       syncClosedIssues?: boolean;
-      defaultStatus?: string;
+      defaultStatus?: IssueStatus;
     }) => {
       if (!orgId) {
         return;
