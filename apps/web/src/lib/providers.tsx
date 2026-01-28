@@ -1,11 +1,9 @@
 "use client";
 
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
-import { ConvexQueryClient } from "@convex-dev/react-query";
 import { env } from "@reflet-v2/env/web";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ConvexReactClient } from "convex/react";
 import { ThemeProvider } from "next-themes";
-import { useEffect, useMemo, useRef } from "react";
 
 import { authClient } from "./auth-client";
 
@@ -14,6 +12,8 @@ if (!convexUrl) {
   throw new Error("NEXT_PUBLIC_CONVEX_URL is not set");
 }
 
+const convex = new ConvexReactClient(convexUrl);
+
 export function Providers({
   children,
   initialToken,
@@ -21,38 +21,6 @@ export function Providers({
   children: React.ReactNode;
   initialToken?: string;
 }) {
-  const convexQueryClient = useMemo(() => new ConvexQueryClient(convexUrl), []);
-
-  const queryClient = useMemo(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            queryKeyHashFn: convexQueryClient.hashFn(),
-            queryFn: convexQueryClient.queryFn(),
-          },
-        },
-      }),
-    [convexQueryClient]
-  );
-
-  const hasConnectedRef = useRef(false);
-
-  useEffect(() => {
-    if (!hasConnectedRef.current) {
-      convexQueryClient.connect(queryClient);
-      hasConnectedRef.current = true;
-    }
-
-    if (initialToken) {
-      convexQueryClient.serverHttpClient?.setAuth(initialToken);
-    }
-
-    return () => {
-      hasConnectedRef.current = false;
-    };
-  }, [convexQueryClient, queryClient, initialToken]);
-
   return (
     <ThemeProvider
       attribute="class"
@@ -62,12 +30,10 @@ export function Providers({
     >
       <ConvexBetterAuthProvider
         authClient={authClient}
-        client={convexQueryClient.convexClient}
+        client={convex}
         initialToken={initialToken}
       >
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
+        {children}
       </ConvexBetterAuthProvider>
     </ThemeProvider>
   );

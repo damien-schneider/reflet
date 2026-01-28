@@ -6,6 +6,10 @@ import type { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import authConfig from "./auth.config";
 
+// GitHub OAuth configuration (optional)
+const githubClientId = process.env.GITHUB_CLIENT_ID;
+const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
+
 const siteUrl = process.env.SITE_URL ?? "";
 const additionalOrigins =
   process.env.ADDITIONAL_TRUSTED_ORIGINS?.split(",").filter(Boolean) ?? [];
@@ -17,6 +21,15 @@ function createAuth(ctx: GenericCtx<DataModel>) {
     baseURL: siteUrl,
     trustedOrigins: [siteUrl, ...additionalOrigins],
     database: authComponent.adapter(ctx),
+    socialProviders:
+      githubClientId && githubClientSecret
+        ? {
+            github: {
+              clientId: githubClientId,
+              clientSecret: githubClientSecret,
+            },
+          }
+        : undefined,
     emailAndPassword: {
       enabled: true,
       // Require email verification in all environments

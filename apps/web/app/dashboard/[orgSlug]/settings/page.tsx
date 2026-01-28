@@ -4,6 +4,7 @@ import {
   Buildings,
   CreditCard,
   Gear as GearIcon,
+  GithubLogo,
   Users,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
@@ -54,6 +55,12 @@ export default function GearPage({
       description: "Invite and manage team members",
       icon: Users,
       href: `/dashboard/${orgSlug}/settings/members`,
+    },
+    {
+      title: "GitHub",
+      description: "Connect GitHub to sync releases and automate changelog",
+      icon: GithubLogo,
+      href: `/dashboard/${orgSlug}/settings/github`,
     },
     {
       title: "Billing",

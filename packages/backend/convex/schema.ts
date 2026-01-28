@@ -60,6 +60,21 @@ const widgetPosition = v.union(
   v.literal("bottom-left")
 );
 
+// GitHub connection status
+const githubConnectionStatus = v.union(
+  v.literal("connected"),
+  v.literal("pending"),
+  v.literal("error")
+);
+
+// GitHub sync status
+const githubSyncStatus = v.union(
+  v.literal("idle"),
+  v.literal("syncing"),
+  v.literal("success"),
+  v.literal("error")
+);
+
 export default defineSchema({
   // ============================================
   // ORGANIZATIONS
@@ -216,6 +231,11 @@ export default defineSchema({
     roadmapLane: v.optional(v.string()), // Tag ID or "now"/"next"/"later"
     roadmapOrder: v.optional(v.number()),
     completedAt: v.optional(v.number()),
+    // GitHub issue sync fields
+    githubIssueId: v.optional(v.string()), // Original GitHub issue ID if synced
+    githubIssueNumber: v.optional(v.number()), // GitHub issue number (#123)
+    githubHtmlUrl: v.optional(v.string()), // Link to GitHub issue
+    syncedFromGithub: v.optional(v.boolean()), // Whether this was created from GitHub sync
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -225,6 +245,7 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_board_status", ["boardId", "status"])
     .index("by_status_id", ["statusId"])
+    .index("by_github_issue", ["organizationId", "githubIssueId"])
     .searchIndex("search_title", {
       searchField: "title",
       filterFields: ["boardId", "organizationId"],
@@ -305,11 +326,16 @@ export default defineSchema({
     description: v.optional(v.string()), // Rich text
     version: v.optional(v.string()), // e.g., "v1.2.0"
     publishedAt: v.optional(v.number()), // null = draft
+    // GitHub sync fields
+    githubReleaseId: v.optional(v.string()), // Original GitHub release ID if synced
+    githubHtmlUrl: v.optional(v.string()), // Link to GitHub release
+    syncedFromGithub: v.optional(v.boolean()), // Whether this was created from GitHub sync
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_organization", ["organizationId"])
-    .index("by_published", ["organizationId", "publishedAt"]),
+    .index("by_published", ["organizationId", "publishedAt"])
+    .index("by_github_release", ["organizationId", "githubReleaseId"]),
 
   // ============================================
   // RELEASE FEEDBACK (Junction table)
@@ -463,4 +489,147 @@ export default defineSchema({
   })
     .index("by_widget_visitor", ["widgetId", "visitorId"])
     .index("by_conversation", ["conversationId"]),
+
+  // ============================================
+  // GITHUB CONNECTIONS
+  // ============================================
+  githubConnections: defineTable({
+    organizationId: v.id("organizations"),
+    // GitHub App installation details
+    installationId: v.string(), // GitHub App installation ID
+    accountType: v.union(v.literal("user"), v.literal("organization")),
+    accountLogin: v.string(), // GitHub username or org name
+    accountAvatarUrl: v.optional(v.string()),
+    // Connection status
+    status: githubConnectionStatus,
+    // Connected repository (optional - can connect later)
+    repositoryId: v.optional(v.string()), // GitHub repo ID
+    repositoryFullName: v.optional(v.string()), // e.g., "owner/repo"
+    repositoryDefaultBranch: v.optional(v.string()),
+    // Webhook configuration
+    webhookId: v.optional(v.string()),
+    webhookSecret: v.optional(v.string()),
+    // CI/GitHub Action configuration
+    ciEnabled: v.optional(v.boolean()),
+    ciBranch: v.optional(v.string()), // Branch to watch for releases
+    ciWorkflowCreated: v.optional(v.boolean()),
+    // Release sync settings
+    autoSyncReleases: v.optional(v.boolean()),
+    lastSyncAt: v.optional(v.number()),
+    lastSyncStatus: v.optional(githubSyncStatus),
+    lastSyncError: v.optional(v.string()),
+    // Issue sync settings
+    autoSyncIssues: v.optional(v.boolean()),
+    issuesSyncEnabled: v.optional(v.boolean()),
+    lastIssuesSyncAt: v.optional(v.number()),
+    lastIssuesSyncStatus: v.optional(githubSyncStatus),
+    lastIssuesSyncError: v.optional(v.string()),
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_installation", ["installationId"]),
+
+  // ============================================
+  // GITHUB RELEASES (Synced from GitHub)
+  // ============================================
+  githubReleases: defineTable({
+    organizationId: v.id("organizations"),
+    githubConnectionId: v.id("githubConnections"),
+    // GitHub release data
+    githubReleaseId: v.string(), // GitHub's release ID
+    tagName: v.string(),
+    name: v.optional(v.string()),
+    body: v.optional(v.string()), // Release notes markdown
+    htmlUrl: v.string(),
+    isDraft: v.boolean(),
+    isPrerelease: v.boolean(),
+    publishedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    // Link to Reflet release (if imported)
+    refletReleaseId: v.optional(v.id("releases")),
+    // Sync metadata
+    lastSyncedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_connection", ["githubConnectionId"])
+    .index("by_github_release_id", ["githubConnectionId", "githubReleaseId"]),
+
+  // ============================================
+  // GITHUB WEBHOOK EVENTS (for debugging/audit)
+  // ============================================
+  githubWebhookEvents: defineTable({
+    organizationId: v.id("organizations"),
+    githubConnectionId: v.id("githubConnections"),
+    eventType: v.string(), // e.g., "release", "push", "issues"
+    action: v.optional(v.string()), // e.g., "published", "created", "opened"
+    payload: v.string(), // JSON stringified payload (truncated)
+    processedAt: v.optional(v.number()),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_connection", ["githubConnectionId"])
+    .index("by_organization", ["organizationId"]),
+
+  // ============================================
+  // GITHUB LABEL MAPPINGS (Maps GitHub labels to Reflet boards/tags)
+  // ============================================
+  githubLabelMappings: defineTable({
+    organizationId: v.id("organizations"),
+    githubConnectionId: v.id("githubConnections"),
+    // GitHub label info
+    githubLabelName: v.string(), // The GitHub label name to match
+    githubLabelColor: v.optional(v.string()), // Label color from GitHub
+    // Mapping target
+    targetBoardId: v.optional(v.id("boards")), // Board to sync issues to
+    targetTagId: v.optional(v.id("tags")), // Tag to apply to synced feedback
+    // Sync options
+    autoSync: v.boolean(), // Whether to auto-sync issues with this label
+    syncClosedIssues: v.optional(v.boolean()), // Whether to sync closed issues
+    defaultStatus: v.optional(feedbackStatus), // Default status for synced issues
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_connection", ["githubConnectionId"])
+    .index("by_connection_label", ["githubConnectionId", "githubLabelName"]),
+
+  // ============================================
+  // GITHUB ISSUES (Synced from GitHub)
+  // ============================================
+  githubIssues: defineTable({
+    organizationId: v.id("organizations"),
+    githubConnectionId: v.id("githubConnections"),
+    // GitHub issue data
+    githubIssueId: v.string(), // GitHub's issue ID
+    githubIssueNumber: v.number(), // Issue number (#123)
+    title: v.string(),
+    body: v.optional(v.string()), // Issue body markdown
+    htmlUrl: v.string(),
+    state: v.union(v.literal("open"), v.literal("closed")),
+    // GitHub metadata
+    githubLabels: v.array(v.string()), // Array of label names
+    githubAuthor: v.optional(v.string()), // GitHub username
+    githubAuthorAvatarUrl: v.optional(v.string()),
+    githubMilestone: v.optional(v.string()),
+    githubAssignees: v.optional(v.array(v.string())), // Array of usernames
+    // Timestamps from GitHub
+    githubCreatedAt: v.number(),
+    githubUpdatedAt: v.number(),
+    githubClosedAt: v.optional(v.number()),
+    // Link to Reflet feedback (if imported)
+    refletFeedbackId: v.optional(v.id("feedback")),
+    // Sync metadata
+    lastSyncedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_connection", ["githubConnectionId"])
+    .index("by_github_issue_id", ["githubConnectionId", "githubIssueId"])
+    .index("by_github_issue_number", [
+      "githubConnectionId",
+      "githubIssueNumber",
+    ])
+    .index("by_reflet_feedback", ["refletFeedbackId"]),
 });
