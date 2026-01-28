@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { MAX_COMMENT_LENGTH } from "./constants";
+import { validateInputLength } from "./validators";
 
 // Helper to get authenticated user
 const getAuthUser = async (ctx: { auth: unknown }) => {
@@ -157,6 +159,9 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
+    // Validate input length
+    validateInputLength(args.body, MAX_COMMENT_LENGTH, "Comment");
+
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
       throw new Error("Feedback not found");
@@ -237,6 +242,9 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
+
+    // Validate input length
+    validateInputLength(args.body, MAX_COMMENT_LENGTH, "Comment");
 
     const comment = await ctx.db.get(args.id);
     if (!comment) {

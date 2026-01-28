@@ -1,7 +1,13 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import {
+  MAX_CHANGELOG_VERSION_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_TITLE_LENGTH,
+} from "./constants";
 import { getAuthUser } from "./utils";
+import { validateInputLength } from "./validators";
 
 // ============================================
 // QUERIES
@@ -216,6 +222,11 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
+    // Validate input lengths
+    validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
+    validateInputLength(args.description, MAX_DESCRIPTION_LENGTH, "Description");
+    validateInputLength(args.version, MAX_CHANGELOG_VERSION_LENGTH, "Version");
+
     // Check admin permission
     const membership = await ctx.db
       .query("organizationMembers")
@@ -255,6 +266,21 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
+
+    // Validate input lengths if present
+    if (args.title !== undefined) {
+      validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
+    }
+    if (args.description !== undefined) {
+      validateInputLength(
+        args.description,
+        MAX_DESCRIPTION_LENGTH,
+        "Description"
+      );
+    }
+    if (args.version !== undefined) {
+      validateInputLength(args.version, MAX_CHANGELOG_VERSION_LENGTH, "Version");
+    }
 
     const release = await ctx.db.get(args.id);
     if (!release) {

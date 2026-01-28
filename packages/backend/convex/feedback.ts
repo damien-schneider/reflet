@@ -1,8 +1,10 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "./constants";
 import { PLAN_LIMITS } from "./organizations";
 import { getAuthUser } from "./utils";
+import { validateInputLength } from "./validators";
 
 // Feedback status type - matching schema
 export const feedbackStatus = v.union(
@@ -136,6 +138,10 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
+    // Validate input lengths
+    validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
+    validateInputLength(args.description, MAX_DESCRIPTION_LENGTH, "Description");
+
     const board = await ctx.db.get(args.boardId);
     if (!board) {
       throw new Error("Board not found");
@@ -227,6 +233,18 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
+
+    // Validate input lengths if present
+    if (args.title !== undefined) {
+      validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
+    }
+    if (args.description !== undefined) {
+      validateInputLength(
+        args.description,
+        MAX_DESCRIPTION_LENGTH,
+        "Description"
+      );
+    }
 
     const feedback = await ctx.db.get(args.id);
     if (!feedback) {
