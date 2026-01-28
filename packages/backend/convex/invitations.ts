@@ -1,8 +1,11 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { PLAN_LIMITS } from "./organizations";
 import { getAuthUser } from "./utils";
+
+const siteUrl = process.env.SITE_URL ?? "";
 
 /**
  * List pending invitations for an organization
@@ -155,6 +158,25 @@ export const create = mutation({
       inviterId: user._id,
       token,
     });
+
+    // Get inviter's name from their user record
+    const inviterName = user.name ?? user.email ?? "Un membre";
+
+    // Build the invitation accept URL
+    const acceptUrl = `${siteUrl}/invite/${token}`;
+
+    // Schedule the invitation email
+    await ctx.scheduler.runAfter(
+      0,
+      internal.email_renderer.sendInvitationEmail,
+      {
+        to: args.email.toLowerCase(),
+        organizationName: org.name,
+        inviterName,
+        role: args.role,
+        acceptUrl,
+      }
+    );
 
     return { invitationId, token };
   },
