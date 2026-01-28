@@ -1,8 +1,16 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalMutation } from "./_generated/server";
 
 // GitHub API base URL
 const GITHUB_API_URL = "https://api.github.com";
+
+// Regex for parsing Link header
+const LINK_HEADER_REGEX = /<([^>]+)>;\s*rel="([^"]+)"/;
+
+// Note: createOrUpdateFile and getInstallationToken have been moved to github_node_actions.ts
+// Import them from there: import { createOrUpdateFile, getInstallationToken } from "./github_node_actions"
 
 /**
  * Generate GitHub Action workflow content for auto-release
@@ -72,40 +80,146 @@ jobs:
 });
 
 /**
- * Fetch repositories from GitHub installation
+ * Get GitHub connection from API routes
+ * Called from Next.js API routes that need to access connection data
+ * This action doesn't require user auth - API routes should verify session separately
+ */
+export const getConnectionFromApiRoute = action({
+  args: {
+    organizationId: v.id("organizations"),
+  },
+  handler: async (ctx, args): Promise<Doc<"githubConnections"> | null> => {
+    return await ctx.runQuery(internal.github.getConnectionInternal, {
+      organizationId: args.organizationId,
+    });
+  },
+});
+
+/**
+ * Save GitHub App installation from OAuth callback
+ * Called from Next.js API route after validating with GitHub's API
+ * This action doesn't require user auth since the installation is verified via GitHub
+ */
+export const saveInstallationFromCallback = action({
+  args: {
+    organizationId: v.id("organizations"),
+    installationId: v.string(),
+    accountType: v.union(v.literal("user"), v.literal("organization")),
+    accountLogin: v.string(),
+    accountAvatarUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<Id<"githubConnections">> => {
+    return await ctx.runMutation(internal.github.saveInstallationInternal, {
+      organizationId: args.organizationId,
+      installationId: args.installationId,
+      accountType: args.accountType,
+      accountLogin: args.accountLogin,
+      accountAvatarUrl: args.accountAvatarUrl,
+    });
+  },
+});
+
+/**
+ * Parse GitHub Link header for pagination
+ */
+function parseLinkHeader(linkHeader: string | null): {
+  next?: string;
+  last?: string;
+} {
+  if (!linkHeader) {
+    return {};
+  }
+
+  const links: Record<string, string> = {};
+  const parts = linkHeader.split(",");
+
+  for (const part of parts) {
+    const match = part.match(LINK_HEADER_REGEX);
+    if (match) {
+      const [, url, rel] = match;
+      if (url && rel) {
+        links[rel] = url;
+      }
+    }
+  }
+
+  return links;
+}
+
+/**
+ * Fetch repositories from GitHub installation with pagination support
+ * Fetches ALL repositories by following pagination links
  */
 export const fetchRepositories = action({
   args: {
     installationToken: v.string(),
   },
   handler: async (_ctx, args) => {
-    const response = await fetch(
-      `${GITHUB_API_URL}/installation/repositories`,
-      {
+    const allRepositories: Array<{
+      id: number;
+      full_name: string;
+      name: string;
+      default_branch: string;
+      private: boolean;
+      description: string | null;
+    }> = [];
+
+    let nextUrl: string | undefined =
+      `${GITHUB_API_URL}/installation/repositories?per_page=100`;
+    let pageCount = 0;
+
+    // Fetch all pages
+    while (nextUrl) {
+      pageCount++;
+      console.log(`Fetching repositories page ${pageCount}: ${nextUrl}`);
+
+      const response = await fetch(nextUrl, {
         headers: {
           Authorization: `Bearer ${args.installationToken}`,
           Accept: "application/vnd.github+json",
           "X-GitHub-Api-Version": "2022-11-28",
         },
-      }
-    );
+      });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch repositories: ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch repositories: ${response.statusText}`);
+      }
+
+      const data = (await response.json()) as {
+        total_count?: number;
+        repositories: Array<{
+          id: number;
+          full_name: string;
+          name: string;
+          default_branch: string;
+          private: boolean;
+          description: string | null;
+        }>;
+      };
+
+      console.log(
+        `Page ${pageCount}: Received ${data.repositories.length} repositories. Total count: ${data.total_count ?? "unknown"}`
+      );
+      allRepositories.push(...data.repositories);
+
+      // Check for next page in Link header
+      const linkHeader = response.headers.get("Link");
+      console.log(`Link header: ${linkHeader}`);
+      const links = parseLinkHeader(linkHeader);
+      nextUrl = links.next;
+
+      if (nextUrl) {
+        console.log(`Next page URL: ${nextUrl}`);
+      } else {
+        console.log("No more pages to fetch");
+      }
     }
 
-    const data = (await response.json()) as {
-      repositories: Array<{
-        id: number;
-        full_name: string;
-        name: string;
-        default_branch: string;
-        private: boolean;
-        description: string | null;
-      }>;
-    };
+    console.log(
+      `Finished fetching repositories. Total: ${allRepositories.length} repositories across ${pageCount} page(s)`
+    );
 
-    return data.repositories.map((repo) => ({
+    return allRepositories.map((repo) => ({
       id: String(repo.id),
       fullName: repo.full_name,
       name: repo.name,
@@ -242,139 +356,6 @@ export const deleteWebhook = action({
     }
 
     return { success: true };
-  },
-});
-
-/**
- * Create or update a file in a GitHub repository (for workflow file)
- */
-export const createOrUpdateFile = action({
-  args: {
-    installationToken: v.string(),
-    repositoryFullName: v.string(),
-    path: v.string(),
-    content: v.string(),
-    message: v.string(),
-    branch: v.string(),
-  },
-  handler: async (_ctx, args) => {
-    // First, try to get the file to see if it exists (to get the SHA)
-    const getResponse = await fetch(
-      `${GITHUB_API_URL}/repos/${args.repositoryFullName}/contents/${args.path}?ref=${args.branch}`,
-      {
-        headers: {
-          Authorization: `Bearer ${args.installationToken}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
-    );
-
-    let sha: string | undefined;
-    if (getResponse.ok) {
-      const existingFile = (await getResponse.json()) as { sha: string };
-      sha = existingFile.sha;
-    }
-
-    // Create or update the file
-    const response = await fetch(
-      `${GITHUB_API_URL}/repos/${args.repositoryFullName}/contents/${args.path}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${args.installationToken}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: args.message,
-          content: Buffer.from(args.content).toString("base64"),
-          branch: args.branch,
-          ...(sha ? { sha } : {}),
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Failed to create/update file: ${response.statusText} - ${errorText}`
-      );
-    }
-
-    return { success: true };
-  },
-});
-
-/**
- * Get installation access token from GitHub App
- */
-export const getInstallationToken = action({
-  args: {
-    installationId: v.string(),
-  },
-  handler: async (_ctx, args) => {
-    const appId = process.env.GITHUB_APP_ID;
-    const privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
-
-    if (!(appId && privateKey)) {
-      throw new Error("GitHub App credentials not configured");
-    }
-
-    // Create JWT for GitHub App authentication
-    const now = Math.floor(Date.now() / 1000);
-    const payload = {
-      iat: now - 60, // Issued at time (60 seconds in the past to allow for clock drift)
-      exp: now + 600, // Expiration time (10 minutes)
-      iss: appId,
-    };
-
-    // Simple JWT creation (you may want to use a proper JWT library)
-    const header = Buffer.from(
-      JSON.stringify({ alg: "RS256", typ: "JWT" })
-    ).toString("base64url");
-    const payloadBase64 = Buffer.from(JSON.stringify(payload)).toString(
-      "base64url"
-    );
-
-    // For proper JWT signing, you'd need a crypto library
-    // This is a simplified version - in production, use a proper JWT library
-    const crypto = await import("node:crypto");
-    const sign = crypto.createSign("RSA-SHA256");
-    sign.update(`${header}.${payloadBase64}`);
-    const signature = sign.sign(privateKey.replace(/\\n/g, "\n"), "base64url");
-
-    const jwt = `${header}.${payloadBase64}.${signature}`;
-
-    // Get installation access token
-    const response = await fetch(
-      `${GITHUB_API_URL}/app/installations/${args.installationId}/access_tokens`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${jwt}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Failed to get installation token: ${response.statusText} - ${errorText}`
-      );
-    }
-
-    const data = (await response.json()) as {
-      token: string;
-      expires_at: string;
-    };
-    return {
-      token: data.token,
-      expiresAt: data.expires_at,
-    };
   },
 });
 
@@ -847,7 +828,7 @@ export const processIssueWebhook = internalMutation({
       // Schedule auto-import check via separate mutation
       await ctx.scheduler.runAfter(
         0,
-        "github_actions:autoImportIssueToFeedback",
+        internal.github_actions.autoImportIssueToFeedback,
         {
           issueId,
           connectionId: args.connectionId,

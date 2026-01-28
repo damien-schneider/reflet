@@ -2,7 +2,7 @@
 
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { use, useEffect } from "react";
 
 import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
@@ -14,6 +14,8 @@ import { SyncSettingsCard } from "@/features/github/components/sync-settings-car
 import { SyncedReleasesCard } from "@/features/github/components/synced-releases-card";
 import { WebhookSetupCard } from "@/features/github/components/webhook-setup-card";
 import { useGitHubSettings } from "@/features/github/hooks/use-github-settings";
+import { useGitHubSettingsMutations } from "@/features/github/hooks/use-github-settings-mutations";
+import { useGitHubSettingsQueries } from "@/features/github/hooks/use-github-settings-queries";
 
 export default function GitHubSettingsPage({
   params,
@@ -26,60 +28,56 @@ export default function GitHubSettingsPage({
     api.members.getCurrentMember,
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
-  const connectionStatus = useQuery(
-    api.github.getConnectionStatus,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
-  );
-  const githubReleases = useQuery(
-    api.github.listGithubReleases,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
-  );
-  const issueSyncStatus = useQuery(
-    api.github_issues.getIssueSyncStatus,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
-  );
-  const labelMappings = useQuery(
-    api.github_issues.getLabelMappings,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
-  );
-  const boards = useQuery(
-    api.boards.list,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
-  );
-  const tags = useQuery(
-    api.tags.list,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
-  );
 
-  const selectRepository = useMutation(api.github.selectRepository);
-  const toggleAutoSync = useMutation(api.github.toggleAutoSync);
-  const disconnect = useMutation(api.github.disconnect);
-  const toggleIssuesSync = useMutation(api.github_issues.toggleIssuesSync);
-  const upsertLabelMapping = useMutation(api.github_issues.upsertLabelMapping);
-  const deleteLabelMapping = useMutation(api.github_issues.deleteLabelMapping);
+  const queries = useGitHubSettingsQueries({ orgId: org?._id });
+  const mutations = useGitHubSettingsMutations();
 
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
 
   const settings = useGitHubSettings({
     orgId: org?._id,
-    isConnected: connectionStatus?.isConnected ?? false,
-    hasRepository: connectionStatus?.hasRepository ?? false,
-    selectRepository,
-    toggleAutoSync,
-    disconnect,
-    toggleIssuesSync,
-    upsertLabelMapping,
-    deleteLabelMapping,
+    orgSlug,
+    isConnected: queries.connectionStatus?.isConnected ?? false,
+    hasRepository: queries.connectionStatus?.hasRepository ?? false,
+    selectRepository: async (
+      args: Parameters<typeof mutations.selectRepositoryMutation>[0]
+    ) => {
+      await mutations.selectRepositoryMutation(args);
+    },
+    toggleAutoSync: async (
+      args: Parameters<typeof mutations.toggleAutoSyncMutation>[0]
+    ) => {
+      await mutations.toggleAutoSyncMutation(args);
+    },
+    disconnect: async (
+      args: Parameters<typeof mutations.disconnectMutation>[0]
+    ) => {
+      await mutations.disconnectMutation(args);
+    },
+    toggleIssuesSync: async (
+      args: Parameters<typeof mutations.toggleIssuesSyncMutation>[0]
+    ) => {
+      await mutations.toggleIssuesSyncMutation(args);
+    },
+    upsertLabelMapping: async (args: unknown) => {
+      await mutations.upsertLabelMappingMutation(args);
+    },
+    deleteLabelMapping: async (args: unknown) => {
+      await mutations.deleteLabelMappingMutation(args);
+    },
   });
 
   useEffect(() => {
-    if (connectionStatus?.isConnected && !connectionStatus?.hasRepository) {
+    if (
+      queries.connectionStatus?.isConnected &&
+      !queries.connectionStatus?.hasRepository
+    ) {
       settings.fetchRepositories();
     }
   }, [
-    connectionStatus?.isConnected,
-    connectionStatus?.hasRepository,
+    queries.connectionStatus?.isConnected,
+    queries.connectionStatus?.hasRepository,
     settings.fetchRepositories,
   ]);
 
@@ -107,53 +105,63 @@ export default function GitHubSettingsPage({
 
       <div className="space-y-6">
         <GitHubConnectionCard
-          accountAvatarUrl={connectionStatus?.accountAvatarUrl}
-          accountLogin={connectionStatus?.accountLogin}
+          accountAvatarUrl={queries.connectionStatus?.accountAvatarUrl}
+          accountLogin={queries.connectionStatus?.accountLogin}
           isAdmin={isAdmin}
-          isConnected={connectionStatus?.isConnected ?? false}
+          isConnected={queries.connectionStatus?.isConnected ?? false}
           isDisconnecting={settings.isDisconnecting}
           onConnect={settings.handleConnectGitHub}
           onDisconnect={settings.handleDisconnect}
         />
 
-        {connectionStatus?.isConnected ? (
+        {queries.connectionStatus?.isConnected ? (
           <RepositorySelectorCard
-            hasRepository={connectionStatus.hasRepository}
+            hasRepository={queries.connectionStatus.hasRepository}
             isAdmin={isAdmin}
             loadingRepos={settings.loadingRepos}
             onChangeRepository={settings.fetchRepositories}
             onConnectRepository={settings.handleSelectRepository}
             onSelectRepo={settings.setSelectedRepo}
             repositories={settings.repositories}
-            repositoryFullName={connectionStatus.repositoryFullName}
+            repositoryFullName={queries.connectionStatus.repositoryFullName}
             selectedRepo={settings.selectedRepo}
           />
         ) : null}
 
-        {connectionStatus?.hasRepository ? (
+        {queries.connectionStatus?.hasRepository ? (
           <RepositorySettingsSection
-            autoSyncEnabled={connectionStatus.autoSyncEnabled ?? false}
-            boards={boards ?? []}
+            autoSyncEnabled={queries.connectionStatus.autoSyncEnabled ?? false}
+            boards={queries.boards ?? []}
             githubLabels={settings.githubLabels}
-            githubReleases={githubReleases}
-            hasWebhook={connectionStatus.hasWebhook}
+            githubReleases={queries.githubReleases}
+            hasWebhook={queries.connectionStatus.hasWebhook}
             isAdmin={isAdmin}
             isLoadingLabels={settings.isLoadingLabels}
             isSettingUp={settings.isSettingUp}
             isSyncing={settings.isSyncing}
             isSyncingIssues={settings.isSyncingIssues}
-            issueSyncStatus={issueSyncStatus}
-            labelMappings={labelMappings ?? []}
-            lastSyncAt={connectionStatus.lastSyncAt}
+            issueSyncStatus={
+              queries.issueSyncStatus
+                ? {
+                    ...queries.issueSyncStatus,
+                    importedCount: queries.issueSyncStatus.importedCount ?? 0,
+                  }
+                : undefined
+            }
+            labelMappings={queries.labelMappings ?? []}
+            lastSyncAt={queries.connectionStatus.lastSyncAt}
             onAddMapping={settings.handleAddLabelMapping}
+            onClearWebhookError={settings.clearWebhookSetupError}
             onDeleteMapping={settings.handleDeleteLabelMapping}
             onFetchLabels={settings.fetchLabels}
+            onResyncGitHub={settings.handleConnectGitHub}
             onSetup={settings.handleSetup}
             onSyncIssues={settings.handleSyncIssues}
             onSyncReleases={settings.handleSyncReleases}
             onToggleAutoSync={settings.handleToggleAutoSync}
             onToggleIssuesSync={settings.handleToggleIssuesSync}
-            tags={tags ?? []}
+            tags={queries.tags ?? []}
+            webhookSetupError={settings.webhookSetupError}
           />
         ) : null}
       </div>
@@ -221,14 +229,17 @@ interface RepositorySettingsSectionProps {
     syncClosedIssues?: boolean;
     defaultStatus?: string;
   }) => void;
+  onClearWebhookError: () => void;
   onDeleteMapping: (mappingId: string) => void;
   onFetchLabels: () => void;
+  onResyncGitHub: () => void;
   onSetup: () => void;
   onSyncIssues: () => void;
   onSyncReleases: () => void;
   onToggleAutoSync: (enabled: boolean) => void;
   onToggleIssuesSync: (enabled: boolean, autoSync: boolean) => void;
   tags: Array<{ _id: string; name: string; color: string }>;
+  webhookSetupError?: { code: string; message: string } | null;
 }
 
 function RepositorySettingsSection({
@@ -246,14 +257,17 @@ function RepositorySettingsSection({
   labelMappings,
   lastSyncAt,
   onAddMapping,
+  onClearWebhookError,
   onDeleteMapping,
   onFetchLabels,
+  onResyncGitHub,
   onSetup,
   onSyncIssues,
   onSyncReleases,
   onToggleAutoSync,
   onToggleIssuesSync,
   tags,
+  webhookSetupError,
 }: RepositorySettingsSectionProps) {
   return (
     <>
@@ -267,7 +281,14 @@ function RepositorySettingsSection({
         onToggleAutoSync={onToggleAutoSync}
       />
 
-      {githubReleases ? <SyncedReleasesCard releases={githubReleases} /> : null}
+      {githubReleases ? (
+        <SyncedReleasesCard
+          releases={githubReleases.map((release) => ({
+            ...release,
+            isDraft: false,
+          }))}
+        />
+      ) : null}
 
       <H3 className="mt-8 border-t pt-4">Issues</H3>
       <IssuesSyncCard
@@ -298,9 +319,12 @@ function RepositorySettingsSection({
 
       <H3 className="mt-8 border-t pt-4">Webhook</H3>
       <WebhookSetupCard
+        error={webhookSetupError}
         hasWebhook={hasWebhook}
         isAdmin={isAdmin}
         isSettingUp={isSettingUp}
+        onClearError={onClearWebhookError}
+        onResync={onResyncGitHub}
         onSetup={onSetup}
       />
     </>

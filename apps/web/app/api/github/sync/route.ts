@@ -1,6 +1,6 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { fetchAction, fetchMutation, fetchQuery } from "convex/nextjs";
+import { fetchAction, fetchMutation } from "convex/nextjs";
 import { NextResponse } from "next/server";
 
 /**
@@ -18,10 +18,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    // Get the GitHub connection
-    const connection = await fetchQuery(api.github.getConnection, {
-      organizationId,
-    });
+    // Get the GitHub connection using action (no auth required)
+    const connection = await fetchAction(
+      api.github_actions.getConnectionFromApiRoute,
+      { organizationId }
+    );
 
     if (!connection) {
       return NextResponse.json(
@@ -46,7 +47,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     try {
       // Get installation access token
       const tokenResult = await fetchAction(
-        api.github_actions.getInstallationToken,
+        api.github_node_actions.getInstallationToken,
         {
           installationId: connection.installationId,
         }

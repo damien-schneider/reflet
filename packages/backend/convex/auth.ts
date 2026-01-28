@@ -17,21 +17,19 @@ const additionalOrigins =
 export const authComponent = createClient<DataModel>(components.betterAuth);
 
 function createAuth(ctx: GenericCtx<DataModel>) {
-  // Build social providers configuration conditionally
-  const githubProvider =
-    githubClientId && githubClientSecret
-      ? {
-          id: "github" as const,
-          clientId: githubClientId,
-          clientSecret: githubClientSecret,
-        }
-      : null;
-
   return betterAuth({
     baseURL: siteUrl,
     trustedOrigins: [siteUrl, ...additionalOrigins],
     database: authComponent.adapter(ctx),
-    socialProviders: githubProvider ? [githubProvider] : undefined,
+    socialProviders:
+      githubClientId && githubClientSecret
+        ? {
+            github: {
+              clientId: githubClientId,
+              clientSecret: githubClientSecret,
+            },
+          }
+        : undefined,
     emailAndPassword: {
       enabled: true,
       // Require email verification in all environments

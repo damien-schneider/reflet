@@ -1,5 +1,5 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
-import { fetchMutation } from "convex/nextjs";
+import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -12,6 +12,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const installationId = searchParams.get("installation_id");
   const setupAction = searchParams.get("setup_action");
+  const stateParam = searchParams.get("state");
 
   if (!installationId) {
     return NextResponse.redirect(
@@ -19,17 +20,35 @@ export async function GET(request: Request): Promise<NextResponse> {
     );
   }
 
-  // Get the organization ID from the state cookie
-  const cookieStore = await cookies();
-  const orgIdCookie = cookieStore.get("github_oauth_org_id");
+  // Try to get organization ID and slug from state parameter first (more reliable)
+  // Fall back to cookie if state is not available
+  let organizationId: string | null = null;
+  let orgSlug: string | null = null;
 
-  if (!orgIdCookie?.value) {
+  if (stateParam) {
+    try {
+      const stateData = JSON.parse(
+        Buffer.from(stateParam, "base64url").toString()
+      ) as { organizationId: string; orgSlug: string; timestamp: number };
+      organizationId = stateData.organizationId;
+      orgSlug = stateData.orgSlug;
+    } catch {
+      // State parsing failed, fall back to cookie
+    }
+  }
+
+  // Fall back to cookie for organizationId
+  const cookieStore = await cookies();
+  if (!organizationId) {
+    const orgIdCookie = cookieStore.get("github_oauth_org_id");
+    organizationId = orgIdCookie?.value ?? null;
+  }
+
+  if (!organizationId) {
     return NextResponse.redirect(
       new URL("/dashboard?error=missing_org_context", request.url)
     );
   }
-
-  const organizationId = orgIdCookie.value;
 
   // Clear the cookie
   cookieStore.delete("github_oauth_org_id");
@@ -89,11 +108,11 @@ export async function GET(request: Request): Promise<NextResponse> {
       };
     };
 
-    // Save the installation to the database
-    await fetchMutation(api.github.saveInstallation, {
-      organizationId: organizationId as Parameters<
-        typeof api.github.saveInstallation
-      >[0]["organizationId"],
+    // Save the installation to the database using fetchAction
+    // (actions don't require user auth, and we've already verified the installation via GitHub's API)
+    const { fetchAction } = await import("convex/nextjs");
+    await fetchAction(api.github_actions.saveInstallationFromCallback, {
+      organizationId: organizationId as Id<"organizations">,
       installationId,
       accountType:
         installation.account.type === "Organization" ? "organization" : "user",
@@ -101,37 +120,18 @@ export async function GET(request: Request): Promise<NextResponse> {
       accountAvatarUrl: installation.account.avatar_url,
     });
 
-    // Get the organization slug for redirect
-    const orgResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/query`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          path: "organizations:get",
-          args: { id: organizationId },
-        }),
-      }
-    );
+    // Build redirect URL using the org slug from state
+    const redirectPath = orgSlug
+      ? `/dashboard/${orgSlug}/settings/github`
+      : "/dashboard";
 
-    let redirectPath = "/dashboard";
-    if (orgResponse.ok) {
-      const org = await orgResponse.json();
-      if (org?.slug) {
-        redirectPath = `/dashboard/${org.slug}/settings/github?success=connected`;
-      }
-    }
-
-    // If this is a new installation, redirect to repo selection
+    const redirectUrl = new URL(redirectPath, request.url);
+    redirectUrl.searchParams.set("success", "connected");
     if (setupAction === "install") {
-      return NextResponse.redirect(
-        new URL(`${redirectPath}&step=select_repo`, request.url)
-      );
+      redirectUrl.searchParams.set("step", "select_repo");
     }
 
-    return NextResponse.redirect(new URL(redirectPath, request.url));
+    return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error("GitHub callback error:", error);
     return NextResponse.redirect(

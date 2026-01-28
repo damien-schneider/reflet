@@ -1,5 +1,10 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
 import { getAuthUser } from "./utils";
 
 // ============================================
@@ -649,5 +654,147 @@ export const logWebhookEvent = mutation({
       payload: args.payload.slice(0, 10_000), // Truncate to 10KB
       createdAt: Date.now(),
     });
+  },
+});
+
+// ============================================
+// INTERNAL MUTATIONS (called from actions, not from client)
+// ============================================
+
+/**
+ * Internal mutation to save GitHub App installation
+ * Called from github_actions.saveInstallationFromCallback action
+ * No auth required since installation is verified via GitHub's API
+ */
+export const saveInstallationInternal = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    installationId: v.string(),
+    accountType: v.union(v.literal("user"), v.literal("organization")),
+    accountLogin: v.string(),
+    accountAvatarUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Check if connection already exists
+    const existing = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+
+    const now = Date.now();
+
+    if (existing) {
+      // Update existing connection
+      await ctx.db.patch(existing._id, {
+        installationId: args.installationId,
+        accountType: args.accountType,
+        accountLogin: args.accountLogin,
+        accountAvatarUrl: args.accountAvatarUrl,
+        status: "connected",
+        updatedAt: now,
+      });
+      return existing._id;
+    }
+
+    // Create new connection
+    const connectionId = await ctx.db.insert("githubConnections", {
+      organizationId: args.organizationId,
+      installationId: args.installationId,
+      accountType: args.accountType,
+      accountLogin: args.accountLogin,
+      accountAvatarUrl: args.accountAvatarUrl,
+      status: "connected",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return connectionId;
+  },
+});
+
+/**
+ * Internal mutation to handle GitHub App uninstallation
+ * Called from webhook when user uninstalls the app from GitHub
+ */
+export const handleInstallationDeleted = internalMutation({
+  args: {
+    installationId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Find the connection by installation ID
+    const connection = await ctx.db
+      .query("githubConnections")
+      .filter((q) => q.eq(q.field("installationId"), args.installationId))
+      .first();
+
+    if (!connection) {
+      return { deleted: false, reason: "not_found" };
+    }
+
+    // Delete all synced releases
+    const releases = await ctx.db
+      .query("githubReleases")
+      .withIndex("by_connection", (q) =>
+        q.eq("githubConnectionId", connection._id)
+      )
+      .collect();
+
+    for (const release of releases) {
+      await ctx.db.delete(release._id);
+    }
+
+    // Delete webhook events
+    const events = await ctx.db
+      .query("githubWebhookEvents")
+      .withIndex("by_connection", (q) =>
+        q.eq("githubConnectionId", connection._id)
+      )
+      .collect();
+
+    for (const event of events) {
+      await ctx.db.delete(event._id);
+    }
+
+    // Delete label mappings
+    const mappings = await ctx.db
+      .query("githubLabelMappings")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", connection.organizationId)
+      )
+      .collect();
+
+    for (const mapping of mappings) {
+      await ctx.db.delete(mapping._id);
+    }
+
+    // Delete the connection
+    await ctx.db.delete(connection._id);
+
+    return { deleted: true, organizationId: connection.organizationId };
+  },
+});
+
+// ============================================
+// INTERNAL QUERIES (called from actions, not from client)
+// ============================================
+
+/**
+ * Internal query to get GitHub connection for an organization
+ * Called from github_actions.getConnectionFromCallback action
+ * No user auth required - used by API routes after verifying session
+ */
+export const getConnectionInternal = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const connection = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+
+    return connection;
   },
 });

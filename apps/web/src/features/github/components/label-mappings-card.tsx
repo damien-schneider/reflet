@@ -239,7 +239,10 @@ export function LabelMappingsCard({
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>GitHub Label</Label>
-              <Select onValueChange={setSelectedLabel} value={selectedLabel}>
+              <Select
+                onValueChange={(value) => setSelectedLabel(value ?? "")}
+                value={selectedLabel}
+              >
                 <SelectTrigger>
                   <SelectValue
                     placeholder={
@@ -265,7 +268,10 @@ export function LabelMappingsCard({
 
             <div className="space-y-2">
               <Label>Target Board</Label>
-              <Select onValueChange={setSelectedBoard} value={selectedBoard}>
+              <Select
+                onValueChange={(value) => setSelectedBoard(value ?? "")}
+                value={selectedBoard}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a board" />
                 </SelectTrigger>
@@ -281,7 +287,10 @@ export function LabelMappingsCard({
 
             <div className="space-y-2">
               <Label>Tag (optional)</Label>
-              <Select onValueChange={setSelectedTag} value={selectedTag}>
+              <Select
+                onValueChange={(value) => setSelectedTag(value ?? "")}
+                value={selectedTag}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a tag (optional)" />
                 </SelectTrigger>

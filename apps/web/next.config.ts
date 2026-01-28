@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   reactCompiler: true,
 
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+      },
+    ],
+  },
+
   transpilePackages: ["@reflet-v2/backend", "@reflet-v2/env"],
   serverExternalPackages: ["isomorphic-dompurify"],
   turbopack: {

@@ -21,6 +21,7 @@ interface GitHubLabel {
 
 interface UseGitHubSettingsProps {
   orgId: Id<"organizations"> | undefined;
+  orgSlug: string | undefined;
   isConnected: boolean;
   hasRepository: boolean;
   selectRepository: (args: {
@@ -56,6 +57,7 @@ interface UseGitHubSettingsProps {
 
 export function useGitHubSettings({
   orgId,
+  orgSlug,
   isConnected,
   hasRepository,
   selectRepository,
@@ -74,6 +76,10 @@ export function useGitHubSettings({
   const [isSyncingIssues, setIsSyncingIssues] = useState(false);
   const [githubLabels, setGithubLabels] = useState<GitHubLabel[]>([]);
   const [isLoadingLabels, setIsLoadingLabels] = useState(false);
+  const [webhookSetupError, setWebhookSetupError] = useState<{
+    code: string;
+    message: string;
+  } | null>(null);
 
   const fetchRepositories = useCallback(async () => {
     if (!(orgId && isConnected)) {
@@ -81,12 +87,23 @@ export function useGitHubSettings({
     }
     setLoadingRepos(true);
     try {
+      console.log("[Frontend] Fetching repositories for org:", orgId);
       const response = await fetch(
-        `/api/github/repositories?organizationId=${orgId}`
+        `/api/github/repositories?organizationId=${orgId}`,
+        {
+          cache: "no-store",
+        }
       );
       const data = (await response.json()) as { repositories: Repository[] };
+      console.log(
+        `[Frontend] Received ${data.repositories?.length ?? 0} repositories`
+      );
       if (data.repositories) {
         setRepositories(data.repositories);
+        console.log(
+          "[Frontend] Repositories set in state:",
+          data.repositories.length
+        );
       }
     } catch (error) {
       console.error("Error fetching repositories:", error);
@@ -116,11 +133,11 @@ export function useGitHubSettings({
   }, [orgId, hasRepository]);
 
   const handleConnectGitHub = useCallback(() => {
-    if (!orgId) {
+    if (!(orgId && orgSlug)) {
       return;
     }
-    window.location.href = `/api/github/install?organizationId=${orgId}`;
-  }, [orgId]);
+    window.location.href = `/api/github/install?organizationId=${orgId}&orgSlug=${encodeURIComponent(orgSlug)}`;
+  }, [orgId, orgSlug]);
 
   const handleSelectRepository = useCallback(async () => {
     if (!(orgId && selectedRepo)) {
@@ -179,8 +196,9 @@ export function useGitHubSettings({
       return;
     }
     setIsSettingUp(true);
+    setWebhookSetupError(null);
     try {
-      await fetch("/api/github/setup", {
+      const response = await fetch("/api/github/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -189,12 +207,34 @@ export function useGitHubSettings({
           setupCi: false,
         }),
       });
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        code?: string;
+        message?: string;
+      };
+
+      if (!response.ok || data.error) {
+        setWebhookSetupError({
+          code: data.code ?? "UNKNOWN_ERROR",
+          message: data.message ?? data.error ?? "An unknown error occurred",
+        });
+      }
     } catch (error) {
       console.error("Error setting up:", error);
+      setWebhookSetupError({
+        code: "NETWORK_ERROR",
+        message: "Failed to connect to the server. Please try again.",
+      });
     } finally {
       setIsSettingUp(false);
     }
   }, [orgId]);
+
+  const clearWebhookSetupError = useCallback(() => {
+    setWebhookSetupError(null);
+  }, []);
 
   const handleDisconnect = useCallback(async () => {
     if (!orgId) {
@@ -273,6 +313,7 @@ export function useGitHubSettings({
     isSyncingIssues,
     githubLabels,
     isLoadingLabels,
+    webhookSetupError,
     // Setters
     setSelectedRepo,
     // Handlers
@@ -288,5 +329,6 @@ export function useGitHubSettings({
     handleToggleIssuesSync,
     handleAddLabelMapping,
     handleDeleteLabelMapping,
+    clearWebhookSetupError,
   };
 }

@@ -1,6 +1,6 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { fetchAction, fetchQuery } from "convex/nextjs";
+import { fetchAction } from "convex/nextjs";
 import { NextResponse } from "next/server";
 
 /**
@@ -20,10 +20,11 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
 
   try {
-    // Get the GitHub connection
-    const connection = await fetchQuery(api.github.getConnection, {
-      organizationId,
-    });
+    // Get the GitHub connection using action (no auth required)
+    const connection = await fetchAction(
+      api.github_actions.getConnectionFromApiRoute,
+      { organizationId }
+    );
 
     if (!connection) {
       return NextResponse.json(
@@ -34,7 +35,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     // Get installation access token
     const tokenResult = await fetchAction(
-      api.github_actions.getInstallationToken,
+      api.github_node_actions.getInstallationToken,
       {
         installationId: connection.installationId,
       }
@@ -48,7 +49,18 @@ export async function GET(request: Request): Promise<NextResponse> {
       }
     );
 
-    return NextResponse.json({ repositories });
+    console.log(`[API Route] Returning ${repositories.length} repositories`);
+
+    return NextResponse.json(
+      { repositories },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching repositories:", error);
     return NextResponse.json(

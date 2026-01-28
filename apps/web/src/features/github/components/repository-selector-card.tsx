@@ -2,10 +2,13 @@
 
 import {
   GitBranch,
+  Globe,
   Link as LinkIcon,
+  Lock,
   Plug,
   Spinner,
 } from "@phosphor-icons/react";
+import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,14 +18,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
+import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/typography";
 
 interface Repository {
@@ -32,6 +36,58 @@ interface Repository {
   defaultBranch: string;
   isPrivate: boolean;
   description: string | null;
+}
+
+function formatRepositoryName(slug: string): string {
+  return slug
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function extractOwner(fullName: string): string {
+  return fullName.split("/")[0] ?? "";
+}
+
+function extractRepositoryName(fullName: string): string {
+  return fullName.split("/")[1] ?? fullName;
+}
+
+function _groupRepositoriesByOwner(
+  repositories: Repository[]
+): Map<string, { public: Repository[]; private: Repository[] }> {
+  const grouped = new Map<
+    string,
+    { public: Repository[]; private: Repository[] }
+  >();
+
+  for (const repo of repositories) {
+    const owner = extractOwner(repo.fullName);
+    if (!grouped.has(owner)) {
+      grouped.set(owner, { public: [], private: [] });
+    }
+    const group = grouped.get(owner);
+    if (group) {
+      if (repo.isPrivate) {
+        group.private.push(repo);
+      } else {
+        group.public.push(repo);
+      }
+    }
+  }
+
+  return grouped;
+}
+
+function getRepositoryDisplayText(repo: Repository): string {
+  return formatRepositoryName(extractRepositoryName(repo.fullName));
+}
+
+function getRepositorySearchText(repo: Repository): string {
+  const owner = extractOwner(repo.fullName);
+  const repoName = formatRepositoryName(extractRepositoryName(repo.fullName));
+  const repoSlug = extractRepositoryName(repo.fullName);
+  return `${owner} ${repoName} ${repoSlug} ${repo.fullName}`.toLowerCase();
 }
 
 interface RepositorySelectorCardProps {
@@ -57,6 +113,14 @@ export function RepositorySelectorCard({
   onConnectRepository,
   onChangeRepository,
 }: RepositorySelectorCardProps) {
+  // Flatten repositories for filtering - include owner and name in searchable text
+  const flatRepositories = useMemo(() => {
+    return repositories.map((repo) => ({
+      ...repo,
+      searchText: getRepositorySearchText(repo),
+    }));
+  }, [repositories]);
+
   return (
     <Card>
       <CardHeader>
@@ -96,19 +160,50 @@ export function RepositorySelectorCard({
               <>
                 <div className="space-y-2">
                   <Label>Select Repository</Label>
-                  <Select onValueChange={onSelectRepo} value={selectedRepo}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a repository" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {repositories.map((repo) => (
-                        <SelectItem key={repo.id} value={repo.id}>
-                          {repo.fullName}
-                          {repo.isPrivate ? " (private)" : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Combobox
+                    filter={(repo, query) => {
+                      if (!query) {
+                        return true;
+                      }
+                      return repo.searchText.includes(query.toLowerCase());
+                    }}
+                    items={flatRepositories}
+                    itemToStringLabel={(repo) => getRepositoryDisplayText(repo)}
+                    onValueChange={(value) => {
+                      if (value) {
+                        onSelectRepo(value.id);
+                      }
+                    }}
+                    value={
+                      selectedRepo
+                        ? flatRepositories.find((r) => r.id === selectedRepo)
+                        : undefined
+                    }
+                  >
+                    <ComboboxInput placeholder="Search repositories..." />
+                    <ComboboxContent>
+                      <ComboboxList>
+                        {(repo) => (
+                          <ComboboxItem key={repo.id} value={repo}>
+                            <div className="flex items-center gap-2">
+                              {repo.isPrivate ? (
+                                <Lock className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <Globe className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <div className="flex flex-col">
+                                <span>{getRepositoryDisplayText(repo)}</span>
+                                <span className="text-muted-foreground text-xs">
+                                  {repo.fullName}
+                                </span>
+                              </div>
+                            </div>
+                          </ComboboxItem>
+                        )}
+                      </ComboboxList>
+                      <ComboboxEmpty>No repositories found</ComboboxEmpty>
+                    </ComboboxContent>
+                  </Combobox>
                 </div>
                 {isAdmin ? (
                   <Button
