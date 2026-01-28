@@ -6,7 +6,8 @@
   "author": "",
   "scripts": {
     "dev": "convex dev",
-    "dev:setup": "convex dev --configure --until-success"
+    "dev:setup": "convex dev --configure --until-success",
+    "test": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.52",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@reflet-v2/config": "workspace:*",
     "@types/node": "^24.3.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "^4.0.18"
   }
 }
