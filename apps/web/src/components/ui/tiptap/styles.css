@@ -1,0 +1,215 @@
+/* Tiptap Editor Styles */
+
+/* Placeholder styling */
+.tiptap-inline-editor .is-editor-empty:first-child::before,
+.tiptap-markdown-editor .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  pointer-events: none;
+  height: 0;
+  color: var(--muted-foreground);
+}
+
+/* Link styling */
+.tiptap-link {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.tiptap-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Image styling */
+.tiptap-image {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+  border-radius: var(--radius);
+}
+
+/* Base typography for markdown editor and renderer */
+.tiptap-markdown-editor,
+.tiptap-renderer {
+  font-size: 0.875rem;
+  line-height: 1.625;
+  color: var(--foreground);
+}
+
+/* Headings */
+.tiptap-markdown-editor h1,
+.tiptap-renderer h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.25;
+}
+
+.tiptap-markdown-editor h2,
+.tiptap-renderer h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.375;
+}
+
+.tiptap-markdown-editor h3,
+.tiptap-renderer h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+/* First heading shouldn't have top margin */
+.tiptap-markdown-editor > h1:first-child,
+.tiptap-markdown-editor > h2:first-child,
+.tiptap-markdown-editor > h3:first-child,
+.tiptap-renderer > h1:first-child,
+.tiptap-renderer > h2:first-child,
+.tiptap-renderer > h3:first-child {
+  margin-top: 0;
+}
+
+/* Paragraphs */
+.tiptap-markdown-editor p,
+.tiptap-renderer p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-markdown-editor p:first-child,
+.tiptap-renderer p:first-child {
+  margin-top: 0;
+}
+
+.tiptap-markdown-editor p:last-child,
+.tiptap-renderer p:last-child {
+  margin-bottom: 0;
+}
+
+/* Bold and italic */
+.tiptap-markdown-editor strong,
+.tiptap-renderer strong {
+  font-weight: 600;
+}
+
+.tiptap-markdown-editor em,
+.tiptap-renderer em {
+  font-style: italic;
+}
+
+/* Lists */
+.tiptap-markdown-editor ul,
+.tiptap-renderer ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-markdown-editor ol,
+.tiptap-renderer ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-markdown-editor li,
+.tiptap-renderer li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.tiptap-markdown-editor li p,
+.tiptap-renderer li p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Nested lists */
+.tiptap-markdown-editor ul ul,
+.tiptap-markdown-editor ol ul,
+.tiptap-renderer ul ul,
+.tiptap-renderer ol ul {
+  list-style-type: circle;
+}
+
+/* Blockquote */
+.tiptap-markdown-editor blockquote,
+.tiptap-renderer blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+/* Inline code */
+.tiptap-markdown-editor code,
+.tiptap-renderer code {
+  background-color: var(--muted);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.875em;
+}
+
+/* Code blocks */
+.tiptap-markdown-editor pre,
+.tiptap-renderer pre {
+  background-color: var(--muted);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  overflow-x: auto;
+}
+
+.tiptap-markdown-editor pre code,
+.tiptap-renderer pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875rem;
+  line-height: 1.625;
+}
+
+/* Horizontal rule */
+.tiptap-markdown-editor hr,
+.tiptap-renderer hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Focus styling */
+.tiptap-markdown-editor:focus,
+.tiptap-inline-editor:focus {
+  outline: none;
+}
+
+/* Selection styling */
+.tiptap-markdown-editor ::selection,
+.tiptap-inline-editor ::selection,
+.tiptap-renderer ::selection {
+  background-color: color-mix(in oklch, var(--primary) 30%, transparent);
+}
+
+/* ProseMirror specific */
+.ProseMirror {
+  outline: none;
+}
+
+.ProseMirror > * + * {
+  margin-top: 0.5em;
+}

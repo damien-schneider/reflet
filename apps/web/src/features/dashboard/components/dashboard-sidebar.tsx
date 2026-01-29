@@ -1,5 +1,6 @@
 import {
   ArrowUpRight,
+  Brain,
   CaretUpDown,
   Chat,
   ChatCircle,
@@ -64,6 +65,11 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
 
+  const githubStatus = useQuery(
+    api.github.getConnectionStatus,
+    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+  );
+
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
   const buildPath = (path: string) =>
@@ -122,6 +128,16 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           label: "Widgets",
           badge: undefined,
         },
+        ...(githubStatus?.hasRepository
+          ? [
+              {
+                href: "/dashboard/$orgSlug/ai",
+                icon: Brain,
+                label: "AI",
+                badge: undefined,
+              },
+            ]
+          : []),
         {
           href: "/dashboard/$orgSlug/settings/members",
           icon: Users,

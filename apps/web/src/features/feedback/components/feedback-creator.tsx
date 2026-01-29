@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { cn } from "@/lib/utils";
 
 interface FeedbackCreatorProps {
@@ -74,12 +74,11 @@ export function FeedbackCreator({
 
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
-        <Textarea
+        <TiptapMarkdownEditor
+          className="min-h-36"
           disabled={isSubmitting}
-          id="description"
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Provide more details about your feedback..."
-          rows={6}
+          onChange={setDescription}
+          placeholder="Provide more details about your feedback... Type '/' for formatting options"
           value={description}
         />
       </div>

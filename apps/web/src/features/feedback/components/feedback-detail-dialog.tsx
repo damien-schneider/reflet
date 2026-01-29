@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowsClockwise,
   Calendar,
   CaretUp,
   Chat,
@@ -9,6 +10,7 @@ import {
   PaperPlaneRight,
   Pencil,
   PushPin,
+  Sparkle,
   Trash,
   X,
 } from "@phosphor-icons/react";
@@ -16,7 +18,7 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -46,8 +48,12 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
+import { TiptapInlineEditor } from "@/components/ui/tiptap/inline-editor";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
+import { MarkdownRenderer } from "@/components/ui/tiptap/markdown-renderer";
 import { cn } from "@/lib/utils";
+
+import { AIClarification } from "./ai-clarification";
 
 interface FeedbackDetailDialogProps {
   feedbackId: Id<"feedback"> | null;
@@ -106,8 +112,6 @@ export function FeedbackDetailDialog({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
-  const commentInputRef = useRef<HTMLTextAreaElement>(null);
-
   // Reset states when feedback changes
   useEffect(() => {
     if (feedback) {
@@ -120,6 +124,36 @@ export function FeedbackDetailDialog({
   const effectiveIsAdmin =
     isAdmin || feedback?.role === "admin" || feedback?.role === "owner";
   const canEdit = feedback?.isAuthor || effectiveIsAdmin;
+
+  // AI Draft Reply
+  const draftReplyStatus = useQuery(
+    api.feedback_clarification.getDraftReplyStatus,
+    feedbackId && effectiveIsAdmin ? { feedbackId } : "skip"
+  );
+  const initiateDraftReply = useMutation(
+    api.feedback_clarification.initiateDraftReply
+  );
+  const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
+
+  // Effect to populate comment input when draft reply is ready
+  useEffect(() => {
+    if (draftReplyStatus?.aiDraftReply && isGeneratingDraft) {
+      setNewComment(draftReplyStatus.aiDraftReply);
+      setIsGeneratingDraft(false);
+    }
+  }, [draftReplyStatus?.aiDraftReply, isGeneratingDraft]);
+
+  const handleGenerateDraftReply = useCallback(async () => {
+    if (!feedbackId) {
+      return;
+    }
+    setIsGeneratingDraft(true);
+    try {
+      await initiateDraftReply({ feedbackId });
+    } catch {
+      setIsGeneratingDraft(false);
+    }
+  }, [feedbackId, initiateDraftReply]);
 
   const handleVote = useCallback(async () => {
     if (!feedbackId) {
@@ -408,10 +442,11 @@ export function FeedbackDetailDialog({
         <h3 className="mb-2 font-medium">Description</h3>
         {isEditingDescription ? (
           <div className="space-y-2">
-            <Textarea
+            <TiptapMarkdownEditor
               autoFocus
-              className="min-h-25"
-              onChange={(e) => setEditDescription(e.target.value)}
+              className="min-h-32"
+              onChange={setEditDescription}
+              placeholder="Describe your feedback..."
               value={editDescription}
             />
             <div className="flex justify-end gap-2">
@@ -427,7 +462,7 @@ export function FeedbackDetailDialog({
         ) : (
           <button
             className={cn(
-              "whitespace-pre-wrap text-left text-muted-foreground",
+              "block w-full text-left",
               canEdit &&
                 "-m-2 cursor-pointer rounded p-2 transition-colors hover:bg-accent/50"
             )}
@@ -435,10 +470,15 @@ export function FeedbackDetailDialog({
             onClick={() => canEdit && setIsEditingDescription(true)}
             type="button"
           >
-            {feedback?.description || "No description provided."}
+            <MarkdownRenderer content={feedback?.description || ""} />
           </button>
         )}
       </div>
+
+      {/* AI Clarification */}
+      {feedbackId && (
+        <AIClarification feedbackId={feedbackId} isAdmin={effectiveIsAdmin} />
+      )}
 
       {/* Tags */}
       {feedback?.tags && feedback.tags.length > 0 && (
@@ -470,28 +510,46 @@ export function FeedbackDetailDialog({
         <h3 className="mb-4 font-medium">Comments ({comments?.length || 0})</h3>
 
         {/* Comment input */}
-        <div className="mb-6 flex gap-2">
-          <Textarea
-            className="flex-1"
-            onChange={(e) => setNewComment(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                handleSubmitComment();
-              }
-            }}
-            placeholder="Write a comment..."
-            ref={commentInputRef}
-            rows={2}
-            value={newComment}
-          />
-          <Button
-            className="self-end"
-            disabled={!newComment.trim() || isSubmittingComment}
-            onClick={handleSubmitComment}
-            size="icon"
-          >
-            <PaperPlaneRight className="h-4 w-4" />
-          </Button>
+        <div className="mb-6 space-y-2">
+          {effectiveIsAdmin && (
+            <div className="flex justify-end">
+              <Button
+                disabled={isGeneratingDraft}
+                onClick={handleGenerateDraftReply}
+                size="sm"
+                variant="outline"
+              >
+                {isGeneratingDraft ? (
+                  <>
+                    <ArrowsClockwise className="mr-1 h-3 w-3 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkle className="mr-1 h-3 w-3" />
+                    Draft Reply with AI
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <TiptapInlineEditor
+              className="flex-1"
+              onChange={setNewComment}
+              onSubmit={handleSubmitComment}
+              placeholder="Write a comment... (Cmd+Enter to send)"
+              value={newComment}
+            />
+            <Button
+              className="self-end"
+              disabled={!newComment.trim() || isSubmittingComment}
+              onClick={handleSubmitComment}
+              size="icon"
+            >
+              <PaperPlaneRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Comments list */}
@@ -733,10 +791,10 @@ function CommentItem({
 
           {isEditing ? (
             <div className="mt-2 space-y-2">
-              <Textarea
+              <TiptapInlineEditor
                 autoFocus
-                onChange={(e) => onEditContentChange(e.target.value)}
-                rows={2}
+                onChange={onEditContentChange}
+                placeholder="Edit your comment..."
                 value={editCommentContent}
               />
               <div className="flex gap-2">
@@ -799,12 +857,12 @@ function CommentItem({
           {/* Reply input */}
           {isReplying && (
             <div className="mt-3 flex gap-2">
-              <Textarea
+              <TiptapInlineEditor
                 autoFocus
                 className="flex-1"
-                onChange={(e) => onReplyContentChange(e.target.value)}
-                placeholder="Write a reply..."
-                rows={2}
+                onChange={onReplyContentChange}
+                onSubmit={() => onSubmitReply(comment._id)}
+                placeholder="Write a reply... (Cmd+Enter to send)"
                 value={replyContent}
               />
               <div className="flex flex-col gap-1">
@@ -853,10 +911,10 @@ function CommentItem({
 
                     {editingCommentId === reply._id ? (
                       <div className="mt-2 space-y-2">
-                        <Textarea
+                        <TiptapInlineEditor
                           autoFocus
-                          onChange={(e) => onEditContentChange(e.target.value)}
-                          rows={2}
+                          onChange={onEditContentChange}
+                          placeholder="Edit your reply..."
                           value={editCommentContent}
                         />
                         <div className="flex gap-2">

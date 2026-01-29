@@ -9,6 +9,7 @@
  */
 
 import type * as agent from "../agent.js";
+import type * as ai_context from "../ai_context.js";
 import type * as auth from "../auth.js";
 import type * as auth_helpers from "../auth_helpers.js";
 import type * as board_statuses from "../board_statuses.js";
@@ -24,6 +25,7 @@ import type * as email from "../email.js";
 import type * as email_renderer from "../email_renderer.js";
 import type * as feedback from "../feedback.js";
 import type * as feedback_actions from "../feedback_actions.js";
+import type * as feedback_clarification from "../feedback_clarification.js";
 import type * as feedback_importance from "../feedback_importance.js";
 import type * as feedback_list from "../feedback_list.js";
 import type * as feedback_roadmap from "../feedback_roadmap.js";
@@ -45,6 +47,8 @@ import type * as polar from "../polar.js";
 import type * as polar_user from "../polar_user.js";
 import type * as privateData from "../privateData.js";
 import type * as releases from "../releases.js";
+import type * as repo_analysis from "../repo_analysis.js";
+import type * as storage from "../storage.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as subscriptions_actions from "../subscriptions_actions.js";
 import type * as support_conversations from "../support_conversations.js";
@@ -56,6 +60,7 @@ import type * as todos from "../todos.js";
 import type * as utils from "../utils.js";
 import type * as validators from "../validators.js";
 import type * as votes from "../votes.js";
+import type * as website_references from "../website_references.js";
 import type * as widget_admin from "../widget_admin.js";
 import type * as widget_public from "../widget_public.js";
 
@@ -67,6 +72,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   agent: typeof agent;
+  ai_context: typeof ai_context;
   auth: typeof auth;
   auth_helpers: typeof auth_helpers;
   board_statuses: typeof board_statuses;
@@ -82,6 +88,7 @@ declare const fullApi: ApiFromModules<{
   email_renderer: typeof email_renderer;
   feedback: typeof feedback;
   feedback_actions: typeof feedback_actions;
+  feedback_clarification: typeof feedback_clarification;
   feedback_importance: typeof feedback_importance;
   feedback_list: typeof feedback_list;
   feedback_roadmap: typeof feedback_roadmap;
@@ -103,6 +110,8 @@ declare const fullApi: ApiFromModules<{
   polar_user: typeof polar_user;
   privateData: typeof privateData;
   releases: typeof releases;
+  repo_analysis: typeof repo_analysis;
+  storage: typeof storage;
   subscriptions: typeof subscriptions;
   subscriptions_actions: typeof subscriptions_actions;
   support_conversations: typeof support_conversations;
@@ -114,6 +123,7 @@ declare const fullApi: ApiFromModules<{
   utils: typeof utils;
   validators: typeof validators;
   votes: typeof votes;
+  website_references: typeof website_references;
   widget_admin: typeof widget_admin;
   widget_public: typeof widget_public;
 }>;

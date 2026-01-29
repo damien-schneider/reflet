@@ -256,6 +256,9 @@ export default defineSchema({
     // AI clarification fields
     aiClarification: v.optional(v.string()),
     aiClarificationGeneratedAt: v.optional(v.number()),
+    // AI draft reply fields
+    aiDraftReply: v.optional(v.string()),
+    aiDraftReplyGeneratedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

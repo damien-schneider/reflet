@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.52",
+    "@openrouter/ai-sdk-provider": "^1.2.0",
     "@convex-dev/agent": "catalog:",
     "@convex-dev/better-auth": "catalog:",
     "@convex-dev/polar": "^0.7.3",
