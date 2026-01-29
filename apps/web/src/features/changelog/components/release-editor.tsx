@@ -1,8 +1,9 @@
+import { Check, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +11,17 @@ import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { cn } from "@/lib/utils";
 
+type SaveStatus = "idle" | "saving" | "saved";
+
+const AUTO_SAVE_DEBOUNCE_MS = 500;
+
 interface ReleaseEditorProps {
   organizationId: Id<"organizations">;
   orgSlug: string;
   release?: Doc<"releases">; // If provided, edit mode
   className?: string;
   onSuccess?: () => void;
+  mode?: "create" | "edit"; // create = auto-save as draft, edit = manual save
 }
 
 export function ReleaseEditor({
@@ -24,6 +30,7 @@ export function ReleaseEditor({
   release,
   className,
   onSuccess,
+  mode = "edit",
 }: ReleaseEditorProps) {
   const router = useRouter();
   const createRelease = useMutation(api.changelog.create);
@@ -33,11 +40,100 @@ export function ReleaseEditor({
 
   const isEditing = !!release;
   const isPublished = release?.publishedAt !== undefined;
+  const isAutoSaveMode = mode === "create";
 
   const [title, setTitle] = useState(release?.title ?? "");
   const [version, setVersion] = useState(release?.version ?? "");
   const [description, setDescription] = useState(release?.description ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Auto-save state
+  const [draftId, setDraftId] = useState<Id<"releases"> | null>(null);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isFirstEditRef = useRef(true);
+
+  // Track if content has changed for auto-save
+  const hasContent = title.trim() || version.trim() || description.trim();
+
+  // Auto-save function
+  const autoSave = useCallback(async () => {
+    if (!(isAutoSaveMode && hasContent)) {
+      return;
+    }
+
+    setSaveStatus("saving");
+
+    try {
+      if (draftId) {
+        // Update existing draft
+        await updateRelease({
+          id: draftId,
+          title: title.trim() || "Untitled Release",
+          version: version.trim() || undefined,
+          description: description.trim() || undefined,
+        });
+      } else {
+        // Create new draft on first edit
+        const newId = await createRelease({
+          organizationId,
+          title: title.trim() || "Untitled Release",
+          version: version.trim() || undefined,
+          description: description.trim() || undefined,
+        });
+        setDraftId(newId);
+      }
+      setSaveStatus("saved");
+      // Reset to idle after showing "Saved" briefly
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch (error) {
+      setSaveStatus("idle");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save draft"
+      );
+    }
+  }, [
+    isAutoSaveMode,
+    hasContent,
+    draftId,
+    title,
+    version,
+    description,
+    organizationId,
+    createRelease,
+    updateRelease,
+  ]);
+
+  // Debounced auto-save effect
+  useEffect(() => {
+    if (!isAutoSaveMode) {
+      return;
+    }
+
+    // Skip auto-save on initial mount
+    if (isFirstEditRef.current) {
+      isFirstEditRef.current = false;
+      return;
+    }
+
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Only auto-save if there's content
+    if (hasContent) {
+      debounceTimerRef.current = setTimeout(() => {
+        autoSave();
+      }, AUTO_SAVE_DEBOUNCE_MS);
+    }
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [isAutoSaveMode, hasContent, autoSave]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +154,15 @@ export function ReleaseEditor({
           description: description.trim() || undefined,
         });
         toast.success("Release updated successfully!");
+      } else if (draftId) {
+        // In create mode, update the existing draft
+        await updateRelease({
+          id: draftId,
+          title: title.trim(),
+          version: version.trim() || undefined,
+          description: description.trim() || undefined,
+        });
+        toast.success("Release saved!");
       } else {
         await createRelease({
           organizationId,
@@ -71,7 +176,7 @@ export function ReleaseEditor({
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push(`/${orgSlug}/changelog`);
+        router.push(`/dashboard/${orgSlug}/changelog`);
       }
     } catch (error) {
       toast.error(
@@ -82,16 +187,64 @@ export function ReleaseEditor({
     }
   };
 
+  const getReleaseData = () => ({
+    title: title.trim(),
+    version: version.trim() || undefined,
+    description: description.trim() || undefined,
+  });
+
+  const navigateToChangelog = () => {
+    router.push(`/dashboard/${orgSlug}/changelog`);
+  };
+
+  const handlePublishNewDraft = async () => {
+    setIsSubmitting(true);
+    try {
+      const data = getReleaseData();
+      const newId = await createRelease({ organizationId, ...data });
+      setDraftId(newId);
+      await publishRelease({ id: newId });
+      toast.success("Release published!");
+      navigateToChangelog();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to publish");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePublishExistingDraft = async (releaseId: Id<"releases">) => {
+    setIsSubmitting(true);
+    try {
+      if (draftId) {
+        await updateRelease({ id: draftId, ...getReleaseData() });
+      }
+      await publishRelease({ id: releaseId });
+      toast.success("Release published!");
+      if (isAutoSaveMode) {
+        navigateToChangelog();
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to publish");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handlePublish = async () => {
-    if (!release) {
+    if (!title.trim()) {
+      toast.error("Title is required to publish");
       return;
     }
 
-    try {
-      await publishRelease({ id: release._id });
-      toast.success("Release published!");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to publish");
+    if (isAutoSaveMode && !draftId) {
+      await handlePublishNewDraft();
+      return;
+    }
+
+    const releaseId = release?._id ?? draftId;
+    if (releaseId) {
+      await handlePublishExistingDraft(releaseId);
     }
   };
 
@@ -110,6 +263,40 @@ export function ReleaseEditor({
     }
   };
 
+  const handleCancel = () => {
+    router.push(`/dashboard/${orgSlug}/changelog`);
+  };
+
+  const renderSaveStatus = () => {
+    if (!isAutoSaveMode) {
+      return null;
+    }
+
+    if (saveStatus === "saving") {
+      return (
+        <span className="flex items-center gap-1 text-muted-foreground text-sm">
+          <Spinner className="h-4 w-4 animate-spin" />
+          Saving...
+        </span>
+      );
+    }
+
+    if (saveStatus === "saved") {
+      return (
+        <span className="flex items-center gap-1 text-green-600 text-sm dark:text-green-400">
+          <Check className="h-4 w-4" />
+          Saved
+        </span>
+      );
+    }
+
+    if (draftId) {
+      return <span className="text-muted-foreground text-sm">Draft</span>;
+    }
+
+    return null;
+  };
+
   return (
     <form
       className={cn(
@@ -120,7 +307,7 @@ export function ReleaseEditor({
     >
       {/* Document-like content area */}
       <div className="flex min-h-[500px] flex-col">
-        {/* Version badge */}
+        {/* Version badge and status */}
         <div className="flex items-center gap-2 px-6 pt-4">
           <Input
             className="h-7 w-28 text-xs"
@@ -134,6 +321,7 @@ export function ReleaseEditor({
               Published
             </span>
           )}
+          <div className="ml-auto">{renderSaveStatus()}</div>
         </div>
 
         {/* Title area */}
@@ -180,31 +368,43 @@ export function ReleaseEditor({
                 {isPublished ? "Unpublish" : "Publish"}
               </Button>
             )}
+            {isAutoSaveMode && (
+              <Button
+                disabled={isSubmitting || !title.trim()}
+                onClick={handlePublish}
+                size="sm"
+                type="button"
+              >
+                Publish
+              </Button>
+            )}
           </div>
 
           <div className="flex gap-2">
             <Button
               disabled={isSubmitting}
-              onClick={() => router.push(`/${orgSlug}/changelog`)}
+              onClick={handleCancel}
               size="sm"
               type="button"
               variant="outline"
             >
               Cancel
             </Button>
-            <Button disabled={isSubmitting} size="sm" type="submit">
-              {(() => {
-                if (isSubmitting) {
-                  return "Saving...";
-                }
+            {!isAutoSaveMode && (
+              <Button disabled={isSubmitting} size="sm" type="submit">
+                {(() => {
+                  if (isSubmitting) {
+                    return "Saving...";
+                  }
 
-                if (isEditing) {
-                  return "Update Release";
-                }
+                  if (isEditing) {
+                    return "Update Release";
+                  }
 
-                return "Create Release";
-              })()}
-            </Button>
+                  return "Create Release";
+                })()}
+              </Button>
+            )}
           </div>
         </div>
       </div>

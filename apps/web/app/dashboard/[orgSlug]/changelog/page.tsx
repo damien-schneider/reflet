@@ -33,13 +33,11 @@ export default function ChangelogPage({
     api.github.getConnectionStatus,
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
-  const createRelease = useMutation(api.changelog.create);
   const updateRelease = useMutation(api.changelog.update);
   const deleteRelease = useMutation(api.changelog_actions.remove);
   const publishRelease = useMutation(api.changelog_actions.publish);
   const unpublishRelease = useMutation(api.changelog_actions.unpublish);
 
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingRelease, setEditingRelease] = useState<
     NonNullable<typeof releases>[number] | null
@@ -63,28 +61,6 @@ export default function ChangelogPage({
       </div>
     );
   }
-
-  const handleCreateRelease = async (data: {
-    title: string;
-    version: string;
-    content: string;
-  }) => {
-    if (!org?._id) {
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      await createRelease({
-        organizationId: org._id as Id<"organizations">,
-        title: data.title,
-        version: data.version,
-        description: data.content,
-      });
-      setIsCreateDialogOpen(false);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleUpdateRelease = async (data: {
     title: string;
@@ -150,10 +126,12 @@ export default function ChangelogPage({
                 </Button>
               </Link>
             )}
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Release
-            </Button>
+            <Link href={`/dashboard/${orgSlug}/changelog/new`}>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Release
+              </Button>
+            </Link>
           </div>
         ) : null}
       </div>
@@ -183,21 +161,16 @@ export default function ChangelogPage({
               Create your first release to share product updates.
             </Muted>
             {isAdmin ? (
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Release
-              </Button>
+              <Link href={`/dashboard/${orgSlug}/changelog/new`}>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Release
+                </Button>
+              </Link>
             ) : null}
           </CardContent>
         </Card>
       )}
-
-      <ReleaseFormDialog
-        isSubmitting={isSubmitting}
-        onClose={() => setIsCreateDialogOpen(false)}
-        onSubmit={handleCreateRelease}
-        open={isCreateDialogOpen}
-      />
 
       {editingRelease ? (
         <ReleaseFormDialog
