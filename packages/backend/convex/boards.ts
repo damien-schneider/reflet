@@ -1,9 +1,15 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import {
+  MAX_BOARD_DESCRIPTION_LENGTH,
+  MAX_BOARD_NAME_LENGTH,
+  MAX_SLUG_LENGTH,
+} from "./constants";
 import { feedbackStatus } from "./feedback";
 import { PLAN_LIMITS } from "./organizations";
 import { getAuthUser } from "./utils";
+import { validateInputLength } from "./validators";
 
 // Helper to generate slug from name
 const generateSlug = (name: string): string => {
@@ -186,6 +192,19 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
+    // Validate input length
+    validateInputLength(args.name, MAX_BOARD_NAME_LENGTH, "Board name");
+    if (args.slug) {
+      validateInputLength(args.slug, MAX_SLUG_LENGTH, "Slug");
+    }
+    if (args.description) {
+      validateInputLength(
+        args.description,
+        MAX_BOARD_DESCRIPTION_LENGTH,
+        "Description"
+      );
+    }
+
     // Check membership
     const membership = await ctx.db
       .query("organizationMembers")
@@ -275,6 +294,21 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
+
+    // Validate input length
+    if (args.name !== undefined) {
+      validateInputLength(args.name, MAX_BOARD_NAME_LENGTH, "Board name");
+    }
+    if (args.slug !== undefined) {
+      validateInputLength(args.slug, MAX_SLUG_LENGTH, "Slug");
+    }
+    if (args.description !== undefined) {
+      validateInputLength(
+        args.description,
+        MAX_BOARD_DESCRIPTION_LENGTH,
+        "Description"
+      );
+    }
 
     const board = await ctx.db.get(args.id);
     if (!board) {
