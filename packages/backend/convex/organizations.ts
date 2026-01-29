@@ -1,7 +1,9 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { MAX_ORG_NAME_LENGTH, MAX_SLUG_LENGTH } from "./constants";
 import { getAuthUser } from "./utils";
+import { validateInputLength } from "./validators";
 
 // Subscription plan limits
 export const PLAN_LIMITS = {
@@ -173,6 +175,12 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
+    // Validate input length
+    validateInputLength(args.name, MAX_ORG_NAME_LENGTH, "Organization name");
+    if (args.slug) {
+      validateInputLength(args.slug, MAX_SLUG_LENGTH, "Slug");
+    }
+
     // Generate or validate slug
     let slug = args.slug || generateSlug(args.name);
 
@@ -231,6 +239,14 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
+
+    // Validate input length
+    if (args.name !== undefined) {
+      validateInputLength(args.name, MAX_ORG_NAME_LENGTH, "Organization name");
+    }
+    if (args.slug !== undefined) {
+      validateInputLength(args.slug, MAX_SLUG_LENGTH, "Slug");
+    }
 
     // Check user has admin or owner role
     const membership = await ctx.db
