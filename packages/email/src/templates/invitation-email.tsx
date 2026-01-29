@@ -2,17 +2,17 @@ import { Button, Heading, Text } from "@react-email/components";
 import { BaseLayout } from "./base-layout";
 
 interface InvitationEmailProps {
-  organizationName: string;
-  inviterName: string;
-  role: "admin" | "member";
-  acceptUrl: string;
+  organizationName?: string;
+  inviterName?: string;
+  role?: "admin" | "member";
+  acceptUrl?: string;
 }
 
 export function InvitationEmail({
-  organizationName,
-  inviterName,
-  role,
-  acceptUrl,
+  organizationName = "Mon Organisation",
+  inviterName = "Jean Dupont",
+  role = "member",
+  acceptUrl = "https://example.com/accept",
 }: InvitationEmailProps) {
   const roleLabel = role === "admin" ? "admin" : "membre";
 

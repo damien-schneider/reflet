@@ -3,12 +3,12 @@ import { BaseLayout } from "./base-layout";
 
 interface PasswordResetEmailProps {
   userName?: string;
-  resetUrl: string;
+  resetUrl?: string;
 }
 
 export function PasswordResetEmail({
   userName,
-  resetUrl,
+  resetUrl = "https://example.com/reset",
 }: PasswordResetEmailProps) {
   const greeting = userName ? `Bonjour ${userName}` : "Bonjour";
 

@@ -3,12 +3,12 @@ import { BaseLayout } from "./base-layout";
 
 interface VerificationEmailProps {
   userName?: string;
-  verificationUrl: string;
+  verificationUrl?: string;
 }
 
 export function VerificationEmail({
   userName,
-  verificationUrl,
+  verificationUrl = "https://example.com/verify",
 }: VerificationEmailProps) {
   const greeting = userName ? `Bonjour ${userName}` : "Bonjour";
 

@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "email dev --dir src/templates --port 3333",
+    "export": "email export --dir src/templates --outDir out",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -15,13 +17,16 @@
     "./templates/invitation-email": "./src/templates/invitation-email.tsx"
   },
   "dependencies": {
-    "@react-email/components": "^0.0.35",
-    "@react-email/render": "^1.0.5",
-    "react": "^19.1.0"
+    "@react-email/components": "^1.0.6",
+    "@react-email/render": "^2.0.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@react-email/preview-server": "^5.2.5",
     "@reflet-v2/config": "workspace:*",
     "@types/react": "^19.1.0",
+    "react-email": "^5.2.5",
     "typescript": "catalog:",
     "vitest": "^2.1.8"
   }
