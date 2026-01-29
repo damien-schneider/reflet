@@ -251,7 +251,7 @@ export const update = mutation({
 
     // Check if custom branding is allowed
     if (
-      (args.primaryColor || args.customCss) &&
+      (args.primaryColor || args.customCss || args.logo) &&
       org.subscriptionTier === "free"
     ) {
       throw new Error("Custom branding requires a Pro subscription");

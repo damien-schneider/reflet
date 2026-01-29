@@ -71,8 +71,6 @@ export default function PublicChangelogPageClient({
     );
   }
 
-  const primaryColor = org.primaryColor ?? "#3b82f6";
-
   return (
     <div className="container mx-auto max-w-3xl px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
@@ -96,7 +94,7 @@ export default function PublicChangelogPageClient({
               <article>
                 <div className="mb-4 flex items-center gap-3">
                   <Badge
-                    style={{ borderColor: primaryColor, color: primaryColor }}
+                    className="border-[var(--color-primary)] text-[var(--color-primary)]"
                     variant="outline"
                   >
                     {release.version}
@@ -136,10 +134,7 @@ export default function PublicChangelogPageClient({
                           className="flex items-center gap-2 text-sm"
                           key={item?._id}
                         >
-                          <Check
-                            className="h-4 w-4"
-                            style={{ color: primaryColor }}
-                          />
+                          <Check className="h-4 w-4 text-[var(--color-primary)]" />
                           {item?.title}
                         </li>
                       ))}

@@ -5,6 +5,7 @@ import {
   CreditCard,
   Gear as GearIcon,
   GithubLogo,
+  PaintBrush,
   Users,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
@@ -49,6 +50,12 @@ export default function GearPage({
       description: "Manage organization name, description, and visibility",
       icon: Buildings,
       href: `/dashboard/${orgSlug}/settings/general`,
+    },
+    {
+      title: "Branding",
+      description: "Customize logo and colors for public pages",
+      icon: PaintBrush,
+      href: `/dashboard/${orgSlug}/settings/branding`,
     },
     {
       title: "Members",

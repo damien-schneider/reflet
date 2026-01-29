@@ -12,7 +12,7 @@ import { useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { use } from "react";
+import { use, useMemo } from "react";
 import {
   H1,
   H2,
@@ -20,6 +20,9 @@ import {
   Text as TypographyText,
 } from "@/components/ui/typography";
 import { PublicViewToolbar } from "@/features/feedback/components/public-view-toolbar";
+import { generateColorCssVars, generateColorPalette } from "@/lib/color-utils";
+
+const DEFAULT_PRIMARY_COLOR = "#5c6d4f";
 
 export default function PublicOrgLayoutClient({
   children,
@@ -38,6 +41,12 @@ export default function PublicOrgLayoutClient({
   );
 
   const supportEnabled = supportSettings?.supportEnabled ?? false;
+
+  const colorCssVars = useMemo(() => {
+    const primaryColor = org?.primaryColor ?? DEFAULT_PRIMARY_COLOR;
+    const palette = generateColorPalette(primaryColor);
+    return generateColorCssVars(palette);
+  }, [org?.primaryColor]);
 
   if (org === undefined) {
     return (
@@ -65,7 +74,7 @@ export default function PublicOrgLayoutClient({
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={colorCssVars as React.CSSProperties}>
       <header className="fixed z-40 mx-auto flex w-full items-center justify-between px-4 py-4">
         <div className="flex items-center gap-3">
           {org.logo ? (
