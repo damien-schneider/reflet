@@ -48,7 +48,9 @@ export default async function RootLayout({
         <link href="/icon.svg" rel="icon" type="image/svg+xml" />
         <link href="/apple-touch-icon.png" rel="apple-touch-icon" />
         <link href="/manifest.json" rel="manifest" />
-        <script defer src="//unpkg.com/react-grab/dist/index.global.js" />
+        {process.env.NODE_ENV === "development" && (
+          <script defer src="//unpkg.com/react-grab/dist/index.global.js" />
+        )}
         <script
           data-website-id="f4232b19-0136-4892-95b5-05801c29715d"
           defer
