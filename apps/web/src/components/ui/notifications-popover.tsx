@@ -33,8 +33,8 @@ const notificationIcons: Record<
 };
 
 const notificationColors: Record<NotificationType, string> = {
-  status_change: "text-blue-500",
-  new_comment: "text-green-500",
+  status_change: "text-olive-500",
+  new_comment: "text-emerald-500",
   vote_milestone: "text-amber-500",
   new_support_message: "text-purple-500",
   invitation: "text-olive-500",

@@ -75,59 +75,51 @@ vi.mock("@/components/ui/combobox", async () => {
 
   const Combobox = ({
     children,
-    items,
-    filter,
-    itemToStringLabel,
-    value,
-    onValueChange,
-  }: any) => {
+    items: _items,
+    filter: _filter,
+    itemToStringLabel: _itemToStringLabel,
+    value: _value,
+    onValueChange: _onValueChange,
+  }: {
+    children: React.ReactNode;
+    items?: unknown[];
+    filter?: (item: unknown, query: string) => boolean;
+    itemToStringLabel?: (item: unknown) => string;
+    value?: unknown;
+    onValueChange?: (value: unknown) => void;
+  }) => {
     const [inputValue, setInputValue] = useState("");
     const [open, setOpen] = useState(false);
 
-    // Filter items based on input value
-    const filteredItems =
-      items?.filter((item: any) => {
-        if (!inputValue) {
-          return true;
-        }
-        return filter ? filter(item, inputValue) : true;
-      }) || [];
-
-    // Create a context for children
-    const _context = {
-      inputValue,
-      setInputValue,
-      filteredItems,
-      value,
-      onValueChange,
-      itemToStringLabel,
-      open,
-      setOpen,
-      items: filteredItems,
-    };
+    // Note: _items, _filter, _itemToStringLabel, _value, _onValueChange
+    // are intentionally unused in this mock - they're accepted for API
+    // compatibility but the mock doesn't implement full combobox behavior
 
     // Process children recursively to inject context
-    const processChildren = (children: any): any => {
-      return Children.map(children, (child) => {
+    const processChildren = (childNodes: React.ReactNode): React.ReactNode => {
+      return Children.map(childNodes, (child) => {
         if (!isValidElement(child)) {
           return child;
         }
 
-        const childProps: any = {};
+        const childProps: Record<string, unknown> = {};
 
         // Add context-aware props based on component type
         if (child.type === ComboboxInput) {
           childProps.value = inputValue;
-          childProps.onChange = (e: any) => {
+          childProps.onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             setInputValue(e.target.value);
             setOpen(true);
           };
           childProps.onFocus = () => setOpen(true);
         }
 
-        // Process nested children
-        if (child.props.children) {
-          childProps.children = processChildren(child.props.children);
+        // Process nested children - child.props is typed via isValidElement
+        const childElement = child as React.ReactElement<{
+          children?: React.ReactNode;
+        }>;
+        if (childElement.props.children) {
+          childProps.children = processChildren(childElement.props.children);
         }
 
         return cloneElement(child, childProps);

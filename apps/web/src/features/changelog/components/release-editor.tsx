@@ -6,8 +6,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
+import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { cn } from "@/lib/utils";
 
 interface ReleaseEditorProps {
@@ -111,83 +111,101 @@ export function ReleaseEditor({
   };
 
   return (
-    <form className={cn("space-y-6", className)} onSubmit={handleSubmit}>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="title">Title</Label>
+    <form
+      className={cn(
+        "overflow-hidden rounded-xl border bg-background shadow-sm",
+        className
+      )}
+      onSubmit={handleSubmit}
+    >
+      {/* Document-like content area */}
+      <div className="flex min-h-[500px] flex-col">
+        {/* Version badge */}
+        <div className="flex items-center gap-2 px-6 pt-4">
           <Input
+            className="h-7 w-28 text-xs"
             disabled={isSubmitting}
-            id="title"
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="What's New in v1.0"
-            required
-            value={title}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="version">Version (optional)</Label>
-          <Input
-            disabled={isSubmitting}
-            id="version"
             onChange={(e) => setVersion(e.target.value)}
             placeholder="v1.0.0"
             value={version}
           />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          disabled={isSubmitting}
-          id="description"
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Describe what's new in this release..."
-          rows={10}
-          value={description}
-        />
-        <p className="text-muted-foreground text-xs">
-          You can use HTML for formatting.
-        </p>
-      </div>
-
-      <div className="flex justify-between gap-2">
-        <div>
-          {isEditing && (
-            <Button
-              disabled={isSubmitting}
-              onClick={isPublished ? handleUnpublish : handlePublish}
-              type="button"
-              variant={isPublished ? "outline" : "default"}
-            >
-              {isPublished ? "Unpublish" : "Publish"}
-            </Button>
+          {isEditing && isPublished && (
+            <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700 text-xs dark:bg-green-900/30 dark:text-green-400">
+              Published
+            </span>
           )}
         </div>
 
-        <div className="flex gap-2">
-          <Button
+        {/* Title area */}
+        <div className="px-6 pt-4 pb-2">
+          <TiptapTitleEditor
+            autoFocus
             disabled={isSubmitting}
-            onClick={() => router.push(`/${orgSlug}/changelog`)}
-            type="button"
-            variant="outline"
-          >
-            Cancel
-          </Button>
-          <Button disabled={isSubmitting} type="submit">
-            {(() => {
-              if (isSubmitting) {
-                return "Saving...";
-              }
+            onChange={setTitle}
+            placeholder="What's New in v1.0"
+            value={title}
+          />
+        </div>
 
-              if (isEditing) {
-                return "Update Release";
-              }
+        {/* Divider */}
+        <div className="mx-6 border-border/50 border-b" />
 
-              return "Create Release";
-            })()}
-          </Button>
+        {/* Description area - takes up remaining space */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <TiptapMarkdownEditor
+            disabled={isSubmitting}
+            minimal
+            onChange={setDescription}
+            placeholder="Describe what's new in this release... Type '/' for commands, or drag and drop images/videos"
+            value={description}
+          />
+        </div>
+
+        {/* Footer */}
+        <div
+          className={cn(
+            "border-t bg-muted/30 px-6 py-4",
+            "flex items-center justify-between gap-2"
+          )}
+        >
+          <div>
+            {isEditing && (
+              <Button
+                disabled={isSubmitting}
+                onClick={isPublished ? handleUnpublish : handlePublish}
+                size="sm"
+                type="button"
+                variant={isPublished ? "outline" : "default"}
+              >
+                {isPublished ? "Unpublish" : "Publish"}
+              </Button>
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              disabled={isSubmitting}
+              onClick={() => router.push(`/${orgSlug}/changelog`)}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button disabled={isSubmitting} size="sm" type="submit">
+              {(() => {
+                if (isSubmitting) {
+                  return "Saving...";
+                }
+
+                if (isEditing) {
+                  return "Update Release";
+                }
+
+                return "Create Release";
+              })()}
+            </Button>
+          </div>
         </div>
       </div>
     </form>

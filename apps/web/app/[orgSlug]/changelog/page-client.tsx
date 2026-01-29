@@ -158,10 +158,7 @@ export default function PublicChangelogPageClient({
               We haven&apos;t published any changelog entries yet. Subscribe to
               be notified when we do!
             </p>
-            <Button
-              onClick={() => setShowSubscribeDialog(true)}
-              style={{ backgroundColor: primaryColor }}
-            >
+            <Button onClick={() => setShowSubscribeDialog(true)}>
               <Bell className="mr-2 h-4 w-4" />
               Subscribe
             </Button>
@@ -220,7 +217,6 @@ export default function PublicChangelogPageClient({
                 <Button
                   disabled={isSubmitting || !email.trim()}
                   onClick={handleSubscribe}
-                  style={{ backgroundColor: primaryColor }}
                 >
                   <Mail className="mr-2 h-4 w-4" />
                   {isSubmitting ? "Subscribing..." : "Subscribe"}

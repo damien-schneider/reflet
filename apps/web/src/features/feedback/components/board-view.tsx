@@ -515,7 +515,6 @@ export function BoardView({
         onFeedbackChange={setNewFeedback}
         onOpenChange={setShowSubmitDialog}
         onSubmit={handleSubmitFeedback}
-        primaryColor={primaryColor}
       />
     </>
   );
@@ -592,10 +591,7 @@ function FeedbackFeedView({
             <p className="mb-4 text-muted-foreground">
               Be the first to share your ideas!
             </p>
-            <Button
-              onClick={onSubmitClick}
-              style={{ backgroundColor: primaryColor }}
-            >
+            <Button onClick={onSubmitClick}>
               <Plus className="mr-2 h-4 w-4" />
               Submit Feedback
             </Button>

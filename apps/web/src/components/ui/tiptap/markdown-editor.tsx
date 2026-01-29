@@ -11,8 +11,47 @@ import { useCallback, useEffect, useRef } from "react";
 import { Markdown } from "tiptap-markdown";
 import { cn } from "@/lib/utils";
 import { createSlashCommandExtension } from "./slash-command";
-import { useImageUpload } from "./use-image-upload";
+import { useMediaUpload } from "./use-media-upload";
 import "./styles.css";
+
+/**
+ * Custom hook for debouncing a callback function.
+ * Returns a debounced version of the callback that only executes
+ * after the specified delay has passed since the last call.
+ */
+function useDebouncedCallback<T extends (...args: Parameters<T>) => void>(
+  callback: T,
+  delay: number
+): T {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callbackRef = useRef(callback);
+
+  // Keep callback ref updated
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        callbackRef.current(...args);
+      }, delay);
+    },
+    [delay]
+  ) as T;
+}
 
 // Helper to get markdown from tiptap-markdown storage
 // The tiptap-markdown extension adds a `markdown` storage that TypeScript doesn't know about
@@ -32,6 +71,15 @@ interface TiptapMarkdownEditorProps {
   maxLength?: number;
   autoFocus?: boolean;
   editable?: boolean;
+  minimal?: boolean;
+  /**
+   * Debounce delay in milliseconds for the onChange callback.
+   * Use this when saving to a real-time database like Convex to prevent
+   * race conditions where the external value updates overwrite user input.
+   * Recommended: 300-500ms for real-time saves, 0 for local state.
+   * @default 0 (no debounce)
+   */
+  debounceMs?: number;
 }
 
 export function TiptapMarkdownEditor({
@@ -43,34 +91,73 @@ export function TiptapMarkdownEditor({
   maxLength,
   autoFocus = false,
   editable = true,
+  minimal = false,
+  debounceMs = 0,
 }: TiptapMarkdownEditorProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
 
-  const { uploadImage, isUploading } = useImageUpload({
-    onSuccess: (url) => {
-      if (editor) {
-        editor.chain().focus().setImage({ src: url }).run();
+  // Track whether this is the initial mount - only sync external value once on mount
+  // After that, local content is authoritative and external updates are ignored.
+  // This prevents real-time database updates from overwriting user edits.
+  const hasInitializedRef = useRef(false);
+  const initialValueRef = useRef(value);
+
+  // Debounced onChange for real-time database scenarios
+  const debouncedOnChange = useDebouncedCallback(onChange, debounceMs);
+  const effectiveOnChange = debounceMs > 0 ? debouncedOnChange : onChange;
+
+  const { uploadMedia, isUploading, uploadProgress } = useMediaUpload({
+    onSuccess: (result) => {
+      const ed = editorRef.current;
+      if (!ed) return;
+
+      if (result.type === "image") {
+        ed.chain().focus().setImage({ src: result.url }).run();
+      } else if (result.type === "video") {
+        // Insert video as HTML since tiptap doesn't have native video support
+        ed.chain()
+          .focus()
+          .insertContent(
+            `<p><video src="${result.url}" controls class="tiptap-video"></video></p>`
+          )
+          .run();
       }
     },
     onError: (error) => {
-      console.error("Image upload failed:", error);
+      console.error("Media upload failed:", error);
     },
   });
 
   const handleImageUpload = useCallback(() => {
-    fileInputRef.current?.click();
+    imageInputRef.current?.click();
   }, []);
 
-  const handleFileChange = useCallback(
+  const handleVideoUpload = useCallback(() => {
+    videoInputRef.current?.click();
+  }, []);
+
+  const handleImageChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (file) {
-        await uploadImage(file);
+        await uploadMedia(file);
       }
-      // Reset input so the same file can be selected again
       event.target.value = "";
     },
-    [uploadImage]
+    [uploadMedia]
+  );
+
+  const handleVideoChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        await uploadMedia(file);
+      }
+      event.target.value = "";
+    },
+    [uploadMedia]
   );
 
   const editor = useEditor({
@@ -105,12 +192,13 @@ export function TiptapMarkdownEditor({
           ]
         : []),
       Markdown.configure({
-        html: false,
+        html: true, // Enable HTML for video support
         transformPastedText: true,
         transformCopiedText: true,
       }),
       createSlashCommandExtension({
         onImageUpload: handleImageUpload,
+        onVideoUpload: handleVideoUpload,
       }),
     ],
     content: value,
@@ -118,18 +206,26 @@ export function TiptapMarkdownEditor({
     autofocus: autoFocus,
     editorProps: {
       attributes: {
-        class: "tiptap-markdown-editor outline-none min-h-32 w-full",
+        class: cn(
+          "outline-none w-full",
+          minimal
+            ? "tiptap-minimal-editor min-h-24"
+            : "tiptap-markdown-editor min-h-32"
+        ),
       },
       handlePaste: (_view, event) => {
         const items = event.clipboardData?.items;
         if (!items) return false;
 
         for (const item of items) {
-          if (item.type.startsWith("image/")) {
+          if (
+            item.type.startsWith("image/") ||
+            item.type.startsWith("video/")
+          ) {
             const file = item.getAsFile();
             if (file) {
               event.preventDefault();
-              uploadImage(file);
+              uploadMedia(file);
               return true;
             }
           }
@@ -144,9 +240,12 @@ export function TiptapMarkdownEditor({
         if (!files?.length) return false;
 
         const file = files[0];
-        if (file?.type.startsWith("image/")) {
+        if (
+          file?.type.startsWith("image/") ||
+          file?.type.startsWith("video/")
+        ) {
           event.preventDefault();
-          uploadImage(file);
+          uploadMedia(file);
           return true;
         }
 
@@ -155,19 +254,34 @@ export function TiptapMarkdownEditor({
     },
     onUpdate: ({ editor: ed }) => {
       const markdown = getMarkdown(ed.storage);
-      onChange(markdown);
+      effectiveOnChange(markdown);
     },
   });
 
-  // Sync external value changes
+  // Store editor ref for use in callbacks
+  useEffect(() => {
+    (editorRef as React.MutableRefObject<typeof editor>).current = editor;
+  }, [editor]);
+
+  // Initialize editor content only on first mount
+  // After initialization, external value changes are IGNORED to prevent
+  // real-time database updates from overwriting local edits.
+  // This is intentional - local content is always authoritative.
   useEffect(() => {
     if (!editor) return;
 
-    const currentMarkdown = getMarkdown(editor.storage);
-    if (value !== currentMarkdown) {
-      editor.commands.setContent(value);
+    // Only set content on initial mount, not on subsequent value changes
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      // Only set if the initial value differs from the current content
+      const currentMarkdown = getMarkdown(editor.storage);
+      if (initialValueRef.current !== currentMarkdown) {
+        editor.commands.setContent(initialValueRef.current);
+      }
     }
-  }, [editor, value]);
+    // Intentionally NOT including `value` in dependencies
+    // External value updates should NOT overwrite local edits
+  }, [editor]);
 
   // Update editable state
   useEffect(() => {
@@ -185,6 +299,60 @@ export function TiptapMarkdownEditor({
     }
   }, [editor, editable, disabled]);
 
+  if (minimal) {
+    return (
+      <div
+        className={cn(
+          "w-full",
+          disabled && "cursor-not-allowed opacity-50",
+          className
+        )}
+        data-slot="tiptap-markdown-editor"
+        onClick={handleContainerClick}
+      >
+        <EditorContent editor={editor} />
+
+        <input
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageChange}
+          ref={imageInputRef}
+          type="file"
+        />
+        <input
+          accept="video/*"
+          className="hidden"
+          onChange={handleVideoChange}
+          ref={videoInputRef}
+          type="file"
+        />
+
+        {(isUploading || maxLength) && (
+          <div className="mt-2 flex items-center justify-between text-xs">
+            {isUploading && (
+              <span className="text-muted-foreground">{uploadProgress}</span>
+            )}
+            {!isUploading && <span />}
+
+            {maxLength && (
+              <span
+                className={cn(
+                  isAtLimit
+                    ? "text-destructive"
+                    : isNearLimit
+                      ? "text-amber-500"
+                      : "text-muted-foreground"
+                )}
+              >
+                {characterCount}/{maxLength}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -201,19 +369,24 @@ export function TiptapMarkdownEditor({
     >
       <EditorContent editor={editor} />
 
-      {/* Hidden file input for image uploads */}
       <input
         accept="image/*"
         className="hidden"
-        onChange={handleFileChange}
-        ref={fileInputRef}
+        onChange={handleImageChange}
+        ref={imageInputRef}
+        type="file"
+      />
+      <input
+        accept="video/*"
+        className="hidden"
+        onChange={handleVideoChange}
+        ref={videoInputRef}
         type="file"
       />
 
-      {/* Character count and upload indicator */}
       <div className="mt-2 flex items-center justify-between text-xs">
         {isUploading && (
-          <span className="text-muted-foreground">Uploading image...</span>
+          <span className="text-muted-foreground">{uploadProgress}</span>
         )}
         {!isUploading && <span />}
 

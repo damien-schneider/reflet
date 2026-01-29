@@ -3,15 +3,15 @@
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
+import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
+import { cn } from "@/lib/utils";
 
 interface SubmitFeedbackDialogProps {
   isOpen: boolean;
@@ -29,7 +29,6 @@ interface SubmitFeedbackDialogProps {
   }) => void;
   isSubmitting: boolean;
   isMember: boolean;
-  primaryColor: string;
 }
 
 export function SubmitFeedbackDialog({
@@ -40,74 +39,91 @@ export function SubmitFeedbackDialog({
   onFeedbackChange,
   isSubmitting,
   isMember,
-  primaryColor,
 }: SubmitFeedbackDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={isOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Submit feedback</DialogTitle>
-          <DialogDescription>
-            Share your ideas, report bugs, or request features.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              onChange={(e) =>
-                onFeedbackChange({ ...feedback, title: e.target.value })
+      <DialogContent
+        className="gap-0 overflow-hidden p-0 sm:max-w-2xl"
+        showCloseButton
+      >
+        {/* Hidden accessible title and description */}
+        <DialogTitle className="sr-only">Submit feedback</DialogTitle>
+        <DialogDescription className="sr-only">
+          Share your ideas, report bugs, or request features.
+        </DialogDescription>
+
+        {/* Document-like content area */}
+        <div className="flex min-h-[400px] flex-col">
+          {/* Title area */}
+          <div className="px-6 pt-6 pb-2">
+            <TiptapTitleEditor
+              autoFocus
+              onChange={(value) =>
+                onFeedbackChange({ ...feedback, title: value })
               }
-              placeholder="Short summary of your feedback"
+              placeholder="Untitled"
               value={feedback.title}
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              onChange={(e) =>
-                onFeedbackChange({
-                  ...feedback,
-                  description: e.target.value,
-                })
+
+          {/* Divider */}
+          <div className="mx-6 border-border/50 border-b" />
+
+          {/* Description area - takes up remaining space */}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <TiptapMarkdownEditor
+              minimal
+              onChange={(value) =>
+                onFeedbackChange({ ...feedback, description: value })
               }
-              placeholder="Provide more details..."
-              rows={4}
+              placeholder="Add a description... Type '/' for commands, or drag and drop images/videos"
               value={feedback.description}
             />
           </div>
-          {!isMember && (
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email (optional)</Label>
-              <Input
-                id="email"
-                onChange={(e) =>
-                  onFeedbackChange({ ...feedback, email: e.target.value })
-                }
-                placeholder="your@email.com"
-                type="email"
-                value={feedback.email}
-              />
-              <p className="text-muted-foreground text-xs">
-                We&apos;ll notify you when there are updates to your feedback.
-              </p>
-            </div>
-          )}
-        </div>
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
-            Cancel
-          </Button>
-          <Button
-            disabled={isSubmitting || !feedback.title.trim()}
-            onClick={onSubmit}
-            style={{ backgroundColor: primaryColor }}
+
+          {/* Footer */}
+          <div
+            className={cn(
+              "border-t bg-muted/30 px-6 py-4",
+              "flex items-center justify-between gap-4"
+            )}
           >
-            {isSubmitting ? "Submitting..." : "Submit"}
-          </Button>
-        </DialogFooter>
+            {/* Left side - email for non-members */}
+            <div className="flex-1">
+              {!isMember && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    className="h-8 max-w-[240px] text-sm"
+                    onChange={(e) =>
+                      onFeedbackChange({ ...feedback, email: e.target.value })
+                    }
+                    placeholder="Email for updates (optional)"
+                    type="email"
+                    value={feedback.email}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Right side - actions */}
+            <div className="flex items-center gap-2">
+              <DialogClose
+                render={
+                  <Button size="sm" variant="ghost">
+                    Cancel
+                  </Button>
+                }
+              />
+              <Button
+                disabled={isSubmitting || !feedback.title.trim()}
+                onClick={onSubmit}
+                size="sm"
+              >
+                {isSubmitting ? "Submitting..." : "Submit"}
+              </Button>
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

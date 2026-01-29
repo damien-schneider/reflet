@@ -137,7 +137,7 @@ function MockupSidebar() {
             <span className="h-2 w-2 rounded-full bg-emerald-500" /> Planned
           </div>
           <div className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground text-sm hover:bg-muted">
-            <span className="h-2 w-2 rounded-full bg-blue-500" /> In Progress
+            <span className="h-2 w-2 rounded-full bg-amber-500" /> In Progress
           </div>
           <div className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground text-sm hover:bg-muted">
             <span className="h-2 w-2 rounded-full bg-purple-500" /> Complete
@@ -221,7 +221,7 @@ interface FeedbackListItemProps {
 function FeedbackListItem({ item }: FeedbackListItemProps) {
   const statusClassMap: Record<string, string> = {
     Planned: "border-emerald-100 bg-emerald-50 text-emerald-700",
-    "In Progress": "border-blue-100 bg-blue-50 text-blue-700",
+    "In Progress": "border-amber-100 bg-amber-50 text-amber-700",
   };
   const statusClasses =
     statusClassMap[item.status] ??

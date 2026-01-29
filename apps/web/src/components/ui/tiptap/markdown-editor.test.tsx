@@ -81,10 +81,14 @@ vi.mock("./slash-command", () => ({
   createSlashCommandExtension: () => ({}),
 }));
 
-vi.mock("./use-image-upload", () => ({
-  useImageUpload: () => ({
-    uploadImage: vi.fn().mockResolvedValue("https://example.com/image.jpg"),
+vi.mock("./use-media-upload", () => ({
+  useMediaUpload: () => ({
+    uploadMedia: vi.fn().mockResolvedValue({
+      url: "https://example.com/media.jpg",
+      type: "image",
+    }),
     isUploading: false,
+    uploadProgress: null,
   }),
 }));
 

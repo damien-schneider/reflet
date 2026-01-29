@@ -21,7 +21,7 @@ const STATUS_CONFIG: Record<
   open: {
     label: "Open",
     icon: Circle,
-    className: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    className: "bg-olive-500/10 text-olive-600 dark:text-olive-400",
   },
   awaiting_reply: {
     label: "Awaiting",

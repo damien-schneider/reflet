@@ -275,6 +275,7 @@ function AnalysisResults({
             <CardContent>
               <TiptapMarkdownEditor
                 className="w-full border-0 bg-transparent p-0 focus-within:ring-0 dark:bg-transparent"
+                debounceMs={500}
                 editable={isAdmin}
                 onChange={(value) => handleSectionChange(section.field, value)}
                 placeholder={`Enter ${section.title.toLowerCase()}...`}

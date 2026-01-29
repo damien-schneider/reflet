@@ -213,3 +213,182 @@
 .ProseMirror > * + * {
   margin-top: 0.5em;
 }
+
+/* Title editor styling - minimal, borderless */
+.tiptap-title-editor {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--foreground);
+}
+
+.tiptap-title-editor p {
+  margin: 0;
+}
+
+.tiptap-title-editor .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  pointer-events: none;
+  height: 0;
+  color: var(--muted-foreground);
+  opacity: 0.6;
+}
+
+/* Video styling */
+.tiptap-video {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+  border-radius: var(--radius);
+}
+
+/* Minimal editor variant - no border, document-like */
+.tiptap-minimal-editor {
+  font-size: 0.9375rem;
+  line-height: 1.625;
+  color: var(--foreground);
+}
+
+.tiptap-minimal-editor .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  pointer-events: none;
+  height: 0;
+  color: var(--muted-foreground);
+  opacity: 0.5;
+}
+
+/* Minimal editor headings */
+.tiptap-minimal-editor h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.25;
+}
+
+.tiptap-minimal-editor h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.375;
+}
+
+.tiptap-minimal-editor h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.tiptap-minimal-editor > h1:first-child,
+.tiptap-minimal-editor > h2:first-child,
+.tiptap-minimal-editor > h3:first-child {
+  margin-top: 0;
+}
+
+/* Minimal editor paragraphs */
+.tiptap-minimal-editor p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-minimal-editor p:first-child {
+  margin-top: 0;
+}
+
+.tiptap-minimal-editor p:last-child {
+  margin-bottom: 0;
+}
+
+/* Minimal editor text styling */
+.tiptap-minimal-editor strong {
+  font-weight: 600;
+}
+
+.tiptap-minimal-editor em {
+  font-style: italic;
+}
+
+/* Minimal editor lists */
+.tiptap-minimal-editor ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-minimal-editor ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-minimal-editor li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.tiptap-minimal-editor li p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.tiptap-minimal-editor ul ul,
+.tiptap-minimal-editor ol ul {
+  list-style-type: circle;
+}
+
+/* Minimal editor blockquote */
+.tiptap-minimal-editor blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+/* Minimal editor code */
+.tiptap-minimal-editor code {
+  background-color: var(--muted);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.875em;
+}
+
+.tiptap-minimal-editor pre {
+  background-color: var(--muted);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  overflow-x: auto;
+}
+
+.tiptap-minimal-editor pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875rem;
+  line-height: 1.625;
+}
+
+/* Minimal editor horizontal rule */
+.tiptap-minimal-editor hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Minimal editor selection */
+.tiptap-minimal-editor ::selection {
+  background-color: color-mix(in oklch, var(--primary) 30%, transparent);
+}
