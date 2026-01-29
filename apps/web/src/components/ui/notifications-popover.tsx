@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, Chat, TrendUp } from "@phosphor-icons/react";
+import { Bell, Chat, Envelope, TrendUp, UserPlus } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
 
 import {
   Popover,
@@ -13,7 +14,12 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-type NotificationType = "status_change" | "new_comment" | "vote_milestone";
+type NotificationType =
+  | "status_change"
+  | "new_comment"
+  | "vote_milestone"
+  | "new_support_message"
+  | "invitation";
 
 const notificationIcons: Record<
   NotificationType,
@@ -22,12 +28,16 @@ const notificationIcons: Record<
   status_change: TrendUp,
   new_comment: Chat,
   vote_milestone: TrendUp,
+  new_support_message: Envelope,
+  invitation: UserPlus,
 };
 
 const notificationColors: Record<NotificationType, string> = {
   status_change: "text-blue-500",
   new_comment: "text-green-500",
   vote_milestone: "text-amber-500",
+  new_support_message: "text-purple-500",
+  invitation: "text-olive-500",
 };
 
 interface NotificationItemProps {
@@ -38,6 +48,7 @@ interface NotificationItemProps {
     message: string;
     isRead: boolean;
     createdAt: number;
+    invitationToken?: string;
   };
 }
 
@@ -45,7 +56,7 @@ function NotificationItem({ notification }: NotificationItemProps) {
   const Icon = notificationIcons[notification.type];
   const iconColor = notificationColors[notification.type];
 
-  return (
+  const content = (
     <div
       className={cn(
         "flex gap-3 rounded-md p-3 transition-colors hover:bg-accent",
@@ -76,6 +87,15 @@ function NotificationItem({ notification }: NotificationItemProps) {
       )}
     </div>
   );
+
+  // Make invitation notifications clickable
+  if (notification.type === "invitation" && notification.invitationToken) {
+    return (
+      <Link href={`/invite/${notification.invitationToken}`}>{content}</Link>
+    );
+  }
+
+  return content;
 }
 
 export function NotificationsPopover({ className }: { className?: string }) {
@@ -103,12 +123,11 @@ export function NotificationsPopover({ className }: { className?: string }) {
           <h3 className="font-semibold text-sm">Notifications</h3>
           {unreadCount && unreadCount > 0 ? (
             <p className="text-muted-foreground text-xs">
-              {unreadCount} unread notification{unreadCount !== 1 && "s"}
+              {unreadCount} notification{unreadCount !== 1 && "s"} non lue
+              {unreadCount !== 1 && "s"}
             </p>
           ) : (
-            <p className="text-muted-foreground text-xs">
-              You're all caught up
-            </p>
+            <p className="text-muted-foreground text-xs">Vous êtes à jour</p>
           )}
         </div>
         <ScrollArea className="h-75">
@@ -128,10 +147,11 @@ export function NotificationsPopover({ className }: { className?: string }) {
               <div>
                 <Bell className="mx-auto h-8 w-8 text-muted-foreground/50" />
                 <p className="mt-2 text-muted-foreground text-sm">
-                  No notifications yet
+                  Aucune notification
                 </p>
                 <p className="mt-1 text-muted-foreground/70 text-xs">
-                  You'll be notified about new feedback, comments, and updates
+                  Vous serez notifié des nouveaux feedbacks, commentaires et
+                  mises à jour
                 </p>
               </div>
             </div>

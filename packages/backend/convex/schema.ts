@@ -40,7 +40,8 @@ const notificationType = v.union(
   v.literal("status_change"),
   v.literal("new_comment"),
   v.literal("vote_milestone"),
-  v.literal("new_support_message")
+  v.literal("new_support_message"),
+  v.literal("invitation")
 );
 
 // Support conversation status
@@ -71,6 +72,22 @@ const githubConnectionStatus = v.union(
 const githubSyncStatus = v.union(
   v.literal("idle"),
   v.literal("syncing"),
+  v.literal("success"),
+  v.literal("error")
+);
+
+// Repo analysis status
+const repoAnalysisStatus = v.union(
+  v.literal("pending"),
+  v.literal("in_progress"),
+  v.literal("completed"),
+  v.literal("error")
+);
+
+// Website reference status
+const websiteReferenceStatus = v.union(
+  v.literal("pending"),
+  v.literal("fetching"),
   v.literal("success"),
   v.literal("error")
 );
@@ -236,6 +253,9 @@ export default defineSchema({
     githubIssueNumber: v.optional(v.number()), // GitHub issue number (#123)
     githubHtmlUrl: v.optional(v.string()), // Link to GitHub issue
     syncedFromGithub: v.optional(v.boolean()), // Whether this was created from GitHub sync
+    // AI clarification fields
+    aiClarification: v.optional(v.string()),
+    aiClarificationGeneratedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -372,6 +392,7 @@ export default defineSchema({
     title: v.string(),
     message: v.string(),
     feedbackId: v.optional(v.id("feedback")),
+    invitationToken: v.optional(v.string()), // Token for invitation notifications
     isRead: v.boolean(),
     createdAt: v.number(),
   })
@@ -632,4 +653,39 @@ export default defineSchema({
       "githubIssueNumber",
     ])
     .index("by_reflet_feedback", ["refletFeedbackId"]),
+
+  // ============================================
+  // REPO ANALYSIS (AI-powered repository analysis)
+  // ============================================
+  repoAnalysis: defineTable({
+    organizationId: v.id("organizations"),
+    githubConnectionId: v.id("githubConnections"),
+    status: repoAnalysisStatus,
+    summary: v.optional(v.string()),
+    techStack: v.optional(v.string()),
+    architecture: v.optional(v.string()),
+    features: v.optional(v.string()),
+    repoStructure: v.optional(v.string()),
+    error: v.optional(v.string()),
+    threadId: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_organization", ["organizationId"]),
+
+  // ============================================
+  // WEBSITE REFERENCES (AI context from websites)
+  // ============================================
+  websiteReferences: defineTable({
+    organizationId: v.id("organizations"),
+    url: v.string(),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    scrapedContent: v.optional(v.string()),
+    status: websiteReferenceStatus,
+    errorMessage: v.optional(v.string()),
+    lastFetchedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
 });

@@ -8,6 +8,7 @@ import { authComponent } from "./auth";
 
 /**
  * List notifications for current user
+ * Also includes pending invitations as notification-like items
  */
 export const list = query({
   args: {
@@ -20,6 +21,7 @@ export const list = query({
       return [];
     }
 
+    // Get regular notifications
     let notifications = await ctx.db
       .query("notifications")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
@@ -29,19 +31,58 @@ export const list = query({
       notifications = notifications.filter((n) => !n.isRead);
     }
 
-    // Sort by newest first
-    notifications.sort((a, b) => b.createdAt - a.createdAt);
+    // Get pending invitations for this user's email
+    const userEmail = user.email?.toLowerCase();
+    const invitationNotifications: typeof notifications = [];
 
-    if (args.limit) {
-      notifications = notifications.slice(0, args.limit);
+    if (userEmail) {
+      const pendingInvitations = await ctx.db
+        .query("invitations")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("email"), userEmail),
+            q.eq(q.field("status"), "pending"),
+            q.gt(q.field("expiresAt"), Date.now())
+          )
+        )
+        .collect();
+
+      // Get organization names for invitations
+      for (const invitation of pendingInvitations) {
+        const org = await ctx.db.get(invitation.organizationId);
+        if (org) {
+          invitationNotifications.push({
+            _id: `invitation-${invitation._id}` as (typeof notifications)[0]["_id"],
+            _creationTime: invitation.createdAt,
+            userId: user._id,
+            type: "invitation" as const,
+            title: `Invitation à rejoindre ${org.name}`,
+            message: `Vous avez été invité à rejoindre ${org.name} en tant que ${invitation.role === "admin" ? "administrateur" : "membre"}.`,
+            invitationToken: invitation.token,
+            isRead: false,
+            createdAt: invitation.createdAt,
+          });
+        }
+      }
     }
 
-    return notifications;
+    // Merge notifications and invitations
+    const allNotifications = [...notifications, ...invitationNotifications];
+
+    // Sort by newest first
+    allNotifications.sort((a, b) => b.createdAt - a.createdAt);
+
+    if (args.limit) {
+      return allNotifications.slice(0, args.limit);
+    }
+
+    return allNotifications;
   },
 });
 
 /**
  * Get unread notification count
+ * Also includes pending invitations
  */
 export const getUnreadCount = query({
   args: {},
@@ -51,6 +92,7 @@ export const getUnreadCount = query({
       return 0;
     }
 
+    // Count unread regular notifications
     const notifications = await ctx.db
       .query("notifications")
       .withIndex("by_user_read", (q) =>
@@ -58,6 +100,24 @@ export const getUnreadCount = query({
       )
       .collect();
 
-    return notifications.length;
+    // Count pending invitations
+    const userEmail = user.email?.toLowerCase();
+    let pendingInvitationsCount = 0;
+
+    if (userEmail) {
+      const pendingInvitations = await ctx.db
+        .query("invitations")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("email"), userEmail),
+            q.eq(q.field("status"), "pending"),
+            q.gt(q.field("expiresAt"), Date.now())
+          )
+        )
+        .collect();
+      pendingInvitationsCount = pendingInvitations.length;
+    }
+
+    return notifications.length + pendingInvitationsCount;
   },
 });

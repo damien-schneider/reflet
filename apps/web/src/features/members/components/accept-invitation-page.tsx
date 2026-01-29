@@ -3,10 +3,12 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { H1, Muted } from "@/components/ui/typography";
+import UnifiedAuthForm from "@/features/auth/components/unified-auth-form";
+import { authClient } from "@/lib/auth-client";
 
 interface AcceptInvitationContentProps {
   token: string;
@@ -20,6 +22,44 @@ export function AcceptInvitationContent({
   const acceptInvitation = useMutation(api.invitations.accept);
   const [isAccepting, setIsAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { data: session } = authClient.useSession();
+  const isAuthenticated = Boolean(session?.user?.id);
+  const hasAutoAccepted = useRef(false);
+  const wasUnauthenticated = useRef(false);
+
+  // Track if user was ever unauthenticated (to enable auto-accept on auth transition)
+  useEffect(() => {
+    if (!isAuthenticated) {
+      wasUnauthenticated.current = true;
+    }
+  }, [isAuthenticated]);
+
+  const handleAcceptInvitation = useCallback(async () => {
+    setIsAccepting(true);
+    setError(null);
+    try {
+      await acceptInvitation({ token });
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+      setIsAccepting(false);
+    }
+  }, [acceptInvitation, token, router]);
+
+  // Auto-accept invitation when user becomes authenticated (after being unauthenticated)
+  useEffect(() => {
+    if (
+      isAuthenticated &&
+      wasUnauthenticated.current &&
+      invitation &&
+      invitation.status === "pending" &&
+      !hasAutoAccepted.current &&
+      !isAccepting
+    ) {
+      hasAutoAccepted.current = true;
+      handleAcceptInvitation();
+    }
+  }, [isAuthenticated, invitation, isAccepting, handleAcceptInvitation]);
 
   // Loading state
   if (invitation === undefined) {
@@ -152,18 +192,6 @@ export function AcceptInvitationContent({
 
   const roleLabel = invitation.role === "admin" ? "administrateur" : "membre";
 
-  const handleAccept = async () => {
-    setIsAccepting(true);
-    setError(null);
-    try {
-      await acceptInvitation({ token });
-      router.push("/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
-      setIsAccepting(false);
-    }
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md p-6 text-center">
@@ -199,18 +227,29 @@ export function AcceptInvitationContent({
             {error}
           </div>
         )}
-        <div className="flex flex-col gap-3">
-          <Button disabled={isAccepting} onClick={handleAccept}>
-            {isAccepting ? "Acceptation en cours..." : "Accepter l'invitation"}
-          </Button>
-          <Button
-            disabled={isAccepting}
-            onClick={() => router.push("/")}
-            variant="outline"
-          >
-            Refuser
-          </Button>
-        </div>
+        {isAuthenticated ? (
+          <div className="flex flex-col gap-3">
+            <Button disabled={isAccepting} onClick={handleAcceptInvitation}>
+              {isAccepting
+                ? "Acceptation en cours..."
+                : "Accepter l'invitation"}
+            </Button>
+            <Button
+              disabled={isAccepting}
+              onClick={() => router.push("/")}
+              variant="outline"
+            >
+              Refuser
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-8">
+            <Muted className="mb-4">
+              Connectez-vous ou créez un compte pour accepter cette invitation.
+            </Muted>
+            <UnifiedAuthForm />
+          </div>
+        )}
       </div>
     </div>
   );
