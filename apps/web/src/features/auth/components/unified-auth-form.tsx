@@ -255,6 +255,9 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
       // Better Auth requires a non-empty name; use email prefix as placeholder
       // The user can update their name later in account settings
       const placeholderName = data.email.split("@")[0] || "Utilisateur";
+      const skipEmailVerification =
+        process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION === "true";
+
       await authClient.signUp.email(
         {
           email: data.email,
@@ -265,14 +268,19 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
         {
           onSuccess: () => {
             onSuccess?.();
-            // Email verification is always required
-            // Redirect immediately to check-email page for better UX
-            router.push(
-              `/auth/check-email?email=${encodeURIComponent(data.email)}`
-            );
-            toast.success(
-              "Inscription réussie. Vérifiez votre email pour activer votre compte."
-            );
+            if (skipEmailVerification) {
+              // Skip email verification (for e2e tests)
+              router.push("/dashboard");
+              toast.success("Inscription réussie.");
+            } else {
+              // Email verification required - redirect to check-email page
+              router.push(
+                `/auth/check-email?email=${encodeURIComponent(data.email)}`
+              );
+              toast.success(
+                "Inscription réussie. Vérifiez votre email pour activer votre compte."
+              );
+            }
           },
           onError: (error) => {
             setApiError(

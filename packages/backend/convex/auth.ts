@@ -10,6 +10,9 @@ import authConfig from "./auth.config";
 const githubClientId = process.env.GITHUB_CLIENT_ID;
 const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
 
+// Skip email verification for e2e tests
+const skipEmailVerification = process.env.SKIP_EMAIL_VERIFICATION === "true";
+
 const siteUrl = process.env.SITE_URL ?? "";
 const additionalOrigins =
   process.env.ADDITIONAL_TRUSTED_ORIGINS?.split(",").filter(Boolean) ?? [];
@@ -32,8 +35,8 @@ function createAuth(ctx: GenericCtx<DataModel>) {
         : undefined,
     emailAndPassword: {
       enabled: true,
-      // Require email verification in all environments
-      requireEmailVerification: true,
+      // Require email verification (can be disabled for e2e tests via SKIP_EMAIL_VERIFICATION=true)
+      requireEmailVerification: !skipEmailVerification,
       // Password reset callback
       sendResetPassword: async ({
         user,
@@ -72,7 +75,7 @@ function createAuth(ctx: GenericCtx<DataModel>) {
     },
     // Email verification config is separate from emailAndPassword
     emailVerification: {
-      sendOnSignUp: true,
+      sendOnSignUp: !skipEmailVerification,
       autoSignInAfterVerification: true,
       sendVerificationEmail: async ({
         user,

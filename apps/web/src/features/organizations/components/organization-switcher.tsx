@@ -3,6 +3,7 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -52,8 +53,12 @@ export function OrganizationSwitcher({
       setShowCreateDialog(false);
       setNewOrgName("");
       router.push("/dashboard");
-    } catch {
-      // Error handling - organization creation failed
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to create organization";
+      toast.error(message);
     } finally {
       setIsCreating(false);
     }
@@ -109,7 +114,7 @@ export function OrganizationSwitcher({
               <DropdownListItem
                 className="flex items-center justify-between"
                 key={org._id}
-                onSelect={() => handleSelectOrg(org.slug)}
+                onClick={() => handleSelectOrg(org.slug)}
               >
                 <span className="truncate">{org.name}</span>
                 {org.slug === currentOrgSlug && (
@@ -119,7 +124,7 @@ export function OrganizationSwitcher({
             ) : null
           )}
           {organizations.length > 0 && <DropdownListSeparator />}
-          <DropdownListItem onSelect={() => setShowCreateDialog(true)}>
+          <DropdownListItem onClick={() => setShowCreateDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create organization
           </DropdownListItem>
