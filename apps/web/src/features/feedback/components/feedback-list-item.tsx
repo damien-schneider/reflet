@@ -80,26 +80,34 @@ export function FeedbackListItem({
   return (
     <ContextList>
       <ContextListTrigger>
-        <button
+        <div
           className={cn(
-            "flex w-full gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-accent/50",
+            "relative group flex w-full gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-accent/50",
             feedback.isPinned && "border-primary/50 bg-primary/5",
             className
           )}
-          onClick={handleClick}
-          type="button"
         >
-          {/* Vote button */}
-          <VoteButton
-            boardId={boardId}
-            feedbackId={feedback._id}
-            hasVoted={feedback.hasVoted}
-            size="md"
-            voteCount={feedback.voteCount ?? 0}
+          {/* Main click target - covers entire card */}
+          <button
+            aria-label={`View feedback: ${feedback.title}`}
+            className="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-lg border-transparent bg-transparent p-0 opacity-0 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            onClick={handleClick}
+            type="button"
           />
 
-          {/* Content */}
-          <div className="min-w-0 flex-1">
+          {/* Vote button - higher z-index to stay clickable */}
+          <div className="relative z-20">
+            <VoteButton
+              boardId={boardId}
+              feedbackId={feedback._id}
+              hasVoted={feedback.hasVoted}
+              size="md"
+              voteCount={feedback.voteCount ?? 0}
+            />
+          </div>
+
+          {/* Content - pointer-events-none allows clicks to pass to the main button behind */}
+          <div className="pointer-events-none relative z-0 min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 {/* Title */}
@@ -162,7 +170,7 @@ export function FeedbackListItem({
               )}
             </div>
           </div>
-        </button>
+        </div>
       </ContextListTrigger>
       {canDelete && (
         <ContextListContent>
