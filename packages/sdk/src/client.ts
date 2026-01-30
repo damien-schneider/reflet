@@ -230,6 +230,53 @@ export class Reflet {
   }
 
   /**
+   * Build request headers with authentication
+   */
+  private buildHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${this.publicKey}`,
+    };
+
+    const token = this.userToken ?? this.generateUserToken();
+    if (token) {
+      headers["X-User-Token"] = token;
+    }
+
+    return headers;
+  }
+
+  /**
+   * Parse JSON response text safely
+   */
+  private parseJsonSafely<T>(
+    text: string,
+    status: number
+  ): T | { error: string } {
+    try {
+      return JSON.parse(text) as T | { error: string };
+    } catch (parseError) {
+      throw new RefletError(
+        `Invalid response: ${parseError instanceof Error ? parseError.message : "Failed to parse JSON"}`,
+        status
+      );
+    }
+  }
+
+  /**
+   * Throw appropriate error based on status code
+   */
+  private throwHttpError(message: string, status: number): never {
+    if (status === 401) {
+      throw new RefletAuthError(message);
+    }
+    if (status === 404) {
+      throw new RefletNotFoundError(message);
+    }
+    throw new RefletError(message, status);
+  }
+
+  /**
    * Make an authenticated API request
    */
   private async request<T>(
@@ -237,37 +284,41 @@ export class Reflet {
     path: string,
     body?: unknown
   ): Promise<T> {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${this.publicKey}`,
-    };
-
-    // Add user token if available
-    const token = this.userToken ?? this.generateUserToken();
-    if (token) {
-      headers["X-User-Token"] = token;
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}${path}`, {
+        method,
+        headers: this.buildHeaders(),
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch (networkError) {
+      const message =
+        networkError instanceof Error
+          ? networkError.message
+          : "Failed to connect";
+      throw new RefletError(`Network error: ${message}`, 0);
     }
 
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    const text = await response.text();
 
-    const data = (await response.json()) as T | { error: string };
+    // Handle empty response
+    if (!text) {
+      if (!response.ok) {
+        this.throwHttpError(
+          `Request failed with status ${response.status}`,
+          response.status
+        );
+      }
+      return {} as T;
+    }
+
+    const data = this.parseJsonSafely<T>(text, response.status);
 
     if (!response.ok) {
       const errorMessage =
-        (data as { error?: string }).error ?? "Request failed";
-
-      if (response.status === 401) {
-        throw new RefletAuthError(errorMessage);
-      }
-      if (response.status === 404) {
-        throw new RefletNotFoundError(errorMessage);
-      }
-
-      throw new RefletError(errorMessage, response.status);
+        (data as { error?: string }).error ??
+        `Request failed with status ${response.status}`;
+      this.throwHttpError(errorMessage, response.status);
     }
 
     return data as T;

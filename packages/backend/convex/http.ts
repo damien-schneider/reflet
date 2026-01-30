@@ -50,6 +50,35 @@ interface ApiAuthContext {
   externalUserId?: Id<"externalUsers">;
 }
 
+/**
+ * Check if a board is accessible (public or using secret key)
+ */
+async function checkBoardAccess(
+  ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
+  boardId: Id<"boards">,
+  isSecretKey: boolean
+): Promise<{ allowed: true } | { allowed: false; response: Response }> {
+  const board = await ctx.runQuery(internal.feedback_api.getBoardConfig, {
+    boardId,
+  });
+
+  if (!board) {
+    return { allowed: false, response: errorResponse("Board not found", 404) };
+  }
+
+  if (!(board.isPublic || isSecretKey)) {
+    return {
+      allowed: false,
+      response: errorResponse(
+        "This board is not public. Use a secret key for private board access.",
+        403
+      ),
+    };
+  }
+
+  return { allowed: true };
+}
+
 async function authenticateApiRequest(
   ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
   request: Request
@@ -225,21 +254,37 @@ http.route({
   path: "/api/v1/feedback",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
-    const authResult = await authenticateApiRequest(ctx, request);
-    if (!authResult.success) {
-      return authResult.response;
+    try {
+      const authResult = await authenticateApiRequest(ctx, request);
+      if (!authResult.success) {
+        return authResult.response;
+      }
+
+      const { boardId } = authResult.auth;
+      const config = await ctx.runQuery(internal.feedback_api.getBoardConfig, {
+        boardId,
+      });
+
+      if (!config) {
+        return errorResponse("Board not found", 404);
+      }
+
+      // Check if board is public (API access requires public board or secret key)
+      if (!(config.isPublic || authResult.auth.isSecretKey)) {
+        return errorResponse(
+          "This board is not public. Use a secret key for private board access.",
+          403
+        );
+      }
+
+      return jsonResponse(config);
+    } catch (error) {
+      console.error("API error (GET /api/v1/feedback):", error);
+      return errorResponse(
+        error instanceof Error ? error.message : "Internal server error",
+        500
+      );
     }
-
-    const { boardId } = authResult.auth;
-    const config = await ctx.runQuery(internal.feedback_api.getBoardConfig, {
-      boardId,
-    });
-
-    if (!config) {
-      return errorResponse("Board not found", 404);
-    }
-
-    return jsonResponse(config);
   }),
 });
 
@@ -248,47 +293,62 @@ http.route({
   path: "/api/v1/feedback/list",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
-    const authResult = await authenticateApiRequest(ctx, request);
-    if (!authResult.success) {
-      return authResult.response;
+    try {
+      const authResult = await authenticateApiRequest(ctx, request);
+      if (!authResult.success) {
+        return authResult.response;
+      }
+
+      const { boardId, externalUserId, isSecretKey } = authResult.auth;
+
+      // Check board visibility
+      const access = await checkBoardAccess(ctx, boardId, isSecretKey);
+      if (!access.allowed) {
+        return access.response;
+      }
+
+      const url = new URL(request.url);
+
+      const statusId = url.searchParams.get(
+        "statusId"
+      ) as Id<"boardStatuses"> | null;
+      const status = url.searchParams.get("status") as
+        | "open"
+        | "under_review"
+        | "planned"
+        | "in_progress"
+        | "completed"
+        | "closed"
+        | null;
+      const search = url.searchParams.get("search");
+      const sortBy = url.searchParams.get("sortBy") as
+        | "votes"
+        | "newest"
+        | "oldest"
+        | "comments"
+        | null;
+      const limit = url.searchParams.get("limit");
+      const offset = url.searchParams.get("offset");
+
+      const result = await ctx.runQuery(internal.feedback_api.listFeedback, {
+        boardId,
+        statusId: statusId ?? undefined,
+        status: status ?? undefined,
+        search: search ?? undefined,
+        sortBy: sortBy ?? undefined,
+        limit: limit ? Number.parseInt(limit, 10) : undefined,
+        offset: offset ? Number.parseInt(offset, 10) : undefined,
+        externalUserId,
+      });
+
+      return jsonResponse(result);
+    } catch (error) {
+      console.error("API error (GET /api/v1/feedback/list):", error);
+      return errorResponse(
+        error instanceof Error ? error.message : "Internal server error",
+        500
+      );
     }
-
-    const { boardId, externalUserId } = authResult.auth;
-    const url = new URL(request.url);
-
-    const statusId = url.searchParams.get(
-      "statusId"
-    ) as Id<"boardStatuses"> | null;
-    const status = url.searchParams.get("status") as
-      | "open"
-      | "under_review"
-      | "planned"
-      | "in_progress"
-      | "completed"
-      | "closed"
-      | null;
-    const search = url.searchParams.get("search");
-    const sortBy = url.searchParams.get("sortBy") as
-      | "votes"
-      | "newest"
-      | "oldest"
-      | "comments"
-      | null;
-    const limit = url.searchParams.get("limit");
-    const offset = url.searchParams.get("offset");
-
-    const result = await ctx.runQuery(internal.feedback_api.listFeedback, {
-      boardId,
-      statusId: statusId ?? undefined,
-      status: status ?? undefined,
-      search: search ?? undefined,
-      sortBy: sortBy ?? undefined,
-      limit: limit ? Number.parseInt(limit, 10) : undefined,
-      offset: offset ? Number.parseInt(offset, 10) : undefined,
-      externalUserId,
-    });
-
-    return jsonResponse(result);
   }),
 });
 
@@ -304,30 +364,45 @@ http.route({
   path: "/api/v1/feedback/item",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
-    const authResult = await authenticateApiRequest(ctx, request);
-    if (!authResult.success) {
-      return authResult.response;
+    try {
+      const authResult = await authenticateApiRequest(ctx, request);
+      if (!authResult.success) {
+        return authResult.response;
+      }
+
+      const { boardId, externalUserId, isSecretKey } = authResult.auth;
+
+      // Check board visibility
+      const access = await checkBoardAccess(ctx, boardId, isSecretKey);
+      if (!access.allowed) {
+        return access.response;
+      }
+
+      const url = new URL(request.url);
+      const feedbackId = url.searchParams.get("id") as Id<"feedback"> | null;
+
+      if (!feedbackId) {
+        return errorResponse("Missing feedback ID", 400);
+      }
+
+      const result = await ctx.runQuery(internal.feedback_api.getFeedback, {
+        boardId,
+        feedbackId,
+        externalUserId,
+      });
+
+      if (!result) {
+        return errorResponse("Feedback not found", 404);
+      }
+
+      return jsonResponse(result);
+    } catch (error) {
+      console.error("API error (GET /api/v1/feedback/item):", error);
+      return errorResponse(
+        error instanceof Error ? error.message : "Internal server error",
+        500
+      );
     }
-
-    const { boardId, externalUserId } = authResult.auth;
-    const url = new URL(request.url);
-    const feedbackId = url.searchParams.get("id") as Id<"feedback"> | null;
-
-    if (!feedbackId) {
-      return errorResponse("Missing feedback ID", 400);
-    }
-
-    const result = await ctx.runQuery(internal.feedback_api.getFeedback, {
-      boardId,
-      feedbackId,
-      externalUserId,
-    });
-
-    if (!result) {
-      return errorResponse("Feedback not found", 404);
-    }
-
-    return jsonResponse(result);
   }),
 });
 
@@ -343,31 +418,42 @@ http.route({
   path: "/api/v1/feedback/create",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    const authResult = await authenticateApiRequest(ctx, request);
-    if (!authResult.success) {
-      return authResult.response;
-    }
-
-    const { boardId, externalUserId } = authResult.auth;
-
-    if (!externalUserId) {
-      return errorResponse(
-        "User identification required. Provide X-User-Token header.",
-        401
-      );
-    }
-
-    const body = (await request.json()) as {
-      title?: string;
-      description?: string;
-    };
-    const { title, description } = body;
-
-    if (!(title && description)) {
-      return errorResponse("Title and description are required", 400);
-    }
-
     try {
+      const authResult = await authenticateApiRequest(ctx, request);
+      if (!authResult.success) {
+        return authResult.response;
+      }
+
+      const { boardId, externalUserId, isSecretKey } = authResult.auth;
+
+      // Check board visibility
+      const access = await checkBoardAccess(ctx, boardId, isSecretKey);
+      if (!access.allowed) {
+        return access.response;
+      }
+
+      if (!externalUserId) {
+        return errorResponse(
+          "User identification required. Provide X-User-Token header.",
+          401
+        );
+      }
+
+      let body: { title?: string; description?: string };
+      try {
+        body = (await request.json()) as {
+          title?: string;
+          description?: string;
+        };
+      } catch {
+        return errorResponse("Invalid JSON body", 400);
+      }
+      const { title, description } = body;
+
+      if (!(title && description)) {
+        return errorResponse("Title and description are required", 400);
+      }
+
       const result = await ctx.runMutation(
         internal.feedback_api.createFeedback,
         {
@@ -380,9 +466,10 @@ http.route({
 
       return jsonResponse(result, 201);
     } catch (error) {
+      console.error("API error (POST /api/v1/feedback/create):", error);
       return errorResponse(
         error instanceof Error ? error.message : "Failed to create feedback",
-        400
+        500
       );
     }
   }),
@@ -400,31 +487,39 @@ http.route({
   path: "/api/v1/feedback/vote",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    const authResult = await authenticateApiRequest(ctx, request);
-    if (!authResult.success) {
-      return authResult.response;
-    }
-
-    const { boardId, externalUserId } = authResult.auth;
-
-    if (!externalUserId) {
-      return errorResponse(
-        "User identification required. Provide X-User-Token header.",
-        401
-      );
-    }
-
-    const body = (await request.json()) as {
-      feedbackId?: string;
-      voteType?: "upvote" | "downvote";
-    };
-    const { feedbackId, voteType } = body;
-
-    if (!feedbackId) {
-      return errorResponse("Feedback ID is required", 400);
-    }
-
     try {
+      const authResult = await authenticateApiRequest(ctx, request);
+      if (!authResult.success) {
+        return authResult.response;
+      }
+
+      const { boardId, externalUserId, isSecretKey } = authResult.auth;
+
+      // Check board visibility
+      const access = await checkBoardAccess(ctx, boardId, isSecretKey);
+      if (!access.allowed) {
+        return access.response;
+      }
+
+      if (!externalUserId) {
+        return errorResponse(
+          "User identification required. Provide X-User-Token header.",
+          401
+        );
+      }
+
+      let body: { feedbackId?: string; voteType?: "upvote" | "downvote" };
+      try {
+        body = await request.json();
+      } catch {
+        return errorResponse("Invalid JSON body", 400);
+      }
+      const { feedbackId, voteType } = body;
+
+      if (!feedbackId) {
+        return errorResponse("Feedback ID is required", 400);
+      }
+
       const result = await ctx.runMutation(internal.feedback_api.voteFeedback, {
         boardId,
         feedbackId: feedbackId as Id<"feedback">,
@@ -434,9 +529,10 @@ http.route({
 
       return jsonResponse(result);
     } catch (error) {
+      console.error("API error (POST /api/v1/feedback/vote):", error);
       return errorResponse(
         error instanceof Error ? error.message : "Failed to vote",
-        400
+        500
       );
     }
   }),
