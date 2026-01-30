@@ -7,15 +7,33 @@ Disallow: /api/
 Disallow: /dashboard/
 Disallow: /dashboard-demo/
 
-# Allow search engines to crawl public organization pages
+# Public organization pages (feedback, roadmap, changelog, boards)
 Allow: /*/
 Allow: /*/roadmap
 Allow: /*/changelog
 Allow: /*/boards/
 
-# Sitemaps
-Sitemap: https://reflet.app/sitemap.xml
+# AI / LLM crawlers (GEO - Generative Engine Optimization)
+# Allow citation by ChatGPT, Claude, Perplexity, Copilot, etc.
+User-agent: GPTBot
+Allow: /
 
-# LLM-friendly content
-# See https://llmstxt.org/
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+# Sitemap and LLM-oriented content
+Sitemap: https://reflet.app/sitemap.xml
+# LLM-friendly overview per https://llmstxt.org/
 LLMs-Txt: https://reflet.app/llms.txt

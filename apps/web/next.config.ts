@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   reactCompiler: true,
 
+  // GEO: redirect llm.txt to llms.txt for crawlers that expect the shorter path
+  redirects() {
+    return [{ source: "/llm.txt", destination: "/llms.txt", permanent: true }];
+  },
+
   images: {
     remotePatterns: [
       {
