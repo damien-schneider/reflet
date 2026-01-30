@@ -53,6 +53,7 @@ I want to integrate Reflet feedback collection into my application. Please analy
 
 \`\`\`
 NEXT_PUBLIC_REFLET_KEY=${publicKey}
+NEXT_PUBLIC_REFLET_URL=<Your Convex deployment URL, e.g., https://your-deployment.convex.cloud>
 REFLET_SECRET_KEY=<I will add this to my environment variables>
 \`\`\`
 
@@ -85,8 +86,11 @@ npm install reflet-sdk
 Add to my \`.env.local\` (or \`.env\`, depending on my setup):
 \`\`\`env
 NEXT_PUBLIC_REFLET_KEY=${publicKey}
+NEXT_PUBLIC_REFLET_URL=https://your-deployment.convex.cloud
 REFLET_SECRET_KEY=<I_WILL_ADD_MY_SECRET_KEY>
 \`\`\`
+
+**IMPORTANT**: The \`NEXT_PUBLIC_REFLET_URL\` must be the Convex deployment URL where the Reflet backend is hosted. Ask me for this URL if needed.
 
 ### Step 4: Integrate with My Authentication
 
@@ -111,6 +115,7 @@ function Providers({ children }) {
   return (
     <RefletProvider
       publicKey={process.env.NEXT_PUBLIC_REFLET_KEY!}
+      baseUrl={process.env.NEXT_PUBLIC_REFLET_URL!}
       user={user ? {
         id: user.id,           // Required: unique user ID
         email: user.email,     // Recommended
@@ -182,6 +187,7 @@ Then fetch and use this token in RefletProvider:
 \`\`\`tsx
 <RefletProvider
   publicKey={process.env.NEXT_PUBLIC_REFLET_KEY!}
+  baseUrl={process.env.NEXT_PUBLIC_REFLET_URL!}
   userToken={tokenFromMyApi}
 />
 \`\`\`
@@ -199,7 +205,9 @@ Then fetch and use this token in RefletProvider:
 
 Please provide:
 1. **Summary of changes**: List all files created/modified
-2. **Environment variables**: Remind me to add REFLET_SECRET_KEY to my env
+2. **Environment variables**: Remind me to add these to my env:
+   - \`NEXT_PUBLIC_REFLET_URL\` - The Convex deployment URL (ask me for this)
+   - \`REFLET_SECRET_KEY\` - My secret key for server-side token signing
 3. **Testing instructions**: How to verify the integration works
 4. **Next steps**: Any additional configuration or features I might want
 
@@ -219,7 +227,7 @@ useChangelog(limit?)
 
 // Core client (for non-React or advanced usage)
 import { Reflet } from 'reflet-sdk';
-const reflet = new Reflet({ publicKey, user?, userToken? });
+const reflet = new Reflet({ publicKey, baseUrl, user?, userToken? });
 
 await reflet.list(params?)
 await reflet.get(feedbackId)

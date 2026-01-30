@@ -22,6 +22,7 @@ Go to your Reflet dashboard → Board Settings → API Keys & Widget to generate
 
 - **Public Key** (`fb_pub_...`) - Safe to use in frontend code
 - **Secret Key** (`fb_sec_...`) - Keep secure, use only on your server
+- **Base URL** - Your Convex deployment URL (e.g., `https://your-deployment.convex.cloud`)
 
 ### 2. Basic Usage (Vanilla JavaScript/TypeScript)
 
@@ -30,6 +31,7 @@ import { Reflet } from 'reflet-sdk';
 
 const reflet = new Reflet({
   publicKey: 'fb_pub_your_key_here',
+  baseUrl: 'https://your-deployment.convex.cloud', // Your Convex deployment URL
   user: {
     id: 'user_123',
     email: 'jane@example.com',
@@ -71,6 +73,7 @@ function App() {
   return (
     <RefletProvider
       publicKey="fb_pub_your_key_here"
+      baseUrl="https://your-deployment.convex.cloud"
       user={currentUser}
     >
       <FeedbackPage />
@@ -132,6 +135,7 @@ import { Reflet } from 'reflet-sdk';
 
 const reflet = new Reflet({
   publicKey: 'fb_pub_your_key_here',
+  baseUrl: 'https://your-deployment.convex.cloud',
   userToken: tokenFromServer, // JWT from your server
 });
 ```
@@ -149,9 +153,9 @@ const reflet = new Reflet(config: RefletConfig);
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
 | `publicKey` | `string` | Yes | Your board's public API key |
+| `baseUrl` | `string` | Yes | Your Convex deployment URL (e.g., `https://your-deployment.convex.cloud`) |
 | `user` | `RefletUser` | No | User information for identification |
 | `userToken` | `string` | No | Signed JWT from your server (alternative to `user`) |
-| `baseUrl` | `string` | No | Custom API endpoint |
 
 #### Methods
 
@@ -325,6 +329,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <RefletProvider
       publicKey={process.env.NEXT_PUBLIC_REFLET_KEY!}
+      baseUrl={process.env.NEXT_PUBLIC_REFLET_URL!}
       user={session?.user ? {
         id: session.user.id,
         email: session.user.email!,

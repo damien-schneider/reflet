@@ -20,7 +20,7 @@ import {
   type VoteResponse,
 } from "./types";
 
-const DEFAULT_BASE_URL = "https://grateful-butterfly-1.convex.cloud";
+// No default base URL - users must provide their own Convex deployment URL
 
 /**
  * Reflet SDK Client
@@ -52,12 +52,18 @@ export class Reflet {
 
   constructor(config: RefletConfig) {
     this.publicKey = config.publicKey;
-    this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
+    this.baseUrl = config.baseUrl;
     this.userToken = config.userToken;
     this.user = config.user;
 
     if (!this.publicKey) {
       throw new Error("Reflet: publicKey is required");
+    }
+
+    if (!this.baseUrl) {
+      throw new Error(
+        "Reflet: baseUrl is required. Use your Convex deployment URL (e.g., https://your-deployment.convex.cloud)"
+      );
     }
   }
 
