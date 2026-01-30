@@ -83,7 +83,7 @@
   --card-foreground: oklch(0.15 0.015 75);
   --popover: oklch(0.99 0.003 85);
   --popover-foreground: oklch(0.15 0.015 75);
-  --primary: oklch(0.2 0.015 75);
+  --primary: var(--color-olive-600);
   --primary-foreground: oklch(0.97 0.005 85);
   --secondary: oklch(0.94 0.006 85);
   --secondary-foreground: oklch(0.2 0.015 75);
@@ -131,10 +131,10 @@
   --card-foreground: oklch(0.97 0.005 85);
   --popover: oklch(0.21 0.012 88);
   --popover-foreground: oklch(0.97 0.005 85);
-  --primary: oklch(0.97 0.005 85);
-  --primary-foreground: oklch(0.13 0.015 85);
+  --primary: var(--color-olive-600);
+  --primary-foreground: var(--color-olive-100);
   --secondary: oklch(0.24 0.012 88);
-  --secondary-foreground: oklch(0.97 0.005 85);
+  --secondary-foreground: var(--color-olive-300);
   --muted: oklch(0.24 0.012 88);
   --muted-foreground: oklch(0.65 0.008 85);
   --accent: oklch(0.26 0.012 88);

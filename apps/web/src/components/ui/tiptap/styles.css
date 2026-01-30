@@ -42,28 +42,31 @@
 .tiptap-markdown-editor h1,
 .tiptap-renderer h1 {
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 500;
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
   line-height: 1.25;
+  letter-spacing: -0.025em;
 }
 
 .tiptap-markdown-editor h2,
 .tiptap-renderer h2 {
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 500;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
   line-height: 1.375;
+  letter-spacing: -0.025em;
 }
 
 .tiptap-markdown-editor h3,
 .tiptap-renderer h3 {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
   line-height: 1.5;
+  letter-spacing: -0.025em;
 }
 
 /* First heading shouldn't have top margin */
@@ -97,6 +100,7 @@
 .tiptap-markdown-editor strong,
 .tiptap-renderer strong {
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .tiptap-markdown-editor em,
@@ -217,8 +221,9 @@
 /* Title editor styling - minimal, borderless */
 .tiptap-title-editor {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.25;
+  letter-spacing: -0.025em;
   color: var(--foreground);
 }
 
@@ -262,26 +267,29 @@
 /* Minimal editor headings */
 .tiptap-minimal-editor h1 {
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 500;
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
   line-height: 1.25;
+  letter-spacing: -0.025em;
 }
 
 .tiptap-minimal-editor h2 {
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 500;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
   line-height: 1.375;
+  letter-spacing: -0.025em;
 }
 
 .tiptap-minimal-editor h3 {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
   line-height: 1.5;
+  letter-spacing: -0.025em;
 }
 
 .tiptap-minimal-editor > h1:first-child,
@@ -307,6 +315,7 @@
 /* Minimal editor text styling */
 .tiptap-minimal-editor strong {
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .tiptap-minimal-editor em {

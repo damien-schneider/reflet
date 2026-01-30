@@ -107,9 +107,7 @@ export function MessageBubble({
           >
             {isOwnMessage ? "You" : displayName}
             {senderType === "admin" && !isOwnMessage && (
-              <span className="ml-1 text-olive-600 dark:text-olive-400">
-                (Support)
-              </span>
+              <span className="ml-1 text-primary">(Support)</span>
             )}
           </span>
         )}
@@ -118,7 +116,7 @@ export function MessageBubble({
           className={cn(
             "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
             isOwnMessage
-              ? "rounded-br-md bg-olive-600 text-olive-50 dark:bg-olive-500"
+              ? "rounded-br-md bg-primary text-primary-foreground"
               : "rounded-bl-md bg-muted text-foreground"
           )}
         >
@@ -135,12 +133,12 @@ export function MessageBubble({
                     className={cn(
                       "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors",
                       isOwnMessage
-                        ? "bg-olive-700/50 hover:bg-olive-700/70"
-                        : "bg-muted-foreground/10 hover:bg-muted-foreground/20",
+                        ? "bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30"
+                        : "bg-muted-foreground/10 text-foreground hover:bg-muted-foreground/20",
                       hasUserReacted &&
                         (isOwnMessage
-                          ? "ring-2 ring-olive-400"
-                          : "ring-2 ring-olive-600")
+                          ? "ring-2 ring-primary-foreground/50"
+                          : "ring-2 ring-primary")
                     )}
                     key={reaction.emoji}
                     onClick={() => handleReactionClick(reaction.emoji)}
@@ -159,14 +157,22 @@ export function MessageBubble({
               className={cn(
                 "mt-2 flex items-center gap-1 self-start rounded-full px-2 py-0.5 text-xs transition-colors",
                 isOwnMessage
-                  ? "bg-olive-700/50 hover:bg-olive-700/70"
-                  : "bg-muted-foreground/10 hover:bg-muted-foreground/20"
+                  ? "bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30"
+                  : "bg-muted-foreground/10 text-foreground hover:bg-muted-foreground/20"
               )}
               onClick={() => handleReactionClick("👍")}
               type="button"
             >
               <span>👍</span>
-              <span className="text-muted-foreground">React</span>
+              <span
+                className={cn(
+                  isOwnMessage
+                    ? "text-primary-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                React
+              </span>
             </button>
           )}
         </div>

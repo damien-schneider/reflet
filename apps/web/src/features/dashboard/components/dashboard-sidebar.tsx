@@ -65,11 +65,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
 
-  const githubStatus = useQuery(
-    api.github.getConnectionStatus,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
-  );
-
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
   const buildPath = (path: string) =>
@@ -128,16 +123,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           label: "Widgets",
           badge: undefined,
         },
-        ...(githubStatus?.hasRepository
-          ? [
-              {
-                href: "/dashboard/$orgSlug/ai",
-                icon: Brain,
-                label: "AI",
-                badge: undefined,
-              },
-            ]
-          : []),
+        {
+          href: "/dashboard/$orgSlug/ai",
+          icon: Brain,
+          label: "AI",
+          badge: undefined,
+        },
         {
           href: "/dashboard/$orgSlug/settings/members",
           icon: Users,
@@ -155,7 +146,30 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
 
   const isActive = (path: string) => {
     const fullPath = buildPath(path);
-    return fullPath ? pathname.startsWith(fullPath) : false;
+    if (!fullPath) {
+      return false;
+    }
+
+    // Exact match
+    if (pathname === fullPath) {
+      return true;
+    }
+
+    // For routes with child paths, only highlight if on a child path
+    // BUT don't highlight if the child path has its own sidebar item
+    // Check all nav items to see if any exactly match current path
+    const allNavItems = [...mainNavItems, ...adminNavItems];
+    const hasExactMatch = allNavItems.some(
+      (item) => pathname === buildPath(item.href)
+    );
+
+    // If current path exactly matches another nav item, don't use startsWith logic
+    if (hasExactMatch) {
+      return false;
+    }
+
+    // Otherwise, check if current path is a child of this nav item
+    return pathname.startsWith(`${fullPath}/`);
   };
 
   const handleSignOut = () => {

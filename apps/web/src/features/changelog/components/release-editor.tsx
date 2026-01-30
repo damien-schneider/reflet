@@ -20,8 +20,6 @@ interface ReleaseEditorProps {
   orgSlug: string;
   release?: Doc<"releases">; // If provided, edit mode
   className?: string;
-  onSuccess?: () => void;
-  mode?: "create" | "edit"; // create = auto-save as draft, edit = manual save
 }
 
 export function ReleaseEditor({
@@ -29,8 +27,6 @@ export function ReleaseEditor({
   orgSlug,
   release,
   className,
-  onSuccess,
-  mode = "edit",
 }: ReleaseEditorProps) {
   const router = useRouter();
   const createRelease = useMutation(api.changelog.create);
@@ -38,17 +34,17 @@ export function ReleaseEditor({
   const publishRelease = useMutation(api.changelog_actions.publish);
   const unpublishRelease = useMutation(api.changelog_actions.unpublish);
 
-  const isEditing = !!release;
   const isPublished = release?.publishedAt !== undefined;
-  const isAutoSaveMode = mode === "create";
 
   const [title, setTitle] = useState(release?.title ?? "");
   const [version, setVersion] = useState(release?.version ?? "");
   const [description, setDescription] = useState(release?.description ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auto-save state
-  const [draftId, setDraftId] = useState<Id<"releases"> | null>(null);
+  // Auto-save state - initialize with release._id if editing
+  const [releaseId, setReleaseId] = useState<Id<"releases"> | null>(
+    release?._id ?? null
+  );
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isFirstEditRef = useRef(true);
@@ -58,17 +54,17 @@ export function ReleaseEditor({
 
   // Auto-save function
   const autoSave = useCallback(async () => {
-    if (!(isAutoSaveMode && hasContent)) {
+    if (!hasContent) {
       return;
     }
 
     setSaveStatus("saving");
 
     try {
-      if (draftId) {
-        // Update existing draft
+      if (releaseId) {
+        // Update existing release
         await updateRelease({
-          id: draftId,
+          id: releaseId,
           title: title.trim() || "Untitled Release",
           version: version.trim() || undefined,
           description: description.trim() || undefined,
@@ -81,7 +77,7 @@ export function ReleaseEditor({
           version: version.trim() || undefined,
           description: description.trim() || undefined,
         });
-        setDraftId(newId);
+        setReleaseId(newId);
       }
       setSaveStatus("saved");
       // Reset to idle after showing "Saved" briefly
@@ -93,9 +89,8 @@ export function ReleaseEditor({
       );
     }
   }, [
-    isAutoSaveMode,
     hasContent,
-    draftId,
+    releaseId,
     title,
     version,
     description,
@@ -106,10 +101,6 @@ export function ReleaseEditor({
 
   // Debounced auto-save effect
   useEffect(() => {
-    if (!isAutoSaveMode) {
-      return;
-    }
-
     // Skip auto-save on initial mount
     if (isFirstEditRef.current) {
       isFirstEditRef.current = false;
@@ -133,77 +124,42 @@ export function ReleaseEditor({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [isAutoSaveMode, hasContent, autoSave]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!title.trim()) {
-      toast.error("Title is required");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      if (isEditing && release) {
-        await updateRelease({
-          id: release._id,
-          title: title.trim(),
-          version: version.trim() || undefined,
-          description: description.trim() || undefined,
-        });
-        toast.success("Release updated successfully!");
-      } else if (draftId) {
-        // In create mode, update the existing draft
-        await updateRelease({
-          id: draftId,
-          title: title.trim(),
-          version: version.trim() || undefined,
-          description: description.trim() || undefined,
-        });
-        toast.success("Release saved!");
-      } else {
-        await createRelease({
-          organizationId,
-          title: title.trim(),
-          version: version.trim() || undefined,
-          description: description.trim() || undefined,
-        });
-        toast.success("Release created successfully!");
-      }
-
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        router.push(`/dashboard/${orgSlug}/changelog`);
-      }
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save release"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const getReleaseData = () => ({
-    title: title.trim(),
-    version: version.trim() || undefined,
-    description: description.trim() || undefined,
-  });
+  }, [hasContent, autoSave]);
 
   const navigateToChangelog = () => {
     router.push(`/dashboard/${orgSlug}/changelog`);
   };
 
-  const handlePublishNewDraft = async () => {
+  const handlePublish = async () => {
+    if (!title.trim()) {
+      toast.error("Title is required to publish");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const data = getReleaseData();
-      const newId = await createRelease({ organizationId, ...data });
-      setDraftId(newId);
-      await publishRelease({ id: newId });
+      let idToPublish = releaseId;
+
+      // If no release exists yet, create one first
+      if (idToPublish) {
+        // Save latest changes before publishing
+        await updateRelease({
+          id: idToPublish,
+          title: title.trim() || "Untitled Release",
+          version: version.trim() || undefined,
+          description: description.trim() || undefined,
+        });
+      } else {
+        idToPublish = await createRelease({
+          organizationId,
+          title: title.trim() || "Untitled Release",
+          version: version.trim() || undefined,
+          description: description.trim() || undefined,
+        });
+        setReleaseId(idToPublish);
+      }
+
+      await publishRelease({ id: idToPublish });
       toast.success("Release published!");
       navigateToChangelog();
     } catch (error) {
@@ -213,53 +169,21 @@ export function ReleaseEditor({
     }
   };
 
-  const handlePublishExistingDraft = async (releaseId: Id<"releases">) => {
+  const handleUnpublish = async () => {
+    if (!releaseId) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      if (draftId) {
-        await updateRelease({ id: draftId, ...getReleaseData() });
-      }
-      await publishRelease({ id: releaseId });
-      toast.success("Release published!");
-      if (isAutoSaveMode) {
-        navigateToChangelog();
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to publish");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handlePublish = async () => {
-    if (!title.trim()) {
-      toast.error("Title is required to publish");
-      return;
-    }
-
-    if (isAutoSaveMode && !draftId) {
-      await handlePublishNewDraft();
-      return;
-    }
-
-    const releaseId = release?._id ?? draftId;
-    if (releaseId) {
-      await handlePublishExistingDraft(releaseId);
-    }
-  };
-
-  const handleUnpublish = async () => {
-    if (!release) {
-      return;
-    }
-
-    try {
-      await unpublishRelease({ id: release._id });
+      await unpublishRelease({ id: releaseId });
       toast.success("Release unpublished");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to unpublish"
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -268,10 +192,6 @@ export function ReleaseEditor({
   };
 
   const renderSaveStatus = () => {
-    if (!isAutoSaveMode) {
-      return null;
-    }
-
     if (saveStatus === "saving") {
       return (
         <span className="flex items-center gap-1 text-muted-foreground text-sm">
@@ -290,7 +210,7 @@ export function ReleaseEditor({
       );
     }
 
-    if (draftId) {
+    if (releaseId && !isPublished) {
       return <span className="text-muted-foreground text-sm">Draft</span>;
     }
 
@@ -298,12 +218,11 @@ export function ReleaseEditor({
   };
 
   return (
-    <form
+    <div
       className={cn(
         "overflow-hidden rounded-xl border bg-background shadow-sm",
         className
       )}
-      onSubmit={handleSubmit}
     >
       {/* Document-like content area */}
       <div className="flex min-h-[500px] flex-col">
@@ -316,7 +235,7 @@ export function ReleaseEditor({
             placeholder="v1.0.0"
             value={version}
           />
-          {isEditing && isPublished && (
+          {isPublished && (
             <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700 text-xs dark:bg-green-900/30 dark:text-green-400">
               Published
             </span>
@@ -356,58 +275,27 @@ export function ReleaseEditor({
             "flex items-center justify-between gap-2"
           )}
         >
-          <div>
-            {isEditing && (
-              <Button
-                disabled={isSubmitting}
-                onClick={isPublished ? handleUnpublish : handlePublish}
-                size="sm"
-                type="button"
-                variant={isPublished ? "outline" : "default"}
-              >
-                {isPublished ? "Unpublish" : "Publish"}
-              </Button>
-            )}
-            {isAutoSaveMode && (
-              <Button
-                disabled={isSubmitting || !title.trim()}
-                onClick={handlePublish}
-                size="sm"
-                type="button"
-              >
-                Publish
-              </Button>
-            )}
-          </div>
+          <Button
+            disabled={isSubmitting || !title.trim()}
+            onClick={isPublished ? handleUnpublish : handlePublish}
+            size="sm"
+            type="button"
+            variant={isPublished ? "outline" : "default"}
+          >
+            {isPublished ? "Unpublish" : "Publish"}
+          </Button>
 
-          <div className="flex gap-2">
-            <Button
-              disabled={isSubmitting}
-              onClick={handleCancel}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              Cancel
-            </Button>
-            {!isAutoSaveMode && (
-              <Button disabled={isSubmitting} size="sm" type="submit">
-                {(() => {
-                  if (isSubmitting) {
-                    return "Saving...";
-                  }
-
-                  if (isEditing) {
-                    return "Update Release";
-                  }
-
-                  return "Create Release";
-                })()}
-              </Button>
-            )}
-          </div>
+          <Button
+            disabled={isSubmitting}
+            onClick={handleCancel}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            Cancel
+          </Button>
         </div>
       </div>
-    </form>
+    </div>
   );
 }

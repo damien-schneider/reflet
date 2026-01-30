@@ -3,7 +3,6 @@
 import {
   Buildings,
   CreditCard,
-  Gear as GearIcon,
   GithubLogo,
   PaintBrush,
   Users,
@@ -80,12 +79,9 @@ export default function GearPage({
   return (
     <div className="admin-container">
       <div className="mb-8">
-        <div className="flex items-center gap-3">
-          <GearIcon className="h-8 w-8 text-muted-foreground" />
-          <div>
-            <H1>Gear</H1>
-            <Text variant="bodySmall">Manage settings for {org.name}</Text>
-          </div>
+        <div>
+          <H1>Settings</H1>
+          <Text variant="bodySmall">Manage settings for {org.name}</Text>
         </div>
       </div>
 
