@@ -164,33 +164,60 @@ export function TiptapMarkdownEditor({
               img.style.width = `${node.attrs.width}px`;
             }
 
-            // Resize handle
-            const resizeHandle = document.createElement("div");
-            resizeHandle.classList.add("tiptap-resize-handle", "bottom-right");
+            // Create resize handles container
+            const handlesContainer = document.createElement("div");
+            handlesContainer.classList.add("tiptap-resize-handles");
 
-            let isResizing = false;
+            // Handle positions and their resize directions
+            const handlePositions = [
+              { position: "top-left", xDir: -1, yDir: -1 },
+              { position: "top-right", xDir: 1, yDir: -1 },
+              { position: "bottom-left", xDir: -1, yDir: 1 },
+              { position: "bottom-right", xDir: 1, yDir: 1 },
+            ];
+
+            let activeHandle: { xDir: number; yDir: number } | null = null;
             let startX = 0;
+            let startY = 0;
             let startWidth = 0;
+            let startHeight = 0;
+            let aspectRatio = 1;
 
-            const onMouseDown = (e: MouseEvent) => {
+            const onMouseDown = (
+              e: MouseEvent,
+              handle: { xDir: number; yDir: number }
+            ) => {
               e.preventDefault();
-              isResizing = true;
+              e.stopPropagation();
+              activeHandle = handle;
               startX = e.clientX;
+              startY = e.clientY;
               startWidth = img.offsetWidth;
+              startHeight = img.offsetHeight;
+              aspectRatio = startWidth / startHeight;
+              container.setAttribute("data-resizing", "true");
               document.addEventListener("mousemove", onMouseMove);
               document.addEventListener("mouseup", onMouseUp);
             };
 
             const onMouseMove = (e: MouseEvent) => {
-              if (!isResizing) return;
-              const diff = e.clientX - startX;
-              const newWidth = Math.max(50, startWidth + diff);
+              if (!activeHandle) return;
+
+              const diffX = (e.clientX - startX) * activeHandle.xDir;
+              const diffY = (e.clientY - startY) * activeHandle.yDir;
+
+              // Use the larger diff to maintain aspect ratio
+              const maxDiff =
+                Math.abs(diffX) > Math.abs(diffY) ? diffX : diffY * aspectRatio;
+              const newWidth = Math.max(50, startWidth + maxDiff);
+
               img.style.width = `${newWidth}px`;
             };
 
             const onMouseUp = () => {
-              if (!isResizing) return;
-              isResizing = false;
+              if (!activeHandle) return;
+              activeHandle = null;
+              container.removeAttribute("data-resizing");
               document.removeEventListener("mousemove", onMouseMove);
               document.removeEventListener("mouseup", onMouseUp);
 
@@ -205,10 +232,18 @@ export function TiptapMarkdownEditor({
               }
             };
 
-            resizeHandle.addEventListener("mousedown", onMouseDown);
+            // Create handles
+            for (const { position, xDir, yDir } of handlePositions) {
+              const handle = document.createElement("div");
+              handle.classList.add("tiptap-resize-handle", position);
+              handle.addEventListener("mousedown", (e) =>
+                onMouseDown(e, { xDir, yDir })
+              );
+              handlesContainer.appendChild(handle);
+            }
 
             container.appendChild(img);
-            container.appendChild(resizeHandle);
+            container.appendChild(handlesContainer);
 
             return {
               dom: container,
@@ -230,7 +265,8 @@ export function TiptapMarkdownEditor({
                 return true;
               },
               destroy: () => {
-                resizeHandle.removeEventListener("mousedown", onMouseDown);
+                document.removeEventListener("mousemove", onMouseMove);
+                document.removeEventListener("mouseup", onMouseUp);
               },
             };
           };
