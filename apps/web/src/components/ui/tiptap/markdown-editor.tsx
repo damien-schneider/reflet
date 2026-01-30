@@ -1,5 +1,6 @@
 "use client";
 
+import { useDebouncedCallback } from "@tanstack/react-pacer";
 import CharacterCount from "@tiptap/extension-character-count";
 import TiptapImage from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
@@ -13,45 +14,6 @@ import { cn } from "@/lib/utils";
 import { createSlashCommandExtension } from "./slash-command";
 import { useMediaUpload } from "./use-media-upload";
 import "./styles.css";
-
-/**
- * Custom hook for debouncing a callback function.
- * Returns a debounced version of the callback that only executes
- * after the specified delay has passed since the last call.
- */
-function useDebouncedCallback<T extends (...args: Parameters<T>) => void>(
-  callback: T,
-  delay: number
-): T {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const callbackRef = useRef(callback);
-
-  // Keep callback ref updated
-  useEffect(() => {
-    callbackRef.current = callback;
-  }, [callback]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  return useCallback(
-    (...args: Parameters<T>) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(() => {
-        callbackRef.current(...args);
-      }, delay);
-    },
-    [delay]
-  ) as T;
-}
 
 // Helper to get markdown from tiptap-markdown storage
 // The tiptap-markdown extension adds a `markdown` storage that TypeScript doesn't know about
@@ -105,7 +67,9 @@ export function TiptapMarkdownEditor({
   const initialValueRef = useRef(value);
 
   // Debounced onChange for real-time database scenarios
-  const debouncedOnChange = useDebouncedCallback(onChange, debounceMs);
+  const debouncedOnChange = useDebouncedCallback(onChange, {
+    wait: debounceMs,
+  });
   const effectiveOnChange = debounceMs > 0 ? debouncedOnChange : onChange;
 
   const { uploadMedia, isUploading, uploadProgress } = useMediaUpload({
