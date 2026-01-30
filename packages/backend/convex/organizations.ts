@@ -1,7 +1,15 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import {
+  MAX_COLOR_LENGTH,
+  MAX_CSS_LENGTH,
+  MAX_ORG_NAME_LENGTH,
+  MAX_SLUG_LENGTH,
+  MAX_URL_LENGTH,
+} from "./constants";
 import { getAuthUser } from "./utils";
+import { validateInputLength } from "./validators";
 
 // Subscription plan limits
 export const PLAN_LIMITS = {
@@ -173,6 +181,9 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
+    validateInputLength(args.name, MAX_ORG_NAME_LENGTH, "Name");
+    validateInputLength(args.slug, MAX_SLUG_LENGTH, "Slug");
+
     // Generate or validate slug
     let slug = args.slug || generateSlug(args.name);
 
@@ -231,6 +242,26 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
+
+    if (args.name !== undefined) {
+      validateInputLength(args.name, MAX_ORG_NAME_LENGTH, "Name");
+    }
+    if (args.slug !== undefined) {
+      validateInputLength(args.slug, MAX_SLUG_LENGTH, "Slug");
+    }
+    if (args.logo !== undefined) {
+      validateInputLength(args.logo, MAX_URL_LENGTH, "Logo URL");
+    }
+    if (args.primaryColor !== undefined) {
+      validateInputLength(
+        args.primaryColor,
+        MAX_COLOR_LENGTH,
+        "Primary Color"
+      );
+    }
+    if (args.customCss !== undefined) {
+      validateInputLength(args.customCss, MAX_CSS_LENGTH, "Custom CSS");
+    }
 
     // Check user has admin or owner role
     const membership = await ctx.db
