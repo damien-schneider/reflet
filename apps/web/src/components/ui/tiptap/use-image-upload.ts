@@ -15,12 +15,13 @@ export function useImageUpload({
   onError,
 }: UseImageUploadOptions = {}) {
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+  const getStorageUrl = useMutation(api.storage.getStorageUrlMutation);
   const [isUploading, setIsUploading] = useState(false);
   const [lastStorageId, setLastStorageId] = useState<Id<"_storage"> | null>(
     null
   );
 
-  // Query the URL when we have a storageId
+  // Query the URL when we have a storageId (for reactive updates)
   const storageUrl = useQuery(
     api.storage.getStorageUrl,
     lastStorageId ? { storageId: lastStorageId } : "skip"
@@ -67,17 +68,15 @@ export function useImageUpload({
         };
         setLastStorageId(storageId);
 
-        // Step 4: Get the public URL - we need to poll for this since it's reactive
-        // For immediate use, we construct the URL pattern
-        // Convex storage URLs follow a predictable pattern
-        const siteUrl = process.env.NEXT_PUBLIC_CONVEX_URL?.replace(
-          ".cloud",
-          ".site"
-        );
-        const immediateUrl = `${siteUrl}/api/storage/${storageId}`;
+        // Step 4: Get the public URL from Convex
+        const url = await getStorageUrl({ storageId });
 
-        onSuccess?.(immediateUrl);
-        return immediateUrl;
+        if (!url) {
+          throw new Error("Failed to get storage URL");
+        }
+
+        onSuccess?.(url);
+        return url;
       } catch (err) {
         const error =
           err instanceof Error ? err : new Error("Failed to upload image");
@@ -87,7 +86,7 @@ export function useImageUpload({
         setIsUploading(false);
       }
     },
-    [generateUploadUrl, onSuccess, onError]
+    [generateUploadUrl, getStorageUrl, onSuccess, onError]
   );
 
   const handlePaste = useCallback(

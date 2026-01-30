@@ -28,6 +28,125 @@
   height: auto;
   margin: 1rem 0;
   border-radius: var(--radius);
+  cursor: pointer;
+  transition: outline 0.15s ease;
+}
+
+/* Image alignment */
+.tiptap-image[data-align="left"] {
+  margin-left: 0;
+  margin-right: auto;
+  display: block;
+}
+
+.tiptap-image[data-align="center"] {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.tiptap-image[data-align="right"] {
+  margin-left: auto;
+  margin-right: 0;
+  display: block;
+}
+
+/* Selected image state */
+.ProseMirror-selectednode.tiptap-image {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Image wrapper container */
+.tiptap-image-wrapper {
+  display: block;
+  position: relative;
+  margin: 1rem 0;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.tiptap-image-wrapper[data-align="left"] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.tiptap-image-wrapper[data-align="center"] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tiptap-image-wrapper[data-align="right"] {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.tiptap-image-wrapper .tiptap-image {
+  margin: 0;
+  display: block;
+  max-width: 100%;
+}
+
+/* Show resize handle on hover/selection */
+.tiptap-image-wrapper .tiptap-resize-handle {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.tiptap-image-wrapper:hover .tiptap-resize-handle,
+.ProseMirror-selectednode .tiptap-resize-handle {
+  opacity: 1;
+}
+
+/* Resize handles */
+.tiptap-resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--primary);
+  border: 2px solid var(--background);
+  border-radius: 2px;
+  z-index: 10;
+}
+
+.tiptap-resize-handle.bottom-right {
+  bottom: -5px;
+  right: -5px;
+  cursor: se-resize;
+}
+
+.tiptap-resize-handle.bottom-left {
+  bottom: -5px;
+  left: -5px;
+  cursor: sw-resize;
+}
+
+.tiptap-resize-handle.top-right {
+  top: -5px;
+  right: -5px;
+  cursor: ne-resize;
+}
+
+.tiptap-resize-handle.top-left {
+  top: -5px;
+  left: -5px;
+  cursor: nw-resize;
+}
+
+/* Image bubble menu */
+.tiptap-image-bubble-menu {
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Base typography for markdown editor and renderer */

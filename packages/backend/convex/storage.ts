@@ -28,3 +28,16 @@ export const getStorageUrl = query({
     return await ctx.storage.getUrl(args.storageId);
   },
 });
+
+/**
+ * Get a URL for accessing a stored file (mutation version).
+ * Can be called imperatively after upload to get the URL immediately.
+ */
+export const getStorageUrlMutation = mutation({
+  args: {
+    storageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.storage.getUrl(args.storageId);
+  },
+});

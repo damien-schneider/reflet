@@ -39,6 +39,7 @@ export function useMediaUpload({
   maxVideoSizeMB = 50,
 }: UseMediaUploadOptions = {}) {
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+  const getStorageUrl = useMutation(api.storage.getStorageUrlMutation);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
@@ -89,11 +90,12 @@ export function useMediaUpload({
           storageId: Id<"_storage">;
         };
 
-        const siteUrl = process.env.NEXT_PUBLIC_CONVEX_URL?.replace(
-          ".cloud",
-          ".site"
-        );
-        const url = `${siteUrl}/api/storage/${storageId}`;
+        // Get the public URL from Convex
+        const url = await getStorageUrl({ storageId });
+
+        if (!url) {
+          throw new Error("Failed to get storage URL");
+        }
 
         const result: MediaUploadResult = { url, type: mediaType };
         onSuccess?.(result);
@@ -110,7 +112,14 @@ export function useMediaUpload({
         setUploadProgress(null);
       }
     },
-    [generateUploadUrl, onSuccess, onError, maxImageSizeMB, maxVideoSizeMB]
+    [
+      generateUploadUrl,
+      getStorageUrl,
+      onSuccess,
+      onError,
+      maxImageSizeMB,
+      maxVideoSizeMB,
+    ]
   );
 
   const openFilePicker = useCallback(

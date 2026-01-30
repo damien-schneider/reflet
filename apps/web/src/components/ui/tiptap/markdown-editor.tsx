@@ -2,7 +2,6 @@
 
 import { useDebouncedCallback } from "@tanstack/react-pacer";
 import CharacterCount from "@tiptap/extension-character-count";
-import TiptapImage from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
@@ -11,6 +10,8 @@ import StarterKit from "@tiptap/starter-kit";
 import { useCallback, useEffect, useRef } from "react";
 import { Markdown } from "tiptap-markdown";
 import { cn } from "@/lib/utils";
+import { ImageBubbleMenu } from "./image-bubble-menu";
+import { ImageExtension } from "./image-extension";
 import { createSlashCommandExtension } from "./slash-command";
 import { useMediaUpload } from "./use-media-upload";
 import "./styles.css";
@@ -142,9 +143,97 @@ export function TiptapMarkdownEditor({
           class: "tiptap-link",
         },
       }),
-      TiptapImage.configure({
+      ImageExtension.configure({
         HTMLAttributes: {
           class: "tiptap-image",
+        },
+      }).extend({
+        addNodeView() {
+          return ({ node, editor, getPos }) => {
+            const container = document.createElement("div");
+            container.classList.add("tiptap-image-wrapper");
+            container.setAttribute("data-align", node.attrs.align || "center");
+
+            const img = document.createElement("img");
+            img.src = node.attrs.src;
+            img.alt = node.attrs.alt || "";
+            img.title = node.attrs.title || "";
+            img.classList.add("tiptap-image");
+            img.setAttribute("data-align", node.attrs.align || "center");
+            if (node.attrs.width) {
+              img.style.width = `${node.attrs.width}px`;
+            }
+
+            // Resize handle
+            const resizeHandle = document.createElement("div");
+            resizeHandle.classList.add("tiptap-resize-handle", "bottom-right");
+
+            let isResizing = false;
+            let startX = 0;
+            let startWidth = 0;
+
+            const onMouseDown = (e: MouseEvent) => {
+              e.preventDefault();
+              isResizing = true;
+              startX = e.clientX;
+              startWidth = img.offsetWidth;
+              document.addEventListener("mousemove", onMouseMove);
+              document.addEventListener("mouseup", onMouseUp);
+            };
+
+            const onMouseMove = (e: MouseEvent) => {
+              if (!isResizing) return;
+              const diff = e.clientX - startX;
+              const newWidth = Math.max(50, startWidth + diff);
+              img.style.width = `${newWidth}px`;
+            };
+
+            const onMouseUp = () => {
+              if (!isResizing) return;
+              isResizing = false;
+              document.removeEventListener("mousemove", onMouseMove);
+              document.removeEventListener("mouseup", onMouseUp);
+
+              // Save the new width
+              const pos = getPos();
+              if (typeof pos === "number") {
+                editor
+                  .chain()
+                  .focus()
+                  .updateAttributes("image", { width: img.offsetWidth })
+                  .run();
+              }
+            };
+
+            resizeHandle.addEventListener("mousedown", onMouseDown);
+
+            container.appendChild(img);
+            container.appendChild(resizeHandle);
+
+            return {
+              dom: container,
+              update: (updatedNode) => {
+                if (updatedNode.type.name !== "image") return false;
+                img.src = updatedNode.attrs.src;
+                img.alt = updatedNode.attrs.alt || "";
+                img.setAttribute(
+                  "data-align",
+                  updatedNode.attrs.align || "center"
+                );
+                container.setAttribute(
+                  "data-align",
+                  updatedNode.attrs.align || "center"
+                );
+                if (updatedNode.attrs.width) {
+                  img.style.width = `${updatedNode.attrs.width}px`;
+                }
+                return true;
+              },
+              destroy: () => {
+                resizeHandle.removeEventListener("mousedown", onMouseDown);
+              },
+            };
+          };
         },
       }),
       Typography,
@@ -274,7 +363,10 @@ export function TiptapMarkdownEditor({
         data-slot="tiptap-markdown-editor"
         onClick={handleContainerClick}
       >
-        <EditorContent editor={editor} />
+        <div className="relative">
+          <EditorContent editor={editor} />
+          {editor && <ImageBubbleMenu editor={editor} />}
+        </div>
 
         <input
           accept="image/*"
@@ -331,7 +423,10 @@ export function TiptapMarkdownEditor({
       data-slot="tiptap-markdown-editor"
       onClick={handleContainerClick}
     >
-      <EditorContent editor={editor} />
+      <div className="relative">
+        <EditorContent editor={editor} />
+        {editor && <ImageBubbleMenu editor={editor} />}
+      </div>
 
       <input
         accept="image/*"

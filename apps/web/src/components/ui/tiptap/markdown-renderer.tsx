@@ -1,12 +1,12 @@
 "use client";
 
-import TiptapImage from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
 import { Markdown } from "tiptap-markdown";
 import { cn } from "@/lib/utils";
+import { ImageExtension } from "./image-extension";
 import "./styles.css";
 
 // Helper to get markdown from tiptap-markdown storage
@@ -43,7 +43,7 @@ export function MarkdownRenderer({
           rel: "noopener noreferrer",
         },
       }),
-      TiptapImage.configure({
+      ImageExtension.configure({
         HTMLAttributes: {
           class: "tiptap-image",
         },

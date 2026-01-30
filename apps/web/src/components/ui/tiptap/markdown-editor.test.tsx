@@ -60,6 +60,9 @@ vi.mock("@tiptap/extension-link", () => ({
 vi.mock("@tiptap/extension-image", () => ({
   default: {
     configure: () => ({}),
+    extend: () => ({
+      configure: () => ({}),
+    }),
   },
 }));
 
@@ -79,6 +82,18 @@ vi.mock("tiptap-markdown", () => ({
 vi.mock("./slash-command", () => ({
   SlashCommand: {},
   createSlashCommandExtension: () => ({}),
+}));
+
+vi.mock("./image-bubble-menu", () => ({
+  ImageBubbleMenu: () => null,
+}));
+
+vi.mock("./image-extension", () => ({
+  ImageExtension: {
+    configure: () => ({
+      extend: () => ({}),
+    }),
+  },
 }));
 
 vi.mock("./use-media-upload", () => ({
