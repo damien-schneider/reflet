@@ -20,8 +20,8 @@ import {
   type VoteResponse,
 } from "./types";
 
-// Default to Reflet production API
-const DEFAULT_API_URL = "https://harmless-clam-802.convex.cloud";
+// Default to Reflet production API (HTTP routes use .convex.site)
+const DEFAULT_API_URL = "https://harmless-clam-802.convex.site";
 
 /**
  * Reflet SDK Client
