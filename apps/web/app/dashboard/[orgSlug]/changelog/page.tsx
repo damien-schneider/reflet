@@ -1,6 +1,6 @@
 "use client";
 
-import { GithubLogo, Megaphone, Plus } from "@phosphor-icons/react";
+import { GithubLogo, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -8,11 +8,9 @@ import Link from "next/link";
 import { use, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
-import { AdminReleaseCard } from "@/features/changelog/components/admin-release-card";
+import { H1, Muted, Text } from "@/components/ui/typography";
 import { DeleteReleaseDialog } from "@/features/changelog/components/delete-release-dialog";
-import { ReleaseFormDialog } from "@/features/changelog/components/release-form-dialog";
+import { ReleaseTimeline } from "@/features/changelog/components/release-timeline";
 
 export default function ChangelogPage({
   params,
@@ -33,15 +31,10 @@ export default function ChangelogPage({
     api.github.getConnectionStatus,
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
-  const updateRelease = useMutation(api.changelog.update);
   const deleteRelease = useMutation(api.changelog_actions.remove);
   const publishRelease = useMutation(api.changelog_actions.publish);
   const unpublishRelease = useMutation(api.changelog_actions.unpublish);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingRelease, setEditingRelease] = useState<
-    NonNullable<typeof releases>[number] | null
-  >(null);
   const [deletingRelease, setDeletingRelease] = useState<
     NonNullable<typeof releases>[number] | null
   >(null);
@@ -53,7 +46,7 @@ export default function ChangelogPage({
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <H2 variant="card">Organization not found</H2>
+          <h2 className="font-semibold text-lg">Organization not found</h2>
           <Muted className="mt-2">
             The organization you&apos;re looking for doesn&apos;t exist.
           </Muted>
@@ -61,28 +54,6 @@ export default function ChangelogPage({
       </div>
     );
   }
-
-  const handleUpdateRelease = async (data: {
-    title: string;
-    version: string;
-    content: string;
-  }) => {
-    if (!editingRelease) {
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      await updateRelease({
-        id: editingRelease._id,
-        title: data.title,
-        version: data.version,
-        description: data.content,
-      });
-      setEditingRelease(null);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleDeleteRelease = async () => {
     if (!deletingRelease) {
@@ -102,97 +73,69 @@ export default function ChangelogPage({
 
   return (
     <div className="admin-container">
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <H1>Changelog</H1>
           <Text variant="bodySmall">
             Manage release notes and product updates
           </Text>
         </div>
-        {isAdmin ? (
+        {isAdmin && (
           <div className="flex items-center gap-2">
             {githubStatus?.isConnected ? (
               <Link href={`/dashboard/${orgSlug}/settings/github`}>
                 <Button variant="outline">
                   <GithubLogo className="mr-2 h-4 w-4" />
-                  Sync from GitHub
+                  <span className="hidden sm:inline">Sync from GitHub</span>
+                  <span className="sm:hidden">Sync</span>
                 </Button>
               </Link>
             ) : (
               <Link href={`/dashboard/${orgSlug}/settings/github`}>
                 <Button variant="outline">
                   <GithubLogo className="mr-2 h-4 w-4" />
-                  Connect GitHub
+                  <span className="hidden sm:inline">Connect GitHub</span>
+                  <span className="sm:hidden">GitHub</span>
                 </Button>
               </Link>
             )}
             <Link href={`/dashboard/${orgSlug}/changelog/new`}>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Create Release
+                <span className="hidden sm:inline">Create Release</span>
+                <span className="sm:hidden">New</span>
               </Button>
             </Link>
           </div>
-        ) : null}
+        )}
       </div>
 
-      {releases && releases.length > 0 ? (
-        <div className="space-y-4">
-          {releases.map((release) => (
-            <AdminReleaseCard
-              isAdmin={isAdmin}
-              key={release._id}
-              onDelete={() => setDeletingRelease(release)}
-              onEdit={() => setEditingRelease(release)}
-              onPublish={() => handlePublish(release._id)}
-              onUnpublish={() => handleUnpublish(release._id)}
-              release={release}
-            />
-          ))}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Megaphone className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <H3 className="mb-2" variant="card">
-              No releases yet
-            </H3>
-            <Muted className="mb-4">
-              Create your first release to share product updates.
-            </Muted>
-            {isAdmin ? (
-              <Link href={`/dashboard/${orgSlug}/changelog/new`}>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Release
-                </Button>
-              </Link>
-            ) : null}
-          </CardContent>
-        </Card>
-      )}
+      <ReleaseTimeline
+        emptyAction={
+          isAdmin && (
+            <Link href={`/dashboard/${orgSlug}/changelog/new`}>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Release
+              </Button>
+            </Link>
+          )
+        }
+        isAdmin={isAdmin}
+        onDelete={setDeletingRelease}
+        onPublish={handlePublish}
+        onUnpublish={handleUnpublish}
+        orgSlug={orgSlug}
+        releases={releases ?? []}
+      />
 
-      {editingRelease ? (
-        <ReleaseFormDialog
-          isSubmitting={isSubmitting}
-          onClose={() => setEditingRelease(null)}
-          onSubmit={handleUpdateRelease}
-          open={Boolean(editingRelease)}
-          release={{
-            version: editingRelease.version ?? "",
-            title: editingRelease.title,
-            content: editingRelease.description ?? "",
-          }}
-        />
-      ) : null}
-
-      {deletingRelease ? (
+      {deletingRelease && (
         <DeleteReleaseDialog
           onClose={() => setDeletingRelease(null)}
           onConfirm={handleDeleteRelease}
           open={Boolean(deletingRelease)}
         />
-      ) : null}
+      )}
     </div>
   );
 }

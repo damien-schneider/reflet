@@ -35,7 +35,7 @@ const h2Variants = cva(
     variants: {
       variant: {
         default: "text-3xl leading-snug tracking-tight",
-        section: "text-4xl font-bold tracking-tight sm:text-5xl",
+        section: "text-4xl tracking-tight sm:text-5xl",
         card: "text-xl font-medium text-foreground",
       },
     },

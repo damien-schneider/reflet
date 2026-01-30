@@ -148,6 +148,7 @@ export default defineSchema({
     createdAt: v.number(),
     inviterId: v.string(), // Better Auth user ID
     token: v.string(), // Unique invitation token
+    lastSentAt: v.optional(v.number()), // Timestamp of last email sent
   })
     .index("by_organization", ["organizationId"])
     .index("by_email", ["email"])

@@ -66,14 +66,11 @@ export default function BillingGearPage({
   return (
     <div className="admin-container">
       <div className="mb-8">
-        <div className="flex items-center gap-3">
-          <CreditCard className="h-8 w-8 text-muted-foreground" />
-          <div>
-            <H1>Billing</H1>
-            <Text variant="bodySmall">
-              Manage your subscription and view usage
-            </Text>
-          </div>
+        <div>
+          <H1>Billing</H1>
+          <Text variant="bodySmall">
+            Manage your subscription and view usage
+          </Text>
         </div>
       </div>
 
@@ -130,7 +127,7 @@ export default function BillingGearPage({
                 <Progress value={memberPercentage}>
                   <ProgressLabel>Team members</ProgressLabel>
                   <ProgressValue>
-                    {memberCount} / {FREE_PLAN_LIMITS.teamMembers}
+                    {() => `${memberCount} / ${FREE_PLAN_LIMITS.teamMembers}`}
                   </ProgressValue>
                 </Progress>
                 {memberCount >= FREE_PLAN_LIMITS.teamMembers && (

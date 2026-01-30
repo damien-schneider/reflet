@@ -3,10 +3,12 @@ import {
   Container,
   Head,
   Html,
+  Link,
   Preview,
   Section,
   Text,
 } from "@react-email/components";
+import { baseStyles } from "./styles";
 
 interface BaseLayoutProps {
   preview: string;
@@ -16,15 +18,29 @@ interface BaseLayoutProps {
 export function BaseLayout({ preview, children }: BaseLayoutProps) {
   return (
     <Html lang="fr">
-      <Head />
+      <Head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif&display=swap"
+          rel="stylesheet"
+        />
+      </Head>
       <Preview>{preview}</Preview>
-      <Body style={styles.body}>
-        <Container style={styles.container}>
-          <Section style={styles.content}>{children}</Section>
-          <Section style={styles.footer}>
-            <Text style={styles.footerText}>
-              Cet email a été envoyé par Reflet. Si vous avez des questions,
-              contactez-nous.
+      <Body style={baseStyles.body}>
+        <Container style={baseStyles.container}>
+          <Section style={baseStyles.header}>
+            <Text style={baseStyles.wordmark}>Reflet</Text>
+          </Section>
+          <Section style={baseStyles.content}>{children}</Section>
+          <Section style={baseStyles.footer}>
+            <Text style={baseStyles.footerBrand}>Reflet</Text>
+            <Text style={baseStyles.footerText}>
+              Des questions ?{" "}
+              <Link
+                href="mailto:support@reflet.app"
+                style={baseStyles.footerLink}
+              >
+                Contactez-nous
+              </Link>
             </Text>
           </Section>
         </Container>
@@ -32,34 +48,3 @@ export function BaseLayout({ preview, children }: BaseLayoutProps) {
     </Html>
   );
 }
-
-const styles = {
-  body: {
-    backgroundColor: "#f4f4f5",
-    fontFamily:
-      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-    margin: 0,
-    padding: "40px 0",
-  },
-  container: {
-    backgroundColor: "#ffffff",
-    borderRadius: "8px",
-    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-    margin: "0 auto",
-    maxWidth: "600px",
-    padding: "0",
-  },
-  content: {
-    padding: "40px",
-  },
-  footer: {
-    borderTop: "1px solid #e4e4e7",
-    padding: "24px 40px",
-  },
-  footerText: {
-    color: "#a1a1aa",
-    fontSize: "12px",
-    lineHeight: "18px",
-    margin: 0,
-  },
-} as const;
