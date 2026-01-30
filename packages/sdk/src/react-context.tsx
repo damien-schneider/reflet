@@ -33,8 +33,8 @@ const RefletContext = createContext<RefletContextValue | null>(null);
 export interface RefletProviderProps {
   /** Your board's public API key */
   publicKey: string;
-  /** Your Convex deployment URL (e.g., https://your-deployment.convex.cloud) */
-  baseUrl: string;
+  /** API base URL (optional, defaults to Reflet production API) */
+  baseUrl?: string;
   /** Initial user identification */
   user?: RefletUser;
   /** Pre-signed user token (alternative to user) */
@@ -54,7 +54,6 @@ export interface RefletProviderProps {
  *   return (
  *     <RefletProvider
  *       publicKey="fb_pub_xxx"
- *       baseUrl="https://your-deployment.convex.cloud"
  *       user={{ id: 'user_123', email: 'user@example.com', name: 'John' }}
  *     >
  *       <YourApp />

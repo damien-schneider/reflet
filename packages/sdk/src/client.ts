@@ -20,7 +20,8 @@ import {
   type VoteResponse,
 } from "./types";
 
-// No default base URL - users must provide their own Convex deployment URL
+// Default to Reflet production API
+const DEFAULT_API_URL = "https://harmless-clam-802.convex.cloud";
 
 /**
  * Reflet SDK Client
@@ -52,18 +53,12 @@ export class Reflet {
 
   constructor(config: RefletConfig) {
     this.publicKey = config.publicKey;
-    this.baseUrl = config.baseUrl;
+    this.baseUrl = config.baseUrl ?? DEFAULT_API_URL;
     this.userToken = config.userToken;
     this.user = config.user;
 
     if (!this.publicKey) {
       throw new Error("Reflet: publicKey is required");
-    }
-
-    if (!this.baseUrl) {
-      throw new Error(
-        "Reflet: baseUrl is required. Use your Convex deployment URL (e.g., https://your-deployment.convex.cloud)"
-      );
     }
   }
 

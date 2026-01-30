@@ -9,8 +9,8 @@
 export interface RefletConfig {
   /** Your board's public API key (fb_pub_xxx) */
   publicKey: string;
-  /** Your Convex deployment URL (e.g., https://your-deployment.convex.cloud) */
-  baseUrl: string;
+  /** API base URL (optional, defaults to Reflet production API) */
+  baseUrl?: string;
   /** User identification for SSO */
   user?: RefletUser;
   /** Pre-signed user token (alternative to user object) */
