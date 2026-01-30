@@ -17,13 +17,11 @@ interface ImageBubbleMenuProps {
 export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [currentAlign, setCurrentAlign] = useState<ImageAlignment>("center");
 
   const setAlignment = (align: ImageAlignment) => {
     editor.chain().focus().updateAttributes("image", { align }).run();
   };
-
-  const currentAlign =
-    (editor.getAttributes("image").align as ImageAlignment) || "center";
 
   useEffect(() => {
     const updateMenu = () => {
@@ -31,6 +29,10 @@ export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
       setIsVisible(isImageActive);
 
       if (isImageActive) {
+        // Update alignment state from current image
+        const attrs = editor.getAttributes("image");
+        setCurrentAlign((attrs.align as ImageAlignment) || "center");
+
         const { view } = editor;
         const { from } = view.state.selection;
         const node = view.domAtPos(from);
@@ -57,6 +59,9 @@ export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
 
     editor.on("selectionUpdate", updateMenu);
     editor.on("transaction", updateMenu);
+
+    // Initial update
+    updateMenu();
 
     return () => {
       editor.off("selectionUpdate", updateMenu);
