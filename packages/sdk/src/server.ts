@@ -1,19 +1,17 @@
 /**
  * Server-side utilities for Reflet SDK
- * Use these functions on your backend to securely sign user tokens
+ * Works in Node.js, Edge runtimes, Cloudflare Workers, and Convex
  *
  * @example
  * ```ts
  * import { signUser } from 'reflet-sdk/server';
  *
- * const { token } = signUser(
+ * const { token } = await signUser(
  *   { id: user.id, email: user.email, name: user.name },
  *   process.env.REFLET_SECRET_KEY!
  * );
  * ```
  */
-
-import { createHmac } from "node:crypto";
 
 // Top-level regex patterns for base64url encoding
 const PLUS_REGEX = /\+/g;
@@ -44,13 +42,13 @@ export interface SignedUserToken {
 
 /**
  * Sign a user token for secure client-side identification
- * Uses HMAC-SHA256 for cryptographically secure signatures
+ * Uses HMAC-SHA256 via Web Crypto API (works in all runtimes)
  */
-export function signUser(
+export async function signUser(
   user: SignUserOptions,
   secretKey: string,
   expiresInSeconds = 86_400 // 24 hours default
-): SignedUserToken {
+): Promise<SignedUserToken> {
   if (!secretKey) {
     throw new Error("signUser: secretKey is required");
   }
@@ -77,8 +75,8 @@ export function signUser(
   const headerB64 = base64UrlEncode(JSON.stringify(header));
   const payloadB64 = base64UrlEncode(JSON.stringify(payload));
 
-  // Create signature using HMAC-SHA256
-  const signature = createHmacSha256Signature(
+  // Create signature using HMAC-SHA256 via Web Crypto API
+  const signature = await createHmacSha256Signature(
     `${headerB64}.${payloadB64}`,
     secretKey
   );
@@ -93,10 +91,10 @@ export function signUser(
  * Verify a user token
  * Returns the user data if valid, null otherwise
  */
-export function verifyUser(
+export async function verifyUser(
   token: string,
   secretKey: string
-): SignUserOptions | null {
+): Promise<SignUserOptions | null> {
   if (!(token && secretKey)) {
     return null;
   }
@@ -109,7 +107,7 @@ export function verifyUser(
   const [headerB64, payloadB64, signature] = parts;
 
   // Verify signature using constant-time comparison
-  const expectedSignature = createHmacSha256Signature(
+  const expectedSignature = await createHmacSha256Signature(
     `${headerB64}.${payloadB64}`,
     secretKey
   );
@@ -152,11 +150,17 @@ export function verifyUser(
 }
 
 // ============================================
-// Utility Functions
+// Utility Functions (Web Crypto API - Universal)
 // ============================================
 
 function base64UrlEncode(str: string): string {
-  const base64 = Buffer.from(str).toString("base64");
+  // Use TextEncoder for universal compatibility
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  const base64 = btoa(binary);
 
   return base64
     .replace(PLUS_REGEX, "-")
@@ -174,19 +178,51 @@ function base64UrlDecode(str: string): string {
     .replace(DASH_REGEX, "+")
     .replace(UNDERSCORE_REGEX, "/");
 
-  return Buffer.from(base64, "base64").toString();
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
 }
 
 /**
- * Create HMAC-SHA256 signature (cryptographically secure)
+ * Create HMAC-SHA256 signature using Web Crypto API
+ * Works in Node.js 18+, Edge runtimes, Cloudflare Workers, Convex, etc.
  */
-function createHmacSha256Signature(data: string, secret: string): string {
-  const hmac = createHmac("sha256", secret);
-  hmac.update(data);
-  const signature = hmac.digest("base64");
+async function createHmacSha256Signature(
+  data: string,
+  secret: string
+): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(data);
+
+  // Import the secret key
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  // Sign the data
+  const signatureBuffer = await crypto.subtle.sign(
+    "HMAC",
+    cryptoKey,
+    messageData
+  );
 
   // Convert to base64url
-  return signature
+  const signatureArray = new Uint8Array(signatureBuffer);
+  let binary = "";
+  for (const byte of signatureArray) {
+    binary += String.fromCharCode(byte);
+  }
+  const base64 = btoa(binary);
+
+  return base64
     .replace(PLUS_REGEX, "-")
     .replace(SLASH_REGEX, "_")
     .replace(PADDING_REGEX, "");

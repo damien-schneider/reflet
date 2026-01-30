@@ -164,7 +164,7 @@ export async function GET(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { token, expiresAt } = signUser(
+  const { token, expiresAt } = await signUser(
     {
       id: user.id,
       email: user.email,

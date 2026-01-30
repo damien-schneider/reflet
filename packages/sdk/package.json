@@ -1,6 +1,6 @@
 {
   "name": "reflet-sdk",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Official Reflet SDK - Collect user feedback, feature requests, and bug reports from your app",
   "license": "MIT",
   "author": "Reflet <hello@reflet.app>",

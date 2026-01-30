@@ -112,7 +112,7 @@ For production apps, sign user tokens on your server to prevent spoofing:
 import { signUser } from 'reflet-sdk/server';
 
 export async function getUserToken(user: User) {
-  const { token, expiresAt } = signUser(
+  const { token, expiresAt } = await signUser(
     {
       id: user.id,
       email: user.email,
@@ -185,14 +185,16 @@ const reflet = new Reflet(config: RefletConfig);
 
 ### Server Utilities
 
+Works in Node.js, Edge runtimes, Cloudflare Workers, and Convex.
+
 ```typescript
 import { signUser, verifyUser } from 'reflet-sdk/server';
 
-// Sign a user token
-const { token, expiresAt } = signUser(user, secretKey, expiresInSeconds?);
+// Sign a user token (async - uses Web Crypto API)
+const { token, expiresAt } = await signUser(user, secretKey, expiresInSeconds?);
 
 // Verify a token (optional - server-side validation)
-const user = verifyUser(token, secretKey);
+const user = await verifyUser(token, secretKey);
 ```
 
 ## Types
