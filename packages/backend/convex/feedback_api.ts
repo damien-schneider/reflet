@@ -926,26 +926,33 @@ export const setImportance = internalMutation({
     }
 
     // Check existing importance vote using a manual query since we don't have an index for external users
-    const _existingVotes = await ctx.db
+    const existingVotes = await ctx.db
       .query("feedbackImportanceVotes")
       .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
       .collect();
 
-    // Find vote by this external user (we need to check externalUserId field which might not exist in schema yet)
-    // For now, we'll create a new vote since importance votes table may not support external users yet
-    // This is a limitation we should address in a future update
+    // Find vote by this external user using a workaround userId format
+    const externalUserId = `external_${args.externalUserId}`;
+    const existingVote = existingVotes.find((v) => v.userId === externalUserId);
 
     const now = Date.now();
 
-    // For simplicity, just insert a new importance vote
-    // In production, you'd want to track external user importance votes properly
-    await ctx.db.insert("feedbackImportanceVotes", {
-      feedbackId: args.feedbackId,
-      userId: `external_${args.externalUserId}`, // Workaround until schema is updated
-      importance: args.importance,
-      createdAt: now,
-      updatedAt: now,
-    });
+    if (existingVote) {
+      // Update existing vote
+      await ctx.db.patch(existingVote._id, {
+        importance: args.importance,
+        updatedAt: now,
+      });
+    } else {
+      // Create new importance vote
+      await ctx.db.insert("feedbackImportanceVotes", {
+        feedbackId: args.feedbackId,
+        userId: externalUserId,
+        importance: args.importance,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
     return { success: true, importance: args.importance };
   },
