@@ -90,16 +90,14 @@ export const list = query({
     // Add replies to each root comment and map authors
     const threaded = await Promise.all(
       rootComments.map(async (comment) => {
-        const commentAuthor = await authComponent.getAnyUserById(
-          ctx,
-          comment.authorId
-        );
+        const commentAuthor = comment.authorId
+          ? await authComponent.getAnyUserById(ctx, comment.authorId)
+          : null;
         const replies = await Promise.all(
           (repliesMap.get(comment._id) || []).map(async (reply) => {
-            const replyAuthor = await authComponent.getAnyUserById(
-              ctx,
-              reply.authorId
-            );
+            const replyAuthor = reply.authorId
+              ? await authComponent.getAnyUserById(ctx, reply.authorId)
+              : null;
             return {
               ...reply,
               author: replyAuthor
@@ -216,7 +214,7 @@ export const create = mutation({
     });
 
     // Create notification for feedback author (if not commenting on own feedback)
-    if (feedback.authorId !== user._id) {
+    if (feedback.authorId && feedback.authorId !== user._id) {
       await ctx.db.insert("notifications", {
         userId: feedback.authorId,
         type: "new_comment",

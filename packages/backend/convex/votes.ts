@@ -90,7 +90,9 @@ export const getVoters = query({
 
     const voters = await Promise.all(
       votes.map(async (vote) => {
-        const userData = await authComponent.getAnyUserById(ctx, vote.userId);
+        const userData = vote.userId
+          ? await authComponent.getAnyUserById(ctx, vote.userId)
+          : null;
         return {
           id: vote._id,
           userId: vote.userId,
@@ -190,6 +192,7 @@ export const toggle = mutation({
 
     // Check for milestone notification
     if (
+      feedback.authorId &&
       VOTE_MILESTONES.includes(roundedCount as (typeof VOTE_MILESTONES)[number])
     ) {
       await ctx.db.insert("notifications", {

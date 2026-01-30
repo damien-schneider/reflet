@@ -240,7 +240,7 @@ export default defineSchema({
     description: v.string(), // Rich text (Tiptap JSON or markdown)
     status: feedbackStatus,
     statusId: v.optional(v.id("boardStatuses")),
-    authorId: v.string(), // Better Auth user ID
+    authorId: v.optional(v.string()), // Better Auth user ID (optional for external users)
     voteCount: v.number(),
     commentCount: v.number(),
     isApproved: v.boolean(),
@@ -260,6 +260,12 @@ export default defineSchema({
     // AI draft reply fields
     aiDraftReply: v.optional(v.string()),
     aiDraftReplyGeneratedAt: v.optional(v.number()),
+    // External user support (for public API)
+    externalUserId: v.optional(v.id("externalUsers")),
+    // Source tracking
+    source: v.optional(
+      v.union(v.literal("web"), v.literal("api"), v.literal("widget"))
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -270,6 +276,7 @@ export default defineSchema({
     .index("by_board_status", ["boardId", "status"])
     .index("by_status_id", ["statusId"])
     .index("by_github_issue", ["organizationId", "githubIssueId"])
+    .index("by_external_user", ["externalUserId"])
     .searchIndex("search_title", {
       searchField: "title",
       filterFields: ["boardId", "organizationId"],
@@ -280,13 +287,16 @@ export default defineSchema({
   // ============================================
   feedbackVotes: defineTable({
     feedbackId: v.id("feedback"),
-    userId: v.string(), // Better Auth user ID
+    userId: v.optional(v.string()), // Better Auth user ID (optional for external users)
     voteType: v.union(v.literal("upvote"), v.literal("downvote")),
+    // External user support (for public API)
+    externalUserId: v.optional(v.id("externalUsers")),
     createdAt: v.number(),
   })
     .index("by_feedback", ["feedbackId"])
     .index("by_user", ["userId"])
-    .index("by_feedback_user", ["feedbackId", "userId"]),
+    .index("by_feedback_user", ["feedbackId", "userId"])
+    .index("by_feedback_external_user", ["feedbackId", "externalUserId"]),
 
   // ============================================
   // FEEDBACK IMPORTANCE VOTES
@@ -307,12 +317,15 @@ export default defineSchema({
   // ============================================
   feedbackSubscriptions: defineTable({
     feedbackId: v.id("feedback"),
-    userId: v.string(), // Better Auth user ID
+    userId: v.optional(v.string()), // Better Auth user ID (optional for external users)
+    // External user support (for public API)
+    externalUserId: v.optional(v.id("externalUsers")),
     createdAt: v.number(),
   })
     .index("by_feedback", ["feedbackId"])
     .index("by_user", ["userId"])
-    .index("by_feedback_user", ["feedbackId", "userId"]),
+    .index("by_feedback_user", ["feedbackId", "userId"])
+    .index("by_feedback_external_user", ["feedbackId", "externalUserId"]),
 
   // ============================================
   // FEEDBACK TAGS (Junction table)
@@ -330,16 +343,19 @@ export default defineSchema({
   // ============================================
   comments: defineTable({
     feedbackId: v.id("feedback"),
-    authorId: v.string(), // Better Auth user ID
+    authorId: v.optional(v.string()), // Better Auth user ID (optional for external users)
     body: v.string(), // Rich text (Tiptap JSON or markdown)
     isOfficial: v.boolean(), // Admin marked as official response
     parentId: v.optional(v.id("comments")), // For threaded replies
+    // External user support (for public API)
+    externalUserId: v.optional(v.id("externalUsers")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_feedback", ["feedbackId"])
     .index("by_author", ["authorId"])
-    .index("by_parent", ["parentId"]),
+    .index("by_parent", ["parentId"])
+    .index("by_external_user", ["externalUserId"]),
 
   // ============================================
   // RELEASES (Changelog)
@@ -692,4 +708,70 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_organization", ["organizationId"]),
+
+  // ============================================
+  // BOARD API KEYS (For public API access)
+  // ============================================
+  boardApiKeys: defineTable({
+    boardId: v.id("boards"),
+    publicKey: v.string(), // fb_pub_xxxxxxxxxxxx
+    secretKeyHash: v.string(), // Hashed secret key
+    allowedDomains: v.optional(v.array(v.string())), // Optional CORS restriction
+    isActive: v.boolean(),
+    rateLimit: v.optional(
+      v.object({
+        requestsPerMinute: v.number(),
+      })
+    ),
+    createdAt: v.number(),
+    lastUsedAt: v.optional(v.number()),
+  })
+    .index("by_board", ["boardId"])
+    .index("by_public_key", ["publicKey"]),
+
+  // ============================================
+  // EXTERNAL USERS (Users from client apps via API)
+  // ============================================
+  externalUsers: defineTable({
+    boardId: v.id("boards"),
+    externalId: v.string(), // User's ID in client's system
+    email: v.optional(v.string()),
+    name: v.optional(v.string()),
+    avatar: v.optional(v.string()),
+    metadata: v.optional(v.any()), // Custom data from client
+    createdAt: v.number(),
+    lastSeenAt: v.number(),
+  })
+    .index("by_board_external", ["boardId", "externalId"])
+    .index("by_board_email", ["boardId", "email"]),
+
+  // ============================================
+  // FEEDBACK VISITORS (Anonymous visitors from widget/API)
+  // ============================================
+  feedbackVisitors: defineTable({
+    boardId: v.id("boards"),
+    visitorId: v.string(),
+    metadata: v.optional(
+      v.object({
+        userAgent: v.optional(v.string()),
+        url: v.optional(v.string()),
+      })
+    ),
+    createdAt: v.number(),
+    lastSeenAt: v.number(),
+  }).index("by_board_visitor", ["boardId", "visitorId"]),
+
+  // ============================================
+  // API REQUEST LOGS (For rate limiting & analytics)
+  // ============================================
+  apiRequestLogs: defineTable({
+    boardId: v.id("boards"),
+    apiKeyId: v.id("boardApiKeys"),
+    endpoint: v.string(),
+    method: v.string(),
+    statusCode: v.number(),
+    ip: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    timestamp: v.number(),
+  }).index("by_key_time", ["apiKeyId", "timestamp"]),
 });

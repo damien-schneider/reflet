@@ -1,0 +1,30 @@
+{
+  "name": "@reflet/feedback-widget",
+  "version": "1.0.0",
+  "description": "Embeddable feedback widget for Reflet - add feedback collection to any website",
+  "type": "module",
+  "main": "dist/feedback-widget.js",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "terser": "^5.37.0",
+    "typescript": "catalog:",
+    "vite": "^6.3.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/reflet-app/reflet-v2.git",
+    "directory": "packages/feedback-widget"
+  },
+  "keywords": [
+    "feedback",
+    "widget",
+    "embed",
+    "reflet"
+  ],
+  "license": "MIT"
+}

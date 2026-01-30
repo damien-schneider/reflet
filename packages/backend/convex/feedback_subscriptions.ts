@@ -90,7 +90,9 @@ export const getSubscribers = query({
     // Get user info for each subscriber
     const subscribers = await Promise.all(
       subscriptions.map(async (sub) => {
-        const userData = await authComponent.getAnyUserById(ctx, sub.userId);
+        const userData = sub.userId
+          ? await authComponent.getAnyUserById(ctx, sub.userId)
+          : null;
         return {
           id: sub._id,
           userId: sub.userId,

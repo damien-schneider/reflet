@@ -1,0 +1,86 @@
+{
+  "name": "reflet-sdk",
+  "version": "0.1.0",
+  "description": "Official Reflet SDK - Collect user feedback, feature requests, and bug reports from your app",
+  "license": "MIT",
+  "author": "Reflet <hello@reflet.app>",
+  "homepage": "https://reflet.app",
+  "bugs": {
+    "url": "https://github.com/reflet-app/reflet/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/reflet-app/reflet.git",
+    "directory": "packages/sdk"
+  },
+  "keywords": [
+    "feedback",
+    "feature-requests",
+    "bug-reports",
+    "user-feedback",
+    "product-feedback",
+    "widget",
+    "sdk",
+    "react",
+    "react-hooks",
+    "typescript",
+    "reflet",
+    "roadmap",
+    "changelog"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./react": {
+      "import": "./dist/react.js",
+      "types": "./dist/react.d.ts"
+    },
+    "./server": {
+      "import": "./dist/server.js",
+      "types": "./dist/server.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "cd ../.. && bun x ultracite check packages/sdk",
+    "prepublishOnly": "npm run build",
+    "version:patch": "npm version patch && npm run release",
+    "version:minor": "npm version minor && npm run release",
+    "version:major": "npm version major && npm run release",
+    "release": "npm run build && npm publish"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

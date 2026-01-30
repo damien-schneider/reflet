@@ -8,7 +8,13 @@ import Link from "next/link";
 import { use, useCallback } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -17,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ApiKeysSettings } from "@/features/feedback/components/api-keys-settings";
 import { StatusManager } from "@/features/feedback/components/status-manager";
 
 export default function BoardGearPage({
@@ -167,6 +174,19 @@ export default function BoardGearPage({
                 </Button>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* API Keys & Widget Integration */}
+        <Card>
+          <CardHeader>
+            <CardTitle>API Keys & Widget</CardTitle>
+            <CardDescription>
+              Enable external integrations with the feedback widget and SDK
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ApiKeysSettings boardId={board._id as Id<"boards">} />
           </CardContent>
         </Card>
       </div>
