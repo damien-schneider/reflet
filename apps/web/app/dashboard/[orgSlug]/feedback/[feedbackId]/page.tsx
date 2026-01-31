@@ -209,7 +209,7 @@ export default function FeedbackDetailPage({
                   <CardHeader className="pb-2">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
-                        {comment.authorName ?? "Anonymous"}
+                        {comment.author?.name ?? "Anonymous"}
                       </span>
                       <Muted>
                         {formatDistanceToNow(comment.createdAt, {

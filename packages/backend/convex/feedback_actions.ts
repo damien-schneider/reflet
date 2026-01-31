@@ -180,6 +180,68 @@ export const createPublic = mutation({
 });
 
 /**
+ * Create public feedback at organization level (for public orgs without boards)
+ */
+export const createPublicOrg = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    email: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.organizationId);
+    if (!org?.isPublic) {
+      throw new Error("Organization not found or not public");
+    }
+
+    // Check feedback limit
+    const existingFeedback = await ctx.db
+      .query("feedback")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    const limit = PLAN_LIMITS[org.subscriptionTier].maxFeedbackPerBoard;
+    if (existingFeedback.length >= limit) {
+      throw new Error(
+        `Feedback limit reached. This organization allows ${limit} feedback items.`
+      );
+    }
+
+    const user = await authComponent.safeGetAuthUser(ctx);
+    const now = Date.now();
+
+    // Get the default org status (first status by order, usually "Open")
+    const orgStatuses = await ctx.db
+      .query("organizationStatuses")
+      .withIndex("by_org_order", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+    const defaultOrgStatus = orgStatuses.sort((a, b) => a.order - b.order)[0];
+
+    const feedbackId = await ctx.db.insert("feedback", {
+      organizationId: args.organizationId,
+      title: args.title,
+      description: args.description || "",
+      status: org.feedbackSettings?.defaultStatus || "open",
+      organizationStatusId: defaultOrgStatus?._id,
+      authorId: user?._id || `anonymous:${args.email || "unknown"}`,
+      voteCount: 0,
+      commentCount: 0,
+      isApproved: !org.feedbackSettings?.requireApproval,
+      isPinned: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return feedbackId;
+  },
+});
+
+/**
  * Toggle pin status on feedback
  */
 export const togglePin = mutation({

@@ -85,6 +85,20 @@ export function FeedbackDetailDialog({
     effectiveBoardId ? { boardId: effectiveBoardId } : "skip"
   );
 
+  // Also query organization statuses for org-level feedback
+  const organizationStatuses = useQuery(
+    api.organization_statuses.list,
+    feedback?.organizationId
+      ? { organizationId: feedback.organizationId }
+      : "skip"
+  );
+
+  // Use org statuses if no board statuses
+  const effectiveStatuses =
+    boardStatuses && boardStatuses.length > 0
+      ? boardStatuses
+      : (organizationStatuses ?? []);
+
   const updateFeedback = useMutation(api.feedback.update);
   const updateFeedbackStatus = useMutation(api.feedback_actions.updateStatus);
   const deleteFeedback = useMutation(api.feedback_actions.remove);
@@ -273,8 +287,10 @@ export function FeedbackDetailDialog({
   }
 
   const isLoading = feedback === undefined;
-  const currentStatus = boardStatuses?.find(
-    (s) => s._id === feedback?.statusId
+  // Find current status from either board or organization statuses
+  const currentStatus = effectiveStatuses.find(
+    (s) =>
+      s._id === feedback?.statusId || s._id === feedback?.organizationStatusId
   );
 
   // Build comment tree
@@ -365,12 +381,16 @@ export function FeedbackDetailDialog({
       {/* Status & Actions */}
       <div className="flex items-center gap-2">
         {/* Status selector (admin only) */}
-        {effectiveIsAdmin && boardStatuses && (
+        {effectiveIsAdmin && effectiveStatuses.length > 0 && (
           <Select
             onValueChange={(val) =>
               handleStatusChange(val as Id<"boardStatuses">)
             }
-            value={feedback?.statusId || undefined}
+            value={
+              (feedback?.statusId ||
+                feedback?.organizationStatusId ||
+                undefined) as string | undefined
+            }
           >
             <SelectTrigger className="w-35">
               <SelectValue placeholder="Set status">
@@ -386,7 +406,7 @@ export function FeedbackDetailDialog({
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {boardStatuses.map((status) => (
+              {effectiveStatuses.map((status) => (
                 <SelectItem key={status._id} value={status._id}>
                   <div className="flex items-center gap-2">
                     <div
