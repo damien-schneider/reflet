@@ -15,7 +15,7 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -328,6 +328,19 @@ export function FeedbackBoard({
   );
   const createFeedbackMember = useMutation(api.feedback.create);
   const toggleVoteMutation = useMutation(api.votes.toggle);
+  const ensureStatusDefaults = useMutation(
+    api.organization_statuses.ensureDefaults
+  );
+
+  // Ensure default statuses exist for this organization
+  useEffect(() => {
+    if (orgStatuses !== undefined && orgStatuses.length === 0 && isMember) {
+      // No statuses exist, create defaults
+      ensureStatusDefaults({ organizationId }).catch(() => {
+        // Silently fail - user may not have permission
+      });
+    }
+  }, [orgStatuses, organizationId, isMember, ensureStatusDefaults]);
 
   // Filter, apply optimistic updates, and sort feedback
   const filteredFeedback = useMemo(() => {
