@@ -8,7 +8,7 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useState } from "react";
 
@@ -38,6 +38,14 @@ export default function OrgDashboard({
 
   const [view, setView] = useState<BoardViewType>("feed");
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [newFeedback, setNewFeedback] = useState({
+    title: "",
+    description: "",
+    email: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const createFeedback = useMutation(api.feedback.create);
 
   const feedback = useQuery(
     api.feedback_list.listByOrganization,
@@ -56,6 +64,25 @@ export default function OrgDashboard({
   );
 
   const roadmapLanes = tags?.filter((t) => t.isRoadmapLane) ?? [];
+
+  const handleSubmitFeedback = async () => {
+    if (!(org?._id && newFeedback.title.trim())) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createFeedback({
+        organizationId: org._id as Id<"organizations">,
+        title: newFeedback.title,
+        description: newFeedback.description,
+      });
+      setShowSubmitDialog(false);
+      setNewFeedback({ title: "", description: "", email: "" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (!org) {
     return (
@@ -210,10 +237,13 @@ export default function OrgDashboard({
 
       {/* Submit Dialog */}
       <SubmitFeedbackDialog
+        feedback={newFeedback}
+        isMember={true}
+        isOpen={showSubmitDialog}
+        isSubmitting={isSubmitting}
+        onFeedbackChange={setNewFeedback}
         onOpenChange={setShowSubmitDialog}
-        open={showSubmitDialog}
-        organizationId={org._id as Id<"organizations">}
-        primaryColor={org.primaryColor ?? "#6366f1"}
+        onSubmit={handleSubmitFeedback}
       />
     </div>
   );
