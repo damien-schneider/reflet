@@ -3,8 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Top-level regex patterns for performance
 const VERSION_PLACEHOLDER_REGEX = /v1\.0\.0/i;
-const CREATE_RELEASE_REGEX = /create release/i;
-const UPDATE_RELEASE_REGEX = /update release/i;
+const PUBLISH_BUTTON_REGEX = /publish/i;
 const CANCEL_BUTTON_REGEX = /cancel/i;
 
 // Mock next/navigation
@@ -29,6 +28,11 @@ vi.mock("@tiptap/react", () => ({
     storage: { markdown: { getMarkdown: () => "" } },
     getText: () => "",
     setEditable: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+    isActive: vi.fn(() => false),
+    chain: vi.fn(() => ({ focus: vi.fn(() => ({ run: vi.fn() })) })),
+    view: { state: { selection: { from: 0, to: 0 } } },
   })),
   EditorContent: ({ editor }: { editor: unknown }) => (
     <div data-testid="editor-content">{editor ? "Editor" : "No editor"}</div>
@@ -48,7 +52,10 @@ vi.mock("@tiptap/extension-link", () => ({
 }));
 
 vi.mock("@tiptap/extension-image", () => ({
-  default: { configure: () => ({}) },
+  default: {
+    configure: () => ({}),
+    extend: () => ({ configure: () => ({}) }),
+  },
 }));
 
 vi.mock("@tiptap/extension-character-count", () => ({
@@ -65,6 +72,14 @@ vi.mock("tiptap-markdown", () => ({
 
 vi.mock("@/components/ui/tiptap/slash-command", () => ({
   createSlashCommandExtension: () => ({}),
+}));
+
+vi.mock("@/components/ui/tiptap/image-extension", () => ({
+  ImageExtension: {
+    configure: () => ({
+      extend: () => ({}),
+    }),
+  },
 }));
 
 vi.mock("@/components/ui/tiptap/use-media-upload", () => ({
@@ -121,16 +136,16 @@ describe("ReleaseEditor", () => {
     expect(versionInput).toBeInTheDocument();
   });
 
-  it("shows create button for new release", () => {
+  it("shows publish button for new release", () => {
     render(<ReleaseEditor {...defaultProps} />);
 
-    const createButton = screen.getByRole("button", {
-      name: CREATE_RELEASE_REGEX,
+    const publishButton = screen.getByRole("button", {
+      name: PUBLISH_BUTTON_REGEX,
     });
-    expect(createButton).toBeInTheDocument();
+    expect(publishButton).toBeInTheDocument();
   });
 
-  it("shows update button when editing existing release", () => {
+  it("shows publish button when editing existing release", () => {
     render(
       <ReleaseEditor
         {...defaultProps}
@@ -145,10 +160,10 @@ describe("ReleaseEditor", () => {
       />
     );
 
-    const updateButton = screen.getByRole("button", {
-      name: UPDATE_RELEASE_REGEX,
+    const publishButton = screen.getByRole("button", {
+      name: PUBLISH_BUTTON_REGEX,
     });
-    expect(updateButton).toBeInTheDocument();
+    expect(publishButton).toBeInTheDocument();
   });
 
   it("renders cancel button", () => {

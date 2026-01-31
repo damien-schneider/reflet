@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment jsdom
+ */
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -59,10 +62,15 @@ vi.mock("@reflet-v2/backend/convex/_generated/api", () => ({
       remove: "comments.remove",
     },
     board_statuses: { list: "board_statuses.list" },
+    organization_statuses: { list: "organization_statuses.list" },
     feedback_actions: {
       updateStatus: "feedback_actions.updateStatus",
       remove: "feedback_actions.remove",
       togglePin: "feedback_actions.togglePin",
+    },
+    feedback_clarification: {
+      getDraftReplyStatus: "feedback_clarification.getDraftReplyStatus",
+      generateDraftReply: "feedback_clarification.generateDraftReply",
     },
     votes: { toggle: "votes.toggle" },
   },
@@ -86,6 +94,53 @@ vi.mock("@/components/ui/dialog", () => ({
   ),
   DialogFooter: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
+  ),
+}));
+
+vi.mock("@/components/ui/card", () => ({
+  Card: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <div className={className} data-testid="card">
+      {children}
+    </div>
+  ),
+  CardContent: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <div className={className} data-testid="card-content">
+      {children}
+    </div>
+  ),
+  CardHeader: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <div className={className} data-testid="card-header">
+      {children}
+    </div>
+  ),
+  CardTitle: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <h3 className={className} data-testid="card-title">
+      {children}
+    </h3>
   ),
 }));
 
@@ -323,6 +378,51 @@ vi.mock("@/lib/utils", () => ({
       .join(" "),
 }));
 
+// Mock tiptap components to avoid hooks issues
+vi.mock("@/components/ui/tiptap/markdown-renderer", () => ({
+  MarkdownRenderer: ({ content }: { content: string }) => (
+    <div data-testid="markdown-renderer">{content}</div>
+  ),
+}));
+
+vi.mock("@/components/ui/tiptap/inline-editor", () => ({
+  TiptapInlineEditor: ({
+    value,
+    onSave,
+    placeholder,
+  }: {
+    value?: string;
+    onSave?: (val: string) => void;
+    placeholder?: string;
+  }) => (
+    <input
+      data-testid="tiptap-inline-editor"
+      defaultValue={value}
+      onBlur={(e) => onSave?.(e.target.value)}
+      placeholder={placeholder}
+    />
+  ),
+}));
+
+vi.mock("@/components/ui/tiptap/markdown-editor", () => ({
+  TiptapMarkdownEditor: ({
+    value,
+    onChange,
+    placeholder,
+  }: {
+    value?: string;
+    onChange?: (val: string) => void;
+    placeholder?: string;
+  }) => (
+    <textarea
+      data-testid="tiptap-markdown-editor"
+      onChange={(e) => onChange?.(e.target.value)}
+      placeholder={placeholder}
+      value={value}
+    />
+  ),
+}));
+
 // Import the component after mocks
 import { FeedbackDetailDialog } from "./feedback-detail-dialog";
 
@@ -346,7 +446,7 @@ describe("FeedbackDetailDialog", () => {
     expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
-  it("should show loading skeleton when feedback is loading", () => {
+  it("should not render when feedback is loading (undefined)", () => {
     const onClose = vi.fn();
     mockUseQuery.mockImplementation((queryName) => {
       if (queryName === "feedback.get") {
@@ -363,8 +463,8 @@ describe("FeedbackDetailDialog", () => {
       />
     );
 
-    expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getAllByTestId("skeleton").length).toBeGreaterThan(0);
+    // Component returns null when feedback is still loading
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
   it("should display feedback title and description", async () => {
@@ -507,12 +607,12 @@ describe("FeedbackDetailDialog", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByPlaceholderText("Write a comment...")
+        screen.getByPlaceholderText("Write a comment... (Cmd+Enter to send)")
       ).toBeInTheDocument();
     });
   });
 
-  it("should show 'Feedback not found' when feedback is null", async () => {
+  it("should not render when feedback is null (not found)", () => {
     const onClose = vi.fn();
     mockUseQuery.mockImplementation((queryName) => {
       if (queryName === "feedback.get") {
@@ -529,9 +629,8 @@ describe("FeedbackDetailDialog", () => {
       />
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Feedback not found")).toBeInTheDocument();
-    });
+    // Component returns null when feedback is not found
+    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
   it("should display comment count", async () => {

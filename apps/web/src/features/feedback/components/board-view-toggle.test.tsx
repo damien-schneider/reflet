@@ -2,8 +2,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type BoardView, BoardViewToggle } from "./board-view-toggle";
 
-// Mock lucide-react icons
-vi.mock("lucide-react", () => ({
+// Mock phosphor icons
+vi.mock("@phosphor-icons/react", () => ({
   GridFour: () => <svg data-testid="layout-grid-icon" />,
   List: () => <svg data-testid="list-icon" />,
 }));
