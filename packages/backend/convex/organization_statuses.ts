@@ -101,6 +101,76 @@ export const createDefaults = mutation({
 });
 
 /**
+ * Ensure default statuses exist for an organization (auto-initializes if missing)
+ * This can be called by any member to ensure the org has statuses
+ */
+export const ensureDefaults = mutation({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
+    }
+
+    // Check if statuses already exist
+    const existingStatuses = await ctx.db
+      .query("organizationStatuses")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+
+    if (existingStatuses) {
+      // Already has statuses, return the list
+      const allStatuses = await ctx.db
+        .query("organizationStatuses")
+        .withIndex("by_organization", (q) =>
+          q.eq("organizationId", args.organizationId)
+        )
+        .collect();
+      return allStatuses.sort((a, b) => a.order - b.order);
+    }
+
+    // Create default statuses
+    const now = Date.now();
+    const createdStatuses: Array<{
+      _id: Id<"organizationStatuses">;
+      organizationId: Id<"organizations">;
+      name: string;
+      color: string;
+      icon: string;
+      order: number;
+      createdAt: number;
+      updatedAt: number;
+    }> = [];
+
+    for (const status of DEFAULT_STATUSES) {
+      const id = await ctx.db.insert("organizationStatuses", {
+        organizationId: args.organizationId,
+        name: status.name,
+        color: status.color,
+        icon: status.icon,
+        order: status.order,
+        createdAt: now,
+        updatedAt: now,
+      });
+      createdStatuses.push({
+        _id: id,
+        organizationId: args.organizationId,
+        name: status.name,
+        color: status.color,
+        icon: status.icon,
+        order: status.order,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    return createdStatuses;
+  },
+});
+
+/**
  * Create a new status for an organization
  */
 export const create = mutation({
