@@ -12,6 +12,34 @@ const generateSlug = (name: string): string => {
     .replace(/^-|-$/g, "");
 };
 
+// Default tags for categorizing feedback types
+const DEFAULT_TAGS = [
+  {
+    name: "Feature Request",
+    slug: "feature-request",
+    color: "#3b82f6",
+    description: "New feature suggestions and ideas",
+  },
+  {
+    name: "Bug Report",
+    slug: "bug-report",
+    color: "#ef4444",
+    description: "Issues and problems to be fixed",
+  },
+  {
+    name: "Enhancement",
+    slug: "enhancement",
+    color: "#8b5cf6",
+    description: "Improvements to existing features",
+  },
+  {
+    name: "Question",
+    slug: "question",
+    color: "#f59e0b",
+    description: "Questions and support requests",
+  },
+] as const;
+
 // Tag settings validator
 const tagSettings = v.object({
   requireApproval: v.optional(v.boolean()),
@@ -211,6 +239,65 @@ export const getForFeedback = query({
 // ============================================
 // MUTATIONS
 // ============================================
+
+/**
+ * Create default tags for an organization
+ */
+export const createDefaults = mutation({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
+    }
+
+    // Check membership
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership) {
+      throw new Error("You are not a member of this organization");
+    }
+
+    // Check if tags already exist
+    const existingTags = await ctx.db
+      .query("tags")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+
+    if (existingTags) {
+      return []; // Already initialized
+    }
+
+    const now = Date.now();
+    const tagIds: string[] = [];
+
+    for (const tag of DEFAULT_TAGS) {
+      const id = await ctx.db.insert("tags", {
+        organizationId: args.organizationId,
+        name: tag.name,
+        slug: tag.slug,
+        color: tag.color,
+        description: tag.description,
+        isDoneStatus: false,
+        isRoadmapLane: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      tagIds.push(id);
+    }
+
+    return tagIds;
+  },
+});
 
 /**
  * Create a new tag

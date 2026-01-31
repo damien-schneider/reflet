@@ -3,14 +3,12 @@ import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { getAuthUser } from "./utils";
 
-// Default statuses to create for new organizations
+// Default statuses to create for new organizations (used as roadmap columns)
 const DEFAULT_STATUSES = [
-  { name: "Open", color: "#6b7280", icon: "circle", order: 0 },
-  { name: "Under Review", color: "#f59e0b", icon: "eye", order: 1 },
-  { name: "Planned", color: "#3b82f6", icon: "calendar", order: 2 },
-  { name: "In Progress", color: "#8b5cf6", icon: "loader", order: 3 },
-  { name: "Completed", color: "#22c55e", icon: "check-circle", order: 4 },
-  { name: "Closed", color: "#ef4444", icon: "x-circle", order: 5 },
+  { name: "Backlog", color: "#6b7280", icon: "clock", order: 0 },
+  { name: "Planned", color: "#3b82f6", icon: "calendar", order: 1 },
+  { name: "In Progress", color: "#8b5cf6", icon: "spinner", order: 2 },
+  { name: "Done", color: "#22c55e", icon: "check-circle", order: 3 },
 ] as const;
 
 /**

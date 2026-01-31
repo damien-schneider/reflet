@@ -319,7 +319,8 @@ export function FeedbackBoard({
     organizationId,
   });
 
-  const tags = useQuery(api.tags.list, { organizationId });
+  // Tags are included with feedback items for display purposes
+  // We don't need to query them separately
 
   // Mutations
   const createFeedbackPublic = useMutation(
@@ -350,10 +351,8 @@ export function FeedbackBoard({
     return sortFeedback(result, sortBy);
   }, [feedback, selectedStatusIds, sortBy, optimisticVotes]);
 
-  // Roadmap lanes (tags marked as roadmap lanes)
-  const roadmapLanes = useMemo(() => {
-    return (tags ?? []).filter((t) => t.isRoadmapLane);
-  }, [tags]);
+  // Roadmap columns are organization statuses (not tags)
+  // Tags are for categorization (Feature Request, Bug Report, etc.)
 
   // Handlers
   const handleSubmitFeedback = async () => {
@@ -521,10 +520,10 @@ export function FeedbackBoard({
         {view === "roadmap" ? (
           <RoadmapView
             feedback={filteredFeedback}
-            lanes={roadmapLanes}
             onFeedbackClick={(id) =>
               setSelectedFeedbackId(id as Id<"feedback">)
             }
+            statuses={orgStatuses ?? []}
           />
         ) : (
           <FeedFeedbackView
@@ -758,21 +757,24 @@ function FeedbackCard({
   );
 }
 
-// Roadmap view component
+// Roadmap view component - uses statuses as columns
 interface RoadmapViewProps {
   feedback: FeedbackItem[];
-  lanes: Array<{ _id: string; name: string; color: string }>;
+  statuses: Array<{ _id: string; name: string; color: string }>;
   onFeedbackClick: (feedbackId: string) => void;
 }
 
-function RoadmapView({ feedback, lanes, onFeedbackClick }: RoadmapViewProps) {
-  if (lanes.length === 0) {
+function RoadmapView({
+  feedback,
+  statuses,
+  onFeedbackClick,
+}: RoadmapViewProps) {
+  if (statuses.length === 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center">
           <p className="text-muted-foreground">
-            No roadmap lanes configured. Roadmap lanes are created from tags
-            marked as &quot;Is Roadmap Lane&quot;.
+            No statuses configured. Statuses are used as roadmap columns.
           </p>
         </CardContent>
       </Card>
@@ -781,34 +783,57 @@ function RoadmapView({ feedback, lanes, onFeedbackClick }: RoadmapViewProps) {
 
   return (
     <div className="flex gap-4 overflow-x-auto pb-4">
-      {lanes.map((lane) => {
-        const laneFeedback = feedback.filter((f) =>
-          f.tags?.some((t) => t?._id === lane._id)
+      {statuses.map((status) => {
+        // Filter feedback by status
+        const statusFeedback = feedback.filter(
+          (f) => f.organizationStatusId === status._id
         );
 
         return (
           <div
             className="w-72 shrink-0 rounded-lg border bg-muted/30 p-4"
-            key={lane._id}
+            key={status._id}
           >
             <div className="mb-3 flex items-center gap-2">
               <div
                 className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: lane.color }}
+                style={{ backgroundColor: status.color }}
               />
-              <h3 className="font-medium">{lane.name}</h3>
+              <h3 className="font-medium">{status.name}</h3>
               <Badge className="ml-auto" variant="secondary">
-                {laneFeedback.length}
+                {statusFeedback.length}
               </Badge>
             </div>
             <div className="space-y-2">
-              {laneFeedback.map((item) => (
+              {statusFeedback.map((item) => (
                 <Card
                   className="cursor-pointer p-3 transition-all hover:border-primary/50"
                   key={item._id}
                   onClick={() => onFeedbackClick(item._id)}
                 >
                   <h4 className="font-medium text-sm">{item.title}</h4>
+                  {/* Show tags for categorization */}
+                  {item.tags && item.tags.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {item.tags.slice(0, 2).map(
+                        (tag) =>
+                          tag && (
+                            <Badge
+                              className="px-1 py-0 font-normal text-xs"
+                              key={tag._id}
+                              style={{
+                                backgroundColor: `${tag.color}15`,
+                                color: tag.color,
+                                borderColor: `${tag.color}30`,
+                              }}
+                              variant="outline"
+                            >
+                              {tag.name}
+                            </Badge>
+                          )
+                      )}
+                    </div>
+                  )}
                   <div className="mt-2 flex items-center gap-2 text-muted-foreground text-xs">
                     <CaretUp className="h-3 w-3" />
                     <span>{item.voteCount}</span>
@@ -817,7 +842,7 @@ function RoadmapView({ feedback, lanes, onFeedbackClick }: RoadmapViewProps) {
                   </div>
                 </Card>
               ))}
-              {laneFeedback.length === 0 && (
+              {statusFeedback.length === 0 && (
                 <p className="py-4 text-center text-muted-foreground text-sm">
                   No items
                 </p>
