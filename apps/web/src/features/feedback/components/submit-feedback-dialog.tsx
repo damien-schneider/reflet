@@ -1,5 +1,6 @@
 "use client";
 
+import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -40,6 +41,11 @@ export function SubmitFeedbackDialog({
   isSubmitting,
   isMember,
 }: SubmitFeedbackDialogProps) {
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    onSubmit();
+  };
+
   return (
     <Dialog onOpenChange={onOpenChange} open={isOpen}>
       <DialogContent
@@ -53,7 +59,7 @@ export function SubmitFeedbackDialog({
         </DialogDescription>
 
         {/* Document-like content area */}
-        <div className="flex min-h-[400px] flex-col">
+        <form className="flex min-h-[400px] flex-col" onSubmit={handleSubmit}>
           {/* Title area */}
           <div className="px-6 pt-6 pb-2">
             <TiptapTitleEditor
@@ -61,6 +67,7 @@ export function SubmitFeedbackDialog({
               onChange={(value) =>
                 onFeedbackChange({ ...feedback, title: value })
               }
+              onEnter={onSubmit}
               placeholder="Untitled"
               value={feedback.title}
             />
@@ -116,14 +123,14 @@ export function SubmitFeedbackDialog({
               />
               <Button
                 disabled={isSubmitting || !feedback.title.trim()}
-                onClick={onSubmit}
                 size="sm"
+                type="submit"
               >
                 {isSubmitting ? "Submitting..." : "Submit"}
               </Button>
             </div>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
