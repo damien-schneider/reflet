@@ -1,7 +1,23 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { feedbackStatus } from "./feedback";
 import { getAuthUser } from "./utils";
+
+// Helper to generate slug from name
+const generateSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+};
+
+// Tag settings validator
+const tagSettings = v.object({
+  requireApproval: v.optional(v.boolean()),
+  defaultStatus: v.optional(feedbackStatus),
+  isPublic: v.optional(v.boolean()),
+});
 
 // ============================================
 // QUERIES
@@ -57,6 +73,77 @@ export const list = query({
       }
       return a.name.localeCompare(b.name);
     });
+  },
+});
+
+/**
+ * Get a tag by organization and slug (for public pages)
+ */
+export const getBySlug = query({
+  args: {
+    organizationId: v.id("organizations"),
+    slug: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      return null;
+    }
+
+    const tag = await ctx.db
+      .query("tags")
+      .withIndex("by_org_slug", (q) =>
+        q.eq("organizationId", args.organizationId).eq("slug", args.slug)
+      )
+      .unique();
+
+    if (!tag) {
+      return null;
+    }
+
+    const user = await authComponent.safeGetAuthUser(ctx);
+
+    // Check access
+    let isMember = false;
+    if (user) {
+      const membership = await ctx.db
+        .query("organizationMembers")
+        .withIndex("by_org_user", (q) =>
+          q.eq("organizationId", args.organizationId).eq("userId", user._id)
+        )
+        .unique();
+      isMember = !!membership;
+    }
+
+    // Non-members can only see public tags
+    if (!(isMember || tag.settings?.isPublic)) {
+      return null;
+    }
+
+    return tag;
+  },
+});
+
+/**
+ * List public tags for an organization
+ */
+export const listPublic = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.organizationId);
+    if (!org?.isPublic) {
+      return [];
+    }
+
+    const tags = await ctx.db
+      .query("tags")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    // Filter to only public tags
+    return tags.filter((tag) => tag.settings?.isPublic);
   },
 });
 
@@ -132,9 +219,12 @@ export const create = mutation({
   args: {
     organizationId: v.id("organizations"),
     name: v.string(),
+    slug: v.optional(v.string()),
     color: v.string(),
+    description: v.optional(v.string()),
     isDoneStatus: v.optional(v.boolean()),
     isRoadmapLane: v.optional(v.boolean()),
+    settings: v.optional(tagSettings),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -149,6 +239,21 @@ export const create = mutation({
 
     if (!membership || membership.role === "member") {
       throw new Error("Only admins can create tags");
+    }
+
+    // Generate or validate slug
+    let slug = args.slug ?? generateSlug(args.name);
+
+    // Ensure slug is unique within the organization
+    const existingTag = await ctx.db
+      .query("tags")
+      .withIndex("by_org_slug", (q) =>
+        q.eq("organizationId", args.organizationId).eq("slug", slug)
+      )
+      .unique();
+
+    if (existingTag) {
+      slug = `${slug}-${Math.random().toString(36).substring(2, 8)}`;
     }
 
     // Get max lane order if this is a roadmap lane
@@ -169,14 +274,19 @@ export const create = mutation({
       laneOrder = maxOrder + 1;
     }
 
+    const now = Date.now();
     const tagId = await ctx.db.insert("tags", {
       organizationId: args.organizationId,
       name: args.name,
+      slug,
       color: args.color,
+      description: args.description,
       isDoneStatus: args.isDoneStatus ?? false,
       isRoadmapLane: args.isRoadmapLane ?? false,
       laneOrder,
-      createdAt: Date.now(),
+      settings: args.settings,
+      createdAt: now,
+      updatedAt: now,
     });
 
     return tagId;
@@ -190,9 +300,12 @@ export const update = mutation({
   args: {
     id: v.id("tags"),
     name: v.optional(v.string()),
+    slug: v.optional(v.string()),
     color: v.optional(v.string()),
+    description: v.optional(v.string()),
     isDoneStatus: v.optional(v.boolean()),
     isRoadmapLane: v.optional(v.boolean()),
+    settings: v.optional(tagSettings),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -214,8 +327,25 @@ export const update = mutation({
       throw new Error("Only admins can update tags");
     }
 
+    // Handle slug uniqueness if changing
+    if (args.slug && args.slug !== tag.slug) {
+      const newSlug = args.slug;
+      const existingTag = await ctx.db
+        .query("tags")
+        .withIndex("by_org_slug", (q) =>
+          q.eq("organizationId", tag.organizationId).eq("slug", newSlug)
+        )
+        .unique();
+
+      if (existingTag) {
+        throw new Error("This slug is already taken in this organization");
+      }
+    }
+
     // Handle lane order if becoming a roadmap lane
-    const updates: Partial<typeof tag> = {};
+    const updates: Partial<typeof tag> & { updatedAt: number } = {
+      updatedAt: Date.now(),
+    };
 
     if (args.isRoadmapLane && !tag.isRoadmapLane) {
       const existingLanes = await ctx.db

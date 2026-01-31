@@ -55,6 +55,7 @@ export {
   useCreateFeedback,
   useFeedback,
   useFeedbackList,
+  useOrganizationConfig,
   useRoadmap,
   useSubscription,
   useVote,
@@ -62,6 +63,7 @@ export {
 // Re-export types from main package
 export type {
   AddCommentParams,
+  /** @deprecated Use OrganizationConfig instead */
   BoardConfig,
   ChangelogEntry,
   Comment,
@@ -71,6 +73,9 @@ export type {
   FeedbackListParams,
   FeedbackStatus,
   FeedbackTag,
+  OrganizationConfig,
+  OrganizationSettings,
+  OrganizationStatus,
   RefletConfig,
   RefletUser,
   Roadmap,

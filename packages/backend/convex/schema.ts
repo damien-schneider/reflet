@@ -119,6 +119,18 @@ export default defineSchema({
     subscriptionId: v.optional(v.string()),
     // Support settings
     supportEnabled: v.optional(v.boolean()),
+    // Feedback settings (org-level defaults)
+    feedbackSettings: v.optional(
+      v.object({
+        allowAnonymousVoting: v.optional(v.boolean()),
+        defaultTagId: v.optional(v.id("tags")),
+        defaultView: v.optional(
+          v.union(v.literal("roadmap"), v.literal("feed"))
+        ),
+        requireApproval: v.optional(v.boolean()),
+        defaultStatus: v.optional(feedbackStatus),
+      })
+    ),
   })
     .index("by_slug", ["slug"])
     .searchIndex("search_name", { searchField: "name" }),
@@ -203,7 +215,7 @@ export default defineSchema({
     .index("by_org_slug", ["organizationId", "slug"]),
 
   // ============================================
-  // BOARD STATUSES
+  // BOARD STATUSES (deprecated - use organizationStatuses)
   // ============================================
   boardStatuses: defineTable({
     boardId: v.id("boards"),
@@ -218,28 +230,57 @@ export default defineSchema({
     .index("by_board_order", ["boardId", "order"]),
 
   // ============================================
+  // ORGANIZATION STATUSES (replaces board-level statuses)
+  // ============================================
+  organizationStatuses: defineTable({
+    organizationId: v.id("organizations"),
+    name: v.string(),
+    color: v.string(),
+    icon: v.optional(v.string()),
+    order: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_order", ["organizationId", "order"]),
+
+  // ============================================
   // TAGS
   // ============================================
   tags: defineTable({
     organizationId: v.id("organizations"),
     name: v.string(),
+    slug: v.string(), // URL-friendly identifier
     color: v.string(), // Hex color
+    description: v.optional(v.string()),
     isDoneStatus: v.boolean(), // Marks completion for changelog
     isRoadmapLane: v.boolean(), // Can be used as roadmap lane
     laneOrder: v.optional(v.number()), // Order in roadmap lanes
+    // Per-tag settings (replacing board-level settings)
+    settings: v.optional(
+      v.object({
+        requireApproval: v.optional(v.boolean()),
+        defaultStatus: v.optional(feedbackStatus),
+        isPublic: v.optional(v.boolean()),
+      })
+    ),
     createdAt: v.number(),
-  }).index("by_organization", ["organizationId"]),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_slug", ["organizationId", "slug"]),
 
   // ============================================
   // FEEDBACK
   // ============================================
   feedback: defineTable({
-    boardId: v.id("boards"),
-    organizationId: v.id("organizations"), // Denormalized for easier queries
+    boardId: v.optional(v.id("boards")), // Optional for migration, will be removed
+    organizationId: v.id("organizations"), // Primary relationship
     title: v.string(),
     description: v.string(), // Rich text (Tiptap JSON or markdown)
     status: feedbackStatus,
-    statusId: v.optional(v.id("boardStatuses")),
+    statusId: v.optional(v.id("boardStatuses")), // Deprecated: use organizationStatusId
+    organizationStatusId: v.optional(v.id("organizationStatuses")), // New org-level status
     authorId: v.optional(v.string()), // Better Auth user ID (optional for external users)
     voteCount: v.number(),
     commentCount: v.number(),
@@ -275,6 +316,7 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_board_status", ["boardId", "status"])
     .index("by_status_id", ["statusId"])
+    .index("by_org_status_id", ["organizationStatusId"])
     .index("by_github_issue", ["organizationId", "githubIssueId"])
     .index("by_external_user", ["externalUserId"])
     .searchIndex("search_title", {
@@ -614,7 +656,7 @@ export default defineSchema({
     .index("by_organization", ["organizationId"]),
 
   // ============================================
-  // GITHUB LABEL MAPPINGS (Maps GitHub labels to Reflet boards/tags)
+  // GITHUB LABEL MAPPINGS (Maps GitHub labels to Reflet tags)
   // ============================================
   githubLabelMappings: defineTable({
     organizationId: v.id("organizations"),
@@ -623,7 +665,7 @@ export default defineSchema({
     githubLabelName: v.string(), // The GitHub label name to match
     githubLabelColor: v.optional(v.string()), // Label color from GitHub
     // Mapping target
-    targetBoardId: v.optional(v.id("boards")), // Board to sync issues to
+    targetBoardId: v.optional(v.id("boards")), // Deprecated: use targetTagId
     targetTagId: v.optional(v.id("tags")), // Tag to apply to synced feedback
     // Sync options
     autoSync: v.boolean(), // Whether to auto-sync issues with this label
@@ -710,7 +752,7 @@ export default defineSchema({
   }).index("by_organization", ["organizationId"]),
 
   // ============================================
-  // BOARD API KEYS (For public API access)
+  // BOARD API KEYS (Deprecated - use organizationApiKeys)
   // ============================================
   boardApiKeys: defineTable({
     boardId: v.id("boards"),
@@ -730,10 +772,34 @@ export default defineSchema({
     .index("by_public_key", ["publicKey"]),
 
   // ============================================
+  // ORGANIZATION API KEYS (Replaces boardApiKeys)
+  // ============================================
+  organizationApiKeys: defineTable({
+    organizationId: v.id("organizations"),
+    tagId: v.optional(v.id("tags")), // Optional: scope key to specific tag
+    name: v.string(), // User-friendly name for the key
+    publicKey: v.string(), // fb_pub_xxxxxxxxxxxx
+    secretKeyHash: v.string(), // Hashed secret key
+    allowedDomains: v.optional(v.array(v.string())), // Optional CORS restriction
+    isActive: v.boolean(),
+    rateLimit: v.optional(
+      v.object({
+        requestsPerMinute: v.number(),
+      })
+    ),
+    createdAt: v.number(),
+    lastUsedAt: v.optional(v.number()),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_public_key", ["publicKey"])
+    .index("by_org_tag", ["organizationId", "tagId"]),
+
+  // ============================================
   // EXTERNAL USERS (Users from client apps via API)
   // ============================================
   externalUsers: defineTable({
-    boardId: v.id("boards"),
+    organizationId: v.id("organizations"), // Primary relationship
+    boardId: v.optional(v.id("boards")), // Deprecated: for migration only
     externalId: v.string(), // User's ID in client's system
     email: v.optional(v.string()),
     name: v.optional(v.string()),
@@ -742,6 +808,8 @@ export default defineSchema({
     createdAt: v.number(),
     lastSeenAt: v.number(),
   })
+    .index("by_organization_external", ["organizationId", "externalId"])
+    .index("by_organization_email", ["organizationId", "email"])
     .index("by_board_external", ["boardId", "externalId"])
     .index("by_board_email", ["boardId", "email"]),
 
@@ -749,7 +817,8 @@ export default defineSchema({
   // FEEDBACK VISITORS (Anonymous visitors from widget/API)
   // ============================================
   feedbackVisitors: defineTable({
-    boardId: v.id("boards"),
+    organizationId: v.id("organizations"), // Primary relationship
+    boardId: v.optional(v.id("boards")), // Deprecated: for migration only
     visitorId: v.string(),
     metadata: v.optional(
       v.object({
@@ -759,19 +828,26 @@ export default defineSchema({
     ),
     createdAt: v.number(),
     lastSeenAt: v.number(),
-  }).index("by_board_visitor", ["boardId", "visitorId"]),
+  })
+    .index("by_organization_visitor", ["organizationId", "visitorId"])
+    .index("by_board_visitor", ["boardId", "visitorId"]),
 
   // ============================================
   // API REQUEST LOGS (For rate limiting & analytics)
   // ============================================
   apiRequestLogs: defineTable({
-    boardId: v.id("boards"),
-    apiKeyId: v.id("boardApiKeys"),
+    organizationId: v.id("organizations"), // Primary relationship
+    boardId: v.optional(v.id("boards")), // Deprecated: for migration only
+    apiKeyId: v.optional(v.id("boardApiKeys")), // Deprecated
+    organizationApiKeyId: v.optional(v.id("organizationApiKeys")), // New org-level key
     endpoint: v.string(),
     method: v.string(),
     statusCode: v.number(),
     ip: v.optional(v.string()),
     userAgent: v.optional(v.string()),
     timestamp: v.number(),
-  }).index("by_key_time", ["apiKeyId", "timestamp"]),
+  })
+    .index("by_organization_time", ["organizationId", "timestamp"])
+    .index("by_org_key_time", ["organizationApiKeyId", "timestamp"])
+    .index("by_key_time", ["apiKeyId", "timestamp"]),
 });

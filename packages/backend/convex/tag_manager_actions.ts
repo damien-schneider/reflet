@@ -2,6 +2,14 @@ import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { getAuthUser } from "./utils";
 
+// Helper to generate slug from name
+const generateSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+};
+
 // ============================================
 // MUTATIONS
 // ============================================
@@ -32,6 +40,21 @@ export const create = mutation({
       throw new Error("Only admins can create tags");
     }
 
+    // Generate slug
+    let slug = generateSlug(args.name);
+
+    // Ensure slug is unique within the organization
+    const existingTag = await ctx.db
+      .query("tags")
+      .withIndex("by_org_slug", (q) =>
+        q.eq("organizationId", args.organizationId).eq("slug", slug)
+      )
+      .unique();
+
+    if (existingTag) {
+      slug = `${slug}-${Math.random().toString(36).substring(2, 8)}`;
+    }
+
     // Get max lane order if this is a roadmap lane
     let laneOrder: number | undefined;
     if (args.isRoadmapLane) {
@@ -50,14 +73,17 @@ export const create = mutation({
       laneOrder = maxOrder + 1;
     }
 
+    const now = Date.now();
     const tagId = await ctx.db.insert("tags", {
       organizationId: args.organizationId,
       name: args.name,
+      slug,
       color: args.color,
       isDoneStatus: args.isDoneStatus ?? false,
       isRoadmapLane: args.isRoadmapLane ?? false,
       laneOrder,
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     });
 
     return tagId;

@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "./constants";
@@ -31,10 +32,8 @@ export const get = query({
       return null;
     }
 
-    const board = await ctx.db.get(feedback.boardId);
-    if (!board) {
-      return null;
-    }
+    // Get board if it exists (for backwards compatibility)
+    const board = feedback.boardId ? await ctx.db.get(feedback.boardId) : null;
 
     const org = await ctx.db.get(feedback.organizationId);
     if (!org) {
@@ -57,7 +56,12 @@ export const get = query({
       role = membership?.role ?? null;
     }
 
-    if (!(isMember || (board.isPublic && org.isPublic))) {
+    // Check visibility: member OR (board is public AND org is public) OR org is public (new flow)
+    const isPublicAccess = board
+      ? board.isPublic && org.isPublic
+      : org.isPublic;
+
+    if (!(isMember || isPublicAccess)) {
       return null;
     }
 
@@ -88,6 +92,11 @@ export const get = query({
       hasVoted = !!vote;
     }
 
+    // Get organization status if set
+    const organizationStatus = feedback.organizationStatusId
+      ? await ctx.db.get(feedback.organizationStatusId)
+      : null;
+
     // Get author info from Better Auth
     let author: {
       name?: string;
@@ -112,6 +121,7 @@ export const get = query({
       ...feedback,
       board,
       organization: org,
+      organizationStatus,
       tags: tags.filter(Boolean),
       hasVoted,
       isMember,
@@ -128,13 +138,17 @@ export const get = query({
 
 /**
  * Create new feedback
+ * Supports both legacy board-based flow and new organization-based flow
  */
 export const create = mutation({
   args: {
-    boardId: v.id("boards"),
+    boardId: v.optional(v.id("boards")), // Optional for new flow
+    organizationId: v.optional(v.id("organizations")), // For new flow
+    tagId: v.optional(v.id("tags")), // Optional tag for categorization
     title: v.string(),
     description: v.string(),
   },
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Legacy code supporting both board and org flows during migration
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -146,64 +160,131 @@ export const create = mutation({
       "Description"
     );
 
-    const board = await ctx.db.get(args.boardId);
-    if (!board) {
-      throw new Error("Board not found");
+    // Determine organization and settings source
+    let orgId: typeof args.organizationId;
+    let requireApproval = false;
+    let defaultStatus:
+      | "open"
+      | "under_review"
+      | "planned"
+      | "in_progress"
+      | "completed"
+      | "closed" = "open";
+
+    if (args.boardId) {
+      // Legacy board-based flow
+      const board = await ctx.db.get(args.boardId);
+      if (!board) {
+        throw new Error("Board not found");
+      }
+      orgId = board.organizationId;
+      requireApproval = board.settings?.requireApproval ?? false;
+      defaultStatus = board.settings?.defaultStatus ?? "open";
+    } else if (args.organizationId) {
+      // New organization-based flow
+      orgId = args.organizationId;
+
+      // Check tag settings if tag provided
+      if (args.tagId) {
+        const tag = await ctx.db.get(args.tagId);
+        if (tag && tag.organizationId === orgId) {
+          requireApproval = tag.settings?.requireApproval ?? false;
+          defaultStatus = tag.settings?.defaultStatus ?? "open";
+        }
+      }
+
+      // Fall back to org settings
+      const org = await ctx.db.get(orgId);
+      if (org?.feedbackSettings) {
+        requireApproval =
+          requireApproval || (org.feedbackSettings.requireApproval ?? false);
+        defaultStatus =
+          defaultStatus || (org.feedbackSettings.defaultStatus ?? "open");
+      }
+    } else {
+      throw new Error("Either boardId or organizationId is required");
     }
 
-    const org = await ctx.db.get(board.organizationId);
+    const org = await ctx.db.get(orgId);
     if (!org) {
       throw new Error("Organization not found");
     }
 
-    // Check access - need to be member OR board is public
+    // Check access - need to be member OR org is public
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", board.organizationId).eq("userId", user._id)
+        q.eq("organizationId", org._id).eq("userId", user._id)
       )
       .unique();
 
     const isMember = !!membership;
 
-    if (!(isMember || (board.isPublic && org.isPublic))) {
-      throw new Error("You don't have access to this board");
+    // For board-based flow, check board visibility
+    if (args.boardId) {
+      const board = await ctx.db.get(args.boardId);
+      if (!(isMember || (board?.isPublic && org.isPublic))) {
+        throw new Error("You don't have access to this board");
+      }
+    } else {
+      // For org-based flow, check org visibility or tag visibility
+      let hasAccess = isMember || org.isPublic;
+      if (args.tagId && !isMember) {
+        const tag = await ctx.db.get(args.tagId);
+        hasAccess = hasAccess && (tag?.settings?.isPublic ?? false);
+      }
+      if (!hasAccess) {
+        throw new Error("You don't have access to submit feedback");
+      }
     }
 
-    // Check feedback limit
+    // Check feedback limit (org-level)
     const existingFeedback = await ctx.db
       .query("feedback")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
+      .withIndex("by_organization", (q) => q.eq("organizationId", org._id))
       .collect();
 
-    const limit = PLAN_LIMITS[org.subscriptionTier].maxFeedbackPerBoard;
+    const limit = PLAN_LIMITS[org.subscriptionTier].maxFeedbackPerBoard * 10; // Org limit is higher
     if (existingFeedback.length >= limit) {
       throw new Error(
-        `Feedback limit reached. This board allows ${limit} feedback items.`
+        `Feedback limit reached. This organization allows ${limit} feedback items.`
       );
     }
 
-    // Get the default status (first status by order, usually "Open")
-    const boardStatuses = await ctx.db
-      .query("boardStatuses")
-      .withIndex("by_board_order", (q) => q.eq("boardId", args.boardId))
+    // Get the default organization status (first by order)
+    const orgStatuses = await ctx.db
+      .query("organizationStatuses")
+      .withIndex("by_org_order", (q) => q.eq("organizationId", org._id))
       .collect();
-    const defaultBoardStatus = boardStatuses.sort(
-      (a, b) => a.order - b.order
-    )[0];
+    const defaultOrgStatus = orgStatuses.sort((a, b) => a.order - b.order)[0];
+
+    // Also get board status for legacy support
+    let defaultBoardStatusId: Id<"boardStatuses"> | undefined;
+    if (args.boardId) {
+      const providedBoardId = args.boardId;
+      const boardStatuses = await ctx.db
+        .query("boardStatuses")
+        .withIndex("by_board_order", (q) => q.eq("boardId", providedBoardId))
+        .collect();
+      const defaultBoardStatus = boardStatuses.sort(
+        (a, b) => a.order - b.order
+      )[0];
+      defaultBoardStatusId = defaultBoardStatus?._id;
+    }
 
     const now = Date.now();
     const feedbackId = await ctx.db.insert("feedback", {
       boardId: args.boardId,
-      organizationId: board.organizationId,
+      organizationId: org._id,
       title: args.title,
       description: args.description,
-      status: board.settings?.defaultStatus || "open",
-      statusId: defaultBoardStatus?._id,
+      status: defaultStatus,
+      statusId: defaultBoardStatusId,
+      organizationStatusId: defaultOrgStatus?._id,
       authorId: user._id,
       voteCount: 1, // Auto-vote for author
       commentCount: 0,
-      isApproved: !board.settings?.requireApproval,
+      isApproved: !requireApproval,
       isPinned: false,
       createdAt: now,
       updatedAt: now,
@@ -216,6 +297,17 @@ export const create = mutation({
       voteType: "upvote",
       createdAt: now,
     });
+
+    // Add tag if provided
+    if (args.tagId) {
+      const tag = await ctx.db.get(args.tagId);
+      if (tag && tag.organizationId === orgId) {
+        await ctx.db.insert("feedbackTags", {
+          feedbackId,
+          tagId: args.tagId,
+        });
+      }
+    }
 
     return feedbackId;
   },
@@ -230,6 +322,7 @@ export const update = mutation({
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     status: v.optional(feedbackStatus),
+    organizationStatusId: v.optional(v.id("organizationStatuses")),
     isApproved: v.optional(v.boolean()),
     isPinned: v.optional(v.boolean()),
     roadmapLane: v.optional(v.string()),
@@ -292,6 +385,7 @@ export const update = mutation({
       const { id, title, description } = args;
       if (
         args.status !== undefined ||
+        args.organizationStatusId !== undefined ||
         args.isApproved !== undefined ||
         args.isPinned !== undefined ||
         args.roadmapLane !== undefined ||

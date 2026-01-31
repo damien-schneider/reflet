@@ -9,7 +9,9 @@ import { internalMutation, internalQuery } from "./_generated/server";
 export interface ApiKeyValidation {
   success: boolean;
   boardId?: Id<"boards">;
+  organizationId?: Id<"organizations">;
   apiKeyId?: Id<"boardApiKeys">;
+  organizationApiKeyId?: Id<"organizationApiKeys">;
   isSecretKey?: boolean;
   error?: string;
 }
@@ -24,7 +26,9 @@ export interface ExternalUserContext {
 export interface ApiAuthResult {
   success: boolean;
   boardId?: Id<"boards">;
+  organizationId?: Id<"organizations">;
   apiKeyId?: Id<"boardApiKeys">;
+  organizationApiKeyId?: Id<"organizationApiKeys">;
   isSecretKey?: boolean;
   externalUser?: ExternalUserContext;
   error?: string;
@@ -75,7 +79,12 @@ export function decodeUserToken(
       return null;
     }
 
-    const payload = JSON.parse(atob(parts[1])) as {
+    const payloadPart = parts[1];
+    if (!payloadPart) {
+      return null;
+    }
+
+    const payload = JSON.parse(atob(payloadPart)) as {
       id?: string;
       sub?: string;
       email?: string;
@@ -137,6 +146,7 @@ export function createUserToken(
 
 /**
  * Validate an API key (public or secret)
+ * Supports both board-level (legacy) and organization-level keys
  */
 export const validateApiKey = internalQuery({
   args: {
@@ -154,7 +164,26 @@ export const validateApiKey = internalQuery({
     }
 
     if (isPublicKey) {
-      // Look up public key directly
+      // First try organization API keys (new flow)
+      const orgApiKeyRecord = await ctx.db
+        .query("organizationApiKeys")
+        .withIndex("by_public_key", (q) => q.eq("publicKey", apiKey))
+        .unique();
+
+      if (orgApiKeyRecord) {
+        if (!orgApiKeyRecord.isActive) {
+          return { success: false, error: "API key is inactive" };
+        }
+
+        return {
+          success: true,
+          organizationId: orgApiKeyRecord.organizationId,
+          organizationApiKeyId: orgApiKeyRecord._id,
+          isSecretKey: false,
+        };
+      }
+
+      // Fall back to legacy board API keys
       const apiKeyRecord = await ctx.db
         .query("boardApiKeys")
         .withIndex("by_public_key", (q) => q.eq("publicKey", apiKey))
@@ -179,8 +208,22 @@ export const validateApiKey = internalQuery({
     // For secret keys, we need to hash and compare
     const hashedKey = hashSecretKey(apiKey);
 
-    // We need to search all keys and compare hashes
-    // This is not ideal for performance but works for small scale
+    // First try organization API keys
+    const allOrgKeys = await ctx.db.query("organizationApiKeys").collect();
+    const orgApiKeyRecord = allOrgKeys.find(
+      (key) => key.secretKeyHash === hashedKey && key.isActive
+    );
+
+    if (orgApiKeyRecord) {
+      return {
+        success: true,
+        organizationId: orgApiKeyRecord.organizationId,
+        organizationApiKeyId: orgApiKeyRecord._id,
+        isSecretKey: true,
+      };
+    }
+
+    // Fall back to legacy board API keys
     const allKeys = await ctx.db.query("boardApiKeys").collect();
     const apiKeyRecord = allKeys.find(
       (key) => key.secretKeyHash === hashedKey && key.isActive
@@ -201,49 +244,106 @@ export const validateApiKey = internalQuery({
 
 /**
  * Get or create external user
+ * Supports both board-level (legacy) and organization-level users
  */
 export const getOrCreateExternalUser = internalMutation({
   args: {
-    boardId: v.id("boards"),
+    boardId: v.optional(v.id("boards")), // Legacy, optional for new flow
+    organizationId: v.optional(v.id("organizations")), // New flow
     externalId: v.string(),
     email: v.optional(v.string()),
     name: v.optional(v.string()),
     avatar: v.optional(v.string()),
     metadata: v.optional(v.any()),
   },
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Handles both board and org authentication paths
   handler: async (ctx, args): Promise<ExternalUserContext> => {
-    const { boardId, externalId, email, name, avatar, metadata } = args;
+    const {
+      boardId,
+      organizationId,
+      externalId,
+      email,
+      name,
+      avatar,
+      metadata,
+    } = args;
     const now = Date.now();
 
-    // Check if external user already exists
-    const existingUser = await ctx.db
+    // Determine organization ID
+    let orgId = organizationId;
+    if (!orgId && boardId) {
+      const board = await ctx.db.get(boardId);
+      if (board) {
+        orgId = board.organizationId;
+      }
+    }
+
+    if (!orgId) {
+      throw new Error("Either boardId or organizationId is required");
+    }
+
+    // TypeScript doesn't narrow through throw, so assign to properly typed variable
+    const validOrgId = orgId;
+
+    // First, check for existing user by organization
+    const existingUserByOrg = await ctx.db
       .query("externalUsers")
-      .withIndex("by_board_external", (q) =>
-        q.eq("boardId", boardId).eq("externalId", externalId)
+      .withIndex("by_organization_external", (q) =>
+        q.eq("organizationId", validOrgId).eq("externalId", externalId)
       )
       .unique();
 
-    if (existingUser) {
+    if (existingUserByOrg) {
       // Update last seen and any changed fields
-      await ctx.db.patch(existingUser._id, {
-        email: email ?? existingUser.email,
-        name: name ?? existingUser.name,
-        avatar: avatar ?? existingUser.avatar,
-        metadata: metadata ?? existingUser.metadata,
+      await ctx.db.patch(existingUserByOrg._id, {
+        email: email ?? existingUserByOrg.email,
+        name: name ?? existingUserByOrg.name,
+        avatar: avatar ?? existingUserByOrg.avatar,
+        metadata: metadata ?? existingUserByOrg.metadata,
         lastSeenAt: now,
       });
 
       return {
-        externalUserId: existingUser._id,
-        externalId: existingUser.externalId,
-        email: email ?? existingUser.email,
-        name: name ?? existingUser.name,
+        externalUserId: existingUserByOrg._id,
+        externalId: existingUserByOrg.externalId,
+        email: email ?? existingUserByOrg.email,
+        name: name ?? existingUserByOrg.name,
       };
     }
 
-    // Create new external user
+    // Check for legacy user by board (for migration)
+    if (boardId) {
+      const existingUser = await ctx.db
+        .query("externalUsers")
+        .withIndex("by_board_external", (q) =>
+          q.eq("boardId", boardId).eq("externalId", externalId)
+        )
+        .unique();
+
+      if (existingUser) {
+        // Migrate to organization-level and update
+        await ctx.db.patch(existingUser._id, {
+          organizationId: orgId,
+          email: email ?? existingUser.email,
+          name: name ?? existingUser.name,
+          avatar: avatar ?? existingUser.avatar,
+          metadata: metadata ?? existingUser.metadata,
+          lastSeenAt: now,
+        });
+
+        return {
+          externalUserId: existingUser._id,
+          externalId: existingUser.externalId,
+          email: email ?? existingUser.email,
+          name: name ?? existingUser.name,
+        };
+      }
+    }
+
+    // Create new external user at organization level
     const newUserId = await ctx.db.insert("externalUsers", {
-      boardId,
+      organizationId: orgId,
+      boardId, // Keep for backward compatibility if provided
       externalId,
       email,
       name,
@@ -281,8 +381,10 @@ export const updateApiKeyLastUsed = internalMutation({
  */
 export const logApiRequest = internalMutation({
   args: {
-    boardId: v.id("boards"),
-    apiKeyId: v.id("boardApiKeys"),
+    organizationId: v.id("organizations"),
+    boardId: v.optional(v.id("boards")), // Legacy, optional
+    apiKeyId: v.optional(v.id("boardApiKeys")), // Legacy, optional
+    organizationApiKeyId: v.optional(v.id("organizationApiKeys")), // New flow
     endpoint: v.string(),
     method: v.string(),
     statusCode: v.number(),
@@ -291,8 +393,10 @@ export const logApiRequest = internalMutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("apiRequestLogs", {
+      organizationId: args.organizationId,
       boardId: args.boardId,
       apiKeyId: args.apiKeyId,
+      organizationApiKeyId: args.organizationApiKeyId,
       endpoint: args.endpoint,
       method: args.method,
       statusCode: args.statusCode,
@@ -308,7 +412,8 @@ export const logApiRequest = internalMutation({
  */
 export const checkRateLimit = internalQuery({
   args: {
-    apiKeyId: v.id("boardApiKeys"),
+    apiKeyId: v.optional(v.id("boardApiKeys")), // Legacy
+    organizationApiKeyId: v.optional(v.id("organizationApiKeys")), // New flow
     windowMs: v.optional(v.number()), // Default 60000 (1 minute)
     maxRequests: v.optional(v.number()), // Default 100 for public, 1000 for secret
   },
@@ -317,13 +422,27 @@ export const checkRateLimit = internalQuery({
     const maxRequests = args.maxRequests ?? 100;
     const windowStart = Date.now() - windowMs;
 
-    // Count requests in the window
-    const recentRequests = await ctx.db
-      .query("apiRequestLogs")
-      .withIndex("by_key_time", (q) =>
-        q.eq("apiKeyId", args.apiKeyId).gt("timestamp", windowStart)
-      )
-      .collect();
+    let recentRequests: unknown[] = [];
+
+    if (args.organizationApiKeyId) {
+      // New flow: check organization API key
+      recentRequests = await ctx.db
+        .query("apiRequestLogs")
+        .withIndex("by_org_key_time", (q) =>
+          q
+            .eq("organizationApiKeyId", args.organizationApiKeyId)
+            .gt("timestamp", windowStart)
+        )
+        .collect();
+    } else if (args.apiKeyId) {
+      // Legacy: check board API key
+      recentRequests = await ctx.db
+        .query("apiRequestLogs")
+        .withIndex("by_key_time", (q) =>
+          q.eq("apiKeyId", args.apiKeyId).gt("timestamp", windowStart)
+        )
+        .collect();
+    }
 
     return {
       allowed: recentRequests.length < maxRequests,
@@ -471,5 +590,161 @@ export const updateApiKeySettings = internalMutation({
     }
 
     return { success: true };
+  },
+});
+
+// ============================================
+// ORGANIZATION API KEY MANAGEMENT (New)
+// ============================================
+
+/**
+ * Generate API keys for an organization
+ */
+export const generateOrganizationApiKeys = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    name: v.string(),
+    tagId: v.optional(v.id("tags")),
+  },
+  handler: async (ctx, args) => {
+    const { organizationId, name, tagId } = args;
+
+    const publicKey = generateApiKey("fb_pub");
+    const secretKey = generateApiKey("fb_sec");
+    const secretKeyHash = hashSecretKey(secretKey);
+
+    const apiKeyId = await ctx.db.insert("organizationApiKeys", {
+      organizationId,
+      name,
+      tagId,
+      publicKey,
+      secretKeyHash,
+      isActive: true,
+      createdAt: Date.now(),
+    });
+
+    // Return the unhashed secret key (only shown once)
+    return {
+      apiKeyId,
+      publicKey,
+      secretKey, // Only returned on creation!
+    };
+  },
+});
+
+/**
+ * Regenerate secret key for an organization API key
+ */
+export const regenerateOrganizationSecretKey = internalMutation({
+  args: {
+    apiKeyId: v.id("organizationApiKeys"),
+  },
+  handler: async (ctx, args) => {
+    const existingKey = await ctx.db.get(args.apiKeyId);
+    if (!existingKey) {
+      throw new Error("API key not found");
+    }
+
+    const newSecretKey = generateApiKey("fb_sec");
+    const secretKeyHash = hashSecretKey(newSecretKey);
+
+    await ctx.db.patch(args.apiKeyId, {
+      secretKeyHash,
+    });
+
+    return {
+      secretKey: newSecretKey, // Only returned on regeneration!
+    };
+  },
+});
+
+/**
+ * Get API keys info for an organization
+ */
+export const getOrganizationApiKeys = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+  },
+  handler: async (ctx, args) => {
+    const keys = await ctx.db
+      .query("organizationApiKeys")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    return keys.map((key) => ({
+      apiKeyId: key._id,
+      name: key.name,
+      publicKey: key.publicKey,
+      tagId: key.tagId,
+      isActive: key.isActive,
+      allowedDomains: key.allowedDomains,
+      rateLimit: key.rateLimit,
+      createdAt: key.createdAt,
+      lastUsedAt: key.lastUsedAt,
+    }));
+  },
+});
+
+/**
+ * Update organization API key settings
+ */
+export const updateOrganizationApiKeySettings = internalMutation({
+  args: {
+    apiKeyId: v.id("organizationApiKeys"),
+    name: v.optional(v.string()),
+    tagId: v.optional(v.id("tags")),
+    isActive: v.optional(v.boolean()),
+    allowedDomains: v.optional(v.array(v.string())),
+    rateLimit: v.optional(
+      v.object({
+        requestsPerMinute: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { apiKeyId, ...updates } = args;
+
+    // Filter out undefined values
+    const filteredUpdates: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(updates)) {
+      if (value !== undefined) {
+        filteredUpdates[key] = value;
+      }
+    }
+
+    if (Object.keys(filteredUpdates).length > 0) {
+      await ctx.db.patch(apiKeyId, filteredUpdates);
+    }
+
+    return { success: true };
+  },
+});
+
+/**
+ * Delete an organization API key
+ */
+export const deleteOrganizationApiKey = internalMutation({
+  args: {
+    apiKeyId: v.id("organizationApiKeys"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.apiKeyId);
+    return { success: true };
+  },
+});
+
+/**
+ * Update organization API key last used timestamp
+ */
+export const updateOrganizationApiKeyLastUsed = internalMutation({
+  args: {
+    apiKeyId: v.id("organizationApiKeys"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.apiKeyId, {
+      lastUsedAt: Date.now(),
+    });
   },
 });

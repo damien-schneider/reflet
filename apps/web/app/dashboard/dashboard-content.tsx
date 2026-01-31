@@ -2,7 +2,6 @@
 
 import { CaretRight } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useAtom } from "jotai";
 import Link from "next/link";
@@ -28,7 +27,7 @@ import { OrganizationSwitcher } from "@/features/organizations/components/organi
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 
 const routeLabels: Record<string, string> = {
-  boards: "Boards",
+  feedback: "Feedback",
   settings: "Settings",
   tags: "Tags",
   changelog: "Changelog",
@@ -44,31 +43,6 @@ function getRelevantPathSegments(pathname: string): string[] {
   return dashboardIndex >= 0
     ? pathSegments.slice(dashboardIndex + 1)
     : pathSegments;
-}
-
-function buildBreadcrumbItemsForBoards(
-  orgSlug: string,
-  boardSlug: string | undefined,
-  board: { name: string } | undefined,
-  relevantSegments: string[]
-): Array<{ label: string; href: string; isActive: boolean }> {
-  const items: Array<{ label: string; href: string; isActive: boolean }> = [
-    {
-      label: "Boards",
-      href: `/dashboard/${orgSlug}/boards`,
-      isActive: relevantSegments.length === 2,
-    },
-  ];
-
-  if (boardSlug && board && relevantSegments.length > 2) {
-    items.push({
-      label: board.name,
-      href: `/${orgSlug}/boards/${boardSlug}`,
-      isActive: relevantSegments.length === 3,
-    });
-  }
-
-  return items;
 }
 
 function buildBreadcrumbItemsForSettings(
@@ -99,8 +73,6 @@ function buildBreadcrumbItemsForSettings(
 function buildBreadcrumbItems(
   orgSlug: string | undefined,
   org: { name: string } | null | undefined,
-  boardSlug: string | undefined,
-  board: { name: string } | null | undefined,
   relevantSegments: string[]
 ): Array<{ label: string; href: string; isActive: boolean }> {
   const items: Array<{ label: string; href: string; isActive: boolean }> = [
@@ -128,16 +100,7 @@ function buildBreadcrumbItems(
   const routeSegment = relevantSegments[1];
   const routeLabel = routeLabels[routeSegment] ?? routeSegment;
 
-  if (routeSegment === "boards" && boardSlug && board) {
-    items.push(
-      ...buildBreadcrumbItemsForBoards(
-        orgSlug,
-        boardSlug,
-        board,
-        relevantSegments
-      )
-    );
-  } else if (routeSegment === "settings") {
+  if (routeSegment === "settings") {
     items.push(...buildBreadcrumbItemsForSettings(orgSlug, relevantSegments));
   } else {
     items.push({
@@ -161,26 +124,9 @@ function DashboardBreadcrumb({
     api.organizations.getBySlug,
     orgSlug ? { slug: orgSlug } : "skip"
   );
-  const params = useParams();
-  const boardSlug = params?.boardSlug as string | undefined;
-  const board = useQuery(
-    api.boards.getBySlug,
-    org?._id && boardSlug
-      ? {
-          organizationId: org._id as Id<"organizations">,
-          slug: boardSlug,
-        }
-      : "skip"
-  );
 
   const relevantSegments = getRelevantPathSegments(pathname);
-  const breadcrumbItems = buildBreadcrumbItems(
-    orgSlug,
-    org,
-    boardSlug,
-    board ?? undefined,
-    relevantSegments
-  );
+  const breadcrumbItems = buildBreadcrumbItems(orgSlug, org, relevantSegments);
 
   return (
     <Breadcrumb>

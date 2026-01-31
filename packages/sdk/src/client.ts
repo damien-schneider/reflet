@@ -1,7 +1,6 @@
 import {
   type AddCommentParams,
   type AddCommentResponse,
-  type BoardConfig,
   type ChangelogEntry,
   type Comment,
   type CreateFeedbackParams,
@@ -9,6 +8,7 @@ import {
   type FeedbackDetail,
   type FeedbackListParams,
   type FeedbackListResponse,
+  type OrganizationConfig,
   RefletAuthError,
   type RefletConfig,
   RefletError,
@@ -79,10 +79,10 @@ export class Reflet {
   }
 
   /**
-   * Get the board configuration
+   * Get the organization configuration
    */
-  async getConfig(): Promise<BoardConfig> {
-    return await this.request<BoardConfig>("GET", "/api/v1/feedback");
+  async getConfig(): Promise<OrganizationConfig> {
+    return await this.request<OrganizationConfig>("GET", "/api/v1/feedback");
   }
 
   /**

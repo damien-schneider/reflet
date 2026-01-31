@@ -80,9 +80,9 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   const mainNavItems = orgSlug
     ? [
         {
-          href: "/dashboard/$orgSlug/boards",
+          href: "/dashboard/$orgSlug",
           icon: Chat,
-          label: "Boards",
+          label: "Feedback",
           badge: undefined,
         },
         {

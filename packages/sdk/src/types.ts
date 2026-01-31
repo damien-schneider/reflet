@@ -7,7 +7,7 @@
 // ============================================
 
 export interface RefletConfig {
-  /** Your board's public API key (fb_pub_xxx) */
+  /** Your organization's public API key (fb_pub_xxx) */
   publicKey: string;
   /** API base URL (optional, defaults to Reflet production API) */
   baseUrl?: string;
@@ -34,36 +34,40 @@ export interface RefletUser {
 // API Responses
 // ============================================
 
-export interface BoardConfig {
+export interface OrganizationConfig {
   id: string;
   name: string;
   slug: string;
   description?: string;
   isPublic: boolean;
-  settings?: BoardSettings;
-  organization: {
-    id: string;
-    name: string;
-    slug: string;
-    logo?: string;
-    primaryColor?: string;
-  };
-  statuses: BoardStatus[];
+  settings?: OrganizationSettings;
+  logo?: string;
+  primaryColor?: string;
+  statuses: OrganizationStatus[];
 }
 
-export interface BoardSettings {
+/** @deprecated Use OrganizationConfig instead */
+export type BoardConfig = OrganizationConfig;
+
+export interface OrganizationSettings {
   allowAnonymousVoting?: boolean;
   requireApproval?: boolean;
   defaultStatus?: FeedbackStatus;
 }
 
-export interface BoardStatus {
+/** @deprecated Use OrganizationSettings instead */
+export type BoardSettings = OrganizationSettings;
+
+export interface OrganizationStatus {
   id: string;
   name: string;
   color: string;
   icon?: string;
   order: number;
 }
+
+/** @deprecated Use OrganizationStatus instead */
+export type BoardStatus = OrganizationStatus;
 
 export type FeedbackStatus =
   | "open"
@@ -90,7 +94,13 @@ export interface FeedbackItem {
   updatedAt: number;
   completedAt?: number;
   tags: FeedbackTag[];
-  boardStatus: {
+  organizationStatus: {
+    id: string;
+    name: string;
+    color: string;
+  } | null;
+  /** @deprecated Use organizationStatus instead */
+  boardStatus?: {
     id: string;
     name: string;
     color: string;

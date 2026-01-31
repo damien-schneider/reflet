@@ -2,13 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useRefletClient } from "./react-context";
 import type {
   AddCommentParams,
-  BoardConfig,
   ChangelogEntry,
   Comment,
   CreateFeedbackParams,
   FeedbackDetail,
   FeedbackItem,
   FeedbackListParams,
+  OrganizationConfig,
   Roadmap,
 } from "./types";
 
@@ -32,15 +32,15 @@ interface UseMutationResult<TData, TVariables> {
 }
 
 // ============================================
-// Board Config Hook
+// Organization Config Hook
 // ============================================
 
 /**
- * Hook to fetch board configuration
+ * Hook to fetch organization configuration
  */
-export function useBoardConfig(): UseQueryResult<BoardConfig> {
+export function useOrganizationConfig(): UseQueryResult<OrganizationConfig> {
   const client = useRefletClient();
-  const [data, setData] = useState<BoardConfig | undefined>();
+  const [data, setData] = useState<OrganizationConfig | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -52,7 +52,9 @@ export function useBoardConfig(): UseQueryResult<BoardConfig> {
       setData(result);
     } catch (err) {
       setError(
-        err instanceof Error ? err : new Error("Failed to fetch board config")
+        err instanceof Error
+          ? err
+          : new Error("Failed to fetch organization config")
       );
     } finally {
       setIsLoading(false);
@@ -65,6 +67,11 @@ export function useBoardConfig(): UseQueryResult<BoardConfig> {
 
   return { data, isLoading, error, refetch: fetch };
 }
+
+/**
+ * @deprecated Use useOrganizationConfig instead
+ */
+export const useBoardConfig = useOrganizationConfig;
 
 // ============================================
 // Feedback List Hook
