@@ -24,6 +24,7 @@ import {
   DropdownList,
   DropdownListCheckboxItem,
   DropdownListContent,
+  DropdownListGroup,
   DropdownListLabel,
   DropdownListSeparator,
   DropdownListTrigger,
@@ -222,25 +223,27 @@ function FiltersBar({
             )}
           </DropdownListTrigger>
           <DropdownListContent align="end" className="w-48">
-            <DropdownListLabel>Filter by status</DropdownListLabel>
-            <DropdownListSeparator />
-            {statuses.map((status) => (
-              <DropdownListCheckboxItem
-                checked={selectedStatusIds.includes(status._id)}
-                key={status._id}
-                onCheckedChange={(checked: boolean) =>
-                  onStatusChange(status._id, checked)
-                }
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: status.color }}
-                  />
-                  {status.name}
-                </div>
-              </DropdownListCheckboxItem>
-            ))}
+            <DropdownListGroup>
+              <DropdownListLabel>Filter by status</DropdownListLabel>
+              <DropdownListSeparator />
+              {statuses.map((status) => (
+                <DropdownListCheckboxItem
+                  checked={selectedStatusIds.includes(status._id)}
+                  key={status._id}
+                  onCheckedChange={(checked: boolean) =>
+                    onStatusChange(status._id, checked)
+                  }
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: status.color }}
+                    />
+                    {status.name}
+                  </div>
+                </DropdownListCheckboxItem>
+              ))}
+            </DropdownListGroup>
           </DropdownListContent>
         </DropdownList>
       )}
