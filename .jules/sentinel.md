@@ -12,3 +12,8 @@
 **Vulnerability:** Denial of Service (DoS) and storage exhaustion via unbounded string inputs in mutations (Feedback, Comments, Changelog).
 **Learning:** Convex validators (`v.string()`) do not enforce length limits by default. Relying solely on frontend validation is insufficient as API access bypasses it.
 **Prevention:** Implement a shared `validateInputLength` helper in `validators.ts` and enforce `MAX_...` constants in all mutations accepting user input.
+
+## 2025-02-18 - Convex Webhook Signature Verification
+**Vulnerability:** Missing signature verification in Convex HTTP actions (GitHub webhook) allowing potential impersonation.
+**Learning:** Convex HTTP actions run in a V8 environment where `node:crypto` is not available. Use Web Crypto API (`crypto.subtle`) for HMAC-SHA256 verification.
+**Prevention:** Implement reusable verification helpers using `crypto.subtle` and enforce them in all webhook handlers (e.g., `packages/backend/convex/security.ts`).
