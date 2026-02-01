@@ -241,10 +241,6 @@ export default defineSchema({
     description: v.string(), // Rich text (Tiptap JSON or markdown)
     status: feedbackStatus,
     organizationStatusId: v.optional(v.id("organizationStatuses")), // Org-level status for roadmap columns
-    // DEPRECATED: These fields are kept for backwards compatibility with existing data
-    // TODO: Run migration to remove these fields from existing documents
-    boardId: v.optional(v.any()), // Deprecated - will be removed after migration
-    statusId: v.optional(v.any()), // Deprecated - will be removed after migration
     authorId: v.optional(v.string()), // Better Auth user ID (optional for external users)
     voteCount: v.number(),
     commentCount: v.number(),
