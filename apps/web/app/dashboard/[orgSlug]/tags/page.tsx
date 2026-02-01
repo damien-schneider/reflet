@@ -114,8 +114,6 @@ export default function TagsPage({
             _id: editingTag._id,
             name: editingTag.name,
             color: editingTag.color,
-            isDoneStatus: editingTag.isDoneStatus,
-            isRoadmapLane: editingTag.isRoadmapLane,
           }}
           onOpenChange={(open) => {
             if (!open) {

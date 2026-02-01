@@ -1,16 +1,9 @@
 "use client";
 
-import {
-  CheckCircle,
-  DotsSixVertical,
-  DotsThreeVertical,
-  MapPin,
-  Trash,
-} from "@phosphor-icons/react";
+import { DotsThreeVertical, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownList,
   DropdownListContent,
@@ -23,8 +16,6 @@ interface TagCardProps {
     _id: Id<"tags">;
     name: string;
     color: string;
-    isDoneStatus: boolean;
-    isRoadmapLane: boolean;
   };
   isAdmin: boolean;
   onEdit: () => void;
@@ -37,9 +28,6 @@ export function TagCard({ tag, isAdmin, onEdit, onDelete }: TagCardProps) {
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
-            {tag.isRoadmapLane && (
-              <DotsSixVertical className="h-4 w-4 text-muted-foreground" />
-            )}
             <div
               className="h-4 w-4 rounded"
               style={{ backgroundColor: tag.color }}
@@ -74,22 +62,6 @@ export function TagCard({ tag, isAdmin, onEdit, onDelete }: TagCardProps) {
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="flex gap-2">
-          {tag.isRoadmapLane && (
-            <Badge variant="outline">
-              <MapPin className="mr-1 h-3 w-3" />
-              Roadmap Lane
-            </Badge>
-          )}
-          {tag.isDoneStatus && (
-            <Badge variant="secondary">
-              <CheckCircle className="mr-1 h-3 w-3" />
-              Done Status
-            </Badge>
-          )}
-        </div>
-      </CardContent>
     </Card>
   );
 }

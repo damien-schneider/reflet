@@ -5,7 +5,6 @@ import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -34,8 +33,6 @@ interface TagFormDialogProps {
     _id: string;
     name: string;
     color: string;
-    isDoneStatus: boolean;
-    isRoadmapLane: boolean;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -56,8 +53,6 @@ export function TagFormDialog({
   const [formData, setFormData] = useState({
     name: "",
     color: "#3b82f6",
-    isDoneStatus: false,
-    isRoadmapLane: false,
   });
 
   useEffect(() => {
@@ -65,15 +60,11 @@ export function TagFormDialog({
       setFormData({
         name: editingTag.name,
         color: editingTag.color,
-        isDoneStatus: editingTag.isDoneStatus,
-        isRoadmapLane: editingTag.isRoadmapLane,
       });
     } else {
       setFormData({
         name: "",
         color: "#3b82f6",
-        isDoneStatus: false,
-        isRoadmapLane: false,
       });
     }
   }, [editingTag]);
@@ -89,8 +80,6 @@ export function TagFormDialog({
         organizationId,
         name: formData.name.trim(),
         color: formData.color,
-        isDoneStatus: formData.isDoneStatus,
-        isRoadmapLane: formData.isRoadmapLane,
       });
       onSuccess();
     } catch (error) {
@@ -111,8 +100,6 @@ export function TagFormDialog({
         id: editingTag._id as Id<"tags">,
         name: formData.name.trim(),
         color: formData.color,
-        isDoneStatus: formData.isDoneStatus,
-        isRoadmapLane: formData.isRoadmapLane,
       });
       onSuccess();
     } catch (error) {
@@ -172,33 +159,6 @@ export function TagFormDialog({
                 />
               ))}
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              checked={formData.isRoadmapLane}
-              id="isRoadmapLane"
-              onCheckedChange={(checked) =>
-                setFormData({
-                  ...formData,
-                  isRoadmapLane: checked as boolean,
-                })
-              }
-            />
-            <Label htmlFor="isRoadmapLane">
-              Use as roadmap lane (appears as a column in roadmap view)
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              checked={formData.isDoneStatus}
-              id="isDoneStatus"
-              onCheckedChange={(checked) =>
-                setFormData({ ...formData, isDoneStatus: checked as boolean })
-              }
-            />
-            <Label htmlFor="isDoneStatus">
-              Mark as done status (items will be eligible for changelog)
-            </Label>
           </div>
         </div>
         <DialogFooter>
