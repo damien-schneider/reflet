@@ -49,7 +49,6 @@ export type { UseFeedbackListOptions } from "./react-hooks";
 // Hooks - Mutations
 export {
   useAddComment,
-  useBoardConfig,
   useChangelog,
   useComments,
   useCreateFeedback,
@@ -63,8 +62,6 @@ export {
 // Re-export types from main package
 export type {
   AddCommentParams,
-  /** @deprecated Use OrganizationConfig instead */
-  BoardConfig,
   ChangelogEntry,
   Comment,
   CreateFeedbackParams,

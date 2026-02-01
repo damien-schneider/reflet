@@ -95,15 +95,15 @@ export const getStatus = query({
     const status = activeSubscription?.status ?? "none";
 
     // Get current usage
-    const boards = await ctx.db
-      .query("boards")
+    const members = await ctx.db
+      .query("organizationMembers")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .collect();
 
-    const members = await ctx.db
-      .query("organizationMembers")
+    const feedback = await ctx.db
+      .query("feedback")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
@@ -129,7 +129,7 @@ export const getStatus = query({
         : null,
       limits,
       usage: {
-        boards: boards.length,
+        feedback: feedback.length,
         members: members.length,
       },
       isOwner: membership.role === "owner",
@@ -144,12 +144,10 @@ export const checkLimit = query({
   args: {
     organizationId: v.id("organizations"),
     action: v.union(
-      v.literal("create_board"),
       v.literal("invite_member"),
       v.literal("create_feedback"),
       v.literal("custom_branding")
     ),
-    boardId: v.optional(v.id("boards")),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
@@ -191,20 +189,20 @@ export const checkLimit = query({
     const limits = PLAN_LIMITS[tier];
 
     switch (args.action) {
-      case "create_board": {
-        const boards = await ctx.db
-          .query("boards")
+      case "create_feedback": {
+        const feedbackItems = await ctx.db
+          .query("feedback")
           .withIndex("by_organization", (q) =>
             q.eq("organizationId", args.organizationId)
           )
           .collect();
 
-        if (boards.length >= limits.maxBoards) {
+        if (feedbackItems.length >= limits.maxFeedbackPerBoard * 10) {
           return {
             allowed: false,
-            reason: `Board limit reached (${limits.maxBoards}). Upgrade to Pro for more boards.`,
-            current: boards.length,
-            limit: limits.maxBoards,
+            reason: "Feedback limit reached. Upgrade to Pro for more feedback.",
+            current: feedbackItems.length,
+            limit: limits.maxFeedbackPerBoard * 10,
           };
         }
         return { allowed: true };
@@ -234,28 +232,6 @@ export const checkLimit = query({
             reason: `Member limit reached (${limits.maxMembers}). Upgrade to Pro for more members.`,
             current: total,
             limit: limits.maxMembers,
-          };
-        }
-        return { allowed: true };
-      }
-
-      case "create_feedback": {
-        const boardId = args.boardId;
-        if (!boardId) {
-          return { allowed: false, reason: "Board ID required" };
-        }
-
-        const feedback = await ctx.db
-          .query("feedback")
-          .withIndex("by_board", (q) => q.eq("boardId", boardId))
-          .collect();
-
-        if (feedback.length >= limits.maxFeedbackPerBoard) {
-          return {
-            allowed: false,
-            reason: `Feedback limit reached (${limits.maxFeedbackPerBoard}). Upgrade to Pro for more feedback items.`,
-            current: feedback.length,
-            limit: limits.maxFeedbackPerBoard,
           };
         }
         return { allowed: true };

@@ -25,7 +25,6 @@ import { SimilarPosts } from "./similar-posts";
 export interface FeedbackDetailDialogProps {
   feedbackId: Id<"feedback"> | null;
   onClose: () => void;
-  boardId?: Id<"boards">;
   isMember?: boolean;
   isAdmin?: boolean;
 }
@@ -33,7 +32,6 @@ export interface FeedbackDetailDialogProps {
 export function FeedbackDetailDialog({
   feedbackId,
   onClose,
-  boardId: _boardId,
   isMember: _isMember = false,
   isAdmin = false,
 }: FeedbackDetailDialogProps) {
@@ -100,14 +98,14 @@ export function FeedbackDetailDialog({
               feedback={{
                 hasVoted: feedback.hasVoted ?? false,
                 voteCount: feedback.voteCount ?? 0,
-                statusId: feedback.statusId,
-                boardId: feedback.boardId,
-                board: feedback.board,
+                organizationStatusId: feedback.organizationStatusId,
                 createdAt: feedback.createdAt,
                 author: feedback.author,
+                assignee: feedback.assignee,
               }}
               feedbackId={feedbackId}
               isAdmin={isAdmin}
+              organizationId={feedback.organizationId}
             />
           </div>
         ) : (

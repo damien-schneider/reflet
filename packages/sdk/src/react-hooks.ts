@@ -68,11 +68,6 @@ export function useOrganizationConfig(): UseQueryResult<OrganizationConfig> {
   return { data, isLoading, error, refetch: fetch };
 }
 
-/**
- * @deprecated Use useOrganizationConfig instead
- */
-export const useBoardConfig = useOrganizationConfig;
-
 // ============================================
 // Feedback List Hook
 // ============================================

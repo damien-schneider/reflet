@@ -17,8 +17,8 @@ const mockFeedback = {
   isAuthor: false,
   role: "member" as const,
   createdAt: Date.now() - 86_400_000, // 1 day ago
-  statusId: "test-status-id" as Id<"boardStatuses">,
-  boardId: "test-board-id" as Id<"boards">,
+  organizationStatusId: "test-status-id" as Id<"organizationStatuses">,
+  organizationId: "test-org-id" as Id<"organizations">,
   tags: [
     { _id: "tag1", name: "Bug", color: "#ff0000" },
     { _id: "tag2", name: "Feature", color: "#00ff00" },
@@ -38,7 +38,7 @@ const mockComments = [
   },
 ];
 
-const mockBoardStatuses = [
+const mockOrganizationStatuses = [
   { _id: "status1", name: "Open", color: "#3b82f6", order: 0 },
   { _id: "status2", name: "In Progress", color: "#f59e0b", order: 1 },
   { _id: "status3", name: "Done", color: "#10b981", order: 2 },
@@ -61,7 +61,6 @@ vi.mock("@reflet-v2/backend/convex/_generated/api", () => ({
       update: "comments.update",
       remove: "comments.remove",
     },
-    board_statuses: { list: "board_statuses.list" },
     organization_statuses: { list: "organization_statuses.list" },
     feedback_actions: {
       updateStatus: "feedback_actions.updateStatus",
@@ -435,13 +434,7 @@ describe("FeedbackDetailDialog", () => {
   it("should not render when feedbackId is null", () => {
     const onClose = vi.fn();
 
-    render(
-      <FeedbackDetailDialog
-        boardId={"board-id" as Id<"boards">}
-        feedbackId={null}
-        onClose={onClose}
-      />
-    );
+    render(<FeedbackDetailDialog feedbackId={null} onClose={onClose} />);
 
     expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
@@ -457,7 +450,6 @@ describe("FeedbackDetailDialog", () => {
 
     render(
       <FeedbackDetailDialog
-        boardId={"board-id" as Id<"boards">}
         feedbackId={"feedback-id" as Id<"feedback">}
         onClose={onClose}
       />
@@ -476,15 +468,14 @@ describe("FeedbackDetailDialog", () => {
       if (queryName === "comments.list") {
         return mockComments;
       }
-      if (queryName === "board_statuses.list") {
-        return mockBoardStatuses;
+      if (queryName === "organization_statuses.list") {
+        return mockOrganizationStatuses;
       }
       return [];
     });
 
     render(
       <FeedbackDetailDialog
-        boardId={"board-id" as Id<"boards">}
         feedbackId={"feedback-id" as Id<"feedback">}
         onClose={onClose}
       />
@@ -505,15 +496,14 @@ describe("FeedbackDetailDialog", () => {
       if (queryName === "comments.list") {
         return mockComments;
       }
-      if (queryName === "board_statuses.list") {
-        return mockBoardStatuses;
+      if (queryName === "organization_statuses.list") {
+        return mockOrganizationStatuses;
       }
       return [];
     });
 
     render(
       <FeedbackDetailDialog
-        boardId={"board-id" as Id<"boards">}
         feedbackId={"feedback-id" as Id<"feedback">}
         onClose={onClose}
       />
@@ -533,15 +523,14 @@ describe("FeedbackDetailDialog", () => {
       if (queryName === "comments.list") {
         return mockComments;
       }
-      if (queryName === "board_statuses.list") {
-        return mockBoardStatuses;
+      if (queryName === "organization_statuses.list") {
+        return mockOrganizationStatuses;
       }
       return [];
     });
 
     render(
       <FeedbackDetailDialog
-        boardId={"board-id" as Id<"boards">}
         feedbackId={"feedback-id" as Id<"feedback">}
         onClose={onClose}
       />
@@ -562,15 +551,14 @@ describe("FeedbackDetailDialog", () => {
       if (queryName === "comments.list") {
         return mockComments;
       }
-      if (queryName === "board_statuses.list") {
-        return mockBoardStatuses;
+      if (queryName === "organization_statuses.list") {
+        return mockOrganizationStatuses;
       }
       return [];
     });
 
     render(
       <FeedbackDetailDialog
-        boardId={"board-id" as Id<"boards">}
         feedbackId={"feedback-id" as Id<"feedback">}
         onClose={onClose}
       />
@@ -591,15 +579,14 @@ describe("FeedbackDetailDialog", () => {
       if (queryName === "comments.list") {
         return mockComments;
       }
-      if (queryName === "board_statuses.list") {
-        return mockBoardStatuses;
+      if (queryName === "organization_statuses.list") {
+        return mockOrganizationStatuses;
       }
       return [];
     });
 
     render(
       <FeedbackDetailDialog
-        boardId={"board-id" as Id<"boards">}
         feedbackId={"feedback-id" as Id<"feedback">}
         onClose={onClose}
       />
@@ -623,7 +610,6 @@ describe("FeedbackDetailDialog", () => {
 
     render(
       <FeedbackDetailDialog
-        boardId={"board-id" as Id<"boards">}
         feedbackId={"feedback-id" as Id<"feedback">}
         onClose={onClose}
       />
@@ -642,15 +628,14 @@ describe("FeedbackDetailDialog", () => {
       if (queryName === "comments.list") {
         return mockComments;
       }
-      if (queryName === "board_statuses.list") {
-        return mockBoardStatuses;
+      if (queryName === "organization_statuses.list") {
+        return mockOrganizationStatuses;
       }
       return [];
     });
 
     render(
       <FeedbackDetailDialog
-        boardId={"board-id" as Id<"boards">}
         feedbackId={"feedback-id" as Id<"feedback">}
         onClose={onClose}
       />
@@ -679,15 +664,14 @@ describe("FeedbackDetailDialog - Admin Features", () => {
       if (queryName === "comments.list") {
         return mockComments;
       }
-      if (queryName === "board_statuses.list") {
-        return mockBoardStatuses;
+      if (queryName === "organization_statuses.list") {
+        return mockOrganizationStatuses;
       }
       return [];
     });
 
     render(
       <FeedbackDetailDialog
-        boardId={"board-id" as Id<"boards">}
         feedbackId={"feedback-id" as Id<"feedback">}
         onClose={onClose}
       />
@@ -708,15 +692,14 @@ describe("FeedbackDetailDialog - Admin Features", () => {
       if (queryName === "comments.list") {
         return mockComments;
       }
-      if (queryName === "board_statuses.list") {
-        return mockBoardStatuses;
+      if (queryName === "organization_statuses.list") {
+        return mockOrganizationStatuses;
       }
       return [];
     });
 
     render(
       <FeedbackDetailDialog
-        boardId={"board-id" as Id<"boards">}
         feedbackId={"feedback-id" as Id<"feedback">}
         onClose={onClose}
       />

@@ -135,7 +135,6 @@ export default function GitHubSettingsPage({
         {queries.connectionStatus?.hasRepository ? (
           <RepositorySettingsSection
             autoSyncEnabled={queries.connectionStatus.autoSyncEnabled ?? false}
-            boards={queries.boards ?? []}
             githubLabels={settings.githubLabels}
             githubReleases={queries.githubReleases}
             isAdmin={isAdmin}
@@ -173,7 +172,6 @@ export default function GitHubSettingsPage({
 
 interface RepositorySettingsSectionProps {
   autoSyncEnabled: boolean;
-  boards: Array<{ _id: string; name: string; slug: string }>;
   githubLabels: Array<{
     id: string;
     name: string;
@@ -211,7 +209,6 @@ interface RepositorySettingsSectionProps {
     _id: string;
     githubLabelName: string;
     githubLabelColor?: string;
-    targetBoardId?: string;
     targetTagId?: string;
     autoSync: boolean;
     syncClosedIssues?: boolean;
@@ -222,7 +219,6 @@ interface RepositorySettingsSectionProps {
       | "in_progress"
       | "completed"
       | "closed";
-    boardName?: string;
     tagName?: string;
     tagColor?: string;
   }>;
@@ -230,7 +226,6 @@ interface RepositorySettingsSectionProps {
   onAddMapping: (mapping: {
     githubLabelName: string;
     githubLabelColor?: string;
-    targetBoardId?: string;
     targetTagId?: string;
     autoSync: boolean;
     syncClosedIssues?: boolean;
@@ -256,7 +251,6 @@ interface RepositorySettingsSectionProps {
 
 function RepositorySettingsSection({
   autoSyncEnabled,
-  boards,
   githubLabels,
   githubReleases,
   isAdmin,
@@ -320,7 +314,6 @@ function RepositorySettingsSection({
       />
 
       <LabelMappingsCard
-        boards={boards}
         githubLabels={githubLabels}
         isAdmin={isAdmin}
         isLoadingLabels={isLoadingLabels}

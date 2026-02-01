@@ -33,9 +33,6 @@ export const list = query({
       return [];
     }
 
-    // Get board if it exists (for backwards compatibility)
-    const board = feedback.boardId ? await ctx.db.get(feedback.boardId) : null;
-
     const org = await ctx.db.get(feedback.organizationId);
     if (!org) {
       return [];
@@ -55,12 +52,8 @@ export const list = query({
       isMember = !!membership;
     }
 
-    // Check visibility: member OR (board is public AND org is public) OR org is public (new flow)
-    const isPublicAccess = board
-      ? board.isPublic && org.isPublic
-      : org.isPublic;
-
-    if (!(isMember || isPublicAccess)) {
+    // Check visibility: member OR org is public
+    if (!(isMember || org.isPublic)) {
       return [];
     }
 
@@ -168,9 +161,6 @@ export const create = mutation({
       throw new Error("Feedback not found");
     }
 
-    // Get board if it exists (for backwards compatibility)
-    const board = feedback.boardId ? await ctx.db.get(feedback.boardId) : null;
-
     const org = await ctx.db.get(feedback.organizationId);
     if (!org) {
       throw new Error("Organization not found");
@@ -186,12 +176,8 @@ export const create = mutation({
 
     const isMember = !!membership;
 
-    // Check visibility: member OR (board is public AND org is public) OR org is public (new flow)
-    const isPublicAccess = board
-      ? board.isPublic && org.isPublic
-      : org.isPublic;
-
-    if (!(isMember || isPublicAccess)) {
+    // Check visibility: member OR org is public
+    if (!(isMember || org.isPublic)) {
       throw new Error("You don't have access to comment on this feedback");
     }
 

@@ -9,6 +9,7 @@ import {
   Key,
   Plus,
   Robot,
+  Trash,
   Warning,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
@@ -40,7 +41,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ApiKeysSettingsProps {
-  boardId: Id<"boards">;
+  organizationId: Id<"organizations">;
 }
 
 // Generate AI prompt for SDK integration
@@ -136,7 +137,7 @@ import {
   useFeedback,
   useAddComment,
   useSubscription,
-  useBoardConfig,
+  useOrgConfig,
   useRoadmap,
   useChangelog,
 } from 'reflet-sdk/react';
@@ -213,7 +214,7 @@ useVote()           // { mutate: (feedbackId) => void }
 useCreateFeedback() // { mutate: ({ title, description }) => void }
 useAddComment()     // { mutate: ({ feedbackId, body }) => void }
 useSubscription()   // { subscribe, unsubscribe }
-useBoardConfig()
+useOrgConfig()
 useRoadmap()
 useChangelog(limit?)
 
@@ -238,38 +239,67 @@ await reflet.getChangelog(limit?)
 Now please analyze my codebase and implement the complete Reflet SDK integration.`;
 }
 
-export function ApiKeysSettings({ boardId }: ApiKeysSettingsProps) {
-  const apiKeys = useQuery(api.feedback_api_admin.getApiKeys, { boardId });
-  const generateApiKeys = useMutation(api.feedback_api_admin.generateApiKeys);
+export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
+  const apiKeys = useQuery(api.feedback_api_admin.getApiKeys, {
+    organizationId,
+  });
+  const generateApiKeysMutation = useMutation(
+    api.feedback_api_admin.generateApiKeys
+  );
   const regenerateSecretKey = useMutation(
     api.feedback_api_admin.regenerateSecretKey
   );
   const updateApiKeySettings = useMutation(
     api.feedback_api_admin.updateApiKeySettings
   );
+  const deleteApiKeyMutation = useMutation(api.feedback_api_admin.deleteApiKey);
 
   const [showSecretKey, setShowSecretKey] = useState(false);
   const [newSecretKey, setNewSecretKey] = useState<string | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+  const [selectedKeyId, setSelectedKeyId] =
+    useState<Id<"organizationApiKeys"> | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [keyToDelete, setKeyToDelete] =
+    useState<Id<"organizationApiKeys"> | null>(null);
   const [domainInput, setDomainInput] = useState("");
+  const [newKeyName, setNewKeyName] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerateKeys = useCallback(async () => {
+    if (!newKeyName.trim()) {
+      toast.error("Please enter a name for the API key");
+      return;
+    }
+    setIsGenerating(true);
     try {
-      const result = await generateApiKeys({ boardId });
+      const result = await generateApiKeysMutation({
+        organizationId,
+        name: newKeyName.trim(),
+      });
       setNewSecretKey(result.secretKey);
+      setNewKeyName("");
       toast.success("API keys generated successfully");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to generate API keys"
       );
+    } finally {
+      setIsGenerating(false);
     }
-  }, [boardId, generateApiKeys]);
+  }, [organizationId, newKeyName, generateApiKeysMutation]);
 
   const handleRegenerateSecretKey = useCallback(async () => {
+    if (!selectedKeyId) {
+      return;
+    }
     setIsRegenerating(true);
     try {
-      const result = await regenerateSecretKey({ boardId });
+      const result = await regenerateSecretKey({
+        organizationId,
+        apiKeyId: selectedKeyId,
+      });
       setNewSecretKey(result.secretKey);
       setShowRegenerateDialog(false);
       toast.success("Secret key regenerated successfully");
@@ -282,46 +312,75 @@ export function ApiKeysSettings({ boardId }: ApiKeysSettingsProps) {
     } finally {
       setIsRegenerating(false);
     }
-  }, [boardId, regenerateSecretKey]);
+  }, [organizationId, selectedKeyId, regenerateSecretKey]);
 
   const handleToggleActive = useCallback(
-    async (isActive: boolean) => {
+    async (apiKeyId: Id<"organizationApiKeys">, isActive: boolean) => {
       try {
-        await updateApiKeySettings({ boardId, isActive });
-        toast.success(isActive ? "API keys activated" : "API keys deactivated");
+        await updateApiKeySettings({ organizationId, apiKeyId, isActive });
+        toast.success(isActive ? "API key activated" : "API key deactivated");
       } catch (error) {
         toast.error(
           error instanceof Error ? error.message : "Failed to update settings"
         );
       }
     },
-    [boardId, updateApiKeySettings]
+    [organizationId, updateApiKeySettings]
   );
 
-  const handleAddDomain = useCallback(async () => {
-    if (!domainInput.trim()) {
+  const handleDeleteKey = useCallback(async () => {
+    if (!keyToDelete) {
       return;
     }
-
-    const newDomains = [...(apiKeys?.allowedDomains ?? []), domainInput.trim()];
     try {
-      await updateApiKeySettings({ boardId, allowedDomains: newDomains });
-      setDomainInput("");
-      toast.success("Domain added");
+      await deleteApiKeyMutation({ organizationId, apiKeyId: keyToDelete });
+      setShowDeleteDialog(false);
+      setKeyToDelete(null);
+      toast.success("API key deleted");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to add domain"
+        error instanceof Error ? error.message : "Failed to delete API key"
       );
     }
-  }, [boardId, domainInput, apiKeys?.allowedDomains, updateApiKeySettings]);
+  }, [organizationId, keyToDelete, deleteApiKeyMutation]);
+
+  const handleAddDomain = useCallback(
+    async (apiKeyId: Id<"organizationApiKeys">, currentDomains: string[]) => {
+      if (!domainInput.trim()) {
+        return;
+      }
+
+      const newDomains = [...currentDomains, domainInput.trim()];
+      try {
+        await updateApiKeySettings({
+          organizationId,
+          apiKeyId,
+          allowedDomains: newDomains,
+        });
+        setDomainInput("");
+        toast.success("Domain added");
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to add domain"
+        );
+      }
+    },
+    [organizationId, domainInput, updateApiKeySettings]
+  );
 
   const handleRemoveDomain = useCallback(
-    async (domain: string) => {
-      const newDomains = (apiKeys?.allowedDomains ?? []).filter(
-        (d: string) => d !== domain
-      );
+    async (
+      apiKeyId: Id<"organizationApiKeys">,
+      currentDomains: string[],
+      domain: string
+    ) => {
+      const newDomains = currentDomains.filter((d: string) => d !== domain);
       try {
-        await updateApiKeySettings({ boardId, allowedDomains: newDomains });
+        await updateApiKeySettings({
+          organizationId,
+          apiKeyId,
+          allowedDomains: newDomains,
+        });
         toast.success("Domain removed");
       } catch (error) {
         toast.error(
@@ -329,7 +388,7 @@ export function ApiKeysSettings({ boardId }: ApiKeysSettingsProps) {
         );
       }
     },
-    [boardId, apiKeys?.allowedDomains, updateApiKeySettings]
+    [organizationId, updateApiKeySettings]
   );
 
   const copyToClipboard = useCallback((text: string, label: string) => {
@@ -349,7 +408,7 @@ export function ApiKeysSettings({ boardId }: ApiKeysSettingsProps) {
   }
 
   // No API keys yet - show generation prompt with docs/AI tabs
-  if (apiKeys === null) {
+  if (!apiKeys || apiKeys.length === 0) {
     return (
       <div className="space-y-6">
         <div className="rounded-lg border bg-muted/30 p-6">
@@ -370,10 +429,21 @@ export function ApiKeysSettings({ boardId }: ApiKeysSettingsProps) {
                 <Badge variant="outline">Server-side Signing</Badge>
                 <Badge variant="outline">Full API Access</Badge>
               </div>
-              <Button className="mt-4" onClick={handleGenerateKeys}>
-                <Key className="mr-2 h-4 w-4" />
-                Generate API Keys
-              </Button>
+              <div className="mt-4 flex items-center gap-2">
+                <Input
+                  className="max-w-xs"
+                  onChange={(e) => setNewKeyName(e.target.value)}
+                  placeholder="API key name (e.g., Production)"
+                  value={newKeyName}
+                />
+                <Button
+                  disabled={isGenerating || !newKeyName.trim()}
+                  onClick={handleGenerateKeys}
+                >
+                  <Key className="mr-2 h-4 w-4" />
+                  {isGenerating ? "Generating..." : "Generate API Keys"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -401,6 +471,8 @@ export function ApiKeysSettings({ boardId }: ApiKeysSettingsProps) {
       </div>
     );
   }
+
+  const firstKey = apiKeys[0];
 
   return (
     <div className="space-y-8">
@@ -459,126 +531,171 @@ export function ApiKeysSettings({ boardId }: ApiKeysSettingsProps) {
         </TabsList>
 
         <TabsContent className="mt-6 space-y-6" value="keys">
-          {/* Status toggle */}
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div>
-              <Label className="text-base">API Status</Label>
-              <p className="text-muted-foreground text-sm">
-                Enable or disable API access for this board
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge variant={apiKeys.isActive ? "default" : "secondary"}>
-                {apiKeys.isActive ? "Active" : "Inactive"}
-              </Badge>
-              <Switch
-                checked={apiKeys.isActive}
-                onCheckedChange={handleToggleActive}
-              />
-            </div>
+          {/* Add new key */}
+          <div className="flex items-center gap-2 rounded-lg border p-4">
+            <Input
+              className="flex-1"
+              onChange={(e) => setNewKeyName(e.target.value)}
+              placeholder="New API key name"
+              value={newKeyName}
+            />
+            <Button
+              disabled={isGenerating || !newKeyName.trim()}
+              onClick={handleGenerateKeys}
+              size="sm"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {isGenerating ? "Creating..." : "Create Key"}
+            </Button>
           </div>
 
-          {/* Public Key */}
-          <div className="space-y-2">
-            <Label>Public Key</Label>
-            <p className="text-muted-foreground text-sm">
-              Use this key in your frontend code. It&apos;s safe to expose in
-              client-side JavaScript.
-            </p>
-            <div className="flex items-center gap-2">
-              <Input className="font-mono" readOnly value={apiKeys.publicKey} />
-              <Button
-                onClick={() => copyToClipboard(apiKeys.publicKey, "Public key")}
-                size="icon"
-                variant="outline"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          {/* List of API keys */}
+          {apiKeys.map((key) => (
+            <div className="space-y-4 rounded-lg border p-4" key={key.apiKeyId}>
+              {/* Key header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium">{key.name}</h4>
+                  <p className="text-muted-foreground text-sm">
+                    Created {new Date(key.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant={key.isActive ? "default" : "secondary"}>
+                    {key.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                  <Switch
+                    checked={key.isActive}
+                    onCheckedChange={(checked) =>
+                      handleToggleActive(key.apiKeyId, checked)
+                    }
+                  />
+                  <Button
+                    onClick={() => {
+                      setKeyToDelete(key.apiKeyId);
+                      setShowDeleteDialog(true);
+                    }}
+                    size="icon"
+                    variant="ghost"
+                  >
+                    <Trash className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              </div>
 
-          {/* Secret Key */}
-          <div className="space-y-2">
-            <Label>Secret Key</Label>
-            <p className="text-muted-foreground text-sm">
-              Use this key server-side only for signing user tokens. Never
-              expose in client code.
-            </p>
-            <div className="flex items-center gap-2">
-              <Input
-                className="font-mono"
-                readOnly
-                type={showSecretKey ? "text" : "password"}
-                value="fb_sec_••••••••••••••••••••••••"
-              />
-              <Button
-                onClick={() => setShowSecretKey(!showSecretKey)}
-                size="icon"
-                title={showSecretKey ? "Hide" : "Show"}
-                variant="outline"
-              >
-                {showSecretKey ? (
-                  <EyeSlash className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                onClick={() => setShowRegenerateDialog(true)}
-                size="sm"
-                variant="outline"
-              >
-                Regenerate
-              </Button>
-            </div>
-          </div>
+              {/* Public Key */}
+              <div className="space-y-2">
+                <Label>Public Key</Label>
+                <div className="flex items-center gap-2">
+                  <Input className="font-mono" readOnly value={key.publicKey} />
+                  <Button
+                    onClick={() => copyToClipboard(key.publicKey, "Public key")}
+                    size="icon"
+                    variant="outline"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
 
-          {/* Allowed Domains */}
-          <div className="space-y-2">
-            <Label>Allowed Domains (Optional)</Label>
-            <p className="text-muted-foreground text-sm">
-              Restrict API access to specific domains. Leave empty to allow all
-              domains.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {apiKeys.allowedDomains?.map((domain: string) => (
-                <Badge
-                  className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                  key={domain}
-                  onClick={() => handleRemoveDomain(domain)}
-                  variant="secondary"
-                >
-                  {domain} &times;
-                </Badge>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <Input
-                onChange={(e) => setDomainInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddDomain()}
-                placeholder="example.com"
-                value={domainInput}
-              />
-              <Button onClick={handleAddDomain} size="icon" variant="outline">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+              {/* Secret Key */}
+              <div className="space-y-2">
+                <Label>Secret Key</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    className="font-mono"
+                    readOnly
+                    type={showSecretKey ? "text" : "password"}
+                    value="fb_sec_••••••••••••••••••••••••"
+                  />
+                  <Button
+                    onClick={() => setShowSecretKey(!showSecretKey)}
+                    size="icon"
+                    title={showSecretKey ? "Hide" : "Show"}
+                    variant="outline"
+                  >
+                    {showSecretKey ? (
+                      <EyeSlash className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setSelectedKeyId(key.apiKeyId);
+                      setShowRegenerateDialog(true);
+                    }}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Regenerate
+                  </Button>
+                </div>
+              </div>
 
-          {/* Usage info */}
-          {apiKeys.lastUsedAt && (
-            <div className="text-muted-foreground text-sm">
-              Last used: {new Date(apiKeys.lastUsedAt).toLocaleDateString()}
+              {/* Allowed Domains */}
+              <div className="space-y-2">
+                <Label>Allowed Domains (Optional)</Label>
+                <p className="text-muted-foreground text-sm">
+                  Restrict API access to specific domains. Leave empty to allow
+                  all domains.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {key.allowedDomains?.map((domain: string) => (
+                    <Badge
+                      className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                      key={domain}
+                      onClick={() =>
+                        handleRemoveDomain(
+                          key.apiKeyId,
+                          key.allowedDomains ?? [],
+                          domain
+                        )
+                      }
+                      variant="secondary"
+                    >
+                      {domain} &times;
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    onChange={(e) => setDomainInput(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" &&
+                      handleAddDomain(key.apiKeyId, key.allowedDomains ?? [])
+                    }
+                    placeholder="example.com"
+                    value={domainInput}
+                  />
+                  <Button
+                    onClick={() =>
+                      handleAddDomain(key.apiKeyId, key.allowedDomains ?? [])
+                    }
+                    size="icon"
+                    variant="outline"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Usage info */}
+              {key.lastUsedAt && (
+                <div className="text-muted-foreground text-sm">
+                  Last used: {new Date(key.lastUsedAt).toLocaleDateString()}
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </TabsContent>
 
         <TabsContent className="mt-6" value="docs">
-          <IntegrationGuide publicKey={apiKeys.publicKey} />
+          <IntegrationGuide publicKey={firstKey?.publicKey ?? "fb_pub_xxx"} />
         </TabsContent>
 
         <TabsContent className="mt-6" value="ai">
-          <AiPromptSection publicKey={apiKeys.publicKey} />
+          <AiPromptSection publicKey={firstKey?.publicKey ?? "fb_pub_xxx"} />
         </TabsContent>
       </Tabs>
 
@@ -602,6 +719,25 @@ export function ApiKeysSettings({ boardId }: ApiKeysSettingsProps) {
               onClick={handleRegenerateSecretKey}
             >
               {isRegenerating ? "Regenerating..." : "Regenerate"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Dialog */}
+      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete API Key?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. Any applications using this API key
+              will stop working immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteKey}>
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -881,7 +1017,7 @@ const reflet = new Reflet({
             <code>useSubscription()</code> - Subscribe
           </li>
           <li>
-            <code>useBoardConfig()</code> - Board config
+            <code>useOrgConfig()</code> - Org config
           </li>
           <li>
             <code>useRoadmap()</code> - Roadmap data

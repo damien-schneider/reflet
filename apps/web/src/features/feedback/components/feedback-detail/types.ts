@@ -7,7 +7,6 @@ import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 export interface FeedbackDetailProps {
   feedbackId: Id<"feedback"> | null;
   onClose: () => void;
-  boardId?: Id<"boards">;
   isMember?: boolean;
   isAdmin?: boolean;
 }

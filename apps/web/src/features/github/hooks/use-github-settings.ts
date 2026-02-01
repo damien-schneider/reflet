@@ -53,7 +53,6 @@ interface UseGitHubSettingsProps {
     organizationId: Id<"organizations">;
     githubLabelName: string;
     githubLabelColor?: string;
-    targetBoardId?: Id<"boards">;
     targetTagId?: Id<"tags">;
     autoSync: boolean;
     syncClosedIssues?: boolean;
@@ -328,7 +327,6 @@ export function useGitHubSettings({
     async (mapping: {
       githubLabelName: string;
       githubLabelColor?: string;
-      targetBoardId?: string;
       targetTagId?: string;
       autoSync: boolean;
       syncClosedIssues?: boolean;
@@ -340,7 +338,6 @@ export function useGitHubSettings({
       await upsertLabelMapping({
         organizationId: orgId,
         ...mapping,
-        targetBoardId: mapping.targetBoardId as Id<"boards"> | undefined,
         targetTagId: mapping.targetTagId as Id<"tags"> | undefined,
       });
     },

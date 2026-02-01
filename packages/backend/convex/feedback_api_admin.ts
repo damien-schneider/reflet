@@ -10,63 +10,63 @@ import { getAuthUser } from "./utils";
 // ============================================
 
 /**
- * Get API keys info for a board (admin only)
+ * Get API keys info for an organization (admin only)
  */
 export const getApiKeys = query({
   args: {
-    boardId: v.id("boards"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
     if (!user) {
-      return null;
+      return [];
     }
 
-    const board = await ctx.db.get(args.boardId);
-    if (!board) {
-      return null;
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      return [];
     }
 
     // Check admin permissions
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", board.organizationId).eq("userId", user._id)
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
       )
       .unique();
 
     if (!membership || membership.role === "member") {
-      return null;
+      return [];
     }
 
     // Get API keys
     const keys = await ctx.db
-      .query("boardApiKeys")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
-      .unique();
+      .query("organizationApiKeys")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
 
-    if (!keys) {
-      return null;
-    }
-
-    return {
-      apiKeyId: keys._id,
-      publicKey: keys.publicKey,
-      isActive: keys.isActive,
-      allowedDomains: keys.allowedDomains,
-      rateLimit: keys.rateLimit,
-      createdAt: keys.createdAt,
-      lastUsedAt: keys.lastUsedAt,
-    };
+    return keys.map((key) => ({
+      apiKeyId: key._id,
+      name: key.name,
+      publicKey: key.publicKey,
+      tagId: key.tagId,
+      isActive: key.isActive,
+      allowedDomains: key.allowedDomains,
+      rateLimit: key.rateLimit,
+      createdAt: key.createdAt,
+      lastUsedAt: key.lastUsedAt,
+    }));
   },
 });
 
 /**
- * List external users for a board (admin only)
+ * List external users for an organization (admin only)
  */
 export const listExternalUsers = query({
   args: {
-    boardId: v.id("boards"),
+    organizationId: v.id("organizations"),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -75,8 +75,8 @@ export const listExternalUsers = query({
       return [];
     }
 
-    const board = await ctx.db.get(args.boardId);
-    if (!board) {
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
       return [];
     }
 
@@ -84,7 +84,7 @@ export const listExternalUsers = query({
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", board.organizationId).eq("userId", user._id)
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
       )
       .unique();
 
@@ -95,7 +95,9 @@ export const listExternalUsers = query({
     // Get external users
     const externalUsers = await ctx.db
       .query("externalUsers")
-      .withIndex("by_board_external", (q) => q.eq("boardId", args.boardId))
+      .withIndex("by_organization_external", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
       .collect();
 
     // Sort by last seen, limit
@@ -119,32 +121,34 @@ export const listExternalUsers = query({
 // ============================================
 
 /**
- * Generate API keys for a board (admin only)
+ * Generate API keys for an organization (admin only)
  */
 export const generateApiKeys = mutation({
   args: {
-    boardId: v.id("boards"),
+    organizationId: v.id("organizations"),
+    name: v.string(),
+    tagId: v.optional(v.id("tags")),
   },
   handler: async (
     ctx,
     args
   ): Promise<{
-    apiKeyId: Id<"boardApiKeys">;
+    apiKeyId: Id<"organizationApiKeys">;
     publicKey: string;
     secretKey: string;
   }> => {
     const user = await getAuthUser(ctx);
 
-    const board = await ctx.db.get(args.boardId);
-    if (!board) {
-      throw new Error("Board not found");
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
     }
 
     // Check admin permissions
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", board.organizationId).eq("userId", user._id)
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
       )
       .unique();
 
@@ -152,23 +156,13 @@ export const generateApiKeys = mutation({
       throw new Error("You don't have permission to manage API keys");
     }
 
-    // Check if keys already exist
-    const existingKeys = await ctx.db
-      .query("boardApiKeys")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
-      .unique();
-
-    if (existingKeys) {
-      throw new Error(
-        "API keys already exist for this board. Use regenerate instead."
-      );
-    }
-
     // Generate keys
     const result = await ctx.runMutation(
-      internal.feedback_api_auth.generateBoardApiKeys,
+      internal.feedback_api_auth.generateOrganizationApiKeys,
       {
-        boardId: args.boardId,
+        organizationId: args.organizationId,
+        name: args.name,
+        tagId: args.tagId,
       }
     );
 
@@ -177,11 +171,12 @@ export const generateApiKeys = mutation({
 });
 
 /**
- * Regenerate secret key for a board (admin only)
+ * Regenerate secret key for an organization API key (admin only)
  */
 export const regenerateSecretKey = mutation({
   args: {
-    boardId: v.id("boards"),
+    organizationId: v.id("organizations"),
+    apiKeyId: v.id("organizationApiKeys"),
   },
   handler: async (
     ctx,
@@ -191,16 +186,16 @@ export const regenerateSecretKey = mutation({
   }> => {
     const user = await getAuthUser(ctx);
 
-    const board = await ctx.db.get(args.boardId);
-    if (!board) {
-      throw new Error("Board not found");
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
     }
 
     // Check admin permissions
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", board.organizationId).eq("userId", user._id)
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
       )
       .unique();
 
@@ -208,11 +203,17 @@ export const regenerateSecretKey = mutation({
       throw new Error("You don't have permission to manage API keys");
     }
 
+    // Verify the API key belongs to this organization
+    const apiKey = await ctx.db.get(args.apiKeyId);
+    if (!apiKey || apiKey.organizationId !== args.organizationId) {
+      throw new Error("API key not found");
+    }
+
     // Regenerate secret key
     const result = await ctx.runMutation(
-      internal.feedback_api_auth.regenerateSecretKey,
+      internal.feedback_api_auth.regenerateOrganizationSecretKey,
       {
-        boardId: args.boardId,
+        apiKeyId: args.apiKeyId,
       }
     );
 
@@ -225,7 +226,10 @@ export const regenerateSecretKey = mutation({
  */
 export const updateApiKeySettings = mutation({
   args: {
-    boardId: v.id("boards"),
+    organizationId: v.id("organizations"),
+    apiKeyId: v.id("organizationApiKeys"),
+    name: v.optional(v.string()),
+    tagId: v.optional(v.id("tags")),
     isActive: v.optional(v.boolean()),
     allowedDomains: v.optional(v.array(v.string())),
     rateLimit: v.optional(
@@ -237,16 +241,16 @@ export const updateApiKeySettings = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    const board = await ctx.db.get(args.boardId);
-    if (!board) {
-      throw new Error("Board not found");
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
     }
 
     // Check admin permissions
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", board.organizationId).eq("userId", user._id)
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
       )
       .unique();
 
@@ -254,18 +258,20 @@ export const updateApiKeySettings = mutation({
       throw new Error("You don't have permission to manage API keys");
     }
 
-    // Get existing keys
-    const keys = await ctx.db
-      .query("boardApiKeys")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
-      .unique();
-
-    if (!keys) {
-      throw new Error("API keys not found for this board");
+    // Verify the API key belongs to this organization
+    const apiKey = await ctx.db.get(args.apiKeyId);
+    if (!apiKey || apiKey.organizationId !== args.organizationId) {
+      throw new Error("API key not found");
     }
 
     // Update settings
     const updates: Record<string, unknown> = {};
+    if (args.name !== undefined) {
+      updates.name = args.name;
+    }
+    if (args.tagId !== undefined) {
+      updates.tagId = args.tagId;
+    }
     if (args.isActive !== undefined) {
       updates.isActive = args.isActive;
     }
@@ -277,7 +283,7 @@ export const updateApiKeySettings = mutation({
     }
 
     if (Object.keys(updates).length > 0) {
-      await ctx.db.patch(keys._id, updates);
+      await ctx.db.patch(args.apiKeyId, updates);
     }
 
     return { success: true };
@@ -285,25 +291,26 @@ export const updateApiKeySettings = mutation({
 });
 
 /**
- * Delete API keys for a board (admin only)
+ * Delete API key (admin only)
  */
-export const deleteApiKeys = mutation({
+export const deleteApiKey = mutation({
   args: {
-    boardId: v.id("boards"),
+    organizationId: v.id("organizations"),
+    apiKeyId: v.id("organizationApiKeys"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    const board = await ctx.db.get(args.boardId);
-    if (!board) {
-      throw new Error("Board not found");
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
     }
 
     // Check owner permissions only
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", board.organizationId).eq("userId", user._id)
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
       )
       .unique();
 
@@ -311,18 +318,14 @@ export const deleteApiKeys = mutation({
       throw new Error("Only the organization owner can delete API keys");
     }
 
-    // Get existing keys
-    const keys = await ctx.db
-      .query("boardApiKeys")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
-      .unique();
-
-    if (!keys) {
-      throw new Error("API keys not found for this board");
+    // Verify the API key belongs to this organization
+    const apiKey = await ctx.db.get(args.apiKeyId);
+    if (!apiKey || apiKey.organizationId !== args.organizationId) {
+      throw new Error("API key not found");
     }
 
-    // Delete keys
-    await ctx.db.delete(keys._id);
+    // Delete key
+    await ctx.db.delete(args.apiKeyId);
 
     return { success: true };
   },

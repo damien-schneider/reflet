@@ -129,15 +129,12 @@ export const toggle = mutation({
       throw new Error("Feedback not found");
     }
 
-    // Get board if it exists (for backwards compatibility)
-    const board = feedback.boardId ? await ctx.db.get(feedback.boardId) : null;
-
     const org = await ctx.db.get(feedback.organizationId);
     if (!org) {
       throw new Error("Organization not found");
     }
 
-    // Check access - member or public board
+    // Check access - member or public org
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -147,12 +144,7 @@ export const toggle = mutation({
 
     const isMember = !!membership;
 
-    // Check visibility: member OR (board is public AND org is public) OR org is public (new flow)
-    const isPublicAccess = board
-      ? board.isPublic && org.isPublic
-      : org.isPublic;
-
-    if (!(isMember || isPublicAccess)) {
+    if (!(isMember || org.isPublic)) {
       throw new Error("You don't have access to subscribe to this feedback");
     }
 

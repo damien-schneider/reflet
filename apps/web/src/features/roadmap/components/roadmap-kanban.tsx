@@ -24,14 +24,14 @@ import { COLOR_PALETTE, type RoadmapLaneWithBacklog } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface RoadmapKanbanProps {
-  boardId: Id<"boards">;
+  organizationId: Id<"organizations">;
   isAdmin?: boolean;
   onAddItem?: (laneId: string) => void;
   onItemClick?: (feedbackId: string) => void;
 }
 
 export function RoadmapKanban({
-  boardId,
+  organizationId,
   isAdmin = false,
   onAddItem,
   onItemClick,
@@ -47,23 +47,29 @@ export function RoadmapKanban({
   const [newColumnIsDone, setNewColumnIsDone] = useState(false);
   const [isCreatingColumn, setIsCreatingColumn] = useState(false);
 
-  // Fetch board statuses (the single source of truth for columns)
-  const boardStatuses = useQuery(api.board_statuses.list, { boardId });
+  // Fetch organization statuses (the single source of truth for columns)
+  const organizationStatuses = useQuery(api.organization_statuses.list, {
+    organizationId,
+  });
 
   // Fetch roadmap data (feedback items)
-  const roadmapData = useQuery(api.feedback_list.listForRoadmap, { boardId });
+  const roadmapData = useQuery(api.feedback_list.listForRoadmapByOrganization, {
+    organizationId,
+  });
 
   // Mutations
-  const updateFeedbackStatus = useMutation(api.feedback_actions.updateStatus);
-  const createStatus = useMutation(api.board_statuses.create);
+  const updateFeedbackStatus = useMutation(
+    api.feedback_actions.updateOrganizationStatus
+  );
+  const createStatus = useMutation(api.organization_statuses.create);
 
-  // Build lane configuration from board statuses
+  // Build lane configuration from organization statuses
   const laneConfigs = useMemo((): LaneConfig[] => {
-    if (!boardStatuses || boardStatuses.length === 0) {
+    if (!organizationStatuses || organizationStatuses.length === 0) {
       return [];
     }
 
-    return boardStatuses.map((status) => ({
+    return organizationStatuses.map((status) => ({
       id: status._id,
       label: status.name,
       color: status.color,
@@ -71,9 +77,9 @@ export function RoadmapKanban({
       isDoneStatus: status.name.toLowerCase() === "completed",
       laneOrder: status.order,
     }));
-  }, [boardStatuses]);
+  }, [organizationStatuses]);
 
-  // Transform data for display - group by statusId
+  // Transform data for display - group by organizationStatusId
   const itemsByLane = useMemo(() => {
     if (!roadmapData) {
       return { backlog: [] as RoadmapItemData[] };
@@ -83,18 +89,18 @@ export function RoadmapKanban({
       backlog: [],
     };
 
-    // Initialize lanes from board statuses
+    // Initialize lanes from organization statuses
     for (const lane of laneConfigs) {
       grouped[lane.id] = [];
     }
 
-    // Group feedback by statusId
+    // Group feedback by organizationStatusId
     for (const item of roadmapData) {
       const feedbackItem = item as unknown as RoadmapItemData;
-      if (item.statusId && grouped[item.statusId]) {
-        grouped[item.statusId].push(feedbackItem);
+      if (item.organizationStatusId && grouped[item.organizationStatusId]) {
+        grouped[item.organizationStatusId].push(feedbackItem);
       } else {
-        // Items without statusId go to backlog
+        // Items without organizationStatusId go to backlog
         grouped.backlog.push(feedbackItem);
       }
     }
@@ -148,7 +154,7 @@ export function RoadmapKanban({
       if (targetLane === "backlog") {
         await updateFeedbackStatus({
           feedbackId: draggedItemId as Id<"feedback">,
-          statusId: undefined,
+          organizationStatusId: undefined,
         });
         return;
       }
@@ -156,7 +162,7 @@ export function RoadmapKanban({
       // Update feedback with new statusId
       await updateFeedbackStatus({
         feedbackId: draggedItemId as Id<"feedback">,
-        statusId: targetLane as Id<"boardStatuses">,
+        organizationStatusId: targetLane as Id<"organizationStatuses">,
       });
     },
     [isAdmin, getDraggedItemId, updateFeedbackStatus]
@@ -172,7 +178,7 @@ export function RoadmapKanban({
 
     try {
       await createStatus({
-        boardId,
+        organizationId,
         name: newColumnName.trim(),
         color: newColumnColor,
         icon: newColumnIsDone ? "check-circle" : undefined,

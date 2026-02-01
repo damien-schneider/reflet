@@ -36,7 +36,7 @@ export const update = mutation({
 });
 
 /**
- * Get organization stats (boards count, members count, feedback count)
+ * Get organization stats (tags count, members count, feedback count)
  */
 export const getStats = query({
   args: { organizationId: v.id("organizations") },
@@ -58,14 +58,6 @@ export const getStats = query({
       return null;
     }
 
-    // Count boards
-    const boards = await ctx.db
-      .query("boards")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
     // Count members
     const members = await ctx.db
       .query("organizationMembers")
@@ -74,7 +66,7 @@ export const getStats = query({
       )
       .collect();
 
-    // Count feedback across all boards
+    // Count feedback
     const feedback = await ctx.db
       .query("feedback")
       .withIndex("by_organization", (q) =>
@@ -82,8 +74,16 @@ export const getStats = query({
       )
       .collect();
 
+    // Count tags
+    const tags = await ctx.db
+      .query("tags")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
     return {
-      boardsCount: boards.length,
+      tagsCount: tags.length,
       membersCount: members.length,
       feedbackCount: feedback.length,
     };
@@ -95,7 +95,6 @@ export const getStats = query({
  */
 export const remove = mutation({
   args: { id: v.id("organizations") },
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: deletion workflow is intentionally verbose
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -112,51 +111,41 @@ export const remove = mutation({
     }
 
     // Delete all related data
-    // 1. Delete all boards and their feedback
-    const boards = await ctx.db
-      .query("boards")
+    // 1. Delete all feedback for this organization
+    const feedbackItems = await ctx.db
+      .query("feedback")
       .withIndex("by_organization", (q) => q.eq("organizationId", args.id))
       .collect();
 
-    for (const board of boards) {
-      // Delete feedback for this board
-      const feedbackItems = await ctx.db
-        .query("feedback")
-        .withIndex("by_board", (q) => q.eq("boardId", board._id))
+    for (const feedback of feedbackItems) {
+      // Delete votes
+      const votes = await ctx.db
+        .query("feedbackVotes")
+        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
         .collect();
-
-      for (const feedback of feedbackItems) {
-        // Delete votes
-        const votes = await ctx.db
-          .query("feedbackVotes")
-          .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
-          .collect();
-        for (const vote of votes) {
-          await ctx.db.delete(vote._id);
-        }
-
-        // Delete comments
-        const comments = await ctx.db
-          .query("comments")
-          .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
-          .collect();
-        for (const comment of comments) {
-          await ctx.db.delete(comment._id);
-        }
-
-        // Delete feedback tags
-        const tags = await ctx.db
-          .query("feedbackTags")
-          .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
-          .collect();
-        for (const tag of tags) {
-          await ctx.db.delete(tag._id);
-        }
-
-        await ctx.db.delete(feedback._id);
+      for (const vote of votes) {
+        await ctx.db.delete(vote._id);
       }
 
-      await ctx.db.delete(board._id);
+      // Delete comments
+      const comments = await ctx.db
+        .query("comments")
+        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
+        .collect();
+      for (const comment of comments) {
+        await ctx.db.delete(comment._id);
+      }
+
+      // Delete feedback tags
+      const feedbackTags = await ctx.db
+        .query("feedbackTags")
+        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
+        .collect();
+      for (const feedbackTag of feedbackTags) {
+        await ctx.db.delete(feedbackTag._id);
+      }
+
+      await ctx.db.delete(feedback._id);
     }
 
     // 2. Delete tags

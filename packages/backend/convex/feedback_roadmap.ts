@@ -4,70 +4,7 @@ import { mutation, query } from "./_generated/server";
 import { getAuthUser } from "./utils";
 
 /**
- * Get feedback items for the roadmap view
- */
-export const getRoadmap = query({
-  args: {
-    boardId: v.id("boards"),
-    includeBacklog: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    // Only show approved items in the roadmap
-    const feedbackItemsRaw = await ctx.db
-      .query("feedback")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
-      .filter((q) => q.eq(q.field("isApproved"), true))
-      .collect();
-
-    // Map tags for each item
-    const feedbackItems = await Promise.all(
-      feedbackItemsRaw.map(async (f) => {
-        const feedbackTags = await ctx.db
-          .query("feedbackTags")
-          .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
-          .collect();
-        const tags = await Promise.all(
-          feedbackTags.map(async (ft) => ctx.db.get(ft.tagId))
-        );
-        return {
-          ...f,
-          tags: tags.filter(Boolean),
-        };
-      })
-    );
-
-    const backlog = feedbackItems.filter((f) => !f.roadmapLane);
-    const inLanes = feedbackItems.filter((f) => !!f.roadmapLane);
-
-    // Grouping by laneId
-    const lanesMap = new Map<string, typeof feedbackItems>();
-    for (const item of inLanes) {
-      if (item.roadmapLane) {
-        const existing = lanesMap.get(item.roadmapLane) || [];
-        existing.push(item);
-        lanesMap.set(item.roadmapLane, existing);
-      }
-    }
-
-    const lanes = await Promise.all(
-      Array.from(lanesMap.entries()).map(async ([laneId, items]) => {
-        const lane = await ctx.db.get(laneId as Id<"tags">);
-        return {
-          lane,
-          items,
-        };
-      })
-    );
-
-    return {
-      backlog,
-      lanes: lanes.filter((l) => !!l.lane),
-    };
-  },
-});
-
-/**
- * Get roadmap items for the entire organization
+ * Get roadmap items for an organization
  */
 export const list = query({
   args: {
@@ -100,17 +37,17 @@ export const list = query({
       })
     );
 
-    // Filter by roadmap statuses or having a roadmapLane
+    // Filter by roadmap statuses or having an organizationStatusId
     return feedbackItems.filter(
       (f) =>
         ["planned", "in_progress", "completed"].includes(f.status) ||
-        !!f.roadmapLane
+        !!f.organizationStatusId
     );
   },
 });
 
 /**
- * Move feedback to a specific roadmap lane
+ * Move feedback to a specific roadmap lane (organization status)
  */
 export const roadmapMoveToLane = mutation({
   args: {
@@ -144,7 +81,6 @@ export const roadmapMoveToLane = mutation({
     const { feedbackId, laneId, order } = args;
 
     const data: Partial<Doc<"feedback">> = {
-      roadmapLane: laneId,
       roadmapOrder: order,
     };
 
@@ -155,7 +91,6 @@ export const roadmapMoveToLane = mutation({
         data.status = "completed";
       } else if (tag) {
         // If it's a roadmap lane but not done, maybe it's "in_progress" or "planned"
-        // For simplicity, we just set it to in_progress if it's not done
         data.status = "in_progress";
       }
     } else {

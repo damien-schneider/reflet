@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
-import { feedbackStatus } from "./feedback";
 import { getAuthUser } from "./utils";
 
 // Helper to generate slug from name
@@ -39,13 +38,6 @@ const DEFAULT_TAGS = [
     description: "Questions and support requests",
   },
 ] as const;
-
-// Tag settings validator
-const tagSettings = v.object({
-  requireApproval: v.optional(v.boolean()),
-  defaultStatus: v.optional(feedbackStatus),
-  isPublic: v.optional(v.boolean()),
-});
 
 // ============================================
 // QUERIES
@@ -88,19 +80,8 @@ export const list = query({
       )
       .collect();
 
-    // Sort by laneOrder for roadmap lanes, then by name
-    return tags.sort((a, b) => {
-      if (a.isRoadmapLane && b.isRoadmapLane) {
-        return (a.laneOrder ?? 0) - (b.laneOrder ?? 0);
-      }
-      if (a.isRoadmapLane) {
-        return -1;
-      }
-      if (b.isRoadmapLane) {
-        return 1;
-      }
-      return a.name.localeCompare(b.name);
-    });
+    // Sort alphabetically by name
+    return tags.sort((a, b) => a.name.localeCompare(b.name));
   },
 });
 
@@ -129,9 +110,9 @@ export const getBySlug = query({
       return null;
     }
 
+    // Tags are accessible if org is public or user is a member
     const user = await authComponent.safeGetAuthUser(ctx);
 
-    // Check access
     let isMember = false;
     if (user) {
       const membership = await ctx.db
@@ -143,8 +124,7 @@ export const getBySlug = query({
       isMember = !!membership;
     }
 
-    // Non-members can only see public tags
-    if (!(isMember || tag.settings?.isPublic)) {
+    if (!(isMember || org.isPublic)) {
       return null;
     }
 
@@ -153,7 +133,7 @@ export const getBySlug = query({
 });
 
 /**
- * List public tags for an organization
+ * List public tags for an organization (returns all tags if org is public)
  */
 export const listPublic = query({
   args: { organizationId: v.id("organizations") },
@@ -170,47 +150,7 @@ export const listPublic = query({
       )
       .collect();
 
-    // Filter to only public tags
-    return tags.filter((tag) => tag.settings?.isPublic);
-  },
-});
-
-/**
- * Get roadmap lanes (tags configured as lanes)
- */
-export const getRoadmapLanes = query({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    const tags = await ctx.db
-      .query("tags")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .filter((q) => q.eq(q.field("isRoadmapLane"), true))
-      .collect();
-
-    return tags.sort((a, b) => (a.laneOrder ?? 0) - (b.laneOrder ?? 0));
-  },
-});
-
-/**
- * Get roadmap configuration (lanes for display)
- * Returns { lanes: Tag[] } for compatibility with roadmap page
- */
-export const getRoadmapConfig = query({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    const tags = await ctx.db
-      .query("tags")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .filter((q) => q.eq(q.field("isRoadmapLane"), true))
-      .collect();
-
-    const lanes = tags.sort((a, b) => (a.laneOrder ?? 0) - (b.laneOrder ?? 0));
-
-    return { lanes };
+    return tags.sort((a, b) => a.name.localeCompare(b.name));
   },
 });
 
@@ -287,8 +227,6 @@ export const createDefaults = mutation({
         slug: tag.slug,
         color: tag.color,
         description: tag.description,
-        isDoneStatus: false,
-        isRoadmapLane: false,
         createdAt: now,
         updatedAt: now,
       });
@@ -309,9 +247,6 @@ export const create = mutation({
     slug: v.optional(v.string()),
     color: v.string(),
     description: v.optional(v.string()),
-    isDoneStatus: v.optional(v.boolean()),
-    isRoadmapLane: v.optional(v.boolean()),
-    settings: v.optional(tagSettings),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -343,24 +278,6 @@ export const create = mutation({
       slug = `${slug}-${Math.random().toString(36).substring(2, 8)}`;
     }
 
-    // Get max lane order if this is a roadmap lane
-    let laneOrder: number | undefined;
-    if (args.isRoadmapLane) {
-      const existingLanes = await ctx.db
-        .query("tags")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", args.organizationId)
-        )
-        .filter((q) => q.eq(q.field("isRoadmapLane"), true))
-        .collect();
-
-      const maxOrder = existingLanes.reduce(
-        (max, lane) => Math.max(max, lane.laneOrder ?? 0),
-        0
-      );
-      laneOrder = maxOrder + 1;
-    }
-
     const now = Date.now();
     const tagId = await ctx.db.insert("tags", {
       organizationId: args.organizationId,
@@ -368,10 +285,6 @@ export const create = mutation({
       slug,
       color: args.color,
       description: args.description,
-      isDoneStatus: args.isDoneStatus ?? false,
-      isRoadmapLane: args.isRoadmapLane ?? false,
-      laneOrder,
-      settings: args.settings,
       createdAt: now,
       updatedAt: now,
     });
@@ -390,9 +303,6 @@ export const update = mutation({
     slug: v.optional(v.string()),
     color: v.optional(v.string()),
     description: v.optional(v.string()),
-    isDoneStatus: v.optional(v.boolean()),
-    isRoadmapLane: v.optional(v.boolean()),
-    settings: v.optional(tagSettings),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -429,65 +339,10 @@ export const update = mutation({
       }
     }
 
-    // Handle lane order if becoming a roadmap lane
-    const updates: Partial<typeof tag> & { updatedAt: number } = {
-      updatedAt: Date.now(),
-    };
-
-    if (args.isRoadmapLane && !tag.isRoadmapLane) {
-      const existingLanes = await ctx.db
-        .query("tags")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", tag.organizationId)
-        )
-        .filter((q) => q.eq(q.field("isRoadmapLane"), true))
-        .collect();
-
-      const maxOrder = existingLanes.reduce(
-        (max, lane) => Math.max(max, lane.laneOrder ?? 0),
-        0
-      );
-      updates.laneOrder = maxOrder + 1;
-    } else if (args.isRoadmapLane === false && tag.isRoadmapLane) {
-      updates.laneOrder = undefined;
-    }
-
-    const { id, ...otherUpdates } = args;
-    await ctx.db.patch(id, { ...otherUpdates, ...updates });
+    const { id, ...updates } = args;
+    await ctx.db.patch(id, { ...updates, updatedAt: Date.now() });
 
     return id;
-  },
-});
-
-/**
- * Reorder roadmap lanes
- */
-export const reorderLanes = mutation({
-  args: {
-    organizationId: v.id("organizations"),
-    laneIds: v.array(v.id("tags")),
-  },
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    // Check admin/owner permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can reorder lanes");
-    }
-
-    // Update lane orders
-    for (let i = 0; i < args.laneIds.length; i++) {
-      await ctx.db.patch(args.laneIds[i], { laneOrder: i });
-    }
-
-    return true;
   },
 });
 
@@ -524,21 +379,6 @@ export const remove = mutation({
 
     for (const ft of feedbackTags) {
       await ctx.db.delete(ft._id);
-    }
-
-    // Clear roadmapLane on feedback using this tag
-    if (tag.isRoadmapLane) {
-      const feedback = await ctx.db
-        .query("feedback")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", tag.organizationId)
-        )
-        .filter((q) => q.eq(q.field("roadmapLane"), args.id))
-        .collect();
-
-      for (const f of feedback) {
-        await ctx.db.patch(f._id, { roadmapLane: undefined });
-      }
     }
 
     await ctx.db.delete(args.id);

@@ -79,12 +79,6 @@ export { Reflet } from "./client";
 export type {
   AddCommentParams,
   AddCommentResponse,
-  /** @deprecated Use OrganizationConfig instead */
-  BoardConfig,
-  /** @deprecated Use OrganizationSettings instead */
-  BoardSettings,
-  /** @deprecated Use OrganizationStatus instead */
-  BoardStatus,
   ChangelogEntry,
   Comment,
   CommentReply,

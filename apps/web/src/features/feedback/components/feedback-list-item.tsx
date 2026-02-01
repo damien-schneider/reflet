@@ -29,7 +29,7 @@ interface FeedbackListItemProps {
   feedback: Doc<"feedback"> & {
     hasVoted?: boolean;
     tags?: FeedbackTag[];
-    boardStatus?: BoardStatusInfo | null;
+    organizationStatus?: BoardStatusInfo | null;
     author?: {
       name: string | null;
       email: string;
@@ -40,7 +40,6 @@ interface FeedbackListItemProps {
   className?: string;
   isAdmin?: boolean;
   isAuthor?: boolean;
-  boardId?: Id<"boards">;
 }
 
 export function FeedbackListItem({
@@ -49,7 +48,6 @@ export function FeedbackListItem({
   className,
   isAdmin = false,
   isAuthor = false,
-  boardId,
 }: FeedbackListItemProps) {
   const deleteFeedback = useMutation(api.feedback_actions.remove);
   const tags = feedback.tags ?? [];
@@ -91,7 +89,6 @@ export function FeedbackListItem({
         >
           {/* Vote button */}
           <VoteButton
-            boardId={boardId}
             feedbackId={feedback._id}
             hasVoted={feedback.hasVoted}
             size="md"
@@ -146,18 +143,18 @@ export function FeedbackListItem({
                 )}
               </div>
 
-              {/* Status Badge from boardStatus */}
-              {feedback.boardStatus && (
+              {/* Status Badge from organizationStatus */}
+              {feedback.organizationStatus && (
                 <Badge
                   className="shrink-0"
                   style={{
-                    backgroundColor: `${feedback.boardStatus.color}20`,
-                    color: feedback.boardStatus.color,
-                    borderColor: feedback.boardStatus.color,
+                    backgroundColor: `${feedback.organizationStatus.color}20`,
+                    color: feedback.organizationStatus.color,
+                    borderColor: feedback.organizationStatus.color,
                   }}
                   variant="outline"
                 >
-                  {feedback.boardStatus.name}
+                  {feedback.organizationStatus.name}
                 </Badge>
               )}
             </div>

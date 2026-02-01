@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 
 interface PublicFeedbackDetailContentProps {
   feedbackId: Id<"feedback">;
-  boardId: Id<"boards">;
+  organizationId: Id<"organizations">;
   primaryColor: string;
   isMember?: boolean;
   isAdmin?: boolean;
@@ -45,18 +45,22 @@ interface PublicFeedbackDetailContentProps {
 
 export function PublicFeedbackDetailContent({
   feedbackId,
-  boardId,
+  organizationId,
   primaryColor,
   isMember: _isMember = false,
   isAdmin = false,
 }: PublicFeedbackDetailContentProps) {
   const feedback = useQuery(api.feedback.get, { id: feedbackId });
   const comments = useQuery(api.comments.list, { feedbackId });
-  const boardStatuses = useQuery(api.board_statuses.list, { boardId });
+  const organizationStatuses = useQuery(api.organization_statuses.list, {
+    organizationId,
+  });
 
   const toggleVote = useMutation(api.votes.toggle);
   const createComment = useMutation(api.comments.create);
-  const updateFeedbackStatus = useMutation(api.feedback_actions.updateStatus);
+  const updateFeedbackStatus = useMutation(
+    api.feedback_actions.updateOrganizationStatus
+  );
   const togglePin = useMutation(api.feedback_actions.togglePin);
 
   const [newComment, setNewComment] = useState("");
@@ -75,7 +79,7 @@ export function PublicFeedbackDetailContent({
       }
       await updateFeedbackStatus({
         feedbackId,
-        statusId: statusId as Id<"boardStatuses">,
+        organizationStatusId: statusId as Id<"organizationStatuses">,
       });
     },
     [feedbackId, updateFeedbackStatus]
@@ -100,8 +104,8 @@ export function PublicFeedbackDetailContent({
   }, [feedbackId, newComment, createComment]);
 
   const isLoading = feedback === undefined;
-  const currentStatus = boardStatuses?.find(
-    (s) => s._id === feedback?.statusId
+  const currentStatus = organizationStatuses?.find(
+    (s) => s._id === feedback?.organizationStatusId
   );
 
   const topLevelComments = comments?.filter((c) => !c.parentId) || [];
@@ -184,16 +188,18 @@ export function PublicFeedbackDetailContent({
 
         <div className="flex items-center gap-2">
           {/* Status - show as select for admins, badge for others */}
-          {isAdmin && boardStatuses && boardStatuses.length > 0 ? (
+          {isAdmin &&
+          organizationStatuses &&
+          organizationStatuses.length > 0 ? (
             <Select
               onValueChange={handleStatusChange}
-              value={feedback.statusId || ""}
+              value={feedback.organizationStatusId || ""}
             >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
-                {boardStatuses.map((status) => (
+                {organizationStatuses.map((status) => (
                   <SelectItem key={status._id} value={status._id}>
                     <div className="flex items-center gap-2">
                       <div

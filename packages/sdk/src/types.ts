@@ -46,17 +46,11 @@ export interface OrganizationConfig {
   statuses: OrganizationStatus[];
 }
 
-/** @deprecated Use OrganizationConfig instead */
-export type BoardConfig = OrganizationConfig;
-
 export interface OrganizationSettings {
   allowAnonymousVoting?: boolean;
   requireApproval?: boolean;
   defaultStatus?: FeedbackStatus;
 }
-
-/** @deprecated Use OrganizationSettings instead */
-export type BoardSettings = OrganizationSettings;
 
 export interface OrganizationStatus {
   id: string;
@@ -65,9 +59,6 @@ export interface OrganizationStatus {
   icon?: string;
   order: number;
 }
-
-/** @deprecated Use OrganizationStatus instead */
-export type BoardStatus = OrganizationStatus;
 
 export type FeedbackStatus =
   | "open"
@@ -95,12 +86,6 @@ export interface FeedbackItem {
   completedAt?: number;
   tags: FeedbackTag[];
   organizationStatus: {
-    id: string;
-    name: string;
-    color: string;
-  } | null;
-  /** @deprecated Use organizationStatus instead */
-  boardStatus?: {
     id: string;
     name: string;
     color: string;

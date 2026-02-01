@@ -31,7 +31,7 @@ const RefletContext = createContext<RefletContextValue | null>(null);
 // ============================================
 
 export interface RefletProviderProps {
-  /** Your board's public API key */
+  /** Your organization's public API key */
   publicKey: string;
   /** API base URL (optional, defaults to Reflet production API) */
   baseUrl?: string;

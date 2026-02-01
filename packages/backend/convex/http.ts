@@ -44,41 +44,10 @@ function corsPreflightResponse(): Response {
 }
 
 interface ApiAuthContext {
-  boardId?: Id<"boards">;
-  organizationId?: Id<"organizations">;
-  apiKeyId?: Id<"boardApiKeys">;
-  organizationApiKeyId?: Id<"organizationApiKeys">;
+  organizationId: Id<"organizations">;
+  organizationApiKeyId: Id<"organizationApiKeys">;
   isSecretKey: boolean;
   externalUserId?: Id<"externalUsers">;
-}
-
-/**
- * Check if a board is accessible (public or using secret key)
- */
-async function checkBoardAccess(
-  ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
-  boardId: Id<"boards">,
-  isSecretKey: boolean
-): Promise<{ allowed: true } | { allowed: false; response: Response }> {
-  const board = await ctx.runQuery(internal.feedback_api.getBoardConfig, {
-    boardId,
-  });
-
-  if (!board) {
-    return { allowed: false, response: errorResponse("Board not found", 404) };
-  }
-
-  if (!(board.isPublic || isSecretKey)) {
-    return {
-      allowed: false,
-      response: errorResponse(
-        "This board is not public. Use a secret key for private board access.",
-        403
-      ),
-    };
-  }
-
-  return { allowed: true };
 }
 
 /**
@@ -136,35 +105,29 @@ async function authenticateApiRequest(
     }
   );
 
-  // Check for either board-level or organization-level auth
-  const hasBoardAuth =
-    validation.success && validation.boardId && validation.apiKeyId;
-  const hasOrgAuth =
-    validation.success &&
-    validation.organizationId &&
-    validation.organizationApiKeyId;
-
-  if (!(hasBoardAuth || hasOrgAuth)) {
+  // Check for organization-level auth - extract values with proper type narrowing
+  if (
+    !(
+      validation.success &&
+      validation.organizationId &&
+      validation.organizationApiKeyId
+    )
+  ) {
     return {
       success: false,
       response: errorResponse(validation.error ?? "Invalid API key", 401),
     };
   }
 
+  // After the above check, these are guaranteed to be defined
+  const organizationId = validation.organizationId;
+  const organizationApiKeyId = validation.organizationApiKeyId;
+  const isSecretKey = validation.isSecretKey ?? false;
+
   // Update last used timestamp (fire and forget)
-  if (validation.apiKeyId) {
-    ctx.runMutation(internal.feedback_api_auth.updateApiKeyLastUsed, {
-      apiKeyId: validation.apiKeyId,
-    });
-  }
-  if (validation.organizationApiKeyId) {
-    ctx.runMutation(
-      internal.feedback_api_auth.updateOrganizationApiKeyLastUsed,
-      {
-        apiKeyId: validation.organizationApiKeyId,
-      }
-    );
-  }
+  ctx.runMutation(internal.feedback_api_auth.updateOrganizationApiKeyLastUsed, {
+    apiKeyId: organizationApiKeyId,
+  });
 
   // Check for user token to identify external user
   const userToken = request.headers.get("X-User-Token");
@@ -177,8 +140,7 @@ async function authenticateApiRequest(
       const externalUser = await ctx.runMutation(
         internal.feedback_api_auth.getOrCreateExternalUser,
         {
-          boardId: validation.boardId,
-          organizationId: validation.organizationId,
+          organizationId,
           externalId: decoded.id,
           email: decoded.email,
           name: decoded.name,
@@ -191,11 +153,9 @@ async function authenticateApiRequest(
   return {
     success: true,
     auth: {
-      boardId: validation.boardId,
-      organizationId: validation.organizationId,
-      apiKeyId: validation.apiKeyId,
-      organizationApiKeyId: validation.organizationApiKeyId,
-      isSecretKey: validation.isSecretKey ?? false,
+      organizationId,
+      organizationApiKeyId,
+      isSecretKey,
       externalUserId,
     },
   };
@@ -304,7 +264,7 @@ http.route({
   handler: httpAction(async () => corsPreflightResponse()),
 });
 
-// GET /api/v1/feedback - Get config (supports both board and organization)
+// GET /api/v1/feedback - Get organization config
 http.route({
   path: "/api/v1/feedback",
   method: "GET",
@@ -315,48 +275,22 @@ http.route({
         return authResult.response;
       }
 
-      const { boardId, organizationId, isSecretKey } = authResult.auth;
+      const { organizationId, isSecretKey } = authResult.auth;
 
-      // New flow: organization-level API key
-      if (organizationId) {
-        const config = await ctx.runQuery(
-          internal.feedback_api.getOrganizationConfig,
-          {
-            organizationId,
-          }
-        );
-
-        if (!config) {
-          return errorResponse("Organization not found", 404);
+      const config = await ctx.runQuery(
+        internal.feedback_api.getOrganizationConfig,
+        {
+          organizationId,
         }
-
-        if (!(config.isPublic || isSecretKey)) {
-          return errorResponse(
-            "This organization is not public. Use a secret key for private access.",
-            403
-          );
-        }
-
-        return jsonResponse(config);
-      }
-
-      // Legacy flow: board-level API key
-      if (!boardId) {
-        return errorResponse("Invalid API key configuration", 500);
-      }
-
-      const config = await ctx.runQuery(internal.feedback_api.getBoardConfig, {
-        boardId,
-      });
+      );
 
       if (!config) {
-        return errorResponse("Board not found", 404);
+        return errorResponse("Organization not found", 404);
       }
 
-      // Check if board is public (API access requires public board or secret key)
       if (!(config.isPublic || isSecretKey)) {
         return errorResponse(
-          "This board is not public. Use a secret key for private board access.",
+          "This organization is not public. Use a secret key for private access.",
           403
         );
       }
@@ -376,7 +310,6 @@ http.route({
 http.route({
   path: "/api/v1/feedback/list",
   method: "GET",
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: HTTP handler with extensive query param validation
   handler: httpAction(async (ctx, request) => {
     try {
       const authResult = await authenticateApiRequest(ctx, request);
@@ -384,11 +317,11 @@ http.route({
         return authResult.response;
       }
 
-      const { boardId, organizationId, externalUserId, isSecretKey } =
-        authResult.auth;
+      const { organizationId, externalUserId, isSecretKey } = authResult.auth;
 
       const url = new URL(request.url);
       const statusId = url.searchParams.get("statusId");
+      const tagId = url.searchParams.get("tagId");
       const status = url.searchParams.get("status") as
         | "open"
         | "under_review"
@@ -407,56 +340,30 @@ http.route({
       const limit = url.searchParams.get("limit");
       const offset = url.searchParams.get("offset");
 
-      // New flow: organization-level API key
-      if (organizationId) {
-        const access = await checkOrganizationAccess(
-          ctx,
-          organizationId,
-          isSecretKey
-        );
-        if (!access.allowed) {
-          return access.response;
-        }
-
-        const result = await ctx.runQuery(
-          internal.feedback_api.listFeedbackByOrganization,
-          {
-            organizationId,
-            statusId:
-              (statusId as Id<"organizationStatuses"> | undefined) ?? undefined,
-            status: status ?? undefined,
-            search: search ?? undefined,
-            sortBy: sortBy ?? undefined,
-            limit: limit ? Number.parseInt(limit, 10) : undefined,
-            offset: offset ? Number.parseInt(offset, 10) : undefined,
-            externalUserId,
-          }
-        );
-
-        return jsonResponse(result);
-      }
-
-      // Legacy flow: board-level API key
-      if (!boardId) {
-        return errorResponse("Invalid API key configuration", 500);
-      }
-
-      // Check board visibility
-      const access = await checkBoardAccess(ctx, boardId, isSecretKey);
+      const access = await checkOrganizationAccess(
+        ctx,
+        organizationId,
+        isSecretKey
+      );
       if (!access.allowed) {
         return access.response;
       }
 
-      const result = await ctx.runQuery(internal.feedback_api.listFeedback, {
-        boardId,
-        statusId: (statusId as Id<"boardStatuses"> | undefined) ?? undefined,
-        status: status ?? undefined,
-        search: search ?? undefined,
-        sortBy: sortBy ?? undefined,
-        limit: limit ? Number.parseInt(limit, 10) : undefined,
-        offset: offset ? Number.parseInt(offset, 10) : undefined,
-        externalUserId,
-      });
+      const result = await ctx.runQuery(
+        internal.feedback_api.listFeedbackByOrganization,
+        {
+          organizationId,
+          statusId:
+            (statusId as Id<"organizationStatuses"> | undefined) ?? undefined,
+          tagId: (tagId as Id<"tags"> | undefined) ?? undefined,
+          status: status ?? undefined,
+          search: search ?? undefined,
+          sortBy: sortBy ?? undefined,
+          limit: limit ? Number.parseInt(limit, 10) : undefined,
+          offset: offset ? Number.parseInt(offset, 10) : undefined,
+          externalUserId,
+        }
+      );
 
       return jsonResponse(result);
     } catch (error) {
@@ -487,8 +394,7 @@ http.route({
         return authResult.response;
       }
 
-      const { boardId, organizationId, externalUserId, isSecretKey } =
-        authResult.auth;
+      const { organizationId, externalUserId, isSecretKey } = authResult.auth;
 
       const url = new URL(request.url);
       const feedbackId = url.searchParams.get("id") as Id<"feedback"> | null;
@@ -497,49 +403,23 @@ http.route({
         return errorResponse("Missing feedback ID", 400);
       }
 
-      // New flow: organization-level API key
-      if (organizationId) {
-        const access = await checkOrganizationAccess(
-          ctx,
-          organizationId,
-          isSecretKey
-        );
-        if (!access.allowed) {
-          return access.response;
-        }
-
-        const result = await ctx.runQuery(
-          internal.feedback_api.getFeedbackByOrganization,
-          {
-            organizationId,
-            feedbackId,
-            externalUserId,
-          }
-        );
-
-        if (!result) {
-          return errorResponse("Feedback not found", 404);
-        }
-
-        return jsonResponse(result);
-      }
-
-      // Legacy flow: board-level API key
-      if (!boardId) {
-        return errorResponse("Invalid API key configuration", 500);
-      }
-
-      // Check board visibility
-      const access = await checkBoardAccess(ctx, boardId, isSecretKey);
+      const access = await checkOrganizationAccess(
+        ctx,
+        organizationId,
+        isSecretKey
+      );
       if (!access.allowed) {
         return access.response;
       }
 
-      const result = await ctx.runQuery(internal.feedback_api.getFeedback, {
-        boardId,
-        feedbackId,
-        externalUserId,
-      });
+      const result = await ctx.runQuery(
+        internal.feedback_api.getFeedbackByOrganization,
+        {
+          organizationId,
+          feedbackId,
+          externalUserId,
+        }
+      );
 
       if (!result) {
         return errorResponse("Feedback not found", 404);
@@ -574,8 +454,7 @@ http.route({
         return authResult.response;
       }
 
-      const { boardId, organizationId, externalUserId, isSecretKey } =
-        authResult.auth;
+      const { organizationId, externalUserId, isSecretKey } = authResult.auth;
 
       if (!externalUserId) {
         return errorResponse(
@@ -600,48 +479,22 @@ http.route({
         return errorResponse("Title and description are required", 400);
       }
 
-      // New flow: organization-level API key
-      if (organizationId) {
-        const access = await checkOrganizationAccess(
-          ctx,
-          organizationId,
-          isSecretKey
-        );
-        if (!access.allowed) {
-          return access.response;
-        }
-
-        const result = await ctx.runMutation(
-          internal.feedback_api.createFeedbackByOrganization,
-          {
-            organizationId,
-            title,
-            description,
-            tagId: tagId as Id<"tags"> | undefined,
-            externalUserId,
-          }
-        );
-
-        return jsonResponse(result, 201);
-      }
-
-      // Legacy flow: board-level API key
-      if (!boardId) {
-        return errorResponse("Invalid API key configuration", 500);
-      }
-
-      // Check board visibility
-      const access = await checkBoardAccess(ctx, boardId, isSecretKey);
+      const access = await checkOrganizationAccess(
+        ctx,
+        organizationId,
+        isSecretKey
+      );
       if (!access.allowed) {
         return access.response;
       }
 
       const result = await ctx.runMutation(
-        internal.feedback_api.createFeedback,
+        internal.feedback_api.createFeedbackByOrganization,
         {
-          boardId,
+          organizationId,
           title,
           description,
+          tagId: tagId as Id<"tags"> | undefined,
           externalUserId,
         }
       );
@@ -675,8 +528,7 @@ http.route({
         return authResult.response;
       }
 
-      const { boardId, organizationId, externalUserId, isSecretKey } =
-        authResult.auth;
+      const { organizationId, externalUserId, isSecretKey } = authResult.auth;
 
       if (!externalUserId) {
         return errorResponse(
@@ -697,47 +549,24 @@ http.route({
         return errorResponse("Feedback ID is required", 400);
       }
 
-      // New flow: organization-level API key
-      if (organizationId) {
-        const access = await checkOrganizationAccess(
-          ctx,
-          organizationId,
-          isSecretKey
-        );
-        if (!access.allowed) {
-          return access.response;
-        }
-
-        const result = await ctx.runMutation(
-          internal.feedback_api.voteFeedbackByOrganization,
-          {
-            organizationId,
-            feedbackId: feedbackId as Id<"feedback">,
-            externalUserId,
-            voteType,
-          }
-        );
-
-        return jsonResponse(result);
-      }
-
-      // Legacy flow: board-level API key
-      if (!boardId) {
-        return errorResponse("Invalid API key configuration", 500);
-      }
-
-      // Check board visibility
-      const access = await checkBoardAccess(ctx, boardId, isSecretKey);
+      const access = await checkOrganizationAccess(
+        ctx,
+        organizationId,
+        isSecretKey
+      );
       if (!access.allowed) {
         return access.response;
       }
 
-      const result = await ctx.runMutation(internal.feedback_api.voteFeedback, {
-        boardId,
-        feedbackId: feedbackId as Id<"feedback">,
-        externalUserId,
-        voteType,
-      });
+      const result = await ctx.runMutation(
+        internal.feedback_api.voteFeedbackByOrganization,
+        {
+          organizationId,
+          feedbackId: feedbackId as Id<"feedback">,
+          externalUserId,
+          voteType,
+        }
+      );
 
       return jsonResponse(result);
     } catch (error) {
@@ -767,7 +596,7 @@ http.route({
       return authResult.response;
     }
 
-    const { boardId, organizationId } = authResult.auth;
+    const { organizationId } = authResult.auth;
     const url = new URL(request.url);
     const feedbackId = url.searchParams.get(
       "feedbackId"
@@ -778,30 +607,14 @@ http.route({
       return errorResponse("Feedback ID is required", 400);
     }
 
-    // New flow: organization-level API key
-    if (organizationId) {
-      const result = await ctx.runQuery(
-        internal.feedback_api.listCommentsByOrganization,
-        {
-          organizationId,
-          feedbackId,
-          sortBy: sortBy ?? undefined,
-        }
-      );
-
-      return jsonResponse(result);
-    }
-
-    // Legacy flow: board-level API key
-    if (!boardId) {
-      return errorResponse("Invalid API key configuration", 500);
-    }
-
-    const result = await ctx.runQuery(internal.feedback_api.listComments, {
-      boardId,
-      feedbackId,
-      sortBy: sortBy ?? undefined,
-    });
+    const result = await ctx.runQuery(
+      internal.feedback_api.listCommentsByOrganization,
+      {
+        organizationId,
+        feedbackId,
+        sortBy: sortBy ?? undefined,
+      }
+    );
 
     return jsonResponse(result);
   }),
@@ -824,7 +637,7 @@ http.route({
       return authResult.response;
     }
 
-    const { boardId, organizationId, externalUserId } = authResult.auth;
+    const { organizationId, externalUserId } = authResult.auth;
 
     if (!externalUserId) {
       return errorResponse(
@@ -844,34 +657,16 @@ http.route({
     }
 
     try {
-      // New flow: organization-level API key
-      if (organizationId) {
-        const result = await ctx.runMutation(
-          internal.feedback_api.addCommentByOrganization,
-          {
-            organizationId,
-            feedbackId: body.feedbackId as Id<"feedback">,
-            body: body.body,
-            parentId: body.parentId as Id<"comments"> | undefined,
-            externalUserId,
-          }
-        );
-
-        return jsonResponse(result, 201);
-      }
-
-      // Legacy flow: board-level API key
-      if (!boardId) {
-        return errorResponse("Invalid API key configuration", 500);
-      }
-
-      const result = await ctx.runMutation(internal.feedback_api.addComment, {
-        boardId,
-        feedbackId: body.feedbackId as Id<"feedback">,
-        body: body.body,
-        parentId: body.parentId as Id<"comments"> | undefined,
-        externalUserId,
-      });
+      const result = await ctx.runMutation(
+        internal.feedback_api.addCommentByOrganization,
+        {
+          organizationId,
+          feedbackId: body.feedbackId as Id<"feedback">,
+          body: body.body,
+          parentId: body.parentId as Id<"comments"> | undefined,
+          externalUserId,
+        }
+      );
 
       return jsonResponse(result, 201);
     } catch (error) {
@@ -900,7 +695,7 @@ http.route({
       return authResult.response;
     }
 
-    const { boardId, organizationId, externalUserId } = authResult.auth;
+    const { organizationId, externalUserId } = authResult.auth;
 
     if (!externalUserId) {
       return errorResponse(
@@ -916,29 +711,10 @@ http.route({
     }
 
     try {
-      // New flow: organization-level API key
-      if (organizationId) {
-        const result = await ctx.runMutation(
-          internal.feedback_api.subscribeFeedbackByOrganization,
-          {
-            organizationId,
-            feedbackId: body.feedbackId as Id<"feedback">,
-            externalUserId,
-          }
-        );
-
-        return jsonResponse(result);
-      }
-
-      // Legacy flow: board-level API key
-      if (!boardId) {
-        return errorResponse("Invalid API key configuration", 500);
-      }
-
       const result = await ctx.runMutation(
-        internal.feedback_api.subscribeFeedback,
+        internal.feedback_api.subscribeFeedbackByOrganization,
         {
-          boardId,
+          organizationId,
           feedbackId: body.feedbackId as Id<"feedback">,
           externalUserId,
         }
@@ -971,7 +747,7 @@ http.route({
       return authResult.response;
     }
 
-    const { boardId, organizationId, externalUserId } = authResult.auth;
+    const { organizationId, externalUserId } = authResult.auth;
 
     if (!externalUserId) {
       return errorResponse(
@@ -987,29 +763,10 @@ http.route({
     }
 
     try {
-      // New flow: organization-level API key
-      if (organizationId) {
-        const result = await ctx.runMutation(
-          internal.feedback_api.unsubscribeFeedbackByOrganization,
-          {
-            organizationId,
-            feedbackId: body.feedbackId as Id<"feedback">,
-            externalUserId,
-          }
-        );
-
-        return jsonResponse(result);
-      }
-
-      // Legacy flow: board-level API key
-      if (!boardId) {
-        return errorResponse("Invalid API key configuration", 500);
-      }
-
       const result = await ctx.runMutation(
-        internal.feedback_api.unsubscribeFeedback,
+        internal.feedback_api.unsubscribeFeedbackByOrganization,
         {
-          boardId,
+          organizationId,
           feedbackId: body.feedbackId as Id<"feedback">,
           externalUserId,
         }
@@ -1042,33 +799,14 @@ http.route({
       return authResult.response;
     }
 
-    const { boardId, organizationId, externalUserId } = authResult.auth;
+    const { organizationId } = authResult.auth;
 
-    // New flow: organization-level API key
-    if (organizationId) {
-      const result = await ctx.runQuery(
-        internal.feedback_api.getRoadmapByOrganization,
-        {
-          organizationId,
-        }
-      );
-
-      if (!result) {
-        return errorResponse("Roadmap not found", 404);
+    const result = await ctx.runQuery(
+      internal.feedback_api.getRoadmapByOrganization,
+      {
+        organizationId,
       }
-
-      return jsonResponse(result);
-    }
-
-    // Legacy flow: board-level API key
-    if (!boardId) {
-      return errorResponse("Invalid API key configuration", 500);
-    }
-
-    const result = await ctx.runQuery(internal.feedback_api.getRoadmap, {
-      boardId,
-      externalUserId,
-    });
+    );
 
     if (!result) {
       return errorResponse("Roadmap not found", 404);
@@ -1095,32 +833,17 @@ http.route({
       return authResult.response;
     }
 
-    const { boardId, organizationId } = authResult.auth;
+    const { organizationId } = authResult.auth;
     const url = new URL(request.url);
     const limit = url.searchParams.get("limit");
 
-    // New flow: organization-level API key
-    if (organizationId) {
-      const result = await ctx.runQuery(
-        internal.feedback_api.getChangelogByOrganization,
-        {
-          organizationId,
-          limit: limit ? Number.parseInt(limit, 10) : undefined,
-        }
-      );
-
-      return jsonResponse(result);
-    }
-
-    // Legacy flow: board-level API key
-    if (!boardId) {
-      return errorResponse("Invalid API key configuration", 500);
-    }
-
-    const result = await ctx.runQuery(internal.feedback_api.getChangelog, {
-      boardId,
-      limit: limit ? Number.parseInt(limit, 10) : undefined,
-    });
+    const result = await ctx.runQuery(
+      internal.feedback_api.getChangelogByOrganization,
+      {
+        organizationId,
+        limit: limit ? Number.parseInt(limit, 10) : undefined,
+      }
+    );
 
     return jsonResponse(result);
   }),

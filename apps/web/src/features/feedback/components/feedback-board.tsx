@@ -7,14 +7,12 @@ import {
   Globe,
   MagnifyingGlass as MagnifyingGlassIcon,
   Plus,
-  PushPin,
   SortAscending as SortAscendingIcon,
   X,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -39,14 +37,18 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H1, Lead } from "@/components/ui/typography";
+import { TagFilterDropdown } from "@/features/tags/components/tag-filter-dropdown";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { cn } from "@/lib/utils";
 
 import {
   BoardViewToggle,
   type BoardView as BoardViewType,
 } from "./board-view-toggle";
+import { FeedbackCardWithMorphingDialog } from "./feedback-card-with-morphing-dialog";
 import { FeedbackDetailDialog } from "./feedback-detail-dialog";
+import { AddColumnInline } from "./roadmap/add-column-inline";
+import { ColumnDeleteDialog } from "./roadmap/column-delete-dialog";
+import { RoadmapColumnHeader } from "./roadmap/roadmap-column-header";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
 
 type SortOption = "votes" | "newest" | "oldest" | "comments";
@@ -175,23 +177,33 @@ function PrivateOrgMessage() {
 }
 
 interface FiltersBarProps {
+  organizationId: Id<"organizations">;
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
   statuses: Array<{ _id: string; name: string; color: string }>;
   selectedStatusIds: string[];
   onStatusChange: (statusId: string, checked: boolean) => void;
+  tags: Array<{ _id: string; name: string; color: string }>;
+  selectedTagIds: string[];
+  onTagChange: (tagId: string, checked: boolean) => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  isAdmin: boolean;
 }
 
 function FiltersBar({
+  organizationId,
   sortBy,
   onSortChange,
   statuses,
   selectedStatusIds,
   onStatusChange,
+  tags,
+  selectedTagIds,
+  onTagChange,
   hasActiveFilters,
   onClearFilters,
+  isAdmin,
 }: FiltersBarProps) {
   return (
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -248,6 +260,14 @@ function FiltersBar({
         </DropdownList>
       )}
 
+      <TagFilterDropdown
+        isAdmin={isAdmin}
+        onTagChange={onTagChange}
+        organizationId={organizationId}
+        selectedTagIds={selectedTagIds}
+        tags={tags}
+      />
+
       {hasActiveFilters && (
         <Button onClick={onClearFilters} size="icon" variant="ghost">
           <X className="h-4 w-4" />
@@ -295,6 +315,7 @@ export function FeedbackBoard({
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("votes");
   const [selectedStatusIds, setSelectedStatusIds] = useState<string[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   // Optimistic vote tracking
   const [optimisticVotes, setOptimisticVotes] = useState<
@@ -302,28 +323,38 @@ export function FeedbackBoard({
   >(new Map());
   const pendingVotesRef = useRef<Set<string>>(new Set());
 
+  // Track if we've loaded data at least once (to avoid skeleton on filter/search changes)
+  const hasLoadedOnce = useRef(false);
+
   // Auth guard
   const { guard: authGuard, isAuthenticated } = useAuthGuard({
     message: "Sign in to vote on this feedback",
   });
 
   // Queries - organization level
+  // Note: tagIds filtering is done client-side to avoid loading state when changing tag filters
   const feedback = useQuery(api.feedback_list.listByOrganization, {
     organizationId,
     search: searchQuery.trim() || undefined,
     sortBy,
-    statusId:
+    statusIds:
       selectedStatusIds.length > 0
-        ? (selectedStatusIds[0] as Id<"organizationStatuses">)
+        ? (selectedStatusIds as Id<"organizationStatuses">[])
         : undefined,
   });
+
+  // Track when we've loaded data at least once
+  if (feedback !== undefined) {
+    hasLoadedOnce.current = true;
+  }
 
   const orgStatuses = useQuery(api.organization_statuses.list, {
     organizationId,
   });
 
-  // Tags are included with feedback items for display purposes
-  // We don't need to query them separately
+  const tags = useQuery(api.tags.list, {
+    organizationId,
+  });
 
   // Mutations
   const createFeedbackPublic = useMutation(
@@ -345,7 +376,7 @@ export function FeedbackBoard({
     }
   }, [orgStatuses, organizationId, isMember, ensureStatusDefaults]);
 
-  // Filter, apply optimistic updates, and sort feedback
+  // Apply optimistic updates, client-side tag filtering, and sort feedback
   const filteredFeedback = useMemo(() => {
     if (!feedback) {
       return [];
@@ -355,17 +386,15 @@ export function FeedbackBoard({
       applyOptimisticVote(item, optimisticVotes.get(item._id))
     );
 
-    // Status filter (for multiple statuses)
-    if (selectedStatusIds.length > 0) {
-      result = result.filter(
-        (item) =>
-          item.organizationStatusId &&
-          selectedStatusIds.includes(item.organizationStatusId)
+    // Client-side tag filtering (avoids loading state when changing tag filters)
+    if (selectedTagIds.length > 0) {
+      result = result.filter((item) =>
+        item.tags?.some((tag) => tag && selectedTagIds.includes(tag._id))
       );
     }
 
     return sortFeedback(result, sortBy);
-  }, [feedback, selectedStatusIds, sortBy, optimisticVotes]);
+  }, [feedback, sortBy, optimisticVotes, selectedTagIds]);
 
   // Roadmap columns are organization statuses (not tags)
   // Tags are for categorization (Feature Request, Bug Report, etc.)
@@ -455,23 +484,39 @@ export function FeedbackBoard({
     [feedback, optimisticVotes, toggleVoteMutation, isAuthenticated, authGuard]
   );
 
-  const handleStatusFilterChange = (statusId: string, checked: boolean) => {
-    setSelectedStatusIds((prev) =>
-      checked ? [...prev, statusId] : prev.filter((id) => id !== statusId)
-    );
-  };
+  const handleStatusFilterChange = useCallback(
+    (statusId: string, checked: boolean) => {
+      setSelectedStatusIds((prev) =>
+        checked ? [...prev, statusId] : prev.filter((id) => id !== statusId)
+      );
+    },
+    []
+  );
 
-  const clearFilters = () => {
+  const handleTagFilterChange = useCallback(
+    (tagId: string, checked: boolean) => {
+      setSelectedTagIds((prev) =>
+        checked ? [...prev, tagId] : prev.filter((id) => id !== tagId)
+      );
+    },
+    []
+  );
+
+  const clearFilters = useCallback(() => {
     setSearchQuery("");
     setSelectedStatusIds([]);
+    setSelectedTagIds([]);
     setSortBy("votes");
-  };
+  }, []);
 
   const hasActiveFilters =
-    !!searchQuery || selectedStatusIds.length > 0 || sortBy !== "votes";
+    !!searchQuery ||
+    selectedStatusIds.length > 0 ||
+    selectedTagIds.length > 0 ||
+    sortBy !== "votes";
 
-  // Loading state
-  if (feedback === undefined) {
+  // Only show loading skeleton on initial load, not on filter/search changes
+  if (feedback === undefined && !hasLoadedOnce.current) {
     return <LoadingSkeleton />;
   }
 
@@ -522,13 +567,105 @@ export function FeedbackBoard({
       {view === "feed" && (
         <FiltersBar
           hasActiveFilters={hasActiveFilters}
+          isAdmin={isAdmin}
           onClearFilters={clearFilters}
           onSortChange={setSortBy}
           onStatusChange={handleStatusFilterChange}
+          onTagChange={handleTagFilterChange}
+          organizationId={organizationId}
           selectedStatusIds={selectedStatusIds}
+          selectedTagIds={selectedTagIds}
           sortBy={sortBy}
           statuses={orgStatuses ?? []}
+          tags={tags ?? []}
         />
+      )}
+
+      {/* Active filter chips (only in feed view) */}
+      {view === "feed" &&
+        (selectedStatusIds.length > 0 || selectedTagIds.length > 0) && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="text-muted-foreground text-sm">Filters:</span>
+            {/* Status chips */}
+            {selectedStatusIds.map((statusId) => {
+              const status = (orgStatuses ?? []).find(
+                (s) => s._id === statusId
+              );
+              if (!status) {
+                return null;
+              }
+              return (
+                <Badge
+                  className="cursor-pointer gap-1 pr-1"
+                  key={statusId}
+                  onClick={() => handleStatusFilterChange(statusId, false)}
+                  style={{
+                    backgroundColor: `${status.color}15`,
+                    color: status.color,
+                    borderColor: `${status.color}30`,
+                  }}
+                  variant="outline"
+                >
+                  {status.name}
+                  <X className="h-3 w-3" />
+                </Badge>
+              );
+            })}
+            {/* Tag chips */}
+            {selectedTagIds.map((tagId) => {
+              const tag = (tags ?? []).find((t) => t._id === tagId);
+              if (!tag) {
+                return null;
+              }
+              return (
+                <Badge
+                  className="cursor-pointer gap-1 pr-1"
+                  key={tagId}
+                  onClick={() => handleTagFilterChange(tagId, false)}
+                  style={{
+                    backgroundColor: `${tag.color}15`,
+                    color: tag.color,
+                    borderColor: `${tag.color}30`,
+                  }}
+                  variant="outline"
+                >
+                  {tag.name}
+                  <X className="h-3 w-3" />
+                </Badge>
+              );
+            })}
+            <Button
+              className="text-xs"
+              onClick={clearFilters}
+              size="sm"
+              variant="ghost"
+            >
+              Clear all
+            </Button>
+          </div>
+        )}
+
+      {/* Tag filter bar for roadmap view */}
+      {view === "roadmap" && (
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <TagFilterDropdown
+            isAdmin={isAdmin}
+            onTagChange={handleTagFilterChange}
+            organizationId={organizationId}
+            selectedTagIds={selectedTagIds}
+            tags={tags ?? []}
+          />
+          {selectedTagIds.length > 0 && (
+            <Button
+              onClick={() => setSelectedTagIds([])}
+              size="sm"
+              variant="ghost"
+            >
+              <X className="mr-1 h-3 w-3" />
+              Clear
+            </Button>
+          )}
+        </div>
       )}
 
       {/* Content */}
@@ -536,16 +673,18 @@ export function FeedbackBoard({
         {view === "roadmap" ? (
           <RoadmapView
             feedback={filteredFeedback}
+            isAdmin={isAdmin}
             onFeedbackClick={(id) =>
               setSelectedFeedbackId(id as Id<"feedback">)
             }
+            organizationId={organizationId}
             statuses={orgStatuses ?? []}
           />
         ) : (
           <FeedFeedbackView
             feedback={filteredFeedback}
             hasActiveFilters={hasActiveFilters}
-            isLoading={feedback === undefined}
+            isLoading={feedback === undefined && !hasLoadedOnce.current}
             onFeedbackClick={(id) =>
               setSelectedFeedbackId(id as Id<"feedback">)
             }
@@ -644,7 +783,7 @@ function FeedFeedbackView({
   return (
     <div className="space-y-4">
       {feedback.map((item) => (
-        <FeedbackCard
+        <FeedbackCardWithMorphingDialog
           feedback={item}
           key={item._id}
           onFeedbackClick={onFeedbackClick}
@@ -657,134 +796,28 @@ function FeedFeedbackView({
   );
 }
 
-// Simple feedback card component
-interface FeedbackCardProps {
-  feedback: FeedbackItem;
-  statuses: Array<{ _id: string; name: string; color: string }>;
-  primaryColor: string;
-  onVote: (
-    e: React.MouseEvent,
-    feedbackId: string,
-    voteType: "upvote" | "downvote"
-  ) => void;
-  onFeedbackClick: (feedbackId: string) => void;
-}
-
-function FeedbackCard({
-  feedback,
-  statuses: _statuses,
-  primaryColor,
-  onVote,
-  onFeedbackClick,
-}: FeedbackCardProps) {
-  const status = feedback.organizationStatus;
-
-  return (
-    <Card
-      className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-sm"
-      onClick={() => onFeedbackClick(feedback._id)}
-    >
-      <CardContent className="flex gap-4 p-4">
-        <button
-          className={cn(
-            "flex shrink-0 flex-col items-center rounded-lg border p-2 transition-colors",
-            feedback.hasVoted
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border hover:border-primary"
-          )}
-          onClick={(e) => onVote(e, feedback._id, "upvote")}
-          style={
-            feedback.hasVoted
-              ? {
-                  borderColor: primaryColor,
-                  backgroundColor: `${primaryColor}15`,
-                  color: primaryColor,
-                }
-              : undefined
-          }
-          type="button"
-        >
-          <CaretUp className="h-4 w-4" />
-          <span className="font-semibold text-sm">{feedback.voteCount}</span>
-        </button>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start gap-2">
-            {feedback.isPinned && (
-              <PushPin
-                className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-                weight="fill"
-              />
-            )}
-            <h3 className="font-semibold">{feedback.title}</h3>
-          </div>
-
-          {feedback.description && (
-            <p className="mt-1 line-clamp-2 text-muted-foreground text-sm">
-              {feedback.description}
-            </p>
-          )}
-
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {status && (
-              <Badge
-                className="font-normal text-xs"
-                style={{
-                  backgroundColor: `${status.color}15`,
-                  color: status.color,
-                  borderColor: `${status.color}30`,
-                }}
-                variant="outline"
-              >
-                {status.name}
-              </Badge>
-            )}
-            {feedback.tags?.map(
-              (tag) =>
-                tag && (
-                  <Badge
-                    className="font-normal text-xs"
-                    key={tag._id}
-                    style={{
-                      backgroundColor: `${tag.color}15`,
-                      color: tag.color,
-                      borderColor: `${tag.color}30`,
-                    }}
-                    variant="outline"
-                  >
-                    {tag.name}
-                  </Badge>
-                )
-            )}
-          </div>
-
-          <div className="mt-2 flex items-center gap-4 text-muted-foreground text-xs">
-            <span className="flex items-center gap-1">
-              <ChatCircle className="h-3.5 w-3.5" />
-              {feedback.commentCount}
-            </span>
-            <span>
-              {formatDistanceToNow(feedback.createdAt, { addSuffix: true })}
-            </span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 // Roadmap view component - uses statuses as columns
 interface RoadmapViewProps {
   feedback: FeedbackItem[];
   statuses: Array<{ _id: string; name: string; color: string }>;
   onFeedbackClick: (feedbackId: string) => void;
+  organizationId: Id<"organizations">;
+  isAdmin: boolean;
 }
 
 function RoadmapView({
   feedback,
   statuses,
   onFeedbackClick,
+  organizationId,
+  isAdmin,
 }: RoadmapViewProps) {
+  const [deleteDialogStatus, setDeleteDialogStatus] = useState<{
+    id: Id<"organizationStatuses">;
+    name: string;
+    color: string;
+  } | null>(null);
+
   if (statuses.length === 0) {
     return (
       <Card>
@@ -798,75 +831,99 @@ function RoadmapView({
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {statuses.map((status) => {
-        // Filter feedback by status
-        const statusFeedback = feedback.filter(
-          (f) => f.organizationStatusId === status._id
-        );
+    <>
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {statuses.map((status) => {
+          // Filter feedback by status
+          const statusFeedback = feedback.filter(
+            (f) => f.organizationStatusId === status._id
+          );
 
-        return (
-          <div
-            className="w-72 shrink-0 rounded-lg border bg-muted/30 p-4"
-            key={status._id}
-          >
-            <div className="mb-3 flex items-center gap-2">
-              <div
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: status.color }}
+          return (
+            <div
+              className="group w-72 shrink-0 rounded-lg border bg-muted/30 p-4"
+              key={status._id}
+            >
+              <RoadmapColumnHeader
+                color={status.color}
+                count={statusFeedback.length}
+                isAdmin={isAdmin}
+                name={status.name}
+                onDelete={() =>
+                  setDeleteDialogStatus({
+                    id: status._id as Id<"organizationStatuses">,
+                    name: status.name,
+                    color: status.color,
+                  })
+                }
+                statusId={status._id as Id<"organizationStatuses">}
               />
-              <h3 className="font-medium">{status.name}</h3>
-              <Badge className="ml-auto" variant="secondary">
-                {statusFeedback.length}
-              </Badge>
-            </div>
-            <div className="space-y-2">
-              {statusFeedback.map((item) => (
-                <Card
-                  className="cursor-pointer p-3 transition-all hover:border-primary/50"
-                  key={item._id}
-                  onClick={() => onFeedbackClick(item._id)}
-                >
-                  <h4 className="font-medium text-sm">{item.title}</h4>
-                  {/* Show tags for categorization */}
-                  {item.tags && item.tags.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {item.tags.slice(0, 2).map(
-                        (tag) =>
-                          tag && (
-                            <Badge
-                              className="px-1 py-0 font-normal text-xs"
-                              key={tag._id}
-                              style={{
-                                backgroundColor: `${tag.color}15`,
-                                color: tag.color,
-                                borderColor: `${tag.color}30`,
-                              }}
-                              variant="outline"
-                            >
-                              {tag.name}
-                            </Badge>
-                          )
-                      )}
+              <div className="space-y-2">
+                {statusFeedback.map((item) => (
+                  <Card
+                    className="cursor-pointer p-3 transition-all hover:border-primary/50"
+                    key={item._id}
+                    onClick={() => onFeedbackClick(item._id)}
+                  >
+                    <h4 className="font-medium text-sm">{item.title}</h4>
+                    {/* Show tags for categorization */}
+                    {item.tags && item.tags.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {item.tags.slice(0, 2).map(
+                          (tag) =>
+                            tag && (
+                              <Badge
+                                className="px-1 py-0 font-normal text-xs"
+                                key={tag._id}
+                                style={{
+                                  backgroundColor: `${tag.color}15`,
+                                  color: tag.color,
+                                  borderColor: `${tag.color}30`,
+                                }}
+                                variant="outline"
+                              >
+                                {tag.name}
+                              </Badge>
+                            )
+                        )}
+                      </div>
+                    )}
+                    <div className="mt-2 flex items-center gap-2 text-muted-foreground text-xs">
+                      <CaretUp className="h-3 w-3" />
+                      <span>{item.voteCount}</span>
+                      <ChatCircle className="ml-2 h-3 w-3" />
+                      <span>{item.commentCount}</span>
                     </div>
-                  )}
-                  <div className="mt-2 flex items-center gap-2 text-muted-foreground text-xs">
-                    <CaretUp className="h-3 w-3" />
-                    <span>{item.voteCount}</span>
-                    <ChatCircle className="ml-2 h-3 w-3" />
-                    <span>{item.commentCount}</span>
-                  </div>
-                </Card>
-              ))}
-              {statusFeedback.length === 0 && (
-                <p className="py-4 text-center text-muted-foreground text-sm">
-                  No items
-                </p>
-              )}
+                  </Card>
+                ))}
+                {statusFeedback.length === 0 && (
+                  <p className="py-4 text-center text-muted-foreground text-sm">
+                    No items
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+
+        {/* Add column button for admins */}
+        {isAdmin && <AddColumnInline organizationId={organizationId} />}
+      </div>
+
+      {/* Delete confirmation dialog */}
+      <ColumnDeleteDialog
+        feedbackCount={
+          deleteDialogStatus
+            ? feedback.filter(
+                (f) => f.organizationStatusId === deleteDialogStatus.id
+              ).length
+            : 0
+        }
+        onOpenChange={(open) => !open && setDeleteDialogStatus(null)}
+        open={!!deleteDialogStatus}
+        otherStatuses={statuses.filter((s) => s._id !== deleteDialogStatus?.id)}
+        statusToDelete={deleteDialogStatus}
+      />
+    </>
   );
 }

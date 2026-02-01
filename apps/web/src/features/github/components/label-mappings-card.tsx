@@ -38,12 +38,6 @@ interface GitHubLabel {
   description: string | null;
 }
 
-interface Board {
-  _id: string;
-  name: string;
-  slug: string;
-}
-
 interface RefletTag {
   _id: string;
   name: string;
@@ -62,12 +56,10 @@ interface LabelMapping {
   _id: string;
   githubLabelName: string;
   githubLabelColor?: string;
-  targetBoardId?: string;
   targetTagId?: string;
   autoSync: boolean;
   syncClosedIssues?: boolean;
   defaultStatus?: IssueStatus;
-  boardName?: string;
   tagName?: string;
   tagColor?: string;
 }
@@ -75,14 +67,12 @@ interface LabelMapping {
 interface LabelMappingsCardProps {
   mappings: LabelMapping[];
   githubLabels: GitHubLabel[];
-  boards: Board[];
   tags: RefletTag[];
   isAdmin: boolean;
   isLoadingLabels: boolean;
   onAddMapping: (mapping: {
     githubLabelName: string;
     githubLabelColor?: string;
-    targetBoardId?: string;
     targetTagId?: string;
     autoSync: boolean;
     syncClosedIssues?: boolean;
@@ -95,7 +85,6 @@ interface LabelMappingsCardProps {
 export function LabelMappingsCard({
   mappings,
   githubLabels,
-  boards,
   tags,
   isAdmin,
   isLoadingLabels,
@@ -105,7 +94,6 @@ export function LabelMappingsCard({
 }: LabelMappingsCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState<string>("");
-  const [selectedBoard, setSelectedBoard] = useState<string>("");
   const [selectedTag, setSelectedTag] = useState<string>("");
   const [autoSync, setAutoSync] = useState(true);
   const [syncClosedIssues, setSyncClosedIssues] = useState(false);
@@ -118,7 +106,7 @@ export function LabelMappingsCard({
   };
 
   const handleAddMapping = () => {
-    if (!(selectedLabel && selectedBoard)) {
+    if (!selectedLabel) {
       return;
     }
 
@@ -127,7 +115,6 @@ export function LabelMappingsCard({
     onAddMapping({
       githubLabelName: selectedLabel,
       githubLabelColor: label?.color,
-      targetBoardId: selectedBoard,
       targetTagId: selectedTag || undefined,
       autoSync,
       syncClosedIssues,
@@ -135,7 +122,6 @@ export function LabelMappingsCard({
 
     // Reset form
     setSelectedLabel("");
-    setSelectedBoard("");
     setSelectedTag("");
     setAutoSync(true);
     setSyncClosedIssues(false);
@@ -185,10 +171,9 @@ export function LabelMappingsCard({
                     >
                       {mapping.githubLabelName}
                     </Badge>
-                    <Text className="text-muted-foreground">→</Text>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">{mapping.boardName}</Badge>
-                      {mapping.tagName ? (
+                    {mapping.tagName && (
+                      <>
+                        <Text className="text-muted-foreground">→</Text>
                         <Badge
                           style={{
                             backgroundColor: mapping.tagColor
@@ -199,8 +184,8 @@ export function LabelMappingsCard({
                         >
                           {mapping.tagName}
                         </Badge>
-                      ) : null}
-                    </div>
+                      </>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {mapping.autoSync ? (
@@ -239,8 +224,8 @@ export function LabelMappingsCard({
           <DialogHeader>
             <DialogTitle>Add Label Mapping</DialogTitle>
             <DialogDescription>
-              Map a GitHub label to a Reflet board. Issues with this label will
-              be synced automatically.
+              Map a GitHub label to a Reflet tag. Issues with this label will be
+              synced automatically.
             </DialogDescription>
           </DialogHeader>
 
@@ -268,25 +253,6 @@ export function LabelMappingsCard({
                         />
                         {label.name}
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Target Board</Label>
-              <Select
-                onValueChange={(value) => setSelectedBoard(value ?? "")}
-                value={selectedBoard}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a board" />
-                </SelectTrigger>
-                <SelectContent>
-                  {boards.map((board) => (
-                    <SelectItem key={board._id} value={board._id}>
-                      {board.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -352,10 +318,7 @@ export function LabelMappingsCard({
             <Button onClick={() => setIsDialogOpen(false)} variant="outline">
               Cancel
             </Button>
-            <Button
-              disabled={!(selectedLabel && selectedBoard)}
-              onClick={handleAddMapping}
-            >
+            <Button disabled={!selectedLabel} onClick={handleAddMapping}>
               Add Mapping
             </Button>
           </DialogFooter>

@@ -36,7 +36,6 @@ import {
 } from "@/store/feedback";
 
 interface FeedbackFunnelsProps {
-  boardId: Id<"boards">;
   organizationId: Id<"organizations">;
   className?: string;
   showSubmitButton?: boolean;
@@ -49,7 +48,7 @@ interface FeedbackFunnelsProps {
  * Uses Jotai atoms internally for state management - no props drilling needed.
  */
 export function FeedbackFunnels({
-  boardId,
+  organizationId,
   className,
   showSubmitButton = true,
   tags = [],
@@ -64,8 +63,10 @@ export function FeedbackFunnels({
   );
   const [selectedTagIds, setSelectedTagIds] = useAtom(selectedTagIdsAtom);
 
-  // Get board statuses for the filter options
-  const boardStatuses = useQuery(api.board_statuses.list, { boardId });
+  // Get organization statuses for the filter options
+  const organizationStatuses = useQuery(api.organization_statuses.list, {
+    organizationId,
+  });
 
   const hasFunnels = selectedStatusIds.length > 0 || selectedTagIds.length > 0;
   const filterCount = selectedStatusIds.length + selectedTagIds.length;
@@ -126,11 +127,11 @@ export function FeedbackFunnels({
             </PopoverTrigger>
             <PopoverContent align="end" className="w-72">
               <div className="space-y-4">
-                {/* Status filters - dynamic from boardStatuses */}
+                {/* Status filters - dynamic from organizationStatuses */}
                 <div>
                   <h4 className="mb-2 font-medium text-sm">Status</h4>
                   <div className="flex flex-wrap gap-1">
-                    {boardStatuses?.map((status) => (
+                    {organizationStatuses?.map((status) => (
                       <Badge
                         className="cursor-pointer"
                         key={status._id}
@@ -155,7 +156,7 @@ export function FeedbackFunnels({
                         {status.name}
                       </Badge>
                     ))}
-                    {!boardStatuses && (
+                    {!organizationStatuses && (
                       <span className="text-muted-foreground text-sm">
                         Loading...
                       </span>
@@ -247,7 +248,9 @@ export function FeedbackFunnels({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-muted-foreground text-sm">Active filters:</span>
           {selectedStatusIds.map((statusId: string) => {
-            const status = boardStatuses?.find((s) => s._id === statusId);
+            const status = organizationStatuses?.find(
+              (s) => s._id === statusId
+            );
             if (!status) {
               return null;
             }

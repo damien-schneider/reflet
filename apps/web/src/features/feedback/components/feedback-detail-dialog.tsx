@@ -5,14 +5,12 @@ import {
   Calendar,
   CaretUp,
   Chat,
-  Check,
   DotsThreeVertical,
   PaperPlaneRight,
   Pencil,
   PushPin,
   Sparkle,
   Trash,
-  X,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
@@ -38,7 +36,6 @@ import {
   DropdownListSeparator,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -48,9 +45,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TiptapInlineEditor } from "@/components/ui/tiptap/inline-editor";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
-import { MarkdownRenderer } from "@/components/ui/tiptap/markdown-renderer";
+import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { cn } from "@/lib/utils";
 
 import { AIClarification } from "./ai-clarification";
@@ -58,7 +54,6 @@ import { AIClarification } from "./ai-clarification";
 interface FeedbackDetailDialogProps {
   feedbackId: Id<"feedback"> | null;
   onClose: () => void;
-  boardId?: Id<"boards">;
   isMember?: boolean;
   isAdmin?: boolean;
 }
@@ -66,7 +61,6 @@ interface FeedbackDetailDialogProps {
 export function FeedbackDetailDialog({
   feedbackId,
   onClose,
-  boardId,
   isMember: _isMember = false,
   isAdmin = false,
 }: FeedbackDetailDialogProps) {
@@ -79,13 +73,7 @@ export function FeedbackDetailDialog({
     feedbackId ? { feedbackId } : "skip"
   );
 
-  const effectiveBoardId = boardId ?? feedback?.boardId;
-  const boardStatuses = useQuery(
-    api.board_statuses.list,
-    effectiveBoardId ? { boardId: effectiveBoardId } : "skip"
-  );
-
-  // Also query organization statuses for org-level feedback
+  // Query organization statuses
   const organizationStatuses = useQuery(
     api.organization_statuses.list,
     feedback?.organizationId
@@ -93,14 +81,12 @@ export function FeedbackDetailDialog({
       : "skip"
   );
 
-  // Use org statuses if no board statuses
-  const effectiveStatuses =
-    boardStatuses && boardStatuses.length > 0
-      ? boardStatuses
-      : (organizationStatuses ?? []);
+  const effectiveStatuses = organizationStatuses ?? [];
 
   const updateFeedback = useMutation(api.feedback.update);
-  const updateFeedbackStatus = useMutation(api.feedback_actions.updateStatus);
+  const updateFeedbackStatus = useMutation(
+    api.feedback_actions.updateOrganizationStatus
+  );
   const deleteFeedback = useMutation(api.feedback_actions.remove);
   const toggleVote = useMutation(api.votes.toggle);
   const togglePin = useMutation(api.feedback_actions.togglePin);
@@ -108,11 +94,19 @@ export function FeedbackDetailDialog({
   const updateComment = useMutation(api.comments.update);
   const deleteComment = useMutation(api.comments.remove);
 
-  // Edit states
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
+  // Edit states - local state for unsaved changes
+  const [editedTitle, setEditedTitle] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Sync local state when feedback loads or changes
+  useEffect(() => {
+    if (feedback) {
+      setEditedTitle(feedback.title);
+      setEditedDescription(feedback.description ?? "");
+      setHasUnsavedChanges(false);
+    }
+  }, [feedback]);
 
   // Comment states
   const [newComment, setNewComment] = useState("");
@@ -125,14 +119,6 @@ export function FeedbackDetailDialog({
   // Delete dialog
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
-
-  // Reset states when feedback changes
-  useEffect(() => {
-    if (feedback) {
-      setEditTitle(feedback.title);
-      setEditDescription(feedback.description ?? "");
-    }
-  }, [feedback]);
 
   // Use passed isAdmin prop if available, otherwise fall back to feedback role
   const effectiveIsAdmin =
@@ -183,31 +169,61 @@ export function FeedbackDetailDialog({
     await togglePin({ id: feedbackId });
   }, [feedbackId, togglePin]);
 
-  const handleSaveTitle = useCallback(async () => {
-    const trimmedTitle = editTitle.trim();
-    if (!(feedbackId && trimmedTitle)) {
-      return;
-    }
-    await updateFeedback({ id: feedbackId, title: trimmedTitle });
-    setIsEditingTitle(false);
-  }, [feedbackId, editTitle, updateFeedback]);
+  const handleTitleChange = useCallback(
+    (newTitle: string) => {
+      setEditedTitle(newTitle);
+      setHasUnsavedChanges(
+        newTitle !== feedback?.title ||
+          editedDescription !== (feedback?.description ?? "")
+      );
+    },
+    [feedback?.title, feedback?.description, editedDescription]
+  );
 
-  const handleSaveDescription = useCallback(async () => {
+  const handleDescriptionChange = useCallback(
+    (newDescription: string) => {
+      setEditedDescription(newDescription);
+      setHasUnsavedChanges(
+        editedTitle !== feedback?.title ||
+          newDescription !== (feedback?.description ?? "")
+      );
+    },
+    [feedback?.title, feedback?.description, editedTitle]
+  );
+
+  const handleSaveChanges = useCallback(async () => {
     if (!feedbackId) {
       return;
     }
-    await updateFeedback({ id: feedbackId, description: editDescription });
-    setIsEditingDescription(false);
-  }, [feedbackId, editDescription, updateFeedback]);
+    const updates: { title?: string; description?: string } = {};
+    if (editedTitle.trim() !== feedback?.title) {
+      updates.title = editedTitle.trim();
+    }
+    if (editedDescription !== (feedback?.description ?? "")) {
+      updates.description = editedDescription;
+    }
+    if (Object.keys(updates).length > 0) {
+      await updateFeedback({ id: feedbackId, ...updates });
+    }
+    setHasUnsavedChanges(false);
+  }, [feedbackId, editedTitle, editedDescription, feedback, updateFeedback]);
+
+  const handleCancelChanges = useCallback(() => {
+    if (feedback) {
+      setEditedTitle(feedback.title);
+      setEditedDescription(feedback.description ?? "");
+      setHasUnsavedChanges(false);
+    }
+  }, [feedback]);
 
   const handleStatusChange = useCallback(
-    async (statusId: Id<"boardStatuses"> | null) => {
+    async (statusId: Id<"organizationStatuses"> | null) => {
       if (!(feedbackId && statusId)) {
         return;
       }
       await updateFeedbackStatus({
         feedbackId,
-        statusId,
+        organizationStatusId: statusId,
       });
     },
     [feedbackId, updateFeedbackStatus]
@@ -287,10 +303,9 @@ export function FeedbackDetailDialog({
   }
 
   const isLoading = feedback === undefined;
-  // Find current status from either board or organization statuses
+  // Find current status from organization statuses
   const currentStatus = effectiveStatuses.find(
-    (s) =>
-      s._id === feedback?.statusId || s._id === feedback?.organizationStatusId
+    (s) => s._id === feedback?.organizationStatusId
   );
 
   // Build comment tree
@@ -317,49 +332,29 @@ export function FeedbackDetailDialog({
 
         <div className="flex-1">
           {/* Title */}
-          {isEditingTitle ? (
-            <div className="flex items-center gap-2">
-              <Input
-                autoFocus
-                className="font-semibold text-lg"
-                onChange={(e) => setEditTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSaveTitle();
-                  }
-                  if (e.key === "Escape") {
-                    setIsEditingTitle(false);
-                  }
-                }}
-                value={editTitle}
-              />
-              <Button onClick={handleSaveTitle} size="icon">
-                <Check className="h-4 w-4" />
+          <div className="flex items-center gap-2">
+            <TiptapTitleEditor
+              className="font-semibold text-xl"
+              disabled={!canEdit}
+              onChange={handleTitleChange}
+              placeholder="Untitled"
+              value={editedTitle}
+            />
+            {feedback?.isPinned && (
+              <PushPin className="h-4 w-4 shrink-0 text-olive-600" />
+            )}
+          </div>
+
+          {/* Save/Cancel buttons for unsaved changes */}
+          {hasUnsavedChanges && canEdit && (
+            <div className="mt-2 flex items-center gap-2">
+              <Button onClick={handleSaveChanges} size="sm">
+                Save
               </Button>
-              <Button
-                onClick={() => setIsEditingTitle(false)}
-                size="icon"
-                variant="ghost"
-              >
-                <X className="h-4 w-4" />
+              <Button onClick={handleCancelChanges} size="sm" variant="ghost">
+                Cancel
               </Button>
             </div>
-          ) : (
-            <button
-              className={cn(
-                "text-left font-semibold text-xl",
-                canEdit &&
-                  "cursor-pointer transition-colors hover:text-olive-600"
-              )}
-              disabled={!canEdit}
-              onClick={() => canEdit && setIsEditingTitle(true)}
-              type="button"
-            >
-              {feedback?.title}
-              {feedback?.isPinned && (
-                <PushPin className="ml-2 inline h-4 w-4 text-olive-600" />
-              )}
-            </button>
           )}
 
           {/* Meta info */}
@@ -384,12 +379,12 @@ export function FeedbackDetailDialog({
         {effectiveIsAdmin && effectiveStatuses.length > 0 && (
           <Select
             onValueChange={(val) =>
-              handleStatusChange(val as Id<"boardStatuses">)
+              handleStatusChange(val as Id<"organizationStatuses">)
             }
             value={
-              (feedback?.statusId ||
-                feedback?.organizationStatusId ||
-                undefined) as string | undefined
+              (feedback?.organizationStatusId || undefined) as
+                | string
+                | undefined
             }
           >
             <SelectTrigger className="w-35">
@@ -430,17 +425,13 @@ export function FeedbackDetailDialog({
               </Button>
             </DropdownListTrigger>
             <DropdownListContent align="end">
-              <DropdownListItem onClick={() => setIsEditingTitle(true)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit title
-              </DropdownListItem>
               {effectiveIsAdmin && (
                 <DropdownListItem onClick={handleTogglePin}>
                   <PushPin className="mr-2 h-4 w-4" />
                   {feedback?.isPinned ? "Unpin" : "Pin"} feedback
                 </DropdownListItem>
               )}
-              <DropdownListSeparator />
+              {effectiveIsAdmin && <DropdownListSeparator />}
               <DropdownListItem
                 className="text-destructive"
                 onClick={() => setShowDeleteDialog(true)}
@@ -459,40 +450,13 @@ export function FeedbackDetailDialog({
     <div className="flex-1 overflow-y-auto p-6">
       {/* Description */}
       <div className="mb-6">
-        <h3 className="mb-2 font-medium">Description</h3>
-        {isEditingDescription ? (
-          <div className="space-y-2">
-            <TiptapMarkdownEditor
-              autoFocus
-              className="min-h-32"
-              onChange={setEditDescription}
-              placeholder="Describe your feedback..."
-              value={editDescription}
-            />
-            <div className="flex justify-end gap-2">
-              <Button
-                onClick={() => setIsEditingDescription(false)}
-                variant="ghost"
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSaveDescription}>Save</Button>
-            </div>
-          </div>
-        ) : (
-          <button
-            className={cn(
-              "block w-full text-left",
-              canEdit &&
-                "-m-2 cursor-pointer rounded p-2 transition-colors hover:bg-accent/50"
-            )}
-            disabled={!canEdit}
-            onClick={() => canEdit && setIsEditingDescription(true)}
-            type="button"
-          >
-            <MarkdownRenderer content={feedback?.description || ""} />
-          </button>
-        )}
+        <TiptapMarkdownEditor
+          editable={canEdit}
+          minimal
+          onChange={handleDescriptionChange}
+          placeholder={canEdit ? "Add a description..." : ""}
+          value={editedDescription}
+        />
       </div>
 
       {/* AI Clarification */}
@@ -554,11 +518,11 @@ export function FeedbackDetailDialog({
             </div>
           )}
           <div className="flex gap-2">
-            <TiptapInlineEditor
+            <TiptapMarkdownEditor
               className="flex-1"
+              minimal
               onChange={setNewComment}
-              onSubmit={handleSubmitComment}
-              placeholder="Write a comment... (Cmd+Enter to send)"
+              placeholder="Write a comment..."
               value={newComment}
             />
             <Button
@@ -811,8 +775,9 @@ function CommentItem({
 
           {isEditing ? (
             <div className="mt-2 space-y-2">
-              <TiptapInlineEditor
+              <TiptapMarkdownEditor
                 autoFocus
+                minimal
                 onChange={onEditContentChange}
                 placeholder="Edit your comment..."
                 value={editCommentContent}
@@ -876,16 +841,15 @@ function CommentItem({
 
           {/* Reply input */}
           {isReplying && (
-            <div className="mt-3 flex gap-2">
-              <TiptapInlineEditor
+            <div className="mt-3 space-y-2">
+              <TiptapMarkdownEditor
                 autoFocus
-                className="flex-1"
+                minimal
                 onChange={onReplyContentChange}
-                onSubmit={() => onSubmitReply(comment._id)}
-                placeholder="Write a reply... (Cmd+Enter to send)"
+                placeholder="Write a reply..."
                 value={replyContent}
               />
-              <div className="flex flex-col gap-1">
+              <div className="flex gap-2">
                 <Button
                   disabled={!replyContent.trim() || isSubmittingComment}
                   onClick={() => onSubmitReply(comment._id)}
@@ -931,8 +895,9 @@ function CommentItem({
 
                     {editingCommentId === reply._id ? (
                       <div className="mt-2 space-y-2">
-                        <TiptapInlineEditor
+                        <TiptapMarkdownEditor
                           autoFocus
+                          minimal
                           onChange={onEditContentChange}
                           placeholder="Edit your reply..."
                           value={editCommentContent}

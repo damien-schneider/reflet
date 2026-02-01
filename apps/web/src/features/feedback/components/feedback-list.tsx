@@ -15,7 +15,6 @@ import {
 } from "@/store/feedback";
 
 interface FeedbackListProps {
-  boardId: Id<"boards">;
   organizationId: Id<"organizations">;
   onFeedbackClick?: (feedbackId: Id<"feedback">) => void;
   className?: string;
@@ -23,7 +22,6 @@ interface FeedbackListProps {
 }
 
 export function FeedbackList({
-  boardId,
   organizationId,
   onFeedbackClick,
   className,
@@ -51,13 +49,13 @@ export function FeedbackList({
   })();
 
   // Query feedback from Convex
-  const feedbackList = useQuery(api.feedback_list.list, {
-    boardId,
+  const feedbackList = useQuery(api.feedback_list.listByOrganization, {
+    organizationId,
     search: search || undefined,
     sortBy: convexSortBy,
-    statusId:
+    statusIds:
       selectedStatusIds.length > 0
-        ? (selectedStatusIds[0] as Id<"boardStatuses">)
+        ? (selectedStatusIds as Id<"organizationStatuses">[])
         : undefined,
     tagIds:
       selectedTagIds.length > 0 ? (selectedTagIds as Id<"tags">[]) : undefined,
@@ -70,11 +68,7 @@ export function FeedbackList({
 
   return (
     <div className={cn("space-y-6", className)}>
-      <FeedbackFunnels
-        boardId={boardId}
-        organizationId={organizationId}
-        tags={tags ?? []}
-      />
+      <FeedbackFunnels organizationId={organizationId} tags={tags ?? []} />
 
       {/* Loading state */}
       {isLoading && (
@@ -112,7 +106,6 @@ export function FeedbackList({
             );
             return (
               <FeedbackListItem
-                boardId={boardId}
                 feedback={{ ...feedback, tags: nonNullTags }}
                 isAdmin={isAdmin}
                 isAuthor={feedback.authorId === userId}

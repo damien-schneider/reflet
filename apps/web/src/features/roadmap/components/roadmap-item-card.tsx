@@ -11,7 +11,7 @@ export interface RoadmapItemData {
   status: Doc<"feedback">["status"];
   voteCount: number;
   commentCount: number;
-  roadmapLane: string | null;
+  organizationStatusId: Id<"organizationStatuses"> | null;
   roadmapOrder: number | null;
   hasVoted?: boolean;
   tags?: Array<{

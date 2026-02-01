@@ -10,14 +10,14 @@ import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { cn } from "@/lib/utils";
 
 interface FeedbackCreatorProps {
-  boardId: Id<"boards">;
+  organizationId: Id<"organizations">;
   className?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 export function FeedbackCreator({
-  boardId,
+  organizationId,
   className,
   onSuccess,
   onCancel,
@@ -40,7 +40,7 @@ export function FeedbackCreator({
 
     try {
       await createFeedback({
-        boardId,
+        organizationId,
         title: title.trim(),
         description: description.trim(),
       });

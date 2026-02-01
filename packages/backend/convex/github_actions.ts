@@ -670,7 +670,7 @@ export const autoImportIssueToFeedback = internalMutation({
       .collect();
 
     for (const mapping of mappings) {
-      if (!(mapping.autoSync && mapping.targetBoardId)) {
+      if (!mapping.autoSync) {
         continue;
       }
 
@@ -692,7 +692,6 @@ export const autoImportIssueToFeedback = internalMutation({
           : (mapping.defaultStatus ?? "open");
 
       const feedbackId = await ctx.db.insert("feedback", {
-        boardId: mapping.targetBoardId,
         organizationId: args.organizationId,
         title: args.issue.title,
         description: args.issue.body ?? "",

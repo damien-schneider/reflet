@@ -27,10 +27,6 @@ export function useGitHubSettingsQueries({
     api.github_issues.getLabelMappings,
     orgId ? { organizationId: orgId } : "skip"
   );
-  const boards = useQuery(
-    api.boards.list,
-    orgId ? { organizationId: orgId } : "skip"
-  );
   const tags = useQuery(
     api.tags.list,
     orgId ? { organizationId: orgId } : "skip"
@@ -41,7 +37,6 @@ export function useGitHubSettingsQueries({
     githubReleases,
     issueSyncStatus,
     labelMappings,
-    boards,
     tags,
   };
 }

@@ -18,13 +18,13 @@ import { Textarea } from "@/components/ui/textarea";
 interface CreateFeedbackDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  boardId: Id<"boards">;
+  organizationId: Id<"organizations">;
 }
 
 export function CreateFeedbackDialog({
   open,
   onOpenChange,
-  boardId,
+  organizationId,
 }: CreateFeedbackDialogProps) {
   const createFeedback = useMutation(api.feedback.create);
   const [newFeedback, setNewFeedback] = useState({
@@ -40,7 +40,7 @@ export function CreateFeedbackDialog({
     setIsSubmitting(true);
     try {
       await createFeedback({
-        boardId,
+        organizationId,
         title: newFeedback.title.trim(),
         description: newFeedback.description.trim(),
       });
@@ -139,51 +139,6 @@ export function DeleteFeedbackDialog({
           </Button>
           <Button onClick={handleDelete} variant="destructive">
             Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-interface DeleteBoardDialogProps {
-  boardId: Id<"boards">;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-export function DeleteBoardDialog({
-  boardId,
-  open,
-  onOpenChange,
-}: DeleteBoardDialogProps) {
-  const deleteBoard = useMutation(api.boards_actions.remove);
-
-  const handleDelete = async () => {
-    try {
-      await deleteBoard({ id: boardId });
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Failed to delete board:", error);
-    }
-  };
-
-  return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete board</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this board? All feedback will be
-            permanently deleted. This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
-            Cancel
-          </Button>
-          <Button onClick={handleDelete} variant="destructive">
-            Delete Board
           </Button>
         </DialogFooter>
       </DialogContent>

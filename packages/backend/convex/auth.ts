@@ -24,6 +24,17 @@ function createAuth(ctx: GenericCtx<DataModel>) {
     baseURL: siteUrl,
     trustedOrigins: [siteUrl, ...additionalOrigins],
     database: authComponent.adapter(ctx),
+    session: {
+      // Enable cookie caching to reduce database calls and improve session persistence
+      cookieCache: {
+        enabled: true,
+        maxAge: 5 * 60, // 5 minutes cache duration
+      },
+      // Session expires after 30 days
+      expiresIn: 60 * 60 * 24 * 30,
+      // Refresh session when it's 7 days old
+      updateAge: 60 * 60 * 24 * 7,
+    },
     socialProviders:
       githubClientId && githubClientSecret
         ? {

@@ -127,7 +127,6 @@ export const toggle = mutation({
     feedbackId: v.id("feedback"),
     voteType: v.union(v.literal("upvote"), v.literal("downvote")),
   },
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Legacy code supporting both board and org access checks
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     const feedback = await ctx.db.get(args.feedbackId);
@@ -136,10 +135,7 @@ export const toggle = mutation({
       throw new Error("Feedback not found");
     }
 
-    // Get board if it exists (for backwards compatibility)
-    const board = feedback.boardId ? await ctx.db.get(feedback.boardId) : null;
     const org = await ctx.db.get(feedback.organizationId);
-
     if (!org) {
       throw new Error("Organization not found");
     }
@@ -151,11 +147,8 @@ export const toggle = mutation({
       )
       .unique();
 
-    // Check visibility: member OR (board is public AND org is public) OR org is public (new flow)
-    const isPublicAccess = board
-      ? board.isPublic && org.isPublic
-      : org.isPublic;
-    const hasAccess = !!membership || isPublicAccess;
+    // Check visibility: member OR org is public
+    const hasAccess = !!membership || org.isPublic;
     if (!hasAccess) {
       throw new Error("You don't have access to vote on this feedback");
     }

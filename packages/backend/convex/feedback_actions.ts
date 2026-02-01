@@ -5,11 +5,11 @@ import { PLAN_LIMITS } from "./organizations";
 import { getAuthUser } from "./utils";
 
 /**
- * List public feedback for a board (no auth required)
+ * List public feedback for an organization (no auth required)
  */
 export const listPublic = query({
   args: {
-    boardId: v.id("boards"),
+    organizationId: v.id("organizations"),
     sortBy: v.optional(
       v.union(
         v.literal("votes"),
@@ -21,13 +21,8 @@ export const listPublic = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const board = await ctx.db.get(args.boardId);
-    if (!board?.isPublic) {
-      return [];
-    }
-
-    const org = await ctx.db.get(board.organizationId);
-    if (!org) {
+    const org = await ctx.db.get(args.organizationId);
+    if (!org?.isPublic) {
       return [];
     }
 
@@ -36,7 +31,9 @@ export const listPublic = query({
     // Get approved feedback only
     let feedbackItems = await ctx.db
       .query("feedback")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
       .collect();
 
     feedbackItems = feedbackItems.filter((f) => f.isApproved);
@@ -104,7 +101,6 @@ export const listPublic = query({
           ...f,
           tags: tags.filter(Boolean),
           hasVoted,
-          boardId: f.boardId,
         };
       })
     );
@@ -114,73 +110,7 @@ export const listPublic = query({
 });
 
 /**
- * Create public feedback (anonymous)
- */
-export const createPublic = mutation({
-  args: {
-    boardId: v.id("boards"),
-    title: v.string(),
-    description: v.optional(v.string()),
-    email: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const board = await ctx.db.get(args.boardId);
-    if (!board?.isPublic) {
-      throw new Error("Board not found or not public");
-    }
-
-    const org = await ctx.db.get(board.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
-
-    // Check feedback limit
-    const existingFeedback = await ctx.db
-      .query("feedback")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
-      .collect();
-
-    const limit = PLAN_LIMITS[org.subscriptionTier].maxFeedbackPerBoard;
-    if (existingFeedback.length >= limit) {
-      throw new Error(
-        `Feedback limit reached. This board allows ${limit} feedback items.`
-      );
-    }
-
-    const user = await authComponent.safeGetAuthUser(ctx);
-    const now = Date.now();
-
-    // Get the default status (first status by order, usually "Open")
-    const boardStatuses = await ctx.db
-      .query("boardStatuses")
-      .withIndex("by_board_order", (q) => q.eq("boardId", args.boardId))
-      .collect();
-    const defaultBoardStatus = boardStatuses.sort(
-      (a, b) => a.order - b.order
-    )[0];
-
-    const feedbackId = await ctx.db.insert("feedback", {
-      boardId: args.boardId,
-      organizationId: board.organizationId,
-      title: args.title,
-      description: args.description || "",
-      status: board.settings?.defaultStatus || "open",
-      statusId: defaultBoardStatus?._id,
-      authorId: user?._id || `anonymous:${args.email || "unknown"}`,
-      voteCount: 0,
-      commentCount: 0,
-      isApproved: !board.settings?.requireApproval,
-      isPinned: false,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    return feedbackId;
-  },
-});
-
-/**
- * Create public feedback at organization level (for public orgs without boards)
+ * Create public feedback at organization level (for public orgs)
  */
 export const createPublicOrg = mutation({
   args: {
@@ -455,12 +385,12 @@ export const remove = mutation({
 });
 
 /**
- * Update feedback status (for drag & drop in roadmap)
+ * Update feedback organization status (for drag & drop in roadmap)
  */
-export const updateStatus = mutation({
+export const updateOrganizationStatus = mutation({
   args: {
     feedbackId: v.id("feedback"),
-    statusId: v.optional(v.id("boardStatuses")),
+    organizationStatusId: v.optional(v.id("organizationStatuses")),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -482,21 +412,20 @@ export const updateStatus = mutation({
       throw new Error("You are not a member of this organization");
     }
 
-    // Validate statusId belongs to the same board
+    // Validate organizationStatusId belongs to the same organization
     let newStatus = feedback.status;
-    if (args.statusId) {
-      const status = await ctx.db.get(args.statusId);
-      if (!status || status.boardId !== feedback.boardId) {
-        throw new Error("Invalid status for this board");
+    if (args.organizationStatusId) {
+      const status = await ctx.db.get(args.organizationStatusId);
+      if (!status || status.organizationId !== feedback.organizationId) {
+        throw new Error("Invalid status for this organization");
       }
 
       // Map custom status name to enum value for the status field
-      // This ensures the list view badge displays correctly
       newStatus = mapStatusNameToEnum(status.name);
     }
 
     await ctx.db.patch(args.feedbackId, {
-      statusId: args.statusId,
+      organizationStatusId: args.organizationStatusId,
       status: newStatus,
       updatedAt: Date.now(),
     });
@@ -506,8 +435,61 @@ export const updateStatus = mutation({
 });
 
 /**
+ * Assign feedback to a team member (admin only)
+ */
+export const assign = mutation({
+  args: {
+    feedbackId: v.id("feedback"),
+    assigneeId: v.optional(v.string()), // User ID or null/undefined to unassign
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      throw new Error("Feedback not found");
+    }
+
+    // Check admin permission
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role === "member") {
+      throw new Error("Only admins can assign feedback");
+    }
+
+    // If assigning to someone, verify they are a member of the org
+    if (args.assigneeId) {
+      const assigneeMembership = await ctx.db
+        .query("organizationMembers")
+        .withIndex("by_org_user", (q) =>
+          q
+            .eq("organizationId", feedback.organizationId)
+            .eq("userId", args.assigneeId as string)
+        )
+        .unique();
+
+      if (!assigneeMembership) {
+        throw new Error("Assignee is not a member of this organization");
+      }
+    }
+
+    await ctx.db.patch(args.feedbackId, {
+      assigneeId: args.assigneeId,
+      updatedAt: Date.now(),
+    });
+
+    return args.feedbackId;
+  },
+});
+
+/**
  * Map custom status name to the corresponding enum value
- * This ensures the status field stays in sync with statusId
+ * This ensures the status field stays in sync with organizationStatusId
  */
 function mapStatusNameToEnum(
   statusName: string

@@ -44,20 +44,15 @@ export const getLabelMappings = query({
       )
       .collect();
 
-    // Enrich with board and tag names
+    // Enrich with tag names
     const enrichedMappings = await Promise.all(
       mappings.map(async (mapping) => {
-        const board = mapping.targetBoardId
-          ? await ctx.db.get(mapping.targetBoardId)
-          : null;
         const tag = mapping.targetTagId
           ? await ctx.db.get(mapping.targetTagId)
           : null;
 
         return {
           ...mapping,
-          boardName: board?.name,
-          boardSlug: board?.slug,
           tagName: tag?.name,
           tagColor: tag?.color,
         };
@@ -206,7 +201,6 @@ export const upsertLabelMapping = mutation({
     organizationId: v.id("organizations"),
     githubLabelName: v.string(),
     githubLabelColor: v.optional(v.string()),
-    targetBoardId: v.optional(v.id("boards")),
     targetTagId: v.optional(v.id("tags")),
     autoSync: v.boolean(),
     syncClosedIssues: v.optional(v.boolean()),
@@ -263,7 +257,6 @@ export const upsertLabelMapping = mutation({
       // Update existing
       await ctx.db.patch(existing._id, {
         githubLabelColor: args.githubLabelColor,
-        targetBoardId: args.targetBoardId,
         targetTagId: args.targetTagId,
         autoSync: args.autoSync,
         syncClosedIssues: args.syncClosedIssues,
@@ -279,7 +272,6 @@ export const upsertLabelMapping = mutation({
       githubConnectionId: connection._id,
       githubLabelName: args.githubLabelName,
       githubLabelColor: args.githubLabelColor,
-      targetBoardId: args.targetBoardId,
       targetTagId: args.targetTagId,
       autoSync: args.autoSync,
       syncClosedIssues: args.syncClosedIssues,
@@ -500,7 +492,6 @@ export const saveSyncedIssues = mutation({
 export const importGithubIssue = mutation({
   args: {
     githubIssueId: v.id("githubIssues"),
-    boardId: v.id("boards"),
     tagIds: v.optional(v.array(v.id("tags"))),
     status: v.optional(
       v.union(
@@ -540,12 +531,6 @@ export const importGithubIssue = mutation({
       throw new Error("This issue has already been imported");
     }
 
-    // Verify board belongs to the organization
-    const board = await ctx.db.get(args.boardId);
-    if (!board || board.organizationId !== githubIssue.organizationId) {
-      throw new Error("Invalid board");
-    }
-
     const now = Date.now();
 
     // Determine status based on GitHub issue state
@@ -556,7 +541,6 @@ export const importGithubIssue = mutation({
 
     // Create Reflet feedback
     const feedbackId = await ctx.db.insert("feedback", {
-      boardId: args.boardId,
       organizationId: githubIssue.organizationId,
       title: githubIssue.title,
       description: githubIssue.body ?? "",
@@ -620,9 +604,7 @@ export const autoImportIssuesByLabel = mutation({
       )
       .collect();
 
-    const activeMappings = mappings.filter(
-      (m) => m.autoSync && m.targetBoardId
-    );
+    const activeMappings = mappings.filter((m) => m.autoSync);
 
     if (activeMappings.length === 0) {
       return { imported: 0 };
@@ -662,7 +644,7 @@ export const autoImportIssuesByLabel = mutation({
         return true;
       });
 
-      if (matchingMapping?.targetBoardId) {
+      if (matchingMapping) {
         // Determine status
         let feedbackStatus = matchingMapping.defaultStatus ?? "open";
         if (issue.state === "closed" && !matchingMapping.defaultStatus) {
@@ -671,7 +653,6 @@ export const autoImportIssuesByLabel = mutation({
 
         // Create Reflet feedback
         const feedbackId = await ctx.db.insert("feedback", {
-          boardId: matchingMapping.targetBoardId,
           organizationId: args.organizationId,
           title: issue.title,
           description: issue.body ?? "",

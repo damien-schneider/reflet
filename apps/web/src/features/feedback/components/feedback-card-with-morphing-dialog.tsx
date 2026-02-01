@@ -21,18 +21,17 @@ interface FeedbackCardWithMorphingDialogProps {
     voteCount: number;
     commentCount: number;
     createdAt: number;
-    statusId?: string;
     isPinned?: boolean;
     hasVoted?: boolean;
     userVoteType?: "upvote" | "downvote" | null;
     upvoteCount?: number;
     downvoteCount?: number;
-    boardId: string;
     tags?: Array<{ _id: string; name: string; color: string } | null>;
+    organizationStatusId?: string;
+    organizationStatus?: { name: string; color: string; icon?: string } | null;
   };
   statuses: Array<{ _id: string; name: string; color: string }>;
   primaryColor: string;
-  boardId: Id<"boards">;
   isMember?: boolean;
   isAdmin?: boolean;
   onVote: (
@@ -40,30 +39,44 @@ interface FeedbackCardWithMorphingDialogProps {
     feedbackId: string,
     voteType: "upvote" | "downvote"
   ) => void;
+  /** If provided, called on click instead of opening internal dialog */
+  onFeedbackClick?: (feedbackId: string) => void;
 }
 
 export function FeedbackCardWithMorphingDialog({
   feedback,
   statuses,
   primaryColor,
-  boardId,
   isMember = false,
   isAdmin = false,
   onVote,
+  onFeedbackClick,
 }: FeedbackCardWithMorphingDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const status = statuses.find((s) => s._id === feedback.statusId);
+
+  // Get status from organizationStatus or find by organizationStatusId
+  const status =
+    feedback.organizationStatus ??
+    statuses.find((s) => s._id === feedback.organizationStatusId);
+
+  const handleClick = () => {
+    if (onFeedbackClick) {
+      onFeedbackClick(feedback._id);
+    } else {
+      setIsOpen(true);
+    }
+  };
 
   return (
     <>
       {/* biome-ignore lint/a11y/useSemanticElements: Using div because button cannot contain nested buttons */}
       <div
         className="w-full cursor-pointer text-left"
-        onClick={() => setIsOpen(true)}
+        onClick={handleClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            setIsOpen(true);
+            handleClick();
           }
         }}
         role="button"
@@ -74,7 +87,6 @@ export function FeedbackCardWithMorphingDialog({
           <div
             className={cn(
               "feedback-card flex-1 cursor-pointer overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-card to-card/80 shadow-sm backdrop-blur-sm transition-all hover:border-border hover:shadow-foreground/5 hover:shadow-md",
-              "feedback-card cursor-pointer overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-card to-card/80 shadow-sm backdrop-blur-sm transition-all hover:border-border hover:shadow-foreground/5 hover:shadow-md",
               feedback.isPinned &&
                 "border-olive-300/50 from-olive-50 to-olive-100/50 dark:border-olive-700/50 dark:from-olive-950/50 dark:to-olive-950/30"
             )}
@@ -156,10 +168,10 @@ export function FeedbackCardWithMorphingDialog({
           </div>
 
           {/* Vote buttons */}
-          <div className="flex flex-row gap-3 self-stretch sm:flex-col">
+          <div className="flex flex-col gap-1 self-stretch">
             <button
               className={cn(
-                "flex-1 shrink-0 flex-col items-center justify-center rounded-xl border border-border/50 bg-muted/50 px-3 py-1.5 transition-all hover:bg-muted hover:shadow-sm",
+                "flex flex-1 shrink-0 flex-col items-center justify-center rounded-xl border border-border/50 bg-muted/30 px-3 py-2 transition-all hover:bg-muted hover:shadow-sm",
                 feedback.userVoteType === "upvote"
                   ? "border-olive-400 bg-olive-100 text-olive-700 shadow-sm dark:border-olive-600 dark:bg-olive-900/50 dark:text-olive-300"
                   : ""
@@ -179,15 +191,15 @@ export function FeedbackCardWithMorphingDialog({
               }
               type="button"
             >
-              <ChevronUp className="h-3.5 w-3.5" weight="bold" />
-              <span className="font-semibold text-[10px]">
+              <ChevronUp className="h-4 w-4" weight="bold" />
+              <span className="font-medium text-xs">
                 {feedback.upvoteCount ?? 0}
               </span>
             </button>
 
             <button
               className={cn(
-                "flex-1 shrink-0 flex-col items-center justify-center rounded-xl border border-border/50 bg-muted/50 px-3 py-1.5 transition-all hover:bg-muted hover:shadow-sm",
+                "flex flex-1 shrink-0 flex-col items-center justify-center rounded-xl border border-border/50 bg-muted/30 px-3 py-2 transition-all hover:bg-muted hover:shadow-sm",
                 feedback.userVoteType === "downvote"
                   ? "border-red-400 bg-red-100 text-red-700 shadow-sm dark:border-red-600 dark:bg-red-900/50 dark:text-red-300"
                   : ""
@@ -198,8 +210,8 @@ export function FeedbackCardWithMorphingDialog({
               }}
               type="button"
             >
-              <ChevronDown className="h-3.5 w-3.5" weight="bold" />
-              <span className="font-semibold text-[10px]">
+              <ChevronDown className="h-4 w-4" weight="bold" />
+              <span className="font-medium text-xs">
                 {feedback.downvoteCount ?? 0}
               </span>
             </button>
@@ -207,13 +219,15 @@ export function FeedbackCardWithMorphingDialog({
         </div>
       </div>
 
-      <FeedbackDetailDialog
-        boardId={boardId}
-        feedbackId={isOpen ? (feedback._id as Id<"feedback">) : null}
-        isAdmin={isAdmin}
-        isMember={isMember}
-        onClose={() => setIsOpen(false)}
-      />
+      {/* Only render dialog when using internal click handling */}
+      {!onFeedbackClick && (
+        <FeedbackDetailDialog
+          feedbackId={isOpen ? (feedback._id as Id<"feedback">) : null}
+          isAdmin={isAdmin}
+          isMember={isMember}
+          onClose={() => setIsOpen(false)}
+        />
+      )}
     </>
   );
 }
