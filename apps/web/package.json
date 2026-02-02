@@ -68,6 +68,7 @@
     "react-dom": "19.2.3",
     "react-grab": "^0.0.98",
     "react-hook-form": "^7.65.0",
+    "react-hotkeys-hook": "^5.2.3",
     "react-resizable-panels": "^4.4.1",
     "recharts": "2.15.4",
     "shadcn": "^3.6.2",

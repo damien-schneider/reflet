@@ -3,7 +3,8 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,20 @@ function CommentInput({
   onSubmit,
   isSubmitting,
 }: CommentInputProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const canSubmit = Boolean(value.trim()) && !isSubmitting;
+
+  useHotkeys(
+    "mod+enter",
+    () => {
+      if (canSubmit) {
+        onSubmit();
+      }
+    },
+    { enabled: canSubmit, enableOnFormTags: true },
+    [canSubmit, onSubmit]
+  );
+
   return (
     <div className="flex gap-3">
       <Avatar className="h-8 w-8">
@@ -127,12 +142,8 @@ function CommentInput({
         <Textarea
           className="min-h-20"
           onChange={(e) => onCommentChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && e.metaKey) {
-              onSubmit();
-            }
-          }}
           placeholder="Write a comment..."
+          ref={textareaRef}
           value={value}
         />
         <div className="flex justify-end">

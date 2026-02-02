@@ -1,5 +1,7 @@
 "use client";
 
+import { useHotkeys } from "react-hotkeys-hook";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -40,6 +42,20 @@ export function SubmitFeedbackDialog({
   isSubmitting,
   isMember,
 }: SubmitFeedbackDialogProps) {
+  const canSubmit = !isSubmitting && feedback.title.trim();
+
+  // Handle cmd+enter (Mac) or ctrl+enter (Windows/Linux) to submit
+  useHotkeys(
+    "mod+enter",
+    () => {
+      if (canSubmit) {
+        onSubmit();
+      }
+    },
+    { enabled: isOpen, enableOnFormTags: true },
+    [canSubmit, onSubmit]
+  );
+
   return (
     <Dialog onOpenChange={onOpenChange} open={isOpen}>
       <DialogContent

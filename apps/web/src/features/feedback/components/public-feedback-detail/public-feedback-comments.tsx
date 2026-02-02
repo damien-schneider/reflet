@@ -2,7 +2,7 @@
 
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
-import { useRef } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +40,18 @@ export function PublicFeedbackComments({
   onNewCommentChange,
   onSubmitComment,
 }: PublicFeedbackCommentsProps) {
-  const commentInputRef = useRef<HTMLTextAreaElement>(null);
+  const canSubmit = Boolean(newComment.trim()) && !isSubmittingComment;
+
+  useHotkeys(
+    "mod+enter",
+    () => {
+      if (canSubmit) {
+        onSubmitComment();
+      }
+    },
+    { enabled: canSubmit, enableOnFormTags: true },
+    [canSubmit, onSubmitComment]
+  );
 
   const topLevelComments = comments?.filter((c) => !c.parentId) || [];
   const commentReplies = (parentId: string) =>
@@ -54,13 +65,7 @@ export function PublicFeedbackComments({
         <Textarea
           className="flex-1"
           onChange={(e) => onNewCommentChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              onSubmitComment();
-            }
-          }}
           placeholder="Write a comment..."
-          ref={commentInputRef}
           rows={2}
           value={newComment}
         />
