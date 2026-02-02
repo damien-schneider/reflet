@@ -3,7 +3,7 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface InviteMemberDialogProps {
   organizationId: Id<"organizations">;
@@ -118,13 +123,20 @@ export function InviteMemberDialog({
                   readOnly
                   value={inviteUrl}
                 />
-                <Button onClick={handleCopyLink} size="icon" variant="outline">
-                  {copied ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger
+                    aria-label="Copy invitation link"
+                    className={buttonVariants({ variant: "outline", size: "icon" })}
+                    onClick={handleCopyLink}
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent>Copy invitation link</TooltipContent>
+                </Tooltip>
               </div>
               <p className="text-muted-foreground text-xs">
                 {copied ? "Copied!" : "Copy link to share with your colleague"}

@@ -38,14 +38,8 @@ vi.mock("@/components/ui/button", () => ({
     variant,
     className,
     size,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-    variant?: string;
-    className?: string;
-    size?: string;
-  }) => (
+    ...props
+  }: any) => (
     <button
       className={className}
       data-size={size}
@@ -55,10 +49,12 @@ vi.mock("@/components/ui/button", () => ({
       disabled={disabled}
       onClick={onClick}
       type="button"
+      {...props}
     >
       {children}
     </button>
   ),
+  buttonVariants: () => "mock-button-variant",
 }));
 
 vi.mock("@/components/ui/dialog", () => ({
@@ -128,6 +124,20 @@ vi.mock("@/components/ui/select", () => ({
   ),
 }));
 
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="tooltip">{children}</div>
+  ),
+  TooltipTrigger: ({ children, render, ...props }: any) => (
+    <button data-testid="tooltip-trigger" type="button" {...props}>
+      {render ? render : children}
+    </button>
+  ),
+  TooltipContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="tooltip-content">{children}</div>
+  ),
+}));
+
 describe("InviteMemberDialog", () => {
   const mockOnOpenChange = vi.fn();
   const defaultProps = {
@@ -148,16 +158,16 @@ describe("InviteMemberDialog", () => {
   it("renders the dialog when open", () => {
     render(<InviteMemberDialog {...defaultProps} />);
 
-    expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByText("Invite member")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).not.toBeNull();
+    expect(screen.getByText("Invite member")).not.toBeNull();
   });
 
   it("shows correct button text (not icon names)", () => {
     render(<InviteMemberDialog {...defaultProps} />);
 
     // Should show "Send invitation" not "PaperPlaneRight invitation"
-    expect(screen.getByText("Send invitation")).toBeInTheDocument();
-    expect(screen.queryByText(PAPER_PLANE_PATTERN)).not.toBeInTheDocument();
+    expect(screen.getByText("Send invitation")).not.toBeNull();
+    expect(screen.queryByText(PAPER_PLANE_PATTERN)).toBeNull();
   });
 
   it("shows success state with copy link after invitation is sent", async () => {
@@ -179,11 +189,14 @@ describe("InviteMemberDialog", () => {
 
     // Should show success state
     await waitFor(() => {
-      expect(screen.getByText(INVITATION_SENT_PATTERN)).toBeInTheDocument();
+      expect(screen.getByText(INVITATION_SENT_PATTERN)).not.toBeNull();
     });
 
     // Should show the copy button (icon button)
-    expect(screen.getByTestId("copy-button")).toBeInTheDocument();
+    const copyButton = screen.getByRole("button", {
+      name: "Copy invitation link",
+    });
+    expect(copyButton).not.toBeNull();
   });
 
   it("shows copied confirmation after copying link", async () => {
@@ -210,16 +223,18 @@ describe("InviteMemberDialog", () => {
 
     // Wait for success state
     await waitFor(() => {
-      expect(screen.getByText(INVITATION_SENT_PATTERN)).toBeInTheDocument();
+      expect(screen.getByText(INVITATION_SENT_PATTERN)).not.toBeNull();
     });
 
     // Click copy button
-    const copyButton = screen.getByTestId("copy-button");
+    const copyButton = screen.getByRole("button", {
+      name: "Copy invitation link",
+    });
     await user.click(copyButton);
 
     // Should show copied confirmation text
     await waitFor(() => {
-      expect(screen.getByText(COPIED_PATTERN)).toBeInTheDocument();
+      expect(screen.getByText(COPIED_PATTERN)).not.toBeNull();
     });
 
     // Verify clipboard was called
@@ -246,7 +261,7 @@ describe("InviteMemberDialog", () => {
 
     // Wait for success state
     await waitFor(() => {
-      expect(screen.getByText(INVITATION_SENT_PATTERN)).toBeInTheDocument();
+      expect(screen.getByText(INVITATION_SENT_PATTERN)).not.toBeNull();
     });
 
     // Close dialog
@@ -256,6 +271,6 @@ describe("InviteMemberDialog", () => {
     rerender(<InviteMemberDialog {...defaultProps} open={true} />);
 
     // Should be back to initial state
-    expect(screen.getByText("Send invitation")).toBeInTheDocument();
+    expect(screen.getByText("Send invitation")).not.toBeNull();
   });
 });
