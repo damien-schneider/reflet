@@ -11,8 +11,6 @@ const AUTH_PAGES = [
 
 const TOKEN_BASED_AUTH_PAGES = ["/auth/verify-email", "/auth/reset-password"];
 
-const PROTECTED_ROUTES = ["/dashboard"];
-
 export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   const sessionCookie = getSessionCookie(request);
@@ -31,10 +29,11 @@ export function proxy(request: NextRequest) {
     if (AUTH_PAGES.some((page) => pathname.startsWith(page))) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-  } else if (PROTECTED_ROUTES.some((route) => pathname.startsWith(route))) {
-    // Unauthenticated users: redirect away from protected routes
-    return NextResponse.redirect(new URL("/", request.url));
   }
+
+  // Note: /dashboard is NOT protected at the proxy level.
+  // The dashboard layout handles auth state client-side, showing
+  // the auth form for unauthenticated users.
 
   return NextResponse.next();
 }
