@@ -85,3 +85,82 @@ describe("Organization slug uniqueness", () => {
     expect(firstOrgId).not.toBe(secondOrgId);
   });
 });
+
+describe("Organization slug update", () => {
+  test("should allow changing slug to a unique value", async () => {
+    const t = convexTest(schema, modules);
+
+    // Create an organization
+    const orgId = await t.mutation(internal.organizations.createOrganization, {
+      name: "My Org",
+      slug: "my-org",
+      userId: "user_123",
+    });
+
+    // Update the slug to a new unique value
+    await t.mutation(internal.organizations.updateOrganizationSlug, {
+      id: orgId,
+      slug: "new-slug",
+    });
+
+    // Verify the slug was updated
+    const org = await t.run(async (ctx) => {
+      return await ctx.db.get(orgId);
+    });
+
+    expect(org?.slug).toBe("new-slug");
+  });
+
+  test("should reject changing slug to one that is already taken", async () => {
+    const t = convexTest(schema, modules);
+
+    // Create first organization
+    await t.mutation(internal.organizations.createOrganization, {
+      name: "First Org",
+      slug: "taken-slug",
+      userId: "user_123",
+    });
+
+    // Create second organization
+    const secondOrgId = await t.mutation(
+      internal.organizations.createOrganization,
+      {
+        name: "Second Org",
+        slug: "second-org",
+        userId: "user_123",
+      }
+    );
+
+    // Try to update second org's slug to the first org's slug - should throw
+    await expect(
+      t.mutation(internal.organizations.updateOrganizationSlug, {
+        id: secondOrgId,
+        slug: "taken-slug",
+      })
+    ).rejects.toThrow("This slug is already taken");
+  });
+
+  test("should allow keeping the same slug (no-op)", async () => {
+    const t = convexTest(schema, modules);
+
+    // Create an organization
+    const orgId = await t.mutation(internal.organizations.createOrganization, {
+      name: "My Org",
+      slug: "my-org",
+      userId: "user_123",
+    });
+
+    // Update with the same slug - should not throw
+    await t.mutation(internal.organizations.updateOrganizationSlug, {
+      id: orgId,
+      slug: "my-org",
+    });
+
+    // Verify the slug is unchanged
+    const org = await t.run(async (ctx) => {
+      return await ctx.db.get(orgId);
+    });
+
+    expect(org?.slug).toBe("my-org");
+  });
+});

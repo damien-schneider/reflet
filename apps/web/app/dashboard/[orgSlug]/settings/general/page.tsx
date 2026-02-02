@@ -1,9 +1,16 @@
 "use client";
 
-import { Buildings, Check, Globe, Spinner } from "@phosphor-icons/react";
+import {
+  Buildings,
+  Check,
+  Globe,
+  Link as LinkIcon,
+  Spinner,
+} from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -19,11 +26,20 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { H1, Text } from "@/components/ui/typography";
 
+// Helper to generate slug from text
+const generateSlug = (text: string): string => {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+};
+
 export default function GeneralGearPage({
   params,
 }: {
   params: Promise<{ orgSlug: string }>;
 }) {
+  const router = useRouter();
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
@@ -33,13 +49,16 @@ export default function GeneralGearPage({
   const updateOrg = useMutation(api.organizations_actions.update);
 
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (org) {
       setName(org.name);
+      setSlug(org.slug);
       setIsPublic(org.isPublic ?? false);
     }
   }, [org]);
@@ -60,20 +79,46 @@ export default function GeneralGearPage({
     );
   }
 
+  const handleSlugChange = (value: string) => {
+    // Automatically format slug as user types
+    setSlug(generateSlug(value));
+    setError(null);
+  };
+
   const handleSave = async () => {
     if (!(org?._id && isAdmin)) {
       return;
     }
 
+    if (!slug.trim()) {
+      setError("Slug cannot be empty");
+      return;
+    }
+
     setIsSaving(true);
+    setError(null);
+
     try {
+      const trimmedSlug = slug.trim();
       await updateOrg({
         organizationId: org._id as Id<"organizations">,
         name: name.trim(),
+        slug: trimmedSlug,
         isPublic,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+
+      // Redirect to new URL if slug changed
+      if (trimmedSlug !== orgSlug) {
+        router.replace(`/dashboard/${trimmedSlug}/settings/general`);
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to save changes");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -115,7 +160,9 @@ export default function GeneralGearPage({
               <Buildings className="h-5 w-5" />
               Organization Details
             </CardTitle>
-            <CardDescription>Update your organization name</CardDescription>
+            <CardDescription>
+              Update your organization name and URL
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -127,6 +174,31 @@ export default function GeneralGearPage({
                 placeholder="My Organization"
                 value={name}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="org-slug">
+                <span className="flex items-center gap-2">
+                  <LinkIcon className="h-4 w-4" />
+                  Organization URL
+                </span>
+              </Label>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground text-sm">
+                  /dashboard/
+                </span>
+                <Input
+                  className="flex-1"
+                  disabled={!isAdmin}
+                  id="org-slug"
+                  onChange={(e) => handleSlugChange(e.target.value)}
+                  placeholder="my-organization"
+                  value={slug}
+                />
+              </div>
+              <p className="text-muted-foreground text-xs">
+                This is the URL identifier for your organization. Only lowercase
+                letters, numbers, and hyphens are allowed.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -159,10 +231,16 @@ export default function GeneralGearPage({
           </CardContent>
         </Card>
 
+        {error ? (
+          <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-destructive text-sm">
+            {error}
+          </div>
+        ) : null}
+
         {isAdmin ? (
           <Button
             className="w-full"
-            disabled={isSaving || !name.trim()}
+            disabled={isSaving || !name.trim() || !slug.trim()}
             onClick={handleSave}
           >
             {getButtonContent()}

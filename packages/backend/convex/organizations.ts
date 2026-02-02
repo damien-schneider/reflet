@@ -273,6 +273,38 @@ export const createOrganization = internalMutation({
   },
 });
 
+/**
+ * Internal mutation to update an organization's slug.
+ * This enables testing without authentication mocking.
+ */
+export const updateOrganizationSlug = internalMutation({
+  args: {
+    id: v.id("organizations"),
+    slug: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.id);
+    if (!org) {
+      throw new Error("Organization not found");
+    }
+
+    // Validate slug uniqueness if changing
+    if (args.slug !== org.slug) {
+      const existingOrg = await ctx.db
+        .query("organizations")
+        .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+        .unique();
+
+      if (existingOrg) {
+        throw new Error("This slug is already taken");
+      }
+    }
+
+    await ctx.db.patch(args.id, { slug: args.slug });
+    return args.id;
+  },
+});
+
 // ============================================
 // MUTATIONS
 // ============================================

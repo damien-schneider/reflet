@@ -9,6 +9,7 @@ export const update = mutation({
   args: {
     organizationId: v.id("organizations"),
     name: v.string(),
+    slug: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -26,8 +27,27 @@ export const update = mutation({
       throw new Error("Only admins can update organization settings");
     }
 
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
+    }
+
+    // Validate slug uniqueness if changing
+    const newSlug = args.slug;
+    if (newSlug && newSlug !== org.slug) {
+      const existingOrg = await ctx.db
+        .query("organizations")
+        .withIndex("by_slug", (q) => q.eq("slug", newSlug))
+        .unique();
+
+      if (existingOrg) {
+        throw new Error("This slug is already taken");
+      }
+    }
+
     await ctx.db.patch(args.organizationId, {
       name: args.name,
+      slug: newSlug ?? org.slug,
       isPublic: args.isPublic ?? false,
     });
 
