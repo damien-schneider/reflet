@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { getAuthUser } from "./utils";
 
@@ -158,6 +158,122 @@ export const getBySlug = query({
 });
 
 // ============================================
+// INTERNAL MUTATIONS (for testing and internal use)
+// ============================================
+
+/**
+ * Internal mutation to create an organization with explicit user ID.
+ * This enables testing without authentication mocking.
+ */
+export const createOrganization = internalMutation({
+  args: {
+    name: v.string(),
+    slug: v.optional(v.string()),
+    isPublic: v.optional(v.boolean()),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Generate or validate slug
+    const slug = args.slug || generateSlug(args.name);
+
+    // Ensure slug is unique - throw error if taken
+    const existingOrg = await ctx.db
+      .query("organizations")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .unique();
+
+    if (existingOrg) {
+      // Add random suffix
+      throw new Error("This slug is already taken");
+    }
+
+    const now = Date.now();
+
+    // Create organization
+    const orgId = await ctx.db.insert("organizations", {
+      name: args.name,
+      slug,
+      isPublic: args.isPublic ?? false,
+      subscriptionTier: "free",
+      subscriptionStatus: "none",
+      createdAt: now,
+    });
+
+    // Add creator as owner
+    await ctx.db.insert("organizationMembers", {
+      organizationId: orgId,
+      userId: args.userId,
+      role: "owner",
+      createdAt: now,
+    });
+
+    // Create default statuses (used as roadmap columns)
+    const DEFAULT_STATUSES = [
+      { name: "Backlog", color: "#6b7280", icon: "clock", order: 0 },
+      { name: "Planned", color: "#3b82f6", icon: "calendar", order: 1 },
+      { name: "In Progress", color: "#8b5cf6", icon: "spinner", order: 2 },
+      { name: "Done", color: "#22c55e", icon: "check-circle", order: 3 },
+    ];
+
+    for (const status of DEFAULT_STATUSES) {
+      await ctx.db.insert("organizationStatuses", {
+        organizationId: orgId,
+        name: status.name,
+        color: status.color,
+        icon: status.icon,
+        order: status.order,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    // Create default tags (for categorizing feedback types)
+    const DEFAULT_TAGS = [
+      {
+        name: "Feature Request",
+        slug: "feature-request",
+        color: "#3b82f6",
+        description: "New feature suggestions and ideas",
+      },
+      {
+        name: "Bug Report",
+        slug: "bug-report",
+        color: "#ef4444",
+        description: "Issues and problems to be fixed",
+      },
+      {
+        name: "Enhancement",
+        slug: "enhancement",
+        color: "#8b5cf6",
+        description: "Improvements to existing features",
+      },
+      {
+        name: "Question",
+        slug: "question",
+        color: "#f59e0b",
+        description: "Questions and support requests",
+      },
+    ];
+
+    for (const tag of DEFAULT_TAGS) {
+      await ctx.db.insert("tags", {
+        organizationId: orgId,
+        name: tag.name,
+        slug: tag.slug,
+        color: tag.color,
+        description: tag.description,
+        isDoneStatus: false,
+        isRoadmapLane: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    return orgId;
+  },
+});
+
+// ============================================
 // MUTATIONS
 // ============================================
 
@@ -174,17 +290,16 @@ export const create = mutation({
     const user = await getAuthUser(ctx);
 
     // Generate or validate slug
-    let slug = args.slug || generateSlug(args.name);
+    const slug = args.slug || generateSlug(args.name);
 
-    // Ensure slug is unique
+    // Ensure slug is unique - throw error if taken
     const existingOrg = await ctx.db
       .query("organizations")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .unique();
 
     if (existingOrg) {
-      // Add random suffix
-      slug = `${slug}-${Math.random().toString(36).substring(2, 8)}`;
+      throw new Error("This slug is already taken");
     }
 
     const now = Date.now();

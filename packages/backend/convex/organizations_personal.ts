@@ -44,6 +44,10 @@ export const ensurePersonalOrganization = mutation({
       .unique();
 
     if (existingOrg) {
+      // For auto-generated personal organizations, we add a random suffix
+      // to avoid blocking users. Unlike user-created organizations where
+      // users explicitly choose a slug (and should get an error if taken),
+      // personal orgs use a generic name and must always succeed.
       slug = `${slug}-${Math.random().toString(36).substring(2, 8)}`;
     }
 
