@@ -1,7 +1,5 @@
 "use client";
 
-import { useHotkeys } from "react-hotkeys-hook";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,16 +43,11 @@ export function SubmitFeedbackDialog({
   const canSubmit = !isSubmitting && feedback.title.trim();
 
   // Handle cmd+enter (Mac) or ctrl+enter (Windows/Linux) to submit
-  useHotkeys(
-    "mod+enter",
-    () => {
-      if (canSubmit) {
-        onSubmit();
-      }
-    },
-    { enabled: isOpen, enableOnFormTags: true },
-    [canSubmit, onSubmit]
-  );
+  const handleSubmit = () => {
+    if (canSubmit) {
+      onSubmit();
+    }
+  };
 
   return (
     <Dialog onOpenChange={onOpenChange} open={isOpen}>
@@ -77,6 +70,7 @@ export function SubmitFeedbackDialog({
               onChange={(value) =>
                 onFeedbackChange({ ...feedback, title: value })
               }
+              onSubmit={handleSubmit}
               placeholder="Untitled"
               value={feedback.title}
             />
@@ -92,6 +86,7 @@ export function SubmitFeedbackDialog({
               onChange={(value) =>
                 onFeedbackChange({ ...feedback, description: value })
               }
+              onSubmit={handleSubmit}
               placeholder="Add a description... Type '/' for commands, or drag and drop images/videos"
               value={feedback.description}
             />

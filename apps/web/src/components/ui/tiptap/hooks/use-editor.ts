@@ -23,6 +23,7 @@ interface UseTiptapMarkdownEditorOptions {
   editable?: boolean;
   minimal?: boolean;
   debounceMs?: number;
+  onSubmit?: () => void;
 }
 
 interface UseTiptapMarkdownEditorReturn {
@@ -57,6 +58,7 @@ export function useTiptapMarkdownEditor(
     editable = true,
     minimal = false,
     debounceMs = 0,
+    onSubmit,
   } = options;
 
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +66,12 @@ export function useTiptapMarkdownEditor(
   const editorRef = useRef<ReturnType<typeof useTiptapEditor>>(null);
   const hasInitializedRef = useRef(false);
   const initialValueRef = useRef(value);
+  const onSubmitRef = useRef(onSubmit);
+
+  // Keep ref updated with latest onSubmit
+  useEffect(() => {
+    onSubmitRef.current = onSubmit;
+  }, [onSubmit]);
 
   const debouncedOnChange = useDebouncedCallback(onChange, {
     wait: debounceMs,
@@ -121,11 +129,17 @@ export function useTiptapMarkdownEditor(
     [uploadMedia]
   );
 
+  // Stable callback that always calls the latest onSubmit
+  const handleSubmit = useCallback(() => {
+    onSubmitRef.current?.();
+  }, []);
+
   const extensions = createExtensions({
     placeholder,
     maxLength,
     onImageUpload: handleImageUpload,
     onVideoUpload: handleVideoUpload,
+    onSubmit: onSubmit ? handleSubmit : undefined,
   });
 
   const editorProps = createEditorProps({

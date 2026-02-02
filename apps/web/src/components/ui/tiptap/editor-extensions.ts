@@ -1,5 +1,6 @@
 "use client";
 
+import { Extension } from "@tiptap/core";
 import CharacterCount from "@tiptap/extension-character-count";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -15,10 +16,26 @@ export interface CreateExtensionsOptions {
   maxLength?: number;
   onImageUpload: () => void;
   onVideoUpload: () => void;
+  onSubmit?: () => void;
+}
+
+function createSubmitExtension(onSubmit: () => void) {
+  return Extension.create({
+    name: "submitShortcut",
+    addKeyboardShortcuts() {
+      return {
+        "Mod-Enter": () => {
+          onSubmit();
+          return true;
+        },
+      };
+    },
+  });
 }
 
 export function createExtensions(options: CreateExtensionsOptions) {
-  const { placeholder, maxLength, onImageUpload, onVideoUpload } = options;
+  const { placeholder, maxLength, onImageUpload, onVideoUpload, onSubmit } =
+    options;
 
   return [
     StarterKit.configure({
@@ -176,6 +193,7 @@ export function createExtensions(options: CreateExtensionsOptions) {
       onImageUpload,
       onVideoUpload,
     }),
+    ...(onSubmit ? [createSubmitExtension(onSubmit)] : []),
   ];
 }
 

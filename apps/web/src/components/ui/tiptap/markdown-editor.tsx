@@ -18,6 +18,7 @@ interface TiptapMarkdownEditorProps {
   editable?: boolean;
   minimal?: boolean;
   debounceMs?: number;
+  onSubmit?: () => void;
 }
 
 export function TiptapMarkdownEditor({
@@ -31,6 +32,7 @@ export function TiptapMarkdownEditor({
   editable = true,
   minimal = false,
   debounceMs = 0,
+  onSubmit,
 }: TiptapMarkdownEditorProps) {
   const {
     editor,
@@ -53,6 +55,7 @@ export function TiptapMarkdownEditor({
     editable,
     minimal,
     debounceMs,
+    onSubmit,
   });
 
   const handleContainerClick = useCallback(() => {

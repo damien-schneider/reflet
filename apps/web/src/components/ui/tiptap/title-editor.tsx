@@ -3,7 +3,7 @@
 import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import "./styles.css";
 
@@ -15,6 +15,7 @@ interface TiptapTitleEditorProps {
   className?: string;
   autoFocus?: boolean;
   onEnter?: () => void;
+  onSubmit?: () => void;
 }
 
 export function TiptapTitleEditor({
@@ -25,7 +26,20 @@ export function TiptapTitleEditor({
   className,
   autoFocus = false,
   onEnter,
+  onSubmit,
 }: TiptapTitleEditorProps) {
+  // Use refs to always access the latest callbacks
+  const onEnterRef = useRef(onEnter);
+  const onSubmitRef = useRef(onSubmit);
+
+  useEffect(() => {
+    onEnterRef.current = onEnter;
+  }, [onEnter]);
+
+  useEffect(() => {
+    onSubmitRef.current = onSubmit;
+  }, [onSubmit]);
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -57,10 +71,16 @@ export function TiptapTitleEditor({
         class: "tiptap-title-editor outline-none w-full",
       },
       handleKeyDown: (_view, event) => {
+        // Handle mod+enter for submit
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          onSubmitRef.current?.();
+          return true;
+        }
         // Prevent Enter from creating new lines
         if (event.key === "Enter") {
           event.preventDefault();
-          onEnter?.();
+          onEnterRef.current?.();
           return true;
         }
         return false;
