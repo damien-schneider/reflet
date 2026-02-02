@@ -5,6 +5,9 @@ import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { decodeUserToken } from "./feedback_api_auth";
 import { polar } from "./polar";
+import { verifyGitHubSignature } from "./security";
+
+declare const process: any;
 
 const http = httpRouter();
 
@@ -186,9 +189,20 @@ http.route({
       return new Response("Missing X-GitHub-Event header", { status: 400 });
     }
 
+    const signature = request.headers.get("X-Hub-Signature-256");
     const body = await request.text();
+    const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
 
-    // TODO: Verify webhook signature using GITHUB_WEBHOOK_SECRET for production
+    if (webhookSecret) {
+      const isValid = await verifyGitHubSignature(body, signature, webhookSecret);
+      if (!isValid) {
+        return new Response("Invalid signature", { status: 401 });
+      }
+    } else {
+      console.warn(
+        "GITHUB_WEBHOOK_SECRET is missing. Webhook verification skipped (INSECURE)."
+      );
+    }
 
     try {
       const payload = JSON.parse(body) as Record<string, unknown>;
