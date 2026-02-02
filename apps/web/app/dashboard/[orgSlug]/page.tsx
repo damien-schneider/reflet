@@ -57,7 +57,8 @@ export default function OrgDashboard({
     );
   }
 
-  const primaryColor = org.primaryColor ?? "#3b82f6";
+  /** When undefined, FeedbackBoard uses theme primary (olive brand) */
+  const primaryColor = org.primaryColor;
   const defaultView =
     (org.feedbackSettings?.defaultView as BoardViewType) ?? "feed";
 

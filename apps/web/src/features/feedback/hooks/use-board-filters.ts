@@ -1,0 +1,193 @@
+"use client";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo } from "react";
+
+import type { BoardView } from "../components/board-view-toggle";
+import type { SortOption } from "../components/filters-bar";
+
+const URL_PARAM_KEYS = {
+  view: "view",
+  sort: "sort",
+  status: "status",
+  tags: "tags",
+  search: "q",
+} as const;
+
+const DEFAULT_VIEW: BoardView = "feed";
+const DEFAULT_SORT: SortOption = "votes";
+
+function parseArrayParam(value: string | null): string[] {
+  if (!value) {
+    return [];
+  }
+  return value.split(",").filter(Boolean);
+}
+
+function serializeArrayParam(values: string[]): string | null {
+  if (values.length === 0) {
+    return null;
+  }
+  return values.join(",");
+}
+
+export interface BoardFiltersState {
+  view: BoardView;
+  sortBy: SortOption;
+  selectedStatusIds: string[];
+  selectedTagIds: string[];
+  searchQuery: string;
+}
+
+export interface BoardFiltersActions {
+  setView: (view: BoardView) => void;
+  setSortBy: (sort: SortOption) => void;
+  setSelectedStatusIds: (ids: string[]) => void;
+  setSelectedTagIds: (ids: string[]) => void;
+  setSearchQuery: (query: string) => void;
+  handleStatusChange: (statusId: string, checked: boolean) => void;
+  handleTagChange: (tagId: string, checked: boolean) => void;
+  clearFilters: () => void;
+  hasActiveFilters: boolean;
+}
+
+export function useBoardFilters(
+  defaultView: BoardView = DEFAULT_VIEW
+): BoardFiltersState & BoardFiltersActions {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Parse current state from URL
+  const state = useMemo((): BoardFiltersState => {
+    const viewParam = searchParams.get(URL_PARAM_KEYS.view);
+    const view =
+      viewParam === "roadmap" || viewParam === "feed" ? viewParam : defaultView;
+
+    const sortParam = searchParams.get(URL_PARAM_KEYS.sort);
+    const sortBy =
+      sortParam === "votes" ||
+      sortParam === "newest" ||
+      sortParam === "oldest" ||
+      sortParam === "comments"
+        ? sortParam
+        : DEFAULT_SORT;
+
+    return {
+      view,
+      sortBy,
+      selectedStatusIds: parseArrayParam(
+        searchParams.get(URL_PARAM_KEYS.status)
+      ),
+      selectedTagIds: parseArrayParam(searchParams.get(URL_PARAM_KEYS.tags)),
+      searchQuery: searchParams.get(URL_PARAM_KEYS.search) ?? "",
+    };
+  }, [searchParams, defaultView]);
+
+  // Helper to update URL params
+  const updateParams = useCallback(
+    (updates: Partial<Record<keyof typeof URL_PARAM_KEYS, string | null>>) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      for (const [key, value] of Object.entries(updates)) {
+        const paramKey = URL_PARAM_KEYS[key as keyof typeof URL_PARAM_KEYS];
+        if (value === null || value === "") {
+          params.delete(paramKey);
+        } else {
+          params.set(paramKey, value);
+        }
+      }
+
+      const queryString = params.toString();
+      const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+      router.replace(newUrl, { scroll: false });
+    },
+    [router, pathname, searchParams]
+  );
+
+  // Actions
+  const setView = useCallback(
+    (view: BoardView) => {
+      updateParams({ view: view === defaultView ? null : view });
+    },
+    [updateParams, defaultView]
+  );
+
+  const setSortBy = useCallback(
+    (sort: SortOption) => {
+      updateParams({ sort: sort === DEFAULT_SORT ? null : sort });
+    },
+    [updateParams]
+  );
+
+  const setSelectedStatusIds = useCallback(
+    (ids: string[]) => {
+      updateParams({ status: serializeArrayParam(ids) });
+    },
+    [updateParams]
+  );
+
+  const setSelectedTagIds = useCallback(
+    (ids: string[]) => {
+      updateParams({ tags: serializeArrayParam(ids) });
+    },
+    [updateParams]
+  );
+
+  const setSearchQuery = useCallback(
+    (query: string) => {
+      updateParams({ search: query || null });
+    },
+    [updateParams]
+  );
+
+  const handleStatusChange = useCallback(
+    (statusId: string, checked: boolean) => {
+      const newIds = checked
+        ? [...state.selectedStatusIds, statusId]
+        : state.selectedStatusIds.filter((id) => id !== statusId);
+      setSelectedStatusIds(newIds);
+    },
+    [state.selectedStatusIds, setSelectedStatusIds]
+  );
+
+  const handleTagChange = useCallback(
+    (tagId: string, checked: boolean) => {
+      const newIds = checked
+        ? [...state.selectedTagIds, tagId]
+        : state.selectedTagIds.filter((id) => id !== tagId);
+      setSelectedTagIds(newIds);
+    },
+    [state.selectedTagIds, setSelectedTagIds]
+  );
+
+  const clearFilters = useCallback(() => {
+    const params = new URLSearchParams();
+    // Keep view param if it's not the default
+    if (state.view !== defaultView) {
+      params.set(URL_PARAM_KEYS.view, state.view);
+    }
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [router, pathname, state.view, defaultView]);
+
+  const hasActiveFilters =
+    !!state.searchQuery ||
+    state.selectedStatusIds.length > 0 ||
+    state.selectedTagIds.length > 0 ||
+    state.sortBy !== DEFAULT_SORT;
+
+  return {
+    ...state,
+    setView,
+    setSortBy,
+    setSelectedStatusIds,
+    setSelectedTagIds,
+    setSearchQuery,
+    handleStatusChange,
+    handleTagChange,
+    clearFilters,
+    hasActiveFilters,
+  };
+}

@@ -7,7 +7,6 @@ import {
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownList,
@@ -78,14 +77,15 @@ export function FiltersBar({
 
       {statuses.length > 0 && (
         <DropdownList>
-          <DropdownListTrigger className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 font-medium text-sm hover:bg-accent hover:text-accent-foreground">
-            <FilterIcon className="h-4 w-4" />
-            Status
-            {selectedStatusIds.length > 0 && (
-              <Badge className="ml-2" variant="secondary">
-                {selectedStatusIds.length}
-              </Badge>
-            )}
+          <DropdownListTrigger asChild>
+            <Button className="relative" size="icon-sm" variant="outline">
+              <FilterIcon />
+              {selectedStatusIds.length > 0 && (
+                <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-olive-600 font-medium text-[10px] text-olive-100">
+                  {selectedStatusIds.length}
+                </span>
+              )}
+            </Button>
           </DropdownListTrigger>
           <DropdownListContent align="end" className="w-48">
             <DropdownListGroup>

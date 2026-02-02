@@ -54,7 +54,8 @@ export interface FeedFeedbackViewProps {
   statuses: Array<{ _id: string; name: string; color: string }>;
   isLoading: boolean;
   hasActiveFilters: boolean;
-  primaryColor: string;
+  /** Org brand color; when undefined, theme primary is used */
+  primaryColor?: string;
   onVote: (
     e: React.MouseEvent,
     feedbackId: string,

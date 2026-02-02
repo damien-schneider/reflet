@@ -9,7 +9,14 @@ import {
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +27,7 @@ import { H1, Lead } from "@/components/ui/typography";
 import { TagFilterDropdown } from "@/features/tags/components/tag-filter-dropdown";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 
+import { useBoardFilters } from "../hooks/use-board-filters";
 import {
   BoardViewToggle,
   type BoardView as BoardViewType,
@@ -150,16 +158,32 @@ export interface FeedbackBoardProps {
   defaultView?: BoardViewType;
 }
 
-export function FeedbackBoard({
+function FeedbackBoardContent({
   organizationId,
-  orgSlug: _orgSlug,
-  primaryColor = "#3b82f6",
+  primaryColor,
   isMember,
   isAdmin,
   isPublic,
   defaultView = "feed",
-}: FeedbackBoardProps) {
-  // State
+}: Omit<FeedbackBoardProps, "orgSlug">) {
+  // URL-based filter state
+  const {
+    view,
+    setView,
+    sortBy,
+    setSortBy,
+    selectedStatusIds,
+    selectedTagIds,
+    searchQuery,
+    setSearchQuery,
+    handleStatusChange: handleStatusFilterChange,
+    handleTagChange: handleTagFilterChange,
+    setSelectedTagIds,
+    clearFilters,
+    hasActiveFilters,
+  } = useBoardFilters(defaultView);
+
+  // Local state (not URL-based)
   const [selectedFeedbackId, setSelectedFeedbackId] =
     useState<Id<"feedback"> | null>(null);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
@@ -169,11 +193,6 @@ export function FeedbackBoard({
     email: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [view, setView] = useState<BoardViewType>(defaultView);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<SortOption>("votes");
-  const [selectedStatusIds, setSelectedStatusIds] = useState<string[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   // Optimistic vote tracking
   const [optimisticVotes, setOptimisticVotes] = useState<
@@ -342,37 +361,6 @@ export function FeedbackBoard({
     [feedback, optimisticVotes, toggleVoteMutation, isAuthenticated, authGuard]
   );
 
-  const handleStatusFilterChange = useCallback(
-    (statusId: string, checked: boolean) => {
-      setSelectedStatusIds((prev) =>
-        checked ? [...prev, statusId] : prev.filter((id) => id !== statusId)
-      );
-    },
-    []
-  );
-
-  const handleTagFilterChange = useCallback(
-    (tagId: string, checked: boolean) => {
-      setSelectedTagIds((prev) =>
-        checked ? [...prev, tagId] : prev.filter((id) => id !== tagId)
-      );
-    },
-    []
-  );
-
-  const clearFilters = useCallback(() => {
-    setSearchQuery("");
-    setSelectedStatusIds([]);
-    setSelectedTagIds([]);
-    setSortBy("votes");
-  }, []);
-
-  const hasActiveFilters =
-    !!searchQuery ||
-    selectedStatusIds.length > 0 ||
-    selectedTagIds.length > 0 ||
-    sortBy !== "votes";
-
   // Only show loading skeleton on initial load, not on filter/search changes
   if (feedback === undefined && !hasLoadedOnce.current) {
     return <LoadingSkeleton />;
@@ -394,30 +382,33 @@ export function FeedbackBoard({
         </Lead>
       </div>
 
-      {/* Search bar */}
-      <div className="mx-auto mb-6 flex max-w-md justify-center">
-        <div className="relative w-full">
-          <MagnifyingGlassIcon className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="h-10 rounded-full border-0 bg-muted pr-4 pl-11 focus-visible:ring-2"
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search feedback..."
-            value={searchQuery}
-          />
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <BoardViewToggle onChange={setView} view={view} />
+      {/* Sticky toolbar area */}
+      <div className="sticky top-0 z-10 -mx-4 px-4 pb-4">
+        {/* Search bar */}
+        <div className="mx-auto mb-4 flex max-w-md justify-center">
+          <div className="relative w-full">
+            <MagnifyingGlassIcon className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              className="h-10 rounded-full border-0 bg-muted pr-4 pl-11 focus-visible:ring-2"
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search feedback..."
+              value={searchQuery}
+            />
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button onClick={() => setShowSubmitDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Submit Feedback
-          </Button>
+        {/* Toolbar */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <BoardViewToggle onChange={setView} view={view} />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setShowSubmitDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Submit Feedback
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -573,5 +564,28 @@ export function FeedbackBoard({
         onSubmit={handleSubmitFeedback}
       />
     </div>
+  );
+}
+
+export function FeedbackBoard({
+  organizationId,
+  orgSlug: _orgSlug,
+  primaryColor,
+  isMember,
+  isAdmin,
+  isPublic,
+  defaultView,
+}: FeedbackBoardProps) {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <FeedbackBoardContent
+        defaultView={defaultView}
+        isAdmin={isAdmin}
+        isMember={isMember}
+        isPublic={isPublic}
+        organizationId={organizationId}
+        primaryColor={primaryColor}
+      />
+    </Suspense>
   );
 }

@@ -31,7 +31,8 @@ interface FeedbackCardWithMorphingDialogProps {
     organizationStatus?: { name: string; color: string; icon?: string } | null;
   };
   statuses: Array<{ _id: string; name: string; color: string }>;
-  primaryColor: string;
+  /** Org brand color; when undefined, theme primary is used */
+  primaryColor?: string;
   isMember?: boolean;
   isAdmin?: boolean;
   onVote: (
@@ -86,7 +87,7 @@ export function FeedbackCardWithMorphingDialog({
           {/* Main card */}
           <div
             className={cn(
-              "feedback-card flex-1 cursor-pointer overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-card to-card/80 shadow-sm backdrop-blur-sm transition-all hover:border-border hover:shadow-foreground/5 hover:shadow-md",
+              "feedback-card flex-1 cursor-pointer rounded-xl border border-border/50 bg-card transition-all hover:border-border hover:shadow-black/5",
               feedback.isPinned &&
                 "border-olive-300/50 from-olive-50 to-olive-100/50 dark:border-olive-700/50 dark:from-olive-950/50 dark:to-olive-950/30"
             )}
@@ -171,9 +172,9 @@ export function FeedbackCardWithMorphingDialog({
           <div className="flex flex-col gap-1 self-stretch">
             <button
               className={cn(
-                "flex flex-1 shrink-0 flex-col items-center justify-center rounded-xl border border-border/50 bg-muted/30 px-3 py-2 transition-all hover:bg-muted hover:shadow-sm",
+                "flex flex-1 shrink-0 flex-col items-center justify-center rounded-xl border border-border/50 bg-card px-3 py-2 transition-all hover:bg-muted hover:shadow-sm",
                 feedback.userVoteType === "upvote"
-                  ? "border-olive-400 bg-olive-100 text-olive-700 shadow-sm dark:border-olive-600 dark:bg-olive-900/50 dark:text-olive-300"
+                  ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/80"
                   : ""
               )}
               onClick={(e) => {
@@ -181,9 +182,8 @@ export function FeedbackCardWithMorphingDialog({
                 onVote(e, feedback._id, "upvote");
               }}
               style={
-                feedback.userVoteType === "upvote"
+                feedback.userVoteType === "upvote" && primaryColor
                   ? {
-                      borderColor: primaryColor,
                       backgroundColor: `${primaryColor}15`,
                       color: primaryColor,
                     }
@@ -199,9 +199,9 @@ export function FeedbackCardWithMorphingDialog({
 
             <button
               className={cn(
-                "flex flex-1 shrink-0 flex-col items-center justify-center rounded-xl border border-border/50 bg-muted/30 px-3 py-2 transition-all hover:bg-muted hover:shadow-sm",
+                "flex flex-1 shrink-0 flex-col items-center justify-center rounded-xl border border-border/50 bg-card px-3 py-2 transition-all hover:bg-muted hover:shadow-sm",
                 feedback.userVoteType === "downvote"
-                  ? "border-red-400 bg-red-100 text-red-700 shadow-sm dark:border-red-600 dark:bg-red-900/50 dark:text-red-300"
+                  ? "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/80"
                   : ""
               )}
               onClick={(e) => {

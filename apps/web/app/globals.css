@@ -30,6 +30,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -77,13 +78,14 @@
 
   /* Light mode - warm cream/paper tones */
   /* Base: #F7F7F4 (background), #F0EFEA (muted), #14120B (foreground) */
-  --background: oklch(0.97 0.005 85);
+  --background: oklch(0.975 0.005 85);
   --foreground: oklch(0.15 0.015 75);
   --card: oklch(0.99 0.003 85);
   --card-foreground: oklch(0.15 0.015 75);
   --popover: oklch(0.99 0.003 85);
   --popover-foreground: oklch(0.15 0.015 75);
-  --primary: var(--color-olive-600);
+  /* Primary = brand (olive); used by buttons, links, vote states, etc. */
+  --primary: var(--olive-600);
   --primary-foreground: oklch(0.97 0.005 85);
   --secondary: oklch(0.94 0.006 85);
   --secondary-foreground: oklch(0.2 0.015 75);
@@ -91,7 +93,8 @@
   --muted-foreground: oklch(0.5 0.01 75);
   --accent: oklch(0.92 0.008 85);
   --accent-foreground: oklch(0.2 0.015 75);
-  --destructive: oklch(0.58 0.2 27);
+  --destructive: oklch(0.6598 0.141 22.71);
+  --destructive-foreground: oklch(0.97 0.005 85);
   --border: oklch(0.88 0.008 85);
   --input: oklch(0.9 0.008 85);
   --ring: oklch(0.65 0.01 75);
@@ -111,6 +114,7 @@
   --sidebar-ring: oklch(0.65 0.01 75);
 
   /* Olive color palette - brand colors */
+  --olive-50: oklch(0.98 0.005 106.5);
   --olive-100: oklch(0.966 0.005 106.5);
   --olive-200: oklch(0.93 0.007 106.5);
   --olive-300: oklch(0.88 0.011 106.6);
@@ -131,15 +135,17 @@
   --card-foreground: oklch(0.97 0.005 85);
   --popover: oklch(0.21 0.012 88);
   --popover-foreground: oklch(0.97 0.005 85);
-  --primary: var(--color-olive-600);
-  --primary-foreground: var(--color-olive-100);
+  /* Primary = brand (olive) */
+  --primary: var(--olive-600);
+  --primary-foreground: var(--olive-100);
   --secondary: oklch(0.24 0.012 88);
   --secondary-foreground: var(--color-olive-300);
   --muted: oklch(0.24 0.012 88);
   --muted-foreground: oklch(0.65 0.008 85);
   --accent: oklch(0.26 0.012 88);
   --accent-foreground: oklch(0.97 0.005 85);
-  --destructive: oklch(0.65 0.18 25);
+  --destructive: oklch(0.6598 0.141 22.71);
+  --destructive-foreground: oklch(0.97 0.005 85);
   --border: oklch(0.97 0.005 85 / 10%);
   --input: oklch(0.97 0.005 85 / 12%);
   --ring: oklch(0.5 0.01 85);

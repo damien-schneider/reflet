@@ -16,6 +16,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   SidebarInset,
   SidebarProvider,
@@ -198,15 +199,20 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>
       <DashboardSidebar orgSlug={orgSlug} pathname={pathname ?? ""} />
-      <SidebarInset className="flex max-h-svh flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger />
-          <div className="flex flex-1 items-center gap-2">
-            <DashboardBreadcrumb orgSlug={orgSlug} pathname={pathname ?? ""} />
+      <SidebarInset className="relative">
+        <header className="absolute top-0 right-0 left-0 z-10 flex h-14 items-center gap-2 px-4">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger className="bg-background/20 backdrop-blur-sm hover:bg-background/30" />
+            <div className="flex flex-1 items-center gap-2 rounded-lg border border-background/50 bg-background/20 px-4 py-1 backdrop-blur-xs">
+              <DashboardBreadcrumb
+                orgSlug={orgSlug}
+                pathname={pathname ?? ""}
+              />
+            </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto">
+        <ScrollArea className="h-full bg-background" classNameViewport="pt-14">
           {!orgSlug && hasOrganizations ? (
             <main className="flex h-full items-center justify-center p-6">
               <div className="max-w-md text-center">
@@ -248,7 +254,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           ) : null}
 
           {orgSlug ? children : null}
-        </div>
+        </ScrollArea>
       </SidebarInset>
     </SidebarProvider>
   );
