@@ -5,12 +5,10 @@ import type * as React from "react";
 import {
   SidebarGroup,
   SidebarGroupContent,
-} from "@/components/ui/sidebar/group";
-import {
   SidebarList,
   SidebarListButton,
   SidebarListItem,
-} from "@/components/ui/sidebar/menu";
+} from "@/components/ui/sidebar";
 
 export function NavSecondary({
   items,

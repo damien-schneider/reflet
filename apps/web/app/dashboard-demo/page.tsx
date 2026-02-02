@@ -1,8 +1,7 @@
 "use client";
 
 import type * as React from "react";
-import { SidebarInset } from "@/components/ui/sidebar/base";
-import { SidebarProvider } from "@/components/ui/sidebar/context";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/features/app-shell/components/app-sidebar";
 import { SiteHeader } from "@/features/navigation/components/site-header";
 import { ChartAreaInteractive } from "@/shared/components/chart-area-interactive";

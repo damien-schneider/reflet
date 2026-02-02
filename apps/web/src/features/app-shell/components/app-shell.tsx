@@ -1,5 +1,8 @@
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar/base";
-import { SidebarProvider } from "@/components/ui/sidebar/context";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { AppSidebar } from "./app-sidebar";
 

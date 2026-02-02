@@ -24,12 +24,10 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-} from "@/components/ui/sidebar/base";
-import {
   SidebarList,
   SidebarListButton,
   SidebarListItem,
-} from "@/components/ui/sidebar/menu";
+} from "@/components/ui/sidebar";
 import { NavDocuments } from "@/features/navigation/components/nav-documents";
 import { NavMain } from "@/features/navigation/components/nav-main";
 import { NavSecondary } from "@/features/navigation/components/nav-secondary";

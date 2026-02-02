@@ -9,7 +9,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar/base";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function SiteHeader() {
   return (
