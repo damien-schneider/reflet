@@ -2,7 +2,6 @@
 
 import { Chat, DotsThreeVertical, Pencil, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useCallback, useState } from "react";
@@ -17,9 +16,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 
-import type { CommentData, CommentItemProps } from "./types";
+import { useFeedbackId } from "./comment-context";
+import type { CommentData } from "./types";
 
-export function CommentItem({ feedbackId, comment }: CommentItemProps) {
+interface CommentItemOwnProps {
+  comment: CommentData;
+}
+
+export function CommentItem({ comment }: CommentItemOwnProps) {
+  const feedbackId = useFeedbackId();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [isReplying, setIsReplying] = useState(false);
@@ -123,7 +128,7 @@ export function CommentItem({ feedbackId, comment }: CommentItemProps) {
 
           {/* Replies */}
           {comment.replies.length > 0 && (
-            <CommentReplies feedbackId={feedbackId} replies={comment.replies} />
+            <CommentReplies replies={comment.replies} />
           )}
         </div>
       </div>
@@ -260,16 +265,14 @@ function ReplyForm({
 }
 
 interface CommentRepliesProps {
-  feedbackId: Id<"feedback">;
   replies: CommentData[];
 }
 
-function CommentReplies({ feedbackId, replies }: CommentRepliesProps) {
+function CommentReplies({ replies }: CommentRepliesProps) {
   return (
     <div className="relative mt-4 space-y-4 pl-4">
       {replies.map((reply, index) => (
         <ReplyItem
-          feedbackId={feedbackId}
           isLast={index === replies.length - 1}
           key={reply.id}
           reply={reply}
@@ -280,12 +283,11 @@ function CommentReplies({ feedbackId, replies }: CommentRepliesProps) {
 }
 
 interface ReplyItemProps {
-  feedbackId: Id<"feedback">;
   reply: CommentData;
   isLast: boolean;
 }
 
-function ReplyItem({ feedbackId, reply, isLast }: ReplyItemProps) {
+function ReplyItem({ reply, isLast }: ReplyItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(reply.content);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -368,9 +370,7 @@ function ReplyItem({ feedbackId, reply, isLast }: ReplyItemProps) {
         )}
 
         {/* Nested replies */}
-        {reply.replies.length > 0 && (
-          <CommentReplies feedbackId={feedbackId} replies={reply.replies} />
-        )}
+        {reply.replies.length > 0 && <CommentReplies replies={reply.replies} />}
       </div>
     </div>
   );

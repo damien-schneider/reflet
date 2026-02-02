@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
+import { CommentProvider } from "./comment-context";
 import { CommentItem } from "./comment-item";
 import type { CommentData } from "./types";
 
@@ -73,21 +74,19 @@ export function CommentsSection({
           />
 
           {/* Comments List */}
-          <div className="mt-6 space-y-4">
-            {comments.length === 0 ? (
-              <p className="py-8 text-center text-muted-foreground">
-                No comments yet. Be the first to comment!
-              </p>
-            ) : (
-              comments.map((comment) => (
-                <CommentItem
-                  comment={comment}
-                  feedbackId={feedbackId}
-                  key={comment.id}
-                />
-              ))
-            )}
-          </div>
+          <CommentProvider feedbackId={feedbackId}>
+            <div className="mt-6 space-y-4">
+              {comments.length === 0 ? (
+                <p className="py-8 text-center text-muted-foreground">
+                  No comments yet. Be the first to comment!
+                </p>
+              ) : (
+                comments.map((comment) => (
+                  <CommentItem comment={comment} key={comment.id} />
+                ))
+              )}
+            </div>
+          </CommentProvider>
         </TabsContent>
 
         <TabsContent className="mt-4" value="activity">

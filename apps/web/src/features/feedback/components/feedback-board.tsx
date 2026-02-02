@@ -1,13 +1,9 @@
 "use client";
 
 import {
-  CaretUp,
-  ChatCircle,
-  Funnel as FilterIcon,
   Globe,
   MagnifyingGlass as MagnifyingGlassIcon,
   Plus,
-  SortAscending as SortAscendingIcon,
   X,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
@@ -18,23 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  DropdownList,
-  DropdownListCheckboxItem,
-  DropdownListContent,
-  DropdownListGroup,
-  DropdownListLabel,
-  DropdownListSeparator,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H1, Lead } from "@/components/ui/typography";
 import { TagFilterDropdown } from "@/features/tags/components/tag-filter-dropdown";
@@ -44,32 +24,11 @@ import {
   BoardViewToggle,
   type BoardView as BoardViewType,
 } from "./board-view-toggle";
-import { FeedbackCardWithMorphingDialog } from "./feedback-card-with-morphing-dialog";
+import { type FeedbackItem, FeedFeedbackView } from "./feed-feedback-view";
 import { FeedbackDetailDialog } from "./feedback-detail-dialog";
-import { AddColumnInline } from "./roadmap/add-column-inline";
-import { ColumnDeleteDialog } from "./roadmap/column-delete-dialog";
-import { RoadmapColumnHeader } from "./roadmap/roadmap-column-header";
+import { FiltersBar, type SortOption } from "./filters-bar";
+import { RoadmapView } from "./roadmap-view";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
-
-type SortOption = "votes" | "newest" | "oldest" | "comments";
-
-interface FeedbackItem {
-  _id: string;
-  title: string;
-  description?: string;
-  voteCount: number;
-  commentCount: number;
-  createdAt: number;
-  organizationStatusId?: Id<"organizationStatuses">;
-  isPinned?: boolean;
-  hasVoted?: boolean;
-  userVoteType?: "upvote" | "downvote" | null;
-  upvoteCount?: number;
-  downvoteCount?: number;
-  organizationId: string;
-  tags?: Array<{ _id: string; name: string; color: string } | null>;
-  organizationStatus?: { name: string; color: string; icon?: string } | null;
-}
 
 function getVoteValue(
   voteType: "upvote" | "downvote" | null | undefined
@@ -172,107 +131,6 @@ function PrivateOrgMessage() {
           </p>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-interface FiltersBarProps {
-  organizationId: Id<"organizations">;
-  sortBy: SortOption;
-  onSortChange: (sort: SortOption) => void;
-  statuses: Array<{ _id: string; name: string; color: string }>;
-  selectedStatusIds: string[];
-  onStatusChange: (statusId: string, checked: boolean) => void;
-  tags: Array<{ _id: string; name: string; color: string }>;
-  selectedTagIds: string[];
-  onTagChange: (tagId: string, checked: boolean) => void;
-  hasActiveFilters: boolean;
-  onClearFilters: () => void;
-  isAdmin: boolean;
-}
-
-function FiltersBar({
-  organizationId,
-  sortBy,
-  onSortChange,
-  statuses,
-  selectedStatusIds,
-  onStatusChange,
-  tags,
-  selectedTagIds,
-  onTagChange,
-  hasActiveFilters,
-  onClearFilters,
-  isAdmin,
-}: FiltersBarProps) {
-  return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-      <Select
-        onValueChange={(v) => onSortChange(v as SortOption)}
-        value={sortBy}
-      >
-        <SelectTrigger className="w-40">
-          <SortAscendingIcon className="mr-2 h-4 w-4" />
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="votes">Most Votes</SelectItem>
-          <SelectItem value="newest">Newest</SelectItem>
-          <SelectItem value="oldest">Oldest</SelectItem>
-          <SelectItem value="comments">Most Comments</SelectItem>
-        </SelectContent>
-      </Select>
-
-      {statuses.length > 0 && (
-        <DropdownList>
-          <DropdownListTrigger className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 font-medium text-sm hover:bg-accent hover:text-accent-foreground">
-            <FilterIcon className="h-4 w-4" />
-            Status
-            {selectedStatusIds.length > 0 && (
-              <Badge className="ml-2" variant="secondary">
-                {selectedStatusIds.length}
-              </Badge>
-            )}
-          </DropdownListTrigger>
-          <DropdownListContent align="end" className="w-48">
-            <DropdownListGroup>
-              <DropdownListLabel>Filter by status</DropdownListLabel>
-              <DropdownListSeparator />
-              {statuses.map((status) => (
-                <DropdownListCheckboxItem
-                  checked={selectedStatusIds.includes(status._id)}
-                  key={status._id}
-                  onCheckedChange={(checked: boolean) =>
-                    onStatusChange(status._id, checked)
-                  }
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: status.color }}
-                    />
-                    {status.name}
-                  </div>
-                </DropdownListCheckboxItem>
-              ))}
-            </DropdownListGroup>
-          </DropdownListContent>
-        </DropdownList>
-      )}
-
-      <TagFilterDropdown
-        isAdmin={isAdmin}
-        onTagChange={onTagChange}
-        organizationId={organizationId}
-        selectedTagIds={selectedTagIds}
-        tags={tags}
-      />
-
-      {hasActiveFilters && (
-        <Button onClick={onClearFilters} size="icon" variant="ghost">
-          <X className="h-4 w-4" />
-        </Button>
-      )}
     </div>
   );
 }
@@ -715,215 +573,5 @@ export function FeedbackBoard({
         onSubmit={handleSubmitFeedback}
       />
     </div>
-  );
-}
-
-// Feed view component
-interface FeedFeedbackViewProps {
-  feedback: FeedbackItem[];
-  statuses: Array<{ _id: string; name: string; color: string }>;
-  isLoading: boolean;
-  hasActiveFilters: boolean;
-  primaryColor: string;
-  onVote: (
-    e: React.MouseEvent,
-    feedbackId: string,
-    voteType: "upvote" | "downvote"
-  ) => void;
-  onSubmitClick: () => void;
-  onFeedbackClick: (feedbackId: string) => void;
-}
-
-function FeedFeedbackView({
-  feedback,
-  statuses,
-  isLoading,
-  hasActiveFilters,
-  primaryColor,
-  onVote,
-  onSubmitClick,
-  onFeedbackClick,
-}: FeedFeedbackViewProps) {
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div className="h-32 animate-pulse rounded-lg bg-muted" key={i} />
-        ))}
-      </div>
-    );
-  }
-
-  if (feedback.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-lg border bg-card py-12">
-        {hasActiveFilters ? (
-          <>
-            <MagnifyingGlassIcon className="mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="font-semibold text-lg">No matching feedback</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your filters or search query.
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="mb-4 text-muted-foreground">
-              Be the first to share your ideas!
-            </p>
-            <Button onClick={onSubmitClick}>
-              <Plus className="mr-2 h-4 w-4" />
-              Submit Feedback
-            </Button>
-          </>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {feedback.map((item) => (
-        <FeedbackCardWithMorphingDialog
-          feedback={item}
-          key={item._id}
-          onFeedbackClick={onFeedbackClick}
-          onVote={onVote}
-          primaryColor={primaryColor}
-          statuses={statuses}
-        />
-      ))}
-    </div>
-  );
-}
-
-// Roadmap view component - uses statuses as columns
-interface RoadmapViewProps {
-  feedback: FeedbackItem[];
-  statuses: Array<{ _id: string; name: string; color: string }>;
-  onFeedbackClick: (feedbackId: string) => void;
-  organizationId: Id<"organizations">;
-  isAdmin: boolean;
-}
-
-function RoadmapView({
-  feedback,
-  statuses,
-  onFeedbackClick,
-  organizationId,
-  isAdmin,
-}: RoadmapViewProps) {
-  const [deleteDialogStatus, setDeleteDialogStatus] = useState<{
-    id: Id<"organizationStatuses">;
-    name: string;
-    color: string;
-  } | null>(null);
-
-  if (statuses.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-muted-foreground">
-            No statuses configured. Statuses are used as roadmap columns.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <>
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {statuses.map((status) => {
-          // Filter feedback by status
-          const statusFeedback = feedback.filter(
-            (f) => f.organizationStatusId === status._id
-          );
-
-          return (
-            <div
-              className="group w-72 shrink-0 rounded-lg border bg-muted/30 p-4"
-              key={status._id}
-            >
-              <RoadmapColumnHeader
-                color={status.color}
-                count={statusFeedback.length}
-                isAdmin={isAdmin}
-                name={status.name}
-                onDelete={() =>
-                  setDeleteDialogStatus({
-                    id: status._id as Id<"organizationStatuses">,
-                    name: status.name,
-                    color: status.color,
-                  })
-                }
-                statusId={status._id as Id<"organizationStatuses">}
-              />
-              <div className="space-y-2">
-                {statusFeedback.map((item) => (
-                  <Card
-                    className="cursor-pointer p-3 transition-all hover:border-primary/50"
-                    key={item._id}
-                    onClick={() => onFeedbackClick(item._id)}
-                  >
-                    <h4 className="font-medium text-sm">{item.title}</h4>
-                    {/* Show tags for categorization */}
-                    {item.tags && item.tags.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {item.tags.slice(0, 2).map(
-                          (tag) =>
-                            tag && (
-                              <Badge
-                                className="px-1 py-0 font-normal text-xs"
-                                key={tag._id}
-                                style={{
-                                  backgroundColor: `${tag.color}15`,
-                                  color: tag.color,
-                                  borderColor: `${tag.color}30`,
-                                }}
-                                variant="outline"
-                              >
-                                {tag.name}
-                              </Badge>
-                            )
-                        )}
-                      </div>
-                    )}
-                    <div className="mt-2 flex items-center gap-2 text-muted-foreground text-xs">
-                      <CaretUp className="h-3 w-3" />
-                      <span>{item.voteCount}</span>
-                      <ChatCircle className="ml-2 h-3 w-3" />
-                      <span>{item.commentCount}</span>
-                    </div>
-                  </Card>
-                ))}
-                {statusFeedback.length === 0 && (
-                  <p className="py-4 text-center text-muted-foreground text-sm">
-                    No items
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })}
-
-        {/* Add column button for admins */}
-        {isAdmin && <AddColumnInline organizationId={organizationId} />}
-      </div>
-
-      {/* Delete confirmation dialog */}
-      <ColumnDeleteDialog
-        feedbackCount={
-          deleteDialogStatus
-            ? feedback.filter(
-                (f) => f.organizationStatusId === deleteDialogStatus.id
-              ).length
-            : 0
-        }
-        onOpenChange={(open) => !open && setDeleteDialogStatus(null)}
-        open={!!deleteDialogStatus}
-        otherStatuses={statuses.filter((s) => s._id !== deleteDialogStatus?.id)}
-        statusToDelete={deleteDialogStatus}
-      />
-    </>
   );
 }

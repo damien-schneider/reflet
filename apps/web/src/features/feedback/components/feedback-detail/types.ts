@@ -23,10 +23,8 @@ export interface CommentData {
   replies: CommentData[];
 }
 
-export interface CommentItemProps {
-  feedbackId: Id<"feedback">;
-  comment: CommentData;
-}
+// Note: CommentItem now gets feedbackId from CommentContext
+// to avoid props drilling through the recursive comment tree
 
 // ============================================
 // CONSTANTS
