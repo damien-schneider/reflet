@@ -5,26 +5,24 @@
 import { z } from "zod";
 
 // Schema for sign-in (email + password)
+// Note: No minimum password length for sign-in - existing users may have shorter passwords
+// Server will validate the actual credentials
 export const signInSchema = z.object({
-  email: z.string().email("Adresse email invalide"),
-  password: z
-    .string()
-    .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
 });
 
 // Schema for sign-up (email + password + confirm password)
 export const signUpSchema = z
   .object({
-    email: z.string().email("Adresse email invalide"),
-    password: z
-      .string()
-      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z
       .string()
-      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+      .min(8, "Password must be at least 8 characters"),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Les mots de passe ne correspondent pas",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
@@ -41,8 +39,8 @@ export const formatAuthError = (message: string): string => {
   let cleaned = message;
 
   const fieldMap: Record<string, string> = {
-    email: "L'email",
-    password: "Le mot de passe",
+    email: "Email",
+    password: "Password",
   };
 
   cleaned = cleaned.replace(BODY_FIELD_REGEX, (_, field) => {
@@ -53,35 +51,35 @@ export const formatAuthError = (message: string): string => {
   const lowerCleaned = cleaned.toLowerCase();
 
   if (lowerCleaned.includes("invalid email")) {
-    return "Adresse email invalide";
+    return "Invalid email address";
   }
 
   if (lowerCleaned.includes("incorrect email or password")) {
-    return "Email ou mot de passe incorrect";
+    return "Incorrect email or password";
   }
 
   if (lowerCleaned.includes("user already exists")) {
-    return "Un compte avec cet email existe déjà";
+    return "An account with this email already exists";
   }
 
   if (
     lowerCleaned.includes("email not verified") ||
     lowerCleaned.includes("verify your email")
   ) {
-    return "Veuillez vérifier votre email avant de vous connecter.";
+    return "Please verify your email before signing in.";
   }
 
   if (
     lowerCleaned.includes("too small") ||
     lowerCleaned.includes("expected string")
   ) {
-    if (cleaned.includes("L'email")) {
-      return "L'email est requis";
+    if (cleaned.includes("Email")) {
+      return "Email is required";
     }
-    if (cleaned.includes("Le mot de passe")) {
-      return "Le mot de passe est requis";
+    if (cleaned.includes("Password")) {
+      return "Password is required";
     }
-    return "Ce champ est requis";
+    return "This field is required";
   }
 
   return cleaned;

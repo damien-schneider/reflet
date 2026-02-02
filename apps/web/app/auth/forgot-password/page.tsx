@@ -13,7 +13,7 @@ import { H1, Muted } from "@/components/ui/typography";
 import { authClient } from "@/lib/auth-client";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Adresse email invalide"),
+  email: z.string().email("Invalid email address"),
 });
 
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
 
       if (result.error) {
         setApiError(
-          result.error.message ?? "Une erreur est survenue. Veuillez réessayer."
+          result.error.message ?? "An error occurred. Please try again."
         );
         return;
       }
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
       setSubmittedEmail(data.email);
       setIsSubmitted(true);
     } catch {
-      setApiError("Une erreur est survenue. Veuillez réessayer.");
+      setApiError("An error occurred. Please try again.");
     }
   };
 
@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
           <div className="mb-6 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-olive-100">
               <svg
-                aria-label="Icône email"
+                aria-label="Email icon"
                 className="h-8 w-8 text-olive-600"
                 fill="none"
                 role="img"
@@ -81,18 +81,18 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
           <H1 className="mb-2" variant="page">
-            Vérifiez votre boîte mail
+            Check your inbox
           </H1>
           <Muted className="mb-2">
-            Si un compte existe avec l'adresse email :
+            If an account exists with the email address:
           </Muted>
           <p className="mb-6 font-medium text-foreground">{submittedEmail}</p>
           <Muted className="mb-6">
-            Vous recevrez un email avec un lien pour réinitialiser votre mot de
-            passe. Vérifiez également votre dossier spam.
+            You will receive an email with a link to reset your password. Also
+            check your spam folder.
           </Muted>
           <Link href="/">
-            <Button variant="outline">Retour à l'accueil</Button>
+            <Button variant="outline">Back to home</Button>
           </Link>
         </div>
       </div>
@@ -103,10 +103,10 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md p-6">
         <H1 className="mb-2 text-center" variant="page">
-          Mot de passe oublié
+          Forgot password
         </H1>
         <Muted className="mb-6 text-center">
-          Entrez votre adresse email pour recevoir un lien de réinitialisation.
+          Enter your email address to receive a reset link.
         </Muted>
 
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -132,10 +132,10 @@ export default function ForgotPasswordPage() {
             {isSubmitting ? (
               <>
                 <Spinner className="mr-2 h-4 w-4" />
-                Envoi en cours...
+                Sending...
               </>
             ) : (
-              "Envoyer le lien de réinitialisation"
+              "Send reset link"
             )}
           </Button>
 
@@ -144,7 +144,7 @@ export default function ForgotPasswordPage() {
               className="font-medium text-olive-600 text-sm hover:underline"
               href="/"
             >
-              Retour à la connexion
+              Back to sign in
             </Link>
           </div>
         </form>

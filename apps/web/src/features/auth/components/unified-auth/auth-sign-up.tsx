@@ -11,18 +11,18 @@ interface AuthHeaderProps {
 
 function getTitle(mode: AuthMode): string {
   if (!mode) {
-    return "Authentification";
+    return "Authentication";
   }
-  return mode === "signIn" ? "Bon retour parmi nous" : "Créer un compte";
+  return mode === "signIn" ? "Welcome back" : "Create an account";
 }
 
 function getDescription(mode: AuthMode): string {
   if (!mode) {
-    return "Entrez votre email pour continuer";
+    return "Enter your email to continue";
   }
   return mode === "signIn"
-    ? "Connectez-vous avec votre email et mot de passe"
-    : "Complétez les informations pour créer votre compte";
+    ? "Sign in with your email and password"
+    : "Complete the information to create your account";
 }
 
 export function AuthHeader({ mode }: AuthHeaderProps) {

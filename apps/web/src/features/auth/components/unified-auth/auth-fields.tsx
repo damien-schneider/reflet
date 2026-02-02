@@ -28,7 +28,7 @@ export function AuthEmailField({
         {isCheckingEmail && (
           <div className="inline-flex w-fit! gap-1 text-muted-foreground text-xs">
             <Spinner />
-            <p className="">Vérification de l'email...</p>
+            <p className="">Checking email...</p>
           </div>
         )}
       </FieldLabel>
@@ -59,7 +59,11 @@ interface AuthPasswordFieldProps {
   ) => void;
   setValue: (name: keyof SignUpFormData, value: string) => void;
   trigger: (name: keyof SignUpFormData) => Promise<boolean>;
+  passwordLength: number;
+  isSignUp: boolean;
 }
+
+const MIN_PASSWORD_LENGTH = 8;
 
 export function AuthPasswordField({
   register,
@@ -68,10 +72,25 @@ export function AuthPasswordField({
   onPasswordChange,
   setValue,
   trigger,
+  passwordLength,
+  isSignUp,
 }: AuthPasswordFieldProps) {
+  const remainingChars = MIN_PASSWORD_LENGTH - passwordLength;
+  // Only show password length hint for new account creation, not for sign-in
+  // (existing users may have shorter passwords)
+  const showHint = isSignUp && passwordLength > 0 && remainingChars > 0;
+
   return (
     <Field className="relative">
-      <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
+      <FieldLabel className="justify-between" htmlFor="password">
+        Password
+        {showHint && (
+          <span className="text-muted-foreground text-xs">
+            {remainingChars} more character{remainingChars !== 1 ? "s" : ""}{" "}
+            needed
+          </span>
+        )}
+      </FieldLabel>
       <Input
         data-testid="password-input"
         id="password"

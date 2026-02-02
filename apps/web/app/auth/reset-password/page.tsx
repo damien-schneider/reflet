@@ -15,15 +15,13 @@ import { authClient } from "@/lib/auth-client";
 
 const resetPasswordSchema = z
   .object({
-    password: z
-      .string()
-      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z
       .string()
-      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+      .min(8, "Password must be at least 8 characters"),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Les mots de passe ne correspondent pas",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
@@ -61,8 +59,8 @@ function ResetPasswordContent() {
       setStatus("error");
       setApiError(
         error === "invalid_token"
-          ? "Le lien de réinitialisation est invalide ou a expiré."
-          : "Une erreur est survenue."
+          ? "The reset link is invalid or has expired."
+          : "An error occurred."
       );
     } else if (!token) {
       setStatus("invalid");
@@ -71,7 +69,7 @@ function ResetPasswordContent() {
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     if (!token) {
-      setApiError("Token de réinitialisation manquant.");
+      setApiError("Reset token is missing.");
       return;
     }
 
@@ -85,14 +83,14 @@ function ResetPasswordContent() {
 
       if (result.error) {
         setApiError(
-          result.error.message ?? "Une erreur est survenue. Veuillez réessayer."
+          result.error.message ?? "An error occurred. Please try again."
         );
         return;
       }
 
       setStatus("success");
     } catch {
-      setApiError("Une erreur est survenue. Veuillez réessayer.");
+      setApiError("An error occurred. Please try again.");
     }
   };
 
@@ -111,7 +109,7 @@ function ResetPasswordContent() {
           <div className="mb-6 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
               <svg
-                aria-label="Icône erreur"
+                aria-label="Error icon"
                 className="h-8 w-8 text-red-600"
                 fill="none"
                 role="img"
@@ -128,14 +126,13 @@ function ResetPasswordContent() {
             </div>
           </div>
           <H1 className="mb-2" variant="page">
-            Lien invalide
+            Invalid link
           </H1>
           <Muted className="mb-6">
-            Ce lien de réinitialisation est invalide. Veuillez demander un
-            nouveau lien.
+            This reset link is invalid. Please request a new link.
           </Muted>
           <Link href="/auth/forgot-password">
-            <Button>Demander un nouveau lien</Button>
+            <Button>Request a new link</Button>
           </Link>
         </div>
       </div>
@@ -149,7 +146,7 @@ function ResetPasswordContent() {
           <div className="mb-6 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
               <svg
-                aria-label="Icône erreur"
+                aria-label="Error icon"
                 className="h-8 w-8 text-red-600"
                 fill="none"
                 role="img"
@@ -166,14 +163,13 @@ function ResetPasswordContent() {
             </div>
           </div>
           <H1 className="mb-2" variant="page">
-            Erreur
+            Error
           </H1>
           <Muted className="mb-6">
-            {apiError ??
-              "Le lien de réinitialisation est invalide ou a expiré."}
+            {apiError ?? "The reset link is invalid or has expired."}
           </Muted>
           <Link href="/auth/forgot-password">
-            <Button>Demander un nouveau lien</Button>
+            <Button>Request a new link</Button>
           </Link>
         </div>
       </div>
@@ -187,7 +183,7 @@ function ResetPasswordContent() {
           <div className="mb-6 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
               <svg
-                aria-label="Icône succès"
+                aria-label="Success icon"
                 className="h-8 w-8 text-green-600"
                 fill="none"
                 role="img"
@@ -204,14 +200,14 @@ function ResetPasswordContent() {
             </div>
           </div>
           <H1 className="mb-2" variant="page">
-            Mot de passe réinitialisé
+            Password reset
           </H1>
           <Muted className="mb-6">
-            Votre mot de passe a été réinitialisé avec succès. Vous pouvez
-            maintenant vous connecter avec votre nouveau mot de passe.
+            Your password has been successfully reset. You can now sign in with
+            your new password.
           </Muted>
           <Button className="w-full" onClick={() => router.push("/")}>
-            Se connecter
+            Sign in
           </Button>
         </div>
       </div>
@@ -222,15 +218,15 @@ function ResetPasswordContent() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md p-6">
         <H1 className="mb-2 text-center" variant="page">
-          Nouveau mot de passe
+          New password
         </H1>
         <Muted className="mb-6 text-center">
-          Choisissez un nouveau mot de passe pour votre compte.
+          Choose a new password for your account.
         </Muted>
 
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <Field className="relative">
-            <FieldLabel htmlFor="password">Nouveau mot de passe</FieldLabel>
+            <FieldLabel htmlFor="password">New password</FieldLabel>
             <Input
               disabled={isSubmitting}
               id="password"
@@ -244,9 +240,7 @@ function ResetPasswordContent() {
           </Field>
 
           <Field className="relative">
-            <FieldLabel htmlFor="confirmPassword">
-              Confirmer le mot de passe
-            </FieldLabel>
+            <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
             <Input
               disabled={isSubmitting}
               id="confirmPassword"
@@ -273,10 +267,10 @@ function ResetPasswordContent() {
             {isSubmitting ? (
               <>
                 <Spinner className="mr-2 h-4 w-4" />
-                Réinitialisation...
+                Resetting...
               </>
             ) : (
-              "Réinitialiser le mot de passe"
+              "Reset password"
             )}
           </Button>
 
@@ -285,7 +279,7 @@ function ResetPasswordContent() {
               className="font-medium text-olive-600 text-sm hover:underline"
               href="/"
             >
-              Retour à la connexion
+              Back to sign in
             </Link>
           </div>
         </form>

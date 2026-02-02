@@ -16,12 +16,12 @@ interface AuthSubmitButtonProps {
 
 function getButtonText(mode: AuthMode, isSubmitting: boolean): string {
   if (isSubmitting) {
-    return "Chargement...";
+    return "Loading...";
   }
   if (!mode) {
-    return "Continuer";
+    return "Continue";
   }
-  return mode === "signIn" ? "Se connecter" : "Créer mon compte";
+  return mode === "signIn" ? "Sign in" : "Create my account";
 }
 
 export function AuthSubmitButton({
@@ -68,24 +68,24 @@ export function AuthHelperText({ mode, onResetMode }: AuthHelperTextProps) {
           <p className="text-muted-foreground text-sm">
             {mode === "signIn" ? (
               <>
-                Vous n'avez pas de compte ?{" "}
+                Don't have an account?{" "}
                 <button
                   className="font-medium text-olive-600 hover:underline"
                   onClick={onResetMode}
                   type="button"
                 >
-                  Utiliser un autre email
+                  Use a different email
                 </button>
               </>
             ) : (
               <>
-                Vous avez déjà un compte ?{" "}
+                Already have an account?{" "}
                 <button
                   className="font-medium text-olive-600 hover:underline"
                   onClick={onResetMode}
                   type="button"
                 >
-                  Utiliser un autre email
+                  Use a different email
                 </button>
               </>
             )}

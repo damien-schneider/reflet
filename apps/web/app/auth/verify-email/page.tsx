@@ -24,8 +24,8 @@ function VerifyEmailContent() {
       setStatus("error");
       setErrorMessage(
         error === "invalid_token"
-          ? "Le lien de vérification est invalide ou a expiré."
-          : "Une erreur est survenue lors de la vérification."
+          ? "The verification link is invalid or has expired."
+          : "An error occurred during verification."
       );
       return;
     }
@@ -40,8 +40,7 @@ function VerifyEmailContent() {
           if (result.error) {
             setStatus("error");
             setErrorMessage(
-              result.error.message ??
-                "Une erreur est survenue lors de la vérification."
+              result.error.message ?? "An error occurred during verification."
             );
           } else {
             setStatus("success");
@@ -49,7 +48,7 @@ function VerifyEmailContent() {
         })
         .catch(() => {
           setStatus("error");
-          setErrorMessage("Une erreur est survenue lors de la vérification.");
+          setErrorMessage("An error occurred during verification.");
         });
     } else {
       // No token and no error - check if user is already verified
@@ -69,9 +68,9 @@ function VerifyEmailContent() {
           email: session.data.user.email,
           callbackURL: "/auth/verify-email",
         });
-        setErrorMessage("Un nouvel email de vérification a été envoyé.");
+        setErrorMessage("A new verification email has been sent.");
       } catch {
-        setErrorMessage("Impossible d'envoyer l'email. Veuillez réessayer.");
+        setErrorMessage("Unable to send email. Please try again.");
       }
     }
   };
@@ -81,7 +80,7 @@ function VerifyEmailContent() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Spinner className="h-8 w-8" />
-          <Muted>Vérification en cours...</Muted>
+          <Muted>Verifying...</Muted>
         </div>
       </div>
     );
@@ -94,7 +93,7 @@ function VerifyEmailContent() {
           <div className="mb-6 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
               <svg
-                aria-label="Icône erreur"
+                aria-label="Error icon"
                 className="h-8 w-8 text-red-600"
                 fill="none"
                 role="img"
@@ -111,18 +110,17 @@ function VerifyEmailContent() {
             </div>
           </div>
           <H1 className="mb-2" variant="page">
-            Vérification échouée
+            Verification failed
           </H1>
           <Muted className="mb-6">
-            {errorMessage ??
-              "Le lien de vérification est invalide ou a expiré."}
+            {errorMessage ?? "The verification link is invalid or has expired."}
           </Muted>
           <div className="flex flex-col gap-3">
             <Button onClick={handleResendEmail} variant="default">
-              Renvoyer l'email de vérification
+              Resend verification email
             </Button>
             <Button onClick={() => router.push("/")} variant="outline">
-              Retour à l'accueil
+              Back to home
             </Button>
           </div>
         </div>
@@ -136,7 +134,7 @@ function VerifyEmailContent() {
         <div className="mb-6 flex justify-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
             <svg
-              aria-label="Icône succès"
+              aria-label="Success icon"
               className="h-8 w-8 text-green-600"
               fill="none"
               role="img"
@@ -153,14 +151,14 @@ function VerifyEmailContent() {
           </div>
         </div>
         <H1 className="mb-2" variant="page">
-          Email vérifié
+          Email verified
         </H1>
         <Muted className="mb-6">
-          Votre adresse email a été vérifiée avec succès. Vous pouvez maintenant
-          accéder à toutes les fonctionnalités de votre compte.
+          Your email address has been successfully verified. You can now access
+          all features of your account.
         </Muted>
         <Button className="w-full" onClick={handleContinue}>
-          Continuer vers le tableau de bord
+          Continue to dashboard
         </Button>
       </div>
     </div>

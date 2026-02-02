@@ -24,10 +24,8 @@ export function AuthDialog() {
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
       <DialogContent className="max-w-md p-0">
         <DialogHeader className="sr-only">
-          <DialogTitle>Authentification</DialogTitle>
-          <DialogDescription>
-            Connectez-vous ou créez un compte
-          </DialogDescription>
+          <DialogTitle>Authentication</DialogTitle>
+          <DialogDescription>Sign in or create an account</DialogDescription>
         </DialogHeader>
         {message && (
           <div className="px-6 pt-6 pb-0">

@@ -105,7 +105,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
     const passwordsMatch = watchedPassword === watchedConfirmPassword;
 
     if (hasConfirmPassword && !passwordsMatch) {
-      setPasswordMismatchError("Les mots de passe ne correspondent pas");
+      setPasswordMismatchError("Passwords do not match");
     } else {
       setPasswordMismatchError(null);
     }
@@ -139,7 +139,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
     setApiError(null);
 
     if (!mode) {
-      setApiError("Veuillez vérifier votre email");
+      setApiError("Please verify your email");
       return;
     }
 
@@ -153,21 +153,19 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
           onSuccess: () => {
             onSuccess?.();
             router.push("/dashboard");
-            toast.success("Connexion réussie");
+            toast.success("Successfully signed in");
           },
           onError: (error) => {
             setApiError(
               formatAuthError(
-                error.error.message ||
-                  error.error.statusText ||
-                  "Erreur de connexion"
+                error.error.message || error.error.statusText || "Sign in error"
               )
             );
           },
         }
       );
     } else {
-      const placeholderName = data.email.split("@")[0] || "Utilisateur";
+      const placeholderName = data.email.split("@")[0] || "User";
       const skipEmailVerification =
         process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION === "true";
 
@@ -183,22 +181,20 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
             onSuccess?.();
             if (skipEmailVerification) {
               router.push("/dashboard");
-              toast.success("Inscription réussie.");
+              toast.success("Successfully signed up.");
             } else {
               router.push(
                 `/auth/check-email?email=${encodeURIComponent(data.email)}`
               );
               toast.success(
-                "Inscription réussie. Vérifiez votre email pour activer votre compte."
+                "Successfully signed up. Check your email to activate your account."
               );
             }
           },
           onError: (error) => {
             setApiError(
               formatAuthError(
-                error.error.message ||
-                  error.error.statusText ||
-                  "Erreur d'inscription"
+                error.error.message || error.error.statusText || "Sign up error"
               )
             );
           },

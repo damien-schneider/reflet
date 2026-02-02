@@ -27,6 +27,7 @@ function isFormValid(
   }
 
   if (mode === "signUp") {
+    // New accounts require 8+ character passwords
     return (
       watchedPassword.length >= 8 &&
       watchedConfirmPassword.length >= 8 &&
@@ -34,7 +35,9 @@ function isFormValid(
     );
   }
 
-  return watchedPassword.length >= 8;
+  // For sign-in, allow any password length (existing users may have shorter passwords)
+  // Server will validate the actual credentials
+  return watchedPassword.length > 0;
 }
 
 function getConfirmPasswordErrors(
@@ -122,8 +125,10 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
 
         <AuthPasswordField
           errors={errors}
+          isSignUp={mode === "signUp"}
           isSubmitting={isSubmitting}
           onPasswordChange={handlePasswordChange}
+          passwordLength={watchedPassword.length}
           register={register}
           setValue={setValue}
           trigger={trigger}

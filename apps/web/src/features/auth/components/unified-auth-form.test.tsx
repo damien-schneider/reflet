@@ -123,11 +123,9 @@ describe("UnifiedAuthForm", () => {
   it("should not show validation errors on initial load", () => {
     render(<UnifiedAuthForm />);
 
+    expect(screen.queryByText("Invalid email address")).not.toBeInTheDocument();
     expect(
-      screen.queryByText("Adresse email invalide")
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText("Le mot de passe doit contenir au moins 8 caractères")
+      screen.queryByText("Password must be at least 8 characters")
     ).not.toBeInTheDocument();
   });
 

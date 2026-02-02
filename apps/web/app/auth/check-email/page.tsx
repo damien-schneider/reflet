@@ -16,7 +16,7 @@ function CheckEmailContent() {
 
   const handleResendEmail = async () => {
     if (!email) {
-      toast.error("Adresse email non trouvée.");
+      toast.error("Email address not found.");
       return;
     }
 
@@ -26,9 +26,9 @@ function CheckEmailContent() {
         email,
         callbackURL: "/auth/verify-email",
       });
-      toast.success("Email de vérification renvoyé.");
+      toast.success("Verification email resent.");
     } catch {
-      toast.error("Impossible d'envoyer l'email. Veuillez réessayer.");
+      toast.error("Unable to send email. Please try again.");
     } finally {
       setIsResending(false);
     }
@@ -40,7 +40,7 @@ function CheckEmailContent() {
         <div className="mb-6 flex justify-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-olive-100">
             <svg
-              aria-label="Icône email"
+              aria-label="Email icon"
               className="h-8 w-8 text-olive-600"
               fill="none"
               role="img"
@@ -57,15 +57,13 @@ function CheckEmailContent() {
           </div>
         </div>
         <H1 className="mb-2" variant="page">
-          Vérifiez votre boîte mail
+          Check your inbox
         </H1>
-        <Muted className="mb-2">
-          Nous avons envoyé un email de vérification à :
-        </Muted>
+        <Muted className="mb-2">We have sent a verification email to:</Muted>
         {email && <p className="mb-6 font-medium text-foreground">{email}</p>}
         <Muted className="mb-6">
-          Cliquez sur le lien dans l'email pour activer votre compte. Si vous ne
-          trouvez pas l'email, vérifiez votre dossier spam.
+          Click the link in the email to activate your account. If you can't
+          find the email, check your spam folder.
         </Muted>
         <div className="flex flex-col gap-3">
           <Button
@@ -76,14 +74,14 @@ function CheckEmailContent() {
             {isResending ? (
               <>
                 <Spinner className="mr-2 h-4 w-4" />
-                Envoi en cours...
+                Sending...
               </>
             ) : (
-              "Renvoyer l'email de vérification"
+              "Resend verification email"
             )}
           </Button>
           <Button onClick={() => router.push("/")} variant="outline">
-            Retour à l'accueil
+            Back to home
           </Button>
         </div>
       </div>

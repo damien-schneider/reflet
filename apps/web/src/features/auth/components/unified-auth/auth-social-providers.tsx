@@ -19,7 +19,7 @@ export function AuthSocialProviders() {
         variant="outline"
       >
         <GithubLogo className="mr-2 size-5" weight="fill" />
-        Continuer avec GitHub
+        Continue with GitHub
       </Button>
     </div>
   );
@@ -33,7 +33,7 @@ export function AuthDivider() {
       </div>
       <div className="relative flex justify-center text-xs uppercase">
         <span className="bg-background px-2 text-muted-foreground">
-          Ou continuer avec email
+          Or continue with email
         </span>
       </div>
     </div>

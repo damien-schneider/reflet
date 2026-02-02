@@ -28,7 +28,7 @@ export function AuthForgotPasswordLink({ mode }: AuthForgotPasswordLinkProps) {
             className="font-medium text-olive-600 text-sm hover:underline"
             href="/auth/forgot-password"
           >
-            Mot de passe oublié ?
+            Forgot password?
           </a>
         </motion.div>
       )}
@@ -70,9 +70,7 @@ export function AuthConfirmPassword({
           variants={animationVariants}
         >
           <Field className="relative">
-            <FieldLabel htmlFor="confirmPassword">
-              Confirmer le mot de passe
-            </FieldLabel>
+            <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
             <Input
               data-testid="confirm-password-input"
               id="confirmPassword"
