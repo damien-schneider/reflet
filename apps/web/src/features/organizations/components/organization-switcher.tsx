@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useSidebar } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar/context";
 
 interface OrganizationSwitcherProps {
   currentOrgSlug?: string;

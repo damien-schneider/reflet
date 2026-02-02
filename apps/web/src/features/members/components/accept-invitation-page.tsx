@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { H1, Muted } from "@/components/ui/typography";
-import UnifiedAuthForm from "@/features/auth/components/unified-auth-form";
+import UnifiedAuthForm from "@/features/auth/components/unified-auth/unified-auth-form";
 import { authClient } from "@/lib/auth-client";
 
 interface AcceptInvitationContentProps {

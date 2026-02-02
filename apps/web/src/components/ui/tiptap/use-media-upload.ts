@@ -7,7 +7,7 @@ import { useCallback, useState } from "react";
 
 type MediaType = "image" | "video";
 
-interface MediaUploadResult {
+export interface MediaUploadResult {
   url: string;
   type: MediaType;
 }

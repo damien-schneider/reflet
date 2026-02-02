@@ -30,7 +30,7 @@ vi.mock("@/lib/auth-client", () => ({
 }));
 
 // Mock the UnifiedAuthForm component
-vi.mock("@/features/auth/components/unified-auth-form", () => ({
+vi.mock("@/features/auth/components/unified-auth/unified-auth-form", () => ({
   default: ({ onSuccess }: { onSuccess?: () => void }) => (
     <div data-testid={AUTH_FORM_TESTID}>
       <button data-testid="mock-auth-submit" onClick={onSuccess} type="button">

@@ -33,15 +33,19 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarHeader,
+  SidebarSeparator,
+} from "@/components/ui/sidebar/base";
+import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
+} from "@/components/ui/sidebar/group";
+import {
   SidebarList,
   SidebarListButton,
   SidebarListItem,
-  SidebarSeparator,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/sidebar/menu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { authClient } from "@/lib/auth-client";

@@ -19,12 +19,12 @@ import {
   DropdownListSeparator,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSidebar } from "@/components/ui/sidebar/context";
 import {
   SidebarList,
   SidebarListButton,
   SidebarListItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/sidebar/menu";
 
 export function NavUser({
   user,

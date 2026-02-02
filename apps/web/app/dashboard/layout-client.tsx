@@ -3,7 +3,7 @@
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import UnifiedAuthForm from "@/features/auth/components/unified-auth-form";
+import UnifiedAuthForm from "@/features/auth/components/unified-auth/unified-auth-form";
 import { DashboardContent } from "./dashboard-content";
 
 export default function DashboardLayoutClient({

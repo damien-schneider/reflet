@@ -10,7 +10,7 @@ import {
   DropdownListSeparator,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSidebar } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar/context";
 import { authClient } from "@/lib/auth-client";
 
 export default function UserList() {

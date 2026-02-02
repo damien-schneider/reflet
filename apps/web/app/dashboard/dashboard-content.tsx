@@ -16,11 +16,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar/base";
+import { SidebarProvider } from "@/components/ui/sidebar/context";
 import { H2, Muted } from "@/components/ui/typography";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";

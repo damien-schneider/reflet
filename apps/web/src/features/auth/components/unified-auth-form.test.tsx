@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import UnifiedAuthForm from "./unified-auth-form";
+import UnifiedAuthForm from "./unified-auth/unified-auth-form";
 
 // Mock dependencies
 vi.mock("@/lib/auth-client", () => ({

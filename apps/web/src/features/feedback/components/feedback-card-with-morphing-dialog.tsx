@@ -11,7 +11,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { FeedbackDetailDialog } from "./feedback-detail";
+import { FeedbackDetailDialog } from "./feedback-detail/feedback-detail-dialog";
 
 interface FeedbackCardWithMorphingDialogProps {
   feedback: {

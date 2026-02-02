@@ -1,29 +1,11 @@
 "use client";
 
-import { useDebouncedCallback } from "@tanstack/react-pacer";
-import CharacterCount from "@tiptap/extension-character-count";
-import Link from "@tiptap/extension-link";
-import Placeholder from "@tiptap/extension-placeholder";
-import Typography from "@tiptap/extension-typography";
-import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { useCallback, useEffect, useRef } from "react";
-import { Markdown } from "tiptap-markdown";
+import { EditorContent } from "@tiptap/react";
+import { useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { useTiptapMarkdownEditor } from "./hooks/use-editor";
 import { ImageBubbleMenu } from "./image-bubble-menu";
-import { ImageExtension } from "./image-extension";
-import { createSlashCommandExtension } from "./slash-command";
-import { useMediaUpload } from "./use-media-upload";
 import "./styles.css";
-
-// Helper to get markdown from tiptap-markdown storage
-// The tiptap-markdown extension adds a `markdown` storage that TypeScript doesn't know about
-const getMarkdown = (storage: unknown): string => {
-  const storageWithMarkdown = storage as {
-    markdown?: { getMarkdown?: () => string };
-  };
-  return storageWithMarkdown?.markdown?.getMarkdown?.() ?? "";
-};
 
 interface TiptapMarkdownEditorProps {
   value: string;
@@ -35,13 +17,6 @@ interface TiptapMarkdownEditorProps {
   autoFocus?: boolean;
   editable?: boolean;
   minimal?: boolean;
-  /**
-   * Debounce delay in milliseconds for the onChange callback.
-   * Use this when saving to a real-time database like Convex to prevent
-   * race conditions where the external value updates overwrite user input.
-   * Recommended: 300-500ms for real-time saves, 0 for local state.
-   * @default 0 (no debounce)
-   */
   debounceMs?: number;
 }
 
@@ -57,330 +32,28 @@ export function TiptapMarkdownEditor({
   minimal = false,
   debounceMs = 0,
 }: TiptapMarkdownEditorProps) {
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
-
-  // Track whether this is the initial mount - only sync external value once on mount
-  // After that, local content is authoritative and external updates are ignored.
-  // This prevents real-time database updates from overwriting user edits.
-  const hasInitializedRef = useRef(false);
-  const initialValueRef = useRef(value);
-
-  // Debounced onChange for real-time database scenarios
-  const debouncedOnChange = useDebouncedCallback(onChange, {
-    wait: debounceMs,
+  const {
+    editor,
+    imageInputRef,
+    videoInputRef,
+    handleImageChange,
+    handleVideoChange,
+    isUploading,
+    uploadProgress,
+    characterCount,
+    isNearLimit,
+    isAtLimit,
+  } = useTiptapMarkdownEditor({
+    value,
+    onChange,
+    placeholder,
+    disabled,
+    maxLength,
+    autoFocus,
+    editable,
+    minimal,
+    debounceMs,
   });
-  const effectiveOnChange = debounceMs > 0 ? debouncedOnChange : onChange;
-
-  const { uploadMedia, isUploading, uploadProgress } = useMediaUpload({
-    onSuccess: (result) => {
-      const ed = editorRef.current;
-      if (!ed) return;
-
-      if (result.type === "image") {
-        ed.chain().focus().setImage({ src: result.url }).run();
-      } else if (result.type === "video") {
-        // Insert video as HTML since tiptap doesn't have native video support
-        ed.chain()
-          .focus()
-          .insertContent(
-            `<p><video src="${result.url}" controls class="tiptap-video"></video></p>`
-          )
-          .run();
-      }
-    },
-    onError: (error) => {
-      console.error("Media upload failed:", error);
-    },
-  });
-
-  const handleImageUpload = useCallback(() => {
-    imageInputRef.current?.click();
-  }, []);
-
-  const handleVideoUpload = useCallback(() => {
-    videoInputRef.current?.click();
-  }, []);
-
-  const handleImageChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (file) {
-        await uploadMedia(file);
-      }
-      event.target.value = "";
-    },
-    [uploadMedia]
-  );
-
-  const handleVideoChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (file) {
-        await uploadMedia(file);
-      }
-      event.target.value = "";
-    },
-    [uploadMedia]
-  );
-
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3],
-        },
-      }),
-      Placeholder.configure({
-        placeholder,
-        emptyEditorClass: "is-editor-empty",
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: "tiptap-link",
-        },
-      }),
-      ImageExtension.configure({
-        HTMLAttributes: {
-          class: "tiptap-image",
-        },
-      }).extend({
-        addNodeView() {
-          return ({ node, editor, getPos }) => {
-            const container = document.createElement("div");
-            container.classList.add("tiptap-image-wrapper");
-            container.setAttribute("data-align", node.attrs.align || "center");
-
-            const img = document.createElement("img");
-            img.src = node.attrs.src;
-            img.alt = node.attrs.alt || "";
-            img.title = node.attrs.title || "";
-            img.classList.add("tiptap-image");
-            img.setAttribute("data-align", node.attrs.align || "center");
-            if (node.attrs.width) {
-              img.style.width = `${node.attrs.width}px`;
-            }
-
-            // Create resize handles container
-            const handlesContainer = document.createElement("div");
-            handlesContainer.classList.add("tiptap-resize-handles");
-
-            // Handle positions and their resize directions
-            const handlePositions = [
-              { position: "top-left", xDir: -1, yDir: -1 },
-              { position: "top-right", xDir: 1, yDir: -1 },
-              { position: "bottom-left", xDir: -1, yDir: 1 },
-              { position: "bottom-right", xDir: 1, yDir: 1 },
-            ];
-
-            let activeHandle: { xDir: number; yDir: number } | null = null;
-            let startX = 0;
-            let startY = 0;
-            let startWidth = 0;
-            let startHeight = 0;
-            let aspectRatio = 1;
-
-            const onMouseDown = (
-              e: MouseEvent,
-              handle: { xDir: number; yDir: number }
-            ) => {
-              e.preventDefault();
-              e.stopPropagation();
-              activeHandle = handle;
-              startX = e.clientX;
-              startY = e.clientY;
-              startWidth = img.offsetWidth;
-              startHeight = img.offsetHeight;
-              aspectRatio = startWidth / startHeight;
-              container.setAttribute("data-resizing", "true");
-              document.addEventListener("mousemove", onMouseMove);
-              document.addEventListener("mouseup", onMouseUp);
-            };
-
-            const onMouseMove = (e: MouseEvent) => {
-              if (!activeHandle) return;
-
-              const diffX = (e.clientX - startX) * activeHandle.xDir;
-              const diffY = (e.clientY - startY) * activeHandle.yDir;
-
-              // Use the larger diff to maintain aspect ratio
-              const maxDiff =
-                Math.abs(diffX) > Math.abs(diffY) ? diffX : diffY * aspectRatio;
-              const newWidth = Math.max(50, startWidth + maxDiff);
-
-              img.style.width = `${newWidth}px`;
-            };
-
-            const onMouseUp = () => {
-              if (!activeHandle) return;
-              activeHandle = null;
-              container.removeAttribute("data-resizing");
-              document.removeEventListener("mousemove", onMouseMove);
-              document.removeEventListener("mouseup", onMouseUp);
-
-              // Save the new width
-              const pos = getPos();
-              if (typeof pos === "number") {
-                editor
-                  .chain()
-                  .focus()
-                  .updateAttributes("image", { width: img.offsetWidth })
-                  .run();
-              }
-            };
-
-            // Create handles
-            for (const { position, xDir, yDir } of handlePositions) {
-              const handle = document.createElement("div");
-              handle.classList.add("tiptap-resize-handle", position);
-              handle.addEventListener("mousedown", (e) =>
-                onMouseDown(e, { xDir, yDir })
-              );
-              handlesContainer.appendChild(handle);
-            }
-
-            container.appendChild(img);
-            container.appendChild(handlesContainer);
-
-            return {
-              dom: container,
-              update: (updatedNode) => {
-                if (updatedNode.type.name !== "image") return false;
-                img.src = updatedNode.attrs.src;
-                img.alt = updatedNode.attrs.alt || "";
-                img.setAttribute(
-                  "data-align",
-                  updatedNode.attrs.align || "center"
-                );
-                container.setAttribute(
-                  "data-align",
-                  updatedNode.attrs.align || "center"
-                );
-                if (updatedNode.attrs.width) {
-                  img.style.width = `${updatedNode.attrs.width}px`;
-                }
-                return true;
-              },
-              destroy: () => {
-                document.removeEventListener("mousemove", onMouseMove);
-                document.removeEventListener("mouseup", onMouseUp);
-              },
-            };
-          };
-        },
-      }),
-      Typography,
-      ...(maxLength
-        ? [
-            CharacterCount.configure({
-              limit: maxLength,
-            }),
-          ]
-        : []),
-      Markdown.configure({
-        html: true, // Enable HTML for video support
-        transformPastedText: true,
-        transformCopiedText: true,
-      }),
-      createSlashCommandExtension({
-        onImageUpload: handleImageUpload,
-        onVideoUpload: handleVideoUpload,
-      }),
-    ],
-    content: value,
-    editable: editable && !disabled,
-    autofocus: autoFocus,
-    editorProps: {
-      attributes: {
-        class: cn(
-          "outline-none w-full",
-          minimal
-            ? "tiptap-minimal-editor min-h-24"
-            : "tiptap-markdown-editor min-h-32"
-        ),
-      },
-      handlePaste: (_view, event) => {
-        const items = event.clipboardData?.items;
-        if (!items) return false;
-
-        for (const item of items) {
-          if (
-            item.type.startsWith("image/") ||
-            item.type.startsWith("video/")
-          ) {
-            const file = item.getAsFile();
-            if (file) {
-              event.preventDefault();
-              uploadMedia(file);
-              return true;
-            }
-          }
-        }
-
-        return false;
-      },
-      handleDrop: (_view, event, _slice, moved) => {
-        if (moved) return false;
-
-        const files = event.dataTransfer?.files;
-        if (!files?.length) return false;
-
-        const file = files[0];
-        if (
-          file?.type.startsWith("image/") ||
-          file?.type.startsWith("video/")
-        ) {
-          event.preventDefault();
-          uploadMedia(file);
-          return true;
-        }
-
-        return false;
-      },
-    },
-    onUpdate: ({ editor: ed }) => {
-      const markdown = getMarkdown(ed.storage);
-      effectiveOnChange(markdown);
-    },
-  });
-
-  // Store editor ref for use in callbacks
-  useEffect(() => {
-    (editorRef as React.MutableRefObject<typeof editor>).current = editor;
-  }, [editor]);
-
-  // Initialize editor content only on first mount
-  // After initialization, external value changes are IGNORED to prevent
-  // real-time database updates from overwriting local edits.
-  // This is intentional - local content is always authoritative.
-  useEffect(() => {
-    if (!editor) return;
-
-    // Only set content on initial mount, not on subsequent value changes
-    if (!hasInitializedRef.current) {
-      hasInitializedRef.current = true;
-      // Only set if the initial value differs from the current content
-      const currentMarkdown = getMarkdown(editor.storage);
-      if (initialValueRef.current !== currentMarkdown) {
-        editor.commands.setContent(initialValueRef.current);
-      }
-    }
-    // Intentionally NOT including `value` in dependencies
-    // External value updates should NOT overwrite local edits
-  }, [editor]);
-
-  // Update editable state
-  useEffect(() => {
-    if (!editor) return;
-    editor.setEditable(editable && !disabled);
-  }, [editor, editable, disabled]);
-
-  const characterCount = editor?.storage.characterCount?.characters() ?? 0;
-  const isNearLimit = maxLength && characterCount > maxLength * 0.9;
-  const isAtLimit = maxLength && characterCount >= maxLength;
 
   const handleContainerClick = useCallback(() => {
     if (editable && !disabled) {

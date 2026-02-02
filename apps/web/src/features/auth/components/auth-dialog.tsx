@@ -13,7 +13,7 @@ import {
   authDialogOpenAtom,
   closeAuthDialogAtom,
 } from "@/store/auth";
-import UnifiedAuthForm from "./unified-auth-form";
+import UnifiedAuthForm from "./unified-auth/unified-auth-form";
 
 export function AuthDialog() {
   const [isOpen, setIsOpen] = useAtom(authDialogOpenAtom);

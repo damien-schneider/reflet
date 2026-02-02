@@ -16,15 +16,14 @@ import {
   DropdownListSeparator,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSidebar } from "@/components/ui/sidebar/context";
+import { SidebarGroup, SidebarGroupLabel } from "@/components/ui/sidebar/group";
 import {
-  SidebarGroup,
-  SidebarGroupLabel,
   SidebarList,
   SidebarListAction,
   SidebarListButton,
   SidebarListItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/sidebar/menu";
 
 export function NavDocuments({
   items,
