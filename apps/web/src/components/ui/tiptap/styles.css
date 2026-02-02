@@ -358,13 +358,16 @@
   margin-top: 0.5em;
 }
 
-/* Title editor styling - minimal, borderless */
+/* Title editor styling - minimal, borderless
+ * Inherits font-size from parent for flexibility
+ * Default size is 1.5rem (set on parent wrapper)
+ */
 .tiptap-title-editor {
-  font-size: 1.5rem;
-  font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: -0.025em;
-  color: var(--foreground);
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
 }
 
 .tiptap-title-editor p {

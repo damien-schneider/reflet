@@ -11,6 +11,7 @@ const URL_PARAM_KEYS = {
   sort: "sort",
   status: "status",
   tags: "tags",
+  tag: "tag", // Single tag filter (from tag filter bar)
   search: "q",
 } as const;
 
@@ -36,6 +37,7 @@ export interface BoardFiltersState {
   sortBy: SortOption;
   selectedStatusIds: string[];
   selectedTagIds: string[];
+  selectedTagId: string | null; // Single tag filter (from tag filter bar)
   searchQuery: string;
 }
 
@@ -44,6 +46,7 @@ export interface BoardFiltersActions {
   setSortBy: (sort: SortOption) => void;
   setSelectedStatusIds: (ids: string[]) => void;
   setSelectedTagIds: (ids: string[]) => void;
+  setSelectedTagId: (id: string | null) => void; // Single tag filter (from tag filter bar)
   setSearchQuery: (query: string) => void;
   handleStatusChange: (statusId: string, checked: boolean) => void;
   handleTagChange: (tagId: string, checked: boolean) => void;
@@ -80,6 +83,7 @@ export function useBoardFilters(
         searchParams.get(URL_PARAM_KEYS.status)
       ),
       selectedTagIds: parseArrayParam(searchParams.get(URL_PARAM_KEYS.tags)),
+      selectedTagId: searchParams.get(URL_PARAM_KEYS.tag) ?? null,
       searchQuery: searchParams.get(URL_PARAM_KEYS.search) ?? "",
     };
   }, [searchParams, defaultView]);
@@ -134,6 +138,13 @@ export function useBoardFilters(
     [updateParams]
   );
 
+  const setSelectedTagId = useCallback(
+    (id: string | null) => {
+      updateParams({ tag: id });
+    },
+    [updateParams]
+  );
+
   const setSearchQuery = useCallback(
     (query: string) => {
       updateParams({ search: query || null });
@@ -176,6 +187,7 @@ export function useBoardFilters(
     !!state.searchQuery ||
     state.selectedStatusIds.length > 0 ||
     state.selectedTagIds.length > 0 ||
+    state.selectedTagId !== null ||
     state.sortBy !== DEFAULT_SORT;
 
   return {
@@ -184,6 +196,7 @@ export function useBoardFilters(
     setSortBy,
     setSelectedStatusIds,
     setSelectedTagIds,
+    setSelectedTagId,
     setSearchQuery,
     handleStatusChange,
     handleTagChange,

@@ -20,15 +20,15 @@
   "dependencies": {
     "@react-email/components": "^1.0.6",
     "@react-email/render": "^2.0.4",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@react-email/preview-server": "^5.2.5",
     "@reflet-v2/config": "workspace:*",
-    "@types/react": "^19.1.0",
+    "@types/react": "^19.2.10",
     "react-email": "^5.2.5",
     "typescript": "catalog:",
-    "vitest": "^2.1.8"
+    "vitest": "^4.0.18"
   }
 }

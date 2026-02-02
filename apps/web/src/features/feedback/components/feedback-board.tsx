@@ -24,7 +24,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H1, Lead } from "@/components/ui/typography";
-import { TagFilterDropdown } from "@/features/tags/components/tag-filter-dropdown";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 
 import { useBoardFilters } from "../hooks/use-board-filters";
@@ -37,6 +36,7 @@ import { FeedbackDetailDialog } from "./feedback-detail-dialog";
 import { FiltersBar, type SortOption } from "./filters-bar";
 import { RoadmapView } from "./roadmap-view";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
+import { TagFilterBar } from "./tag-filter-bar";
 
 function getVoteValue(
   voteType: "upvote" | "downvote" | null | undefined
@@ -174,11 +174,11 @@ function FeedbackBoardContent({
     setSortBy,
     selectedStatusIds,
     selectedTagIds,
+    selectedTagId,
+    setSelectedTagId,
     searchQuery,
     setSearchQuery,
     handleStatusChange: handleStatusFilterChange,
-    handleTagChange: handleTagFilterChange,
-    setSelectedTagIds,
     clearFilters,
     hasActiveFilters,
   } = useBoardFilters(defaultView);
@@ -263,15 +263,17 @@ function FeedbackBoardContent({
       applyOptimisticVote(item, optimisticVotes.get(item._id))
     );
 
-    // Client-side tag filtering (avoids loading state when changing tag filters)
-    if (selectedTagIds.length > 0) {
+    // Tag filtering: single tag (from bar) takes precedence over multi-tag (from dropdown)
+    const tagIdsToFilter = selectedTagId ? [selectedTagId] : selectedTagIds;
+
+    if (tagIdsToFilter.length > 0) {
       result = result.filter((item) =>
-        item.tags?.some((tag) => tag && selectedTagIds.includes(tag._id))
+        item.tags?.some((tag) => tag && tagIdsToFilter.includes(tag._id))
       );
     }
 
     return sortFeedback(result, sortBy);
-  }, [feedback, sortBy, optimisticVotes, selectedTagIds]);
+  }, [feedback, sortBy, optimisticVotes, selectedTagId, selectedTagIds]);
 
   // Roadmap columns are organization statuses (not tags)
   // Tags are for categorization (Feature Request, Bug Report, etc.)
@@ -412,113 +414,61 @@ function FeedbackBoardContent({
         </div>
       </div>
 
-      {/* Filters bar (only in feed view) */}
-      {view === "feed" && (
-        <FiltersBar
-          hasActiveFilters={hasActiveFilters}
+      {/* Tag filter bar */}
+      {(tags && tags.length > 0) || isAdmin ? (
+        <TagFilterBar
           isAdmin={isAdmin}
-          onClearFilters={clearFilters}
-          onSortChange={setSortBy}
-          onStatusChange={handleStatusFilterChange}
-          onTagChange={handleTagFilterChange}
+          onTagSelect={setSelectedTagId}
           organizationId={organizationId}
-          selectedStatusIds={selectedStatusIds}
-          selectedTagIds={selectedTagIds}
-          sortBy={sortBy}
-          statuses={orgStatuses ?? []}
+          selectedTagId={selectedTagId}
           tags={tags ?? []}
         />
+      ) : null}
+
+      {/* Filters bar (only in feed view) */}
+      {view === "feed" && (
+        <FiltersBar onSortChange={setSortBy} sortBy={sortBy} />
       )}
 
-      {/* Active filter chips (only in feed view) */}
-      {view === "feed" &&
-        (selectedStatusIds.length > 0 || selectedTagIds.length > 0) && (
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground text-sm">Filters:</span>
-            {/* Status chips */}
-            {selectedStatusIds.map((statusId) => {
-              const status = (orgStatuses ?? []).find(
-                (s) => s._id === statusId
-              );
-              if (!status) {
-                return null;
-              }
-              return (
-                <Badge
-                  className="cursor-pointer gap-1 pr-1"
-                  key={statusId}
-                  onClick={() => handleStatusFilterChange(statusId, false)}
-                  style={{
-                    backgroundColor: `${status.color}15`,
-                    color: status.color,
-                    borderColor: `${status.color}30`,
-                  }}
-                  variant="outline"
-                >
-                  {status.name}
-                  <X className="h-3 w-3" />
-                </Badge>
-              );
-            })}
-            {/* Tag chips */}
-            {selectedTagIds.map((tagId) => {
-              const tag = (tags ?? []).find((t) => t._id === tagId);
-              if (!tag) {
-                return null;
-              }
-              return (
-                <Badge
-                  className="cursor-pointer gap-1 pr-1"
-                  key={tagId}
-                  onClick={() => handleTagFilterChange(tagId, false)}
-                  style={{
-                    backgroundColor: `${tag.color}15`,
-                    color: tag.color,
-                    borderColor: `${tag.color}30`,
-                  }}
-                  variant="outline"
-                >
-                  {tag.name}
-                  <X className="h-3 w-3" />
-                </Badge>
-              );
-            })}
-            <Button
-              className="text-xs"
-              onClick={clearFilters}
-              size="sm"
-              variant="ghost"
-            >
-              Clear all
-            </Button>
-          </div>
-        )}
-
-      {/* Tag filter bar for roadmap view */}
-      {view === "roadmap" && (
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <TagFilterDropdown
-            isAdmin={isAdmin}
-            onTagChange={handleTagFilterChange}
-            organizationId={organizationId}
-            selectedTagIds={selectedTagIds}
-            tags={tags ?? []}
-          />
-          {selectedTagIds.length > 0 && (
-            <Button
-              onClick={() => setSelectedTagIds([])}
-              size="sm"
-              variant="ghost"
-            >
-              <X className="mr-1 h-3 w-3" />
-              Clear
-            </Button>
-          )}
+      {/* Active status filter chips (only in feed view) */}
+      {view === "feed" && selectedStatusIds.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-muted-foreground text-sm">Status:</span>
+          {selectedStatusIds.map((statusId) => {
+            const status = (orgStatuses ?? []).find((s) => s._id === statusId);
+            if (!status) {
+              return null;
+            }
+            return (
+              <Badge
+                className="cursor-pointer gap-1 pr-1"
+                key={statusId}
+                onClick={() => handleStatusFilterChange(statusId, false)}
+                style={{
+                  backgroundColor: `${status.color}15`,
+                  color: status.color,
+                  borderColor: `${status.color}30`,
+                }}
+                variant="outline"
+              >
+                {status.name}
+                <X className="h-3 w-3" />
+              </Badge>
+            );
+          })}
+          <Button
+            className="text-xs"
+            onClick={clearFilters}
+            size="sm"
+            variant="ghost"
+          >
+            Clear
+          </Button>
         </div>
       )}
 
       {/* Content */}
-      <div className="mx-auto max-w-3xl">
+      <div className={view === "feed" ? "mx-auto max-w-3xl" : ""}>
         {view === "roadmap" ? (
           <RoadmapView
             feedback={filteredFeedback}

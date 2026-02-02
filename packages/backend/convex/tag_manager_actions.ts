@@ -22,6 +22,7 @@ export const create = mutation({
     organizationId: v.id("organizations"),
     name: v.string(),
     color: v.string(),
+    icon: v.optional(v.string()),
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -60,6 +61,7 @@ export const create = mutation({
       name: args.name,
       slug,
       color: args.color,
+      icon: args.icon,
       description: args.description,
       createdAt: now,
       updatedAt: now,
@@ -77,6 +79,7 @@ export const update = mutation({
     id: v.id("tags"),
     name: v.optional(v.string()),
     color: v.optional(v.string()),
+    icon: v.optional(v.string()),
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

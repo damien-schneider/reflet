@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Trash, X } from "@phosphor-icons/react";
+import { Check, Palette, Trash, X } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -8,14 +8,19 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
-import { COLOR_PALETTE } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import {
+  getTagTextColor,
+  isValidTagColor,
+  migrateHexToNamedColor,
+  type TagColor,
+} from "@/lib/tag-colors";
 
 interface RoadmapColumnHeaderProps {
   statusId: Id<"organizationStatuses">;
@@ -39,6 +44,12 @@ export function RoadmapColumnHeader({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const updateStatus = useMutation(api.organization_statuses.update);
+
+  // Get the display color - migrate hex colors to named colors for display
+  const displayColor: TagColor = isValidTagColor(color)
+    ? color
+    : migrateHexToNamedColor(color);
+  const textColor = getTagTextColor(displayColor);
 
   // Sync local state when prop changes
   useEffect(() => {
@@ -68,7 +79,7 @@ export function RoadmapColumnHeader({
   }, [name]);
 
   const handleColorChange = useCallback(
-    async (newColor: string) => {
+    async (newColor: TagColor) => {
       await updateStatus({ id: statusId, color: newColor });
       setIsColorPickerOpen(false);
     },
@@ -77,45 +88,38 @@ export function RoadmapColumnHeader({
 
   return (
     <div className="mb-3 flex items-center gap-2">
-      {/* Color dot / picker */}
-      {isAdmin ? (
+      {/* Color picker button (only for admins) */}
+      {isAdmin && (
         <Popover onOpenChange={setIsColorPickerOpen} open={isColorPickerOpen}>
           <PopoverTrigger
-            className="h-3 w-3 shrink-0 rounded-full transition-transform hover:scale-110"
-            style={{ backgroundColor: color }}
-            title="Change color"
+            render={(props) => (
+              <button
+                {...props}
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded transition-opacity hover:opacity-70"
+                style={{ color: textColor }}
+                title="Change color"
+                type="button"
+              >
+                <Palette className="h-4 w-4" weight="fill" />
+              </button>
+            )}
           />
-          <PopoverContent align="start" className="w-auto p-2">
-            <div className="grid grid-cols-3 gap-1">
-              {COLOR_PALETTE.map((paletteColor) => (
-                <button
-                  className={cn(
-                    "h-6 w-6 rounded-full transition-transform hover:scale-110",
-                    paletteColor === color &&
-                      "ring-2 ring-primary ring-offset-2"
-                  )}
-                  key={paletteColor}
-                  onClick={() => handleColorChange(paletteColor)}
-                  style={{ backgroundColor: paletteColor }}
-                  type="button"
-                />
-              ))}
-            </div>
+          <PopoverContent align="start" className="w-[200px] p-2">
+            <NotionColorPicker
+              onChange={handleColorChange}
+              value={displayColor}
+            />
           </PopoverContent>
         </Popover>
-      ) : (
-        <div
-          className="h-3 w-3 shrink-0 rounded-full"
-          style={{ backgroundColor: color }}
-        />
       )}
 
-      {/* Title - inline editable for admins */}
+      {/* Title - inline editable with color */}
       <TiptapTitleEditor
-        className="flex-1 font-medium text-sm"
+        className="flex-1 font-semibold text-xs tracking-wide"
         disabled={!isAdmin}
         onChange={handleNameChange}
         placeholder="Status name"
+        style={{ color: textColor }}
         value={editedName}
       />
 

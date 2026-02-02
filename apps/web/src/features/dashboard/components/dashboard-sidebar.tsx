@@ -11,7 +11,6 @@ import {
   Globe,
   SignOut,
   Spinner,
-  Tag,
   User,
   Users,
 } from "@phosphor-icons/react";
@@ -96,12 +95,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
 
   const adminNavItems = orgSlug
     ? [
-        {
-          href: "/dashboard/$orgSlug/tags",
-          icon: Tag,
-          label: "Tags",
-          badge: undefined,
-        },
         {
           href: "/dashboard/$orgSlug/changelog",
           icon: FileText,

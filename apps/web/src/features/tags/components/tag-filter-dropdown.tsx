@@ -38,6 +38,7 @@ interface Tag {
   _id: string;
   name: string;
   color: string;
+  icon?: string;
 }
 
 interface TagFilterDropdownProps {
@@ -298,7 +299,10 @@ export const TagFilterDropdown = memo(function TagFilterDropdown({
                       className="h-2.5 w-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: tag.color }}
                     />
-                    <span className="flex-1 truncate">{tag.name}</span>
+                    <span className="flex-1 truncate">
+                      {tag.icon && <span className="mr-1">{tag.icon}</span>}
+                      {tag.name}
+                    </span>
                     {isAdmin && <TagEditButton tag={tag} />}
                   </CommandItem>
                 );

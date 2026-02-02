@@ -124,6 +124,28 @@
   --olive-700: oklch(0.394 0.023 107.4);
   --olive-800: oklch(0.286 0.016 107.4);
   --olive-950: oklch(0.153 0.006 107.1);
+
+  /* Tag colors - Notion style (light mode) */
+  --tag-default-bg: 245 245 245;
+  --tag-default-text: 115 115 115;
+  --tag-gray-bg: 241 241 241;
+  --tag-gray-text: 120 119 116;
+  --tag-brown-bg: 244 238 238;
+  --tag-brown-text: 151 109 87;
+  --tag-orange-bg: 251 236 221;
+  --tag-orange-text: 204 119 47;
+  --tag-yellow-bg: 251 243 219;
+  --tag-yellow-text: 194 146 67;
+  --tag-green-bg: 237 243 236;
+  --tag-green-text: 84 129 100;
+  --tag-blue-bg: 231 243 248;
+  --tag-blue-text: 72 124 165;
+  --tag-purple-bg: 244 240 247;
+  --tag-purple-text: 144 101 176;
+  --tag-pink-bg: 250 241 245;
+  --tag-pink-text: 179 84 136;
+  --tag-red-bg: 255 226 221;
+  --tag-red-text: 196 85 77;
 }
 
 .dark {
@@ -162,6 +184,28 @@
   --sidebar-accent-foreground: oklch(0.97 0.005 85);
   --sidebar-border: oklch(0.97 0.005 85 / 10%);
   --sidebar-ring: oklch(0.5 0.01 85);
+
+  /* Tag colors - Notion style (dark mode) */
+  --tag-default-bg: 55 55 55;
+  --tag-default-text: 175 175 175;
+  --tag-gray-bg: 60 60 60;
+  --tag-gray-text: 175 175 170;
+  --tag-brown-bg: 74 54 44;
+  --tag-brown-text: 201 159 137;
+  --tag-orange-bg: 84 54 34;
+  --tag-orange-text: 254 169 97;
+  --tag-yellow-bg: 84 74 44;
+  --tag-yellow-text: 244 196 117;
+  --tag-green-bg: 44 64 54;
+  --tag-green-text: 134 179 150;
+  --tag-blue-bg: 44 64 84;
+  --tag-blue-text: 122 174 215;
+  --tag-purple-bg: 64 54 74;
+  --tag-purple-text: 194 151 226;
+  --tag-pink-bg: 74 44 64;
+  --tag-pink-text: 229 134 186;
+  --tag-red-bg: 84 44 44;
+  --tag-red-text: 246 135 127;
 }
 
 @layer base {

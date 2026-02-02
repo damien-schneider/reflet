@@ -213,7 +213,8 @@ export default defineSchema({
     organizationId: v.id("organizations"),
     name: v.string(),
     slug: v.string(), // URL-friendly identifier
-    color: v.string(), // Hex color
+    color: v.string(), // Color name (e.g., "blue", "red") or hex for legacy
+    icon: v.optional(v.string()), // Emoji character (e.g., "🔥", "📦")
     description: v.optional(v.string()),
     // Deprecated fields - kept for backward compatibility
     isDoneStatus: v.optional(v.boolean()),

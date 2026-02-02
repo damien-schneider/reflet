@@ -422,6 +422,30 @@ vi.mock("@/components/ui/tiptap/markdown-editor", () => ({
   ),
 }));
 
+vi.mock("@/components/ui/tiptap/title-editor", () => ({
+  TiptapTitleEditor: ({
+    value,
+    onSave,
+    placeholder,
+    editable,
+  }: {
+    value?: string;
+    onSave?: (val: string) => void;
+    placeholder?: string;
+    editable?: boolean;
+  }) => (
+    <div data-editable={editable} data-testid="tiptap-title-editor">
+      <span>{value}</span>
+      <input
+        defaultValue={value}
+        onBlur={(e) => onSave?.(e.target.value)}
+        placeholder={placeholder}
+        style={{ display: "none" }}
+      />
+    </div>
+  ),
+}));
+
 // Import the component after mocks
 import { FeedbackDetailDialog } from "./feedback-detail-dialog";
 
@@ -594,7 +618,7 @@ describe("FeedbackDetailDialog", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByPlaceholderText("Write a comment... (Cmd+Enter to send)")
+        screen.getByPlaceholderText("Write a comment...")
       ).toBeInTheDocument();
     });
   });

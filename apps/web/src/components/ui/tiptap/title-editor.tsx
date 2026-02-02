@@ -3,6 +3,7 @@
 import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import "./styles.css";
@@ -13,6 +14,7 @@ interface TiptapTitleEditorProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  style?: React.CSSProperties;
   autoFocus?: boolean;
   onEnter?: () => void;
   onSubmit?: () => void;
@@ -24,6 +26,7 @@ export function TiptapTitleEditor({
   placeholder = "Untitled",
   disabled = false,
   className,
+  style,
   autoFocus = false,
   onEnter,
   onSubmit,
@@ -116,12 +119,13 @@ export function TiptapTitleEditor({
   return (
     <div
       className={cn(
-        "w-full",
+        "w-full font-medium text-2xl leading-tight tracking-tight",
         disabled && "cursor-not-allowed opacity-50",
         className
       )}
       data-slot="tiptap-title-editor"
       onClick={handleContainerClick}
+      style={style}
     >
       <EditorContent editor={editor} />
     </div>

@@ -212,7 +212,10 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <ScrollArea className="h-full bg-background" classNameViewport="pt-14">
+        <ScrollArea
+          className="-mr-2 -mb-2 h-full bg-background"
+          classNameViewport="pt-14"
+        >
           {!orgSlug && hasOrganizations ? (
             <main className="flex h-full items-center justify-center p-6">
               <div className="max-w-md text-center">

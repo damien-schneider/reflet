@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRefletClient } from "./react-context";
 import type {
   AddCommentParams,
@@ -89,10 +89,21 @@ export function useFeedbackList(
   options: UseFeedbackListOptions = {}
 ): UseQueryResult<{ items: FeedbackItem[]; total: number; hasMore: boolean }> {
   const client = useRefletClient();
-  const { enabled = true, ...params } = options;
+  const {
+    enabled = true,
+    statusId,
+    status,
+    search,
+    sortBy,
+    limit,
+    offset,
+  } = options;
 
-  // Create stable reference using individual params
-  const { statusId, status, search, sortBy, limit, offset } = params;
+  // Create stable params reference
+  const params = useMemo(
+    () => ({ statusId, status, search, sortBy, limit, offset }),
+    [statusId, status, search, sortBy, limit, offset]
+  );
 
   const [data, setData] = useState<{
     items: FeedbackItem[];
@@ -106,14 +117,7 @@ export function useFeedbackList(
     setIsLoading(true);
     setError(null);
     try {
-      const result = await client.list({
-        statusId,
-        status,
-        search,
-        sortBy,
-        limit,
-        offset,
-      });
+      const result = await client.list(params);
       setData(result);
     } catch (err) {
       setError(
@@ -122,7 +126,7 @@ export function useFeedbackList(
     } finally {
       setIsLoading(false);
     }
-  }, [client, statusId, status, search, sortBy, limit, offset]);
+  }, [client, params]);
 
   useEffect(() => {
     if (enabled) {
