@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { cn } from "@/lib/utils";
@@ -104,6 +105,7 @@ export function SubmitFeedbackDialog({
               {!isMember && (
                 <div className="flex items-center gap-2">
                   <Input
+                    aria-label="Email for updates"
                     className="h-8 max-w-[240px] text-sm"
                     onChange={(e) =>
                       onFeedbackChange({ ...feedback, email: e.target.value })
@@ -130,7 +132,8 @@ export function SubmitFeedbackDialog({
                 onClick={onSubmit}
                 size="sm"
               >
-                {isSubmitting ? "Submitting..." : "Submit"}
+                {isSubmitting && <Spinner className="mr-2" />}
+                {isSubmitting ? "Submitting" : "Submit"}
               </Button>
             </div>
           </div>
