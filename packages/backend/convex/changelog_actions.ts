@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { getAuthUser } from "./utils";
@@ -195,6 +196,15 @@ export const publish = mutation({
       publishedAt: Date.now(),
       updatedAt: Date.now(),
     });
+
+    // Schedule email notifications to subscribers
+    await ctx.scheduler.runAfter(
+      0,
+      internal.changelog_notifications.sendReleaseNotifications,
+      {
+        releaseId: args.id,
+      }
+    );
 
     return args.id;
   },

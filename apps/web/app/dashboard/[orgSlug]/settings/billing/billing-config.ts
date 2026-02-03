@@ -29,17 +29,17 @@ export const PLANS: Plan[] = [
     highlighted: true,
     prices: [
       {
-        amount: 29,
+        amount: 15,
         currency: "€",
         interval: "monthly",
         priceKey: "proMonthly",
       },
       {
-        amount: 290,
+        amount: 150,
         currency: "€",
         interval: "yearly",
         priceKey: "proYearly",
-        savings: 58,
+        savings: 30,
       },
     ],
     features: [

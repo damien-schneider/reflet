@@ -30,9 +30,9 @@ const PRICING_TIERS = [
   },
   {
     name: "Growth",
-    monthlyPrice: 29,
-    yearlyPrice: 290,
-    yearlySavings: 58,
+    monthlyPrice: 15,
+    yearlyPrice: 150,
+    yearlySavings: 30,
     description: "For growing teams needing privacy and integrations.",
     features: [
       "Everything in Starter",
@@ -49,9 +49,9 @@ const PRICING_TIERS = [
   },
   {
     name: "Business",
-    monthlyPrice: 99,
-    yearlyPrice: 990,
-    yearlySavings: 198,
+    monthlyPrice: 49,
+    yearlyPrice: 480,
+    yearlySavings: 108,
     description: "Advanced control for larger organizations.",
     features: [
       "Everything in Growth",
@@ -100,11 +100,12 @@ function BillingToggle({
           Yearly
         </button>
       </div>
-      {interval === "yearly" && (
-        <Badge className="ml-2" variant="green">
-          Save 2 months
-        </Badge>
-      )}
+      <Badge
+        className={`ml-2 transition-opacity ${interval === "yearly" ? "opacity-100" : "opacity-0"}`}
+        variant="green"
+      >
+        Save 2 months
+      </Badge>
     </div>
   );
 }
@@ -145,13 +146,15 @@ interface PricingCardProps {
 }
 
 function PricingCard({ tier, billingInterval }: PricingCardProps) {
-  const price =
-    billingInterval === "monthly" ? tier.monthlyPrice : tier.yearlyPrice;
-  const period = billingInterval === "monthly" ? "/mo" : "/yr";
+  const isYearly = billingInterval === "yearly";
+  const MONTHS_PER_YEAR = 12;
+  const yearlyPrice = tier.yearlyPrice;
+  const monthlyEquivalent = isYearly
+    ? Math.round((yearlyPrice / MONTHS_PER_YEAR) * 100) / 100
+    : tier.monthlyPrice;
+  const displayPrice = monthlyEquivalent;
   const showSavings =
-    billingInterval === "yearly" &&
-    "yearlySavings" in tier &&
-    tier.yearlySavings > 0;
+    isYearly && "yearlySavings" in tier && tier.yearlySavings > 0;
 
   if (tier.highlighted) {
     return (
@@ -164,33 +167,44 @@ function PricingCard({ tier, billingInterval }: PricingCardProps) {
         <H3 className="mb-2" variant="card">
           {tier.name}
         </H3>
-        <div className="mb-2 flex items-baseline gap-1">
+        <div className="relative mb-1 flex items-baseline gap-1 pb-6">
           <span className="font-semibold text-2xl">
-            {price === 0 ? (
+            {displayPrice === 0 ? (
               "Free"
             ) : (
               <>
-                $
+                €
                 <NumberFlow
                   transformTiming={{ duration: 400, easing: "ease-out" }}
-                  value={price}
+                  value={displayPrice}
                 />
               </>
             )}
           </span>
-          {price > 0 && (
-            <span className="text-primary-foreground/70">{period}</span>
+          {displayPrice > 0 && (
+            <span className="text-primary-foreground/70">/mo</span>
+          )}
+          {"yearlySavings" in tier && tier.yearlySavings > 0 && (
+            <Badge
+              className={`ml-2 transition-opacity ${showSavings ? "opacity-100" : "opacity-0"}`}
+              variant="green"
+            >
+              Save €
+              <NumberFlow
+                transformTiming={{ duration: 400, easing: "ease-out" }}
+                value={tier.yearlySavings}
+              />
+              /yr
+            </Badge>
+          )}
+          {displayPrice > 0 && (
+            <p
+              className={`absolute bottom-0 left-0 text-primary-foreground/70 text-sm transition-opacity ${isYearly ? "opacity-100" : "opacity-0"}`}
+            >
+              Billed yearly (€{yearlyPrice})
+            </p>
           )}
         </div>
-        {showSavings && (
-          <Badge className="mb-4 w-fit" variant="green">
-            Save $
-            <NumberFlow
-              transformTiming={{ duration: 400, easing: "ease-out" }}
-              value={tier.yearlySavings}
-            />
-          </Badge>
-        )}
         <p className="mb-8 min-h-[40px] text-primary-foreground/70 text-sm">
           {tier.description}
         </p>
@@ -228,31 +242,42 @@ function PricingCard({ tier, billingInterval }: PricingCardProps) {
       <H3 className="mb-2" variant="card">
         {tier.name}
       </H3>
-      <div className="mb-2 flex items-baseline gap-1">
+      <div className="relative mb-1 flex items-baseline gap-1 pb-6">
         <span className="font-semibold text-2xl text-foreground">
-          {price === 0 ? (
+          {displayPrice === 0 ? (
             "Free"
           ) : (
             <>
-              $
+              €
               <NumberFlow
                 transformTiming={{ duration: 400, easing: "ease-out" }}
-                value={price}
+                value={displayPrice}
               />
             </>
           )}
         </span>
-        {price > 0 && <span className="text-muted-foreground">{period}</span>}
+        {displayPrice > 0 && <span className="text-muted-foreground">/mo</span>}
+        {"yearlySavings" in tier && tier.yearlySavings > 0 && (
+          <Badge
+            className={`ml-2 transition-opacity ${showSavings ? "opacity-100" : "opacity-0"}`}
+            variant="green"
+          >
+            Save €
+            <NumberFlow
+              transformTiming={{ duration: 400, easing: "ease-out" }}
+              value={tier.yearlySavings}
+            />
+            /yr
+          </Badge>
+        )}
+        {displayPrice > 0 && (
+          <p
+            className={`absolute bottom-0 left-0 text-muted-foreground text-sm transition-opacity ${isYearly ? "opacity-100" : "opacity-0"}`}
+          >
+            Billed yearly (€{yearlyPrice})
+          </p>
+        )}
       </div>
-      {showSavings && (
-        <Badge className="mb-4 w-fit" variant="green">
-          Save $
-          <NumberFlow
-            transformTiming={{ duration: 400, easing: "ease-out" }}
-            value={tier.yearlySavings}
-          />
-        </Badge>
-      )}
       <p className="mb-8 min-h-[40px] text-muted-foreground text-sm">
         {tier.description}
       </p>

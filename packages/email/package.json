@@ -15,6 +15,7 @@
     "./templates/verification-email": "./src/templates/verification-email.tsx",
     "./templates/welcome-email": "./src/templates/welcome-email.tsx",
     "./templates/invitation-email": "./src/templates/invitation-email.tsx",
+    "./templates/changelog-notification-email": "./src/templates/changelog-notification-email.tsx",
     "./templates/styles": "./src/templates/styles.ts"
   },
   "dependencies": {

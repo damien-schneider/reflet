@@ -192,3 +192,39 @@ export const sendTemplatedEmail = internalAction({
     });
   },
 });
+
+// Send changelog notification email using react-email template
+export const sendChangelogNotificationEmail = internalAction({
+  args: {
+    to: v.string(),
+    organizationName: v.string(),
+    releaseTitle: v.string(),
+    releaseVersion: v.optional(v.string()),
+    releaseDescription: v.string(),
+    releaseUrl: v.string(),
+    unsubscribeUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { ChangelogNotificationEmail } = await import(
+      "@reflet-v2/email/templates/changelog-notification-email"
+    );
+
+    const html = await render(
+      ChangelogNotificationEmail({
+        organizationName: args.organizationName,
+        releaseTitle: args.releaseTitle,
+        releaseVersion: args.releaseVersion,
+        releaseDescription: args.releaseDescription,
+        releaseUrl: args.releaseUrl,
+        unsubscribeUrl: args.unsubscribeUrl,
+      })
+    );
+
+    await ctx.runMutation(internal.email.sendEmail, {
+      from: defaultFrom,
+      to: args.to,
+      subject: `${args.organizationName} - ${args.releaseTitle}`,
+      html,
+    });
+  },
+});

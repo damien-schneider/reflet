@@ -1,7 +1,16 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
 import { authComponent } from "./auth";
 import { getAuthUser } from "./utils";
+
+function generateUnsubscribeToken(): string {
+  return crypto.randomUUID();
+}
 
 /**
  * Check if user is subscribed to changelog
@@ -54,6 +63,7 @@ export const subscribe = mutation({
       userId: user._id,
       organizationId: args.organizationId,
       subscribedAt: Date.now(),
+      unsubscribeToken: generateUnsubscribeToken(),
     });
 
     return subscriberId;
@@ -115,8 +125,73 @@ export const subscribeByEmail = mutation({
       email: args.email.toLowerCase(),
       organizationId: args.organizationId,
       subscribedAt: Date.now(),
+      unsubscribeToken: generateUnsubscribeToken(),
     });
 
     return subscriberId;
+  },
+});
+
+/**
+ * Unsubscribe from changelog by token (for one-click unsubscribe links)
+ */
+export const unsubscribeByToken = mutation({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const subscription = await ctx.db
+      .query("changelogSubscribers")
+      .withIndex("by_unsubscribe_token", (q) =>
+        q.eq("unsubscribeToken", args.token)
+      )
+      .unique();
+
+    if (!subscription) {
+      throw new Error("Invalid or expired unsubscribe token");
+    }
+
+    await ctx.db.delete(subscription._id);
+
+    return true;
+  },
+});
+
+/**
+ * Get all subscribers for an organization (internal use only)
+ */
+export const getSubscribersByOrganization = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("changelogSubscribers")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+  },
+});
+
+/**
+ * Migrate existing subscribers to add unsubscribe tokens (internal use only)
+ */
+export const migrateSubscriberTokens = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const subscribers = await ctx.db.query("changelogSubscribers").collect();
+    let migrated = 0;
+
+    for (const subscriber of subscribers) {
+      if (!subscriber.unsubscribeToken) {
+        await ctx.db.patch(subscriber._id, {
+          unsubscribeToken: generateUnsubscribeToken(),
+        });
+        migrated++;
+      }
+    }
+
+    return { migrated, total: subscribers.length };
   },
 });

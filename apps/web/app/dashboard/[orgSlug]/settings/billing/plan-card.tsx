@@ -59,33 +59,58 @@ function PriceDisplay({
 }) {
   if (price.amount === 0) {
     return (
-      <div className="flex items-baseline gap-1">
-        <span className="font-bold text-3xl">Free</span>
+      <div className="relative flex flex-col gap-1 pb-6">
+        <div className="flex items-baseline gap-1">
+          <span className="font-bold text-3xl">Free</span>
+        </div>
+        <span className="absolute bottom-0 left-0 text-muted-foreground text-sm opacity-0">
+          Placeholder
+        </span>
       </div>
     );
   }
 
+  const isYearly = price.interval === "yearly";
+  const MONTHS_PER_YEAR = 12;
+  const displayAmount = isYearly
+    ? Math.round((price.amount / MONTHS_PER_YEAR) * 100) / 100
+    : price.amount;
+
+  const showYearlyDetails = isYearly && price.savings && isSelected;
+
   return (
-    <div className="flex items-baseline gap-1">
-      <span className="font-bold text-3xl">
-        {price.currency}
-        <NumberFlow
-          transformTiming={{ duration: 400, easing: "ease-out" }}
-          value={price.amount}
-        />
-      </span>
-      <span className="text-muted-foreground">
-        /{price.interval === "monthly" ? "mo" : "yr"}
-      </span>
-      {price.savings && isSelected && (
-        <Badge className="ml-2" variant="green">
-          Save {price.currency}
+    <div className="relative flex flex-col gap-1 pb-6">
+      <div className="flex items-baseline gap-1">
+        <span className="font-bold text-3xl">
+          {price.currency}
           <NumberFlow
             transformTiming={{ duration: 400, easing: "ease-out" }}
-            value={price.savings}
+            value={displayAmount}
           />
-        </Badge>
-      )}
+        </span>
+        <span className="text-muted-foreground">/mo</span>
+        {price.savings && (
+          <Badge
+            className={`ml-2 transition-opacity ${showYearlyDetails ? "opacity-100" : "opacity-0"}`}
+            variant="green"
+          >
+            Save {price.currency}
+            <NumberFlow
+              transformTiming={{ duration: 400, easing: "ease-out" }}
+              value={price.savings}
+            />
+            /yr
+          </Badge>
+        )}
+      </div>
+      <span
+        className={`absolute bottom-0 left-0 text-muted-foreground text-sm transition-opacity ${
+          isYearly ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        Billed yearly ({price.currency}
+        {price.amount})
+      </span>
     </div>
   );
 }

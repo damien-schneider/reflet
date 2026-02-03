@@ -5,6 +5,7 @@ import type { Id } from "./_generated/dataModel";
 import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { decodeUserToken } from "./feedback_api_auth";
+import { generateRssFeed } from "./rss";
 
 const http = httpRouter();
 
@@ -856,6 +857,59 @@ http.route({
   path: "/api/v1/feedback/changelog",
   method: "OPTIONS",
   handler: httpAction(async () => corsPreflightResponse()),
+});
+
+// ============================================
+// RSS FEED
+// ============================================
+
+// GET /rss/:orgSlug - Get RSS feed for organization changelog
+http.route({
+  path: "/rss",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    // Extract slug from path (e.g., /rss/my-org -> my-org)
+    const pathParts = url.pathname.split("/").filter(Boolean);
+    const orgSlug = pathParts[1];
+
+    if (!orgSlug) {
+      return new Response("Organization slug required", { status: 400 });
+    }
+
+    // Get organization by slug
+    const org = await ctx.runQuery(internal.rss.getOrganizationBySlug, {
+      slug: orgSlug,
+    });
+
+    if (!org) {
+      return new Response("Organization not found", { status: 404 });
+    }
+
+    // Check if organization is public
+    if (!org.isPublic) {
+      return new Response("RSS feed not available for private organizations", {
+        status: 404,
+      });
+    }
+
+    // Get published releases
+    const releases = await ctx.runQuery(internal.rss.getPublishedReleases, {
+      organizationId: org._id,
+      limit: 50,
+    });
+
+    const siteUrl = process.env.SITE_URL ?? "";
+    const rssXml = generateRssFeed(org, releases, siteUrl);
+
+    return new Response(rssXml, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/rss+xml; charset=utf-8",
+        "Cache-Control": "public, max-age=3600",
+      },
+    });
+  }),
 });
 
 export default http;

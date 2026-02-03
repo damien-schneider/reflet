@@ -418,11 +418,13 @@ export default defineSchema({
     email: v.optional(v.string()), // Email for anonymous subscribers
     organizationId: v.id("organizations"),
     subscribedAt: v.number(),
+    unsubscribeToken: v.string(), // Unique token for one-click unsubscribe
   })
     .index("by_user", ["userId"])
     .index("by_organization", ["organizationId"])
     .index("by_user_org", ["userId", "organizationId"])
-    .index("by_email_org", ["email", "organizationId"]),
+    .index("by_email_org", ["email", "organizationId"])
+    .index("by_unsubscribe_token", ["unsubscribeToken"]),
 
   // ============================================
   // NOTIFICATIONS
