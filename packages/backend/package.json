@@ -9,6 +9,7 @@
     "dev:setup": "convex dev --configure --until-success",
     "test": "vitest run",
     "verify:stripe": "tsx scripts/verify-stripe-setup.ts",
+    "verify:stripe:prod": "STRIPE_MODE=production tsx scripts/verify-stripe-setup.ts",
     "predeploy": "bun run verify:stripe",
     "deploy": "convex deploy"
   },

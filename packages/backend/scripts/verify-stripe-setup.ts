@@ -7,17 +7,22 @@
  * Run this before `bun run convex deploy` to ensure billing will work correctly.
  *
  * Usage:
- *   npx tsx scripts/verify-stripe-setup.ts
- *   bun run scripts/verify-stripe-setup.ts
+ *   bun run verify:stripe           # Test mode (uses .env.local with sk_test_...)
+ *   bun run verify:stripe:prod      # Production mode (uses .env.production with sk_live_...)
  *
- * Required environment variables (in Convex dashboard):
+ * Required environment variables (same names in both files):
  *   - STRIPE_SECRET_KEY
  *   - STRIPE_WEBHOOK_SECRET
  *   - STRIPE_PRICE_PRO_MONTHLY
  *   - STRIPE_PRICE_PRO_YEARLY
  */
 
+import { config } from "dotenv";
 import Stripe from "stripe";
+
+// Load appropriate env file based on mode
+const isProductionMode = process.env.STRIPE_MODE === "production";
+config({ path: isProductionMode ? ".env.production" : ".env.local" });
 
 const EXPECTED_PRICES = {
   proMonthly: {
@@ -179,45 +184,120 @@ async function verifyWebhook(
   }
 }
 
+interface EnvConfig {
+  isProduction: boolean;
+  modeLabel: string;
+  stripeSecretKey: string | undefined;
+  priceMonthly: string | undefined;
+  priceYearly: string | undefined;
+  webhookSecret: string | undefined;
+}
+
+function getEnvConfig(): EnvConfig {
+  const isProduction = process.env.STRIPE_MODE === "production";
+
+  return {
+    isProduction,
+    modeLabel: isProduction ? "PRODUCTION" : "TEST",
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+    priceMonthly: process.env.STRIPE_PRICE_PRO_MONTHLY,
+    priceYearly: process.env.STRIPE_PRICE_PRO_YEARLY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  };
+}
+
+function logResult(result: VerificationResult): void {
+  const icon = result.success ? "✅" : "❌";
+  console.log(`   ${icon} ${result.message}`);
+  if (result.details) {
+    console.log(`      ${result.details}`);
+  }
+}
+
+function printMissingKeyError(isProduction: boolean): void {
+  console.log("\n❌ STRIPE_SECRET_KEY is not set");
+  const envFile = isProduction ? ".env.production" : ".env.local";
+  const keyType = isProduction ? "sk_live_..." : "sk_test_...";
+  console.log(`   Add STRIPE_SECRET_KEY=${keyType} to ${envFile}\n`);
+}
+
+function warnKeyModeMismatch(
+  stripeSecretKey: string,
+  isProduction: boolean
+): void {
+  const isLiveKey = stripeSecretKey.startsWith("sk_live_");
+  const isTestKey = stripeSecretKey.startsWith("sk_test_");
+
+  if (isProduction && isTestKey) {
+    console.log(
+      "\n⚠️  WARNING: Running in PRODUCTION mode but using a TEST key (sk_test_...)"
+    );
+    console.log(
+      "   Update STRIPE_SECRET_KEY in .env.production with sk_live_...\n"
+    );
+  } else if (!isProduction && isLiveKey) {
+    console.log(
+      "\n⚠️  WARNING: Running in TEST mode but using a LIVE key (sk_live_...)"
+    );
+    console.log(
+      "   Use bun run verify:stripe:prod for production verification\n"
+    );
+  }
+}
+
+function printSummary(
+  results: VerificationResult[],
+  hasWebhookSecret: boolean
+): void {
+  console.log(`\n${"=".repeat(50)}`);
+  const failedCount = results.filter((r) => !r.success).length;
+  const warningCount = hasWebhookSecret ? 0 : 1;
+
+  if (failedCount === 0 && warningCount === 0) {
+    console.log("\n✅ All Stripe checks passed! Ready to deploy.\n");
+    process.exit(0);
+  }
+
+  if (failedCount === 0) {
+    console.log(
+      `\n⚠️  ${warningCount} warning(s). Review above and fix if needed.\n`
+    );
+    process.exit(0);
+  }
+
+  console.log(
+    `\n❌ ${failedCount} check(s) failed. Fix the issues above before deploying.\n`
+  );
+  process.exit(1);
+}
+
 async function main() {
-  console.log("\n🔍 Verifying Stripe Setup for Reflet\n");
+  const config = getEnvConfig();
+
+  console.log(
+    `\n🔍 Verifying Stripe Setup for Reflet (${config.modeLabel} MODE)\n`
+  );
   console.log("=".repeat(50));
 
-  // Get environment variables
-  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-  const priceMonthly = process.env.STRIPE_PRICE_PRO_MONTHLY;
-  const priceYearly = process.env.STRIPE_PRICE_PRO_YEARLY;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (config.isProduction) {
+    console.log("⚠️  Running in PRODUCTION mode - using live Stripe keys\n");
+  }
 
-  const results: VerificationResult[] = [];
-
-  // Check for required environment variables
-  if (!stripeSecretKey) {
-    console.log("\n❌ STRIPE_SECRET_KEY is not set");
-    console.log(
-      "   Run: npx convex env set STRIPE_SECRET_KEY 'sk_test_...' or set it locally"
-    );
-    console.log("\nTo run this script with local env vars:");
-    console.log(
-      "   STRIPE_SECRET_KEY=sk_test_... npx tsx scripts/verify-stripe-setup.ts\n"
-    );
+  if (!config.stripeSecretKey) {
+    printMissingKeyError(config.isProduction);
     process.exit(1);
   }
 
-  const stripe = new Stripe(stripeSecretKey);
+  warnKeyModeMismatch(config.stripeSecretKey, config.isProduction);
+
+  const stripe = new Stripe(config.stripeSecretKey);
+  const results: VerificationResult[] = [];
 
   // 1. Verify API key
   console.log("\n1. Verifying Stripe API Key...");
   const keyResult = await verifyStripeKey(stripe);
   results.push(keyResult);
-  console.log(
-    keyResult.success
-      ? `   ✅ ${keyResult.message}`
-      : `   ❌ ${keyResult.message}`
-  );
-  if (keyResult.details) {
-    console.log(`      ${keyResult.details}`);
-  }
+  logResult(keyResult);
 
   if (!keyResult.success) {
     console.log("\n❌ Cannot continue without valid API key\n");
@@ -228,54 +308,33 @@ async function main() {
   console.log("\n2. Verifying Pro Monthly Price...");
   const monthlyResult = await verifyPrice(
     stripe,
-    priceMonthly ?? "",
+    config.priceMonthly ?? "",
     EXPECTED_PRICES.proMonthly,
     "Pro Monthly"
   );
   results.push(monthlyResult);
-  console.log(
-    monthlyResult.success
-      ? `   ✅ ${monthlyResult.message}`
-      : `   ❌ ${monthlyResult.message}`
-  );
-  if (monthlyResult.details) {
-    console.log(`      ${monthlyResult.details}`);
-  }
+  logResult(monthlyResult);
 
   // 3. Verify Pro Yearly price
   console.log("\n3. Verifying Pro Yearly Price...");
   const yearlyResult = await verifyPrice(
     stripe,
-    priceYearly ?? "",
+    config.priceYearly ?? "",
     EXPECTED_PRICES.proYearly,
     "Pro Yearly"
   );
   results.push(yearlyResult);
-  console.log(
-    yearlyResult.success
-      ? `   ✅ ${yearlyResult.message}`
-      : `   ❌ ${yearlyResult.message}`
-  );
-  if (yearlyResult.details) {
-    console.log(`      ${yearlyResult.details}`);
-  }
+  logResult(yearlyResult);
 
   // 4. Verify Webhook
   console.log("\n4. Verifying Webhook Configuration...");
   const webhookResult = await verifyWebhook(stripe, "/stripe/webhook");
   results.push(webhookResult);
-  console.log(
-    webhookResult.success
-      ? `   ✅ ${webhookResult.message}`
-      : `   ❌ ${webhookResult.message}`
-  );
-  if (webhookResult.details) {
-    console.log(`      ${webhookResult.details}`);
-  }
+  logResult(webhookResult);
 
   // 5. Check webhook secret
   console.log("\n5. Checking Webhook Secret...");
-  if (webhookSecret) {
+  if (config.webhookSecret) {
     console.log("   ✅ STRIPE_WEBHOOK_SECRET is set");
   } else {
     console.log("   ⚠️  STRIPE_WEBHOOK_SECRET is not set");
@@ -284,25 +343,7 @@ async function main() {
     );
   }
 
-  // Summary
-  console.log(`\n${"=".repeat(50)}`);
-  const failedCount = results.filter((r) => !r.success).length;
-  const warningCount = webhookSecret ? 0 : 1;
-
-  if (failedCount === 0 && warningCount === 0) {
-    console.log("\n✅ All Stripe checks passed! Ready to deploy.\n");
-    process.exit(0);
-  } else if (failedCount === 0) {
-    console.log(
-      `\n⚠️  ${warningCount} warning(s). Review above and fix if needed.\n`
-    );
-    process.exit(0);
-  } else {
-    console.log(
-      `\n❌ ${failedCount} check(s) failed. Fix the issues above before deploying.\n`
-    );
-    process.exit(1);
-  }
+  printSummary(results, Boolean(config.webhookSecret));
 }
 
 main().catch((error) => {
