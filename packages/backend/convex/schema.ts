@@ -113,10 +113,13 @@ export default defineSchema({
         versionPrefix: v.optional(v.string()),
       })
     ),
-    // Subscription
+    // Subscription (org-based billing)
     subscriptionTier,
     subscriptionStatus,
-    subscriptionId: v.optional(v.string()),
+    stripeCustomerId: v.optional(v.string()), // Stripe customer for this org
+    stripeSubscriptionId: v.optional(v.string()), // Active Stripe subscription ID
+    // Custom domain (Pro feature)
+    customDomain: v.optional(v.string()),
     // Support settings
     supportEnabled: v.optional(v.boolean()),
     // Feedback settings (org-level defaults)
@@ -133,6 +136,7 @@ export default defineSchema({
     ),
   })
     .index("by_slug", ["slug"])
+    .index("by_stripe_customer", ["stripeCustomerId"])
     .searchIndex("search_name", { searchField: "name" }),
 
   // ============================================
@@ -168,19 +172,21 @@ export default defineSchema({
     .index("by_status", ["status"]),
 
   // ============================================
-  // SUBSCRIPTIONS (Polar)
+  // SUBSCRIPTIONS (Stripe)
   // ============================================
   subscriptions: defineTable({
     organizationId: v.id("organizations"),
-    polarCustomerId: v.string(),
-    polarProductId: v.string(),
-    polarProductName: v.optional(v.string()),
+    stripeCustomerId: v.string(),
+    stripeSubscriptionId: v.string(),
+    stripePriceId: v.optional(v.string()),
     status: v.union(
       v.literal("active"),
       v.literal("trialing"),
       v.literal("past_due"),
       v.literal("canceled"),
-      v.literal("unpaid")
+      v.literal("unpaid"),
+      v.literal("incomplete"),
+      v.literal("incomplete_expired")
     ),
     currentPeriodStart: v.optional(v.number()),
     currentPeriodEnd: v.optional(v.number()),
@@ -189,7 +195,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_organization", ["organizationId"])
-    .index("by_polar_customer", ["polarCustomerId"]),
+    .index("by_stripe_customer", ["stripeCustomerId"])
+    .index("by_stripe_subscription", ["stripeSubscriptionId"]),
 
   // ============================================
   // ORGANIZATION STATUSES

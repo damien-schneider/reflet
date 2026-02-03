@@ -7,14 +7,17 @@
   "scripts": {
     "dev": "convex dev",
     "dev:setup": "convex dev --configure --until-success",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify:stripe": "tsx scripts/verify-stripe-setup.ts",
+    "predeploy": "bun run verify:stripe",
+    "deploy": "convex deploy"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.52",
     "@openrouter/ai-sdk-provider": "^1.2.0",
     "@convex-dev/agent": "catalog:",
     "@convex-dev/better-auth": "catalog:",
-    "@convex-dev/polar": "^0.7.3",
+    "@convex-dev/stripe": "^0.1.0",
     "@convex-dev/rate-limiter": "^0.3.2",
     "@convex-dev/resend": "^0.2.3",
     "@convex-dev/sharded-counter": "^0.2.0",
@@ -32,6 +35,8 @@
     "@reflet-v2/config": "workspace:*",
     "@types/node": "^25.2.0",
     "convex-test": "^0.0.41",
+    "stripe": "^17.6.0",
+    "tsx": "^4.19.2",
     "typescript": "catalog:",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"

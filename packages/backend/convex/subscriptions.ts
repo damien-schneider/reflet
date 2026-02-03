@@ -3,21 +3,23 @@ import { components } from "./_generated/api";
 import { query } from "./_generated/server";
 import { authComponent } from "./auth";
 
-// Plan limits (re-export from organizations for convenience)
+// Plan limits for Free vs Pro tiers
 export const PLAN_LIMITS = {
   free: {
-    maxBoards: 1,
     maxMembers: 3,
-    maxFeedbackPerBoard: 100,
+    maxFeedback: 100,
     customBranding: false,
+    customDomain: false,
     apiAccess: false,
+    prioritySupport: false,
   },
   pro: {
-    maxBoards: 5,
-    maxMembers: 10,
-    maxFeedbackPerBoard: 1000,
+    maxMembers: Number.POSITIVE_INFINITY, // Unlimited
+    maxFeedback: 5000,
     customBranding: true,
+    customDomain: true,
     apiAccess: true,
+    prioritySupport: true,
   },
 } as const;
 
@@ -29,7 +31,7 @@ type PlanTier = keyof typeof PLAN_LIMITS;
 
 /**
  * Get subscription status for an organization
- * Uses Polar component to get subscription data
+ * Uses org-based subscription model (subscription belongs to org, not user)
  */
 export const getStatus = query({
   args: { organizationId: v.id("organizations") },
@@ -56,43 +58,17 @@ export const getStatus = query({
       return null;
     }
 
-    // Query Polar component directly for user subscriptions
-    const polarSubscriptions = await ctx.runQuery(
-      components.polar.lib.listUserSubscriptions,
-      { userId: user._id }
+    // Query Stripe component for org's subscription
+    const subscription = await ctx.runQuery(
+      components.stripe.public.getSubscriptionByOrgId,
+      { orgId: args.organizationId }
     );
 
-    // Find the first active subscription
-    const activeSubscription = polarSubscriptions.find(
-      (s) => s.status === "active" || s.status === "trialing"
-    );
-
-    // Get product info to determine tier
-    let productKey: string | undefined;
-    if (activeSubscription) {
-      const products = await ctx.runQuery(
-        components.polar.lib.listProducts,
-        {}
-      );
-      const product = products.find(
-        (p) => p.id === activeSubscription.productId
-      );
-      // Check if it's a Pro product by matching product ID
-      const proMonthlyId = process.env.POLAR_PRODUCT_PRO_MONTHLY;
-      const proYearlyId = process.env.POLAR_PRODUCT_PRO_YEARLY;
-      if (product) {
-        if (product.id === proMonthlyId) {
-          productKey = "proMonthly";
-        } else if (product.id === proYearlyId) {
-          productKey = "proYearly";
-        }
-      }
-    }
-
-    // Determine tier based on subscription
-    const hasPro = productKey === "proMonthly" || productKey === "proYearly";
-    const tier: PlanTier = hasPro ? "pro" : "free";
-    const status = activeSubscription?.status ?? "none";
+    // Determine tier based on subscription status
+    const hasActiveSubscription =
+      subscription &&
+      (subscription.status === "active" || subscription.status === "trialing");
+    const tier: PlanTier = hasActiveSubscription ? "pro" : "free";
 
     // Get current usage
     const members = await ctx.db
@@ -102,7 +78,7 @@ export const getStatus = query({
       )
       .collect();
 
-    const feedback = await ctx.db
+    const feedbackCount = await ctx.db
       .query("feedback")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
@@ -110,29 +86,28 @@ export const getStatus = query({
       .collect();
 
     const limits = PLAN_LIMITS[tier];
+    const isOwner = membership.role === "owner";
 
     return {
       tier,
-      status,
-      subscription: activeSubscription
+      status: subscription?.status ?? "none",
+      subscription: subscription
         ? {
-            productKey,
-            status: activeSubscription.status,
-            currentPeriodStart: activeSubscription.currentPeriodStart
-              ? new Date(activeSubscription.currentPeriodStart).getTime()
-              : undefined,
-            currentPeriodEnd: activeSubscription.currentPeriodEnd
-              ? new Date(activeSubscription.currentPeriodEnd).getTime()
-              : undefined,
-            cancelAtPeriodEnd: activeSubscription.cancelAtPeriodEnd,
+            priceId: subscription.priceId,
+            status: subscription.status,
+            currentPeriodEnd: subscription.currentPeriodEnd,
+            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+            cancelAt: subscription.cancelAt,
           }
         : null,
       limits,
       usage: {
-        feedback: feedback.length,
         members: members.length,
+        feedback: feedbackCount.length,
       },
-      isOwner: membership.role === "owner",
+      isOwner,
+      // Only owner can manage billing
+      canManageBilling: isOwner,
     };
   },
 });
@@ -146,7 +121,9 @@ export const checkLimit = query({
     action: v.union(
       v.literal("invite_member"),
       v.literal("create_feedback"),
-      v.literal("custom_branding")
+      v.literal("custom_branding"),
+      v.literal("custom_domain"),
+      v.literal("api_access")
     ),
   },
   handler: async (ctx, args) => {
@@ -160,32 +137,17 @@ export const checkLimit = query({
       return { allowed: false, reason: "Organization not found" };
     }
 
-    // Query Polar component directly for user subscriptions
-    const polarSubscriptions = await ctx.runQuery(
-      components.polar.lib.listUserSubscriptions,
-      { userId: user._id }
+    // Query Stripe component for org's subscription
+    const subscription = await ctx.runQuery(
+      components.stripe.public.getSubscriptionByOrgId,
+      { orgId: args.organizationId }
     );
 
-    // Find the first active subscription
-    const activeSubscription = polarSubscriptions.find(
-      (s) => s.status === "active" || s.status === "trialing"
-    );
-
-    // Get product info to determine tier
-    let productKey: string | undefined;
-    if (activeSubscription) {
-      const proMonthlyId = process.env.POLAR_PRODUCT_PRO_MONTHLY;
-      const proYearlyId = process.env.POLAR_PRODUCT_PRO_YEARLY;
-      if (activeSubscription.productId === proMonthlyId) {
-        productKey = "proMonthly";
-      } else if (activeSubscription.productId === proYearlyId) {
-        productKey = "proYearly";
-      }
-    }
-
-    // Determine tier based on subscription
-    const hasPro = productKey === "proMonthly" || productKey === "proYearly";
-    const tier: PlanTier = hasPro ? "pro" : "free";
+    // Determine tier based on subscription status
+    const hasActiveSubscription =
+      subscription &&
+      (subscription.status === "active" || subscription.status === "trialing");
+    const tier: PlanTier = hasActiveSubscription ? "pro" : "free";
     const limits = PLAN_LIMITS[tier];
 
     switch (args.action) {
@@ -197,12 +159,12 @@ export const checkLimit = query({
           )
           .collect();
 
-        if (feedbackItems.length >= limits.maxFeedbackPerBoard * 10) {
+        if (feedbackItems.length >= limits.maxFeedback) {
           return {
             allowed: false,
-            reason: "Feedback limit reached. Upgrade to Pro for more feedback.",
+            reason: `Feedback limit reached (${limits.maxFeedback}). Upgrade to Pro for more.`,
             current: feedbackItems.length,
-            limit: limits.maxFeedbackPerBoard * 10,
+            limit: limits.maxFeedback,
           };
         }
         return { allowed: true };
@@ -229,7 +191,7 @@ export const checkLimit = query({
         if (total >= limits.maxMembers) {
           return {
             allowed: false,
-            reason: `Member limit reached (${limits.maxMembers}). Upgrade to Pro for more members.`,
+            reason: `Member limit reached (${limits.maxMembers}). Upgrade to Pro for unlimited members.`,
             current: total,
             limit: limits.maxMembers,
           };
@@ -242,6 +204,26 @@ export const checkLimit = query({
           return {
             allowed: false,
             reason: "Custom branding is a Pro feature. Upgrade to unlock.",
+          };
+        }
+        return { allowed: true };
+      }
+
+      case "custom_domain": {
+        if (!limits.customDomain) {
+          return {
+            allowed: false,
+            reason: "Custom domains are a Pro feature. Upgrade to unlock.",
+          };
+        }
+        return { allowed: true };
+      }
+
+      case "api_access": {
+        if (!limits.apiAccess) {
+          return {
+            allowed: false,
+            reason: "API access is a Pro feature. Upgrade to unlock.",
           };
         }
         return { allowed: true };

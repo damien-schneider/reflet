@@ -1,54 +1,40 @@
 "use client";
 
-import { ChartBar, CreditCard, Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { useQuery } from "convex/react";
-import { use } from "react";
+import { useAction, useQuery } from "convex/react";
+import { use, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Progress,
-  ProgressLabel,
-  ProgressValue,
-} from "@/components/ui/progress";
-import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
+import { H1, H2, Muted, Text } from "@/components/ui/typography";
 
-const FREE_PLAN_LIMITS = {
-  teamMembers: 3,
-} as const;
+import { DEFAULT_LIMITS, PLANS } from "./billing-config";
+import { BillingToggle } from "./billing-toggle";
+import type { BillingInterval, PlanTier } from "./billing-types";
+import { PlanCard } from "./plan-card";
+import { UsageCard } from "./usage-card";
 
-export default function BillingGearPage({
+export default function BillingPage({
   params,
 }: {
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
-  const currentMember = useQuery(
-    api.members.getCurrentMember,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
-  );
-  const members = useQuery(
-    api.members.list,
+  const subscriptionStatus = useQuery(
+    api.subscriptions.getStatus,
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
 
-  const isAdmin =
-    currentMember?.role === "admin" || currentMember?.role === "owner";
-  const isPro = org?.subscriptionTier === "pro";
-  const memberCount = members?.length ?? 0;
-  const memberPercentage = Math.min(
-    (memberCount / FREE_PLAN_LIMITS.teamMembers) * 100,
-    100
+  const createCheckoutSession = useAction(
+    api.subscriptions_actions.createCheckoutSession
   );
+  const createPortalSession = useAction(
+    api.subscriptions_actions.createCustomerPortalSession
+  );
+
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [billingInterval, setBillingInterval] =
+    useState<BillingInterval>("yearly");
 
   if (!org) {
     return (
@@ -63,134 +49,104 @@ export default function BillingGearPage({
     );
   }
 
+  const currentTier: PlanTier =
+    subscriptionStatus?.tier === "pro" ? "pro" : "free";
+  const canManageBilling = subscriptionStatus?.canManageBilling ?? false;
+  const subscription = subscriptionStatus?.subscription ?? null;
+  const usage = subscriptionStatus?.usage ?? { members: 0, feedback: 0 };
+  const limits = subscriptionStatus?.limits ?? DEFAULT_LIMITS;
+
+  const handleUpgrade = async (priceKey: string) => {
+    if (!(org._id && canManageBilling && priceKey)) {
+      return;
+    }
+
+    setIsLoading(priceKey);
+    try {
+      const result = await createCheckoutSession({
+        organizationId: org._id as Id<"organizations">,
+        priceKey: priceKey as "proMonthly" | "proYearly",
+        successUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing?success=true`,
+        cancelUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing?canceled=true`,
+      });
+
+      if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      console.error("Failed to create checkout session:", error);
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    if (!(org._id && canManageBilling)) {
+      return;
+    }
+
+    setIsLoading("portal");
+    try {
+      const result = await createPortalSession({
+        organizationId: org._id as Id<"organizations">,
+        returnUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing`,
+      });
+
+      if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      console.error("Failed to create portal session:", error);
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  // Get yearly savings for the toggle
+  const proYearlyPrice = PLANS.find((p) => p.id === "pro")?.prices.find(
+    (p) => p.interval === "yearly"
+  );
+
   return (
     <div className="admin-container">
       <div className="mb-8">
-        <div>
-          <H1>Billing</H1>
-          <Text variant="bodySmall">
-            Manage your subscription and view usage
-          </Text>
-        </div>
+        <H1>Billing</H1>
+        <Text className="text-muted-foreground" variant="bodySmall">
+          Manage your organization&apos;s subscription and usage
+        </Text>
       </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkle className="h-5 w-5" />
-              Current Plan
-            </CardTitle>
-            <CardDescription>
-              You are currently on the {isPro ? "Pro" : "Free"} plan
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-lg border bg-muted/50 p-4">
-              <H3 className="mb-2" variant="card">
-                {isPro ? "Pro Plan" : "Free Plan"}
-              </H3>
-              <ul className="space-y-1 text-muted-foreground text-sm">
-                {isPro ? (
-                  <>
-                    <li>• Everything in Free</li>
-                    <li>• Unlimited team members</li>
-                    <li>• Custom branding</li>
-                    <li>• Priority support</li>
-                    <li>• Advanced analytics</li>
-                  </>
-                ) : (
-                  <>
-                    <li>• Unlimited feedback boards</li>
-                    <li>• Public roadmap and changelog</li>
-                    <li>• Up to 3 team members</li>
-                  </>
-                )}
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="space-y-8">
+        {/* Billing Interval Toggle */}
+        <BillingToggle
+          interval={billingInterval}
+          onChange={setBillingInterval}
+          yearlySavings={proYearlyPrice?.savings}
+        />
 
-        {!isPro && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ChartBar className="h-5 w-5" />
-                Usage
-              </CardTitle>
-              <CardDescription>
-                Track your current plan usage limits
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Progress value={memberPercentage}>
-                  <ProgressLabel>Team members</ProgressLabel>
-                  <ProgressValue>
-                    {() => `${memberCount} / ${FREE_PLAN_LIMITS.teamMembers}`}
-                  </ProgressValue>
-                </Progress>
-                {memberCount >= FREE_PLAN_LIMITS.teamMembers && (
-                  <Text className="mt-2 text-amber-600" variant="bodySmall">
-                    You&apos;ve reached your team member limit. Upgrade to Pro
-                    for unlimited members.
-                  </Text>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Plan Cards */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {PLANS.map((plan) => (
+            <PlanCard
+              canManageBilling={canManageBilling}
+              currentTier={currentTier}
+              isLoading={isLoading}
+              key={plan.id}
+              onManageSubscription={handleManageSubscription}
+              onUpgrade={handleUpgrade}
+              plan={plan}
+              selectedInterval={billingInterval}
+              subscription={subscription}
+            />
+          ))}
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Payment Method
-            </CardTitle>
-            <CardDescription>No payment method on file</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isAdmin ? (
-              <Button variant="outline">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Add Payment Method
-              </Button>
-            ) : (
-              <Text variant="bodySmall">
-                Contact an admin to manage billing settings.
-              </Text>
-            )}
-          </CardContent>
-        </Card>
-
-        {!isPro && (
-          <Card className="border-olive-600/20 bg-olive-600/5">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkle className="h-5 w-5 text-olive-600" />
-                Upgrade to Pro
-              </CardTitle>
-              <CardDescription>
-                Get more features and unlimited team members
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="mb-4 space-y-1 text-muted-foreground text-sm">
-                <li>• Everything in Free</li>
-                <li>• Unlimited team members</li>
-                <li>• Custom branding</li>
-                <li>• Priority support</li>
-                <li>• Advanced analytics</li>
-              </ul>
-              {isAdmin ? (
-                <Button>
-                  <Sparkle className="mr-2 h-4 w-4" />
-                  Upgrade to Pro
-                </Button>
-              ) : null}
-            </CardContent>
-          </Card>
-        )}
+        {/* Usage Section */}
+        <UsageCard
+          isPro={currentTier === "pro"}
+          limits={limits}
+          usage={usage}
+        />
       </div>
     </div>
   );

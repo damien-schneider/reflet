@@ -1,10 +1,10 @@
+import { registerRoutes as registerStripeRoutes } from "@convex-dev/stripe";
 import { httpRouter } from "convex/server";
-import { internal } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { decodeUserToken } from "./feedback_api_auth";
-import { polar } from "./polar";
 
 const http = httpRouter();
 
@@ -165,12 +165,14 @@ async function authenticateApiRequest(
 authComponent.registerRoutes(http, createAuth);
 
 // ============================================
-// POLAR WEBHOOK HANDLER
+// STRIPE WEBHOOK HANDLER
 // ============================================
 
-// Register Polar webhook routes at /polar/events
+// Register Stripe webhook routes at /stripe/webhook
 // The component handles webhook signature verification and subscription sync
-polar.registerRoutes(http);
+registerStripeRoutes(http, components.stripe, {
+  webhookPath: "/stripe/webhook",
+});
 
 // ============================================
 // GITHUB WEBHOOK HANDLER

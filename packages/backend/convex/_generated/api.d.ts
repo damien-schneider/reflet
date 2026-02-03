@@ -45,14 +45,14 @@ import type * as organization_statuses from "../organization_statuses.js";
 import type * as organizations from "../organizations.js";
 import type * as organizations_actions from "../organizations_actions.js";
 import type * as organizations_personal from "../organizations_personal.js";
-import type * as polar from "../polar.js";
-import type * as polar_user from "../polar_user.js";
 import type * as privateData from "../privateData.js";
 import type * as releases from "../releases.js";
 import type * as repo_analysis from "../repo_analysis.js";
 import type * as storage from "../storage.js";
+import type * as stripe from "../stripe.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as subscriptions_actions from "../subscriptions_actions.js";
+import type * as subscriptions_internal from "../subscriptions_internal.js";
 import type * as support_conversations from "../support_conversations.js";
 import type * as support_messages from "../support_messages.js";
 import type * as tag_manager from "../tag_manager.js";
@@ -110,14 +110,14 @@ declare const fullApi: ApiFromModules<{
   organizations: typeof organizations;
   organizations_actions: typeof organizations_actions;
   organizations_personal: typeof organizations_personal;
-  polar: typeof polar;
-  polar_user: typeof polar_user;
   privateData: typeof privateData;
   releases: typeof releases;
   repo_analysis: typeof repo_analysis;
   storage: typeof storage;
+  stripe: typeof stripe;
   subscriptions: typeof subscriptions;
   subscriptions_actions: typeof subscriptions_actions;
+  subscriptions_internal: typeof subscriptions_internal;
   support_conversations: typeof support_conversations;
   support_messages: typeof support_messages;
   tag_manager: typeof tag_manager;
@@ -4987,546 +4987,354 @@ export declare const components: {
       };
     };
   };
-  polar: {
-    lib: {
-      createProduct: FunctionReference<
+  stripe: {
+    private: {
+      handleCheckoutSessionCompleted: FunctionReference<
         "mutation",
         "internal",
         {
-          product: {
-            createdAt: string;
-            description: string | null;
-            id: string;
-            isArchived: boolean;
-            isRecurring: boolean;
-            medias: Array<{
-              checksumEtag: string | null;
-              checksumSha256Base64: string | null;
-              checksumSha256Hex: string | null;
-              createdAt: string;
-              id: string;
-              isUploaded: boolean;
-              lastModifiedAt: string | null;
-              mimeType: string;
-              name: string;
-              organizationId: string;
-              path: string;
-              publicUrl: string;
-              service?: string;
-              size: number;
-              sizeReadable: string;
-              storageVersion: string | null;
-              version: string | null;
-            }>;
-            metadata?: Record<string, any>;
-            modifiedAt: string | null;
-            name: string;
-            organizationId: string;
-            prices: Array<{
-              amountType?: string;
-              createdAt: string;
-              id: string;
-              isArchived: boolean;
-              maximumAmount?: number | null;
-              minimumAmount?: number | null;
-              modifiedAt: string | null;
-              presetAmount?: number | null;
-              priceAmount?: number;
-              priceCurrency?: string;
-              productId: string;
-              recurringInterval?: "day" | "week" | "month" | "year" | null;
-              type?: string;
-            }>;
-            recurringInterval?: "day" | "week" | "month" | "year" | null;
-          };
+          metadata?: any;
+          mode: string;
+          stripeCheckoutSessionId: string;
+          stripeCustomerId?: string;
         },
-        any
+        null
       >;
-      createSubscription: FunctionReference<
+      handleCustomerCreated: FunctionReference<
         "mutation",
         "internal",
         {
-          subscription: {
-            amount: number | null;
-            cancelAtPeriodEnd: boolean;
-            checkoutId: string | null;
-            createdAt: string;
-            currency: string | null;
-            currentPeriodEnd: string | null;
-            currentPeriodStart: string;
-            customerCancellationComment?: string | null;
-            customerCancellationReason?: string | null;
-            customerId: string;
-            endedAt: string | null;
-            id: string;
-            metadata: Record<string, any>;
-            modifiedAt: string | null;
-            priceId?: string;
-            productId: string;
-            recurringInterval: "day" | "week" | "month" | "year" | null;
-            startedAt: string | null;
-            status: string;
-          };
+          email?: string;
+          metadata?: any;
+          name?: string;
+          stripeCustomerId: string;
         },
-        any
+        null
       >;
-      getCurrentSubscription: FunctionReference<
+      handleCustomerUpdated: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          email?: string;
+          metadata?: any;
+          name?: string;
+          stripeCustomerId: string;
+        },
+        null
+      >;
+      handleInvoiceCreated: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          amountDue: number;
+          amountPaid: number;
+          created: number;
+          status: string;
+          stripeCustomerId: string;
+          stripeInvoiceId: string;
+          stripeSubscriptionId?: string;
+        },
+        null
+      >;
+      handleInvoicePaid: FunctionReference<
+        "mutation",
+        "internal",
+        { amountPaid: number; stripeInvoiceId: string },
+        null
+      >;
+      handleInvoicePaymentFailed: FunctionReference<
+        "mutation",
+        "internal",
+        { stripeInvoiceId: string },
+        null
+      >;
+      handlePaymentIntentSucceeded: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          amount: number;
+          created: number;
+          currency: string;
+          metadata?: any;
+          status: string;
+          stripeCustomerId?: string;
+          stripePaymentIntentId: string;
+        },
+        null
+      >;
+      handleSubscriptionCreated: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          cancelAt?: number;
+          cancelAtPeriodEnd: boolean;
+          currentPeriodEnd: number;
+          metadata?: any;
+          priceId: string;
+          quantity?: number;
+          status: string;
+          stripeCustomerId: string;
+          stripeSubscriptionId: string;
+        },
+        null
+      >;
+      handleSubscriptionDeleted: FunctionReference<
+        "mutation",
+        "internal",
+        { stripeSubscriptionId: string },
+        null
+      >;
+      handleSubscriptionUpdated: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          cancelAt?: number;
+          cancelAtPeriodEnd: boolean;
+          currentPeriodEnd: number;
+          metadata?: any;
+          priceId?: string;
+          quantity?: number;
+          status: string;
+          stripeSubscriptionId: string;
+        },
+        null
+      >;
+      updatePaymentCustomer: FunctionReference<
+        "mutation",
+        "internal",
+        { stripeCustomerId: string; stripePaymentIntentId: string },
+        null
+      >;
+      updateSubscriptionQuantityInternal: FunctionReference<
+        "mutation",
+        "internal",
+        { quantity: number; stripeSubscriptionId: string },
+        null
+      >;
+    };
+    public: {
+      createOrUpdateCustomer: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          email?: string;
+          metadata?: any;
+          name?: string;
+          stripeCustomerId: string;
+        },
+        string
+      >;
+      getCustomer: FunctionReference<
         "query",
         "internal",
-        { userId: string },
+        { stripeCustomerId: string },
         {
-          amount: number | null;
-          cancelAtPeriodEnd: boolean;
-          checkoutId: string | null;
-          createdAt: string;
-          currency: string | null;
-          currentPeriodEnd: string | null;
-          currentPeriodStart: string;
-          customerCancellationComment?: string | null;
-          customerCancellationReason?: string | null;
-          customerId: string;
-          endedAt: string | null;
-          id: string;
-          metadata: Record<string, any>;
-          modifiedAt: string | null;
-          priceId?: string;
-          product: {
-            createdAt: string;
-            description: string | null;
-            id: string;
-            isArchived: boolean;
-            isRecurring: boolean;
-            medias: Array<{
-              checksumEtag: string | null;
-              checksumSha256Base64: string | null;
-              checksumSha256Hex: string | null;
-              createdAt: string;
-              id: string;
-              isUploaded: boolean;
-              lastModifiedAt: string | null;
-              mimeType: string;
-              name: string;
-              organizationId: string;
-              path: string;
-              publicUrl: string;
-              service?: string;
-              size: number;
-              sizeReadable: string;
-              storageVersion: string | null;
-              version: string | null;
-            }>;
-            metadata?: Record<string, any>;
-            modifiedAt: string | null;
-            name: string;
-            organizationId: string;
-            prices: Array<{
-              amountType?: string;
-              createdAt: string;
-              id: string;
-              isArchived: boolean;
-              maximumAmount?: number | null;
-              minimumAmount?: number | null;
-              modifiedAt: string | null;
-              presetAmount?: number | null;
-              priceAmount?: number;
-              priceCurrency?: string;
-              productId: string;
-              recurringInterval?: "day" | "week" | "month" | "year" | null;
-              type?: string;
-            }>;
-            recurringInterval?: "day" | "week" | "month" | "year" | null;
-          };
-          productId: string;
-          recurringInterval: "day" | "week" | "month" | "year" | null;
-          startedAt: string | null;
-          status: string;
+          email?: string;
+          metadata?: any;
+          name?: string;
+          stripeCustomerId: string;
         } | null
       >;
-      getCustomerByUserId: FunctionReference<
+      getPayment: FunctionReference<
         "query",
         "internal",
-        { userId: string },
-        { id: string; metadata?: Record<string, any>; userId: string } | null
-      >;
-      getProduct: FunctionReference<
-        "query",
-        "internal",
-        { id: string },
+        { stripePaymentIntentId: string },
         {
-          createdAt: string;
-          description: string | null;
-          id: string;
-          isArchived: boolean;
-          isRecurring: boolean;
-          medias: Array<{
-            checksumEtag: string | null;
-            checksumSha256Base64: string | null;
-            checksumSha256Hex: string | null;
-            createdAt: string;
-            id: string;
-            isUploaded: boolean;
-            lastModifiedAt: string | null;
-            mimeType: string;
-            name: string;
-            organizationId: string;
-            path: string;
-            publicUrl: string;
-            service?: string;
-            size: number;
-            sizeReadable: string;
-            storageVersion: string | null;
-            version: string | null;
-          }>;
-          metadata?: Record<string, any>;
-          modifiedAt: string | null;
-          name: string;
-          organizationId: string;
-          prices: Array<{
-            amountType?: string;
-            createdAt: string;
-            id: string;
-            isArchived: boolean;
-            maximumAmount?: number | null;
-            minimumAmount?: number | null;
-            modifiedAt: string | null;
-            presetAmount?: number | null;
-            priceAmount?: number;
-            priceCurrency?: string;
-            productId: string;
-            recurringInterval?: "day" | "week" | "month" | "year" | null;
-            type?: string;
-          }>;
-          recurringInterval?: "day" | "week" | "month" | "year" | null;
+          amount: number;
+          created: number;
+          currency: string;
+          metadata?: any;
+          orgId?: string;
+          status: string;
+          stripeCustomerId?: string;
+          stripePaymentIntentId: string;
+          userId?: string;
         } | null
       >;
       getSubscription: FunctionReference<
         "query",
         "internal",
-        { id: string },
+        { stripeSubscriptionId: string },
         {
-          amount: number | null;
+          cancelAt?: number;
           cancelAtPeriodEnd: boolean;
-          checkoutId: string | null;
-          createdAt: string;
-          currency: string | null;
-          currentPeriodEnd: string | null;
-          currentPeriodStart: string;
-          customerCancellationComment?: string | null;
-          customerCancellationReason?: string | null;
-          customerId: string;
-          endedAt: string | null;
-          id: string;
-          metadata: Record<string, any>;
-          modifiedAt: string | null;
-          priceId?: string;
-          productId: string;
-          recurringInterval: "day" | "week" | "month" | "year" | null;
-          startedAt: string | null;
+          currentPeriodEnd: number;
+          metadata?: any;
+          orgId?: string;
+          priceId: string;
+          quantity?: number;
           status: string;
+          stripeCustomerId: string;
+          stripeSubscriptionId: string;
+          userId?: string;
         } | null
       >;
-      insertCustomer: FunctionReference<
-        "mutation",
-        "internal",
-        { id: string; metadata?: Record<string, any>; userId: string },
-        string
-      >;
-      listCustomerSubscriptions: FunctionReference<
+      getSubscriptionByOrgId: FunctionReference<
         "query",
         "internal",
-        { customerId: string },
-        Array<{
-          amount: number | null;
+        { orgId: string },
+        {
+          cancelAt?: number;
           cancelAtPeriodEnd: boolean;
-          checkoutId: string | null;
-          createdAt: string;
-          currency: string | null;
-          currentPeriodEnd: string | null;
-          currentPeriodStart: string;
-          customerCancellationComment?: string | null;
-          customerCancellationReason?: string | null;
-          customerId: string;
-          endedAt: string | null;
-          id: string;
-          metadata: Record<string, any>;
-          modifiedAt: string | null;
-          priceId?: string;
-          productId: string;
-          recurringInterval: "day" | "week" | "month" | "year" | null;
-          startedAt: string | null;
+          currentPeriodEnd: number;
+          metadata?: any;
+          orgId?: string;
+          priceId: string;
+          quantity?: number;
           status: string;
-        }>
+          stripeCustomerId: string;
+          stripeSubscriptionId: string;
+          userId?: string;
+        } | null
       >;
-      listProducts: FunctionReference<
+      listInvoices: FunctionReference<
         "query",
         "internal",
-        { includeArchived?: boolean },
+        { stripeCustomerId: string },
         Array<{
-          createdAt: string;
-          description: string | null;
-          id: string;
-          isArchived: boolean;
-          isRecurring: boolean;
-          medias: Array<{
-            checksumEtag: string | null;
-            checksumSha256Base64: string | null;
-            checksumSha256Hex: string | null;
-            createdAt: string;
-            id: string;
-            isUploaded: boolean;
-            lastModifiedAt: string | null;
-            mimeType: string;
-            name: string;
-            organizationId: string;
-            path: string;
-            publicUrl: string;
-            service?: string;
-            size: number;
-            sizeReadable: string;
-            storageVersion: string | null;
-            version: string | null;
-          }>;
-          metadata?: Record<string, any>;
-          modifiedAt: string | null;
-          name: string;
-          organizationId: string;
-          priceAmount?: number;
-          prices: Array<{
-            amountType?: string;
-            createdAt: string;
-            id: string;
-            isArchived: boolean;
-            maximumAmount?: number | null;
-            minimumAmount?: number | null;
-            modifiedAt: string | null;
-            presetAmount?: number | null;
-            priceAmount?: number;
-            priceCurrency?: string;
-            productId: string;
-            recurringInterval?: "day" | "week" | "month" | "year" | null;
-            type?: string;
-          }>;
-          recurringInterval?: "day" | "week" | "month" | "year" | null;
+          amountDue: number;
+          amountPaid: number;
+          created: number;
+          orgId?: string;
+          status: string;
+          stripeCustomerId: string;
+          stripeInvoiceId: string;
+          stripeSubscriptionId?: string;
+          userId?: string;
         }>
       >;
-      listUserSubscriptions: FunctionReference<
+      listInvoicesByOrgId: FunctionReference<
+        "query",
+        "internal",
+        { orgId: string },
+        Array<{
+          amountDue: number;
+          amountPaid: number;
+          created: number;
+          orgId?: string;
+          status: string;
+          stripeCustomerId: string;
+          stripeInvoiceId: string;
+          stripeSubscriptionId?: string;
+          userId?: string;
+        }>
+      >;
+      listInvoicesByUserId: FunctionReference<
         "query",
         "internal",
         { userId: string },
         Array<{
-          amount: number | null;
-          cancelAtPeriodEnd: boolean;
-          checkoutId: string | null;
-          createdAt: string;
-          currency: string | null;
-          currentPeriodEnd: string | null;
-          currentPeriodStart: string;
-          customerCancellationComment?: string | null;
-          customerCancellationReason?: string | null;
-          customerId: string;
-          endedAt: string | null;
-          id: string;
-          metadata: Record<string, any>;
-          modifiedAt: string | null;
-          priceId?: string;
-          product: {
-            createdAt: string;
-            description: string | null;
-            id: string;
-            isArchived: boolean;
-            isRecurring: boolean;
-            medias: Array<{
-              checksumEtag: string | null;
-              checksumSha256Base64: string | null;
-              checksumSha256Hex: string | null;
-              createdAt: string;
-              id: string;
-              isUploaded: boolean;
-              lastModifiedAt: string | null;
-              mimeType: string;
-              name: string;
-              organizationId: string;
-              path: string;
-              publicUrl: string;
-              service?: string;
-              size: number;
-              sizeReadable: string;
-              storageVersion: string | null;
-              version: string | null;
-            }>;
-            metadata?: Record<string, any>;
-            modifiedAt: string | null;
-            name: string;
-            organizationId: string;
-            prices: Array<{
-              amountType?: string;
-              createdAt: string;
-              id: string;
-              isArchived: boolean;
-              maximumAmount?: number | null;
-              minimumAmount?: number | null;
-              modifiedAt: string | null;
-              presetAmount?: number | null;
-              priceAmount?: number;
-              priceCurrency?: string;
-              productId: string;
-              recurringInterval?: "day" | "week" | "month" | "year" | null;
-              type?: string;
-            }>;
-            recurringInterval?: "day" | "week" | "month" | "year" | null;
-          } | null;
-          productId: string;
-          recurringInterval: "day" | "week" | "month" | "year" | null;
-          startedAt: string | null;
+          amountDue: number;
+          amountPaid: number;
+          created: number;
+          orgId?: string;
           status: string;
+          stripeCustomerId: string;
+          stripeInvoiceId: string;
+          stripeSubscriptionId?: string;
+          userId?: string;
         }>
       >;
-      syncProducts: FunctionReference<
+      listPayments: FunctionReference<
+        "query",
+        "internal",
+        { stripeCustomerId: string },
+        Array<{
+          amount: number;
+          created: number;
+          currency: string;
+          metadata?: any;
+          orgId?: string;
+          status: string;
+          stripeCustomerId?: string;
+          stripePaymentIntentId: string;
+          userId?: string;
+        }>
+      >;
+      listPaymentsByOrgId: FunctionReference<
+        "query",
+        "internal",
+        { orgId: string },
+        Array<{
+          amount: number;
+          created: number;
+          currency: string;
+          metadata?: any;
+          orgId?: string;
+          status: string;
+          stripeCustomerId?: string;
+          stripePaymentIntentId: string;
+          userId?: string;
+        }>
+      >;
+      listPaymentsByUserId: FunctionReference<
+        "query",
+        "internal",
+        { userId: string },
+        Array<{
+          amount: number;
+          created: number;
+          currency: string;
+          metadata?: any;
+          orgId?: string;
+          status: string;
+          stripeCustomerId?: string;
+          stripePaymentIntentId: string;
+          userId?: string;
+        }>
+      >;
+      listSubscriptions: FunctionReference<
+        "query",
+        "internal",
+        { stripeCustomerId: string },
+        Array<{
+          cancelAt?: number;
+          cancelAtPeriodEnd: boolean;
+          currentPeriodEnd: number;
+          metadata?: any;
+          orgId?: string;
+          priceId: string;
+          quantity?: number;
+          status: string;
+          stripeCustomerId: string;
+          stripeSubscriptionId: string;
+          userId?: string;
+        }>
+      >;
+      listSubscriptionsByUserId: FunctionReference<
+        "query",
+        "internal",
+        { userId: string },
+        Array<{
+          cancelAt?: number;
+          cancelAtPeriodEnd: boolean;
+          currentPeriodEnd: number;
+          metadata?: any;
+          orgId?: string;
+          priceId: string;
+          quantity?: number;
+          status: string;
+          stripeCustomerId: string;
+          stripeSubscriptionId: string;
+          userId?: string;
+        }>
+      >;
+      updateSubscriptionMetadata: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          metadata: any;
+          orgId?: string;
+          stripeSubscriptionId: string;
+          userId?: string;
+        },
+        null
+      >;
+      updateSubscriptionQuantity: FunctionReference<
         "action",
         "internal",
-        { polarAccessToken: string; server: "sandbox" | "production" },
-        any
-      >;
-      updateProduct: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          product: {
-            createdAt: string;
-            description: string | null;
-            id: string;
-            isArchived: boolean;
-            isRecurring: boolean;
-            medias: Array<{
-              checksumEtag: string | null;
-              checksumSha256Base64: string | null;
-              checksumSha256Hex: string | null;
-              createdAt: string;
-              id: string;
-              isUploaded: boolean;
-              lastModifiedAt: string | null;
-              mimeType: string;
-              name: string;
-              organizationId: string;
-              path: string;
-              publicUrl: string;
-              service?: string;
-              size: number;
-              sizeReadable: string;
-              storageVersion: string | null;
-              version: string | null;
-            }>;
-            metadata?: Record<string, any>;
-            modifiedAt: string | null;
-            name: string;
-            organizationId: string;
-            prices: Array<{
-              amountType?: string;
-              createdAt: string;
-              id: string;
-              isArchived: boolean;
-              maximumAmount?: number | null;
-              minimumAmount?: number | null;
-              modifiedAt: string | null;
-              presetAmount?: number | null;
-              priceAmount?: number;
-              priceCurrency?: string;
-              productId: string;
-              recurringInterval?: "day" | "week" | "month" | "year" | null;
-              type?: string;
-            }>;
-            recurringInterval?: "day" | "week" | "month" | "year" | null;
-          };
-        },
-        any
-      >;
-      updateProducts: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          polarAccessToken: string;
-          products: Array<{
-            createdAt: string;
-            description: string | null;
-            id: string;
-            isArchived: boolean;
-            isRecurring: boolean;
-            medias: Array<{
-              checksumEtag: string | null;
-              checksumSha256Base64: string | null;
-              checksumSha256Hex: string | null;
-              createdAt: string;
-              id: string;
-              isUploaded: boolean;
-              lastModifiedAt: string | null;
-              mimeType: string;
-              name: string;
-              organizationId: string;
-              path: string;
-              publicUrl: string;
-              service?: string;
-              size: number;
-              sizeReadable: string;
-              storageVersion: string | null;
-              version: string | null;
-            }>;
-            metadata?: Record<string, any>;
-            modifiedAt: string | null;
-            name: string;
-            organizationId: string;
-            prices: Array<{
-              amountType?: string;
-              createdAt: string;
-              id: string;
-              isArchived: boolean;
-              maximumAmount?: number | null;
-              minimumAmount?: number | null;
-              modifiedAt: string | null;
-              presetAmount?: number | null;
-              priceAmount?: number;
-              priceCurrency?: string;
-              productId: string;
-              recurringInterval?: "day" | "week" | "month" | "year" | null;
-              type?: string;
-            }>;
-            recurringInterval?: "day" | "week" | "month" | "year" | null;
-          }>;
-        },
-        any
-      >;
-      updateSubscription: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          subscription: {
-            amount: number | null;
-            cancelAtPeriodEnd: boolean;
-            checkoutId: string | null;
-            createdAt: string;
-            currency: string | null;
-            currentPeriodEnd: string | null;
-            currentPeriodStart: string;
-            customerCancellationComment?: string | null;
-            customerCancellationReason?: string | null;
-            customerId: string;
-            endedAt: string | null;
-            id: string;
-            metadata: Record<string, any>;
-            modifiedAt: string | null;
-            priceId?: string;
-            productId: string;
-            recurringInterval: "day" | "week" | "month" | "year" | null;
-            startedAt: string | null;
-            status: string;
-          };
-        },
-        any
-      >;
-      upsertCustomer: FunctionReference<
-        "mutation",
-        "internal",
-        { id: string; metadata?: Record<string, any>; userId: string },
-        string
+        { apiKey: string; quantity: number; stripeSubscriptionId: string },
+        null
       >;
     };
   };
