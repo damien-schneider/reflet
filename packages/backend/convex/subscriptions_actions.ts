@@ -104,7 +104,7 @@ export const createCheckoutSession = action({
 
 /**
  * Create a Stripe Customer Portal session for managing billing
- * Only the org owner can access the billing portal
+ * Any org member can access the billing portal to view subscription details
  */
 export const createCustomerPortalSession = action({
   args: {
@@ -114,7 +114,7 @@ export const createCustomerPortalSession = action({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    // Verify user is the owner of this organization
+    // Verify user is a member of this organization
     const membership = await ctx.runQuery(
       internal.subscriptions_internal.getMembershipForOrg,
       {
@@ -125,10 +125,6 @@ export const createCustomerPortalSession = action({
 
     if (!membership) {
       throw new Error("You are not a member of this organization");
-    }
-
-    if (membership.role !== "owner") {
-      throw new Error("Only the organization owner can manage billing");
     }
 
     // Get org to find Stripe customer ID

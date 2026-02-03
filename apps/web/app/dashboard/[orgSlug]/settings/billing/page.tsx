@@ -52,6 +52,7 @@ export default function BillingPage({
   const currentTier: PlanTier =
     subscriptionStatus?.tier === "pro" ? "pro" : "free";
   const canManageBilling = subscriptionStatus?.canManageBilling ?? false;
+  const canViewBilling = subscriptionStatus?.canViewBilling ?? false;
   const subscription = subscriptionStatus?.subscription ?? null;
   const usage = subscriptionStatus?.usage ?? { members: 0, feedback: 0 };
   const limits = subscriptionStatus?.limits ?? DEFAULT_LIMITS;
@@ -81,7 +82,7 @@ export default function BillingPage({
   };
 
   const handleManageSubscription = async () => {
-    if (!(org._id && canManageBilling)) {
+    if (!(org._id && canViewBilling)) {
       return;
     }
 
@@ -129,6 +130,7 @@ export default function BillingPage({
           {PLANS.map((plan) => (
             <PlanCard
               canManageBilling={canManageBilling}
+              canViewBilling={canViewBilling}
               currentTier={currentTier}
               isLoading={isLoading}
               key={plan.id}

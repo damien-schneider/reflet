@@ -8,7 +8,6 @@
   "overrides": [
     {
       "includes": [
-        "apps/web/src/routeTree.gen.ts",
         "packages/backend/convex/_generated/**/*",
         "apps/web/playwright-report/**/*",
         "apps/web/test-results/**/*",
@@ -30,16 +29,6 @@
     },
     {
       "includes": ["packages/backend/convex/**/*.ts"],
-      "linter": {
-        "rules": {
-          "style": {
-            "useFilenamingConvention": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["apps/web/src/routes/**/*.{ts,tsx}"],
       "linter": {
         "rules": {
           "style": {

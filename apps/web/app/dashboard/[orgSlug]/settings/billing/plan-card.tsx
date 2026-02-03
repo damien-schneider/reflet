@@ -1,3 +1,4 @@
+import NumberFlow from "@number-flow/react";
 import { Check, Crown, Sparkle, Warning } from "@phosphor-icons/react";
 
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +69,10 @@ function PriceDisplay({
     <div className="flex items-baseline gap-1">
       <span className="font-bold text-3xl">
         {price.currency}
-        {price.amount}
+        <NumberFlow
+          transformTiming={{ duration: 400, easing: "ease-out" }}
+          value={price.amount}
+        />
       </span>
       <span className="text-muted-foreground">
         /{price.interval === "monthly" ? "mo" : "yr"}
@@ -76,7 +80,10 @@ function PriceDisplay({
       {price.savings && isSelected && (
         <Badge className="ml-2" variant="green">
           Save {price.currency}
-          {price.savings}
+          <NumberFlow
+            transformTiming={{ duration: 400, easing: "ease-out" }}
+            value={price.savings}
+          />
         </Badge>
       )}
     </div>
@@ -85,6 +92,7 @@ function PriceDisplay({
 
 function PlanActions({
   canManageBilling,
+  canViewBilling,
   isCurrentPlan,
   isUpgrade,
   isLoading,
@@ -94,6 +102,7 @@ function PlanActions({
   onManageSubscription,
 }: {
   canManageBilling: boolean;
+  canViewBilling: boolean;
   isCurrentPlan: boolean;
   isUpgrade: boolean;
   isLoading: string | null;
@@ -102,17 +111,8 @@ function PlanActions({
   onUpgrade: () => void;
   onManageSubscription: () => void;
 }) {
-  if (!canManageBilling) {
-    return (
-      <div className="mt-auto">
-        <Text className="text-center text-muted-foreground" variant="bodySmall">
-          Only the organization owner can manage billing
-        </Text>
-      </div>
-    );
-  }
-
-  if (isCurrentPlan && planId === "pro") {
+  // Show manage subscription button for Pro plan - any member can view the portal
+  if (isCurrentPlan && planId === "pro" && canViewBilling) {
     return (
       <div className="mt-auto">
         <Button
@@ -125,6 +125,23 @@ function PlanActions({
         </Button>
       </div>
     );
+  }
+
+  // Only owners can upgrade
+  if (!canManageBilling) {
+    if (isUpgrade) {
+      return (
+        <div className="mt-auto">
+          <Text
+            className="text-center text-muted-foreground"
+            variant="bodySmall"
+          >
+            Only the organization owner can upgrade
+          </Text>
+        </div>
+      );
+    }
+    return null;
   }
 
   if (isCurrentPlan && planId === "free") {
@@ -171,6 +188,7 @@ export function PlanCard({
   selectedInterval,
   isLoading,
   canManageBilling,
+  canViewBilling,
   subscription,
   onUpgrade,
   onManageSubscription,
@@ -180,6 +198,7 @@ export function PlanCard({
   selectedInterval: BillingInterval;
   isLoading: string | null;
   canManageBilling: boolean;
+  canViewBilling: boolean;
   subscription: SubscriptionData | null;
   onUpgrade: (priceKey: string) => void;
   onManageSubscription: () => void;
@@ -258,6 +277,7 @@ export function PlanCard({
         {/* Actions */}
         <PlanActions
           canManageBilling={canManageBilling}
+          canViewBilling={canViewBilling}
           isCurrentPlan={isCurrentPlan}
           isLoading={isLoading}
           isUpgrade={isUpgrade}

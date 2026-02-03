@@ -106,8 +106,10 @@ export const getStatus = query({
         feedback: feedbackCount.length,
       },
       isOwner,
-      // Only owner can manage billing
+      // Only owner can upgrade/checkout
       canManageBilling: isOwner,
+      // All members can view the billing portal
+      canViewBilling: true,
     };
   },
 });

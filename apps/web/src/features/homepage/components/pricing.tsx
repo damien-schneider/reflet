@@ -1,16 +1,21 @@
 "use client";
 
+import NumberFlow from "@number-flow/react";
 import { Check } from "@phosphor-icons/react";
 import Link from "next/link";
+import { useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { H2, H3 } from "@/components/ui/typography";
+
+type BillingInterval = "monthly" | "yearly";
 
 const PRICING_TIERS = [
   {
     name: "Starter",
-    price: "$0",
-    period: "/mo",
+    monthlyPrice: 0,
+    yearlyPrice: 0,
     description: "Perfect for open source projects and small startups.",
     features: [
       "Unlimited feedback posts",
@@ -25,8 +30,9 @@ const PRICING_TIERS = [
   },
   {
     name: "Growth",
-    price: "$29",
-    period: "/mo",
+    monthlyPrice: 29,
+    yearlyPrice: 290,
+    yearlySavings: 58,
     description: "For growing teams needing privacy and integrations.",
     features: [
       "Everything in Starter",
@@ -43,8 +49,9 @@ const PRICING_TIERS = [
   },
   {
     name: "Business",
-    price: "$99",
-    period: "/mo",
+    monthlyPrice: 99,
+    yearlyPrice: 990,
+    yearlySavings: 198,
     description: "Advanced control for larger organizations.",
     features: [
       "Everything in Growth",
@@ -60,17 +67,71 @@ const PRICING_TIERS = [
   },
 ] as const;
 
+function BillingToggle({
+  interval,
+  onChange,
+}: {
+  interval: BillingInterval;
+  onChange: (interval: BillingInterval) => void;
+}) {
+  return (
+    <div className="mb-12 flex items-center justify-center gap-2">
+      <div className="inline-flex items-center rounded-full bg-secondary p-1">
+        <button
+          className={`rounded-full px-4 py-2 font-medium text-sm transition-colors ${
+            interval === "monthly"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          onClick={() => onChange("monthly")}
+          type="button"
+        >
+          Monthly
+        </button>
+        <button
+          className={`rounded-full px-4 py-2 font-medium text-sm transition-colors ${
+            interval === "yearly"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          onClick={() => onChange("yearly")}
+          type="button"
+        >
+          Yearly
+        </button>
+      </div>
+      {interval === "yearly" && (
+        <Badge className="ml-2" variant="green">
+          Save 2 months
+        </Badge>
+      )}
+    </div>
+  );
+}
+
 export default function Pricing() {
+  const [billingInterval, setBillingInterval] =
+    useState<BillingInterval>("yearly");
+
   return (
     <section className="bg-background py-24" id="pricing">
       <div className="mx-auto max-w-7xl px-4 text-left sm:px-6 lg:px-8">
-        <H2 className="mb-20" variant="section">
+        <H2 className="mb-12" variant="section">
           Simple pricing for teams of all sizes.
         </H2>
 
+        <BillingToggle
+          interval={billingInterval}
+          onChange={setBillingInterval}
+        />
+
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {PRICING_TIERS.map((tier) => (
-            <PricingCard key={tier.name} tier={tier} />
+            <PricingCard
+              billingInterval={billingInterval}
+              key={tier.name}
+              tier={tier}
+            />
           ))}
         </div>
       </div>
@@ -80,9 +141,18 @@ export default function Pricing() {
 
 interface PricingCardProps {
   tier: (typeof PRICING_TIERS)[number];
+  billingInterval: BillingInterval;
 }
 
-function PricingCard({ tier }: PricingCardProps) {
+function PricingCard({ tier, billingInterval }: PricingCardProps) {
+  const price =
+    billingInterval === "monthly" ? tier.monthlyPrice : tier.yearlyPrice;
+  const period = billingInterval === "monthly" ? "/mo" : "/yr";
+  const showSavings =
+    billingInterval === "yearly" &&
+    "yearlySavings" in tier &&
+    tier.yearlySavings > 0;
+
   if (tier.highlighted) {
     return (
       <div className="relative flex flex-col rounded-xl bg-primary p-8 text-primary-foreground shadow-xl">
@@ -95,9 +165,32 @@ function PricingCard({ tier }: PricingCardProps) {
           {tier.name}
         </H3>
         <div className="mb-2 flex items-baseline gap-1">
-          <span className="font-semibold text-2xl">{tier.price}</span>
-          <span className="text-primary-foreground/70">{tier.period}</span>
+          <span className="font-semibold text-2xl">
+            {price === 0 ? (
+              "Free"
+            ) : (
+              <>
+                $
+                <NumberFlow
+                  transformTiming={{ duration: 400, easing: "ease-out" }}
+                  value={price}
+                />
+              </>
+            )}
+          </span>
+          {price > 0 && (
+            <span className="text-primary-foreground/70">{period}</span>
+          )}
         </div>
+        {showSavings && (
+          <Badge className="mb-4 w-fit" variant="green">
+            Save $
+            <NumberFlow
+              transformTiming={{ duration: 400, easing: "ease-out" }}
+              value={tier.yearlySavings}
+            />
+          </Badge>
+        )}
         <p className="mb-8 min-h-[40px] text-primary-foreground/70 text-sm">
           {tier.description}
         </p>
@@ -137,10 +230,29 @@ function PricingCard({ tier }: PricingCardProps) {
       </H3>
       <div className="mb-2 flex items-baseline gap-1">
         <span className="font-semibold text-2xl text-foreground">
-          {tier.price}
+          {price === 0 ? (
+            "Free"
+          ) : (
+            <>
+              $
+              <NumberFlow
+                transformTiming={{ duration: 400, easing: "ease-out" }}
+                value={price}
+              />
+            </>
+          )}
         </span>
-        <span className="text-muted-foreground">{tier.period}</span>
+        {price > 0 && <span className="text-muted-foreground">{period}</span>}
       </div>
+      {showSavings && (
+        <Badge className="mb-4 w-fit" variant="green">
+          Save $
+          <NumberFlow
+            transformTiming={{ duration: 400, easing: "ease-out" }}
+            value={tier.yearlySavings}
+          />
+        </Badge>
+      )}
       <p className="mb-8 min-h-[40px] text-muted-foreground text-sm">
         {tier.description}
       </p>
