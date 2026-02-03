@@ -23,6 +23,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { H2, Muted } from "@/components/ui/typography";
+import { CommandPalette } from "@/features/command-palette/components/command-palette";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
@@ -170,6 +171,10 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const organizations = useQuery(api.organizations.list);
+  const org = useQuery(
+    api.organizations.getBySlug,
+    orgSlug ? { slug: orgSlug } : "skip"
+  );
   const ensurePersonalOrganization = useMutation(
     api.organizations_personal.ensurePersonalOrganization
   );
@@ -177,6 +182,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom);
 
   const hasOrganizations = !!organizations && organizations.length > 0;
+  const isAdmin = org?.role === "admin" || org?.role === "owner";
 
   useEffect(() => {
     if (organizations?.length === 0 && !ensureAttempted) {
@@ -198,6 +204,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>
+      <CommandPalette isAdmin={isAdmin} orgSlug={orgSlug} />
       <DashboardSidebar orgSlug={orgSlug} pathname={pathname ?? ""} />
       <SidebarInset className="relative">
         <header className="absolute top-0 right-0 left-0 z-10 flex h-14 items-center gap-2 px-4">

@@ -16,3 +16,6 @@ export const currentBoardIdAtom = atom<string | null>(null);
 // Dialog states
 export const showCreateBoardDialogAtom = atom(false);
 export const showCreateOrgDialogAtom = atom(false);
+
+// Command palette state
+export const commandPaletteOpenAtom = atom(false);

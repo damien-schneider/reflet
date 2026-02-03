@@ -42,6 +42,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { authClient } from "@/lib/auth-client";
 
@@ -195,6 +196,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader>
         <OrganizationSwitcher currentOrgSlug={orgSlug} />
+        <CommandPaletteTrigger />
       </SidebarHeader>
 
       <SidebarContent>
