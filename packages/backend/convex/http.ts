@@ -5,6 +5,9 @@ import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { decodeUserToken } from "./feedback_api_auth";
 import { polar } from "./polar";
+import { verifyGitHubSignature } from "./security";
+
+declare const process: any;
 
 const http = httpRouter();
 
@@ -188,7 +191,20 @@ http.route({
 
     const body = await request.text();
 
-    // TODO: Verify webhook signature using GITHUB_WEBHOOK_SECRET for production
+    const signature = request.headers.get("X-Hub-Signature-256");
+    const secret = process.env.GITHUB_WEBHOOK_SECRET;
+
+    if (!secret) {
+      console.error("GITHUB_WEBHOOK_SECRET is not set");
+      return new Response("Webhook secret not configured", { status: 500 });
+    }
+
+    const isValid = await verifyGitHubSignature(body, signature, secret);
+
+    if (!isValid) {
+      console.error("Invalid GitHub webhook signature");
+      return new Response("Invalid signature", { status: 401 });
+    }
 
     try {
       const payload = JSON.parse(body) as Record<string, unknown>;
