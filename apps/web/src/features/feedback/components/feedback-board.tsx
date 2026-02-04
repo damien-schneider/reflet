@@ -22,9 +22,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { H1, Lead } from "@/components/ui/typography";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { cn } from "@/lib/utils";
 
 import { useBoardFilters } from "../hooks/use-board-filters";
 import {
@@ -111,18 +112,10 @@ function sortFeedback(
   });
 }
 
-function LoadingSkeleton() {
+function LoadingState() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 text-center">
-        <Skeleton className="mx-auto h-10 w-64" />
-        <Skeleton className="mx-auto mt-2 h-5 w-96" />
-      </div>
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Skeleton className="h-32 w-full" key={i} />
-        ))}
-      </div>
+    <div className="container mx-auto flex min-h-[280px] items-center justify-center px-4 py-8">
+      <Spinner aria-label="Loading" className="size-8 text-muted-foreground" />
     </div>
   );
 }
@@ -365,7 +358,7 @@ function FeedbackBoardContent({
 
   // Only show loading skeleton on initial load, not on filter/search changes
   if (feedback === undefined && !hasLoadedOnce.current) {
-    return <LoadingSkeleton />;
+    return <LoadingState />;
   }
 
   // Check if organization is public (for non-members)
@@ -374,9 +367,14 @@ function FeedbackBoardContent({
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div
+      className={cn(
+        "py-8",
+        view === "roadmap" ? "overflow-x-hidden" : "container mx-auto px-4"
+      )}
+    >
       {/* Header */}
-      <div className="mb-8 text-center">
+      <div className={cn("mb-8 text-center", view === "roadmap" && "px-4")}>
         <H1 variant="page">Feature Requests & Feedback</H1>
         <Lead>
           Help us improve by sharing your ideas and voting on features
@@ -385,8 +383,13 @@ function FeedbackBoardContent({
       </div>
 
       {/* Sticky toolbar area */}
-      <div className="sticky top-0 z-10 -mx-4 bg-background/95 px-4 pb-4 backdrop-blur-sm">
-        <div className="flex items-center justify-between gap-4">
+      <div
+        className={cn(
+          "sticky top-0 z-10 bg-background/95 pb-4 backdrop-blur-sm",
+          view === "roadmap" ? "px-4" : "-mx-4 px-4"
+        )}
+      >
+        <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-clip">
           {/* Search bar - left */}
           <div className="relative w-48 flex-shrink-0">
             <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -425,13 +428,15 @@ function FeedbackBoardContent({
 
       {/* Tag filter bar */}
       {(tags && tags.length > 0) || isAdmin ? (
-        <TagFilterBar
-          isAdmin={isAdmin}
-          onTagSelect={setSelectedTagId}
-          organizationId={organizationId}
-          selectedTagId={selectedTagId}
-          tags={tags ?? []}
-        />
+        <div className={cn(view === "roadmap" && "px-4")}>
+          <TagFilterBar
+            isAdmin={isAdmin}
+            onTagSelect={setSelectedTagId}
+            organizationId={organizationId}
+            selectedTagId={selectedTagId}
+            tags={tags ?? []}
+          />
+        </div>
       ) : null}
 
       {/* Filters bar (only in feed view) */}
@@ -536,7 +541,7 @@ export function FeedbackBoard({
   defaultView,
 }: FeedbackBoardProps) {
   return (
-    <Suspense fallback={<LoadingSkeleton />}>
+    <Suspense fallback={<LoadingState />}>
       <FeedbackBoardContent
         defaultView={defaultView}
         isAdmin={isAdmin}

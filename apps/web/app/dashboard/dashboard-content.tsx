@@ -16,7 +16,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   SidebarInset,
   SidebarProvider,
@@ -219,10 +218,8 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <ScrollArea
-          className="-mr-2 -mb-2 h-full bg-background"
-          classNameViewport="pt-14"
-        >
+        {/* Main content area - uses native overflow instead of ScrollArea */}
+        <div className="h-full overflow-y-auto overflow-x-hidden bg-background pt-14">
           {!orgSlug && hasOrganizations ? (
             <main className="flex h-full items-center justify-center p-6">
               <div className="max-w-md text-center">
@@ -264,7 +261,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           ) : null}
 
           {orgSlug ? children : null}
-        </ScrollArea>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

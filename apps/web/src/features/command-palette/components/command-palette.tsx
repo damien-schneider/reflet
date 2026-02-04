@@ -85,9 +85,9 @@ export function CommandPalette({ orgSlug, isAdmin }: CommandPaletteProps) {
                   value={item.id}
                 >
                   <item.icon className="size-4" />
-                  <span>{item.label}</span>
+                  <span className="flex-1">{item.label}</span>
                   {item.description ? (
-                    <span className="ml-auto text-muted-foreground text-xs">
+                    <span className="text-muted-foreground text-xs">
                       {item.description}
                     </span>
                   ) : null}

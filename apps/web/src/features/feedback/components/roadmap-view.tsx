@@ -350,14 +350,14 @@ export function RoadmapView({
   }
 
   return (
-    <>
+    <div className="overflow-hidden">
       <DndContext
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
         onDragStart={handleDragStart}
         sensors={sensors}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-4 overflow-x-auto px-4 pb-4">
           {statuses.map((status) => {
             const statusFeedback = optimisticFeedback.filter(
               (f) => f.organizationStatusId === status._id
@@ -406,6 +406,6 @@ export function RoadmapView({
         otherStatuses={statuses.filter((s) => s._id !== deleteDialogStatus?.id)}
         statusToDelete={deleteDialogStatus}
       />
-    </>
+    </div>
   );
 }

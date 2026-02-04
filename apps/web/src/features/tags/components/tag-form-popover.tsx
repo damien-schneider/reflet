@@ -196,7 +196,7 @@ export function TagFormPopover({
           <button
             {...props}
             aria-label="Add tag"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 border-dashed text-muted-foreground transition-colors hover:border-muted-foreground/50 hover:bg-accent hover:text-foreground"
+            className="flex shrink-0 items-center justify-center rounded-full bg-muted px-2 py-1 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
             type="button"
           >
             <Plus className="h-4 w-4" />

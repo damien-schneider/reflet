@@ -1,15 +1,32 @@
 "use client";
 
 import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area";
+import type { CSSProperties } from "react";
 
 import { cn } from "@/lib/utils";
+
+type ScrollDirection = "vertical" | "horizontal" | "both";
+
+function getOverflowStyle(direction: ScrollDirection): CSSProperties {
+  if (direction === "vertical") {
+    return { overflowX: "hidden", overflowY: "scroll" };
+  }
+  if (direction === "horizontal") {
+    return { overflowX: "scroll", overflowY: "hidden" };
+  }
+  return {};
+}
 
 function ScrollArea({
   className,
   classNameViewport,
   children,
+  direction = "both",
   ...props
-}: ScrollAreaPrimitive.Root.Props & { classNameViewport?: string }) {
+}: ScrollAreaPrimitive.Root.Props & {
+  classNameViewport?: string;
+  direction?: ScrollDirection;
+}) {
   return (
     <ScrollAreaPrimitive.Root
       className={cn("relative", className)}
@@ -22,6 +39,7 @@ function ScrollArea({
           classNameViewport
         )}
         data-slot="scroll-area-viewport"
+        style={getOverflowStyle(direction)}
       >
         {children}
       </ScrollAreaPrimitive.Viewport>

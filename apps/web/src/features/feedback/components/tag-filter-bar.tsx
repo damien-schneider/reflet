@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/context-menu";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag-dialog";
 import { TagFormPopover } from "@/features/tags/components/tag-form-popover";
+import type { TagColor } from "@/lib/tag-colors";
 import { isValidTagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
@@ -40,9 +41,53 @@ interface TagButtonProps {
   onDelete: () => void;
 }
 
-function getTagCssColor(color: string): string {
+// Tailwind classes for tag colors - using opacity for modern look
+const TAG_STYLES: Record<TagColor, { base: string; selected: string }> = {
+  default: {
+    base: "bg-muted text-neutral-600 dark:text-neutral-400",
+    selected: "bg-neutral-500/15 text-neutral-600 dark:text-neutral-300",
+  },
+  gray: {
+    base: "bg-muted text-slate-600 dark:text-slate-400",
+    selected: "bg-slate-500/15 text-slate-600 dark:text-slate-300",
+  },
+  brown: {
+    base: "bg-muted text-amber-700 dark:text-amber-400",
+    selected: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  },
+  orange: {
+    base: "bg-muted text-orange-600 dark:text-orange-400",
+    selected: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+  },
+  yellow: {
+    base: "bg-muted text-yellow-700 dark:text-yellow-400",
+    selected: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400",
+  },
+  green: {
+    base: "bg-muted text-emerald-700 dark:text-emerald-400",
+    selected: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  },
+  blue: {
+    base: "bg-muted text-blue-600 dark:text-blue-400",
+    selected: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+  },
+  purple: {
+    base: "bg-muted text-violet-700 dark:text-violet-400",
+    selected: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
+  },
+  pink: {
+    base: "bg-muted text-pink-600 dark:text-pink-400",
+    selected: "bg-pink-500/15 text-pink-600 dark:text-pink-400",
+  },
+  red: {
+    base: "bg-muted text-red-600 dark:text-red-400",
+    selected: "bg-red-500/15 text-red-600 dark:text-red-400",
+  },
+};
+
+function getTagStyles(color: string): { base: string; selected: string } {
   const validColor = isValidTagColor(color) ? color : "default";
-  return validColor;
+  return TAG_STYLES[validColor];
 }
 
 const TagButton = memo(function TagButton({
@@ -54,21 +99,15 @@ const TagButton = memo(function TagButton({
   onDelete,
 }: TagButtonProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const cssColor = getTagCssColor(tag.color);
+  const styles = getTagStyles(tag.color);
 
   const button = (
     <button
-      className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 font-medium text-sm transition-all"
+      className={cn(
+        "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 font-medium text-sm transition",
+        isSelected ? styles.selected : styles.base
+      )}
       onClick={onClick}
-      style={{
-        backgroundColor: isSelected
-          ? `rgb(var(--tag-${cssColor}-bg))`
-          : `rgb(var(--tag-${cssColor}-bg) / 0.5)`,
-        color: `rgb(var(--tag-${cssColor}-text))`,
-        border: isSelected
-          ? "1px solid transparent"
-          : `1px solid rgb(var(--tag-${cssColor}-text) / 0.2)`,
-      }}
       type="button"
     >
       {tag.icon && <span>{tag.icon}</span>}
@@ -137,10 +176,10 @@ export const TagFilterBar = memo(function TagFilterBar({
         {/* All button */}
         <button
           className={cn(
-            "shrink-0 rounded-full px-3 py-1.5 font-medium text-sm transition-all",
+            "shrink-0 rounded-full px-3 py-1 font-medium text-sm transition",
             isAllSelected
-              ? "border border-primary/20 bg-primary text-primary-foreground"
-              : "border border-primary/20 bg-primary/10 text-primary"
+              ? "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300"
+              : "bg-muted text-neutral-600 dark:text-neutral-400"
           )}
           onClick={() => onTagSelect(null)}
           type="button"

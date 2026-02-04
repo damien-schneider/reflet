@@ -15,7 +15,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Tooltip,
   TooltipContent,
@@ -303,10 +303,10 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
 
 function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
   return (
-    <div className="relative flex w-full flex-1 flex-col md:peer-data-[variant=inset]:max-h-svh md:peer-data-[variant=inset]:p-2 md:peer-data-[variant=inset]:pl-0 md:peer-data-[variant=inset]:peer-data-[state=collapsed]:pl-2 md:peer-data-[variant=inset]:*:rounded-xl md:peer-data-[variant=inset]:*:shadow-sm">
+    <div className="relative flex min-w-0 w-full flex-1 flex-col overflow-x-hidden md:peer-data-[variant=inset]:max-h-svh md:peer-data-[variant=inset]:p-2 md:peer-data-[variant=inset]:pl-0 md:peer-data-[variant=inset]:peer-data-[state=collapsed]:pl-2 md:peer-data-[variant=inset]:*:rounded-xl md:peer-data-[variant=inset]:*:shadow-sm">
       <main
         className={cn(
-          "flex min-h-0 flex-1 flex-col overflow-hidden",
+          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
           className
         )}
         data-slot="sidebar-inset"
@@ -605,32 +605,19 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<"div"> & {
   showIcon?: boolean;
 }) {
-  // Random width between 50 to 90%.
-  const [width] = React.useState(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`;
-  });
-
   return (
     <div
-      className={cn("h-8 gap-2 rounded-md px-2 flex items-center", className)}
+      className={cn(
+        "h-8 gap-2 rounded-md px-2 flex items-center justify-center",
+        className
+      )}
       data-sidebar="menu-skeleton"
       data-slot="sidebar-menu-skeleton"
       {...props}
     >
-      {showIcon && (
-        <Skeleton
-          className="size-4 rounded-md"
-          data-sidebar="menu-skeleton-icon"
-        />
-      )}
-      <Skeleton
-        className="h-4 max-w-(--skeleton-width) flex-1"
-        data-sidebar="menu-skeleton-text"
-        style={
-          {
-            "--skeleton-width": width,
-          } as React.CSSProperties
-        }
+      <Spinner
+        className={cn("size-4 text-muted-foreground", showIcon && "shrink-0")}
+        data-sidebar="menu-skeleton-spinner"
       />
     </div>
   );
