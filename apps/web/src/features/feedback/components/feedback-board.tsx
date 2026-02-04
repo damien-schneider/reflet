@@ -369,7 +369,7 @@ function FeedbackBoardContent({
   return (
     <div
       className={cn(
-        "py-8",
+        "py-8 *:mx-auto *:max-w-5xl",
         view === "roadmap" ? "overflow-x-hidden" : "container mx-auto px-4"
       )}
     >
@@ -382,11 +382,11 @@ function FeedbackBoardContent({
         </Lead>
       </div>
 
-      {/* Sticky toolbar area */}
+      {/* Sticky toolbar area - all filters */}
       <div
         className={cn(
-          "sticky top-0 z-10 bg-background/95 pb-4 backdrop-blur-sm",
-          view === "roadmap" ? "px-4" : "-mx-4 px-4"
+          "sticky top-0 z-10 bg-background pb-4",
+          view === "roadmap" && "px-4"
         )}
       >
         <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-clip">
@@ -424,25 +424,27 @@ function FeedbackBoardContent({
         <div className="mt-3 flex justify-center md:hidden">
           <BoardViewToggle onChange={setView} view={view} />
         </div>
+
+        {/* Tag filter bar */}
+        {(tags && tags.length > 0) || isAdmin ? (
+          <div className="mt-4">
+            <TagFilterBar
+              isAdmin={isAdmin}
+              onTagSelect={setSelectedTagId}
+              organizationId={organizationId}
+              selectedTagId={selectedTagId}
+              tags={tags ?? []}
+            />
+          </div>
+        ) : null}
+
+        {/* Filters bar (only in feed view) */}
+        {view === "feed" && (
+          <div className="mt-4">
+            <FiltersBar onSortChange={setSortBy} sortBy={sortBy} />
+          </div>
+        )}
       </div>
-
-      {/* Tag filter bar */}
-      {(tags && tags.length > 0) || isAdmin ? (
-        <div className={cn(view === "roadmap" && "px-4")}>
-          <TagFilterBar
-            isAdmin={isAdmin}
-            onTagSelect={setSelectedTagId}
-            organizationId={organizationId}
-            selectedTagId={selectedTagId}
-            tags={tags ?? []}
-          />
-        </div>
-      ) : null}
-
-      {/* Filters bar (only in feed view) */}
-      {view === "feed" && (
-        <FiltersBar onSortChange={setSortBy} sortBy={sortBy} />
-      )}
 
       {/* Active status filter chips (only in feed view) */}
       {view === "feed" && selectedStatusIds.length > 0 && (

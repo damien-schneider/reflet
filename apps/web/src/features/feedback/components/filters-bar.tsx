@@ -19,7 +19,7 @@ export interface FiltersBarProps {
 
 export function FiltersBar({ sortBy, onSortChange }: FiltersBarProps) {
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <Select
         onValueChange={(v) => onSortChange(v as SortOption)}
         value={sortBy}
