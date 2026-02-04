@@ -382,13 +382,8 @@ function FeedbackBoardContent({
         </Lead>
       </div>
 
-      {/* Sticky toolbar area - all filters */}
-      <div
-        className={cn(
-          "sticky top-0 z-10 bg-background pb-4",
-          view === "roadmap" && "px-4"
-        )}
-      >
+      {/* Toolbar area */}
+      <div className={cn("pb-4", view === "roadmap" && "px-4")}>
         <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-clip">
           {/* Search bar - left */}
           <div className="relative w-48 flex-shrink-0">
@@ -401,12 +396,14 @@ function FeedbackBoardContent({
             />
           </div>
 
-          {/* View toggle - center */}
-          <BoardViewToggle
-            className="hidden shrink-0 md:flex"
-            onChange={setView}
-            view={view}
-          />
+          {/* View toggle - center (sticky) */}
+          <div className="sticky top-2 z-10">
+            <BoardViewToggle
+              className="hidden shrink-0 md:flex"
+              onChange={setView}
+              view={view}
+            />
+          </div>
 
           {/* Submit button - right */}
           <div className="flex shrink-0 justify-end">
@@ -420,31 +417,29 @@ function FeedbackBoardContent({
           </div>
         </div>
 
-        {/* Mobile view toggle */}
-        <div className="mt-3 flex justify-center md:hidden">
+        {/* Mobile view toggle (sticky) */}
+        <div className="sticky top-2 z-10 mt-3 flex justify-center md:hidden">
           <BoardViewToggle onChange={setView} view={view} />
         </div>
-
-        {/* Tag filter bar */}
-        {(tags && tags.length > 0) || isAdmin ? (
-          <div className="mt-4">
-            <TagFilterBar
-              isAdmin={isAdmin}
-              onTagSelect={setSelectedTagId}
-              organizationId={organizationId}
-              selectedTagId={selectedTagId}
-              tags={tags ?? []}
-            />
-          </div>
-        ) : null}
-
-        {/* Filters bar (only in feed view) */}
-        {view === "feed" && (
-          <div className="mt-4">
-            <FiltersBar onSortChange={setSortBy} sortBy={sortBy} />
-          </div>
-        )}
       </div>
+
+      {/* Tag filter bar */}
+      {(tags && tags.length > 0) || isAdmin ? (
+        <div className={cn(view === "roadmap" && "px-4")}>
+          <TagFilterBar
+            isAdmin={isAdmin}
+            onTagSelect={setSelectedTagId}
+            organizationId={organizationId}
+            selectedTagId={selectedTagId}
+            tags={tags ?? []}
+          />
+        </div>
+      ) : null}
+
+      {/* Filters bar (only in feed view) */}
+      {view === "feed" && (
+        <FiltersBar onSortChange={setSortBy} sortBy={sortBy} />
+      )}
 
       {/* Active status filter chips (only in feed view) */}
       {view === "feed" && selectedStatusIds.length > 0 && (
