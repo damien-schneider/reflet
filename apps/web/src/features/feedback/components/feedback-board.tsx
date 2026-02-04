@@ -382,6 +382,11 @@ function FeedbackBoardContent({
         </Lead>
       </div>
 
+      {/* Sticky view toggle - centered */}
+      <div className="sticky top-2 z-10 mb-4 flex justify-center">
+        <BoardViewToggle onChange={setView} view={view} />
+      </div>
+
       {/* Toolbar area */}
       <div className={cn("pb-4", view === "roadmap" && "px-4")}>
         <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-clip">
@@ -396,15 +401,6 @@ function FeedbackBoardContent({
             />
           </div>
 
-          {/* View toggle - center (sticky) */}
-          <div className="sticky top-2 z-10">
-            <BoardViewToggle
-              className="hidden shrink-0 md:flex"
-              onChange={setView}
-              view={view}
-            />
-          </div>
-
           {/* Submit button - right */}
           <div className="flex shrink-0 justify-end">
             <Button
@@ -415,11 +411,6 @@ function FeedbackBoardContent({
               <span className="hidden md:inline">Submit Feedback</span>
             </Button>
           </div>
-        </div>
-
-        {/* Mobile view toggle (sticky) */}
-        <div className="sticky top-2 z-10 mt-3 flex justify-center md:hidden">
-          <BoardViewToggle onChange={setView} view={view} />
         </div>
       </div>
 
