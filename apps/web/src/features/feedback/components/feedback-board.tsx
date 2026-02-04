@@ -385,32 +385,41 @@ function FeedbackBoardContent({
       </div>
 
       {/* Sticky toolbar area */}
-      <div className="sticky top-0 z-10 -mx-4 px-4 pb-4">
-        {/* Search bar */}
-        <div className="mx-auto mb-4 flex max-w-md justify-center">
-          <div className="relative w-full">
-            <MagnifyingGlassIcon className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="sticky top-0 z-10 -mx-4 bg-background/95 px-4 pb-4 backdrop-blur-sm">
+        <div className="flex items-center justify-between gap-4">
+          {/* Search bar - left */}
+          <div className="relative w-48 flex-shrink-0">
+            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              className="h-10 rounded-full border-0 bg-muted pr-4 pl-11 focus-visible:ring-2"
+              className="h-10 rounded-full border-0 bg-muted pr-4 pl-10 focus-visible:ring-2"
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search feedback..."
+              placeholder="Search..."
               value={searchQuery}
             />
           </div>
-        </div>
 
-        {/* Toolbar */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            <BoardViewToggle onChange={setView} view={view} />
-          </div>
+          {/* View toggle - center */}
+          <BoardViewToggle
+            className="hidden shrink-0 md:flex"
+            onChange={setView}
+            view={view}
+          />
 
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setShowSubmitDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Submit Feedback
+          {/* Submit button - right */}
+          <div className="flex shrink-0 justify-end">
+            <Button
+              className="h-10 min-w-10 rounded-full"
+              onClick={() => setShowSubmitDialog(true)}
+            >
+              <Plus className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Submit Feedback</span>
             </Button>
           </div>
+        </div>
+
+        {/* Mobile view toggle */}
+        <div className="mt-3 flex justify-center md:hidden">
+          <BoardViewToggle onChange={setView} view={view} />
         </div>
       </div>
 
