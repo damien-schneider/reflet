@@ -3,7 +3,7 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { H1, Muted } from "@/components/ui/typography";
@@ -24,15 +24,6 @@ export function AcceptInvitationContent({
   const [error, setError] = useState<string | null>(null);
   const { data: session } = authClient.useSession();
   const isAuthenticated = Boolean(session?.user?.id);
-  const hasAutoAccepted = useRef(false);
-  const wasUnauthenticated = useRef(false);
-
-  // Track if user was ever unauthenticated (to enable auto-accept on auth transition)
-  useEffect(() => {
-    if (!isAuthenticated) {
-      wasUnauthenticated.current = true;
-    }
-  }, [isAuthenticated]);
 
   const handleAcceptInvitation = useCallback(async () => {
     setIsAccepting(true);
@@ -45,21 +36,6 @@ export function AcceptInvitationContent({
       setIsAccepting(false);
     }
   }, [acceptInvitation, token, router]);
-
-  // Auto-accept invitation when user becomes authenticated (after being unauthenticated)
-  useEffect(() => {
-    if (
-      isAuthenticated &&
-      wasUnauthenticated.current &&
-      invitation &&
-      invitation.status === "pending" &&
-      !hasAutoAccepted.current &&
-      !isAccepting
-    ) {
-      hasAutoAccepted.current = true;
-      handleAcceptInvitation();
-    }
-  }, [isAuthenticated, invitation, isAccepting, handleAcceptInvitation]);
 
   // Loading state
   if (invitation === undefined) {

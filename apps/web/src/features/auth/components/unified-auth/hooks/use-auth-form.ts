@@ -152,7 +152,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
         {
           onSuccess: () => {
             onSuccess?.();
-            router.push("/dashboard");
+            router.push("/pending-invitations");
             toast.success("Successfully signed in");
           },
           onError: (error) => {
@@ -180,7 +180,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
           onSuccess: () => {
             onSuccess?.();
             if (skipEmailVerification) {
-              router.push("/dashboard");
+              router.push("/pending-invitations");
               toast.success("Successfully signed up.");
             } else {
               router.push(

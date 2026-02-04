@@ -271,7 +271,7 @@ describe("AcceptInvitationContent", () => {
       expect(screen.queryByTestId(AUTH_FORM_TESTID)).not.toBeInTheDocument();
     });
 
-    it("auto-accepts invitation after successful authentication", async () => {
+    it("does NOT auto-accept invitation after authentication - user must click accept", () => {
       // Start unauthenticated
       mockUseSession.mockReturnValue(createUnauthenticatedSession());
       mockInvitationQuery.mockReturnValue({
@@ -295,16 +295,12 @@ describe("AcceptInvitationContent", () => {
       // Rerender to trigger the effect
       rerender(<AcceptInvitationContent token="valid-token" />);
 
-      // Should auto-accept and redirect
-      await waitFor(() => {
-        expect(mockAcceptMutation).toHaveBeenCalledWith({
-          token: "valid-token",
-        });
-      });
+      // Should NOT auto-accept - user must click the accept button
+      expect(mockAcceptMutation).not.toHaveBeenCalled();
+      expect(mockRouterPush).not.toHaveBeenCalled();
 
-      await waitFor(() => {
-        expect(mockRouterPush).toHaveBeenCalledWith("/dashboard");
-      });
+      // Should show the accept button for the user to click
+      expect(screen.getByText(ACCEPT_INVITATION_PATTERN)).toBeInTheDocument();
     });
 
     it("shows invitation details even when not authenticated", () => {

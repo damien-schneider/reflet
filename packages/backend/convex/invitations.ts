@@ -44,6 +44,45 @@ export const listPending = query({
 });
 
 /**
+ * List pending invitations for the current user (by email)
+ */
+export const listMyPendingInvitations = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await authComponent.safeGetAuthUser(ctx);
+    if (!user?.email) {
+      return [];
+    }
+
+    const now = Date.now();
+    const invitations = await ctx.db
+      .query("invitations")
+      .withIndex("by_email", (q) => q.eq("email", user.email.toLowerCase()))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "pending"),
+          q.gt(q.field("expiresAt"), now)
+        )
+      )
+      .collect();
+
+    // Fetch organization names for each invitation
+    const invitationsWithOrg = await Promise.all(
+      invitations.map(async (invitation) => {
+        const org = await ctx.db.get(invitation.organizationId);
+        return {
+          ...invitation,
+          organizationName: org?.name ?? "Unknown",
+          organizationLogo: org?.logo,
+        };
+      })
+    );
+
+    return invitationsWithOrg;
+  },
+});
+
+/**
  * Get invitation by token (for accepting)
  */
 export const getByToken = query({
@@ -142,6 +181,15 @@ export const create = mutation({
 
     if (existingInvitation) {
       throw new Error("An invitation has already been sent to this email");
+    }
+
+    // Check if email already belongs to an existing member
+    const normalizedEmail = args.email.toLowerCase();
+    for (const member of currentMembers) {
+      const memberUser = await authComponent.getAnyUserById(ctx, member.userId);
+      if (memberUser?.email?.toLowerCase() === normalizedEmail) {
+        throw new Error("This person is already a member of this organization");
+      }
     }
 
     // Generate unique token

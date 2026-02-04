@@ -57,7 +57,7 @@ function VerifyEmailContent() {
   }, [token, error]);
 
   const handleContinue = () => {
-    router.push("/dashboard");
+    router.push("/pending-invitations");
   };
 
   const handleResendEmail = async () => {
