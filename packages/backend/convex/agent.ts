@@ -47,3 +47,6 @@ Your job is to analyze a GitHub repository and provide:
 
 Be thorough but concise. Focus on actionable insights that would help someone understand the project quickly.`,
 });
+
+// Note: Auto-tagging now uses AI SDK directly with structured output (generateObject)
+// See feedback_auto_tagging.ts for the implementation

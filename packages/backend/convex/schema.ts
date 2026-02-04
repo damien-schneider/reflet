@@ -354,10 +354,36 @@ export default defineSchema({
   feedbackTags: defineTable({
     feedbackId: v.id("feedback"),
     tagId: v.id("tags"),
+    appliedByAi: v.optional(v.boolean()),
   })
     .index("by_feedback", ["feedbackId"])
     .index("by_tag", ["tagId"])
     .index("by_feedback_tag", ["feedbackId", "tagId"]),
+
+  // ============================================
+  // AUTO-TAGGING JOBS (Progress tracking)
+  // ============================================
+  autoTaggingJobs: defineTable({
+    organizationId: v.id("organizations"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    totalItems: v.number(),
+    processedItems: v.number(),
+    successfulItems: v.number(),
+    failedItems: v.number(),
+    errors: v.array(
+      v.object({
+        feedbackId: v.id("feedback"),
+        error: v.string(),
+      })
+    ),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_organization", ["organizationId"]),
 
   // ============================================
   // COMMENTS

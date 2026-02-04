@@ -11,6 +11,7 @@ import {
   ContextListSeparator,
   ContextListTrigger,
 } from "@/components/ui/context-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag-dialog";
 import { TagFormPopover } from "@/features/tags/components/tag-form-popover";
 import type { TagColor } from "@/lib/tag-colors";
@@ -172,7 +173,10 @@ export const TagFilterBar = memo(function TagFilterBar({
 
   return (
     <>
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
+      <ScrollArea
+        className="mx-auto max-w-6xl"
+        classNameViewport="flex gap-2 pb-5 pt-1 px-4"
+      >
         {/* All button */}
         <button
           className={cn(
@@ -211,7 +215,7 @@ export const TagFilterBar = memo(function TagFilterBar({
             organizationId={organizationId}
           />
         )}
-      </div>
+      </ScrollArea>
 
       {/* Delete tag dialog */}
       <DeleteTagDialog

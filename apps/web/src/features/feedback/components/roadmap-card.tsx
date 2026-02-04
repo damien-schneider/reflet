@@ -22,6 +22,7 @@ export function RoadmapCard({
   return (
     <Link
       href={`/dashboard/${orgSlug}/boards/${boardSlug}/feedback/${feedback._id}`}
+      prefetch={true}
     >
       <Card className="group cursor-pointer transition-all hover:border-olive-600 hover:bg-accent/50">
         <CardContent className="p-3">

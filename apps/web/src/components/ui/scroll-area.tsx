@@ -20,11 +20,13 @@ function getOverflowStyle(direction: ScrollDirection): CSSProperties {
 function ScrollArea({
   className,
   classNameViewport,
+  styleViewport,
   children,
   direction = "both",
   ...props
 }: ScrollAreaPrimitive.Root.Props & {
   classNameViewport?: string;
+  styleViewport?: CSSProperties;
   direction?: ScrollDirection;
 }) {
   return (
@@ -39,7 +41,7 @@ function ScrollArea({
           classNameViewport
         )}
         data-slot="scroll-area-viewport"
-        style={getOverflowStyle(direction)}
+        style={{ ...getOverflowStyle(direction), ...styleViewport }}
       >
         {children}
       </ScrollAreaPrimitive.Viewport>

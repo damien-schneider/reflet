@@ -1,4 +1,7 @@
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateObject } from "ai";
 import { v } from "convex/values";
+import { z } from "zod";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import {
@@ -8,54 +11,33 @@ import {
   mutation,
   query,
 } from "./_generated/server";
-import {
-  autoTaggingAgent,
-  autoTaggingAgentFallback1,
-  autoTaggingAgentFallback2,
-} from "./agent";
 import { getAuthUser } from "./utils";
 
-// Regex to extract JSON from AI response (may include markdown code blocks)
-const JSON_EXTRACT_REGEX = /\{[\s\S]*\}/;
+// Zod schema for auto-tagging response
+const autoTaggingResponseSchema = z.object({
+  selectedTagIds: z
+    .array(z.string())
+    .describe(
+      "Array of tag IDs from the provided list that match the feedback"
+    ),
+  reasoning: z
+    .string()
+    .describe("Brief explanation of why these tags were selected"),
+});
 
-// Helper to parse AI response and extract valid tag IDs
-function parseAiTagResponse(
-  responseText: string,
-  validTagIds: Set<string>
-): { tagIds: string[]; error: string | null } {
-  try {
-    const jsonMatch = responseText.match(JSON_EXTRACT_REGEX);
-    if (!jsonMatch) {
-      return { tagIds: [], error: "No JSON found in response" };
-    }
+type AutoTaggingResponse = z.infer<typeof autoTaggingResponseSchema>;
 
-    const parsed = JSON.parse(jsonMatch[0]) as {
-      selectedTagIds?: string[];
-      reasoning?: string;
-    };
+// OpenRouter provider setup
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
 
-    console.log("Parsed response:", parsed);
-
-    if (!Array.isArray(parsed.selectedTagIds)) {
-      return { tagIds: [], error: "selectedTagIds is not an array" };
-    }
-
-    const matchedIds = parsed.selectedTagIds.filter((id) =>
-      validTagIds.has(id)
-    );
-
-    console.log("Valid tag IDs:", Array.from(validTagIds));
-    console.log("AI returned IDs:", parsed.selectedTagIds);
-    console.log("Matched tag IDs:", matchedIds);
-
-    return { tagIds: matchedIds, error: null };
-  } catch (err) {
-    return {
-      tagIds: [],
-      error: `JSON parse error: ${err instanceof Error ? err.message : "Unknown"}`,
-    };
-  }
-}
+// Model fallback chain
+const AUTO_TAGGING_MODELS = [
+  "arcee-ai/trinity-large-preview:free",
+  "upstage/solar-pro-3:free",
+  "z-ai/glm-4.7-flash",
+] as const;
 
 // ============================================
 // QUERIES
@@ -407,11 +389,14 @@ export const startBulkAutoTagging = mutation({
 // ============================================
 
 /**
- * Process auto-tagging for a single feedback item
+ * Process auto-tagging for a single feedback item using AI SDK with structured output
  */
 export const processAutoTagging = internalAction({
   args: { feedbackId: v.id("feedback") },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{ success: boolean; reason?: string; tagCount: number }> => {
     const data = await ctx.runQuery(
       internal.feedback_auto_tagging.getFeedbackForAutoTagging,
       { feedbackId: args.feedbackId }
@@ -434,77 +419,70 @@ export const processAutoTagging = internalAction({
       )
       .join("\n");
 
-    const prompt = `You are a feedback categorization assistant. Analyze the feedback below and select the most appropriate tag(s) from the available list.
+    const systemPrompt = `You are a feedback categorization assistant. Your job is to analyze user feedback and select the most appropriate tags from the available list.
 
-FEEDBACK TO CATEGORIZE:
+IMPORTANT:
+- Only select tag IDs from the provided list
+- Select 1-3 tags that best match the feedback content
+- If no tags match well, return an empty array for selectedTagIds`;
+
+    const userPrompt = `Categorize this feedback:
+
+FEEDBACK:
 Title: ${feedback.title}
 Description: ${feedback.description || "(no description)"}
 
-AVAILABLE TAGS (select from these only):
-${tagsDescription}
+AVAILABLE TAGS (use exact IDs):
+${tagsDescription}`;
 
-INSTRUCTIONS:
-1. Read the feedback carefully
-2. Select 1-3 tags that best match the feedback content
-3. Return ONLY valid JSON in this exact format: {"selectedTagIds": ["id1", "id2"], "reasoning": "brief explanation"}
-4. The IDs must be exactly as shown above (they start with letters and numbers)
-5. If no tags match well, return: {"selectedTagIds": [], "reasoning": "no matching tags"}
+    const validTagIds = new Set<string>(
+      tags.map(
+        (t: { _id: Id<"tags">; name: string; description?: string }) =>
+          t._id as string
+      )
+    );
 
-Your response (JSON only):`;
-
-    // Try agents in order with fallback chain
-    const agents = [
-      { agent: autoTaggingAgent, name: "primary" },
-      { agent: autoTaggingAgentFallback1, name: "fallback1" },
-      { agent: autoTaggingAgentFallback2, name: "fallback2" },
-    ];
-
-    let result: { text: string } | undefined;
+    // Try models in fallback chain
+    let result: AutoTaggingResponse | null = null;
     let lastError: Error | null = null;
 
-    for (const { agent, name } of agents) {
+    for (const modelId of AUTO_TAGGING_MODELS) {
       try {
-        console.log(`Trying auto-tagging with ${name} agent...`);
-        result = await agent.generateText(
-          ctx,
-          { userId: "system" },
-          { prompt }
-        );
-        console.log(`${name} agent succeeded`);
-        break; // Success, exit the loop
+        console.log(`Trying auto-tagging with model: ${modelId}...`);
+
+        const response = await generateObject({
+          model: openrouter(modelId),
+          schema: autoTaggingResponseSchema,
+          system: systemPrompt,
+          prompt: userPrompt,
+        });
+
+        result = response.object;
+        console.log(`Model ${modelId} succeeded:`, result);
+        break;
       } catch (err) {
-        console.error(`${name} agent failed:`, err);
+        console.error(`Model ${modelId} failed:`, err);
         lastError = err instanceof Error ? err : new Error(String(err));
-        // Continue to next agent in fallback chain
       }
     }
 
     if (!result) {
       return {
         success: false,
-        reason: `All AI agents failed: ${lastError?.message ?? "Unknown error"}`,
+        reason: `All AI models failed: ${lastError?.message ?? "Unknown error"}`,
         tagCount: 0,
       };
     }
 
-    const responseText = result.text || "";
-    console.log("AI response for feedback", args.feedbackId, ":", responseText);
-
-    const validTagIds = new Set(
-      tags.map(
-        (t: { _id: Id<"tags">; name: string; description?: string }) => t._id
-      )
+    // Filter to only valid tag IDs that exist in the org
+    const selectedTagIds = result.selectedTagIds.filter((id) =>
+      validTagIds.has(id)
     );
 
-    const { tagIds: selectedTagIds, error: parseError } = parseAiTagResponse(
-      responseText,
-      validTagIds
-    );
-
-    if (parseError) {
-      console.error("Parse error:", parseError, "Response was:", responseText);
-      return { success: false, reason: parseError, tagCount: 0 };
-    }
+    console.log("AI reasoning:", result.reasoning);
+    console.log("Valid tag IDs:", Array.from(validTagIds));
+    console.log("AI returned IDs:", result.selectedTagIds);
+    console.log("Matched tag IDs:", selectedTagIds);
 
     if (selectedTagIds.length > 0) {
       await ctx.runMutation(internal.feedback_auto_tagging.applyAutoTags, {
@@ -514,10 +492,9 @@ Your response (JSON only):`;
       return { success: true, tagCount: selectedTagIds.length };
     }
 
-    // No tags selected - this is still "processed" but not "tagged"
     return {
       success: false,
-      reason: "AI selected no matching tags",
+      reason: result.reasoning || "AI selected no matching tags",
       tagCount: 0,
     };
   },

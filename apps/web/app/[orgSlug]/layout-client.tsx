@@ -3,7 +3,7 @@
 import {
   ChatCircle,
   FileText,
-  MapTrifold as MapIcon,
+  List as MenuIcon,
   Chat as MessageSquare,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
@@ -11,8 +11,15 @@ import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { use, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { use, useEffect, useMemo } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   H1,
   H2,
@@ -34,6 +41,7 @@ export default function PublicOrgLayoutClient({
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const pathname = usePathname();
+  const router = useRouter();
 
   const supportSettings = useQuery(
     api.support_conversations.getSupportSettings,
@@ -42,11 +50,41 @@ export default function PublicOrgLayoutClient({
 
   const supportEnabled = supportSettings?.supportEnabled ?? false;
 
+  // Prefetch tab routes for instant navigation
+  useEffect(() => {
+    router.prefetch(`/${orgSlug}`);
+    router.prefetch(`/${orgSlug}/changelog`);
+    if (supportEnabled) {
+      router.prefetch(`/${orgSlug}/support`);
+    }
+  }, [router, orgSlug, supportEnabled]);
+
   const colorCssVars = useMemo(() => {
     const primaryColor = org?.primaryColor ?? DEFAULT_PRIMARY_COLOR;
     const palette = generateColorPalette(primaryColor);
     return generateColorCssVars(palette);
   }, [org?.primaryColor]);
+
+  const currentTab = useMemo(() => {
+    if (pathname === `/${orgSlug}/changelog`) {
+      return "changelog";
+    }
+    if (pathname === `/${orgSlug}/support`) {
+      return "support";
+    }
+    return "feedback";
+  }, [pathname, orgSlug]);
+
+  const handleTabChange = (value: string | null) => {
+    if (!value) {
+      return;
+    }
+    if (value === "feedback") {
+      router.push(`/${orgSlug}`);
+    } else {
+      router.push(`/${orgSlug}/${value}`);
+    }
+  };
 
   if (org === undefined) {
     return (
@@ -89,98 +127,77 @@ export default function PublicOrgLayoutClient({
             <H2 variant="card">{org.name}</H2>
           )}
         </div>
-        <nav className="hidden items-center gap-4 md:flex">
-          <Link
-            className={`flex items-center gap-2 font-medium text-sm hover:text-olive-600 ${
-              pathname === `/${orgSlug}` ? "text-olive-600" : ""
-            }`}
-            href={`/${orgSlug}`}
-          >
-            <MessageSquare className="h-4 w-4" />
-            Feedback
-          </Link>
-          <Link
-            className={`flex items-center gap-2 font-medium text-sm hover:text-olive-600 ${
-              pathname === `/${orgSlug}/roadmap` ? "text-olive-600" : ""
-            }`}
-            href={`/${orgSlug}/roadmap`}
-          >
-            <MapIcon className="h-4 w-4" />
-            Roadmap
-          </Link>
-          <Link
-            className={`flex items-center gap-2 font-medium text-sm hover:text-olive-600 ${
-              pathname === `/${orgSlug}/changelog` ? "text-olive-600" : ""
-            }`}
-            href={`/${orgSlug}/changelog`}
-          >
-            <FileText className="h-4 w-4" />
-            Changelog
-          </Link>
-          {supportEnabled && (
-            <Link
-              className={`flex items-center gap-2 font-medium text-sm hover:text-olive-600 ${
-                pathname === `/${orgSlug}/support` ? "text-olive-600" : ""
-              }`}
-              href={`/${orgSlug}/support`}
-            >
-              <ChatCircle className="h-4 w-4" />
-              Support
-            </Link>
-          )}
-        </nav>
+
+        {/* Mobile: Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex rounded-md p-2 hover:bg-accent sm:hidden">
+            <MenuIcon className="h-5 w-5" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>
+              <Link
+                className={`flex w-full items-center gap-2 ${
+                  pathname === `/${orgSlug}` ? "text-olive-600" : ""
+                }`}
+                href={`/${orgSlug}`}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Feedback
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link
+                className={`flex w-full items-center gap-2 ${
+                  pathname === `/${orgSlug}/changelog` ? "text-olive-600" : ""
+                }`}
+                href={`/${orgSlug}/changelog`}
+              >
+                <FileText className="h-4 w-4" />
+                Changelog
+              </Link>
+            </DropdownMenuItem>
+            {supportEnabled && (
+              <DropdownMenuItem>
+                <Link
+                  className={`flex w-full items-center gap-2 ${
+                    pathname === `/${orgSlug}/support` ? "text-olive-600" : ""
+                  }`}
+                  href={`/${orgSlug}/support`}
+                >
+                  <ChatCircle className="h-4 w-4" />
+                  Support
+                </Link>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Desktop (sm:): Tabs */}
+        <Tabs
+          className="hidden sm:block"
+          onValueChange={handleTabChange}
+          value={currentTab}
+        >
+          <TabsList>
+            <TabsTrigger value="feedback">
+              <MessageSquare className="h-4 w-4" />
+              Feedback
+            </TabsTrigger>
+            <TabsTrigger value="changelog">
+              <FileText className="h-4 w-4" />
+              Changelog
+            </TabsTrigger>
+            {supportEnabled && (
+              <TabsTrigger value="support">
+                <ChatCircle className="h-4 w-4" />
+                Support
+              </TabsTrigger>
+            )}
+          </TabsList>
+        </Tabs>
       </header>
 
-      <nav className="fixed inset-x-4 bottom-4 z-50 flex items-center justify-around rounded-full border border-border bg-background/95 px-2 py-3 shadow-lg backdrop-blur-md md:hidden">
-        <Link
-          className={`flex flex-col items-center gap-1 rounded-full px-4 py-1 font-medium text-xs transition-colors ${
-            pathname === `/${orgSlug}`
-              ? "bg-olive-100 text-olive-600 dark:bg-olive-900/30"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-          href={`/${orgSlug}`}
-        >
-          <MessageSquare className="h-5 w-5" />
-          Feedback
-        </Link>
-        <Link
-          className={`flex flex-col items-center gap-1 rounded-full px-4 py-1 font-medium text-xs transition-colors ${
-            pathname === `/${orgSlug}/roadmap`
-              ? "bg-olive-100 text-olive-600 dark:bg-olive-900/30"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-          href={`/${orgSlug}/roadmap`}
-        >
-          <MapIcon className="h-5 w-5" />
-          Roadmap
-        </Link>
-        <Link
-          className={`flex flex-col items-center gap-1 rounded-full px-4 py-1 font-medium text-xs transition-colors ${
-            pathname === `/${orgSlug}/changelog`
-              ? "bg-olive-100 text-olive-600 dark:bg-olive-900/30"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-          href={`/${orgSlug}/changelog`}
-        >
-          <FileText className="h-5 w-5" />
-          Changelog
-        </Link>
-        {supportEnabled && (
-          <Link
-            className={`flex flex-col items-center gap-1 rounded-full px-4 py-1 font-medium text-xs transition-colors ${
-              pathname === `/${orgSlug}/support`
-                ? "bg-olive-100 text-olive-600 dark:bg-olive-900/30"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            href={`/${orgSlug}/support`}
-          >
-            <ChatCircle className="h-5 w-5" />
-            Support
-          </Link>
-        )}
-      </nav>
-
-      <main className="min-h-[80vh] pt-22 pb-24 md:pb-0">{children}</main>
+      <main className="min-h-[80vh] pt-22">{children}</main>
 
       <footer className="py-8">
         <div className="container mx-auto flex items-center justify-center px-4 text-muted-foreground text-sm">
@@ -188,7 +205,7 @@ export default function PublicOrgLayoutClient({
             Powered by{" "}
             <Link
               className="font-display font-medium text-lg text-olive-600 underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
-              href="https://reflet.app"
+              href={process.env.NEXT_PUBLIC_SITE_URL ?? "https://reflet.app"}
               rel="noopener"
               target="_blank"
             >

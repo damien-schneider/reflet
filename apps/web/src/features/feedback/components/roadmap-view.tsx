@@ -25,6 +25,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { FeedbackItem } from "./feed-feedback-view";
 import { AddColumnInline } from "./roadmap/add-column-inline";
@@ -350,14 +351,21 @@ export function RoadmapView({
   }
 
   return (
-    <div className="overflow-hidden">
+    <>
       <DndContext
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
         onDragStart={handleDragStart}
         sensors={sensors}
       >
-        <div className="flex gap-4 overflow-x-auto px-4 pb-4">
+        <ScrollArea
+          className=""
+          classNameViewport="flex gap-4 pb-4"
+          styleViewport={{
+            paddingLeft: "max(1rem, calc(50vw - 35rem))",
+            paddingRight: "1rem",
+          }}
+        >
           {statuses.map((status) => {
             const statusFeedback = optimisticFeedback.filter(
               (f) => f.organizationStatusId === status._id
@@ -382,7 +390,7 @@ export function RoadmapView({
           })}
 
           {isAdmin && <AddColumnInline organizationId={organizationId} />}
-        </div>
+        </ScrollArea>
 
         <DragOverlay>
           {activeItem ? (
@@ -406,6 +414,6 @@ export function RoadmapView({
         otherStatuses={statuses.filter((s) => s._id !== deleteDialogStatus?.id)}
         statusToDelete={deleteDialogStatus}
       />
-    </div>
+    </>
   );
 }

@@ -8,7 +8,7 @@ import schema from "./schema";
 const modules = import.meta.glob("./**/*.ts");
 
 // Type assertion to work around convex-test version mismatch
-// biome-ignore lint/suspicious/noExplicitAny: convex-test types are not compatible with newer convex versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const testSchema = schema as any;
 
 describe("Organization slug uniqueness", () => {

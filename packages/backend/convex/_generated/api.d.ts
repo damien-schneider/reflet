@@ -27,6 +27,7 @@ import type * as feedback_actions from "../feedback_actions.js";
 import type * as feedback_api from "../feedback_api.js";
 import type * as feedback_api_admin from "../feedback_api_admin.js";
 import type * as feedback_api_auth from "../feedback_api_auth.js";
+import type * as feedback_auto_tagging from "../feedback_auto_tagging.js";
 import type * as feedback_clarification from "../feedback_clarification.js";
 import type * as feedback_importance from "../feedback_importance.js";
 import type * as feedback_list from "../feedback_list.js";
@@ -95,6 +96,7 @@ declare const fullApi: ApiFromModules<{
   feedback_api: typeof feedback_api;
   feedback_api_admin: typeof feedback_api_admin;
   feedback_api_auth: typeof feedback_api_auth;
+  feedback_auto_tagging: typeof feedback_auto_tagging;
   feedback_clarification: typeof feedback_clarification;
   feedback_importance: typeof feedback_importance;
   feedback_list: typeof feedback_list;

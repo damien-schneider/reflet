@@ -95,6 +95,7 @@ export default function NavbarDesktop() {
               <Link
                 className="font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
                 href="/dashboard"
+                prefetch={true}
               >
                 Log in
               </Link>
@@ -104,7 +105,7 @@ export default function NavbarDesktop() {
               initial={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <Link href="/dashboard">
+              <Link href="/dashboard" prefetch={true}>
                 <Button
                   className="transition-all duration-200 hover:scale-105 hover:shadow-md"
                   size="default"

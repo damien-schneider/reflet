@@ -28,7 +28,7 @@ export function PublicViewToolbar({ orgSlug }: PublicViewToolbarProps) {
         <span className="whitespace-nowrap text-muted-foreground text-xs">
           You are in the public view
         </span>
-        <Link href={`/dashboard/${orgSlug}`}>
+        <Link href={`/dashboard/${orgSlug}`} prefetch={true}>
           <Button className="h-6" size="xs" variant="outline">
             <ArrowLeft className="mr-1 h-3 w-3" />
             <span className="hidden sm:inline">Dashboard</span>

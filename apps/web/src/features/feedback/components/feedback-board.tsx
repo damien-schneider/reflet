@@ -34,7 +34,7 @@ import {
 } from "./board-view-toggle";
 import { type FeedbackItem, FeedFeedbackView } from "./feed-feedback-view";
 import { FeedbackDetailDialog } from "./feedback-detail-dialog";
-import { FiltersBar, type SortOption } from "./filters-bar";
+import type { SortOption } from "./filters-bar";
 import { RoadmapView } from "./roadmap-view";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
 import { TagFilterBar } from "./tag-filter-bar";
@@ -114,7 +114,7 @@ function sortFeedback(
 
 function LoadingState() {
   return (
-    <div className="container mx-auto flex min-h-[280px] items-center justify-center px-4 py-8">
+    <div className="flex min-h-[280px] items-center justify-center px-4 py-8">
       <Spinner aria-label="Loading" className="size-8 text-muted-foreground" />
     </div>
   );
@@ -122,7 +122,7 @@ function LoadingState() {
 
 function PrivateOrgMessage() {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="px-4 py-8">
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Globe className="mb-4 h-12 w-12 text-muted-foreground" />
@@ -369,8 +369,8 @@ function FeedbackBoardContent({
   return (
     <div
       className={cn(
-        "py-8 *:mx-auto *:max-w-5xl",
-        view === "roadmap" ? "overflow-x-hidden" : "container mx-auto px-4"
+        "py-8"
+        // view === "roadmap" ? "overflow-x-hidden" : "container mx-auto px-4"
       )}
     >
       {/* Header */}
@@ -382,13 +382,22 @@ function FeedbackBoardContent({
         </Lead>
       </div>
 
-      {/* Sticky view toggle - centered */}
-      <div className="sticky top-2 z-10 mb-4 flex justify-center">
+      {/* View toggle - sticky on desktop, fixed at bottom on mobile */}
+      <div className="sticky top-4 z-10 mb-4 hidden justify-center md:flex">
+        <BoardViewToggle onChange={setView} view={view} />
+      </div>
+      <div
+        className="fixed inset-x-0 z-50 flex justify-center md:hidden"
+        style={{
+          bottom:
+            "calc(var(--mobile-nav-bottom, 0.75rem) + var(--mobile-nav-height, 3rem) + 0.5rem)",
+        }}
+      >
         <BoardViewToggle onChange={setView} view={view} />
       </div>
 
       {/* Toolbar area */}
-      <div className={cn("pb-4", view === "roadmap" && "px-4")}>
+      <div className={cn("mx-auto max-w-6xl px-4 pb-4")}>
         <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-clip">
           {/* Search bar - left */}
           <div className="relative w-48 flex-shrink-0">
@@ -416,7 +425,7 @@ function FeedbackBoardContent({
 
       {/* Tag filter bar */}
       {(tags && tags.length > 0) || isAdmin ? (
-        <div className={cn(view === "roadmap" && "px-4")}>
+        <div>
           <TagFilterBar
             isAdmin={isAdmin}
             onTagSelect={setSelectedTagId}
@@ -426,11 +435,6 @@ function FeedbackBoardContent({
           />
         </div>
       ) : null}
-
-      {/* Filters bar (only in feed view) */}
-      {view === "feed" && (
-        <FiltersBar onSortChange={setSortBy} sortBy={sortBy} />
-      )}
 
       {/* Active status filter chips (only in feed view) */}
       {view === "feed" && selectedStatusIds.length > 0 && (
@@ -489,9 +493,11 @@ function FeedbackBoardContent({
             onFeedbackClick={(id) =>
               setSelectedFeedbackId(id as Id<"feedback">)
             }
+            onSortChange={setSortBy}
             onSubmitClick={() => setShowSubmitDialog(true)}
             onVote={handleToggleVote}
             primaryColor={primaryColor}
+            sortBy={sortBy}
             statuses={orgStatuses || []}
           />
         )}

@@ -8,6 +8,9 @@ import {
 import { Button } from "@/components/ui/button";
 
 import { FeedbackCardWithMorphingDialog } from "./feedback-card-with-morphing-dialog";
+import { FiltersBar } from "./filters-bar";
+
+export type { SortOption } from "./filters-bar";
 
 export interface FeedbackItem {
   _id: string;
@@ -34,6 +37,8 @@ export interface FeedFeedbackViewProps {
   hasActiveFilters: boolean;
   /** Org brand color; when undefined, theme primary is used */
   primaryColor?: string;
+  sortBy: SortOption;
+  onSortChange: (sort: SortOption) => void;
   onVote: (
     e: React.MouseEvent,
     feedbackId: string,
@@ -49,13 +54,15 @@ export function FeedFeedbackView({
   isLoading,
   hasActiveFilters,
   primaryColor,
+  sortBy,
+  onSortChange,
   onVote,
   onSubmitClick,
   onFeedbackClick,
 }: FeedFeedbackViewProps) {
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 px-4">
         {[1, 2, 3].map((i) => (
           <div className="h-32 animate-pulse rounded-lg bg-muted" key={i} />
         ))}
@@ -65,7 +72,7 @@ export function FeedFeedbackView({
 
   if (feedback.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border bg-card py-12">
+      <div className="flex flex-col items-center justify-center py-12">
         {hasActiveFilters ? (
           <>
             <MagnifyingGlassIcon className="mb-4 h-12 w-12 text-muted-foreground" />
@@ -90,17 +97,20 @@ export function FeedFeedbackView({
   }
 
   return (
-    <div className="space-y-4">
-      {feedback.map((item) => (
-        <FeedbackCardWithMorphingDialog
-          feedback={item}
-          key={item._id}
-          onFeedbackClick={onFeedbackClick}
-          onVote={onVote}
-          primaryColor={primaryColor}
-          statuses={statuses}
-        />
-      ))}
-    </div>
+    <>
+      <FiltersBar onSortChange={onSortChange} sortBy={sortBy} />
+      <div className="space-y-4 px-4">
+        {feedback.map((item) => (
+          <FeedbackCardWithMorphingDialog
+            feedback={item}
+            key={item._id}
+            onFeedbackClick={onFeedbackClick}
+            onVote={onVote}
+            primaryColor={primaryColor}
+            statuses={statuses}
+          />
+        ))}
+      </div>
+    </>
   );
 }

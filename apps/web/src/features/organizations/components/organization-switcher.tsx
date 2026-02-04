@@ -1,8 +1,9 @@
 import { Buildings, CaretUpDown, Check, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +43,17 @@ export function OrganizationSwitcher({
 
   const currentOrg = organizations?.find((org) => org?.slug === currentOrgSlug);
 
+  // Prefetch organization routes for instant switching
+  useEffect(() => {
+    if (organizations) {
+      for (const org of organizations) {
+        if (org?.slug && org.slug !== currentOrgSlug) {
+          router.prefetch(`/dashboard/${org.slug}`);
+        }
+      }
+    }
+  }, [organizations, currentOrgSlug, router]);
+
   const handleCreateOrg = async () => {
     if (!newOrgName.trim()) {
       return;
@@ -62,10 +74,6 @@ export function OrganizationSwitcher({
     } finally {
       setIsCreating(false);
     }
-  };
-
-  const handleSelectOrg = (orgSlug: string) => {
-    router.push(`/dashboard/${orgSlug}`);
   };
 
   if (!organizations) {
@@ -114,13 +122,15 @@ export function OrganizationSwitcher({
               <DropdownListItem
                 className="flex items-center justify-between"
                 key={org._id}
-                onClick={() => handleSelectOrg(org.slug)}
-              >
-                <span className="truncate">{org.name}</span>
-                {org.slug === currentOrgSlug && (
-                  <Check className="h-4 w-4 shrink-0" />
+                render={(props) => (
+                  <Link href={`/dashboard/${org.slug}`} {...props}>
+                    <span className="truncate">{org.name}</span>
+                    {org.slug === currentOrgSlug && (
+                      <Check className="h-4 w-4 shrink-0" />
+                    )}
+                  </Link>
                 )}
-              </DropdownListItem>
+              />
             ) : null
           )}
           {organizations.length > 0 && <DropdownListSeparator />}
