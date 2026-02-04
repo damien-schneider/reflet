@@ -63,8 +63,11 @@ const TagButton = memo(function TagButton({
       style={{
         backgroundColor: isSelected
           ? `rgb(var(--tag-${cssColor}-bg))`
-          : `rgb(var(--tag-${cssColor}-bg) / 0.4)`,
+          : `rgb(var(--tag-${cssColor}-bg) / 0.5)`,
         color: `rgb(var(--tag-${cssColor}-text))`,
+        border: isSelected
+          ? "1px solid transparent"
+          : `1px solid rgb(var(--tag-${cssColor}-text) / 0.2)`,
       }}
       type="button"
     >
@@ -136,8 +139,8 @@ export const TagFilterBar = memo(function TagFilterBar({
           className={cn(
             "shrink-0 rounded-full px-3 py-1.5 font-medium text-sm transition-all",
             isAllSelected
-              ? "bg-foreground text-background"
-              : "bg-foreground/10 text-foreground"
+              ? "border border-primary/20 bg-primary text-primary-foreground"
+              : "border border-primary/20 bg-primary/10 text-primary"
           )}
           onClick={() => onTagSelect(null)}
           type="button"
