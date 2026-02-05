@@ -1,0 +1,636 @@
+import { BlogPostLayout } from "@/components/blog/blog-post-layout";
+import { Callout } from "@/components/blog/callout";
+import { LeadMagnet } from "@/components/blog/lead-magnet";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Open Source Product Management: Complete Self-Hosting Guide",
+  description: "Learn how to self-host Reflet, the open source product feedback platform. Step-by-step deployment guide for Docker, Kubernetes, and cloud providers with GDPR compliance.",
+  date: "2026-02-05",
+  author: "Reflet Team",
+  authorRole: "Engineering",
+  category: "guide",
+  tags: ["self-hosting", "open source", "deployment", "GDPR", "docker", "kubernetes"],
+  readingTime: "16 min read",
+  featured: true,
+  seoKeywords: ["self-hosted feedback tool", "open source roadmap", "GDPR compliance", "self hosted product feedback"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/self-hosting-guide",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+# Self-Hosting Reflet: Complete Deployment Guide
+
+Self-hosting your product feedback platform gives you complete control over your data, compliance requirements, and infrastructure costs. This comprehensive guide walks you through deploying Reflet on your own servers, from quick Docker setups to production-ready Kubernetes deployments.
+
+## Why Self-Host Your Feedback Platform?
+
+Before diving into the technical details, let's understand why organizations choose to self-host their product feedback tools.
+
+### Data Ownership and Privacy
+
+When you self-host Reflet, all user feedback, feature requests, and product data stay within your infrastructure. This is critical for organizations that:
+
+- Handle sensitive customer information
+- Operate in regulated industries (healthcare, finance, government)
+- Need to comply with data residency requirements
+- Want to avoid vendor lock-in
+
+### GDPR and Compliance
+
+For European companies and those serving EU customers, GDPR compliance is non-negotiable. Self-hosting ensures:
+
+- **Data residency**: Keep all data within EU borders
+- **Right to erasure**: Full control over data deletion
+- **Data portability**: Export data in any format you need
+- **Audit trails**: Complete visibility into data access
+
+<Callout type="info" title="GDPR Quick Note">
+Self-hosting alone doesn't make you GDPR compliant. You still need proper data handling procedures, privacy policies, and user consent mechanisms. However, self-hosting gives you the foundation to implement these requirements.
+</Callout>
+
+### Security Benefits
+
+Running Reflet on your infrastructure means:
+
+- Integration with your existing security stack (firewalls, VPNs, SIEM)
+- Custom authentication via your identity provider
+- Network isolation and private deployments
+- Full audit logging to your preferred destination
+
+### Cost Optimization
+
+While cloud-hosted solutions charge per user or feature, self-hosting has predictable infrastructure costs. For larger teams, self-hosting often becomes significantly more economical after 50+ users.
+
+### Customization Freedom
+
+Open source means you can modify Reflet to fit your exact needs:
+
+- Custom integrations with internal tools
+- Modified workflows and approval processes
+- White-labeling for client-facing deployments
+- Extended data models for specialized use cases
+
+## Prerequisites
+
+Before you begin, ensure you have the following tools and services ready.
+
+### Required Tools
+
+| Tool | Minimum Version | Purpose |
+|------|-----------------|---------|
+| Docker | 24.0+ | Container runtime |
+| Docker Compose | 2.20+ | Multi-container orchestration |
+| Node.js | 20+ | Build tooling |
+| Bun | 1.0+ | Package manager and runtime |
+| Git | 2.40+ | Source code management |
+
+### Infrastructure Requirements
+
+**Minimum specifications for production:**
+
+- **CPU**: 2 cores
+- **RAM**: 4 GB
+- **Storage**: 20 GB SSD
+- **Network**: Public IP or load balancer for external access
+
+**Recommended for teams of 100+ users:**
+
+- **CPU**: 4 cores
+- **RAM**: 8 GB
+- **Storage**: 50 GB SSD
+- **Network**: Load balancer with SSL termination
+
+### External Services
+
+Reflet requires the following services:
+
+1. **Convex** - Real-time backend database (self-hosted or cloud)
+2. **Authentication Provider** - Better-Auth with your choice of providers
+3. **SMTP Server** - For email notifications (optional but recommended)
+4. **Object Storage** - For file uploads (S3-compatible)
+
+<Callout type="tip" title="Convex Options">
+Convex offers both cloud-hosted and self-hosted options. For maximum data control, you can self-host Convex alongside Reflet. See the Convex self-hosting documentation for details.
+</Callout>
+
+## Quick Start: Docker Deployment
+
+Let's get Reflet running with Docker in under 10 minutes.
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/damien-schneider/reflet.git
+cd reflet
+```
+
+### Step 2: Configure Environment Variables
+
+Copy the example environment file and configure it:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your settings:
+
+```bash
+# Application
+NEXT_PUBLIC_APP_URL=https://feedback.yourcompany.com
+NODE_ENV=production
+
+# Convex
+CONVEX_DEPLOYMENT=your-convex-deployment
+NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+
+# Authentication
+BETTER_AUTH_SECRET=your-secure-secret-key-min-32-chars
+BETTER_AUTH_URL=https://feedback.yourcompany.com
+
+# Email (optional)
+SMTP_HOST=smtp.yourprovider.com
+SMTP_PORT=587
+SMTP_USER=your-smtp-user
+SMTP_PASSWORD=your-smtp-password
+SMTP_FROM=feedback@yourcompany.com
+
+# Object Storage (optional)
+S3_BUCKET=reflet-uploads
+S3_REGION=us-east-1
+S3_ACCESS_KEY=your-access-key
+S3_SECRET_KEY=your-secret-key
+```
+
+<Callout type="warning" title="Security Warning">
+Never commit your `.env` file to version control. Always use environment variables or secrets management in production.
+</Callout>
+
+### Step 3: Build and Run
+
+```bash
+# Build the Docker image
+docker compose build
+
+# Start the services
+docker compose up -d
+```
+
+### Step 4: Initialize the Database
+
+```bash
+# Run database migrations
+docker compose exec web bun run db:push
+```
+
+### Step 5: Verify the Installation
+
+Open your browser and navigate to `http://localhost:3000`. You should see the Reflet login page.
+
+```bash
+# Check container status
+docker compose ps
+
+# View logs
+docker compose logs -f web
+```
+
+<Callout type="success" title="Quick Start Complete">
+Your Reflet instance is now running. For production deployments, continue with the sections below to configure SSL, backups, and monitoring.
+</Callout>
+
+## Production Deployment: Kubernetes with Helm
+
+For production environments, we recommend Kubernetes for its scalability, self-healing, and declarative configuration.
+
+### Helm Chart Installation
+
+Add the Reflet Helm repository:
+
+```bash
+helm repo add reflet https://charts.reflet.app
+helm repo update
+```
+
+Create a values file for your deployment:
+
+```yaml
+# values.yaml
+replicaCount: 2
+
+image:
+  repository: ghcr.io/damien-schneider/reflet
+  tag: latest
+  pullPolicy: Always
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  hosts:
+    - host: feedback.yourcompany.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: reflet-tls
+      hosts:
+        - feedback.yourcompany.com
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+env:
+  - name: NODE_ENV
+    value: production
+  - name: NEXT_PUBLIC_APP_URL
+    value: https://feedback.yourcompany.com
+
+envFrom:
+  - secretRef:
+      name: reflet-secrets
+```
+
+Create the secrets:
+
+```bash
+kubectl create secret generic reflet-secrets \
+  --from-literal=BETTER_AUTH_SECRET=your-secure-secret \
+  --from-literal=CONVEX_DEPLOYMENT=your-deployment \
+  --from-literal=NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+```
+
+Install the Helm chart:
+
+```bash
+helm install reflet reflet/reflet \
+  -f values.yaml \
+  -n reflet \
+  --create-namespace
+```
+
+### Health Checks and Probes
+
+The Helm chart includes configured health checks:
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+```
+
+### Horizontal Pod Autoscaler
+
+The chart includes HPA configuration for automatic scaling:
+
+```bash
+# View autoscaler status
+kubectl get hpa -n reflet
+
+# Monitor pod scaling
+kubectl get pods -n reflet -w
+```
+
+## GDPR Compliance Checklist
+
+Self-hosting is just the first step toward GDPR compliance. Use this checklist to ensure your deployment meets regulatory requirements.
+
+<LeadMagnet
+  title="GDPR Compliance Checklist"
+  description="A comprehensive checklist for self-hosted feedback platforms covering data handling, user rights, and documentation requirements."
+  fileName="reflet-gdpr-checklist.pdf"
+  fileType="pdf"
+  downloadUrl="/downloads/reflet-gdpr-checklist.pdf"
+/>
+
+### Data Processing Requirements
+
+- [ ] Document all data processing activities
+- [ ] Implement data minimization (collect only necessary data)
+- [ ] Define data retention periods and automate deletion
+- [ ] Encrypt data at rest and in transit
+- [ ] Maintain records of processing activities (ROPA)
+
+### User Rights Implementation
+
+- [ ] **Right to access**: Users can export their data
+- [ ] **Right to rectification**: Users can correct their information
+- [ ] **Right to erasure**: Implement account and data deletion
+- [ ] **Right to portability**: Provide data in machine-readable format
+- [ ] **Right to object**: Allow users to opt out of processing
+
+### Technical Measures
+
+- [ ] Enable TLS 1.3 for all connections
+- [ ] Implement database encryption at rest
+- [ ] Configure audit logging for data access
+- [ ] Set up intrusion detection
+- [ ] Regular security assessments
+
+### Administrative Measures
+
+- [ ] Appoint a Data Protection Officer (if required)
+- [ ] Create and publish a privacy policy
+- [ ] Implement staff training procedures
+- [ ] Document data breach response procedures
+- [ ] Maintain vendor agreements (DPAs)
+
+<Callout type="info" title="Legal Advice">
+This checklist provides technical guidance but does not constitute legal advice. Consult with a legal professional to ensure full compliance with GDPR and other applicable regulations.
+</Callout>
+
+## Cloud Provider Deployment Guides
+
+### Amazon Web Services (AWS)
+
+Deploy Reflet on AWS using ECS or EKS for container orchestration.
+
+**ECS with Fargate (Serverless):**
+
+```bash
+# Create ECS cluster
+aws ecs create-cluster --cluster-name reflet-cluster
+
+# Create task definition (see AWS documentation)
+aws ecs register-task-definition --cli-input-json file://task-definition.json
+
+# Create service
+aws ecs create-service \
+  --cluster reflet-cluster \
+  --service-name reflet \
+  --task-definition reflet:1 \
+  --desired-count 2 \
+  --launch-type FARGATE \
+  --network-configuration "awsvpcConfiguration={subnets=[subnet-xxx],securityGroups=[sg-xxx],assignPublicIp=ENABLED}"
+```
+
+**Recommended AWS Architecture:**
+
+- **Compute**: ECS Fargate or EKS
+- **Load Balancer**: Application Load Balancer with SSL
+- **Secrets**: AWS Secrets Manager
+- **Storage**: S3 for file uploads
+- **CDN**: CloudFront for static assets
+
+### Google Cloud Platform (GCP)
+
+Deploy on GCP using Cloud Run or GKE.
+
+**Cloud Run (Serverless):**
+
+```bash
+# Build and push to Artifact Registry
+gcloud builds submit --tag gcr.io/PROJECT_ID/reflet
+
+# Deploy to Cloud Run
+gcloud run deploy reflet \
+  --image gcr.io/PROJECT_ID/reflet \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars NODE_ENV=production \
+  --set-secrets BETTER_AUTH_SECRET=reflet-auth-secret:latest
+```
+
+**Recommended GCP Architecture:**
+
+- **Compute**: Cloud Run or GKE Autopilot
+- **Load Balancer**: Cloud Load Balancing with managed SSL
+- **Secrets**: Secret Manager
+- **Storage**: Cloud Storage for file uploads
+- **CDN**: Cloud CDN for static assets
+
+### Microsoft Azure
+
+Deploy on Azure using Container Apps or AKS.
+
+**Azure Container Apps:**
+
+```bash
+# Create Container Apps environment
+az containerapp env create \
+  --name reflet-env \
+  --resource-group reflet-rg \
+  --location eastus
+
+# Deploy container app
+az containerapp create \
+  --name reflet \
+  --resource-group reflet-rg \
+  --environment reflet-env \
+  --image ghcr.io/damien-schneider/reflet:latest \
+  --target-port 3000 \
+  --ingress external \
+  --secrets auth-secret=your-secret \
+  --env-vars NODE_ENV=production
+```
+
+**Recommended Azure Architecture:**
+
+- **Compute**: Container Apps or AKS
+- **Load Balancer**: Azure Application Gateway
+- **Secrets**: Azure Key Vault
+- **Storage**: Azure Blob Storage for file uploads
+- **CDN**: Azure CDN for static assets
+
+## Monitoring and Maintenance
+
+### Health Monitoring
+
+Reflet exposes health endpoints for monitoring:
+
+```bash
+# Liveness check
+curl https://feedback.yourcompany.com/api/health
+
+# Readiness check (includes database connectivity)
+curl https://feedback.yourcompany.com/api/health/ready
+```
+
+### Logging Configuration
+
+Configure structured logging for production:
+
+```yaml
+# In your deployment configuration
+env:
+  - name: LOG_LEVEL
+    value: info
+  - name: LOG_FORMAT
+    value: json
+```
+
+Integrate with your logging stack:
+
+- **ELK Stack**: Filebeat to Elasticsearch
+- **Grafana Loki**: Promtail for log collection
+- **CloudWatch/Stackdriver**: Native cloud provider logging
+
+### Metrics and Alerting
+
+Reflet exposes Prometheus metrics:
+
+```bash
+curl https://feedback.yourcompany.com/metrics
+```
+
+Key metrics to monitor:
+
+| Metric | Description | Alert Threshold |
+|--------|-------------|-----------------|
+| `http_request_duration_seconds` | Request latency | P99 > 2s |
+| `http_requests_total` | Request count | Error rate > 1% |
+| `nodejs_heap_size_used_bytes` | Memory usage | > 80% limit |
+| `process_cpu_seconds_total` | CPU usage | Sustained > 80% |
+
+### Backup Procedures
+
+Since Reflet uses Convex as the database, backups are managed through Convex's backup system. For self-hosted Convex deployments:
+
+```bash
+# Export data snapshot
+convex export --path ./backups/$(date +%Y%m%d)
+
+# Schedule automated backups (cron)
+0 2 * * * /usr/local/bin/convex export --path /backups/$(date +\%Y\%m\%d)
+```
+
+<Callout type="tip" title="Backup Testing">
+Regularly test your backup restoration process. A backup is only as good as your ability to restore from it.
+</Callout>
+
+### Update Procedures
+
+Keep your Reflet installation up to date:
+
+```bash
+# Docker Compose
+docker compose pull
+docker compose up -d
+
+# Kubernetes/Helm
+helm repo update
+helm upgrade reflet reflet/reflet -f values.yaml -n reflet
+```
+
+## Troubleshooting Common Issues
+
+### Container Won't Start
+
+**Symptom**: Container exits immediately or enters crash loop.
+
+**Solutions**:
+
+1. Check environment variables are set correctly:
+   ```bash
+   docker compose config
+   ```
+
+2. View container logs:
+   ```bash
+   docker compose logs web
+   ```
+
+3. Verify Convex connection:
+   ```bash
+   docker compose exec web bun run convex:check
+   ```
+
+### Database Connection Errors
+
+**Symptom**: "Failed to connect to Convex" errors.
+
+**Solutions**:
+
+1. Verify `CONVEX_DEPLOYMENT` and `NEXT_PUBLIC_CONVEX_URL` are correct
+2. Check network connectivity to Convex servers
+3. Ensure your deployment is active in the Convex dashboard
+
+### Authentication Issues
+
+**Symptom**: Users cannot log in or sessions expire unexpectedly.
+
+**Solutions**:
+
+1. Verify `BETTER_AUTH_SECRET` is at least 32 characters
+2. Check `BETTER_AUTH_URL` matches your public URL exactly
+3. Ensure cookies are set with correct domain and secure flags
+
+### Performance Problems
+
+**Symptom**: Slow page loads or timeouts.
+
+**Solutions**:
+
+1. Check resource utilization:
+   ```bash
+   docker stats
+   ```
+
+2. Review application metrics for bottlenecks
+
+3. Scale horizontally if needed:
+   ```bash
+   kubectl scale deployment reflet --replicas=4 -n reflet
+   ```
+
+### SSL Certificate Issues
+
+**Symptom**: HTTPS not working or certificate warnings.
+
+**Solutions**:
+
+1. Verify cert-manager is installed and configured
+2. Check certificate status:
+   ```bash
+   kubectl get certificates -n reflet
+   ```
+
+3. Review cert-manager logs for issuance errors
+
+<Callout type="warning" title="Getting Help">
+If you encounter issues not covered here, check the GitHub Issues or join our Discord community for support from the Reflet team and community.
+</Callout>
+
+## Next Steps
+
+Now that your self-hosted Reflet instance is running, consider these next steps:
+
+1. **Configure SSO**: Integrate with your identity provider (Okta, Auth0, Azure AD)
+2. **Set up integrations**: Connect to Slack, Discord, or your project management tools
+3. **Customize branding**: Add your logo and brand colors
+4. **Import existing feedback**: Migrate data from your previous feedback tool
+5. **Train your team**: Share the user guide with your product and support teams
+
+Self-hosting Reflet gives you the flexibility and control that modern product teams need. With this guide, you're well-equipped to run a secure, compliant, and scalable feedback platform that grows with your organization.

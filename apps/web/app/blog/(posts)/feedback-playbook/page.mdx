@@ -1,0 +1,414 @@
+import { BlogPostLayout } from "@/components/blog/blog-post-layout";
+import { Callout } from "@/components/blog/callout";
+import { LeadMagnet } from "@/components/blog/lead-magnet";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Building a Product Feedback Program from Scratch (0-to-1 Playbook)",
+  description: "A complete guide to launching your product feedback program. Learn how to collect, organize, prioritize, and act on user feedback with proven frameworks and templates.",
+  date: "2026-02-05",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "guide",
+  tags: ["feedback program", "product management", "user research", "prioritization", "templates"],
+  readingTime: "12 min read",
+  featured: true,
+  seoKeywords: ["product feedback program", "feedback management process", "customer feedback program", "feature request management"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/feedback-playbook",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Starting a product feedback program from zero can feel overwhelming. You have users with opinions scattered across support tickets, social media, sales calls, and random Slack messages. How do you transform this chaos into a structured system that actually drives product decisions?
+
+This playbook gives you a concrete 30-day plan to go from zero to a fully operational feedback program. By the end, you will have a centralized feedback hub, clear prioritization frameworks, and a closed-loop system that keeps users engaged.
+
+## The Challenge of Starting from Zero
+
+Most teams face the same problems when they begin collecting feedback systematically:
+
+- **Feedback is everywhere**: Support tickets, emails, social media, sales calls, user interviews, and in-app surveys all contain valuable insights, but they live in silos.
+- **No common language**: One person calls it a "bug," another calls it a "feature request," and a third logs it as "customer complaint."
+- **Prioritization paralysis**: When everything seems important, nothing gets done.
+- **Feedback black holes**: Users submit ideas and never hear back, leading to disengagement.
+
+The good news? You can solve all of these problems in 30 days with a structured approach.
+
+<Callout type="tip" title="Start Small, Scale Fast">
+  Do not try to capture every piece of feedback on day one. Focus on your top 2-3 sources initially, then expand once your system is running smoothly.
+</Callout>
+
+## The 30-Day Blueprint
+
+### Week 1: Foundation
+
+Your first week focuses on understanding your current state and setting up the basic infrastructure.
+
+#### Day 1-2: Audit Your Feedback Sources
+
+Map every channel where users share feedback. Be thorough. Common sources include:
+
+| Source Type | Examples | Typical Volume |
+|-------------|----------|----------------|
+| Direct | In-app feedback, email, contact forms | High |
+| Support | Help desk tickets, live chat, phone calls | High |
+| Social | Twitter/X, LinkedIn, Reddit, forums | Medium |
+| Sales | CRM notes, call recordings, lost deal surveys | Medium |
+| Analytics | Session recordings, heatmaps, NPS surveys | High |
+| Community | Slack/Discord, user groups, conferences | Low-Medium |
+
+For each source, document:
+- How much feedback flows through it monthly
+- Who currently has access to it
+- How (or if) it gets captured today
+- Quality and actionability of the feedback
+
+#### Day 3-4: Define Your Taxonomy
+
+Create a shared vocabulary for categorizing feedback. This taxonomy becomes the backbone of your entire system.
+
+| Category | Definition | Examples |
+|----------|------------|----------|
+| Bug | Something broken that worked before | "Login button does not work on Safari" |
+| Feature Request | New capability users want | "Add dark mode support" |
+| Improvement | Enhancement to existing feature | "Make the dashboard load faster" |
+| UX Issue | Confusing or frustrating experience | "Cannot find export button" |
+| Documentation | Missing or unclear docs | "Need API examples for webhooks" |
+| Integration | Third-party tool requests | "Add Slack integration" |
+
+<Callout type="info" title="Keep It Simple">
+  Start with 5-7 categories maximum. You can always add more later, but too many categories from the start leads to inconsistent tagging.
+</Callout>
+
+Also define your status workflow:
+
+| Status | Meaning | Who Moves It |
+|--------|---------|--------------|
+| New | Just submitted, needs triage | Automatic |
+| Under Review | Being evaluated by product team | Product Manager |
+| Planned | Accepted and on roadmap | Product Manager |
+| In Progress | Currently being built | Engineering |
+| Shipped | Released to users | Engineering |
+| Declined | Not pursuing (with reason) | Product Manager |
+
+#### Day 5-7: Set Up Your Feedback Hub
+
+Choose and configure your central feedback system. This is where all feedback will live, regardless of where it originated.
+
+Your hub needs to support:
+- **Unified inbox**: All feedback flows to one place
+- **Tagging and categorization**: Your taxonomy in action
+- **User identification**: Link feedback to customer data
+- **Search and filtering**: Find patterns quickly
+- **Public roadmap option**: Show users what you are building
+
+<Callout type="success" title="Why Centralization Matters">
+  Teams with centralized feedback systems are 3x more likely to report that user feedback directly influences their roadmap decisions (ProductPlan 2024 Survey).
+</Callout>
+
+<LeadMagnet
+  title="Feedback Source Audit Template"
+  description="A spreadsheet template to map and evaluate all your feedback channels. Includes scoring criteria for prioritizing which sources to integrate first."
+  fileName="feedback-source-audit-template.xlsx"
+  fileType="xlsx"
+  downloadUrl="/downloads/feedback-source-audit-template.xlsx"
+/>
+
+### Week 2: Collection Systems
+
+With your foundation in place, week two focuses on actually capturing feedback consistently.
+
+#### Day 8-10: Establish Capture Points
+
+Set up feedback collection at key moments in the user journey:
+
+**In-app feedback widget**: Let users submit feedback without leaving your product. Place it prominently but not intrusively.
+
+**Post-action surveys**: After key actions (completing onboarding, using a feature for the first time, finishing a workflow), ask a simple question: "How was this experience?"
+
+**Support ticket routing**: Configure your help desk to automatically tag and forward feature requests and feedback to your hub.
+
+**NPS follow-up**: When users give you an NPS score, always ask "What's the primary reason for your score?" That qualitative data is gold.
+
+#### Day 11-12: Create Submission Templates
+
+Make it easy for users to give high-quality feedback by providing structure.
+
+**For users submitting feedback directly:**
+
+```
+What are you trying to accomplish?
+[User describes their goal]
+
+What's getting in your way?
+[User describes the problem]
+
+How are you working around it today?
+[User describes current workaround, if any]
+
+How important is this to you?
+[ ] Nice to have
+[ ] Important
+[ ] Critical for my workflow
+```
+
+**For internal team members logging feedback:**
+
+```
+Source: [Where did this come from?]
+Customer: [Name/Company/Tier]
+Verbatim: [Exact user words]
+Context: [What were they doing?]
+Category: [Bug/Feature/Improvement/etc.]
+Impact: [How many users affected?]
+```
+
+<Callout type="warning" title="Preserve User Voice">
+  Always capture feedback in the user's own words first. Summarize and categorize later, but keep the original verbatim quote. The exact language users use often reveals insights that summaries miss.
+</Callout>
+
+#### Day 13-14: Train Your Team
+
+Your feedback program is only as good as the people feeding it. Hold brief training sessions for:
+
+- **Support team**: How to identify and tag feedback in tickets, what to forward vs. handle directly
+- **Sales team**: How to log feature requests from prospects, when feedback indicates a deal-breaker vs. nice-to-have
+- **Customer Success**: How to capture expansion opportunities, recognizing patterns across accounts
+- **Engineering**: How to submit technical debt and DX feedback, linking to relevant code or PRs
+
+Create a simple one-pager with:
+- When to log feedback (vs. ignore)
+- How to categorize correctly
+- Expected response time for different categories
+- Who to escalate to for edge cases
+
+### Week 3: Prioritization Framework
+
+Collecting feedback is easy. Deciding what to build is hard. Week three gives you a framework for making those decisions consistently.
+
+#### Day 15-17: Implement RICE Scoring
+
+RICE (Reach, Impact, Confidence, Effort) is a proven framework for comparing opportunities objectively.
+
+| Factor | Question | Scale |
+|--------|----------|-------|
+| Reach | How many users will this affect per quarter? | Actual number |
+| Impact | How much will this improve their experience? | 0.25 (minimal) to 3 (massive) |
+| Confidence | How sure are we about Reach and Impact estimates? | 0-100% |
+| Effort | How many person-weeks to build? | Actual estimate |
+
+**RICE Score = (Reach x Impact x Confidence) / Effort**
+
+Example calculation:
+
+| Feature | Reach | Impact | Confidence | Effort | RICE Score |
+|---------|-------|--------|------------|--------|------------|
+| Dark mode | 2000 | 1 | 80% | 3 | 533 |
+| API webhooks | 500 | 3 | 90% | 4 | 337 |
+| Bulk export | 800 | 2 | 70% | 2 | 560 |
+
+In this example, bulk export wins despite lower reach because of strong confidence and low effort.
+
+<Callout type="tip" title="Customize Your Framework">
+  RICE is a starting point. Many teams add strategic alignment multipliers (2x for features supporting this quarter's OKRs) or customer tier weighting (enterprise requests count more).
+</Callout>
+
+#### Day 18-19: Build Your Prioritization Rubric
+
+Create a standardized rubric that removes ambiguity from prioritization discussions.
+
+**Impact Assessment Rubric:**
+
+| Score | Definition | Example |
+|-------|------------|---------|
+| 3 (Massive) | Unblocks a major workflow or eliminates a top-3 complaint | "Users cannot complete purchases without this" |
+| 2 (High) | Significantly improves experience for a core use case | "Cuts task completion time by 50%" |
+| 1 (Medium) | Noticeable improvement for some users | "Adds useful shortcut for power users" |
+| 0.5 (Low) | Minor convenience improvement | "Slightly better error message" |
+| 0.25 (Minimal) | Trivial or cosmetic | "Icon color preference" |
+
+**Confidence Calibration:**
+
+| Score | Definition | Evidence Required |
+|-------|------------|-------------------|
+| 100% | Proven with data | A/B test results, usage analytics |
+| 80% | Strong signals | Multiple user interviews, support volume data |
+| 50% | Reasonable assumption | A few user requests, competitive pressure |
+| 20% | Gut feeling | Internal intuition only |
+
+#### Day 20-21: Run Your First Prioritization Session
+
+Bring together product, engineering, and customer-facing teams for a structured prioritization meeting.
+
+**Agenda (90 minutes):**
+
+1. **Review top 20 feedback items by volume** (15 min) - What are users asking for most?
+2. **Score each item using RICE** (45 min) - Work through the framework together
+3. **Identify quick wins** (15 min) - Low effort, high impact items to ship immediately
+4. **Resolve debates** (15 min) - Use the rubric to settle disagreements
+
+<Callout type="info" title="Document Your Decisions">
+  For every item you decline or defer, write one sentence explaining why. This becomes invaluable when users ask "Why haven't you built X?" and helps future you remember the context.
+</Callout>
+
+<LeadMagnet
+  title="RICE Scoring Calculator"
+  description="A ready-to-use spreadsheet with RICE formula, example data, and visualization charts. Includes customizable weighting for strategic priorities."
+  fileName="rice-scoring-calculator.xlsx"
+  fileType="xlsx"
+  downloadUrl="/downloads/rice-scoring-calculator.xlsx"
+/>
+
+### Week 4: Closing the Loop
+
+The biggest mistake teams make is treating feedback as a one-way channel. Week four turns your program into a conversation.
+
+#### Day 22-24: Create Response Templates
+
+Build a library of responses for common scenarios:
+
+**For new submissions:**
+> Thanks for sharing this feedback. We have logged it and it will be reviewed by our product team. You will receive updates as the status changes.
+
+**For planned items:**
+> Great news. This feature is now on our roadmap. We are planning to work on it in [timeframe]. We will notify you when it ships.
+
+**For shipped items:**
+> We built it. Based on your feedback, we have released [feature name]. Check it out and let us know what you think.
+
+**For declined items:**
+> Thanks for this suggestion. After careful consideration, we have decided not to pursue this because [specific reason]. We are instead focusing on [alternative] which addresses a similar need. We appreciate you taking the time to share your thoughts.
+
+<Callout type="warning" title="Never Ghost Your Users">
+  Even a "no" is better than silence. Users who receive a thoughtful decline explanation remain 2x more likely to submit future feedback than users who never hear back (UserVoice research).
+</Callout>
+
+#### Day 25-26: Set Up Automated Notifications
+
+Configure your feedback hub to automatically notify users when:
+- Their submission is reviewed
+- A related item is planned
+- The feature ships
+
+Also set up internal notifications:
+- Daily digest of new feedback for product team
+- Weekly summary for leadership
+- Alerts when feedback volume spikes on any topic
+
+#### Day 27-28: Launch Your Public Roadmap
+
+Give users visibility into what you are building. A public roadmap:
+- Reduces "when will you build X?" support tickets
+- Creates excitement for upcoming features
+- Builds trust through transparency
+- Lets users vote on priorities (optional)
+
+**Roadmap best practices:**
+- Show 3-6 months ahead maximum (further out is misleading)
+- Use categories like "Now," "Next," "Later" instead of specific dates
+- Include a "Released" section to celebrate shipped features
+- Link back to the original feedback that inspired each item
+
+#### Day 29-30: Measure and Iterate
+
+Track these metrics to ensure your program is working:
+
+| Metric | Target | How to Measure |
+|--------|--------|----------------|
+| Feedback volume | Increasing | Count submissions per week |
+| Response time | Under 48 hours | Time from submission to first response |
+| Close rate | Over 70% | Percentage of items with a final status |
+| User satisfaction | Over 4/5 | Survey after status update |
+| Feedback influence | Over 30% | Percentage of roadmap items from user feedback |
+
+<Callout type="success" title="You Made It">
+  By day 30, you have transformed scattered user opinions into a systematic program that drives product decisions. Now the real work begins: consistently running this system and improving it over time.
+</Callout>
+
+## Common Pitfalls to Avoid
+
+Even with a solid system, teams frequently stumble. Watch out for these traps:
+
+**1. Collecting without acting**
+If your backlog of unprocessed feedback grows faster than you can address it, users will stop submitting. Commit to reviewing every piece of feedback within one week.
+
+**2. Letting loud voices dominate**
+One enterprise customer shouting does not equal 1000 users quietly struggling. Use data (support ticket volume, usage analytics) to calibrate the true impact.
+
+**3. Building feature factories**
+Not every piece of feedback deserves a solution. Sometimes the answer is better documentation, sometimes it is "that's not the problem we solve."
+
+**4. Ignoring the silent majority**
+Users who submit feedback are a vocal minority. Supplement with proactive research: user interviews, session recordings, and surveys to understand non-vocal users.
+
+**5. Treating all feedback equally**
+A feature request from a churned customer carries different weight than one from your most engaged power user. Build customer context into your evaluation.
+
+## Templates and Resources
+
+<LeadMagnet
+  title="Complete Feedback Playbook Toolkit"
+  description="Everything you need to implement this playbook: source audit template, taxonomy definitions, RICE calculator, response templates, and team training deck."
+  fileName="feedback-playbook-toolkit.zip"
+  fileType="zip"
+  downloadUrl="/downloads/feedback-playbook-toolkit.zip"
+/>
+
+### Quick Reference Checklist
+
+Use this checklist to track your progress through the 30-day playbook:
+
+**Week 1: Foundation**
+- [ ] Complete feedback source audit
+- [ ] Define feedback taxonomy (5-7 categories)
+- [ ] Create status workflow
+- [ ] Set up central feedback hub
+- [ ] Configure basic integrations
+
+**Week 2: Collection**
+- [ ] Add in-app feedback widget
+- [ ] Create post-action surveys
+- [ ] Set up support ticket routing
+- [ ] Build submission templates
+- [ ] Train support team
+- [ ] Train sales team
+- [ ] Train customer success team
+
+**Week 3: Prioritization**
+- [ ] Implement RICE scoring
+- [ ] Build impact assessment rubric
+- [ ] Create confidence calibration guide
+- [ ] Run first prioritization session
+- [ ] Document decisions for top 20 items
+
+**Week 4: Closing the Loop**
+- [ ] Create response template library
+- [ ] Configure user notifications
+- [ ] Set up internal alerts
+- [ ] Launch public roadmap
+- [ ] Define success metrics
+- [ ] Schedule first retrospective
+
+## What Comes Next
+
+After your initial 30 days, focus on:
+
+1. **Expanding sources**: Integrate more channels one at a time
+2. **Refining taxonomy**: Add categories based on actual usage patterns
+3. **Automating triage**: Use AI to auto-categorize and route feedback
+4. **Deepening analysis**: Look for patterns across customer segments
+5. **Sharing insights**: Create regular feedback reports for the broader org
+
+Your feedback program is a living system. The 30-day playbook gets you started, but the real value comes from consistently running, measuring, and improving it over time.
+
+---
+
+Ready to put this playbook into action? Reflet makes it easy to implement every step: centralized feedback collection, prioritization frameworks, public roadmaps, and automated user notifications are all built in. Start your free trial and transform how you listen to users.
