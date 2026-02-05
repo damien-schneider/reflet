@@ -1,6 +1,6 @@
 "use client";
 
-import { CaretRight } from "@phosphor-icons/react";
+import { Buildings, CaretRight } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useAtom } from "jotai";
@@ -15,7 +15,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
 import {
   SidebarInset,
   SidebarProvider,
@@ -222,38 +221,62 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
         <div className="h-full overflow-y-auto overflow-x-hidden bg-background pt-14">
           {!orgSlug && hasOrganizations ? (
             <main className="flex h-full items-center justify-center p-6">
-              <div className="max-w-md text-center">
-                <H2 variant="section">Select an organization</H2>
-                <Muted className="mt-2">
-                  Choose an organization from the sidebar or select one below.
-                </Muted>
-                <div className="mt-8 flex flex-col gap-3">
+              <div className="w-full max-w-sm">
+                <div className="mb-6 flex justify-center">
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
+                    <Buildings
+                      className="size-7 text-olive-600 dark:text-olive-400"
+                      weight="duotone"
+                    />
+                  </div>
+                </div>
+                <div className="mb-8 text-center">
+                  <H2>Select an organization</H2>
+                  <Muted className="mt-2">
+                    Choose a workspace to continue.
+                  </Muted>
+                </div>
+                <nav aria-label="Organizations" className="flex flex-col gap-2">
                   {organizations.map((org) =>
                     org ? (
-                      <Link href={`/dashboard/${org.slug}`} key={org._id}>
-                        <Button
-                          className="w-full justify-between rounded-lg px-4"
-                          variant="outline"
-                        >
+                      <Link
+                        className="group flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-all hover:ring-olive-400 dark:hover:ring-olive-600"
+                        href={`/dashboard/${org.slug}`}
+                        key={org._id}
+                      >
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-olive-100 font-display text-lg text-olive-700 dark:bg-olive-800/40 dark:text-olive-300">
+                          {org.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="flex-1 truncate font-medium text-sm">
                           {org.name}
-                          <CaretRight className="h-4 w-4 opacity-50" />
-                        </Button>
+                        </span>
+                        <CaretRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                       </Link>
                     ) : null
                   )}
-                </div>
+                </nav>
               </div>
             </main>
           ) : null}
 
           {!orgSlug && organizations?.length === 0 ? (
             <main className="flex h-full items-center justify-center p-6">
-              <div className="max-w-md text-center">
-                <H2 variant="section">Welcome to Reflet!</H2>
-                <Muted className="mt-2">
-                  Create your first organization to start collecting feedback.
-                </Muted>
-                <div className="mt-8">
+              <div className="w-full max-w-sm">
+                <div className="mb-6 flex justify-center">
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
+                    <Buildings
+                      className="size-7 text-olive-600 dark:text-olive-400"
+                      weight="duotone"
+                    />
+                  </div>
+                </div>
+                <div className="mb-8 text-center">
+                  <H2>Welcome to Reflet</H2>
+                  <Muted className="mt-2">
+                    Create your first organization to start collecting feedback.
+                  </Muted>
+                </div>
+                <div>
                   <OrganizationSwitcher currentOrgSlug={undefined} />
                 </div>
               </div>
