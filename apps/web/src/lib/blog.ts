@@ -55,7 +55,7 @@ export async function getBlogPostMeta(
   slug: string
 ): Promise<BlogPostMeta | null> {
   try {
-    const { meta } = await import(`@/app/blog/(posts)/${slug}/page.mdx`);
+    const { meta } = await import(`@app/blog/(posts)/${slug}/page.mdx`);
     return meta as BlogPostMeta;
   } catch {
     return null;

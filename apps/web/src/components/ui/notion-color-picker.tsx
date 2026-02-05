@@ -1,7 +1,12 @@
 "use client";
 
 import { Check } from "@phosphor-icons/react";
-import { TAG_COLOR_LABELS, TAG_COLORS, type TagColor } from "@/lib/tag-colors";
+import {
+  getTagSwatchClass,
+  TAG_COLOR_LABELS,
+  TAG_COLORS,
+  type TagColor,
+} from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 interface NotionColorPickerProps {
@@ -25,11 +30,10 @@ export function NotionColorPicker({ value, onChange }: NotionColorPickerProps) {
             type="button"
           >
             <div
-              className="h-4 w-4 rounded-sm"
-              style={{
-                backgroundColor: `rgb(var(--tag-${color}-bg))`,
-                border: `1px solid rgb(var(--tag-${color}-text) / 0.3)`,
-              }}
+              className={cn(
+                "h-4 w-4 rounded-sm border",
+                getTagSwatchClass(color)
+              )}
             />
             <span className="flex-1 text-left">{TAG_COLOR_LABELS[color]}</span>
             {value === color && <Check className="h-4 w-4" />}

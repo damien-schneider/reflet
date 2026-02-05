@@ -4,6 +4,7 @@ import { Check, Palette, Trash, X } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
+import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -43,13 +44,16 @@ export function RoadmapColumnHeader({
   const [editedName, setEditedName] = useState(name);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const updateStatus = useMutation(api.organization_statuses.update);
 
   // Get the display color - migrate hex colors to named colors for display
   const displayColor: TagColor = isValidTagColor(color)
     ? color
     : migrateHexToNamedColor(color);
-  const textColor = getTagTextColor(displayColor);
+  const textColor = getTagTextColor(displayColor, isDark);
 
   // Sync local state when prop changes
   useEffect(() => {
