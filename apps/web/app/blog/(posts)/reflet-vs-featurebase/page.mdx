@@ -1,0 +1,211 @@
+import { BlogPostLayout } from "@/components/blog/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/components/blog/comparison-table";
+import { Callout } from "@/components/blog/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs Featurebase: Open Source vs All-in-One Customer Platform",
+  description: "Compare Reflet and Featurebase for product feedback. See how open source compares to an all-in-one customer support and feedback platform.",
+  date: "2026-02-05",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["featurebase alternative", "comparison", "product feedback", "customer support"],
+  readingTime: "7 min read",
+  seoKeywords: ["featurebase alternative", "reflet vs featurebase", "open source feedback tool"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-featurebase",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Choosing between Reflet and Featurebase comes down to a fundamental question: do you want a focused, open-source feedback tool you control, or an all-in-one customer engagement platform with AI-powered features?
+
+Both are excellent products, but they serve different needs. This comparison will help you understand which approach aligns with your team's requirements.
+
+## Quick Comparison
+
+**Reflet** is an open-source, self-hostable feedback platform focused on doing one thing well: collecting user feedback, managing feature requests, and sharing roadmaps.
+
+**Featurebase** is a comprehensive customer engagement platform that combines feedback collection with AI-powered support, help centers, and customer communication tools.
+
+<Callout type="info" title="Philosophy Difference">
+  Reflet follows the Unix philosophy of doing one thing well. Featurebase follows the all-in-one platform approach, bundling multiple customer-facing tools together.
+</Callout>
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="Featurebase"
+  features={[
+    {
+      name: "Feedback Collection",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Collect and organize user feedback with voting"
+    },
+    {
+      name: "Customer Support Inbox",
+      reflet: "partial",
+      competitor: "strong",
+      description: "Unified inbox for customer conversations"
+    },
+    {
+      name: "AI-Powered Support",
+      reflet: "no",
+      competitor: "yes",
+      description: "AI agents that answer customer questions automatically"
+    },
+    {
+      name: "Help Center / Knowledge Base",
+      reflet: "no",
+      competitor: "yes",
+      description: "Self-serve documentation for customers"
+    },
+    {
+      name: "Real-Time Sync",
+      reflet: "strong",
+      competitor: "yes",
+      description: "Instant updates across all connected clients"
+    },
+    {
+      name: "Product Roadmap",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Public roadmap to share your product direction"
+    },
+    {
+      name: "Changelog",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Announce updates and new features"
+    },
+    {
+      name: "Open Source",
+      reflet: "yes",
+      competitor: "no",
+      description: "Source code available for inspection and modification"
+    },
+    {
+      name: "Self-Hosting Option",
+      reflet: "yes",
+      competitor: "no",
+      description: "Run on your own infrastructure"
+    },
+    {
+      name: "Transparent Pricing",
+      reflet: "yes",
+      competitor: "no",
+      description: "Public pricing without sales calls"
+    },
+    {
+      name: "Custom Branding",
+      reflet: "yes",
+      competitor: "yes",
+      description: "White-label with your brand colors and logo"
+    },
+    {
+      name: "API Access",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Programmatic access to your data"
+    }
+  ]}
+/>
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="Featurebase"
+  refletPricing={{
+    free: "Generous free tier",
+    paid: "From $19/month",
+    enterprise: "Custom pricing"
+  }}
+  competitorPricing={{
+    free: "Limited free tier",
+    paid: "Contact sales",
+    enterprise: "Contact sales"
+  }}
+/>
+
+<Callout type="tip" title="Self-Hosting Saves More">
+  With Reflet's open-source model, you can self-host for free on your own infrastructure. This is especially valuable for teams with strict data residency requirements or those who want complete control over their costs.
+</Callout>
+
+## Key Differences Explained
+
+### Focused Tool vs All-in-One Platform
+
+**Reflet** concentrates on the feedback-to-roadmap workflow. You get feedback boards, voting, roadmaps, and changelogs — all designed to work seamlessly together. This focused approach means less complexity and faster onboarding.
+
+**Featurebase** bundles multiple tools: feedback, support inbox, AI agents, help center, and more. If you need all these capabilities in one place, Featurebase offers that integration. However, if you already have solutions for support or documentation, you may be paying for features you don't use.
+
+### Open Source vs Closed Source
+
+**Reflet** is fully open source under the SSPL license. You can:
+- Inspect the source code
+- Self-host on your infrastructure
+- Contribute improvements
+- Fork and customize if needed
+- Ensure data sovereignty
+
+**Featurebase** is a closed-source SaaS product. You rely entirely on their infrastructure and trust their security practices without visibility into the code.
+
+### Pricing Transparency
+
+**Reflet** publishes clear pricing on the website. You know exactly what you'll pay before signing up.
+
+**Featurebase** requires contacting sales for pricing on most plans. This opaque pricing can make budgeting difficult and often indicates higher costs for scaling teams.
+
+### Real-Time Architecture
+
+**Reflet** is built on Convex, providing true real-time synchronization. When someone votes or adds feedback, everyone sees it instantly without page refreshes.
+
+**Featurebase** offers real-time features, but the depth of real-time integration varies across different parts of the product.
+
+## When to Choose Reflet
+
+Reflet is the better choice when you:
+
+- **Want full control** over your feedback data and infrastructure
+- **Value open source** for security transparency and customization
+- **Need transparent pricing** without sales negotiations
+- **Already have** customer support and help center solutions
+- **Prefer focused tools** that do one thing exceptionally well
+- **Have data residency requirements** that necessitate self-hosting
+- **Want real-time collaboration** as a core feature
+
+<Callout type="success" title="Best for Product Teams">
+  Reflet is ideal for product teams who want a dedicated feedback tool that integrates with their existing stack rather than replacing it.
+</Callout>
+
+## When to Choose Featurebase
+
+Featurebase makes sense when you:
+
+- **Need an all-in-one platform** for customer engagement
+- **Want AI-powered support** to reduce ticket volume
+- **Need a built-in help center** and don't have one already
+- **Prefer vendor-managed** infrastructure with no maintenance burden
+- **Have budget flexibility** and prefer bundled solutions
+- **Want unified analytics** across support and feedback
+
+## The Bottom Line
+
+**Choose Reflet** if you believe in the power of focused, open-source tools and want complete control over your feedback infrastructure.
+
+**Choose Featurebase** if you want an all-in-one customer platform and are comfortable with closed-source, sales-driven pricing.
+
+Both are capable products. The right choice depends on your team's philosophy, existing tool stack, and budget constraints.
+
+---
+
+Ready to try the open-source approach? Reflet offers a generous free tier and you can self-host for complete control. Start collecting feedback in minutes, not meetings.

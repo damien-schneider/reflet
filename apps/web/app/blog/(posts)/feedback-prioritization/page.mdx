@@ -1,0 +1,382 @@
+import { BlogPostLayout } from "@/components/blog/blog-post-layout";
+import { Callout } from "@/components/blog/callout";
+import { LeadMagnet } from "@/components/blog/lead-magnet";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "The Complete Guide to Feedback Prioritization (Without AI)",
+  description: "Master RICE, ICE, Kano, and Value/Effort frameworks for prioritizing product feedback. Practical templates and examples for product managers.",
+  date: "2026-02-05",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "guide",
+  tags: ["prioritization", "RICE", "ICE", "Kano", "product management", "frameworks"],
+  readingTime: "14 min read",
+  seoKeywords: ["RICE framework product", "feature prioritization", "ICE scoring template", "feedback prioritization framework"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/feedback-prioritization",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Product teams drown in feedback. Users submit feature requests daily, stakeholders push competing priorities, and technical debt accumulates silently. Without a systematic approach to prioritization, teams either build the wrong things or spend months debating what to build next.
+
+This guide covers four battle-tested prioritization frameworks—RICE, ICE, Kano Model, and Value/Effort Matrix—with practical examples, calculation templates, and guidance on when to use each.
+
+## Why Prioritization Frameworks Matter
+
+Every "yes" to a feature is a "no" to something else. Your team has finite engineering hours, limited runway, and an overwhelming backlog. Prioritization frameworks transform subjective debates into data-driven decisions.
+
+**Without frameworks, teams typically:**
+- Build features that the loudest stakeholder requested
+- Prioritize based on recency bias (newest requests first)
+- Defer difficult decisions until they become emergencies
+- Waste cycles debating opinions instead of measuring impact
+
+**With frameworks, teams:**
+- Align on shared criteria before discussing specific features
+- Compare apples to apples across different feature types
+- Document reasoning for future reference
+- Move faster by reducing ambiguity
+
+<Callout type="info" title="Framework Selection">
+No single framework works for every situation. The best teams combine frameworks based on context—using RICE for quarterly planning and ICE for sprint decisions.
+</Callout>
+
+---
+
+## Framework 1: RICE Scoring
+
+RICE is the most comprehensive prioritization framework, developed by Intercom. It balances impact against effort while accounting for reach and confidence.
+
+### The RICE Formula
+
+| Factor | Definition | Scale |
+|--------|------------|-------|
+| **Reach** | How many users will this affect per quarter? | Actual number (e.g., 500 users) |
+| **Impact** | How much will this move the metric per user? | 3 = Massive, 2 = High, 1 = Medium, 0.5 = Low, 0.25 = Minimal |
+| **Confidence** | How certain are you about estimates? | 100% = High, 80% = Medium, 50% = Low |
+| **Effort** | Person-months of work required | Actual estimate (e.g., 2 person-months) |
+
+**Formula:**
+
+```
+RICE Score = (Reach × Impact × Confidence) / Effort
+```
+
+### RICE Example Calculation
+
+Let's score three competing feature requests:
+
+| Feature | Reach | Impact | Confidence | Effort | RICE Score |
+|---------|-------|--------|------------|--------|------------|
+| Slack integration | 2,000 users | 2 (High) | 80% | 3 months | **(2000 × 2 × 0.8) / 3 = 1,067** |
+| Dark mode | 5,000 users | 0.5 (Low) | 100% | 1 month | **(5000 × 0.5 × 1.0) / 1 = 2,500** |
+| API v2 | 300 users | 3 (Massive) | 50% | 4 months | **(300 × 3 × 0.5) / 4 = 113** |
+
+**Prioritization order:** Dark mode > Slack integration > API v2
+
+<Callout type="tip" title="When to Use RICE">
+RICE works best for quarterly or monthly planning when you have data on user reach. Use it when comparing features with significantly different scopes and target audiences.
+</Callout>
+
+### RICE Pros and Cons
+
+| Pros | Cons |
+|------|------|
+| Accounts for confidence uncertainty | Requires reach data you may not have |
+| Balances business impact with effort | Time-consuming to score many items |
+| Widely adopted, easy to explain | Impact scoring is still subjective |
+
+---
+
+## Framework 2: ICE Scoring
+
+ICE is RICE's faster cousin. Created by Sean Ellis (GrowthHackers), it trades precision for speed—perfect for rapid experimentation.
+
+### The ICE Formula
+
+| Factor | Definition | Scale |
+|--------|------------|-------|
+| **Impact** | Potential positive effect on your goal | 1-10 (10 = highest) |
+| **Confidence** | How sure are you this will work? | 1-10 (10 = certain) |
+| **Ease** | How easy is this to implement? | 1-10 (10 = easiest) |
+
+**Formula:**
+
+```
+ICE Score = Impact × Confidence × Ease
+```
+
+### ICE Example Calculation
+
+Scoring the same features with ICE:
+
+| Feature | Impact | Confidence | Ease | ICE Score |
+|---------|--------|------------|------|-----------|
+| Slack integration | 7 | 8 | 5 | **280** |
+| Dark mode | 4 | 10 | 9 | **360** |
+| API v2 | 9 | 5 | 3 | **135** |
+
+**Prioritization order:** Dark mode > Slack integration > API v2
+
+### ICE vs RICE Comparison
+
+| Aspect | ICE | RICE |
+|--------|-----|------|
+| Speed to score | Fast (2-3 minutes) | Slow (10-15 minutes) |
+| Data requirements | None | Reach data needed |
+| Precision | Lower | Higher |
+| Best for | Experiments, sprints | Roadmap planning |
+| Team adoption | Easy | Moderate |
+
+<Callout type="tip" title="When to Use ICE">
+ICE shines in fast-paced environments. Use it for sprint planning, growth experiments, or when you need a quick gut-check on priorities without extensive data.
+</Callout>
+
+---
+
+## Framework 3: The Kano Model
+
+The Kano Model categorizes features by how they affect customer satisfaction. Unlike RICE and ICE, Kano reveals which features users expect versus which will delight them.
+
+### The Five Kano Categories
+
+| Category | Description | Example |
+|----------|-------------|---------|
+| **Must-Be** | Expected. Absence causes dissatisfaction, presence doesn't increase satisfaction. | Search functionality in a SaaS app |
+| **Performance** | Linear relationship: more is better. | Faster load times, more storage |
+| **Attractive** | Unexpected delighters. Absence is OK, presence excites. | AI-powered suggestions |
+| **Indifferent** | Users don't care either way. | Backend refactoring |
+| **Reverse** | Some users actively dislike it. | Gamification elements |
+
+### Kano Survey Questions
+
+To categorize features, ask users two questions per feature:
+
+**Functional question:** "If [feature] were added, how would you feel?"
+
+**Dysfunctional question:** "If [feature] were NOT added, how would you feel?"
+
+| Response Options |
+|------------------|
+| I would like it |
+| I expect it |
+| I am neutral |
+| I can tolerate it |
+| I would dislike it |
+
+### Interpreting Kano Results
+
+Cross-reference functional and dysfunctional answers:
+
+| | **Dysfunctional: Like** | **Dysfunctional: Expect** | **Dysfunctional: Neutral** | **Dysfunctional: Tolerate** | **Dysfunctional: Dislike** |
+|---|---|---|---|---|---|
+| **Functional: Like** | Questionable | Attractive | Attractive | Attractive | Performance |
+| **Functional: Expect** | Reverse | Indifferent | Indifferent | Indifferent | Must-Be |
+| **Functional: Neutral** | Reverse | Indifferent | Indifferent | Indifferent | Must-Be |
+| **Functional: Tolerate** | Reverse | Indifferent | Indifferent | Indifferent | Must-Be |
+| **Functional: Dislike** | Reverse | Reverse | Reverse | Reverse | Questionable |
+
+### Using Kano Results for Prioritization
+
+**Priority order for different contexts:**
+
+| Context | Priority Order |
+|---------|----------------|
+| New product launch | Must-Be > Performance > Attractive |
+| Mature product | Attractive > Performance > Must-Be |
+| Competitive market | Attractive > Performance |
+| Cost-cutting | Skip Indifferent, eliminate Reverse |
+
+<Callout type="warning" title="Kano Drift">
+Features drift between categories over time. Yesterday's Attractive feature (e.g., mobile apps) becomes today's Must-Be. Re-run Kano surveys quarterly.
+</Callout>
+
+---
+
+## Framework 4: Value/Effort Matrix
+
+The simplest framework: plot features on a 2x2 grid of Value vs. Effort. Fast, visual, and perfect for workshop settings.
+
+### The Four Quadrants
+
+```
+High Value │  Quick Wins   │    Big Bets
+           │   (DO FIRST)  │ (Plan Carefully)
+───────────┼───────────────┼─────────────────
+Low Value  │  Fill-Ins     │   Money Pit
+           │ (Do If Spare) │   (AVOID)
+           └───────────────┴─────────────────
+              Low Effort      High Effort
+```
+
+| Quadrant | Value | Effort | Action |
+|----------|-------|--------|--------|
+| Quick Wins | High | Low | Do immediately |
+| Big Bets | High | High | Plan carefully, validate assumptions |
+| Fill-Ins | Low | Low | Do when you have spare capacity |
+| Money Pit | Low | High | Avoid unless strategic |
+
+### Value/Effort Example
+
+| Feature | Value | Effort | Quadrant |
+|---------|-------|--------|----------|
+| Slack integration | High | Medium | Quick Win |
+| Dark mode | Medium | Low | Quick Win |
+| API v2 | High | High | Big Bet |
+| Admin redesign | Low | High | Money Pit |
+| Email templates | Low | Low | Fill-In |
+
+**Prioritization order:**
+1. Slack integration and Dark mode (Quick Wins)
+2. API v2 with validation (Big Bet)
+3. Email templates (Fill-In, spare capacity)
+4. Admin redesign (Avoid unless justified)
+
+<Callout type="tip" title="When to Use Value/Effort">
+Value/Effort matrices excel in workshops and stakeholder alignment sessions. They're visual, intuitive, and help non-technical participants engage with prioritization.
+</Callout>
+
+---
+
+## Choosing the Right Framework
+
+| Situation | Recommended Framework | Why |
+|-----------|----------------------|-----|
+| Quarterly roadmap planning | RICE | Comprehensive, data-driven |
+| Sprint planning | ICE | Fast, actionable |
+| Understanding user expectations | Kano | Reveals feature categories |
+| Stakeholder alignment workshop | Value/Effort | Visual, collaborative |
+| Growth experiments | ICE | Speed matters for iteration |
+| New product development | Kano + RICE | Understand needs, then prioritize |
+| Technical debt decisions | Value/Effort | Clear effort/value tradeoffs |
+
+<Callout type="info" title="Combining Frameworks">
+Use Kano to understand WHAT to build, then RICE or ICE to decide WHEN. This combination provides strategic direction and tactical execution.
+</Callout>
+
+---
+
+## Running a Prioritization Session
+
+### Before the Session
+
+1. **Gather data**: Collect user feedback, usage metrics, and technical estimates
+2. **Prepare the list**: Consolidate duplicate requests, add context
+3. **Choose framework(s)**: Match to your planning horizon
+4. **Invite stakeholders**: Product, engineering, design, customer success
+
+### During the Session
+
+**Step 1: Align on criteria (15 min)**
+- Review the chosen framework
+- Agree on what "impact" or "value" means for your team
+- Set scoring conventions
+
+**Step 2: Individual scoring (20 min)**
+- Each participant scores independently
+- Prevents anchoring bias
+
+**Step 3: Compare and discuss (30 min)**
+- Review items with highest variance
+- Discuss differing assumptions
+- Converge on final scores
+
+**Step 4: Stack rank and commit (15 min)**
+- Sort by final score
+- Identify cut line for the planning period
+- Document rationale for top items
+
+### After the Session
+
+1. Share prioritized list with the team
+2. Update your roadmap tool
+3. Communicate decisions to stakeholders
+4. Schedule follow-up to review progress
+
+---
+
+## Common Prioritization Mistakes
+
+### 1. Ignoring Confidence
+
+**Mistake:** Treating a confident 5-point feature the same as an uncertain 5-point feature.
+
+**Fix:** Always factor in confidence. ICE and RICE include it explicitly. For other frameworks, add a confidence column.
+
+### 2. Recency Bias
+
+**Mistake:** Prioritizing whatever was requested most recently.
+
+**Fix:** Batch feedback and prioritize periodically (weekly or bi-weekly), not continuously.
+
+### 3. Loudest Voice Wins
+
+**Mistake:** Building what the most persistent stakeholder wants.
+
+**Fix:** Require everyone to score before discussion. Weight scores equally or by customer value.
+
+### 4. Analysis Paralysis
+
+**Mistake:** Spending more time scoring than building.
+
+**Fix:** Set time limits. Use ICE for quick decisions, reserve RICE for strategic planning.
+
+### 5. Set and Forget
+
+**Mistake:** Scoring features once and never revisiting.
+
+**Fix:** Re-prioritize when new data arrives: user research, competitive moves, or team capacity changes.
+
+### 6. Ignoring Dependencies
+
+**Mistake:** Prioritizing a feature that requires another unprioritzed feature.
+
+**Fix:** Map dependencies before scoring. Score the enabling feature, not just the end feature.
+
+---
+
+## Prioritization in Practice with Reflet
+
+Reflet simplifies feedback prioritization by organizing requests in one place. With voting, status tracking, and tagging, you can:
+
+- **Aggregate feedback** from multiple channels
+- **Quantify demand** through upvotes
+- **Track status** from idea to shipped
+- **Communicate decisions** via your public roadmap
+
+Whether you use RICE, ICE, Kano, or Value/Effort, Reflet provides the raw material—organized, searchable, and voteable.
+
+---
+
+## Templates and Resources
+
+<LeadMagnet
+  title="Prioritization Framework Templates"
+  description="Spreadsheet templates for RICE, ICE, Kano surveys, and Value/Effort matrices. Ready to use with your team."
+  fileName="prioritization-templates.xlsx"
+  fileType="xlsx"
+  downloadUrl="/downloads/prioritization-templates.xlsx"
+/>
+
+---
+
+## Key Takeaways
+
+1. **No framework is perfect**—choose based on context and planning horizon
+2. **RICE** for comprehensive roadmap planning with data
+3. **ICE** for fast sprint and experiment prioritization
+4. **Kano** to understand what users expect vs. what delights them
+5. **Value/Effort** for visual, collaborative prioritization workshops
+6. **Combine frameworks**: Kano + RICE/ICE gives both strategic and tactical clarity
+7. **Document your reasoning**—your future self will thank you
+
+Prioritization is a skill that improves with practice. Start with one framework, run a session with your team, and iterate based on what you learn.
