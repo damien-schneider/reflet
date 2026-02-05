@@ -3,7 +3,17 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { useCallback } from "react";
+import { type KeyboardEvent, useCallback, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   ContextList,
@@ -52,122 +62,150 @@ export function FeedbackListItem({
   const deleteFeedback = useMutation(api.feedback_actions.remove);
   const tags = feedback.tags ?? [];
   const canDelete = isAuthor || isAdmin;
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
-  const handleDelete = useCallback(async () => {
-    if (!canDelete) {
-      return;
-    }
+  const handleDeleteClick = useCallback(() => {
+    if (!canDelete) return;
+    setShowDeleteAlert(true);
+  }, [canDelete]);
 
-    // Confirm before deleting
-    if (
-      // biome-ignore lint/suspicious/noAlert: Simple confirmation for destructive action
-      !window.confirm(
-        `Are you sure you want to delete "${feedback.title}"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
+  const handleConfirmDelete = useCallback(async () => {
     await deleteFeedback({ id: feedback._id });
-  }, [canDelete, feedback._id, feedback.title, deleteFeedback]);
+    setShowDeleteAlert(false);
+  }, [deleteFeedback, feedback._id]);
 
   const handleClick = useCallback(() => {
     onClick?.(feedback._id);
   }, [onClick, feedback._id]);
 
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleClick();
+      }
+    },
+    [handleClick]
+  );
+
   return (
-    <ContextList>
-      <ContextListTrigger>
-        <button
-          className={cn(
-            "flex w-full gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-accent/50",
-            feedback.isPinned && "border-primary/50 bg-primary/5",
-            className
-          )}
-          onClick={handleClick}
-          type="button"
-        >
-          {/* Vote button */}
-          <VoteButton
-            feedbackId={feedback._id}
-            hasVoted={feedback.hasVoted}
-            size="md"
-            voteCount={feedback.voteCount ?? 0}
-          />
+    <>
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              feedback "{feedback.title}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleConfirmDelete}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-          {/* Content */}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                {/* Title */}
-                <h3 className="line-clamp-2 font-semibold text-base transition-colors group-hover:text-olive-600">
-                  {feedback.isPinned && (
-                    <PushPin className="mr-1 inline h-4 w-4 text-olive-600" />
+      <ContextList>
+        <ContextListTrigger>
+          <div
+            className={cn(
+              "flex w-full gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-accent/50 cursor-pointer",
+              feedback.isPinned && "border-primary/50 bg-primary/5",
+              className
+            )}
+            onClick={handleClick}
+            onKeyDown={handleKeyDown}
+            role="button"
+            tabIndex={0}
+          >
+            {/* Vote button */}
+            <VoteButton
+              feedbackId={feedback._id}
+              hasVoted={feedback.hasVoted}
+              size="md"
+              voteCount={feedback.voteCount ?? 0}
+            />
+
+            {/* Content */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  {/* Title */}
+                  <h3 className="line-clamp-2 font-semibold text-base transition-colors group-hover:text-olive-600">
+                    {feedback.isPinned && (
+                      <PushPin className="mr-1 inline h-4 w-4 text-olive-600" />
+                    )}
+                    {feedback.title}
+                  </h3>
+
+                  {/* Meta info */}
+                  <div className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
+                    <span>{feedback.author?.name ?? "Unknown"}</span>
+                    <span>•</span>
+                    <span>
+                      {formatDistanceToNow(feedback.createdAt, {
+                        addSuffix: true,
+                      })}
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <Chat className="h-3 w-3" />
+                      {feedback.commentCount}
+                    </span>
+                  </div>
+
+                  {/* Tags */}
+                  {tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {tags.map((tag) => (
+                        <Badge
+                          className="font-normal text-xs"
+                          color={tag.color}
+                          key={tag._id}
+                        >
+                          {tag.name}
+                        </Badge>
+                      ))}
+                    </div>
                   )}
-                  {feedback.title}
-                </h3>
-
-                {/* Meta info */}
-                <div className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
-                  <span>{feedback.author?.name ?? "Unknown"}</span>
-                  <span>•</span>
-                  <span>
-                    {formatDistanceToNow(feedback.createdAt, {
-                      addSuffix: true,
-                    })}
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Chat className="h-3 w-3" />
-                    {feedback.commentCount}
-                  </span>
                 </div>
 
-                {/* Tags */}
-                {tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {tags.map((tag) => (
-                      <Badge
-                        className="font-normal text-xs"
-                        color={tag.color}
-                        key={tag._id}
-                      >
-                        {tag.name}
-                      </Badge>
-                    ))}
-                  </div>
+                {/* Status Badge from organizationStatus */}
+                {feedback.organizationStatus && (
+                  <Badge
+                    className="shrink-0"
+                    style={{
+                      backgroundColor: `${feedback.organizationStatus.color}20`,
+                      color: feedback.organizationStatus.color,
+                      borderColor: feedback.organizationStatus.color,
+                    }}
+                    variant="outline"
+                  >
+                    {feedback.organizationStatus.name}
+                  </Badge>
                 )}
               </div>
-
-              {/* Status Badge from organizationStatus */}
-              {feedback.organizationStatus && (
-                <Badge
-                  className="shrink-0"
-                  style={{
-                    backgroundColor: `${feedback.organizationStatus.color}20`,
-                    color: feedback.organizationStatus.color,
-                    borderColor: feedback.organizationStatus.color,
-                  }}
-                  variant="outline"
-                >
-                  {feedback.organizationStatus.name}
-                </Badge>
-              )}
             </div>
           </div>
-        </button>
-      </ContextListTrigger>
-      {canDelete && (
-        <ContextListContent>
-          <ContextListItem
-            className="text-destructive focus:text-destructive"
-            onClick={handleDelete}
-          >
-            <Trash className="mr-2 h-4 w-4" />
-            Delete
-          </ContextListItem>
-        </ContextListContent>
-      )}
-    </ContextList>
+        </ContextListTrigger>
+        {canDelete && (
+          <ContextListContent>
+            <ContextListItem
+              className="text-destructive focus:text-destructive"
+              onClick={handleDeleteClick}
+            >
+              <Trash className="mr-2 h-4 w-4" />
+              Delete
+            </ContextListItem>
+          </ContextListContent>
+        )}
+      </ContextList>
+    </>
   );
 }
