@@ -1,3 +1,4 @@
+import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
 
 // Import env to validate at build time
@@ -6,6 +7,9 @@ import "@reflet-v2/env/web";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   reactCompiler: true,
+
+  // Enable MDX pages
+  pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
 
   // GEO: redirect llm.txt to llms.txt for crawlers that expect the shorter path
   redirects() {
@@ -17,6 +21,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "avatars.githubusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
       },
     ],
   },
@@ -68,4 +76,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withMDX = createMDX({
+  options: {
+    remarkPlugins: [],
+    rehypePlugins: [],
+  },
+});
+
+export default withMDX(nextConfig);
