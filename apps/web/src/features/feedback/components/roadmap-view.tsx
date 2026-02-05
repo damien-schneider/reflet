@@ -9,22 +9,17 @@ import {
   KeyboardSensor,
   PointerSensor,
   TouchSensor,
+  useDraggable,
   useDroppable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { CaretUp, ChatCircle, DotsSixVertical } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -92,7 +87,7 @@ function FeedbackCardContent({
             "h-6 w-6 rounded text-muted-foreground/50",
             "hover:bg-muted hover:text-muted-foreground",
             "cursor-grab active:cursor-grabbing",
-            "touch-none"
+            "pointer-events-auto touch-none"
           )}
           type="button"
         >
@@ -132,22 +127,10 @@ function DraggableFeedbackCard({
   isAdmin,
   onFeedbackClick,
 }: DraggableFeedbackCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item._id,
     disabled: !isAdmin,
   });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
 
   const handleClick = () => {
     if (!isDragging) {
@@ -163,15 +146,17 @@ function DraggableFeedbackCard({
   };
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: dnd-kit requires div wrapper for ref and style transforms
-    <div
+    <motion.div
+      animate={{ opacity: isDragging ? 0.4 : 1, scale: isDragging ? 0.98 : 1 }}
       className="cursor-pointer"
+      initial={false}
+      layoutId={`feedback-card-${item._id}`}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       ref={setNodeRef}
       role="button"
-      style={style}
       tabIndex={0}
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
     >
       {/* On mobile, apply touch listeners to the whole card for long press */}
       <div
@@ -186,7 +171,7 @@ function DraggableFeedbackCard({
           item={item}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -194,6 +179,7 @@ interface DroppableColumnProps {
   status: { _id: string; name: string; color: string };
   items: FeedbackItem[];
   isAdmin: boolean;
+  isDragging: boolean;
   onFeedbackClick: (feedbackId: string) => void;
   onDeleteClick: () => void;
 }
@@ -202,6 +188,7 @@ function DroppableColumn({
   status,
   items,
   isAdmin,
+  isDragging,
   onFeedbackClick,
   onDeleteClick,
 }: DroppableColumnProps) {
@@ -213,14 +200,17 @@ function DroppableColumn({
     },
   });
 
+  // Background opacity: 8% normally, 28% when dragging over
+  const bgOpacity = isOver ? "28" : "08";
+
   return (
     <div
       className={cn(
-        "group w-72 shrink-0 rounded-lg p-4 transition-all",
-        isOver && "ring-2 ring-primary ring-offset-2"
+        "group w-72 shrink-0 rounded-lg p-4 transition-colors duration-200"
       )}
+      ref={setNodeRef}
       style={{
-        backgroundColor: `${status.color}08`,
+        backgroundColor: `${status.color}${bgOpacity}`,
       }}
     >
       <RoadmapColumnHeader
@@ -231,31 +221,29 @@ function DroppableColumn({
         onDelete={onDeleteClick}
         statusId={status._id as Id<"organizationStatuses">}
       />
-      <SortableContext
-        items={items.map((i) => i._id)}
-        strategy={verticalListSortingStrategy}
+      <div
+        className="min-h-[100px] space-y-2"
+        data-dragging={isDragging ? "true" : "false"}
       >
-        <div className="min-h-[100px] space-y-2" ref={setNodeRef}>
-          {items.map((item) => (
-            <DraggableFeedbackCard
-              isAdmin={isAdmin}
-              item={item}
-              key={item._id}
-              onFeedbackClick={onFeedbackClick}
-            />
-          ))}
-          {items.length === 0 && (
-            <p
-              className={cn(
-                "py-4 text-center text-muted-foreground text-sm transition-colors",
-                isOver && "text-primary"
-              )}
-            >
-              {isOver ? "Drop here" : "No items"}
-            </p>
-          )}
-        </div>
-      </SortableContext>
+        {items.map((item) => (
+          <DraggableFeedbackCard
+            isAdmin={isAdmin}
+            item={item}
+            key={item._id}
+            onFeedbackClick={onFeedbackClick}
+          />
+        ))}
+        {items.length === 0 && (
+          <p
+            className={cn(
+              "py-4 text-center text-muted-foreground text-sm transition-colors",
+              isOver && "text-primary"
+            )}
+          >
+            {isOver ? "Drop here" : "No items"}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -438,67 +426,70 @@ export function RoadmapView({
 
   return (
     <>
-      <DndContext
-        accessibility={{ announcements }}
-        collisionDetection={closestCorners}
-        onDragEnd={handleDragEnd}
-        onDragStart={handleDragStart}
-        sensors={sensors}
-      >
-        <ScrollArea
-          className=""
-          classNameViewport="flex gap-4 pb-4"
-          styleViewport={{
-            paddingLeft: "max(1rem, calc(50vw - 35rem))",
-            paddingRight: "1rem",
-          }}
+      <LayoutGroup>
+        <DndContext
+          accessibility={{ announcements }}
+          collisionDetection={closestCorners}
+          onDragEnd={handleDragEnd}
+          onDragStart={handleDragStart}
+          sensors={sensors}
         >
-          {statuses.map((status) => {
-            const statusFeedback = optimisticFeedback.filter(
-              (f) => f.organizationStatusId === status._id
-            );
+          <ScrollArea
+            className=""
+            classNameViewport="flex gap-4 pb-4 min-h-[70vh]"
+            styleViewport={{
+              paddingLeft: "max(1rem, calc(50vw - 35rem))",
+              paddingRight: "1rem",
+            }}
+          >
+            {statuses.map((status) => {
+              const statusFeedback = optimisticFeedback.filter(
+                (f) => f.organizationStatusId === status._id
+              );
 
-            return (
-              <DroppableColumn
-                isAdmin={isAdmin}
-                items={statusFeedback}
-                key={status._id}
-                onDeleteClick={() =>
-                  setDeleteDialogStatus({
-                    id: status._id as Id<"organizationStatuses">,
-                    name: status.name,
-                    color: status.color,
-                  })
-                }
-                onFeedbackClick={onFeedbackClick}
-                status={status}
-              />
-            );
-          })}
+              return (
+                <DroppableColumn
+                  isAdmin={isAdmin}
+                  isDragging={activeItem !== null}
+                  items={statusFeedback}
+                  key={status._id}
+                  onDeleteClick={() =>
+                    setDeleteDialogStatus({
+                      id: status._id as Id<"organizationStatuses">,
+                      name: status.name,
+                      color: status.color,
+                    })
+                  }
+                  onFeedbackClick={onFeedbackClick}
+                  status={status}
+                />
+              );
+            })}
 
-          {isAdmin && <AddColumnInline organizationId={organizationId} />}
-        </ScrollArea>
+            {isAdmin && <AddColumnInline organizationId={organizationId} />}
+          </ScrollArea>
 
-        <DragOverlay>
-          <AnimatePresence>
-            {activeItem && (
-              <motion.div
-                animate={{
-                  scale: 1.05,
-                  rotate: 3,
-                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                }}
-                className="w-64"
-                exit={{ scale: 1, rotate: 0 }}
-                initial={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              >
-                <FeedbackCardContent isOverlay item={activeItem} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay dropAnimation={null}>
+            <AnimatePresence mode="popLayout">
+              {activeItem && (
+                <motion.div
+                  animate={{
+                    scale: 1.05,
+                    rotate: 3,
+                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                  }}
+                  className="w-64"
+                  exit={{ scale: 1, rotate: 0, opacity: 0 }}
+                  initial={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                >
+                  <FeedbackCardContent isOverlay item={activeItem} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </DragOverlay>
+        </DndContext>
+      </LayoutGroup>
 
       <ColumnDeleteDialog
         feedbackCount={

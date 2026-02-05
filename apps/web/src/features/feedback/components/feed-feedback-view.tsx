@@ -4,6 +4,7 @@ import {
   MagnifyingGlass as MagnifyingGlassIcon,
   Plus,
 } from "@phosphor-icons/react";
+import { AnimatePresence, motion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 
@@ -105,16 +106,26 @@ export function FeedFeedbackView({
     <>
       <FiltersBar onSortChange={onSortChange} sortBy={sortBy} />
       <div className="space-y-4 px-4">
-        {feedback.map((item) => (
-          <FeedbackCardWithMorphingDialog
-            feedback={item}
-            key={item._id}
-            onFeedbackClick={onFeedbackClick}
-            onVote={onVote}
-            primaryColor={primaryColor}
-            statuses={statuses}
-          />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {feedback.map((item) => (
+            <motion.div
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              key={item._id}
+              layout
+              transition={{ duration: 0.2 }}
+            >
+              <FeedbackCardWithMorphingDialog
+                feedback={item}
+                onFeedbackClick={onFeedbackClick}
+                onVote={onVote}
+                primaryColor={primaryColor}
+                statuses={statuses}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </>
   );

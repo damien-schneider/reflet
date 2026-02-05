@@ -7,19 +7,39 @@ import { useQuery } from "convex/react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 
 import { CommentsSection } from "./comments-section";
 import { FeedbackContent } from "./feedback-content";
 import { FeedbackMetadataBar } from "./feedback-metadata-bar";
+
+// Minimal feedback data from the list (for instant display)
+export interface FeedbackListItem {
+  _id: string;
+  title: string;
+  description?: string;
+  voteCount: number;
+  commentCount: number;
+  createdAt: number;
+  organizationStatusId?: string;
+  hasVoted?: boolean;
+  organizationId: string;
+  tags?: Array<{
+    _id: string;
+    name: string;
+    color: string;
+    icon?: string;
+  } | null>;
+}
 
 export interface FeedbackDetailDrawerProps {
   feedbackId: Id<"feedback"> | null;
@@ -27,6 +47,8 @@ export interface FeedbackDetailDrawerProps {
   onClose: () => void;
   isMember?: boolean;
   isAdmin?: boolean;
+  // Initial data from the list for instant display
+  feedbackList?: FeedbackListItem[];
   // Navigation
   feedbackIds?: Id<"feedback">[];
   currentIndex?: number;
@@ -42,6 +64,7 @@ export function FeedbackDetailDrawer({
   onClose,
   isMember: _isMember = false,
   isAdmin = false,
+  feedbackList = [],
   feedbackIds = [],
   currentIndex = -1,
   hasPrevious = false,
@@ -49,10 +72,44 @@ export function FeedbackDetailDrawer({
   onPrevious,
   onNext,
 }: FeedbackDetailDrawerProps) {
-  const feedback = useQuery(
+  // Fetch full details (includes author, assignee)
+  const feedbackDetails = useQuery(
     api.feedback.get,
     feedbackId ? { id: feedbackId } : "skip"
   );
+
+  // Find initial data from list for instant display
+  const listItem = feedbackId
+    ? feedbackList.find((f) => f._id === feedbackId)
+    : null;
+
+  // Merge: use full details if available, otherwise use list data
+  const feedback =
+    feedbackDetails ??
+    (listItem
+      ? {
+          _id: feedbackId as Id<"feedback">,
+          title: listItem.title,
+          description: listItem.description ?? null,
+          tags: listItem.tags
+            ?.filter((t): t is NonNullable<typeof t> => t !== null)
+            .map((t) => ({
+              _id: t._id as Id<"tags">,
+              name: t.name,
+              color: t.color,
+            })),
+          hasVoted: listItem.hasVoted,
+          voteCount: listItem.voteCount,
+          commentCount: listItem.commentCount,
+          organizationStatusId: listItem.organizationStatusId as
+            | Id<"organizationStatuses">
+            | undefined,
+          createdAt: listItem.createdAt,
+          author: null, // Will load from full details
+          assignee: null, // Will load from full details
+          organizationId: listItem.organizationId as Id<"organizations">,
+        }
+      : null);
 
   // Keyboard shortcuts for navigation
   useHotkeys(
@@ -100,22 +157,25 @@ export function FeedbackDetailDrawer({
   );
 
   const showNavigation = feedbackIds.length > 1;
+  // Only show loading if we have no data at all (not even from the list)
   const isLoading = feedbackId && !feedback;
 
   return (
-    <Sheet onOpenChange={(open) => !open && onClose()} open={isOpen}>
-      <SheetContent
-        className="flex w-full flex-col gap-0 overflow-hidden p-0 md:w-[60vw] md:max-w-3xl"
-        showCloseButton={false}
-        side="right"
-        variant="floating"
+    <Drawer
+      direction="right"
+      onOpenChange={(open) => !open && onClose()}
+      open={isOpen}
+    >
+      <DrawerContent
+        className="inset-y-0 right-0 flex h-full w-full flex-col gap-0 overflow-hidden rounded-none border-l p-0 shadow-xl md:inset-y-2 md:right-2 md:h-auto md:w-[60vw] md:max-w-5xl md:rounded-xl md:border"
+        showOverlay={false}
       >
         {/* Header */}
-        <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
-          <SheetTitle className="sr-only">Feedback Details</SheetTitle>
-          <SheetDescription className="sr-only">
+        <DrawerHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
+          <DrawerTitle className="sr-only">Feedback Details</DrawerTitle>
+          <DrawerDescription className="sr-only">
             View and manage feedback details
-          </SheetDescription>
+          </DrawerDescription>
 
           {/* Navigation controls */}
           <div className="flex items-center gap-1">
@@ -150,25 +210,27 @@ export function FeedbackDetailDrawer({
           </div>
 
           {/* Close button */}
-          <Button onClick={onClose} size="icon-sm" variant="ghost">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </Button>
-        </SheetHeader>
+          <DrawerClose asChild>
+            <Button onClick={onClose} size="icon-sm" variant="ghost">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </DrawerClose>
+        </DrawerHeader>
 
         {/* Content */}
-        <DrawerBody
+        <FeedbackDetailContent
           feedback={feedback}
           feedbackId={feedbackId}
           isAdmin={isAdmin}
           isLoading={isLoading}
         />
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   );
 }
 
-interface DrawerBodyProps {
+interface FeedbackDetailContentProps {
   isLoading: boolean | null;
   feedback:
     | {
@@ -204,12 +266,12 @@ interface DrawerBodyProps {
   isAdmin: boolean;
 }
 
-function DrawerBody({
+function FeedbackDetailContent({
   isLoading,
   feedback,
   feedbackId,
   isAdmin,
-}: DrawerBodyProps) {
+}: FeedbackDetailContentProps) {
   if (isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center">

@@ -194,6 +194,8 @@ function FeedbackBoardContent({
 
   // Track if we've loaded data at least once (to avoid skeleton on filter/search changes)
   const hasLoadedOnce = useRef(false);
+  // Store previous feedback to prevent blinking during refetch
+  const previousFeedbackRef = useRef<FeedbackItem[]>([]);
 
   // Auth guard
   const { guard: authGuard, isAuthenticated } = useAuthGuard({
@@ -212,9 +214,10 @@ function FeedbackBoardContent({
         : undefined,
   });
 
-  // Track when we've loaded data at least once
+  // Track when we've loaded data at least once and store previous feedback
   if (feedback !== undefined) {
     hasLoadedOnce.current = true;
+    previousFeedbackRef.current = feedback as FeedbackItem[];
   }
 
   const orgStatuses = useQuery(api.organization_statuses.list, {
@@ -247,11 +250,13 @@ function FeedbackBoardContent({
 
   // Apply optimistic updates, client-side tag filtering, and sort feedback
   const filteredFeedback = useMemo(() => {
-    if (!feedback) {
+    // Use previous feedback during refetch to prevent blinking
+    const currentFeedback = feedback ?? previousFeedbackRef.current;
+    if (currentFeedback.length === 0) {
       return [];
     }
 
-    let result = (feedback as FeedbackItem[]).map((item) =>
+    let result = (currentFeedback as FeedbackItem[]).map((item) =>
       applyOptimisticVote(item, optimisticVotes.get(item._id))
     );
 
@@ -519,6 +524,7 @@ function FeedbackBoardContent({
         currentIndex={currentIndex}
         feedbackId={selectedFeedbackId}
         feedbackIds={feedbackIds}
+        feedbackList={filteredFeedback}
         hasNext={hasNext}
         hasPrevious={hasPrevious}
         isAdmin={isAdmin}
