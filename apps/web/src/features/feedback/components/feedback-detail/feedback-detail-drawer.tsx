@@ -163,6 +163,7 @@ export function FeedbackDetailDrawer({
   return (
     <Drawer
       direction="right"
+      handleOnly
       onOpenChange={(open) => !open && onClose()}
       open={isOpen}
     >

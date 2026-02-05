@@ -85,6 +85,8 @@
   margin: 0;
   display: block;
   max-width: 100%;
+  min-width: 50px;
+  min-height: 50px;
 }
 
 /* Resize handles container */
