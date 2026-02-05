@@ -80,11 +80,13 @@ export function FeedbackMetadataBar({
   }, [feedbackId, toggleVote, isAuthenticated, authGuard]);
 
   const handleStatusChange = useCallback(
-    async (statusId: string) => {
-      await updateStatus({
-        feedbackId,
-        organizationStatusId: statusId as Id<"organizationStatuses">,
-      });
+    async (statusId: Id<"organizationStatuses"> | null) => {
+      if (statusId) {
+        await updateStatus({
+          feedbackId,
+          organizationStatusId: statusId,
+        });
+      }
     },
     [feedbackId, updateStatus]
   );
@@ -131,7 +133,7 @@ export function FeedbackMetadataBar({
       {/* Author */}
       {author && (
         <Tooltip>
-          <TooltipTrigger asChild>
+          <TooltipTrigger>
             <div className="flex items-center gap-1.5">
               <Avatar className="h-5 w-5">
                 <AvatarImage src={author.image ?? undefined} />
@@ -152,7 +154,7 @@ export function FeedbackMetadataBar({
 
       {/* Date */}
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger>
           <div className="flex items-center gap-1 text-muted-foreground text-xs">
             <Calendar className="h-3.5 w-3.5" />
             <span>{formatDistanceToNow(createdAt, { addSuffix: true })}</span>
@@ -171,7 +173,7 @@ export function FeedbackMetadataBar({
 
       {/* Subscribe button */}
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger>
           <Button
             className={cn("h-8 w-8", isSubscribed === true && "text-primary")}
             onClick={handleToggleSubscription}
@@ -208,7 +210,7 @@ interface StatusDisplayProps {
     | { _id: Id<"organizationStatuses">; name: string; color: string }
     | undefined;
   statusId?: Id<"organizationStatuses"> | null;
-  onStatusChange: (statusId: string) => void;
+  onStatusChange: (statusId: Id<"organizationStatuses"> | null) => void;
 }
 
 function StatusDisplay({

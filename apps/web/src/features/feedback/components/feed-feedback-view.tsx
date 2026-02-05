@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 import { FeedbackCardWithMorphingDialog } from "./feedback-card-with-morphing-dialog";
-import { FiltersBar } from "./filters-bar";
+import { FiltersBar, type SortOption } from "./filters-bar";
 
 export type { SortOption } from "./filters-bar";
 

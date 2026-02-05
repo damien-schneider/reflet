@@ -99,15 +99,18 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
 
             {/* Actions menu */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="ml-auto h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
-                  size="icon-sm"
-                  variant="ghost"
-                >
-                  <DotsThree className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={(props: React.ComponentProps<"button">) => (
+                  <Button
+                    {...props}
+                    className="ml-auto h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
+                    size="icon-sm"
+                    variant="ghost"
+                  >
+                    <DotsThree className="h-4 w-4" />
+                  </Button>
+                )}
+              />
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setIsEditing(true)}>
                   <Pencil className="mr-2 h-4 w-4" />
