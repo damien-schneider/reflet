@@ -92,7 +92,7 @@ function PriceDisplay({
         {price.savings && (
           <Badge
             className={`ml-2 transition-opacity ${showYearlyDetails ? "opacity-100" : "opacity-0"}`}
-            variant="green"
+            color="green"
           >
             Save {price.currency}
             <NumberFlow

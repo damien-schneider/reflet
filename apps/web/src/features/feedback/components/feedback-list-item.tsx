@@ -128,13 +128,9 @@ export function FeedbackListItem({
                   <div className="mt-2 flex flex-wrap gap-1">
                     {tags.map((tag) => (
                       <Badge
-                        className="text-xs"
+                        className="font-normal text-xs"
+                        color={tag.color}
                         key={tag._id}
-                        style={{
-                          backgroundColor: `${tag.color}20`,
-                          color: tag.color,
-                        }}
-                        variant="secondary"
                       >
                         {tag.name}
                       </Badge>

@@ -26,7 +26,12 @@ export interface FeedbackItem {
   upvoteCount?: number;
   downvoteCount?: number;
   organizationId: string;
-  tags?: Array<{ _id: string; name: string; color: string } | null>;
+  tags?: Array<{
+    _id: string;
+    name: string;
+    color: string;
+    icon?: string;
+  } | null>;
   organizationStatus?: { name: string; color: string; icon?: string } | null;
 }
 

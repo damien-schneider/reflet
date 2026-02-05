@@ -28,12 +28,13 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { cn } from "@/lib/utils";
 
 import { useBoardFilters } from "../hooks/use-board-filters";
+import { useFeedbackDrawer } from "../hooks/use-feedback-drawer";
 import {
   BoardViewToggle,
   type BoardView as BoardViewType,
 } from "./board-view-toggle";
 import { type FeedbackItem, FeedFeedbackView } from "./feed-feedback-view";
-import { FeedbackDetailDialog } from "./feedback-detail-dialog";
+import { FeedbackDetailDrawer } from "./feedback-detail/feedback-detail-drawer";
 import type { SortOption } from "./filters-bar";
 import { RoadmapView } from "./roadmap-view";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
@@ -177,8 +178,6 @@ function FeedbackBoardContent({
   } = useBoardFilters(defaultView);
 
   // Local state (not URL-based)
-  const [selectedFeedbackId, setSelectedFeedbackId] =
-    useState<Id<"feedback"> | null>(null);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [newFeedback, setNewFeedback] = useState({
     title: "",
@@ -268,8 +267,24 @@ function FeedbackBoardContent({
     return sortFeedback(result, sortBy);
   }, [feedback, sortBy, optimisticVotes, selectedTagId, selectedTagIds]);
 
-  // Roadmap columns are organization statuses (not tags)
-  // Tags are for categorization (Feature Request, Bug Report, etc.)
+  // Extract feedback IDs for drawer navigation
+  const feedbackIds = useMemo(
+    () => filteredFeedback.map((f) => f._id as Id<"feedback">),
+    [filteredFeedback]
+  );
+
+  // URL-based drawer state with navigation
+  const {
+    selectedFeedbackId,
+    isOpen: isDrawerOpen,
+    openFeedback,
+    closeFeedback,
+    currentIndex,
+    hasPrevious,
+    hasNext,
+    goToPrevious,
+    goToNext,
+  } = useFeedbackDrawer(feedbackIds);
 
   // Handlers
   const handleSubmitFeedback = async () => {
@@ -479,9 +494,7 @@ function FeedbackBoardContent({
           <RoadmapView
             feedback={filteredFeedback}
             isAdmin={isAdmin}
-            onFeedbackClick={(id) =>
-              setSelectedFeedbackId(id as Id<"feedback">)
-            }
+            onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
             organizationId={organizationId}
             statuses={orgStatuses ?? []}
           />
@@ -490,9 +503,7 @@ function FeedbackBoardContent({
             feedback={filteredFeedback}
             hasActiveFilters={hasActiveFilters}
             isLoading={feedback === undefined && !hasLoadedOnce.current}
-            onFeedbackClick={(id) =>
-              setSelectedFeedbackId(id as Id<"feedback">)
-            }
+            onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
             onSortChange={setSortBy}
             onSubmitClick={() => setShowSubmitDialog(true)}
             onVote={handleToggleVote}
@@ -503,12 +514,19 @@ function FeedbackBoardContent({
         )}
       </div>
 
-      {/* Feedback Detail Dialog */}
-      <FeedbackDetailDialog
+      {/* Feedback Detail Drawer */}
+      <FeedbackDetailDrawer
+        currentIndex={currentIndex}
         feedbackId={selectedFeedbackId}
+        feedbackIds={feedbackIds}
+        hasNext={hasNext}
+        hasPrevious={hasPrevious}
         isAdmin={isAdmin}
         isMember={isMember}
-        onClose={() => setSelectedFeedbackId(null)}
+        isOpen={isDrawerOpen}
+        onClose={closeFeedback}
+        onNext={goToNext}
+        onPrevious={goToPrevious}
       />
 
       {/* Submit Dialog */}

@@ -131,7 +131,7 @@ function RoadmapCard({ feedback, primaryColor }: RoadmapCardProps) {
       ?.slice(0, 2) ?? [];
 
   return (
-    <Card>
+    <Card className="cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:bg-accent/50 hover:shadow-md">
       <CardContent className="p-3">
         <h4 className="font-medium text-sm">{feedback.title}</h4>
         <div className="mt-2 flex items-center justify-between">

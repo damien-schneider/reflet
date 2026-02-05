@@ -62,7 +62,7 @@ export function FeedbackSidebar({
   );
 
   return (
-    <div className="flex w-full flex-col gap-6 border-t p-6 md:w-80 md:border-t-0 md:border-l">
+    <div className="flex w-full flex-col gap-6 border-t p-6 md:border-t-0 md:border-l">
       <SidebarVotingSection
         hasVoted={feedback.hasVoted}
         onVote={handleVote}

@@ -7,6 +7,7 @@ import {
   DragOverlay,
   type DragStartEvent,
   PointerSensor,
+  TouchSensor,
   useDroppable,
   useSensor,
   useSensors,
@@ -17,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { CaretUp, ChatCircle } from "@phosphor-icons/react";
+import { CaretUp, ChatCircle, DotsSixVertical } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -48,39 +49,65 @@ interface DraggableFeedbackCardProps {
   onFeedbackClick: (feedbackId: string) => void;
 }
 
+type DragHandleListeners = Record<
+  string,
+  (event: React.SyntheticEvent) => void
+>;
+
 function FeedbackCardContent({
   item,
   isDragging,
   isOverlay,
+  isAdmin,
+  dragHandleListeners,
+  dragHandleAttributes,
 }: {
   item: FeedbackItem;
   isDragging?: boolean;
   isOverlay?: boolean;
+  isAdmin?: boolean;
+  dragHandleListeners?: DragHandleListeners;
+  dragHandleAttributes?: React.HTMLAttributes<HTMLButtonElement>;
 }) {
   return (
     <Card
       className={cn(
-        "p-3 transition-all",
+        "relative p-3 transition-all duration-200",
+        "hover:scale-[1.02] hover:bg-accent/50 hover:shadow-md",
         isDragging && "opacity-50 ring-2 ring-primary",
         isOverlay && "rotate-3 shadow-xl ring-2 ring-primary"
       )}
     >
-      <h4 className="font-medium text-sm">{item.title}</h4>
+      {isAdmin && dragHandleListeners && (
+        <button
+          {...dragHandleAttributes}
+          {...dragHandleListeners}
+          aria-label="Drag to reorder"
+          className={cn(
+            "absolute top-1/2 right-1 -translate-y-1/2",
+            "hidden items-center justify-center md:flex",
+            "h-6 w-6 rounded text-muted-foreground/50",
+            "hover:bg-muted hover:text-muted-foreground",
+            "cursor-grab active:cursor-grabbing",
+            "touch-none"
+          )}
+          type="button"
+        >
+          <DotsSixVertical className="h-4 w-4" weight="bold" />
+        </button>
+      )}
+      <h4 className="pr-6 font-medium text-sm">{item.title}</h4>
       {item.tags && item.tags.length > 0 && (
         <div className="mt-1 flex flex-wrap gap-1">
           {item.tags.slice(0, 2).map(
             (tag) =>
               tag && (
                 <Badge
-                  className="px-1 py-0 font-normal text-xs"
+                  className="font-normal text-[11px]"
+                  color={tag.color}
                   key={tag._id}
-                  style={{
-                    backgroundColor: `${tag.color}15`,
-                    color: tag.color,
-                    borderColor: `${tag.color}30`,
-                  }}
-                  variant="outline"
                 >
+                  {tag.icon && <span>{tag.icon}</span>}
                   {tag.name}
                 </Badge>
               )
@@ -133,21 +160,29 @@ function DraggableFeedbackCard({
   };
 
   return (
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: dnd-kit requires div wrapper; role="button" is spread via attributes
-    // biome-ignore lint/a11y/noStaticElementInteractions: dnd-kit requires div wrapper; role="button" is spread via attributes
+    // biome-ignore lint/a11y/useSemanticElements: dnd-kit requires div wrapper for ref and style transforms
     <div
-      {...attributes}
-      {...(isAdmin ? listeners : {})}
-      className={cn(
-        "cursor-pointer",
-        isAdmin && "cursor-grab active:cursor-grabbing"
-      )}
+      className="cursor-pointer"
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       ref={setNodeRef}
+      role="button"
       style={style}
+      tabIndex={0}
     >
-      <FeedbackCardContent isDragging={isDragging} item={item} />
+      {/* On mobile, apply touch listeners to the whole card for long press */}
+      <div
+        {...(isAdmin ? listeners : {})}
+        className="md:pointer-events-none md:contents"
+      >
+        <FeedbackCardContent
+          dragHandleAttributes={attributes}
+          dragHandleListeners={listeners as DragHandleListeners}
+          isAdmin={isAdmin}
+          isDragging={isDragging}
+          item={item}
+        />
+      </div>
     </div>
   );
 }
@@ -271,6 +306,12 @@ export function RoadmapView({
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 300,
+        tolerance: 5,
       },
     })
   );

@@ -102,7 +102,7 @@ function BillingToggle({
       </div>
       <Badge
         className={`ml-2 transition-opacity ${interval === "yearly" ? "opacity-100" : "opacity-0"}`}
-        variant="green"
+        color="green"
       >
         Save 2 months
       </Badge>
@@ -187,7 +187,7 @@ function PricingCard({ tier, billingInterval }: PricingCardProps) {
           {"yearlySavings" in tier && tier.yearlySavings > 0 && (
             <Badge
               className={`ml-2 transition-opacity ${showSavings ? "opacity-100" : "opacity-0"}`}
-              variant="green"
+              color="green"
             >
               Save €
               <NumberFlow
@@ -260,7 +260,7 @@ function PricingCard({ tier, billingInterval }: PricingCardProps) {
         {"yearlySavings" in tier && tier.yearlySavings > 0 && (
           <Badge
             className={`ml-2 transition-opacity ${showSavings ? "opacity-100" : "opacity-0"}`}
-            variant="green"
+            color="green"
           >
             Save €
             <NumberFlow

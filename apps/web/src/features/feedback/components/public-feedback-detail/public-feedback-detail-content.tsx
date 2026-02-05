@@ -152,12 +152,9 @@ export function PublicFeedbackDetailContent({
                 .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
                 .map((tag) => (
                   <Badge
+                    className="font-normal"
+                    color={tag.color}
                     key={tag._id}
-                    style={{
-                      backgroundColor: `${tag.color}20`,
-                      color: tag.color,
-                    }}
-                    variant="secondary"
                   >
                     {tag.name}
                   </Badge>

@@ -1,10 +1,11 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
+import type { TagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "group/badge inline-flex h-6 w-fit shrink-0 items-center justify-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full px-2.5 py-1 font-medium text-xs transition-all focus-visible:ring-2 focus-visible:ring-offset-1 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&>svg]:pointer-events-none [&>svg]:size-3.5",
+  "group/badge inline-flex h-6 w-fit shrink-0 items-center justify-center gap-1.5 overflow-hidden whitespace-nowrap rounded-md px-2 py-0.5 font-medium text-xs transition-all focus-visible:ring-2 focus-visible:ring-offset-1 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&>svg]:pointer-events-none [&>svg]:size-3.5",
   {
     variants: {
       variant: {
@@ -18,41 +19,22 @@ const badgeVariants = cva(
         ghost:
           "text-muted-foreground [a&]:hover:bg-muted [a&]:hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // Tailwind color variants - soft pastel style matching the reference image
-        slate:
-          "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-        gray: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-        zinc: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-        neutral:
-          "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
-        stone:
-          "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300",
-        red: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400",
+        // Tailwind color variants
+        gray: "bg-gray-50 text-gray-600 dark:bg-gray-400/10 dark:text-gray-400",
+        red: "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-400",
         orange:
-          "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-400",
-        amber:
-          "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400",
+          "bg-orange-50 text-orange-700 dark:bg-orange-400/10 dark:text-orange-400",
         yellow:
-          "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-400",
-        lime: "bg-lime-100 text-lime-700 dark:bg-lime-900/50 dark:text-lime-400",
+          "bg-yellow-50 text-yellow-800 dark:bg-yellow-400/10 dark:text-yellow-500",
         green:
-          "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400",
-        emerald:
-          "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400",
-        teal: "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-400",
-        cyan: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-400",
-        sky: "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-400",
-        blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400",
-        indigo:
-          "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-400",
-        violet:
-          "bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-400",
+          "bg-green-50 text-green-700 dark:bg-green-400/10 dark:text-green-400",
+        blue: "bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-400",
         purple:
-          "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-400",
-        fuchsia:
-          "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/50 dark:text-fuchsia-400",
-        pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-400",
-        rose: "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-400",
+          "bg-purple-50 text-purple-700 dark:bg-purple-400/10 dark:text-purple-400",
+        pink: "bg-pink-50 text-pink-700 dark:bg-pink-400/10 dark:text-pink-400",
+        // Additional colors
+        brown:
+          "bg-amber-50 text-amber-800 dark:bg-amber-400/10 dark:text-amber-400",
       },
     },
     defaultVariants: {
@@ -61,26 +43,66 @@ const badgeVariants = cva(
   }
 );
 
-function Badge({
-  className,
-  variant = "default",
-  render,
-  ...props
-}: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>) {
+// Tag colors that can be used with the color prop
+const TAG_COLORS = [
+  "default",
+  "gray",
+  "brown",
+  "orange",
+  "yellow",
+  "green",
+  "blue",
+  "purple",
+  "pink",
+  "red",
+] as const;
+
+type BadgeColor = (typeof TAG_COLORS)[number];
+
+// Map tag colors to badge variants
+const colorToVariant: Record<
+  string,
+  VariantProps<typeof badgeVariants>["variant"]
+> = {
+  default: "gray",
+  gray: "gray",
+  brown: "brown",
+  orange: "orange",
+  yellow: "yellow",
+  green: "green",
+  blue: "blue",
+  purple: "purple",
+  pink: "pink",
+  red: "red",
+};
+
+interface BadgeProps
+  extends useRender.ComponentProps<"span">,
+    VariantProps<typeof badgeVariants> {
+  /** Tag color - maps to a color variant */
+  color?: TagColor | string;
+}
+
+function Badge({ className, variant, color, render, ...props }: BadgeProps) {
+  // If color is provided, use it to determine the variant
+  const resolvedVariant = color
+    ? (colorToVariant[color] ?? "gray")
+    : (variant ?? "default");
+
   return useRender({
     defaultTagName: "span",
     props: mergeProps<"span">(
       {
-        className: cn(badgeVariants({ className, variant })),
+        className: cn(badgeVariants({ className, variant: resolvedVariant })),
       },
       props
     ),
     render,
     state: {
       slot: "badge",
-      variant,
+      variant: resolvedVariant,
     },
   });
 }
 
-export { Badge, badgeVariants };
+export { Badge, badgeVariants, TAG_COLORS, type BadgeColor };

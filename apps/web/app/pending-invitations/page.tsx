@@ -4,7 +4,7 @@ import { UserPlus } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,14 +27,27 @@ export default function PendingInvitationsPage() {
   const [acceptingToken, setAcceptingToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect to login if not authenticated
-  if (!(isSessionLoading || session?.user)) {
-    router.push("/auth/sign-in");
-    return null;
-  }
+  // Determine redirect conditions
+  const shouldRedirectToLogin = !(isSessionLoading || session?.user);
+  const shouldRedirectToDashboard =
+    invitations !== undefined && invitations.length === 0;
 
-  // Loading state
-  if (invitations === undefined || isSessionLoading) {
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (shouldRedirectToLogin) {
+      router.push("/auth/sign-in");
+    }
+  }, [shouldRedirectToLogin, router]);
+
+  // Redirect to dashboard if no pending invitations
+  useEffect(() => {
+    if (shouldRedirectToDashboard) {
+      router.push("/dashboard");
+    }
+  }, [shouldRedirectToDashboard, router]);
+
+  // Show loading state while checking auth or loading invitations
+  if (isSessionLoading || invitations === undefined || shouldRedirectToLogin) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -45,10 +58,16 @@ export default function PendingInvitationsPage() {
     );
   }
 
-  // No pending invitations - redirect to dashboard
+  // No pending invitations - show loading while redirecting
   if (invitations.length === 0) {
-    router.push("/dashboard");
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Spinner className="h-8 w-8" />
+          <Muted>Redirection...</Muted>
+        </div>
+      </div>
+    );
   }
 
   const handleAccept = async (token: string) => {

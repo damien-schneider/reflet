@@ -65,11 +65,21 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
     setValue,
     trigger,
   } = useForm<SignUpFormData>({
-    resolver: async (data, context, options) => {
+    // Pass mode via context so resolver always gets current value
+    context: { mode },
+    resolver: async (data, resolverContext, options) => {
       try {
-        const result = await zodResolver(
-          mode === "signUp" ? signUpSchema : signInSchema
-        )(data, context, options);
+        // Read mode from context (which updates on re-render) instead of closure
+        const contextWithMode = resolverContext as
+          | { mode: AuthMode }
+          | undefined;
+        const currentMode = contextWithMode?.mode;
+        const schema = currentMode === "signUp" ? signUpSchema : signInSchema;
+        const result = await zodResolver(schema)(
+          data,
+          resolverContext,
+          options
+        );
         return result;
       } catch {
         return { errors: {}, values: data };

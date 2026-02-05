@@ -277,14 +277,10 @@ export function FeedbackFunnels({
             }
             return (
               <Badge
-                className="cursor-pointer gap-1"
+                className="cursor-pointer gap-1 font-normal"
+                color={tag.color}
                 key={tagId}
                 onClick={() => toggleTag(tagId)}
-                style={{
-                  backgroundColor: `${tag.color}20`,
-                  color: tag.color,
-                }}
-                variant="secondary"
               >
                 {tag.name}
                 <X className="h-3 w-3" />

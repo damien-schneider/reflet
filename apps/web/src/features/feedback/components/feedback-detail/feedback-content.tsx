@@ -1,6 +1,5 @@
 "use client";
 
-import { Tag } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -11,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 
-interface FeedbackHeaderProps {
+interface FeedbackContentProps {
   feedbackId: Id<"feedback">;
   title: string;
   description: string;
@@ -19,13 +18,13 @@ interface FeedbackHeaderProps {
   isAdmin: boolean;
 }
 
-export function FeedbackHeader({
+export function FeedbackContent({
   feedbackId,
   title,
   description,
   tags = [],
   isAdmin,
-}: FeedbackHeaderProps) {
+}: FeedbackContentProps) {
   const updateFeedback = useMutation(api.feedback.update);
 
   // Local state for unsaved changes
@@ -87,11 +86,17 @@ export function FeedbackHeader({
     setHasUnsavedChanges(false);
   }, [title, description]);
 
+  const validTags = tags.filter(Boolean) as Array<{
+    _id: Id<"tags">;
+    name: string;
+    color: string;
+  }>;
+
   return (
     <div className="space-y-4">
       {/* Title */}
       <TiptapTitleEditor
-        className="font-semibold text-xl"
+        className="font-semibold text-xl leading-tight"
         disabled={!isAdmin}
         onChange={handleTitleChange}
         placeholder="Untitled"
@@ -99,55 +104,45 @@ export function FeedbackHeader({
       />
 
       {/* Tags */}
-      {tags.length > 0 && <TagsList tags={tags} />}
+      {validTags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {validTags.map((tag) => (
+            <Badge
+              className="rounded-full px-2 py-0.5 font-normal text-xs"
+              color={tag.color}
+              key={tag._id}
+            >
+              {tag.name}
+            </Badge>
+          ))}
+        </div>
+      )}
 
       {/* Description */}
-      <TiptapMarkdownEditor
-        editable={isAdmin}
-        minimal
-        onChange={handleDescriptionChange}
-        placeholder={isAdmin ? "Add a description..." : ""}
-        value={editedDescription}
-      />
+      <div className="prose prose-sm dark:prose-invert max-w-none">
+        <TiptapMarkdownEditor
+          className="min-h-[60px]"
+          editable={isAdmin}
+          minimal
+          onChange={handleDescriptionChange}
+          placeholder={
+            isAdmin ? "Add a description..." : "No description provided."
+          }
+          value={editedDescription}
+        />
+      </div>
 
       {/* Save/Cancel buttons */}
       {hasUnsavedChanges && isAdmin && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pt-2">
           <Button onClick={handleSave} size="sm">
-            Save
+            Save changes
           </Button>
           <Button onClick={handleCancel} size="sm" variant="ghost">
             Cancel
           </Button>
         </div>
       )}
-    </div>
-  );
-}
-
-interface TagsListProps {
-  tags: Array<{ _id: Id<"tags">; name: string; color: string } | null>;
-}
-
-function TagsList({ tags }: TagsListProps) {
-  const validTags = tags.filter(Boolean) as Array<{
-    _id: Id<"tags">;
-    name: string;
-    color: string;
-  }>;
-
-  if (validTags.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Tag className="h-4 w-4 text-muted-foreground" />
-      {validTags.map((tag) => (
-        <Badge className="font-normal" color={tag.color} key={tag._id}>
-          {tag.name}
-        </Badge>
-      ))}
     </div>
   );
 }

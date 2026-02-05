@@ -472,14 +472,7 @@ export function FeedbackDetailDialog({
             {feedback.tags
               .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
               .map((tag) => (
-                <Badge
-                  key={tag._id}
-                  style={{
-                    backgroundColor: `${tag.color}20`,
-                    color: tag.color,
-                  }}
-                  variant="secondary"
-                >
+                <Badge className="font-normal" color={tag.color} key={tag._id}>
                   {tag.name}
                 </Badge>
               ))}

@@ -36,10 +36,9 @@ export function RoadmapCard({
                 ?.slice(0, 2)
                 .map((tag) => (
                   <Badge
-                    className="h-4 px-1 text-[10px]"
+                    className="h-5 font-normal text-[10px]"
+                    color={tag.color}
                     key={tag._id}
-                    style={{ borderColor: tag.color, color: tag.color }}
-                    variant="outline"
                   >
                     {tag.name}
                   </Badge>

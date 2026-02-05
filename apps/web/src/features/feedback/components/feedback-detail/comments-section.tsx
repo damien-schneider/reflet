@@ -1,15 +1,14 @@
 "use client";
 
+import { PaperPlaneTilt } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useRef, useState } from "react";
-import { useHotkeys } from "react-hotkeys-hook";
+import { useCallback, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 
 import { CommentProvider } from "./comment-context";
 import { CommentItem } from "./comment-item";
@@ -27,7 +26,6 @@ export function CommentsSection({
   feedbackId,
   currentUser,
 }: CommentsSectionProps) {
-  const [activeTab, setActiveTab] = useState("comments");
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -53,47 +51,41 @@ export function CommentsSection({
 
   // Transform comments to CommentData format with nested replies
   const comments = buildCommentTree(commentsData ?? []);
+  const commentCount = commentsData?.length ?? 0;
 
   return (
-    <div className="space-y-4">
-      <Tabs onValueChange={setActiveTab} value={activeTab}>
-        <TabsList>
-          <TabsTrigger value="comments">
-            Comments ({commentsData?.length ?? 0})
-          </TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-        </TabsList>
+    <div className="space-y-6">
+      {/* Header */}
+      <h3 className="font-medium text-sm">
+        Discussion
+        {commentCount > 0 && (
+          <span className="ml-2 text-muted-foreground">({commentCount})</span>
+        )}
+      </h3>
 
-        <TabsContent className="mt-4" value="comments">
-          {/* Comment Input */}
-          <CommentInput
-            currentUser={currentUser}
-            isSubmitting={isSubmitting}
-            onCommentChange={setNewComment}
-            onSubmit={handleSubmitComment}
-            value={newComment}
-          />
+      {/* Comment Input */}
+      <CommentInput
+        currentUser={currentUser}
+        isSubmitting={isSubmitting}
+        onCommentChange={setNewComment}
+        onSubmit={handleSubmitComment}
+        value={newComment}
+      />
 
-          {/* Comments List */}
-          <CommentProvider feedbackId={feedbackId}>
-            <div className="mt-6 space-y-4">
-              {comments.length === 0 ? (
-                <p className="py-8 text-center text-muted-foreground">
-                  No comments yet. Be the first to comment!
-                </p>
-              ) : (
-                comments.map((comment) => (
-                  <CommentItem comment={comment} key={comment.id} />
-                ))
-              )}
-            </div>
-          </CommentProvider>
-        </TabsContent>
-
-        <TabsContent className="mt-4" value="activity">
-          <ActivityFeed feedbackId={feedbackId} />
-        </TabsContent>
-      </Tabs>
+      {/* Comments List */}
+      <CommentProvider feedbackId={feedbackId}>
+        <div className="space-y-1">
+          {comments.length === 0 ? (
+            <p className="py-8 text-center text-muted-foreground text-sm">
+              No comments yet. Start the conversation!
+            </p>
+          ) : (
+            comments.map((comment) => (
+              <CommentItem comment={comment} key={comment.id} />
+            ))
+          )}
+        </div>
+      </CommentProvider>
     </div>
   );
 }
@@ -116,59 +108,46 @@ function CommentInput({
   onSubmit,
   isSubmitting,
 }: CommentInputProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const canSubmit = Boolean(value.trim()) && !isSubmitting;
 
-  useHotkeys(
-    "mod+enter",
-    () => {
-      if (canSubmit) {
-        onSubmit();
-      }
-    },
-    { enabled: canSubmit, enableOnFormTags: true },
-    [canSubmit, onSubmit]
-  );
+  const handleKeyboardSubmit = useCallback(() => {
+    if (canSubmit) {
+      onSubmit();
+    }
+  }, [canSubmit, onSubmit]);
 
   return (
     <div className="flex gap-3">
-      <Avatar className="h-8 w-8">
+      <Avatar className="h-8 w-8 shrink-0">
         <AvatarImage src={currentUser?.image ?? undefined} />
         <AvatarFallback className="text-xs">
-          {currentUser?.name?.charAt(0) || "?"}
+          {currentUser?.name?.charAt(0) ?? "?"}
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1 space-y-2">
-        <Textarea
-          className="min-h-20"
-          onChange={(e) => onCommentChange(e.target.value)}
-          placeholder="Write a comment..."
-          ref={textareaRef}
-          value={value}
-        />
-        <div className="flex justify-end">
-          <Button
-            disabled={!value.trim() || isSubmitting}
-            onClick={onSubmit}
-            size="sm"
-          >
-            {isSubmitting ? "Posting..." : "Post Comment"}
-          </Button>
+      <div className="flex-1">
+        <div className="overflow-hidden rounded-xl border bg-muted/30 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20">
+          <TiptapMarkdownEditor
+            className="min-h-[80px]"
+            editable
+            minimal
+            onChange={onCommentChange}
+            onSubmit={handleKeyboardSubmit}
+            placeholder="Write a comment... (Cmd+Enter to submit)"
+            value={value}
+          />
+          <div className="flex items-center justify-end border-t bg-muted/50 px-3 py-2">
+            <Button
+              className="h-8 gap-1.5"
+              disabled={!canSubmit}
+              onClick={onSubmit}
+              size="sm"
+            >
+              <PaperPlaneTilt className="h-3.5 w-3.5" />
+              {isSubmitting ? "Posting..." : "Post"}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-interface ActivityFeedProps {
-  feedbackId: Id<"feedback">;
-}
-
-function ActivityFeed({ feedbackId: _feedbackId }: ActivityFeedProps) {
-  // TODO: Implement activity feed with status changes, votes, etc.
-  return (
-    <div className="py-8 text-center text-muted-foreground">
-      Activity feed coming soon...
     </div>
   );
 }
