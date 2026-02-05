@@ -3,7 +3,7 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import type { MouseEvent } from "react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -62,22 +62,20 @@ export function VoteButton({
 
   return (
     <Tooltip>
-      <TooltipTrigger>
-        <Button
-          aria-label={label}
-          aria-pressed={hasVoted}
-          className={cn(
-            "flex flex-col items-center justify-center gap-0.5 font-semibold",
-            sizeClasses[size],
-            hasVoted && "bg-primary text-primary-foreground",
-            className
-          )}
-          onClick={handleVote}
-          variant={hasVoted ? "default" : "outline"}
-        >
-          <CaretUp className={iconSizes[size]} />
-          <span>{voteCount}</span>
-        </Button>
+      <TooltipTrigger
+        aria-label={label}
+        aria-pressed={hasVoted}
+        className={cn(
+          buttonVariants({ variant: hasVoted ? "default" : "outline" }),
+          "flex flex-col items-center justify-center gap-0.5 font-semibold",
+          sizeClasses[size],
+          hasVoted && "bg-primary text-primary-foreground",
+          className
+        )}
+        onClick={handleVote}
+      >
+        <CaretUp className={iconSizes[size]} />
+        <span>{voteCount}</span>
       </TooltipTrigger>
       <TooltipContent>
         <p>{tooltipText}</p>

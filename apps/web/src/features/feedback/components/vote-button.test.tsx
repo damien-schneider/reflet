@@ -39,30 +39,16 @@ vi.mock("@/components/ui/tooltip", () => ({
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="tooltip-content">{children}</div>
   ),
-  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="tooltip-trigger">{children}</div>
+  TooltipTrigger: ({ children, onClick, ...props }: any) => (
+    <button data-testid="tooltip-trigger" onClick={onClick} type="button" {...props}>
+      {children}
+    </button>
   ),
 }));
 
 // Mock button
 vi.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    "aria-label": ariaLabel,
-    "aria-pressed": ariaPressed,
-    ...props
-  }: any) => (
-    <button
-      aria-label={ariaLabel}
-      aria-pressed={ariaPressed}
-      onClick={onClick}
-      type="button"
-      {...props}
-    >
-      {children}
-    </button>
-  ),
+  buttonVariants: () => "mock-button-class",
 }));
 
 describe("VoteButton", () => {
