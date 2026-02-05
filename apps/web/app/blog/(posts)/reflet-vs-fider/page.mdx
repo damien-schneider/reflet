@@ -1,0 +1,310 @@
+import { BlogPostLayout } from "@/components/blog/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/components/blog/comparison-table";
+import { Callout } from "@/components/blog/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs Fider: Two Open Source Feedback Tools Compared",
+  description: "Compare Reflet and Fider, both open source product feedback tools. See which open source solution best fits your team's needs.",
+  date: "2026-02-05",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["fider alternative", "comparison", "open source", "feedback tool"],
+  readingTime: "6 min read",
+  seoKeywords: ["fider alternative", "reflet vs fider", "open source feedback tool comparison"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-fider",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Both Reflet and Fider are **open source** product feedback tools that you can self-host for free. While they share this fundamental philosophy, they differ significantly in their technology stacks, feature sets, and user experience. This comparison will help you decide which open source solution best fits your team's needs.
+
+## Quick Overview
+
+| Aspect | Reflet | Fider |
+|--------|--------|-------|
+| License | Open Source (SSPL) | Open Source (AGPL) |
+| Primary Language | TypeScript | Go |
+| Database | Convex | PostgreSQL |
+| Self-Hosting | Yes | Yes |
+| Hosted Version | Yes (reflet.app) | Yes (fider.io) |
+
+Both tools are committed to the open source community, giving you full control over your data and deployment. The key differences lie in their technical architecture and feature depth.
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="Fider"
+  features={[
+    {
+      name: "Feedback Collection",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Collect and organize user feedback"
+    },
+    {
+      name: "Upvoting System",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Let users vote on feature requests"
+    },
+    {
+      name: "Real-Time Updates",
+      reflet: "strong",
+      competitor: "partial",
+      description: "Live updates without page refresh"
+    },
+    {
+      name: "Roadmap View",
+      reflet: "yes",
+      competitor: "no",
+      description: "Visual kanban-style roadmap"
+    },
+    {
+      name: "Changelog",
+      reflet: "yes",
+      competitor: "no",
+      description: "Built-in release notes and announcements"
+    },
+    {
+      name: "GitHub Integration",
+      reflet: "yes",
+      competitor: "no",
+      description: "Link feedback to GitHub issues"
+    },
+    {
+      name: "Slack Integration",
+      reflet: "yes",
+      competitor: "no",
+      description: "Get notified in Slack"
+    },
+    {
+      name: "Comments & Discussions",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Threaded conversations on feedback"
+    },
+    {
+      name: "Status Updates",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Mark items as planned, in progress, etc."
+    },
+    {
+      name: "Custom Branding",
+      reflet: "yes",
+      competitor: "partial",
+      description: "Customize colors and branding"
+    },
+    {
+      name: "Modern UI/UX",
+      reflet: "strong",
+      competitor: "partial",
+      description: "Contemporary design and interactions"
+    },
+    {
+      name: "Open Source",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Full access to source code"
+    },
+    {
+      name: "Self-Hosting",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Deploy on your own infrastructure"
+    },
+    {
+      name: "OAuth Providers",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Sign in with Google, GitHub, etc."
+    },
+    {
+      name: "Email Notifications",
+      reflet: "yes",
+      competitor: "yes",
+      description: "Notify users of status changes"
+    }
+  ]}
+/>
+
+## Technology Stack Comparison
+
+The most significant difference between Reflet and Fider lies in their technology stacks:
+
+### Reflet's Modern Stack
+
+- **Frontend**: Next.js 16 with React 19
+- **Styling**: Tailwind CSS 4 with modern design system
+- **Database**: Convex (real-time sync built-in)
+- **Authentication**: Better-Auth with multiple providers
+- **Language**: TypeScript throughout
+
+Reflet is built with the latest web technologies, offering instant real-time updates, modern React patterns, and a polished user interface. The Convex backend means data syncs automatically across all connected clients.
+
+### Fider's Proven Stack
+
+- **Backend**: Go (Golang)
+- **Database**: PostgreSQL
+- **Frontend**: Server-rendered with some JavaScript
+- **Language**: Go + TypeScript
+
+Fider uses a more traditional server-rendered architecture. It's a mature project (started in 2017) with a focus on simplicity and reliability. The Go backend is efficient and easy to deploy.
+
+<Callout type="info" title="Architecture Trade-offs">
+  Reflet's modern stack offers better real-time collaboration but requires Convex for the backend. Fider's simpler architecture is easier to understand and modify but lacks real-time features.
+</Callout>
+
+## User Experience
+
+### Reflet
+
+Reflet offers a **contemporary, app-like experience**:
+
+- Instant real-time updates across all views
+- Smooth animations and transitions
+- Kanban-style roadmap with drag-and-drop
+- Dark mode support out of the box
+- Mobile-responsive design
+
+### Fider
+
+Fider provides a **straightforward, functional interface**:
+
+- Clean and simple design
+- Fast page loads with server rendering
+- Focused on core feedback functionality
+- Mobile-friendly layout
+- Minimal JavaScript footprint
+
+## Pricing
+
+<PricingComparison
+  competitorName="Fider"
+  refletPricing={{
+    free: "Self-host free forever",
+    paid: "Hosted from $0/mo (free tier)",
+    enterprise: "Custom pricing"
+  }}
+  competitorPricing={{
+    free: "Self-host free forever",
+    paid: "Hosted from $0/mo",
+    enterprise: "Not available"
+  }}
+/>
+
+<Callout type="success" title="Both Are Truly Free">
+  Both Reflet and Fider can be self-hosted completely free. This is the beauty of open source - you're not locked into any pricing changes or vendor decisions.
+</Callout>
+
+## When to Choose Reflet
+
+**Choose Reflet if you want:**
+
+- Real-time collaboration features
+- A modern, polished user interface
+- Built-in roadmap and changelog
+- GitHub and Slack integrations
+- The latest web technology stack
+- More comprehensive product feedback features
+
+Reflet is ideal for teams who want a full-featured feedback platform with modern UX and real-time capabilities.
+
+## When to Choose Fider
+
+**Choose Fider if you want:**
+
+- A simple, lightweight solution
+- Minimal dependencies (just PostgreSQL)
+- A mature, battle-tested codebase
+- Easier self-hosting with fewer moving parts
+- Lower resource requirements
+- Focus purely on feedback collection
+
+Fider is great for teams who want a straightforward feedback tool without additional complexity.
+
+## Self-Hosting Comparison
+
+### Self-Hosting Reflet
+
+```bash
+# Clone the repository
+git clone https://github.com/damien-schneider/reflet.git
+cd reflet
+
+# Install dependencies
+bun install
+
+# Set up Convex backend
+bunx convex dev
+
+# Start the development server
+bun dev
+```
+
+Reflet requires a Convex backend, which can be self-hosted or used via Convex Cloud.
+
+### Self-Hosting Fider
+
+```bash
+# Using Docker
+docker run -d -p 3000:3000 \
+  -e DATABASE_URL=postgres://user:pass@host/fider \
+  getfider/fider
+```
+
+Fider has a simpler deployment model with a single Docker container and PostgreSQL database.
+
+<Callout type="tip" title="Deployment Complexity">
+  Fider is easier to self-host initially (single container + PostgreSQL). Reflet offers more features but requires understanding the Convex architecture.
+</Callout>
+
+## Migrating from Fider to Reflet
+
+If you're currently using Fider and want to migrate to Reflet for its additional features:
+
+1. **Export your data**: Fider stores data in PostgreSQL, which you can query directly
+2. **Map status fields**: Match Fider's statuses to Reflet's workflow
+3. **Import feedback items**: Use Reflet's API to import your existing feedback
+4. **Migrate users**: Set up SSO to allow users to sign in with the same providers
+5. **Redirect old URLs**: Set up redirects from your Fider instance to Reflet
+
+<Callout type="info" title="Need Help Migrating?">
+  Contact the Reflet team if you need assistance migrating from Fider. We're happy to help fellow open source users make the transition.
+</Callout>
+
+## Community and Support
+
+### Reflet
+
+- Active development with frequent updates
+- GitHub discussions for community support
+- Modern documentation
+
+### Fider
+
+- Established community since 2017
+- GitHub issues for support
+- Proven track record with many users
+
+Both projects benefit from open source communities who contribute code, report bugs, and help other users.
+
+## Conclusion
+
+Reflet and Fider represent two philosophies in open source product feedback tools:
+
+**Reflet** offers a feature-rich, modern experience with real-time collaboration, integrated roadmaps, changelogs, and third-party integrations. It's built for teams who want a comprehensive feedback platform.
+
+**Fider** provides a focused, lightweight solution for teams who primarily need feedback collection and voting. Its simplicity is its strength.
+
+Both are excellent open source options. Your choice depends on whether you prioritize feature depth (Reflet) or simplicity (Fider). The good news? Being open source, you can always switch if your needs change.

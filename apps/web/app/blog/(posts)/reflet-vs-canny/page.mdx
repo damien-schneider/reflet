@@ -1,0 +1,175 @@
+import { BlogPostLayout } from "@/components/blog/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/components/blog/comparison-table";
+import { Callout } from "@/components/blog/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs Canny: Which Product Feedback Tool is Right for You?",
+  description: "A detailed comparison of Reflet and Canny for product feedback management. Compare features, pricing, and find the best tool for your team.",
+  date: "2026-02-05",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["canny alternative", "comparison", "product feedback", "feature voting"],
+  readingTime: "8 min read",
+  seoKeywords: ["canny alternative", "reflet vs canny", "canny comparison", "open source canny alternative"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-canny",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Both Reflet and Canny help product teams collect user feedback, prioritize features, and communicate product direction. But they take different approaches to solving these challenges.
+
+In this comparison, we'll examine how Reflet and Canny stack up across features, pricing, and use cases to help you choose the right tool for your team.
+
+## Quick Summary
+
+| Aspect | Reflet | Canny |
+|--------|--------|-------|
+| **Pricing** | Free tier + $15-49/mo | Limited free + $79-359/mo |
+| **Open Source** | Yes (SSPL) | No |
+| **Self-Hosting** | Available | Not available |
+| **Best For** | Startups, indie devs, privacy-conscious teams | Established companies with budget |
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="Canny"
+  features={[
+    { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback in one place" },
+    { name: "Feature Voting", reflet: "yes", competitor: "yes", description: "Let users upvote features they want" },
+    { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction with users" },
+    { name: "Changelog", reflet: "yes", competitor: "yes", description: "Announce new features and updates" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "yes", description: "Instant updates across all users" },
+    { name: "Open Source", reflet: "yes", competitor: "no", description: "Access and modify the source code" },
+    { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Host on your own infrastructure" },
+    { name: "AI Autopilot", reflet: "no", competitor: "yes", description: "AI-powered feedback categorization" },
+    { name: "Custom Domain", reflet: "yes", competitor: "yes", description: "Use your own domain for feedback portal" },
+    { name: "Integrations", reflet: "yes", competitor: "yes", description: "Connect with other tools" },
+    { name: "Team Collaboration", reflet: "yes", competitor: "yes", description: "Work together on feedback management" },
+    { name: "Private Boards", reflet: "yes", competitor: "yes", description: "Internal feedback boards" },
+  ]}
+/>
+
+### Where Reflet Excels
+
+**Real-Time Collaboration**: Built on Convex, Reflet provides instant synchronization across all connected users. Changes appear immediately without page refreshes, creating a more responsive experience for teams managing feedback together.
+
+**Open Source Flexibility**: Reflet's open-source nature means you can inspect the code, contribute improvements, and customize the platform to your exact needs. This transparency builds trust and enables deeper integrations.
+
+**Self-Hosting Option**: For teams with strict data residency requirements or those who prefer complete control, Reflet can be deployed on your own infrastructure.
+
+### Where Canny Excels
+
+**AI Autopilot**: Canny offers AI-powered features that automatically categorize feedback, detect duplicates, and suggest related requests. This can save significant time for teams processing high volumes of feedback.
+
+**Mature Ecosystem**: As an established player, Canny has a broader range of native integrations and a more extensive documentation library.
+
+**Enterprise Features**: Canny's higher-tier plans include advanced features like SSO, dedicated support, and custom contracts.
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="Canny"
+  refletPricing={{
+    free: "Included",
+    paid: "$15-49/mo",
+    enterprise: "Custom",
+  }}
+  competitorPricing={{
+    free: "Limited (100 tracked users)",
+    paid: "$79-359/mo",
+    enterprise: "Custom",
+  }}
+/>
+
+<Callout type="tip" title="Cost Savings">
+  Teams switching from Canny to Reflet typically save 60-80% on their monthly feedback management costs while retaining core functionality.
+</Callout>
+
+### Reflet Pricing Details
+
+- **Free**: Full-featured for small teams and projects
+- **Pro ($15/mo)**: More boards, members, and custom branding
+- **Team ($49/mo)**: Advanced features for growing teams
+- **Self-Hosted**: Free (open source)
+
+### Canny Pricing Details
+
+- **Free**: Limited to 100 tracked users, 1 admin
+- **Growth ($79/mo)**: Core features for small teams
+- **Business ($359/mo)**: Advanced features and integrations
+- **Enterprise**: Custom pricing
+
+## When to Choose Reflet
+
+Reflet is the better choice when:
+
+- **Budget matters**: You need powerful feedback tools without the premium price tag
+- **Data ownership is important**: You want the option to self-host and control your data
+- **Transparency is valued**: You prefer open-source software you can inspect and customize
+- **Real-time collaboration is key**: Your team works closely together on feedback management
+- **You're a startup or indie developer**: You need a cost-effective solution that scales with you
+
+## When to Choose Canny
+
+Canny might be the better choice when:
+
+- **You need AI automation**: AI-powered categorization and duplicate detection are essential
+- **Enterprise compliance is required**: You need SOC 2, HIPAA, or other compliance certifications
+- **Budget is not a constraint**: You can afford premium pricing for a mature platform
+- **You need specific integrations**: Canny has a native integration you require
+
+## Migration Guide: Moving from Canny to Reflet
+
+Thinking about switching? Here's how to migrate your feedback data:
+
+### Step 1: Export Your Data from Canny
+
+1. Go to your Canny admin dashboard
+2. Navigate to Settings > Export
+3. Download your posts, votes, and comments as CSV
+
+### Step 2: Prepare Your Reflet Account
+
+1. Sign up for Reflet at [reflet.app](/dashboard)
+2. Create your organization and feedback boards
+3. Invite your team members
+
+### Step 3: Import Your Feedback
+
+1. Map your Canny categories to Reflet boards
+2. Use Reflet's import tools or API to migrate feedback items
+3. Verify that votes and comments are preserved
+
+### Step 4: Update Your Embeds and Links
+
+1. Replace Canny widgets with Reflet embeds
+2. Update any documentation or links pointing to your old feedback portal
+3. Set up redirects if using custom domains
+
+<Callout type="info" title="Need Help Migrating?">
+  Our team is happy to assist with migrations from Canny. Reach out through our feedback board or GitHub discussions for support.
+</Callout>
+
+## The Verdict
+
+Both Reflet and Canny are capable product feedback platforms, but they serve different needs.
+
+**Choose Reflet** if you value open-source software, need budget-friendly pricing, want self-hosting options, or require real-time collaboration features.
+
+**Choose Canny** if you need AI automation, require enterprise compliance features, or have specific integration requirements that only Canny supports.
+
+For most startups, indie developers, and growing teams, Reflet provides the best balance of features, flexibility, and value.
+
+---
+
+Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.
