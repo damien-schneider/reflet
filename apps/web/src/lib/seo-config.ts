@@ -364,3 +364,116 @@ export function getOrgPageJsonLd(options: {
     },
   };
 }
+
+/**
+ * JSON-LD structured data for blog posts (Article schema)
+ */
+export function getBlogPostJsonLd(options: {
+  title: string;
+  description: string;
+  slug: string;
+  datePublished: string;
+  dateModified?: string;
+  author: string;
+  tags: string[];
+  ogImage?: string;
+}) {
+  const {
+    title,
+    description,
+    slug,
+    datePublished,
+    dateModified,
+    author,
+    tags,
+    ogImage,
+  } = options;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    description,
+    url: `${BASE_URL}/blog/${slug}`,
+    datePublished,
+    dateModified: dateModified ?? datePublished,
+    author: {
+      "@type": "Person",
+      name: author,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      logo: {
+        "@type": "ImageObject",
+        url: `${BASE_URL}/logo.png`,
+      },
+    },
+    image: ogImage ?? `${BASE_URL}/og-image.png`,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${BASE_URL}/blog/${slug}`,
+    },
+    keywords: tags.join(", "),
+  };
+}
+
+/**
+ * JSON-LD for comparison pages (ItemList schema)
+ */
+export function getComparisonJsonLd(options: {
+  title: string;
+  description: string;
+  slug: string;
+  competitorName: string;
+}) {
+  const { title, description, slug, competitorName } = options;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: title,
+    description,
+    url: `${BASE_URL}/blog/${slug}`,
+    about: [
+      {
+        "@type": "SoftwareApplication",
+        name: "Reflet",
+        applicationCategory: "BusinessApplication",
+      },
+      {
+        "@type": "SoftwareApplication",
+        name: competitorName,
+        applicationCategory: "BusinessApplication",
+      },
+    ],
+  };
+}
+
+/**
+ * JSON-LD for HowTo guides
+ */
+export function getHowToJsonLd(options: {
+  title: string;
+  description: string;
+  slug: string;
+  steps: { name: string; text: string }[];
+  totalTime?: string;
+}) {
+  const { title, description, slug, steps, totalTime } = options;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: title,
+    description,
+    url: `${BASE_URL}/blog/${slug}`,
+    totalTime: totalTime ?? "PT30M",
+    step: steps.map((step, index) => ({
+      "@type": "HowToStep",
+      position: index + 1,
+      name: step.name,
+      text: step.text,
+    })),
+  };
+}
