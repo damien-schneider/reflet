@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { MAX_SUPPORT_MESSAGE_LENGTH } from "./constants";
+import { validateInputLength } from "./validators";
 
 const getAuthUser = async (ctx: { auth: unknown }) => {
   const user = await authComponent.safeGetAuthUser(
@@ -82,6 +84,9 @@ export const send = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
+
+    // Validate input length
+    validateInputLength(args.body, MAX_SUPPORT_MESSAGE_LENGTH, "Message");
 
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {
