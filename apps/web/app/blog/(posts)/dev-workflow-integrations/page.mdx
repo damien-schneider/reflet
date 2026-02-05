@@ -1,0 +1,399 @@
+import { BlogPostLayout } from "@/components/blog/blog-post-layout";
+import { Callout } from "@/components/blog/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Integrating Feedback Tools with Your Dev Workflow (Slack + GitHub + Jira)",
+  description: "A comprehensive tutorial on connecting your feedback management tools with Slack, GitHub, and Jira to create seamless workflows from customer insight to shipped features.",
+  date: "2025-01-12",
+  author: "Damien Schneider",
+  authorRole: "Founder",
+  category: "tutorial",
+  tags: ["integrations", "Slack", "GitHub", "Jira", "developer workflow"],
+  readingTime: "10 min read",
+  seoKeywords: ["feedback tool integration", "Slack GitHub integration", "Jira feedback"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/dev-workflow-integrations",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+The gap between customer feedback and development work is where valuable insights go to die. A customer reports an issue, it gets logged somewhere, and then it sits disconnected from the actual work happening in engineering. Weeks later, someone asks "did we fix that thing?" and nobody is sure.
+
+This guide shows you how to build integrations between your feedback tools and development workflow so that customer insights flow seamlessly into tickets, code, and shipped features.
+
+## Why Integration Matters
+
+Before diving into specific tools, let us understand what we are trying to achieve.
+
+### The Disconnected Workflow Problem
+
+In many organizations, customer feedback lives in one system while development work happens in another:
+
+- Support tickets in Zendesk or Intercom
+- Feature requests in a feedback tool or spreadsheet
+- Development work in Jira or Linear
+- Code and deployments in GitHub
+
+Without integration, teams manually copy information between systems, context gets lost, and feedback submitters never learn what happened to their requests.
+
+<Callout type="info" title="The Cost of Manual Processes">
+Studies show that knowledge workers spend 20% of their time searching for information or tracking down colleagues who can help. Integration eliminates much of this waste.
+</Callout>
+
+### The Connected Workflow Goal
+
+With proper integration:
+
+1. Customer submits feedback
+2. Feedback automatically creates or links to a development ticket
+3. Engineers see customer context while working
+4. Status updates flow back to feedback tool
+5. Customers are notified when their request ships
+
+This closed loop ensures nothing falls through the cracks and customers feel heard.
+
+## Slack Integration
+
+Slack is often the hub of team communication. Integrating feedback into Slack keeps everyone aware of what customers are saying.
+
+### Setting Up Feedback Notifications
+
+Most feedback tools offer Slack integration. Configure notifications for:
+
+**New feedback**: Alert a dedicated channel when customers submit feedback. This keeps the team aware of incoming requests.
+
+**High-priority items**: Route urgent feedback to appropriate channels or individuals.
+
+**Status changes**: Notify when items move through your workflow.
+
+**Milestone events**: Celebrate when feedback-driven features ship.
+
+### Creating Feedback Channels
+
+Structure your Slack channels for feedback visibility:
+
+```
+#feedback-all          - All incoming feedback
+#feedback-urgent       - High-priority items
+#feedback-engineering  - Technical requests
+#feedback-shipped      - Completed items
+```
+
+### Slack Commands and Shortcuts
+
+Modern feedback tools often support Slack commands:
+
+```
+/feedback "User wants dark mode" - Quick feedback submission
+/feedback-search dark mode       - Search existing feedback
+/feedback-status FEAT-123        - Check item status
+```
+
+<Callout type="tip" title="Emoji Reactions">
+Set up emoji-triggered workflows. React with a specific emoji to escalate feedback, assign it to someone, or move it to a specific status.
+</Callout>
+
+### Two-Way Communication
+
+The best integrations are bidirectional:
+
+- Updates in your feedback tool appear in Slack
+- Slack discussions can be linked to feedback items
+- Team members can update status from Slack
+
+## GitHub Integration
+
+GitHub integration connects customer feedback directly to code changes.
+
+### Linking Feedback to Issues
+
+Create GitHub issues from feedback items or link existing issues:
+
+**Automatic issue creation**: When feedback is approved for development, automatically create a GitHub issue with customer context, use cases, and requirements.
+
+**Manual linking**: Allow team members to link feedback items to existing GitHub issues.
+
+**Bidirectional sync**: Status updates in GitHub reflect in your feedback tool.
+
+### Issue Template Integration
+
+Configure your GitHub issue templates to include feedback reference fields:
+
+```markdown
+## Description
+[Description of the work]
+
+## Related Feedback
+- Feedback ID: [FEEDBACK_ID]
+- Customer requests: [COUNT]
+- Combined MRR impact: [AMOUNT]
+
+## Acceptance Criteria
+- [ ] [Criteria from feedback]
+```
+
+### Pull Request Integration
+
+Link PRs back to feedback:
+
+**PR descriptions**: Include feedback references in PR templates
+
+**Automated comments**: When a PR is merged, automatically comment on related feedback items
+
+**Release notes**: Generate release notes that reference resolved feedback
+
+### Branch Naming Conventions
+
+Adopt conventions that connect branches to feedback:
+
+```
+feature/feedback-123-dark-mode
+fix/feedback-456-export-bug
+```
+
+This makes it easy to trace code changes back to customer requests.
+
+<Callout type="warning" title="Avoid Over-Automation">
+Not every piece of feedback should create a GitHub issue. Automate the link creation, but keep humans in control of what gets built.
+</Callout>
+
+## Jira Integration
+
+For teams using Jira, integration ensures feedback flows into your sprint planning and tracking.
+
+### Syncing Feedback to Jira
+
+Configure sync rules based on your workflow:
+
+**Automatic ticket creation**: When feedback reaches "Approved" status, create a Jira ticket in your backlog.
+
+**Field mapping**: Map feedback fields to Jira fields:
+
+| Feedback Field | Jira Field |
+|----------------|------------|
+| Title | Summary |
+| Description | Description |
+| Category | Component |
+| Priority | Priority |
+| Requester count | Custom field |
+
+**Status sync**: Keep feedback status aligned with Jira workflow:
+
+| Jira Status | Feedback Status |
+|-------------|-----------------|
+| To Do | Planned |
+| In Progress | In Progress |
+| In Review | In Progress |
+| Done | Shipped |
+
+### Custom Fields for Customer Context
+
+Add custom fields to Jira that display customer context:
+
+- Number of requesting customers
+- Combined ARR of requesters
+- Key account requests
+- Original customer quotes
+
+This context helps developers understand the impact of their work.
+
+### JQL for Feedback-Driven Work
+
+Create JQL queries to find feedback-related tickets:
+
+```
+project = PRODUCT AND "Feedback Requests" > 5
+project = PRODUCT AND "Customer Priority" = High
+labels = customer-feedback AND status != Done
+```
+
+### Sprint Planning Integration
+
+During sprint planning, surface feedback metrics:
+
+- How many customer requests does this ticket address?
+- What is the revenue impact of this work?
+- Are there urgent customer escalations?
+
+## Automation Examples
+
+Let us look at specific automation workflows you can build.
+
+### New High-Priority Feedback
+
+```
+Trigger: New feedback with priority = High
+Actions:
+1. Post to #feedback-urgent Slack channel
+2. Create Jira ticket in Triage queue
+3. Notify product manager via email
+4. Add to weekly review agenda
+```
+
+### Feedback Approved for Development
+
+```
+Trigger: Feedback status changed to "Approved"
+Actions:
+1. Create GitHub issue with full context
+2. Create Jira ticket linked to GitHub issue
+3. Post to #engineering Slack channel
+4. Update feedback status to "Planned"
+```
+
+### Feature Shipped
+
+```
+Trigger: Related Jira ticket marked "Done"
+Actions:
+1. Update feedback status to "Shipped"
+2. Post to #feedback-shipped Slack channel
+3. Queue email notification to requesters
+4. Update public roadmap
+5. Add to changelog draft
+```
+
+<Callout type="success" title="Start Simple">
+You do not need to automate everything at once. Start with one or two workflows and expand as you learn what works for your team.
+</Callout>
+
+### Customer Churn Risk
+
+```
+Trigger: Customer marked as churn risk
+Actions:
+1. Highlight their pending feedback requests
+2. Notify account manager
+3. Create priority review task
+4. Generate report of their request history
+```
+
+## Building Custom Integrations
+
+Sometimes existing integrations are not enough. Here is how to build custom connections.
+
+### Webhooks
+
+Most modern tools support webhooks. When events occur, they send HTTP requests to your endpoints:
+
+```javascript
+// Example webhook handler
+app.post('/webhook/feedback', (req, res) => {
+  const { event, feedback } = req.body;
+
+  if (event === 'feedback.created' && feedback.priority === 'high') {
+    createJiraTicket(feedback);
+    notifySlackChannel(feedback);
+  }
+
+  res.status(200).send('OK');
+});
+```
+
+### API Integration
+
+Use APIs for more complex integrations:
+
+```javascript
+// Sync feedback to multiple systems
+async function syncFeedback(feedbackId) {
+  const feedback = await feedbackApi.get(feedbackId);
+
+  // Create Jira ticket
+  const jiraTicket = await jira.createIssue({
+    project: 'PROD',
+    summary: feedback.title,
+    description: buildDescription(feedback)
+  });
+
+  // Update feedback with link
+  await feedbackApi.update(feedbackId, {
+    jiraKey: jiraTicket.key
+  });
+
+  // Notify Slack
+  await slack.postMessage({
+    channel: '#feedback-engineering',
+    text: `New feedback synced: ${feedback.title} -> ${jiraTicket.key}`
+  });
+}
+```
+
+### Integration Platforms
+
+Consider using integration platforms like Zapier, Make (formerly Integromat), or n8n:
+
+- No code required for basic workflows
+- Pre-built connectors for hundreds of apps
+- Easy to modify and test
+- Good for teams without dedicated engineering resources
+
+## Best Practices
+
+Follow these guidelines for successful integrations.
+
+### Avoid Duplicate Data
+
+Designate one system as the source of truth for each data type:
+
+- Feedback tool: Customer requests and context
+- Jira: Development work and sprint tracking
+- GitHub: Code and technical discussions
+
+Sync references between systems, not full data copies.
+
+### Maintain Context
+
+When information flows between systems, preserve context:
+
+- Always include links back to the original feedback
+- Include customer quotes and use cases
+- Note how many customers requested the feature
+
+### Handle Failures Gracefully
+
+Integrations fail. Build resilience:
+
+- Queue failed operations for retry
+- Alert on repeated failures
+- Provide manual override options
+- Log integration activity for debugging
+
+### Respect Rate Limits
+
+APIs have rate limits. Design integrations to:
+
+- Batch operations when possible
+- Implement exponential backoff
+- Cache frequently accessed data
+- Spread load over time
+
+## Measuring Integration Success
+
+Track these metrics to ensure your integrations are working:
+
+**Process metrics**:
+- Time from feedback to development ticket
+- Percentage of shipped features linked to feedback
+- Integration error rate
+
+**Outcome metrics**:
+- Customer notification success rate
+- Time to close the feedback loop
+- Team satisfaction with workflow
+
+## Conclusion
+
+Integrating your feedback tools with Slack, GitHub, and Jira transforms disconnected processes into a seamless workflow. Customers feel heard because they receive updates. Engineers have context because they see customer insights. Product managers have visibility because information flows automatically.
+
+Start with simple integrations and expand as you learn what works for your team. The goal is not to automate everything but to ensure that valuable customer insights flow smoothly from submission to shipped feature.
+
+The best feedback workflows are invisible. Customers submit requests and receive updates without knowing what happens in between. Teams work efficiently without manually copying data between systems. Information flows, context is preserved, and everyone stays aligned on what customers need.
