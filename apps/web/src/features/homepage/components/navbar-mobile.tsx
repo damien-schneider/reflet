@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Article,
   CurrencyCircleDollar,
   GithubLogo,
   Sparkle,
@@ -12,6 +13,7 @@ import Link from "next/link";
 const NAV_LINKS = [
   { label: "Pricing", targetId: "pricing", icon: CurrencyCircleDollar },
   { label: "Features", targetId: "features", icon: Sparkle },
+  { label: "Blog", href: "/blog", icon: Article },
   {
     label: "GitHub",
     href: "https://github.com/damien-schneider/reflet",
@@ -49,6 +51,18 @@ export default function NavbarMobile() {
               <Icon className="h-5 w-5" />
               {link.label}
             </a>
+          );
+        }
+        if ("href" in link && !("external" in link)) {
+          return (
+            <Link
+              className="flex flex-col items-center gap-1 rounded-full px-4 py-1 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
+              href={link.href}
+              key={link.label}
+            >
+              <Icon className="h-5 w-5" />
+              {link.label}
+            </Link>
           );
         }
         if ("targetId" in link) {

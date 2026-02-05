@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Article,
   CurrencyCircleDollar,
   GithubLogo,
   Sparkle,
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 const NAV_LINKS = [
   { label: "Pricing", targetId: "pricing", icon: CurrencyCircleDollar },
   { label: "Features", targetId: "features", icon: Sparkle },
+  { label: "Blog", href: "/blog", icon: Article },
   {
     label: "GitHub",
     href: "https://github.com/damien-schneider/reflet",
@@ -140,6 +142,18 @@ function NavLink({ link, onScrollTo }: NavLinkProps) {
         {link.label}
         <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
       </a>
+    );
+  }
+
+  if ("href" in link && !("external" in link)) {
+    return (
+      <Link
+        className="group relative font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
+        href={link.href}
+      >
+        {link.label}
+        <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
+      </Link>
     );
   }
 
