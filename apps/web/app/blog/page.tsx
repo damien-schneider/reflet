@@ -55,12 +55,12 @@ export default async function BlogIndexPage() {
                       .join("")}
                   </div>
                   <div>
-                    <Text as="span" className="font-medium text-sm">
+                    <span className="font-medium text-sm">
                       {post.meta.author}
-                    </Text>
-                    <Muted as="span" className="ml-2">
+                    </span>
+                    <span className="ml-2 text-muted-foreground text-sm">
                       {formatDate(post.meta.date)}
-                    </Muted>
+                    </span>
                   </div>
                 </div>
               </Link>

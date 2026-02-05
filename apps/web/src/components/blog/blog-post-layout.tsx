@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { H1, Lead, Muted, Text } from "@/components/ui/typography";
+import { H1, Lead, Muted } from "@/components/ui/typography";
 import type { BlogPostMeta } from "@/lib/blog";
 import { formatDate, getCategoryLabel } from "@/lib/blog";
 
@@ -33,13 +33,11 @@ export function BlogPostLayout({ meta, children }: BlogPostLayoutProps) {
                 .join("")}
             </div>
             <div>
-              <Text as="span" className="font-medium">
-                {meta.author}
-              </Text>
+              <span className="font-medium">{meta.author}</span>
               {meta.authorRole && (
-                <Muted as="span" className="ml-1">
+                <span className="ml-1 text-muted-foreground text-sm">
                   ({meta.authorRole})
-                </Muted>
+                </span>
               )}
               <Muted className="block">{formatDate(meta.date)}</Muted>
             </div>
@@ -54,12 +52,12 @@ export function BlogPostLayout({ meta, children }: BlogPostLayoutProps) {
 
       {/* Footer CTA */}
       <footer className="mt-12 rounded-xl border border-border bg-muted/50 p-8 text-center">
-        <Text className="mb-4 font-display font-semibold text-2xl">
+        <p className="mb-4 font-display font-semibold text-2xl">
           Ready to streamline your product feedback?
-        </Text>
-        <Text className="mb-6 text-muted-foreground">
+        </p>
+        <p className="mb-6 text-muted-foreground">
           Start collecting and organizing feedback with Reflet today.
-        </Text>
+        </p>
         <div className="flex justify-center gap-4">
           <Link href="/dashboard">
             <Button size="lg">Start Free Trial</Button>
