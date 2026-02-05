@@ -1,11 +1,12 @@
 "use client";
 
 import {
-  closestCenter,
+  closestCorners,
   DndContext,
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
+  KeyboardSensor,
   PointerSensor,
   TouchSensor,
   useDroppable,
@@ -14,6 +15,7 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
+  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -22,6 +24,7 @@ import { CaretUp, ChatCircle, DotsSixVertical } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -75,7 +78,7 @@ function FeedbackCardContent({
         "relative p-3 transition-all duration-200",
         "hover:scale-[1.02] hover:bg-accent/50 hover:shadow-md",
         isDragging && "opacity-50 ring-2 ring-primary",
-        isOverlay && "rotate-3 shadow-xl ring-2 ring-primary"
+        isOverlay && "shadow-xl ring-2 ring-primary"
       )}
     >
       {isAdmin && dragHandleListeners && (
@@ -263,6 +266,40 @@ interface OptimisticUpdate {
   newStatusId: string;
 }
 
+// Accessibility announcements for screen readers
+const createAnnouncements = (
+  feedback: FeedbackItem[],
+  statuses: Array<{ _id: string; name: string; color: string }>
+) => ({
+  onDragStart({ active }: { active: { id: string | number } }) {
+    const item = feedback.find((f) => f._id === active.id);
+    return `Picked up ${item?.title}. Dragging.`;
+  },
+  onDragOver({
+    over,
+  }: {
+    active: { id: string | number };
+    over: { id: string | number } | null;
+  }) {
+    const status = statuses.find((s) => s._id === over?.id);
+    return status ? `Over ${status.name} column` : undefined;
+  },
+  onDragEnd({
+    active,
+    over,
+  }: {
+    active: { id: string | number };
+    over: { id: string | number } | null;
+  }) {
+    const item = feedback.find((f) => f._id === active.id);
+    const status = statuses.find((s) => s._id === over?.id);
+    return status
+      ? `Dropped ${item?.title} in ${status.name}`
+      : "Drag cancelled";
+  },
+  onDragCancel: () => "Drag cancelled",
+});
+
 export function RoadmapView({
   feedback,
   statuses,
@@ -313,7 +350,15 @@ export function RoadmapView({
         delay: 300,
         tolerance: 5,
       },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     })
+  );
+
+  const announcements = useMemo(
+    () => createAnnouncements(feedback, statuses),
+    [feedback, statuses]
   );
 
   const handleDragStart = useCallback(
@@ -394,7 +439,8 @@ export function RoadmapView({
   return (
     <>
       <DndContext
-        collisionDetection={closestCenter}
+        accessibility={{ announcements }}
+        collisionDetection={closestCorners}
         onDragEnd={handleDragEnd}
         onDragStart={handleDragStart}
         sensors={sensors}
@@ -434,11 +480,23 @@ export function RoadmapView({
         </ScrollArea>
 
         <DragOverlay>
-          {activeItem ? (
-            <div className="w-64">
-              <FeedbackCardContent isOverlay item={activeItem} />
-            </div>
-          ) : null}
+          <AnimatePresence>
+            {activeItem && (
+              <motion.div
+                animate={{
+                  scale: 1.05,
+                  rotate: 3,
+                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                }}
+                className="w-64"
+                exit={{ scale: 1, rotate: 0 }}
+                initial={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              >
+                <FeedbackCardContent isOverlay item={activeItem} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </DragOverlay>
       </DndContext>
 
