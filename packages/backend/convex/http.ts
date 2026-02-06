@@ -6,6 +6,9 @@ import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { decodeUserToken } from "./feedback_api_auth";
 import { generateRssFeed } from "./rss";
+import { verifyGitHubSignature } from "./security";
+
+declare const process: any;
 
 const http = httpRouter();
 
@@ -191,7 +194,22 @@ http.route({
 
     const body = await request.text();
 
-    // TODO: Verify webhook signature using GITHUB_WEBHOOK_SECRET for production
+    // Verify webhook signature
+    const signature = request.headers.get("X-Hub-Signature-256");
+    const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
+
+    if (webhookSecret) {
+      const isValid = await verifyGitHubSignature(
+        body,
+        signature,
+        webhookSecret
+      );
+      if (!isValid) {
+        return new Response("Invalid signature", { status: 401 });
+      }
+    } else if (process.env.NODE_ENV === "production") {
+      console.warn("GITHUB_WEBHOOK_SECRET is not set in production");
+    }
 
     try {
       const payload = JSON.parse(body) as Record<string, unknown>;
