@@ -10,6 +10,7 @@ vi.mock("@phosphor-icons/react", () => ({
 
 // Mock motion/react to avoid animation issues in tests
 vi.mock("motion/react", () => ({
+  LayoutGroup: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   motion: {
     span: ({
       children,
