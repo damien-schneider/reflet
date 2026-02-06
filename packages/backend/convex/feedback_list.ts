@@ -315,6 +315,19 @@ export const listForRoadmapByOrganization = query({
           userVoteType = userVote?.voteType ?? null;
         }
 
+        // Get milestones linked to this feedback
+        const milestoneFeedbackLinks = await ctx.db
+          .query("milestoneFeedback")
+          .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
+          .collect();
+        const milestones = (
+          await Promise.all(
+            milestoneFeedbackLinks.map(async (mf) => ctx.db.get(mf.milestoneId))
+          )
+        ).filter(
+          (m): m is NonNullable<typeof m> => m !== null && m !== undefined
+        );
+
         return {
           ...f,
           tags: tags.filter(Boolean),
@@ -329,6 +342,11 @@ export const listForRoadmapByOrganization = query({
           userVoteType,
           upvoteCount,
           downvoteCount,
+          milestones: milestones.map((m) => ({
+            _id: m._id,
+            name: m.name,
+            emoji: m.emoji,
+          })),
         };
       })
     );

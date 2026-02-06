@@ -7,15 +7,15 @@ import { useQuery } from "convex/react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 
 import { CommentsSection } from "./comments-section";
@@ -32,6 +32,7 @@ export interface FeedbackListItem {
   createdAt: number;
   organizationStatusId?: string;
   hasVoted?: boolean;
+  userVoteType?: "upvote" | "downvote" | null;
   organizationId: string;
   tags?: Array<{
     _id: string;
@@ -99,6 +100,7 @@ export function FeedbackDetailDrawer({
               color: t.color,
             })),
           hasVoted: listItem.hasVoted,
+          userVoteType: listItem.userVoteType,
           voteCount: listItem.voteCount,
           commentCount: listItem.commentCount,
           organizationStatusId: listItem.organizationStatusId as
@@ -161,22 +163,19 @@ export function FeedbackDetailDrawer({
   const isLoading = feedbackId && !feedback;
 
   return (
-    <Drawer
-      direction="right"
-      handleOnly
-      onOpenChange={(open) => !open && onClose()}
-      open={isOpen}
-    >
-      <DrawerContent
-        className="inset-y-0 right-0 flex h-full w-full flex-col gap-0 overflow-hidden rounded-none border-l p-0 shadow-xl md:inset-y-2 md:right-2 md:h-auto md:w-[60vw] md:max-w-5xl md:rounded-xl md:border"
-        showOverlay={false}
+    <Sheet onOpenChange={(open) => !open && onClose()} open={isOpen}>
+      <SheetContent
+        className="gap-0 overflow-hidden p-0 md:w-[60vw] md:max-w-5xl"
+        showCloseButton={false}
+        side="right"
+        variant="panel"
       >
         {/* Header */}
-        <DrawerHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
-          <DrawerTitle className="sr-only">Feedback Details</DrawerTitle>
-          <DrawerDescription className="sr-only">
+        <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
+          <SheetTitle className="sr-only">Feedback Details</SheetTitle>
+          <SheetDescription className="sr-only">
             View and manage feedback details
-          </DrawerDescription>
+          </SheetDescription>
 
           {/* Navigation controls */}
           <div className="flex items-center gap-1">
@@ -211,13 +210,13 @@ export function FeedbackDetailDrawer({
           </div>
 
           {/* Close button */}
-          <DrawerClose asChild>
-            <Button onClick={onClose} size="icon-sm" variant="ghost">
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </DrawerClose>
-        </DrawerHeader>
+          <SheetClose
+            render={<Button onClick={onClose} size="icon-sm" variant="ghost" />}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </SheetClose>
+        </SheetHeader>
 
         {/* Content */}
         <FeedbackDetailContent
@@ -226,8 +225,8 @@ export function FeedbackDetailDrawer({
           isAdmin={isAdmin}
           isLoading={isLoading}
         />
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -244,6 +243,7 @@ interface FeedbackDetailContentProps {
           color: string;
         } | null>;
         hasVoted?: boolean;
+        userVoteType?: "upvote" | "downvote" | null;
         voteCount?: number;
         commentCount?: number;
         organizationStatusId?: Id<"organizationStatuses"> | null;
@@ -293,15 +293,15 @@ function FeedbackDetailContent({
           author={feedback.author}
           createdAt={feedback.createdAt}
           feedbackId={feedbackId}
-          hasVoted={feedback.hasVoted ?? false}
           isAdmin={isAdmin}
           organizationId={feedback.organizationId}
           organizationStatusId={feedback.organizationStatusId}
+          userVoteType={feedback.userVoteType ?? null}
           voteCount={feedback.voteCount ?? 0}
         />
 
         {/* Main content */}
-        <div className="px-6 py-4">
+        <div className="min-h-[60vh] px-6 py-4">
           <FeedbackContent
             description={feedback.description ?? ""}
             feedbackId={feedbackId}

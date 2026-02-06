@@ -54,8 +54,14 @@ export function PublicFeedbackComments({
   );
 
   const topLevelComments = comments?.filter((c) => !c.parentId) || [];
-  const commentReplies = (parentId: string) =>
-    comments?.filter((c) => c.parentId === parentId) || [];
+  const repliesMap = new Map<string, Comment[]>();
+  for (const c of comments ?? []) {
+    if (c.parentId) {
+      const existing = repliesMap.get(c.parentId) ?? [];
+      existing.push(c);
+      repliesMap.set(c.parentId, existing);
+    }
+  }
 
   return (
     <div>
@@ -100,82 +106,70 @@ export function PublicFeedbackComments({
       {comments !== undefined && topLevelComments.length > 0 && (
         <div className="space-y-4">
           {topLevelComments.map((comment) => (
-            <div className="group" key={comment._id}>
-              <div className="flex gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={comment.author?.image} />
-                  <AvatarFallback>
-                    {comment.author?.name?.charAt(0) || "?"}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">
-                      {comment.author?.name ||
-                        comment.author?.email ||
-                        "Anonymous"}
-                    </span>
-                    {comment.isOfficial && (
-                      <Badge className="text-xs" variant="secondary">
-                        Official
-                      </Badge>
-                    )}
-                    <span className="text-muted-foreground text-xs">
-                      {formatDistanceToNow(comment.createdAt, {
-                        addSuffix: true,
-                      })}
-                    </span>
-                  </div>
-
-                  <p className="mt-1 whitespace-pre-wrap text-sm">
-                    {comment.body}
-                  </p>
-
-                  {commentReplies(comment._id).length > 0 && (
-                    <div className="mt-4 space-y-3 border-l-2 pl-4">
-                      {commentReplies(comment._id).map((reply) => (
-                        <div className="group flex gap-3" key={reply._id}>
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={reply.author?.image} />
-                            <AvatarFallback className="text-xs">
-                              {reply.author?.name?.charAt(0) || "?"}
-                            </AvatarFallback>
-                          </Avatar>
-
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">
-                                {reply.author?.name ||
-                                  reply.author?.email ||
-                                  "Anonymous"}
-                              </span>
-                              {reply.isOfficial && (
-                                <Badge className="text-xs" variant="secondary">
-                                  Official
-                                </Badge>
-                              )}
-                              <span className="text-muted-foreground text-xs">
-                                {formatDistanceToNow(reply.createdAt, {
-                                  addSuffix: true,
-                                })}
-                              </span>
-                            </div>
-
-                            <p className="mt-1 whitespace-pre-wrap text-sm">
-                              {reply.body}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <PublicCommentItem
+              comment={comment}
+              key={comment._id}
+              repliesMap={repliesMap}
+            />
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function PublicCommentItem({
+  comment,
+  repliesMap,
+  isReply = false,
+}: {
+  comment: Comment;
+  repliesMap: Map<string, Comment[]>;
+  isReply?: boolean;
+}) {
+  const replies = repliesMap.get(comment._id) ?? [];
+
+  return (
+    <div className="group flex gap-3">
+      <Avatar className={isReply ? "h-6 w-6" : "h-8 w-8"}>
+        <AvatarImage src={comment.author?.image} />
+        <AvatarFallback className={isReply ? "text-xs" : ""}>
+          {comment.author?.name?.charAt(0) || "?"}
+        </AvatarFallback>
+      </Avatar>
+
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm">
+            {comment.author?.name || comment.author?.email || "Anonymous"}
+          </span>
+          {comment.isOfficial && (
+            <Badge className="text-xs" variant="secondary">
+              Official
+            </Badge>
+          )}
+          <span className="text-muted-foreground text-xs">
+            {formatDistanceToNow(comment.createdAt, {
+              addSuffix: true,
+            })}
+          </span>
+        </div>
+
+        <p className="mt-1 whitespace-pre-wrap text-sm">{comment.body}</p>
+
+        {replies.length > 0 && (
+          <div className="mt-4 space-y-3 border-l-2 pl-4">
+            {replies.map((reply) => (
+              <PublicCommentItem
+                comment={reply}
+                isReply
+                key={reply._id}
+                repliesMap={repliesMap}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

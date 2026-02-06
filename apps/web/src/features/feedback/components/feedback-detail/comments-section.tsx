@@ -152,7 +152,7 @@ function CommentInput({
   );
 }
 
-// Helper function to build comment tree from flat list
+// Build recursive comment tree from flat list
 interface RawComment {
   _id: Id<"comments">;
   body: string;
@@ -186,7 +186,7 @@ function buildCommentTree(rawComments: RawComment[]): CommentData[] {
     });
   }
 
-  // Second pass: build tree structure
+  // Second pass: build tree by linking children to parents
   for (const comment of rawComments) {
     const commentData = commentMap.get(comment._id);
     if (!commentData) {

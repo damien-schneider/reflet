@@ -7,6 +7,7 @@ import { useFeedbackSidebar } from "./hooks/use-feedback-sidebar";
 import { SidebarAssigneeSection } from "./sidebar-assignee-section";
 import { SidebarDifficultySection } from "./sidebar-difficulty-section";
 import { SidebarMetadata } from "./sidebar-metadata";
+import { SidebarMilestonesSection } from "./sidebar-milestones-section";
 import { SidebarStatusSection } from "./sidebar-status-section";
 import { SidebarSubscriptionSection } from "./sidebar-subscription-section";
 import { SidebarVotingSection } from "./sidebar-voting-section";
@@ -83,6 +84,14 @@ export function FeedbackSidebar({
           statusId={feedback.organizationStatusId}
         />
       </div>
+
+      {organizationId && (
+        <SidebarMilestonesSection
+          feedbackId={feedbackId}
+          isAdmin={isAdmin}
+          organizationId={organizationId}
+        />
+      )}
 
       <SidebarMetadata
         author={feedback.author}

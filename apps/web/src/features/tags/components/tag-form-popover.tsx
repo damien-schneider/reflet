@@ -164,6 +164,7 @@ export function TagFormPopover({
     return (
       <Popover onOpenChange={onOpenChange} open={open}>
         <PopoverTrigger
+          nativeButton={false}
           render={(props) => (
             // biome-ignore lint/a11y/noStaticElementInteractions: Intentionally blocking events for externally-controlled popover
             // biome-ignore lint/a11y/noNoninteractiveElementInteractions: Intentionally blocking events for externally-controlled popover

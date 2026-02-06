@@ -43,6 +43,7 @@ import type * as http from "../http.js";
 import type * as invitations from "../invitations.js";
 import type * as members from "../members.js";
 import type * as migrations_cleanup_board_fields from "../migrations/cleanup_board_fields.js";
+import type * as milestones from "../milestones.js";
 import type * as notifications from "../notifications.js";
 import type * as organization_statuses from "../organization_statuses.js";
 import type * as organizations from "../organizations.js";
@@ -112,6 +113,7 @@ declare const fullApi: ApiFromModules<{
   invitations: typeof invitations;
   members: typeof members;
   "migrations/cleanup_board_fields": typeof migrations_cleanup_board_fields;
+  milestones: typeof milestones;
   notifications: typeof notifications;
   organization_statuses: typeof organization_statuses;
   organizations: typeof organizations;

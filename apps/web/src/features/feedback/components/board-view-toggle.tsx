@@ -1,11 +1,11 @@
 "use client";
 
-import { GridFour, List } from "@phosphor-icons/react";
+import { Flag, GridFour, List } from "@phosphor-icons/react";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-export type BoardView = "roadmap" | "feed";
+export type BoardView = "roadmap" | "feed" | "milestones";
 
 interface BoardViewToggleProps {
   view: BoardView;
@@ -32,6 +32,10 @@ export function BoardViewToggle({
         <TabsTrigger className="h-8 gap-2 px-4" value="roadmap">
           <GridFour className="h-4 w-4" />
           <span>Roadmap</span>
+        </TabsTrigger>
+        <TabsTrigger className="h-8 gap-2 px-4" value="milestones">
+          <Flag className="h-4 w-4" />
+          <span>Timeline</span>
         </TabsTrigger>
       </TabsList>
     </Tabs>

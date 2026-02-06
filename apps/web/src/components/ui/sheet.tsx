@@ -40,23 +40,27 @@ function SheetContent({
   children,
   side = "right",
   showCloseButton = true,
+  showOverlay,
   variant = "default",
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left";
   showCloseButton?: boolean;
-  variant?: "default" | "floating";
+  showOverlay?: boolean;
+  variant?: "default" | "floating" | "panel";
 }) {
   const isFloating = variant === "floating";
+  const isPanel = variant === "panel";
+  const shouldShowOverlay = showOverlay ?? !(isFloating || isPanel);
 
   return (
     <SheetPortal>
-      {!isFloating && <SheetOverlay />}
+      {shouldShowOverlay && <SheetOverlay />}
       <SheetPrimitive.Popup
         className={cn(
           "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 fixed z-50 flex flex-col gap-4 bg-clip-padding text-sm transition duration-200 ease-in-out",
           // Default variant styles
-          !isFloating && [
+          !(isFloating || isPanel) && [
             "shadow-lg",
             "data-[side=right]:data-closed:slide-out-to-right-10 data-[side=right]:data-open:slide-in-from-right-10",
             "data-[side=left]:data-closed:slide-out-to-left-10 data-[side=left]:data-open:slide-in-from-left-10",
@@ -75,6 +79,18 @@ function SheetContent({
             "data-[side=left]:data-closed:slide-out-to-left-full data-[side=left]:data-open:slide-in-from-left-full",
             "data-[side=right]:right-3 data-[side=right]:top-3 data-[side=right]:bottom-3",
             "data-[side=left]:left-3 data-[side=left]:top-3 data-[side=left]:bottom-3",
+          ],
+          // Panel variant styles - full screen on mobile, floating rounded on desktop
+          isPanel && [
+            "shadow-xl",
+            "data-[side=right]:data-closed:slide-out-to-right-10 data-[side=right]:data-open:slide-in-from-right-10",
+            "data-[side=left]:data-closed:slide-out-to-left-10 data-[side=left]:data-open:slide-in-from-left-10",
+            // Mobile: full screen, pinned to edge
+            "data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-full data-[side=right]:border-l",
+            "data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-full data-[side=left]:border-r",
+            // Desktop: floating with inset, rounded
+            "data-[side=right]:md:inset-y-2 data-[side=right]:md:right-2 data-[side=right]:md:h-auto data-[side=right]:md:rounded-xl data-[side=right]:md:border",
+            "data-[side=left]:md:inset-y-2 data-[side=left]:md:left-2 data-[side=left]:md:h-auto data-[side=left]:md:rounded-xl data-[side=left]:md:border",
           ],
           className
         )}

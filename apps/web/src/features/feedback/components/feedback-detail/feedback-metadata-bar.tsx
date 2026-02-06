@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowUp, Bell, BellSlash, Calendar } from "@phosphor-icons/react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Bell,
+  BellSlash,
+  Calendar,
+  CaretDown,
+} from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -11,12 +18,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -29,7 +36,7 @@ interface FeedbackMetadataBarProps {
   feedbackId: Id<"feedback">;
   organizationId: Id<"organizations">;
   voteCount: number;
-  hasVoted: boolean;
+  userVoteType: "upvote" | "downvote" | null;
   createdAt: number;
   organizationStatusId?: Id<"organizationStatuses"> | null;
   author?: {
@@ -44,7 +51,7 @@ export function FeedbackMetadataBar({
   feedbackId,
   organizationId,
   voteCount,
-  hasVoted,
+  userVoteType,
   createdAt,
   organizationStatusId,
   author,
@@ -71,13 +78,16 @@ export function FeedbackMetadataBar({
     (s) => s._id === organizationStatusId
   );
 
-  const handleVote = useCallback(async () => {
-    if (!isAuthenticated) {
-      authGuard(() => undefined);
-      return;
-    }
-    await toggleVote({ feedbackId, voteType: "upvote" });
-  }, [feedbackId, toggleVote, isAuthenticated, authGuard]);
+  const handleVote = useCallback(
+    async (voteType: "upvote" | "downvote") => {
+      if (!isAuthenticated) {
+        authGuard(() => undefined);
+        return;
+      }
+      await toggleVote({ feedbackId, voteType });
+    },
+    [feedbackId, toggleVote, isAuthenticated, authGuard]
+  );
 
   const handleStatusChange = useCallback(
     async (statusId: Id<"organizationStatuses"> | null) => {
@@ -101,22 +111,46 @@ export function FeedbackMetadataBar({
 
   return (
     <div className="flex flex-wrap items-center gap-3 border-b bg-muted/30 px-6 py-3">
-      {/* Vote button */}
-      <Button
-        className={cn(
-          "h-8 gap-1.5 rounded-full px-3",
-          hasVoted && "border-primary bg-primary/10 text-primary"
-        )}
-        onClick={handleVote}
-        size="sm"
-        variant="outline"
-      >
-        <ArrowUp
-          className={cn("h-3.5 w-3.5", hasVoted && "fill-current")}
-          weight={hasVoted ? "fill" : "regular"}
-        />
-        <span className="font-semibold tabular-nums">{voteCount}</span>
-      </Button>
+      {/* Vote buttons */}
+      <div className="flex items-center gap-1">
+        <Button
+          className={cn(
+            "h-8 gap-1.5 rounded-full px-3",
+            userVoteType === "upvote" &&
+              "border-primary bg-primary/10 text-primary"
+          )}
+          onClick={() => handleVote("upvote")}
+          size="sm"
+          variant="outline"
+        >
+          <ArrowUp
+            className={cn(
+              "h-3.5 w-3.5",
+              userVoteType === "upvote" && "fill-current"
+            )}
+            weight={userVoteType === "upvote" ? "fill" : "regular"}
+          />
+          <span className="font-semibold tabular-nums">{voteCount}</span>
+        </Button>
+        <Button
+          className={cn(
+            "h-8 rounded-full px-2.5",
+            userVoteType === "downvote" &&
+              "border-destructive bg-destructive/10 text-destructive"
+          )}
+          onClick={() => handleVote("downvote")}
+          size="sm"
+          variant="outline"
+        >
+          <ArrowDown
+            className={cn(
+              "h-3.5 w-3.5",
+              userVoteType === "downvote" && "fill-current"
+            )}
+            weight={userVoteType === "downvote" ? "fill" : "regular"}
+          />
+        </Button>
+      </div>
 
       {/* Status */}
       <StatusDisplay
@@ -173,7 +207,7 @@ export function FeedbackMetadataBar({
 
       {/* Subscribe button */}
       <Tooltip>
-        <TooltipTrigger>
+        <TooltipTrigger render={<span />}>
           <Button
             className={cn("h-8 w-8", isSubscribed === true && "text-primary")}
             onClick={handleToggleSubscription}
@@ -200,7 +234,6 @@ export function FeedbackMetadataBar({
   );
 }
 
-// Extracted to avoid nested ternary
 interface StatusDisplayProps {
   isAdmin: boolean;
   organizationStatuses:
@@ -222,36 +255,43 @@ function StatusDisplay({
 }: StatusDisplayProps) {
   if (isAdmin && organizationStatuses) {
     return (
-      <Select onValueChange={onStatusChange} value={statusId ?? undefined}>
-        <SelectTrigger className="h-8 w-auto gap-2 rounded-full border-dashed px-3">
-          <SelectValue placeholder="Set status">
-            {currentStatus ? (
-              <div className="flex items-center gap-1.5">
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="flex h-8 w-auto cursor-pointer select-none items-center gap-2 rounded-full border border-input border-dashed bg-transparent px-3 text-sm transition-colors"
+          render={<button type="button" />}
+        >
+          {currentStatus ? (
+            <div className="flex items-center gap-1.5">
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: currentStatus.color }}
+              />
+              <span className="text-xs">{currentStatus.name}</span>
+            </div>
+          ) : (
+            <span className="text-muted-foreground text-xs">Status</span>
+          )}
+          <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-48">
+          <DropdownMenuRadioGroup
+            onValueChange={(value) =>
+              onStatusChange(value as Id<"organizationStatuses">)
+            }
+            value={statusId ?? ""}
+          >
+            {organizationStatuses.map((status) => (
+              <DropdownMenuRadioItem key={status._id} value={status._id}>
                 <div
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: currentStatus.color }}
-                />
-                <span className="text-xs">{currentStatus.name}</span>
-              </div>
-            ) : (
-              <span className="text-muted-foreground text-xs">Status</span>
-            )}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {organizationStatuses.map((status) => (
-            <SelectItem key={status._id} value={status._id}>
-              <div className="flex items-center gap-2">
-                <div
-                  className="h-2 w-2 rounded-full"
+                  className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: status.color }}
                 />
                 {status.name}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   }
 

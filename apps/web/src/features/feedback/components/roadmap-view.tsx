@@ -112,6 +112,20 @@ function FeedbackCardContent({
           )}
         </div>
       )}
+      {item.milestones && item.milestones.length > 0 && (
+        <div className="mt-1 flex gap-1">
+          {item.milestones.slice(0, 2).map((m) => (
+            <span className="text-xs" key={m._id} title={m.name}>
+              {m.emoji ?? "🏁"}
+            </span>
+          ))}
+          {item.milestones.length > 2 && (
+            <span className="text-[10px] text-muted-foreground">
+              +{item.milestones.length - 2}
+            </span>
+          )}
+        </div>
+      )}
       <div className="mt-2 flex items-center gap-2 text-muted-foreground text-xs">
         <CaretUp className="h-3 w-3" />
         <span>{item.voteCount}</span>

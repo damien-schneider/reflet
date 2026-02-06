@@ -214,6 +214,52 @@ export default defineSchema({
     .index("by_org_order", ["organizationId", "order"]),
 
   // ============================================
+  // MILESTONES
+  // ============================================
+  milestones: defineTable({
+    organizationId: v.id("organizations"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    emoji: v.optional(v.string()),
+    color: v.string(),
+    timeHorizon: v.union(
+      v.literal("now"),
+      v.literal("next_month"),
+      v.literal("next_quarter"),
+      v.literal("half_year"),
+      v.literal("next_year"),
+      v.literal("future")
+    ),
+    targetDate: v.optional(v.number()),
+    order: v.number(),
+    status: v.union(
+      v.literal("active"),
+      v.literal("completed"),
+      v.literal("archived")
+    ),
+    completedAt: v.optional(v.number()),
+    isPublic: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_status", ["organizationId", "status"])
+    .index("by_org_horizon", ["organizationId", "timeHorizon"]),
+
+  // ============================================
+  // MILESTONE FEEDBACK (Junction table)
+  // ============================================
+  milestoneFeedback: defineTable({
+    milestoneId: v.id("milestones"),
+    feedbackId: v.id("feedback"),
+    addedAt: v.number(),
+    addedBy: v.optional(v.string()),
+  })
+    .index("by_milestone", ["milestoneId"])
+    .index("by_feedback", ["feedbackId"])
+    .index("by_milestone_feedback", ["milestoneId", "feedbackId"]),
+
+  // ============================================
   // TAGS
   // ============================================
   tags: defineTable({

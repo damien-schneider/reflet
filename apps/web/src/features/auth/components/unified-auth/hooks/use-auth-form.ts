@@ -163,7 +163,6 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
           onSuccess: () => {
             onSuccess?.();
             router.push("/pending-invitations");
-            toast.success("Successfully signed in");
           },
           onError: (error) => {
             setApiError(

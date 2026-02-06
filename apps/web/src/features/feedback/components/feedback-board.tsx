@@ -24,9 +24,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { H1, Lead } from "@/components/ui/typography";
+import { MilestonesView } from "@/features/milestones/components/milestones-view";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { cn } from "@/lib/utils";
-
 import { useBoardFilters } from "../hooks/use-board-filters";
 import { useFeedbackDrawer } from "../hooks/use-feedback-drawer";
 import {
@@ -495,7 +495,14 @@ function FeedbackBoardContent({
 
       {/* Content */}
       <div className={view === "feed" ? "mx-auto max-w-3xl" : ""}>
-        {view === "roadmap" ? (
+        {view === "milestones" && (
+          <MilestonesView
+            isAdmin={isAdmin}
+            onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
+            organizationId={organizationId}
+          />
+        )}
+        {view === "roadmap" && (
           <RoadmapView
             feedback={filteredFeedback}
             isAdmin={isAdmin}
@@ -503,7 +510,8 @@ function FeedbackBoardContent({
             organizationId={organizationId}
             statuses={orgStatuses ?? []}
           />
-        ) : (
+        )}
+        {view === "feed" && (
           <FeedFeedbackView
             feedback={filteredFeedback}
             hasActiveFilters={hasActiveFilters}

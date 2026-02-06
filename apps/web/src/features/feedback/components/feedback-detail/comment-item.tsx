@@ -168,16 +168,14 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
               </p>
 
               {/* Reply button */}
-              {!isReply && (
-                <button
-                  className="mt-2 flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground"
-                  onClick={() => setIsReplying(true)}
-                  type="button"
-                >
-                  <ArrowBendDownRight className="h-3 w-3" />
-                  Reply
-                </button>
-              )}
+              <button
+                className="mt-2 flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground"
+                onClick={() => setIsReplying(true)}
+                type="button"
+              >
+                <ArrowBendDownRight className="h-3 w-3" />
+                Reply
+              </button>
             </>
           )}
 

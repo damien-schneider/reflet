@@ -75,6 +75,7 @@ export const get = query({
 
     // Check if user voted
     let hasVoted = false;
+    let userVoteType: "upvote" | "downvote" | null = null;
     if (user) {
       const vote = await ctx.db
         .query("feedbackVotes")
@@ -83,6 +84,7 @@ export const get = query({
         )
         .unique();
       hasVoted = !!vote;
+      userVoteType = vote?.voteType ?? null;
     }
 
     // Get organization status if set
@@ -138,6 +140,7 @@ export const get = query({
       organizationStatus,
       tags: tags.filter(Boolean),
       hasVoted,
+      userVoteType,
       isMember,
       role,
       isAuthor: user?._id === feedback.authorId,

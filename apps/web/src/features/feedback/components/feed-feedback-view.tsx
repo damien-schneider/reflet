@@ -34,6 +34,11 @@ export interface FeedbackItem {
     icon?: string;
   } | null>;
   organizationStatus?: { name: string; color: string; icon?: string } | null;
+  milestones?: Array<{
+    _id: string;
+    name: string;
+    emoji?: string;
+  }>;
 }
 
 export interface FeedFeedbackViewProps {

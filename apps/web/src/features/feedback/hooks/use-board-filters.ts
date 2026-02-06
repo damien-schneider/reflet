@@ -65,7 +65,11 @@ export function useBoardFilters(
   const state = useMemo((): BoardFiltersState => {
     const viewParam = searchParams.get(URL_PARAM_KEYS.view);
     const view =
-      viewParam === "roadmap" || viewParam === "feed" ? viewParam : defaultView;
+      viewParam === "roadmap" ||
+      viewParam === "feed" ||
+      viewParam === "milestones"
+        ? viewParam
+        : defaultView;
 
     const sortParam = searchParams.get(URL_PARAM_KEYS.sort);
     const sortBy =

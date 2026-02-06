@@ -71,59 +71,27 @@ export const list = query({
       comments.sort((a, b) => a.createdAt - b.createdAt);
     }
 
-    // Build threaded structure
-    const rootComments = comments.filter((c) => !c.parentId);
-    const repliesMap = new Map<string, typeof comments>();
-
-    for (const comment of comments) {
-      if (comment.parentId) {
-        const existing = repliesMap.get(comment.parentId) || [];
-        existing.push(comment);
-        repliesMap.set(comment.parentId, existing);
-      }
-    }
-
-    // Add replies to each root comment and map authors
-    const threaded = await Promise.all(
-      rootComments.map(async (comment) => {
-        const commentAuthor = comment.authorId
+    // Resolve authors for all comments and return flat list
+    const withAuthors = await Promise.all(
+      comments.map(async (comment) => {
+        const author = comment.authorId
           ? await authComponent.getAnyUserById(ctx, comment.authorId)
           : null;
-        const replies = await Promise.all(
-          (repliesMap.get(comment._id) || []).map(async (reply) => {
-            const replyAuthor = reply.authorId
-              ? await authComponent.getAnyUserById(ctx, reply.authorId)
-              : null;
-            return {
-              ...reply,
-              author: replyAuthor
-                ? {
-                    name: replyAuthor.name || undefined,
-                    email: replyAuthor.email,
-                    image: replyAuthor.image || undefined,
-                  }
-                : undefined,
-              isAuthor: user?._id === reply.authorId,
-            };
-          })
-        );
-
         return {
           ...comment,
-          author: commentAuthor
+          author: author
             ? {
-                name: commentAuthor.name || undefined,
-                email: commentAuthor.email,
-                image: commentAuthor.image || undefined,
+                name: author.name || undefined,
+                email: author.email,
+                image: author.image || undefined,
               }
             : undefined,
-          replies,
           isAuthor: user?._id === comment.authorId,
         };
       })
     );
 
-    return threaded;
+    return withAuthors;
   },
 });
 
