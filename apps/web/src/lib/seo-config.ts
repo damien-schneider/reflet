@@ -111,6 +111,9 @@ export const defaultMetadata: Metadata = {
     // yandex: 'your-yandex-verification-code',
     // bing: 'your-bing-verification-code',
   },
+  appleWebApp: {
+    title: "Reflet",
+  },
   category: "technology",
   classification: "Business Software",
 };

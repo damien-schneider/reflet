@@ -36,7 +36,6 @@ export function NavMain({
                     <span>{item.title}</span>
                   </Link>
                 )}
-                tooltip={item.title}
               />
               <SidebarListAction showOnHover>
                 <IconPlus />

@@ -99,7 +99,7 @@ export default function GitHubSettingsPage({
   }
 
   return (
-    <div className="admin-container">
+    <div>
       <div className="mb-8">
         <H1>GitHub Integration</H1>
         <Text variant="bodySmall">

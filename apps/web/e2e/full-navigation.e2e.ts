@@ -116,18 +116,12 @@ test.describe("Full Navigation E2E - No 404 Errors", () => {
     // Verify no 404 on board detail page
     await expect(page.getByText("Board not found")).not.toBeVisible();
 
-    // 4. Navigate to Settings page
+    // 4. Navigate to Settings page (now shows General settings)
     await page.goto(`/dashboard/${orgSlug}/settings`);
     await page.waitForLoadState("networkidle");
     await expect(
-      page.getByRole("heading", { name: "Settings", exact: true })
+      page.getByRole("heading", { name: "General Gear", exact: true })
     ).toBeVisible({ timeout: 10_000 });
-
-    // 5. Navigate to Settings > General
-    await page.goto(`/dashboard/${orgSlug}/settings/general`);
-    await page.waitForLoadState("networkidle");
-    // Verify page renders (not 404)
-    await expect(page.locator("h1")).toBeVisible({ timeout: 10_000 });
 
     // 6. Navigate to Settings > Members
     await page.goto(`/dashboard/${orgSlug}/settings/members`);

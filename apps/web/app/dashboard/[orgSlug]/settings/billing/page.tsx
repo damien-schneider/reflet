@@ -109,7 +109,7 @@ export default function BillingPage({
   );
 
   return (
-    <div className="admin-container">
+    <div>
       <div className="mb-8">
         <H1>Billing</H1>
         <Text className="text-muted-foreground" variant="bodySmall">

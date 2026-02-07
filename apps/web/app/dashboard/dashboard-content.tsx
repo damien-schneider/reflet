@@ -35,6 +35,8 @@ const routeLabels: Record<string, string> = {
   billing: "Billing",
   members: "Members",
   inbox: "Inbox",
+  github: "GitHub",
+  branding: "Branding",
 };
 
 function getRelevantPathSegments(pathname: string): string[] {
@@ -204,10 +206,10 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
     <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>
       <CommandPalette isAdmin={isAdmin} orgSlug={orgSlug} />
       <DashboardSidebar orgSlug={orgSlug} pathname={pathname ?? ""} />
-      <SidebarInset className="relative">
-        <header className="absolute top-0 right-0 left-0 z-10 flex h-14 items-center gap-2 px-4">
+      <SidebarInset>
+        <header className="pointer-events-none sticky top-0 z-10 flex h-14 items-center gap-2 px-4 *:pointer-events-auto">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="bg-background/20 backdrop-blur-sm hover:bg-background/30" />
+            <SidebarTrigger className="bg-background/20 backdrop-blur-sm hover:bg-background/30 md:hidden" />
             <div className="flex flex-1 items-center gap-2 rounded-lg border border-background/50 bg-background/20 px-4 py-1 backdrop-blur-xs">
               <DashboardBreadcrumb
                 orgSlug={orgSlug}
@@ -217,74 +219,69 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Main content area - uses native overflow instead of ScrollArea */}
-        <div className="h-full overflow-y-auto overflow-x-hidden bg-background pt-14">
-          {!orgSlug && hasOrganizations ? (
-            <main className="flex h-full items-center justify-center p-6">
-              <div className="w-full max-w-sm">
-                <div className="mb-6 flex justify-center">
-                  <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
-                    <Buildings
-                      className="size-7 text-olive-600 dark:text-olive-400"
-                      weight="duotone"
-                    />
-                  </div>
-                </div>
-                <div className="mb-8 text-center">
-                  <H2>Select an organization</H2>
-                  <Muted className="mt-2">
-                    Choose a workspace to continue.
-                  </Muted>
-                </div>
-                <nav aria-label="Organizations" className="flex flex-col gap-2">
-                  {organizations.map((org) =>
-                    org ? (
-                      <Link
-                        className="group flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-all hover:ring-olive-400 dark:hover:ring-olive-600"
-                        href={`/dashboard/${org.slug}`}
-                        key={org._id}
-                      >
-                        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-olive-100 font-display text-lg text-olive-700 dark:bg-olive-800/40 dark:text-olive-300">
-                          {org.name.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="flex-1 truncate font-medium text-sm">
-                          {org.name}
-                        </span>
-                        <CaretRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                      </Link>
-                    ) : null
-                  )}
-                </nav>
-              </div>
-            </main>
-          ) : null}
-
-          {!orgSlug && organizations?.length === 0 ? (
-            <main className="flex h-full items-center justify-center p-6">
-              <div className="w-full max-w-sm">
-                <div className="mb-6 flex justify-center">
-                  <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
-                    <Buildings
-                      className="size-7 text-olive-600 dark:text-olive-400"
-                      weight="duotone"
-                    />
-                  </div>
-                </div>
-                <div className="mb-8 text-center">
-                  <H2>Welcome to Reflet</H2>
-                  <Muted className="mt-2">
-                    Create your first organization to start collecting feedback.
-                  </Muted>
-                </div>
-                <div>
-                  <OrganizationSwitcher currentOrgSlug={undefined} />
+        {!orgSlug && hasOrganizations ? (
+          <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
+            <div className="w-full max-w-sm">
+              <div className="mb-6 flex justify-center">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
+                  <Buildings
+                    className="size-7 text-olive-600 dark:text-olive-400"
+                    weight="duotone"
+                  />
                 </div>
               </div>
-            </main>
-          ) : null}
+              <div className="mb-8 text-center">
+                <H2>Select an organization</H2>
+                <Muted className="mt-2">Choose a workspace to continue.</Muted>
+              </div>
+              <nav aria-label="Organizations" className="flex flex-col gap-2">
+                {organizations.map((org) =>
+                  org ? (
+                    <Link
+                      className="group flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-all hover:ring-olive-400 dark:hover:ring-olive-600"
+                      href={`/dashboard/${org.slug}`}
+                      key={org._id}
+                    >
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-olive-100 font-display text-lg text-olive-700 dark:bg-olive-800/40 dark:text-olive-300">
+                        {org.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="flex-1 truncate font-medium text-sm">
+                        {org.name}
+                      </span>
+                      <CaretRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                    </Link>
+                  ) : null
+                )}
+              </nav>
+            </div>
+          </div>
+        ) : null}
 
-          {orgSlug ? children : null}
-        </div>
+        {!orgSlug && organizations?.length === 0 ? (
+          <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
+            <div className="w-full max-w-sm">
+              <div className="mb-6 flex justify-center">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
+                  <Buildings
+                    className="size-7 text-olive-600 dark:text-olive-400"
+                    weight="duotone"
+                  />
+                </div>
+              </div>
+              <div className="mb-8 text-center">
+                <H2>Welcome to Reflet</H2>
+                <Muted className="mt-2">
+                  Create your first organization to start collecting feedback.
+                </Muted>
+              </div>
+              <div>
+                <OrganizationSwitcher currentOrgSlug={undefined} />
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {orgSlug ? children : null}
       </SidebarInset>
     </SidebarProvider>
   );

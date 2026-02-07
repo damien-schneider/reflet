@@ -7,20 +7,44 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const themes = ["system", "light", "dark"] as const;
-type Theme = (typeof themes)[number];
+export const themes = ["system", "light", "dark"] as const;
+export type Theme = (typeof themes)[number];
 
-const themeIcons: Record<Theme, React.ComponentType<{ className?: string }>> = {
+export const themeIcons: Record<
+  Theme,
+  React.ComponentType<{ className?: string }>
+> = {
   system: Desktop,
   light: Sun,
   dark: Moon,
 };
 
-const themeLabels: Record<Theme, string> = {
+export const themeLabels: Record<Theme, string> = {
   system: "System",
   light: "Light",
   dark: "Dark",
 };
+
+export function useThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const cycleTheme = () => {
+    const currentIndex = themes.indexOf(theme as Theme);
+    const nextIndex = (currentIndex + 1) % themes.length;
+    setTheme(themes[nextIndex]);
+  };
+
+  const currentTheme = ((mounted ? theme : undefined) as Theme) ?? "system";
+  const Icon = themeIcons[currentTheme];
+  const label = themeLabels[currentTheme];
+
+  return { mounted, cycleTheme, setTheme, currentTheme, Icon, label };
+}
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();

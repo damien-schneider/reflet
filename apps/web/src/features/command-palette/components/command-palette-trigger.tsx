@@ -10,13 +10,15 @@ export function CommandPaletteTrigger() {
 
   return (
     <Button
-      className="h-8 w-full justify-start gap-2 text-muted-foreground group-data-[collapsible=icon]:hidden"
+      className="h-8 w-full justify-start gap-2 text-muted-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
       onClick={() => setOpen(true)}
       variant="outline"
     >
-      <MagnifyingGlass className="size-4" />
-      <span className="flex-1 text-left">Search...</span>
-      <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium font-mono text-[10px] text-muted-foreground">
+      <MagnifyingGlass className="size-4 shrink-0" />
+      <span className="flex-1 text-left group-data-[collapsible=icon]:hidden">
+        Search...
+      </span>
+      <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium font-mono text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden">
         <span className="text-xs">⌘</span>K
       </kbd>
     </Button>

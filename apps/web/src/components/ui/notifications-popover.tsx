@@ -98,26 +98,36 @@ function NotificationItem({ notification }: NotificationItemProps) {
   return content;
 }
 
-export function NotificationsPopover({ className }: { className?: string }) {
+export function NotificationsPopover({
+  className,
+  render,
+}: {
+  className?: string;
+  render?: React.ComponentProps<typeof PopoverTrigger>["render"];
+}) {
   const notifications = useQuery(api.notifications.list, { limit: 10 });
   const unreadCount = useQuery(api.notifications.getUnreadCount);
 
   return (
     <Popover>
-      <PopoverTrigger
-        className={cn(
-          "relative inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
-          className
-        )}
-      >
-        <Bell className="h-4 w-4" />
-        {unreadCount && unreadCount > 0 ? (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-olive-500 px-1 font-medium text-[10px] text-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        ) : null}
-        <span className="sr-only">Notifications</span>
-      </PopoverTrigger>
+      {render ? (
+        <PopoverTrigger render={render} />
+      ) : (
+        <PopoverTrigger
+          className={cn(
+            "relative inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+            className
+          )}
+        >
+          <Bell className="h-4 w-4" />
+          {unreadCount && unreadCount > 0 ? (
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-olive-500 px-1 font-medium text-[10px] text-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          ) : null}
+          <span className="sr-only">Notifications</span>
+        </PopoverTrigger>
+      )}
       <PopoverContent align="end" className="w-80 p-0" side="right">
         <div className="border-b px-4 py-3">
           <h3 className="font-semibold text-sm">Notifications</h3>

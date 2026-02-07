@@ -16,7 +16,7 @@ export function AppShell({ children, className }: AppShellProps) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className={cn("flex flex-col", className)}>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[variant=inset]/sidebar-wrapper:h-12">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
           </div>

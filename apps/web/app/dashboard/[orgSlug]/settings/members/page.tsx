@@ -75,7 +75,7 @@ export default function MembersGearPage({
   };
 
   return (
-    <div className="admin-container">
+    <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
           <H1>Members</H1>

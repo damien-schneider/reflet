@@ -44,10 +44,6 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <link href="/favicon.ico" rel="icon" sizes="any" />
-        <link href="/icon.svg" rel="icon" type="image/svg+xml" />
-        <link href="/apple-touch-icon.png" rel="apple-touch-icon" />
-        <link href="/manifest.json" rel="manifest" />
         {process.env.NODE_ENV === "development" && (
           <script defer src="//unpkg.com/react-grab/dist/index.global.js" />
         )}

@@ -403,7 +403,7 @@ function FeedbackBoardContent({
       </div>
 
       {/* View toggle - sticky on desktop, fixed at bottom on mobile */}
-      <div className="sticky top-4 z-10 mb-4 hidden justify-center md:flex">
+      <div className="sticky top-12 z-10 mb-4 hidden justify-center md:flex">
         <BoardViewToggle onChange={setView} view={view} />
       </div>
       <div

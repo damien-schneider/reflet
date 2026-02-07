@@ -10,27 +10,26 @@ import {
   DropdownListSeparator,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSidebar } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 
 export default function UserList() {
   const user = useQuery(api.auth.getCurrentUser);
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
 
   return (
     <DropdownList>
       <DropdownListTrigger
         render={
           <Button
-            className="w-full justify-start group-data-[collapsible=icon]:p-2"
+            className="w-full justify-start group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
             variant="outline"
           />
         }
       >
         <span className="flex items-center gap-2 truncate">
           <User className="h-4 w-4 shrink-0" />
-          {!isCollapsed && <span className="truncate">{user?.name}</span>}
+          <span className="truncate group-data-[collapsible=icon]:hidden">
+            {user?.name}
+          </span>
         </span>
       </DropdownListTrigger>
       <DropdownListContent className="w-56 bg-card">

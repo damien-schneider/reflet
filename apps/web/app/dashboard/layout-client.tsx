@@ -18,7 +18,7 @@ export default function DashboardLayoutClient({
   }, []);
 
   return (
-    <div className="h-svh bg-background">
+    <div className="min-h-svh bg-background">
       <Authenticated>
         {isClient ? (
           <DashboardContent>{children}</DashboardContent>

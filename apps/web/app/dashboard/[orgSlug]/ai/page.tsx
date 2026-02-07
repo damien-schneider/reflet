@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ArrowsClockwise,
-  Brain,
-  GitBranch,
-  Sparkle,
-} from "@phosphor-icons/react";
+import { ArrowsClockwise, Brain, Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -17,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { H1, H2, Muted, Text } from "@/components/ui/typography";
 import { WebsiteReferenceList } from "@/features/ai-context/components/website-reference-list";
+import { GitHubConnectionPrompt } from "@/features/github/components/github-connection-prompt";
 
 export default function AIPage({
   params,
@@ -47,6 +43,13 @@ export default function AIPage({
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
 
+  const handleConnectGitHub = () => {
+    if (!(org?._id && orgSlug)) {
+      return;
+    }
+    window.location.href = `/api/github/install?organizationId=${org._id}&orgSlug=${encodeURIComponent(orgSlug)}`;
+  };
+
   const handleStartAnalysis = async () => {
     if (!org?._id) {
       return;
@@ -72,19 +75,7 @@ export default function AIPage({
     );
   }
 
-  if (!githubStatus?.hasRepository) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <GitBranch className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <H2 variant="card">No GitHub Repository Connected</H2>
-          <Muted className="mt-2">
-            Connect a GitHub repository in Settings to use AI features.
-          </Muted>
-        </div>
-      </div>
-    );
-  }
+  const hasRepository = githubStatus?.hasRepository;
 
   const isAnalyzing =
     latestAnalysis?.status === "pending" ||
@@ -111,10 +102,12 @@ export default function AIPage({
             <div>
               <H2 variant="card">Repository Analysis</H2>
               <Text className="mt-1" variant="bodySmall">
-                AI-powered analysis of {githubStatus.repositoryFullName}
+                {hasRepository
+                  ? `AI-powered analysis of ${githubStatus.repositoryFullName}`
+                  : "Connect a GitHub repository to enable AI-powered analysis"}
               </Text>
             </div>
-            {isAdmin && (
+            {isAdmin && hasRepository && (
               <Button
                 disabled={isAnalyzing || isStarting}
                 onClick={handleStartAnalysis}
@@ -130,9 +123,16 @@ export default function AIPage({
             )}
           </div>
 
-          {isAnalyzing && <AnalysisLoadingState />}
+          {!hasRepository && (
+            <GitHubConnectionPrompt
+              isAdmin={isAdmin}
+              onConnect={handleConnectGitHub}
+            />
+          )}
 
-          {latestAnalysis?.status === "error" && (
+          {hasRepository && isAnalyzing && <AnalysisLoadingState />}
+
+          {hasRepository && latestAnalysis?.status === "error" && (
             <Card className="border-destructive/50 bg-destructive/5">
               <CardContent className="pt-4">
                 <p className="text-destructive text-sm">
@@ -142,15 +142,17 @@ export default function AIPage({
             </Card>
           )}
 
-          {latestAnalysis?.status === "completed" && org._id && (
-            <AnalysisResults
-              analysis={latestAnalysis}
-              isAdmin={isAdmin}
-              organizationId={org._id as Id<"organizations">}
-            />
-          )}
+          {hasRepository &&
+            latestAnalysis?.status === "completed" &&
+            org._id && (
+              <AnalysisResults
+                analysis={latestAnalysis}
+                isAdmin={isAdmin}
+                organizationId={org._id as Id<"organizations">}
+              />
+            )}
 
-          {!(latestAnalysis || isAnalyzing) && (
+          {hasRepository && !(latestAnalysis || isAnalyzing) && (
             <Card>
               <CardContent className="flex flex-col items-center py-8 text-center">
                 <Brain className="mb-4 h-12 w-12 text-muted-foreground" />

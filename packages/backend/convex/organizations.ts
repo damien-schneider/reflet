@@ -460,9 +460,9 @@ export const update = mutation({
       throw new Error("Organization not found");
     }
 
-    // Check if custom branding is allowed
+    // Check if custom branding is allowed (logo is free for all tiers)
     if (
-      (args.primaryColor || args.customCss || args.logo) &&
+      (args.primaryColor || args.customCss) &&
       org.subscriptionTier === "free"
     ) {
       throw new Error("Custom branding requires a Pro subscription");

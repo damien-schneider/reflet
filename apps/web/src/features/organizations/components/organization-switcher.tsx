@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useSidebar } from "@/components/ui/sidebar";
 
 interface OrganizationSwitcherProps {
   currentOrgSlug?: string;
@@ -33,8 +32,6 @@ export function OrganizationSwitcher({
   currentOrgSlug,
 }: OrganizationSwitcherProps) {
   const router = useRouter();
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
   const organizations = useQuery(api.organizations.list);
   const createOrg = useMutation(api.organizations.create);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -79,14 +76,12 @@ export function OrganizationSwitcher({
   if (!organizations) {
     return (
       <Button
-        className="w-full justify-between group-data-[collapsible=icon]:p-2"
+        className="w-full justify-between group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
         disabled
         variant="outline"
       >
-        <span className="flex items-center gap-2">
-          <Buildings className="h-4 w-4" />
-          {!isCollapsed && <span>Loading...</span>}
-        </span>
+        <Buildings className="h-4 w-4 shrink-0" />
+        <span className="group-data-[collapsible=icon]:hidden">Loading...</span>
       </Button>
     );
   }
@@ -98,7 +93,7 @@ export function OrganizationSwitcher({
           className="w-full justify-between"
           render={
             <Button
-              className="w-full justify-between group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+              className="w-full justify-between group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
               size="lg"
               variant="outline"
             />
@@ -106,15 +101,11 @@ export function OrganizationSwitcher({
         >
           <span className="flex items-center gap-2 truncate">
             <Buildings className="h-4 w-4 shrink-0" />
-            {!isCollapsed && (
-              <span className="truncate group-data-[collapsible=icon]:hidden">
-                {currentOrg?.name || "Select organization"}
-              </span>
-            )}
+            <span className="truncate group-data-[collapsible=icon]:hidden">
+              {currentOrg?.name || "Select organization"}
+            </span>
           </span>
-          {!isCollapsed && (
-            <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          )}
+          <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 group-data-[collapsible=icon]:hidden" />
         </DropdownListTrigger>
         <DropdownListContent align="start" className="w-50">
           {organizations.map((org) =>

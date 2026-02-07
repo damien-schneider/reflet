@@ -51,7 +51,8 @@ export default function BrandingSettingsPage({
   const isProTier = org?.subscriptionTier === "pro";
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
-  const isDisabled = !(isAdmin && isProTier);
+  const isLogoDisabled = !isAdmin;
+  const isBrandingDisabled = !(isAdmin && isProTier);
 
   useEffect(() => {
     if (org) {
@@ -84,7 +85,7 @@ export default function BrandingSettingsPage({
       await updateOrg({
         id: org._id as Id<"organizations">,
         logo: logo ?? undefined,
-        primaryColor,
+        ...(isProTier ? { primaryColor } : {}),
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -129,7 +130,7 @@ export default function BrandingSettingsPage({
   const colorPalette = generateColorPalette(primaryColor);
 
   return (
-    <div className="admin-container">
+    <div>
       <div className="mb-8">
         <div className="flex items-center gap-3">
           <PaintBrush className="h-8 w-8 text-muted-foreground" />
@@ -150,8 +151,8 @@ export default function BrandingSettingsPage({
               Upgrade to Pro
             </CardTitle>
             <CardDescription>
-              Custom branding is available on the Pro plan. Upgrade to customize
-              your logo and colors.
+              Custom colors and styling are available on the Pro plan. Upgrade
+              to customize your brand colors.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -168,20 +169,15 @@ export default function BrandingSettingsPage({
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Logo</CardTitle>
-                <CardDescription>
-                  Upload your organization logo. Displayed on public pages.
-                </CardDescription>
-              </div>
-              {!isProTier && <Badge variant="secondary">Pro</Badge>}
-            </div>
+            <CardTitle>Logo</CardTitle>
+            <CardDescription>
+              Upload your organization logo. Displayed on public pages.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <LogoUploader
               currentLogo={logo}
-              disabled={isDisabled}
+              disabled={isLogoDisabled}
               onLogoChange={setLogo}
             />
           </CardContent>
@@ -206,7 +202,7 @@ export default function BrandingSettingsPage({
               <div className="flex gap-2">
                 <Input
                   className="h-10 w-14 cursor-pointer p-1"
-                  disabled={isDisabled}
+                  disabled={isBrandingDisabled}
                   id="primary-color-picker"
                   onChange={(e) => handleColorPickerChange(e.target.value)}
                   type="color"
@@ -214,7 +210,7 @@ export default function BrandingSettingsPage({
                 />
                 <Input
                   className="flex-1"
-                  disabled={isDisabled}
+                  disabled={isBrandingDisabled}
                   id="primary-color"
                   onChange={(e) => handleColorInputChange(e.target.value)}
                   placeholder="#5c6d4f"
@@ -315,7 +311,7 @@ export default function BrandingSettingsPage({
           </CardContent>
         </Card>
 
-        {isAdmin && isProTier && (
+        {isAdmin && (
           <Button
             className="w-full"
             disabled={isSaving || !isValidHexColor(colorInput)}

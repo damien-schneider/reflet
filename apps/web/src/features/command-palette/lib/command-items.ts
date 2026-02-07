@@ -86,7 +86,7 @@ export const commandItems: CommandItem[] = [
     label: "General Settings",
     keywords: ["general", "name", "organization"],
     group: "settings",
-    href: "/dashboard/$orgSlug/settings/general",
+    href: "/dashboard/$orgSlug/settings",
     icon: Gear,
     description: "General organization settings",
     requiresOrg: true,
