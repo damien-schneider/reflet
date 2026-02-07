@@ -1,6 +1,7 @@
 import { Buildings, CaretUpDown, Check, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -100,7 +101,17 @@ export function OrganizationSwitcher({
           }
         >
           <span className="flex items-center gap-2 truncate">
-            <Buildings className="h-4 w-4 shrink-0" />
+            {currentOrg?.logo ? (
+              <Image
+                alt={currentOrg.name}
+                className="h-4 w-4 shrink-0 rounded object-contain"
+                height={16}
+                src={currentOrg.logo}
+                width={16}
+              />
+            ) : (
+              <Buildings className="h-4 w-4 shrink-0" />
+            )}
             <span className="truncate group-data-[collapsible=icon]:hidden">
               {currentOrg?.name || "Select organization"}
             </span>
@@ -115,7 +126,20 @@ export function OrganizationSwitcher({
                 key={org._id}
                 render={(props) => (
                   <Link href={`/dashboard/${org.slug}`} {...props}>
-                    <span className="truncate">{org.name}</span>
+                    <span className="flex items-center gap-2 truncate">
+                      {org.logo ? (
+                        <Image
+                          alt={org.name}
+                          className="h-4 w-4 shrink-0 rounded object-contain"
+                          height={16}
+                          src={org.logo}
+                          width={16}
+                        />
+                      ) : (
+                        <Buildings className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      )}
+                      <span className="truncate">{org.name}</span>
+                    </span>
                     {org.slug === currentOrgSlug && (
                       <Check className="h-4 w-4 shrink-0" />
                     )}
