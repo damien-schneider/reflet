@@ -89,6 +89,31 @@
   min-height: 50px;
 }
 
+/* Image error placeholder */
+.tiptap-image-error {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 80px;
+  min-width: 120px;
+  padding: 1rem;
+  border-radius: var(--radius);
+  background-color: var(--muted);
+  border: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+.tiptap-image-error-icon::before {
+  content: "\26A0";
+  font-size: 1rem;
+}
+
+.tiptap-image-wrapper[data-error="true"] .tiptap-resize-handles {
+  display: none;
+}
+
 /* Resize handles container */
 .tiptap-resize-handles {
   position: absolute;

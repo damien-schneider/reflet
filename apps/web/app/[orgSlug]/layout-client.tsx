@@ -3,7 +3,6 @@
 import {
   ChatCircle,
   FileText,
-  List as MenuIcon,
   Chat as MessageSquare,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
@@ -13,12 +12,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { use, useEffect, useMemo } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   H1,
@@ -128,50 +121,6 @@ export default function PublicOrgLayoutClient({
           )}
         </div>
 
-        {/* Mobile: Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex rounded-md p-2 hover:bg-accent sm:hidden">
-            <MenuIcon className="h-5 w-5" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <Link
-                className={`flex w-full items-center gap-2 ${
-                  pathname === `/${orgSlug}` ? "text-olive-600" : ""
-                }`}
-                href={`/${orgSlug}`}
-              >
-                <MessageSquare className="h-4 w-4" />
-                Feedback
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Link
-                className={`flex w-full items-center gap-2 ${
-                  pathname === `/${orgSlug}/changelog` ? "text-olive-600" : ""
-                }`}
-                href={`/${orgSlug}/changelog`}
-              >
-                <FileText className="h-4 w-4" />
-                Changelog
-              </Link>
-            </DropdownMenuItem>
-            {supportEnabled && (
-              <DropdownMenuItem>
-                <Link
-                  className={`flex w-full items-center gap-2 ${
-                    pathname === `/${orgSlug}/support` ? "text-olive-600" : ""
-                  }`}
-                  href={`/${orgSlug}/support`}
-                >
-                  <ChatCircle className="h-4 w-4" />
-                  Support
-                </Link>
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         {/* Desktop (sm:): Tabs */}
         <Tabs
           className="hidden sm:block"
@@ -197,7 +146,48 @@ export default function PublicOrgLayoutClient({
         </Tabs>
       </header>
 
-      <main className="min-h-[80vh] pt-22">{children}</main>
+      <main className="min-h-[80vh] pt-22 pb-16 sm:pb-0">{children}</main>
+
+      {/* Mobile: Bottom tab bar */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background sm:hidden">
+        <div className="flex items-center justify-around">
+          <Link
+            className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
+              currentTab === "feedback"
+                ? "font-medium text-olive-600"
+                : "text-muted-foreground"
+            }`}
+            href={`/${orgSlug}`}
+          >
+            <MessageSquare className="h-5 w-5" />
+            Feedback
+          </Link>
+          <Link
+            className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
+              currentTab === "changelog"
+                ? "font-medium text-olive-600"
+                : "text-muted-foreground"
+            }`}
+            href={`/${orgSlug}/changelog`}
+          >
+            <FileText className="h-5 w-5" />
+            Changelog
+          </Link>
+          {supportEnabled && (
+            <Link
+              className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
+                currentTab === "support"
+                  ? "font-medium text-olive-600"
+                  : "text-muted-foreground"
+              }`}
+              href={`/${orgSlug}/support`}
+            >
+              <ChatCircle className="h-5 w-5" />
+              Support
+            </Link>
+          )}
+        </div>
+      </nav>
 
       <footer className="py-8">
         <div className="container mx-auto flex items-center justify-center px-4 text-muted-foreground text-sm">

@@ -47,6 +47,69 @@ export function MarkdownRenderer({
         HTMLAttributes: {
           class: "tiptap-image",
         },
+      }).extend({
+        addNodeView() {
+          return ({ node }) => {
+            const container = document.createElement("div");
+            container.classList.add("tiptap-image-wrapper");
+            container.setAttribute("data-align", node.attrs.align || "center");
+
+            const img = document.createElement("img");
+            img.src = node.attrs.src;
+            img.alt = node.attrs.alt || "";
+            img.title = node.attrs.title || "";
+            img.classList.add("tiptap-image");
+            img.setAttribute("data-align", node.attrs.align || "center");
+            if (node.attrs.width) {
+              img.style.width = `${node.attrs.width}px`;
+            }
+
+            const errorPlaceholder = document.createElement("div");
+            errorPlaceholder.classList.add("tiptap-image-error");
+            const errorIcon = document.createElement("span");
+            errorIcon.classList.add("tiptap-image-error-icon");
+            errorIcon.setAttribute("aria-hidden", "true");
+            const errorText = document.createElement("span");
+            errorText.textContent = "Image unavailable";
+            errorPlaceholder.appendChild(errorIcon);
+            errorPlaceholder.appendChild(errorText);
+
+            img.addEventListener("error", () => {
+              img.style.display = "none";
+              errorPlaceholder.style.display = "flex";
+              container.setAttribute("data-error", "true");
+            });
+
+            container.appendChild(img);
+            container.appendChild(errorPlaceholder);
+
+            return {
+              dom: container,
+              update: (updatedNode) => {
+                if (updatedNode.type.name !== "image") return false;
+                if (img.src !== updatedNode.attrs.src) {
+                  img.style.display = "block";
+                  errorPlaceholder.style.display = "none";
+                  container.removeAttribute("data-error");
+                }
+                img.src = updatedNode.attrs.src;
+                img.alt = updatedNode.attrs.alt || "";
+                img.setAttribute(
+                  "data-align",
+                  updatedNode.attrs.align || "center"
+                );
+                container.setAttribute(
+                  "data-align",
+                  updatedNode.attrs.align || "center"
+                );
+                if (updatedNode.attrs.width) {
+                  img.style.width = `${updatedNode.attrs.width}px`;
+                }
+                return true;
+              },
+            };
+          };
+        },
       }),
       Markdown.configure({
         html: false,

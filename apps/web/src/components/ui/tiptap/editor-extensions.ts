@@ -74,6 +74,29 @@ export function createExtensions(options: CreateExtensionsOptions) {
             img.style.width = `${node.attrs.width}px`;
           }
 
+          // Error placeholder for broken/missing images
+          const errorPlaceholder = document.createElement("div");
+          errorPlaceholder.classList.add("tiptap-image-error");
+          const errorIcon = document.createElement("span");
+          errorIcon.classList.add("tiptap-image-error-icon");
+          errorIcon.setAttribute("aria-hidden", "true");
+          const errorText = document.createElement("span");
+          errorText.textContent = "Image unavailable";
+          errorPlaceholder.appendChild(errorIcon);
+          errorPlaceholder.appendChild(errorText);
+
+          img.addEventListener("error", () => {
+            img.style.display = "none";
+            errorPlaceholder.style.display = "flex";
+            container.setAttribute("data-error", "true");
+          });
+
+          img.addEventListener("load", () => {
+            img.style.display = "block";
+            errorPlaceholder.style.display = "none";
+            container.removeAttribute("data-error");
+          });
+
           const handlesContainer = document.createElement("div");
           handlesContainer.classList.add("tiptap-resize-handles");
 
@@ -147,12 +170,19 @@ export function createExtensions(options: CreateExtensionsOptions) {
           }
 
           container.appendChild(img);
+          container.appendChild(errorPlaceholder);
           container.appendChild(handlesContainer);
 
           return {
             dom: container,
             update: (updatedNode) => {
               if (updatedNode.type.name !== "image") return false;
+              // Reset error state when src changes
+              if (img.src !== updatedNode.attrs.src) {
+                img.style.display = "block";
+                errorPlaceholder.style.display = "none";
+                container.removeAttribute("data-error");
+              }
               img.src = updatedNode.attrs.src;
               img.alt = updatedNode.attrs.alt || "";
               img.setAttribute(
