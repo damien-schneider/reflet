@@ -4,6 +4,7 @@ import {
   Article,
   CurrencyCircleDollar,
   GithubLogo,
+  MapTrifold,
   Sparkle,
 } from "@phosphor-icons/react";
 import { motion, useMotionValueEvent, useScroll } from "motion/react";
@@ -15,6 +16,12 @@ import { Button } from "@/components/ui/button";
 const NAV_LINKS = [
   { label: "Pricing", targetId: "pricing", icon: CurrencyCircleDollar },
   { label: "Features", targetId: "features", icon: Sparkle },
+  {
+    label: "Roadmap",
+    href: "https://www.reflet.app/reflet?view=roadmap",
+    external: true,
+    icon: MapTrifold,
+  },
   { label: "Blog", href: "/blog", icon: Article },
   {
     label: "GitHub",

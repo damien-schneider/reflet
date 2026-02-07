@@ -1,11 +1,12 @@
 "use client";
 
-import { Gear } from "@phosphor-icons/react";
+import { EyeSlash, Gear } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
+import { Alert, AlertAction, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { H2, Muted } from "@/components/ui/typography";
 import {
@@ -51,6 +52,10 @@ export default function InboxPage({
   const membership = useQuery(
     api.members.getMembership,
     org?._id ? { organizationId: org._id } : "skip"
+  );
+  const supportSettings = useQuery(
+    api.support_conversations.getSupportSettings,
+    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
 
   const [selectedConversationId, setSelectedConversationId] =
@@ -183,6 +188,22 @@ export default function InboxPage({
           </Button>
         </Link>
       </AdminInboxHeader>
+
+      {supportSettings?.supportEnabled === false && (
+        <Alert className="mx-4 mt-3 w-auto">
+          <EyeSlash className="h-4 w-4" />
+          <AlertTitle>
+            Your inbox is private &mdash; users can&apos;t see it yet.
+          </AlertTitle>
+          <AlertAction>
+            <Link href={`/dashboard/${orgSlug}/inbox/settings`}>
+              <Button size="sm" variant="outline">
+                Make it public
+              </Button>
+            </Link>
+          </AlertAction>
+        </Alert>
+      )}
 
       <div className="flex flex-1 overflow-hidden">
         <div className="w-80 shrink-0 border-r">

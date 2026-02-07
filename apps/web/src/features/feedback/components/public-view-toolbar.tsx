@@ -5,8 +5,6 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
-
 interface PublicViewToolbarProps {
   orgSlug: string;
 }
@@ -24,18 +22,20 @@ export function PublicViewToolbar({ orgSlug }: PublicViewToolbarProps) {
 
   return (
     <div className="fixed bottom-4 left-1/2 z-50 w-full max-w-fit -translate-x-1/2 px-4 sm:px-0">
-      <div className="flex items-center gap-2 rounded-lg border bg-background px-2.5 py-1 shadow-md">
+      <Link
+        className="flex cursor-pointer items-center gap-2 rounded-lg border bg-background px-2.5 py-1 shadow-md transition-colors hover:bg-muted"
+        href={`/dashboard/${orgSlug}`}
+        prefetch={true}
+      >
         <span className="whitespace-nowrap text-muted-foreground text-xs">
           You are in the public view
         </span>
-        <Link href={`/dashboard/${orgSlug}`} prefetch={true}>
-          <Button className="h-6" size="xs" variant="outline">
-            <ArrowLeft className="mr-1 h-3 w-3" />
-            <span className="hidden sm:inline">Dashboard</span>
-            <span className="sm:hidden">Dash</span>
-          </Button>
-        </Link>
-      </div>
+        <span className="flex items-center gap-1 font-medium text-xs">
+          <ArrowLeft className="h-3 w-3" />
+          <span className="hidden sm:inline">Dashboard</span>
+          <span className="sm:hidden">Dash</span>
+        </span>
+      </Link>
     </div>
   );
 }

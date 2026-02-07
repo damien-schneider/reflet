@@ -4,6 +4,7 @@ import {
   Article,
   CurrencyCircleDollar,
   GithubLogo,
+  MapTrifold,
   Sparkle,
   User,
 } from "@phosphor-icons/react";
@@ -13,6 +14,12 @@ import Link from "next/link";
 const NAV_LINKS = [
   { label: "Pricing", targetId: "pricing", icon: CurrencyCircleDollar },
   { label: "Features", targetId: "features", icon: Sparkle },
+  {
+    label: "Roadmap",
+    href: "https://www.reflet.app/reflet?view=roadmap",
+    external: true,
+    icon: MapTrifold,
+  },
   { label: "Blog", href: "/blog", icon: Article },
   {
     label: "GitHub",

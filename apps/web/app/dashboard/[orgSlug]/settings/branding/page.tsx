@@ -6,7 +6,7 @@ import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
 } from "@/lib/color-utils";
 
 const DEFAULT_PRIMARY_COLOR = "#5c6d4f";
+const AUTOSAVE_DEBOUNCE_MS = 800;
 
 export default function BrandingSettingsPage({
   params,
@@ -45,8 +46,12 @@ export default function BrandingSettingsPage({
   const [logo, setLogo] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState(DEFAULT_PRIMARY_COLOR);
   const [colorInput, setColorInput] = useState(DEFAULT_PRIMARY_COLOR);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
+    "idle"
+  );
+
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const isProTier = org?.subscriptionTier === "pro";
   const isAdmin =
@@ -63,56 +68,75 @@ export default function BrandingSettingsPage({
     }
   }, [org]);
 
+  const save = useCallback(
+    async (newLogo: string | null, newColor: string) => {
+      if (!(org?._id && isAdmin)) {
+        return;
+      }
+      setSaveStatus("saving");
+      try {
+        await updateOrg({
+          id: org._id as Id<"organizations">,
+          logo: newLogo ?? undefined,
+          ...(isProTier ? { primaryColor: newColor } : {}),
+        });
+        setSaveStatus("saved");
+        if (savedTimerRef.current) {
+          clearTimeout(savedTimerRef.current);
+        }
+        savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
+      } catch {
+        setSaveStatus("idle");
+      }
+    },
+    [org?._id, isAdmin, isProTier, updateOrg]
+  );
+
+  const debouncedSave = useCallback(
+    (newLogo: string | null, newColor: string) => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      debounceTimerRef.current = setTimeout(() => {
+        save(newLogo, newColor);
+      }, AUTOSAVE_DEBOUNCE_MS);
+    },
+    [save]
+  );
+
   const handleColorInputChange = (value: string) => {
     setColorInput(value);
     if (isValidHexColor(value)) {
-      setPrimaryColor(normalizeHexColor(value));
+      const normalized = normalizeHexColor(value);
+      setPrimaryColor(normalized);
+      debouncedSave(logo, normalized);
     }
   };
 
   const handleColorPickerChange = (value: string) => {
     setPrimaryColor(value);
     setColorInput(value);
+    debouncedSave(logo, value);
   };
 
-  const handleSave = async () => {
-    if (!(org?._id && isAdmin)) {
-      return;
+  const handleLogoChange = (newLogo: string | null) => {
+    setLogo(newLogo);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
-
-    setIsSaving(true);
-    try {
-      await updateOrg({
-        id: org._id as Id<"organizations">,
-        logo: logo ?? undefined,
-        ...(isProTier ? { primaryColor } : {}),
-      });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } finally {
-      setIsSaving(false);
-    }
+    save(newLogo, primaryColor);
   };
 
-  const getButtonContent = () => {
-    if (isSaving) {
-      return (
-        <>
-          <Spinner className="mr-2 h-4 w-4 animate-spin" />
-          Saving...
-        </>
-      );
-    }
-    if (saved) {
-      return (
-        <>
-          <Check className="mr-2 h-4 w-4" />
-          Saved
-        </>
-      );
-    }
-    return "Save Changes";
-  };
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      if (savedTimerRef.current) {
+        clearTimeout(savedTimerRef.current);
+      }
+    };
+  }, []);
 
   if (!org) {
     return (
@@ -143,29 +167,6 @@ export default function BrandingSettingsPage({
         </div>
       </div>
 
-      {!isProTier && (
-        <Card className="mb-6 border-olive-600/20 bg-olive-600/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkle className="h-5 w-5 text-olive-600" />
-              Upgrade to Pro
-            </CardTitle>
-            <CardDescription>
-              Custom colors and styling are available on the Pro plan. Upgrade
-              to customize your brand colors.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href={`/dashboard/${orgSlug}/settings/billing`}>
-              <Button>
-                <Sparkle className="mr-2 h-4 w-4" />
-                Upgrade to Pro
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
-
       <div className="space-y-6">
         <Card>
           <CardHeader>
@@ -178,7 +179,7 @@ export default function BrandingSettingsPage({
             <LogoUploader
               currentLogo={logo}
               disabled={isLogoDisabled}
-              onLogoChange={setLogo}
+              onLogoChange={handleLogoChange}
             />
           </CardContent>
         </Card>
@@ -193,8 +194,29 @@ export default function BrandingSettingsPage({
                   shades are derived automatically.
                 </CardDescription>
               </div>
-              {!isProTier && <Badge variant="secondary">Pro</Badge>}
+              {!isProTier && (
+                <Badge
+                  className="bg-olive-600/10 text-olive-600"
+                  variant="secondary"
+                >
+                  <Sparkle className="mr-1 h-3 w-3" />
+                  Pro
+                </Badge>
+              )}
             </div>
+            {!isProTier && (
+              <div className="flex items-center gap-2 rounded-md border border-olive-600/20 bg-olive-600/5 px-3 py-2">
+                <p className="text-muted-foreground text-sm">
+                  Custom brand colors require the Pro plan.{" "}
+                  <Link
+                    className="font-medium text-olive-600 underline underline-offset-4"
+                    href={`/dashboard/${orgSlug}/settings/billing`}
+                  >
+                    Upgrade to Pro
+                  </Link>
+                </p>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -311,14 +333,21 @@ export default function BrandingSettingsPage({
           </CardContent>
         </Card>
 
-        {isAdmin && (
-          <Button
-            className="w-full"
-            disabled={isSaving || !isValidHexColor(colorInput)}
-            onClick={handleSave}
-          >
-            {getButtonContent()}
-          </Button>
+        {saveStatus !== "idle" && (
+          <div className="flex items-center justify-end gap-2 text-muted-foreground text-sm">
+            {saveStatus === "saving" && (
+              <>
+                <Spinner className="h-3.5 w-3.5 animate-spin" />
+                <span>Saving...</span>
+              </>
+            )}
+            {saveStatus === "saved" && (
+              <>
+                <Check className="h-3.5 w-3.5" />
+                <span>Saved</span>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -93,10 +93,6 @@ vi.mock("./milestone-expanded-panel", () => ({
   ),
 }));
 
-vi.mock("./milestone-inline-form", () => ({
-  MilestoneInlineForm: () => <div data-testid="inline-form">Form</div>,
-}));
-
 // Mock scroll area with data-slot attribute on the viewport,
 // matching the real component's DOM structure
 vi.mock("@/components/ui/scroll-area", () => ({

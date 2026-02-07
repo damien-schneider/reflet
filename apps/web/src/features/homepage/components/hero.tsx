@@ -47,12 +47,18 @@ export default function Hero() {
             Start free trial
           </Button>
         </Link>
-        <Link
+        <button
           className="flex w-full items-center justify-center font-medium text-foreground transition-opacity hover:opacity-70 sm:w-auto sm:justify-start"
-          href="/dashboard"
+          onClick={() => {
+            const element = document.getElementById("demo");
+            if (element) {
+              element.scrollIntoView({ behavior: "smooth" });
+            }
+          }}
+          type="button"
         >
           View Demo <ArrowRight className="ml-2" size={18} />
-        </Link>
+        </button>
       </div>
 
       {/* Dashboard Mockup */}

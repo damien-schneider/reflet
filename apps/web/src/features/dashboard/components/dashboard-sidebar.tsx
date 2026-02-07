@@ -310,7 +310,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
         ) : (
           <SidebarGroup>
             <SidebarGroupContent>
-              <div className="px-2 py-4 text-muted-foreground text-sm">
+              <div className="px-2 py-4 text-muted-foreground text-sm group-data-[collapsible=icon]:hidden">
                 Select an organization to get started.
               </div>
             </SidebarGroupContent>

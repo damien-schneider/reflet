@@ -4,6 +4,7 @@ import CTA from "./cta";
 import Features from "./features";
 import Footer from "./footer";
 import Hero from "./hero";
+import LiveDemo from "./live-demo";
 import Navbar from "./navbar";
 import Pricing from "./pricing";
 import Testimonials from "./testimonials";
@@ -15,6 +16,7 @@ export default function Homepage() {
       <main className="flex-1">
         <Hero />
         <Features />
+        <LiveDemo />
         <Testimonials />
         <Pricing />
         <CTA />

@@ -1,13 +1,11 @@
 "use client";
 
-import { Flag } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { TimeHorizon } from "@/lib/milestone-constants";
@@ -15,10 +13,7 @@ import { TIME_HORIZON_CONFIG, TIME_HORIZONS } from "@/lib/milestone-constants";
 
 import { MilestoneExpandedPanel } from "./milestone-expanded-panel";
 import { MilestoneFormPopover } from "./milestone-form-popover";
-import { MilestoneInlineForm } from "./milestone-inline-form";
 import { MilestoneSegment } from "./milestone-segment";
-
-const noop = () => undefined;
 
 export interface MilestonesViewProps {
   organizationId: Id<"organizations">;
@@ -163,64 +158,6 @@ export function MilestonesView({
       <div className="flex min-h-[200px] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
       </div>
-    );
-  }
-
-  // Empty state (non-admin)
-  if (milestones.length === 0 && !isAdmin) {
-    return (
-      <Card className="mx-auto max-w-md">
-        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-          <motion.div
-            animate={{ y: [0, -8, 0] }}
-            transition={{
-              duration: 3,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut",
-            }}
-          >
-            <Flag className="mb-4 h-12 w-12 text-muted-foreground/40" />
-          </motion.div>
-          <h3 className="mb-2 font-display font-semibold text-lg">
-            No milestones yet
-          </h3>
-          <p className="text-muted-foreground text-sm">
-            The team hasn&apos;t set any milestones yet. Check back soon!
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Admin empty state with CTA
-  if (milestones.length === 0 && isAdmin) {
-    return (
-      <Card className="mx-auto max-w-md">
-        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-          <motion.div
-            animate={{ y: [0, -8, 0] }}
-            transition={{
-              duration: 3,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut",
-            }}
-          >
-            <Flag className="mb-4 h-12 w-12 text-muted-foreground/40" />
-          </motion.div>
-          <h3 className="mb-2 font-display font-semibold text-lg">
-            Chart your course
-          </h3>
-          <p className="mb-6 text-muted-foreground text-sm">
-            Create milestones to share your product roadmap vision with users.
-          </p>
-          <MilestoneInlineForm
-            defaultTimeHorizon="now"
-            onCancel={noop}
-            onCreated={noop}
-            organizationId={organizationId}
-          />
-        </CardContent>
-      </Card>
     );
   }
 
