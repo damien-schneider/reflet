@@ -83,17 +83,7 @@ export default function AIPage({
 
   return (
     <div className="admin-container">
-      <div className="mb-8">
-        <div className="flex items-center gap-3">
-          <Brain className="h-8 w-8 text-olive-600" />
-          <div>
-            <H1>AI Context</H1>
-            <Text variant="bodySmall">
-              AI-powered analysis and context for better feedback understanding
-            </Text>
-          </div>
-        </div>
-      </div>
+      <H1 className="mb-8">AI Context</H1>
 
       <div className="space-y-8">
         {/* Repository Analysis Section */}
@@ -101,11 +91,11 @@ export default function AIPage({
           <div className="mb-4 flex items-center justify-between">
             <div>
               <H2 variant="card">Repository Analysis</H2>
-              <Text className="mt-1" variant="bodySmall">
-                {hasRepository
-                  ? `AI-powered analysis of ${githubStatus.repositoryFullName}`
-                  : "Connect a GitHub repository to enable AI-powered analysis"}
-              </Text>
+              {hasRepository && (
+                <Text className="mt-1" variant="bodySmall">
+                  {githubStatus.repositoryFullName}
+                </Text>
+              )}
             </div>
             {isAdmin && hasRepository && (
               <Button
@@ -170,10 +160,6 @@ export default function AIPage({
           <section>
             <div className="mb-4">
               <H2 variant="card">Website References</H2>
-              <Text className="mt-1" variant="bodySmall">
-                Add website URLs to provide additional context for AI
-                clarifications
-              </Text>
             </div>
             <WebsiteReferenceList
               isAdmin={isAdmin}

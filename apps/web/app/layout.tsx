@@ -1,3 +1,4 @@
+import { Agentation } from "agentation";
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Inter } from "next/font/google";
 import { JsonLd } from "@/components/json-ld";
@@ -59,6 +60,7 @@ export default async function RootLayout({
           {children}
           <Toaster richColors />
           <AuthDialog />
+          {process.env.NODE_ENV === "development" && <Agentation />}
         </Providers>
       </body>
     </html>

@@ -5,16 +5,10 @@ import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { use, useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { H1, H2, Muted, Text } from "@/components/ui/typography";
+import { H1, H2, Muted } from "@/components/ui/typography";
 
 export default function InboxSettingsPage({
   params,
@@ -92,10 +86,7 @@ export default function InboxSettingsPage({
 
   return (
     <div className="admin-container">
-      <div className="mb-8">
-        <H1>Inbox Settings</H1>
-        <Text variant="bodySmall">Configure your support inbox settings</Text>
-      </div>
+      <H1 className="mb-8">Inbox Settings</H1>
 
       <div className="space-y-6">
         <Card>
@@ -104,21 +95,10 @@ export default function InboxSettingsPage({
               <ChatCircle className="h-5 w-5" />
               Public Support Page
             </CardTitle>
-            <CardDescription>
-              Allow users to contact your support team through the public
-              website
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="support-toggle">Enable Support Page</Label>
-                <Text variant="bodySmall">
-                  When enabled, a &quot;Support&quot; link will appear in your
-                  public navigation, allowing users to send messages to your
-                  team.
-                </Text>
-              </div>
+              <Label htmlFor="support-toggle">Enable support page</Label>
               <Switch
                 checked={supportEnabled}
                 disabled={isSaving}
