@@ -118,6 +118,7 @@ export const createPublicOrg = mutation({
     title: v.string(),
     description: v.optional(v.string()),
     email: v.optional(v.string()),
+    attachments: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const org = await ctx.db.get(args.organizationId);
@@ -163,6 +164,7 @@ export const createPublicOrg = mutation({
       commentCount: 0,
       isApproved: !org.feedbackSettings?.requireApproval,
       isPinned: false,
+      attachments: args.attachments,
       createdAt: now,
       updatedAt: now,
     });

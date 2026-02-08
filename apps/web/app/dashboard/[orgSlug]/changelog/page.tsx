@@ -1,6 +1,6 @@
 "use client";
 
-import { GithubLogo, Plus } from "@phosphor-icons/react";
+import { Code, GithubLogo, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -8,7 +8,9 @@ import Link from "next/link";
 import { use, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H1, Muted, Text } from "@/components/ui/typography";
+import { ChangelogWidgetTab } from "@/features/changelog/components/changelog-widget-tab";
 import { DeleteReleaseDialog } from "@/features/changelog/components/delete-release-dialog";
 import { ReleaseTimeline } from "@/features/changelog/components/release-timeline";
 
@@ -31,6 +33,10 @@ export default function ChangelogPage({
     api.github.getConnectionStatus,
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
+  const apiKeys = useQuery(
+    api.feedback_api_admin.getApiKeys,
+    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+  );
   const deleteRelease = useMutation(api.changelog_actions.remove);
   const publishRelease = useMutation(api.changelog_actions.publish);
   const unpublishRelease = useMutation(api.changelog_actions.unpublish);
@@ -41,6 +47,9 @@ export default function ChangelogPage({
 
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
+
+  const hasApiKeys = apiKeys !== undefined && apiKeys.length > 0;
+  const publicKey = apiKeys?.[0]?.publicKey ?? "fb_pub_xxxxxxxxxxxxxxxx";
 
   if (!org) {
     return (
@@ -110,24 +119,49 @@ export default function ChangelogPage({
         )}
       </div>
 
-      <ReleaseTimeline
-        emptyAction={
-          isAdmin && (
-            <Link href={`/dashboard/${orgSlug}/changelog/new`}>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Release
-              </Button>
-            </Link>
-          )
-        }
-        isAdmin={isAdmin}
-        onDelete={setDeletingRelease}
-        onPublish={handlePublish}
-        onUnpublish={handleUnpublish}
-        orgSlug={orgSlug}
-        releases={releases ?? []}
-      />
+      <Tabs defaultValue="releases">
+        <TabsList>
+          <TabsTrigger value="releases">
+            <Plus className="mr-2 h-4 w-4" />
+            Releases
+          </TabsTrigger>
+          <TabsTrigger value="widget">
+            <Code className="mr-2 h-4 w-4" />
+            Widget
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent className="mt-6" value="releases">
+          <ReleaseTimeline
+            emptyAction={
+              isAdmin && (
+                <Link href={`/dashboard/${orgSlug}/changelog/new`}>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Release
+                  </Button>
+                </Link>
+              )
+            }
+            isAdmin={isAdmin}
+            onDelete={setDeletingRelease}
+            onPublish={handlePublish}
+            onUnpublish={handleUnpublish}
+            orgSlug={orgSlug}
+            releases={releases ?? []}
+          />
+        </TabsContent>
+
+        <TabsContent className="mt-6" value="widget">
+          <ChangelogWidgetTab
+            hasApiKeys={hasApiKeys}
+            organizationId={org._id as Id<"organizations">}
+            orgSlug={orgSlug}
+            primaryColor={org.primaryColor}
+            publicKey={publicKey}
+          />
+        </TabsContent>
+      </Tabs>
 
       {deletingRelease && (
         <DeleteReleaseDialog

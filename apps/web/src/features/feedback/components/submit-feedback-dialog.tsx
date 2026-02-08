@@ -1,17 +1,21 @@
 "use client";
 
+import { X } from "@phosphor-icons/react";
+
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { cn } from "@/lib/utils";
+import { AttachmentUpload } from "./attachment-upload";
 
 interface SubmitFeedbackDialogProps {
   isOpen: boolean;
@@ -21,11 +25,13 @@ interface SubmitFeedbackDialogProps {
     title: string;
     description: string;
     email: string;
+    attachments: string[];
   };
   onFeedbackChange: (feedback: {
     title: string;
     description: string;
     email: string;
+    attachments: string[];
   }) => void;
   isSubmitting: boolean;
   isMember: boolean;
@@ -50,19 +56,39 @@ export function SubmitFeedbackDialog({
   };
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={isOpen}>
-      <DialogContent
-        className="gap-0 overflow-hidden p-0 sm:max-w-2xl"
-        showCloseButton
+    <Sheet onOpenChange={onOpenChange} open={isOpen}>
+      <SheetContent
+        className="gap-0 overflow-hidden p-0 md:w-[50vw] md:max-w-2xl"
+        showCloseButton={false}
+        side="right"
+        variant="panel"
       >
-        {/* Hidden accessible title and description */}
-        <DialogTitle className="sr-only">Submit feedback</DialogTitle>
-        <DialogDescription className="sr-only">
-          Share your ideas, report bugs, or request features.
-        </DialogDescription>
+        {/* Header */}
+        <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
+          <SheetTitle className="font-medium text-base">
+            Submit Feedback
+          </SheetTitle>
+          <SheetDescription className="sr-only">
+            Share your ideas, report bugs, or request features.
+          </SheetDescription>
+
+          {/* Close button */}
+          <SheetClose
+            render={
+              <Button
+                onClick={() => onOpenChange(false)}
+                size="icon-sm"
+                variant="ghost"
+              />
+            }
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </SheetClose>
+        </SheetHeader>
 
         {/* Document-like content area */}
-        <div className="flex min-h-[400px] flex-col">
+        <div className="flex min-h-100 flex-1 flex-col overflow-y-auto">
           {/* Title area */}
           <div className="px-6 pt-6 pb-2">
             <TiptapTitleEditor
@@ -92,6 +118,17 @@ export function SubmitFeedbackDialog({
             />
           </div>
 
+          {/* Attachments */}
+          <div className="px-6 pb-4">
+            <AttachmentUpload
+              attachments={feedback.attachments}
+              disabled={isSubmitting}
+              onAttachmentsChange={(attachments) =>
+                onFeedbackChange({ ...feedback, attachments })
+              }
+            />
+          </div>
+
           {/* Footer */}
           <div
             className={cn(
@@ -104,7 +141,7 @@ export function SubmitFeedbackDialog({
               {!isMember && (
                 <div className="flex items-center gap-2">
                   <Input
-                    className="h-8 max-w-[240px] text-sm"
+                    className="h-8 max-w-60 text-sm"
                     onChange={(e) =>
                       onFeedbackChange({ ...feedback, email: e.target.value })
                     }
@@ -118,13 +155,13 @@ export function SubmitFeedbackDialog({
 
             {/* Right side - actions */}
             <div className="flex items-center gap-2">
-              <DialogClose
-                render={
-                  <Button size="sm" variant="ghost">
-                    Cancel
-                  </Button>
-                }
-              />
+              <Button
+                onClick={() => onOpenChange(false)}
+                size="sm"
+                variant="ghost"
+              >
+                Cancel
+              </Button>
               <Button
                 disabled={isSubmitting || !feedback.title.trim()}
                 onClick={onSubmit}
@@ -135,7 +172,7 @@ export function SubmitFeedbackDialog({
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

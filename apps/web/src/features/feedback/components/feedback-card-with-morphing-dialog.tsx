@@ -75,7 +75,8 @@ export function FeedbackCardWithMorphingDialog({
           className={cn(
             "feedback-card flex-1 cursor-pointer rounded-xl border border-border/50 bg-card transition-all hover:border-border hover:shadow-black/5",
             feedback.isPinned &&
-              "border-olive-300/50 from-olive-50 to-olive-100/50 dark:border-olive-700/50 dark:from-olive-950/50 dark:to-olive-950/30"
+              "border-olive-300/50 from-olive-50 to-olive-100/50 dark:border-olive-700/50 dark:from-olive-950/50 dark:to-olive-950/30",
+            "min-w-0"
           )}
           style={
             {
@@ -86,7 +87,7 @@ export function FeedbackCardWithMorphingDialog({
           <div className="space-y-3 px-4 pt-4">
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   {feedback.isPinned && (
                     <PushPin
                       className="h-3.5 w-3.5 shrink-0 text-olive-600 dark:text-olive-400"

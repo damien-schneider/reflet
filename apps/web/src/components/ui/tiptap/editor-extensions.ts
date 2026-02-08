@@ -113,29 +113,29 @@ export function createExtensions(options: CreateExtensionsOptions) {
           let startWidth = 0;
           let startHeight = 0;
           let aspectRatio = 1;
+          let isResizing = false;
 
-          const onMouseDown = (
-            e: MouseEvent,
+          // Shared resize logic
+          const startResize = (
+            clientX: number,
+            clientY: number,
             handle: { xDir: number; yDir: number }
           ) => {
-            e.preventDefault();
-            e.stopPropagation();
             activeHandle = handle;
-            startX = e.clientX;
-            startY = e.clientY;
+            isResizing = true;
+            startX = clientX;
+            startY = clientY;
             startWidth = img.offsetWidth;
             startHeight = img.offsetHeight;
             aspectRatio = startWidth / startHeight;
             container.setAttribute("data-resizing", "true");
-            document.addEventListener("mousemove", onMouseMove);
-            document.addEventListener("mouseup", onMouseUp);
           };
 
-          const onMouseMove = (e: MouseEvent) => {
+          const moveResize = (clientX: number, clientY: number) => {
             if (!activeHandle) return;
 
-            const diffX = (e.clientX - startX) * activeHandle.xDir;
-            const diffY = (e.clientY - startY) * activeHandle.yDir;
+            const diffX = (clientX - startX) * activeHandle.xDir;
+            const diffY = (clientY - startY) * activeHandle.yDir;
             const maxDiff =
               Math.abs(diffX) > Math.abs(diffY) ? diffX : diffY * aspectRatio;
             const newWidth = Math.max(50, startWidth + maxDiff);
@@ -143,12 +143,10 @@ export function createExtensions(options: CreateExtensionsOptions) {
             img.style.width = `${newWidth}px`;
           };
 
-          const onMouseUp = () => {
+          const endResize = () => {
             if (!activeHandle) return;
             activeHandle = null;
             container.removeAttribute("data-resizing");
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("mouseup", onMouseUp);
 
             const pos = getPos();
             if (typeof pos === "number") {
@@ -158,13 +156,81 @@ export function createExtensions(options: CreateExtensionsOptions) {
                 .updateAttributes("image", { width: img.offsetWidth })
                 .run();
             }
+
+            // Delay clearing the flag so touchend on img can check it
+            requestAnimationFrame(() => {
+              isResizing = false;
+            });
           };
+
+          // Mouse handlers
+          const onMouseDown = (
+            e: MouseEvent,
+            handle: { xDir: number; yDir: number }
+          ) => {
+            e.preventDefault();
+            e.stopPropagation();
+            startResize(e.clientX, e.clientY, handle);
+            document.addEventListener("mousemove", onMouseMove);
+            document.addEventListener("mouseup", onMouseUp);
+          };
+
+          const onMouseMove = (e: MouseEvent) => {
+            moveResize(e.clientX, e.clientY);
+          };
+
+          const onMouseUp = () => {
+            endResize();
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+          };
+
+          // Touch handlers
+          const onTouchStart = (
+            e: TouchEvent,
+            handle: { xDir: number; yDir: number }
+          ) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const touch = e.touches[0];
+            startResize(touch.clientX, touch.clientY, handle);
+            document.addEventListener("touchmove", onTouchMove, {
+              passive: false,
+            });
+            document.addEventListener("touchend", onTouchEnd);
+            document.addEventListener("touchcancel", onTouchEnd);
+          };
+
+          const onTouchMove = (e: TouchEvent) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            moveResize(touch.clientX, touch.clientY);
+          };
+
+          const onTouchEnd = () => {
+            endResize();
+            document.removeEventListener("touchmove", onTouchMove);
+            document.removeEventListener("touchend", onTouchEnd);
+            document.removeEventListener("touchcancel", onTouchEnd);
+          };
+
+          // Prevent keyboard popup when tapping images on mobile
+          img.addEventListener("touchend", (e) => {
+            if (!isResizing) {
+              e.preventDefault();
+            }
+          });
 
           for (const { position, xDir, yDir } of handlePositions) {
             const handle = document.createElement("div");
             handle.classList.add("tiptap-resize-handle", position);
             handle.addEventListener("mousedown", (e) =>
               onMouseDown(e, { xDir, yDir })
+            );
+            handle.addEventListener(
+              "touchstart",
+              (e) => onTouchStart(e, { xDir, yDir }),
+              { passive: false }
             );
             handlesContainer.appendChild(handle);
           }
@@ -201,6 +267,9 @@ export function createExtensions(options: CreateExtensionsOptions) {
             destroy: () => {
               document.removeEventListener("mousemove", onMouseMove);
               document.removeEventListener("mouseup", onMouseUp);
+              document.removeEventListener("touchmove", onTouchMove);
+              document.removeEventListener("touchend", onTouchEnd);
+              document.removeEventListener("touchcancel", onTouchEnd);
             },
           };
         };

@@ -300,6 +300,83 @@ export function useChangelog(limit?: number): UseQueryResult<ChangelogEntry[]> {
 }
 
 // ============================================
+// Unread Changelog Count Hook
+// ============================================
+
+const CHANGELOG_STORAGE_KEY_PREFIX = "reflet_changelog_seen_";
+
+/**
+ * Hook to track unread changelog entries based on localStorage
+ *
+ * @example
+ * ```tsx
+ * const { unreadCount, markAsRead } = useUnreadChangelogCount('fb_pub_xxx');
+ *
+ * return (
+ *   <button onClick={markAsRead}>
+ *     What's New {unreadCount > 0 && <span>({unreadCount})</span>}
+ *   </button>
+ * );
+ * ```
+ */
+export function useUnreadChangelogCount(publicKey: string): {
+  unreadCount: number;
+  markAsRead: () => void;
+} {
+  const { data: entries } = useChangelog();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const storageKey = `${CHANGELOG_STORAGE_KEY_PREFIX}${publicKey}`;
+
+  useEffect(() => {
+    if (!entries || entries.length === 0) {
+      setUnreadCount(0);
+      return;
+    }
+
+    let lastSeen = 0;
+    try {
+      const stored = localStorage.getItem(storageKey);
+      lastSeen = stored ? Number(stored) : 0;
+    } catch {
+      // localStorage unavailable
+    }
+
+    let count = 0;
+    for (const entry of entries) {
+      if (entry.publishedAt && entry.publishedAt > lastSeen) {
+        count++;
+      }
+    }
+    setUnreadCount(count);
+  }, [entries, storageKey]);
+
+  const markAsRead = useCallback(() => {
+    if (!entries || entries.length === 0) {
+      return;
+    }
+
+    let latestTimestamp = 0;
+    for (const entry of entries) {
+      if (entry.publishedAt && entry.publishedAt > latestTimestamp) {
+        latestTimestamp = entry.publishedAt;
+      }
+    }
+
+    if (latestTimestamp > 0) {
+      try {
+        localStorage.setItem(storageKey, String(latestTimestamp));
+      } catch {
+        // localStorage unavailable
+      }
+      setUnreadCount(0);
+    }
+  }, [entries, storageKey]);
+
+  return { unreadCount, markAsRead };
+}
+
+// ============================================
 // Create Feedback Mutation Hook
 // ============================================
 

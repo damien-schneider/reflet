@@ -163,6 +163,7 @@ export const create = mutation({
     tagId: v.optional(v.id("tags")), // Optional tag for categorization
     title: v.string(),
     description: v.string(),
+    attachments: v.optional(v.array(v.string())),
   },
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: mutation needs validation, limit checks, and status lookup
   handler: async (ctx, args) => {
@@ -259,6 +260,7 @@ export const create = mutation({
       commentCount: 0,
       isApproved: !requireApproval,
       isPinned: false,
+      attachments: args.attachments,
       createdAt: now,
       updatedAt: now,
     });
@@ -299,6 +301,7 @@ export const update = mutation({
     isApproved: v.optional(v.boolean()),
     isPinned: v.optional(v.boolean()),
     roadmapOrder: v.optional(v.number()),
+    attachments: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);

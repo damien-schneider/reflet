@@ -330,6 +330,8 @@ export default defineSchema({
     externalUserId: v.optional(v.id("externalUsers")),
     // Assignee (team member assigned to this feedback)
     assigneeId: v.optional(v.string()), // User ID from Better Auth
+    // Image attachments
+    attachments: v.optional(v.array(v.string())),
     // Source tracking
     source: v.optional(
       v.union(v.literal("web"), v.literal("api"), v.literal("widget"))

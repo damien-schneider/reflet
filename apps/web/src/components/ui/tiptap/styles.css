@@ -172,6 +172,40 @@
   cursor: nwse-resize;
 }
 
+/* Touch-friendly resize handles */
+@media (pointer: coarse) {
+  .tiptap-resize-handle {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+  }
+
+  .tiptap-resize-handle.top-left {
+    top: -10px;
+    left: -10px;
+  }
+
+  .tiptap-resize-handle.top-right {
+    top: -10px;
+    right: -10px;
+  }
+
+  .tiptap-resize-handle.bottom-left {
+    bottom: -10px;
+    left: -10px;
+  }
+
+  .tiptap-resize-handle.bottom-right {
+    bottom: -10px;
+    right: -10px;
+  }
+
+  /* Always show handles on touch devices (no hover) */
+  .tiptap-image-wrapper .tiptap-resize-handles {
+    opacity: 1;
+  }
+}
+
 /* Resizing state */
 .tiptap-image-wrapper[data-resizing="true"] {
   user-select: none;

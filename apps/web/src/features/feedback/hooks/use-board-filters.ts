@@ -13,6 +13,7 @@ const URL_PARAM_KEYS = {
   tags: "tags",
   tag: "tag", // Single tag filter (from tag filter bar)
   search: "q",
+  newFeedback: "new", // Submit feedback drawer
 } as const;
 
 const DEFAULT_VIEW: BoardView = "feed";
@@ -39,6 +40,7 @@ export interface BoardFiltersState {
   selectedTagIds: string[];
   selectedTagId: string | null; // Single tag filter (from tag filter bar)
   searchQuery: string;
+  showSubmitDrawer: boolean; // Submit feedback drawer state
 }
 
 export interface BoardFiltersActions {
@@ -48,6 +50,8 @@ export interface BoardFiltersActions {
   setSelectedTagIds: (ids: string[]) => void;
   setSelectedTagId: (id: string | null) => void; // Single tag filter (from tag filter bar)
   setSearchQuery: (query: string) => void;
+  openSubmitDrawer: () => void;
+  closeSubmitDrawer: () => void;
   handleStatusChange: (statusId: string, checked: boolean) => void;
   handleTagChange: (tagId: string, checked: boolean) => void;
   clearFilters: () => void;
@@ -89,6 +93,7 @@ export function useBoardFilters(
       selectedTagIds: parseArrayParam(searchParams.get(URL_PARAM_KEYS.tags)),
       selectedTagId: searchParams.get(URL_PARAM_KEYS.tag) ?? null,
       searchQuery: searchParams.get(URL_PARAM_KEYS.search) ?? "",
+      showSubmitDrawer: searchParams.get(URL_PARAM_KEYS.newFeedback) === "1",
     };
   }, [searchParams, defaultView]);
 
@@ -113,12 +118,33 @@ export function useBoardFilters(
     [router, pathname, searchParams]
   );
 
+  // Helper to push to history (for view changes that should be navigable with back/forward)
+  const pushParams = useCallback(
+    (updates: Partial<Record<keyof typeof URL_PARAM_KEYS, string | null>>) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      for (const [key, value] of Object.entries(updates)) {
+        const paramKey = URL_PARAM_KEYS[key as keyof typeof URL_PARAM_KEYS];
+        if (value === null || value === "") {
+          params.delete(paramKey);
+        } else {
+          params.set(paramKey, value);
+        }
+      }
+
+      const queryString = params.toString();
+      const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+      router.push(newUrl, { scroll: false });
+    },
+    [router, pathname, searchParams]
+  );
+
   // Actions
   const setView = useCallback(
     (view: BoardView) => {
-      updateParams({ view: view === defaultView ? null : view });
+      pushParams({ view: view === defaultView ? null : view });
     },
-    [updateParams, defaultView]
+    [pushParams, defaultView]
   );
 
   const setSortBy = useCallback(
@@ -155,6 +181,18 @@ export function useBoardFilters(
     },
     [updateParams]
   );
+
+  const openSubmitDrawer = useCallback(() => {
+    pushParams({ newFeedback: "1" });
+  }, [pushParams]);
+
+  const closeSubmitDrawer = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(URL_PARAM_KEYS.newFeedback);
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [router, pathname, searchParams]);
 
   const handleStatusChange = useCallback(
     (statusId: string, checked: boolean) => {
@@ -202,6 +240,8 @@ export function useBoardFilters(
     setSelectedTagIds,
     setSelectedTagId,
     setSearchQuery,
+    openSubmitDrawer,
+    closeSubmitDrawer,
     handleStatusChange,
     handleTagChange,
     clearFilters,

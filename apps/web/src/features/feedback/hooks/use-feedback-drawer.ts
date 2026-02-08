@@ -59,7 +59,7 @@ export function useFeedbackDrawer(
 
       const queryString = params.toString();
       const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-      router.replace(newUrl, { scroll: false });
+      router.push(newUrl, { scroll: false });
     },
     [router, pathname, searchParams]
   );

@@ -36,8 +36,9 @@
 // Re-export client for advanced usage
 // biome-ignore lint/performance/noBarrelFile: SDK packages need clean export API
 export { Reflet } from "./client";
+// Changelog Widget Component
+export { ChangelogWidget } from "./react-changelog-widget";
 export type { RefletProviderProps } from "./react-context";
-
 // Provider
 export {
   RefletProvider,
@@ -57,6 +58,7 @@ export {
   useOrganizationConfig,
   useRoadmap,
   useSubscription,
+  useUnreadChangelogCount,
   useVote,
 } from "./react-hooks";
 // Re-export types from main package

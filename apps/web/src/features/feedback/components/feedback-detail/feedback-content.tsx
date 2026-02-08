@@ -3,6 +3,7 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,13 @@ interface FeedbackContentProps {
   description: string;
   tags?: Array<{ _id: Id<"tags">; name: string; color: string } | null>;
   isAdmin: boolean;
+  attachments?: string[];
+}
+
+function AttachmentThumbnail({ src, alt }: { src: string; alt: string }) {
+  return (
+    <Image alt={alt} className="object-cover" fill sizes="80px" src={src} />
+  );
 }
 
 export function FeedbackContent({
@@ -24,6 +32,7 @@ export function FeedbackContent({
   description,
   tags = [],
   isAdmin,
+  attachments = [],
 }: FeedbackContentProps) {
   const updateFeedback = useMutation(api.feedback.update);
 
@@ -131,6 +140,23 @@ export function FeedbackContent({
           value={editedDescription}
         />
       </div>
+
+      {/* Attachments */}
+      {attachments.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {attachments.map((url, index) => (
+            <a
+              className="relative block h-20 w-20 overflow-hidden rounded-md border bg-muted transition-opacity hover:opacity-80"
+              href={url}
+              key={url}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <AttachmentThumbnail alt={`Attachment ${index + 1}`} src={url} />
+            </a>
+          ))}
+        </div>
+      )}
 
       {/* Save/Cancel buttons */}
       {hasUnsavedChanges && isAdmin && (

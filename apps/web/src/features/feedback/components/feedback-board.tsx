@@ -172,17 +172,20 @@ function FeedbackBoardContent({
     setSelectedTagId,
     searchQuery,
     setSearchQuery,
+    showSubmitDrawer,
+    openSubmitDrawer,
+    closeSubmitDrawer,
     handleStatusChange: handleStatusFilterChange,
     clearFilters,
     hasActiveFilters,
   } = useBoardFilters(defaultView);
 
   // Local state (not URL-based)
-  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [newFeedback, setNewFeedback] = useState({
     title: "",
     description: "",
     email: "",
+    attachments: [] as string[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -299,11 +302,16 @@ function FeedbackBoardContent({
 
     setIsSubmitting(true);
     try {
+      const attachments =
+        newFeedback.attachments.length > 0
+          ? newFeedback.attachments
+          : undefined;
       if (isMember) {
         await createFeedbackMember({
           organizationId,
           title: newFeedback.title.trim(),
           description: newFeedback.description.trim() || "",
+          attachments,
         });
       } else {
         await createFeedbackPublic({
@@ -311,10 +319,16 @@ function FeedbackBoardContent({
           title: newFeedback.title.trim(),
           description: newFeedback.description.trim() || undefined,
           email: newFeedback.email.trim() || undefined,
+          attachments,
         });
       }
-      setShowSubmitDialog(false);
-      setNewFeedback({ title: "", description: "", email: "" });
+      closeSubmitDrawer();
+      setNewFeedback({
+        title: "",
+        description: "",
+        email: "",
+        attachments: [],
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -434,7 +448,7 @@ function FeedbackBoardContent({
           <div className="flex shrink-0 justify-end">
             <Button
               className="h-10 min-w-10 rounded-full"
-              onClick={() => setShowSubmitDialog(true)}
+              onClick={openSubmitDrawer}
             >
               <Plus className="h-4 w-4 md:mr-2" />
               <span className="hidden md:inline">Submit Feedback</span>
@@ -518,7 +532,7 @@ function FeedbackBoardContent({
             isLoading={feedback === undefined && !hasLoadedOnce.current}
             onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
             onSortChange={setSortBy}
-            onSubmitClick={() => setShowSubmitDialog(true)}
+            onSubmitClick={openSubmitDrawer}
             onVote={handleToggleVote}
             primaryColor={primaryColor}
             sortBy={sortBy}
@@ -547,10 +561,16 @@ function FeedbackBoardContent({
       <SubmitFeedbackDialog
         feedback={newFeedback}
         isMember={isMember}
-        isOpen={showSubmitDialog}
+        isOpen={showSubmitDrawer}
         isSubmitting={isSubmitting}
         onFeedbackChange={setNewFeedback}
-        onOpenChange={setShowSubmitDialog}
+        onOpenChange={(open) => {
+          if (open) {
+            openSubmitDrawer();
+          } else {
+            closeSubmitDrawer();
+          }
+        }}
         onSubmit={handleSubmitFeedback}
       />
     </div>

@@ -165,7 +165,7 @@ export function FeedbackDetailDrawer({
   return (
     <Sheet onOpenChange={(open) => !open && onClose()} open={isOpen}>
       <SheetContent
-        className="gap-0 overflow-hidden p-0 md:w-[60vw] md:max-w-5xl"
+        className="gap-0 overflow-hidden p-0 md:w-[70vw] md:max-w-[70vw]"
         showCloseButton={false}
         side="right"
         variant="panel"
@@ -303,6 +303,11 @@ function FeedbackDetailContent({
         {/* Main content */}
         <div className="min-h-[60vh] px-6 py-4">
           <FeedbackContent
+            attachments={
+              "attachments" in feedback
+                ? (feedback.attachments as string[] | undefined)
+                : undefined
+            }
             description={feedback.description ?? ""}
             feedbackId={feedbackId}
             isAdmin={isAdmin}
