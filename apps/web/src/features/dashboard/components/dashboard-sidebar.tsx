@@ -187,13 +187,8 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   };
 
   const handleSignOut = () => {
-    authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          location.reload();
-        },
-      },
-    });
+    authClient.signOut();
+    window.location.href = "/";
   };
 
   const handleMakePublic = async () => {

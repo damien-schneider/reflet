@@ -1,4 +1,4 @@
-import { Buildings, CaretUpDown, Check, Plus } from "@phosphor-icons/react";
+import { CaretUpDown, Check, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import Image from "next/image";
@@ -24,6 +24,36 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+function OrgIcon({
+  org,
+}: {
+  org?: { name: string; logo?: string | null } | null;
+}) {
+  if (org?.logo) {
+    return (
+      <Image
+        alt={org.name}
+        className="h-4 w-4 shrink-0 rounded object-contain"
+        height={16}
+        src={org.logo}
+        width={16}
+      />
+    );
+  }
+
+  if (org) {
+    return (
+      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-olive-100 font-display font-medium text-[10px] text-olive-700 dark:bg-olive-800/40 dark:text-olive-300">
+        {org.name.charAt(0).toUpperCase()}
+      </span>
+    );
+  }
+
+  return (
+    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-olive-100 dark:bg-olive-800/40" />
+  );
+}
 
 interface OrganizationSwitcherProps {
   currentOrgSlug?: string;
@@ -81,7 +111,7 @@ export function OrganizationSwitcher({
         disabled
         variant="outline"
       >
-        <Buildings className="h-4 w-4 shrink-0" />
+        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-olive-100 dark:bg-olive-800/40" />
         <span className="group-data-[collapsible=icon]:hidden">Loading...</span>
       </Button>
     );
@@ -101,17 +131,7 @@ export function OrganizationSwitcher({
           }
         >
           <span className="flex items-center gap-2 truncate">
-            {currentOrg?.logo ? (
-              <Image
-                alt={currentOrg.name}
-                className="h-4 w-4 shrink-0 rounded object-contain"
-                height={16}
-                src={currentOrg.logo}
-                width={16}
-              />
-            ) : (
-              <Buildings className="h-4 w-4 shrink-0" />
-            )}
+            <OrgIcon org={currentOrg} />
             <span className="truncate group-data-[collapsible=icon]:hidden">
               {currentOrg?.name || "Select organization"}
             </span>
@@ -127,17 +147,7 @@ export function OrganizationSwitcher({
                 render={(props) => (
                   <Link href={`/dashboard/${org.slug}`} {...props}>
                     <span className="flex items-center gap-2 truncate">
-                      {org.logo ? (
-                        <Image
-                          alt={org.name}
-                          className="h-4 w-4 shrink-0 rounded object-contain"
-                          height={16}
-                          src={org.logo}
-                          width={16}
-                        />
-                      ) : (
-                        <Buildings className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      )}
+                      <OrgIcon org={org} />
                       <span className="truncate">{org.name}</span>
                     </span>
                     {org.slug === currentOrgSlug && (

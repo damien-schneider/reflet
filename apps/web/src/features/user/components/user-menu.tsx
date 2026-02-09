@@ -41,13 +41,8 @@ export default function UserList() {
         <DropdownListSeparator />
         <DropdownListItem
           onClick={() => {
-            authClient.signOut({
-              fetchOptions: {
-                onSuccess: () => {
-                  location.reload();
-                },
-              },
-            });
+            authClient.signOut();
+            window.location.href = "/";
           }}
           variant="destructive"
         >
