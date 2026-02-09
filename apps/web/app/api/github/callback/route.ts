@@ -1,5 +1,6 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { env } from "@reflet-v2/env/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -55,8 +56,8 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   try {
     // Fetch installation details from GitHub
-    const appId = process.env.GITHUB_APP_ID;
-    const privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
+    const appId = env.GITHUB_APP_ID;
+    const privateKey = env.GITHUB_APP_PRIVATE_KEY;
 
     if (!(appId && privateKey)) {
       throw new Error("GitHub App credentials not configured");

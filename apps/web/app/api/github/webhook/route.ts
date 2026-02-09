@@ -1,3 +1,4 @@
+import { env } from "@reflet-v2/env/server";
 import { NextResponse } from "next/server";
 
 interface GitHubRelease {
@@ -103,7 +104,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   try {
     // Verify webhook signature if a secret is configured
-    const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
+    const webhookSecret = env.GITHUB_WEBHOOK_SECRET;
     if (webhookSecret) {
       const isValid = await verifySignature(payload, signature, webhookSecret);
       if (!isValid) {

@@ -134,22 +134,12 @@ export function FeedbackFunnels({
                     {organizationStatuses?.map((status) => (
                       <Badge
                         className="cursor-pointer"
+                        color={status.color}
                         key={status._id}
                         onClick={() => toggleStatus(status._id)}
-                        style={
-                          selectedStatusIds.includes(status._id)
-                            ? {
-                                backgroundColor: status.color,
-                                borderColor: status.color,
-                              }
-                            : {
-                                borderColor: status.color,
-                                color: status.color,
-                              }
-                        }
                         variant={
                           selectedStatusIds.includes(status._id)
-                            ? "default"
+                            ? undefined
                             : "outline"
                         }
                       >
@@ -172,22 +162,12 @@ export function FeedbackFunnels({
                       {tags.map((tag) => (
                         <Badge
                           className="cursor-pointer"
+                          color={tag.color}
                           key={tag._id}
                           onClick={() => toggleTag(tag._id)}
-                          style={
-                            selectedTagIds.includes(tag._id)
-                              ? {
-                                  backgroundColor: tag.color,
-                                  borderColor: tag.color,
-                                }
-                              : {
-                                  borderColor: tag.color,
-                                  color: tag.color,
-                                }
-                          }
                           variant={
                             selectedTagIds.includes(tag._id)
-                              ? "default"
+                              ? undefined
                               : "outline"
                           }
                         >
@@ -257,13 +237,9 @@ export function FeedbackFunnels({
             return (
               <Badge
                 className="cursor-pointer gap-1"
+                color={status.color}
                 key={statusId}
                 onClick={() => toggleStatus(statusId)}
-                style={{
-                  backgroundColor: `${status.color}20`,
-                  color: status.color,
-                }}
-                variant="secondary"
               >
                 {status.name}
                 <X className="h-3 w-3" />

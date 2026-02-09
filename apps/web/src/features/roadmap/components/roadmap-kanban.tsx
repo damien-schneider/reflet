@@ -14,13 +14,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import { Switch } from "@/components/ui/switch";
 import type { RoadmapItemData } from "@/features/roadmap/components/roadmap-item-card";
 import {
   type LaneConfig,
   RoadmapLaneColumn,
 } from "@/features/roadmap/components/roadmap-lane";
-import { COLOR_PALETTE, type RoadmapLaneWithBacklog } from "@/lib/constants";
+import type { RoadmapLaneWithBacklog } from "@/lib/constants";
+import type { TagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 interface RoadmapKanbanProps {
@@ -41,9 +43,7 @@ export function RoadmapKanban({
   // Modal state for adding columns
   const [showAddColumnModal, setShowAddColumnModal] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
-  const [newColumnColor, setNewColumnColor] = useState<
-    (typeof COLOR_PALETTE)[number]
-  >(COLOR_PALETTE[0]);
+  const [newColumnColor, setNewColumnColor] = useState<TagColor>("blue");
   const [newColumnIsDone, setNewColumnIsDone] = useState(false);
   const [isCreatingColumn, setIsCreatingColumn] = useState(false);
 
@@ -185,7 +185,7 @@ export function RoadmapKanban({
       });
 
       setNewColumnName("");
-      setNewColumnColor(COLOR_PALETTE[0]);
+      setNewColumnColor("blue");
       setNewColumnIsDone(false);
       setShowAddColumnModal(false);
     } finally {
@@ -284,21 +284,10 @@ export function RoadmapKanban({
 
             <div className="space-y-2">
               <Label>Color</Label>
-              <div className="flex flex-wrap gap-2">
-                {COLOR_PALETTE.map((c) => (
-                  <button
-                    className={cn(
-                      "h-8 w-8 rounded-full transition-all",
-                      newColumnColor === c &&
-                        "ring-2 ring-primary ring-offset-2"
-                    )}
-                    key={c}
-                    onClick={() => setNewColumnColor(c)}
-                    style={{ backgroundColor: c }}
-                    type="button"
-                  />
-                ))}
-              </div>
+              <NotionColorPicker
+                onChange={setNewColumnColor}
+                value={newColumnColor}
+              />
             </div>
 
             <div className="flex items-center justify-between">

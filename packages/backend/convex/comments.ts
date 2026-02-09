@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { MAX_COMMENT_LENGTH } from "./constants";
@@ -184,6 +185,19 @@ export const create = mutation({
         isRead: false,
         createdAt: now,
       });
+
+      // Trigger push notification
+      await ctx.scheduler.runAfter(
+        0,
+        internal.push_notifications.sendPushNotification,
+        {
+          userId: feedback.authorId,
+          type: "new_comment",
+          title: "New comment on your feedback",
+          message: `Someone commented on "${feedback.title}"`,
+          url: "/dashboard",
+        }
+      );
     }
 
     return commentId;

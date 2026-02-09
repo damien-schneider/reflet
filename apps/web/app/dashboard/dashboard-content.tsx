@@ -4,6 +4,7 @@ import { Buildings, CaretRight } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useAtom } from "jotai";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -23,6 +24,7 @@ import {
 import { H2, Muted } from "@/components/ui/typography";
 import { CommandPalette } from "@/features/command-palette/components/command-palette";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
+import { PushNotificationPrompt } from "@/features/dashboard/components/push-notification-prompt";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 
@@ -243,7 +245,17 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
                       key={org._id}
                     >
                       <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-olive-100 font-display text-lg text-olive-700 dark:bg-olive-800/40 dark:text-olive-300">
-                        {org.name.charAt(0).toUpperCase()}
+                        {org.logo ? (
+                          <Image
+                            alt={org.name}
+                            className="size-10 rounded-lg object-contain"
+                            height={40}
+                            src={org.logo}
+                            width={40}
+                          />
+                        ) : (
+                          org.name.charAt(0).toUpperCase()
+                        )}
                       </div>
                       <span className="flex-1 truncate font-medium text-sm">
                         {org.name}
@@ -281,7 +293,12 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           </div>
         ) : null}
 
-        {orgSlug ? children : null}
+        {orgSlug ? (
+          <>
+            <PushNotificationPrompt />
+            {children}
+          </>
+        ) : null}
       </SidebarInset>
     </SidebarProvider>
   );

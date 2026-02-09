@@ -338,6 +338,7 @@ export default defineSchema({
     ),
     createdAt: v.number(),
     updatedAt: v.number(),
+    deletedAt: v.optional(v.number()),
   })
     .index("by_organization", ["organizationId"])
     .index("by_author", ["authorId"])
@@ -515,6 +516,36 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_read", ["userId", "isRead"]),
+
+  // ============================================
+  // PUSH SUBSCRIPTIONS
+  // ============================================
+  pushSubscriptions: defineTable({
+    userId: v.string(), // Better Auth user ID
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    userAgent: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_endpoint", ["endpoint"]),
+
+  // ============================================
+  // USER NOTIFICATION PREFERENCES
+  // ============================================
+  userNotificationPreferences: defineTable({
+    userId: v.string(), // Better Auth user ID
+    pushEnabled: v.boolean(),
+    notifyOnStatusChange: v.boolean(),
+    notifyOnNewComment: v.boolean(),
+    notifyOnVoteMilestone: v.boolean(),
+    notifyOnNewSupportMessage: v.boolean(),
+    notifyOnInvitation: v.boolean(),
+    pushPromptDismissed: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
 
   // ============================================
   // ACTIVITY LOGS

@@ -6,7 +6,6 @@ import { useMutation } from "convex/react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
@@ -15,7 +14,6 @@ interface FeedbackContentProps {
   feedbackId: Id<"feedback">;
   title: string;
   description: string;
-  tags?: Array<{ _id: Id<"tags">; name: string; color: string } | null>;
   isAdmin: boolean;
   attachments?: string[];
 }
@@ -30,7 +28,6 @@ export function FeedbackContent({
   feedbackId,
   title,
   description,
-  tags = [],
   isAdmin,
   attachments = [],
 }: FeedbackContentProps) {
@@ -95,12 +92,6 @@ export function FeedbackContent({
     setHasUnsavedChanges(false);
   }, [title, description]);
 
-  const validTags = tags.filter(Boolean) as Array<{
-    _id: Id<"tags">;
-    name: string;
-    color: string;
-  }>;
-
   return (
     <div className="space-y-4">
       {/* Title */}
@@ -111,21 +102,6 @@ export function FeedbackContent({
         placeholder="Untitled"
         value={editedTitle}
       />
-
-      {/* Tags */}
-      {validTags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {validTags.map((tag) => (
-            <Badge
-              className="rounded-full px-2 py-0.5 font-normal text-xs"
-              color={tag.color}
-              key={tag._id}
-            >
-              {tag.name}
-            </Badge>
-          ))}
-        </div>
-      )}
 
       {/* Description */}
       <div className="prose prose-sm dark:prose-invert max-w-none">

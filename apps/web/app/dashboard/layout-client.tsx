@@ -23,18 +23,18 @@ export default function DashboardLayoutClient({
         {isClient ? (
           <DashboardContent>{children}</DashboardContent>
         ) : (
-          <div className="flex h-full items-center justify-center">
+          <div className="flex min-h-svh items-center justify-center">
             <Spinner className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         )}
       </Authenticated>
       <Unauthenticated>
-        <div className="flex h-full items-center justify-center pb-[10vh]">
+        <div className="flex min-h-svh items-center justify-center pb-[10vh]">
           <UnifiedAuthForm />
         </div>
       </Unauthenticated>
       <AuthLoading>
-        <div className="flex h-full items-center justify-center">
+        <div className="flex min-h-svh items-center justify-center">
           <Spinner />
         </div>
       </AuthLoading>

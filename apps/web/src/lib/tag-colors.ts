@@ -26,9 +26,7 @@ export const TAG_COLOR_LABELS: Record<TagColor, string> = {
   red: "Red",
 };
 
-// Color values matching Tailwind palette (used by badge variants)
-// Light mode: bg is *-50, text is *-600/700/800
-// Dark mode: bg is *-400/10, text is *-400/500
+// Color values matching Notion's tag palette (used by badge variants)
 interface ColorValue {
   bg: string;
   text: string;
@@ -38,64 +36,64 @@ interface ColorValue {
 
 const COLOR_VALUES: Record<TagColor, ColorValue> = {
   default: {
-    bg: "rgb(249 250 251)", // gray-50
-    text: "rgb(75 85 99)", // gray-600
-    darkBg: "rgba(156, 163, 175, 0.1)", // gray-400/10
-    darkText: "rgb(156 163 175)", // gray-400
+    bg: "#f1f1ef",
+    text: "#787774",
+    darkBg: "rgba(255, 255, 255, 0.06)",
+    darkText: "#9b9a97",
   },
   gray: {
-    bg: "rgb(249 250 251)", // gray-50
-    text: "rgb(75 85 99)", // gray-600
-    darkBg: "rgba(156, 163, 175, 0.1)", // gray-400/10
-    darkText: "rgb(156 163 175)", // gray-400
+    bg: "#f1f1ef",
+    text: "#787774",
+    darkBg: "rgba(255, 255, 255, 0.06)",
+    darkText: "#9b9a97",
   },
   red: {
-    bg: "rgb(254 242 242)", // red-50
-    text: "rgb(185 28 28)", // red-700
-    darkBg: "rgba(248, 113, 113, 0.1)", // red-400/10
-    darkText: "rgb(248 113 113)", // red-400
+    bg: "#ffe2dd",
+    text: "#e03e3e",
+    darkBg: "rgba(234, 87, 82, 0.15)",
+    darkText: "#df5452",
   },
   orange: {
-    bg: "rgb(255 247 237)", // orange-50
-    text: "rgb(194 65 12)", // orange-700
-    darkBg: "rgba(251, 146, 60, 0.1)", // orange-400/10
-    darkText: "rgb(251 146 60)", // orange-400
+    bg: "#fadec9",
+    text: "#d9730d",
+    darkBg: "rgba(255, 163, 68, 0.15)",
+    darkText: "#c77d48",
   },
   yellow: {
-    bg: "rgb(254 252 232)", // yellow-50
-    text: "rgb(133 77 14)", // yellow-800
-    darkBg: "rgba(250, 204, 21, 0.1)", // yellow-400/10
-    darkText: "rgb(234 179 8)", // yellow-500
+    bg: "#fdecc8",
+    text: "#dfab01",
+    darkBg: "rgba(255, 220, 73, 0.14)",
+    darkText: "#c29343",
   },
   green: {
-    bg: "rgb(240 253 244)", // green-50
-    text: "rgb(21 128 61)", // green-700
-    darkBg: "rgba(74, 222, 128, 0.1)", // green-400/10
-    darkText: "rgb(74 222 128)", // green-400
+    bg: "#dbeddb",
+    text: "#0f7b6c",
+    darkBg: "rgba(77, 171, 154, 0.14)",
+    darkText: "#529e72",
   },
   blue: {
-    bg: "rgb(239 246 255)", // blue-50
-    text: "rgb(29 78 216)", // blue-700
-    darkBg: "rgba(96, 165, 250, 0.1)", // blue-400/10
-    darkText: "rgb(96 165 250)", // blue-400
+    bg: "#d3e5ef",
+    text: "#0b6e99",
+    darkBg: "rgba(82, 156, 202, 0.15)",
+    darkText: "#5e87c9",
   },
   purple: {
-    bg: "rgb(250 245 255)", // purple-50
-    text: "rgb(126 34 206)", // purple-700
-    darkBg: "rgba(192, 132, 252, 0.1)", // purple-400/10
-    darkText: "rgb(192 132 252)", // purple-400
+    bg: "#e8deee",
+    text: "#6940a5",
+    darkBg: "rgba(154, 109, 215, 0.15)",
+    darkText: "#9a6dd7",
   },
   pink: {
-    bg: "rgb(253 242 248)", // pink-50
-    text: "rgb(190 24 93)", // pink-700
-    darkBg: "rgba(244, 114, 182, 0.1)", // pink-400/10
-    darkText: "rgb(244 114 182)", // pink-400
+    bg: "#f5e0e9",
+    text: "#ad1a72",
+    darkBg: "rgba(226, 85, 161, 0.15)",
+    darkText: "#b65590",
   },
   brown: {
-    bg: "rgb(255 251 235)", // amber-50
-    text: "rgb(146 64 14)", // amber-800
-    darkBg: "rgba(251, 191, 36, 0.1)", // amber-400/10
-    darkText: "rgb(251 191 36)", // amber-400
+    bg: "#eee0da",
+    text: "#64473a",
+    darkBg: "rgba(147, 114, 100, 0.15)",
+    darkText: "#b4836d",
   },
 };
 
@@ -103,8 +101,17 @@ export function isValidTagColor(color: string): color is TagColor {
   return TAG_COLORS.includes(color as TagColor);
 }
 
+// Resolve any color (named or legacy hex) to a TagColor.
+// Tries named match first, then hex-to-named migration, then falls back to "default".
+function resolveTagColor(color: string): TagColor {
+  if (isValidTagColor(color)) {
+    return color;
+  }
+  return migrateHexToNamedColor(color);
+}
+
 function getValidColor(color: string): TagColor {
-  return isValidTagColor(color) ? color : "default";
+  return resolveTagColor(color);
 }
 
 // Get color values for a tag color
@@ -128,7 +135,26 @@ export function getTagColorStyles(
   return {
     backgroundColor: bg,
     color: text,
-    borderColor: text.replace("rgb(", "rgba(").replace(")", ", 0.3)"),
+    borderColor: `${text}4d`,
+  };
+}
+
+// Get badge-style CSS properties for any color (named tag color or hex).
+// Named colors and known hex colors use the Notion palette; unknown hex colors fall back to alpha variants.
+export function getColorBadgeStyles(color: string): React.CSSProperties {
+  const resolved = resolveTagColor(color);
+  if (resolved !== "default" || isValidTagColor(color)) {
+    const { bg, text } = getTagColorValues(resolved);
+    return {
+      backgroundColor: bg,
+      color: text,
+      borderColor: `${text}30`,
+    };
+  }
+  return {
+    backgroundColor: `${color}15`,
+    color,
+    borderColor: `${color}30`,
   };
 }
 
@@ -142,38 +168,54 @@ export function getTagTextColor(color: string, isDark = false): string {
   return getTagColorValues(color, isDark).text;
 }
 
-// Tailwind classes for tag text colors
+// Get a solid representative color for small dots/indicators
+// Works with named colors, legacy hex values, and unknown hex values
+export function getTagDotColor(color: string, isDark = false): string {
+  const resolved = resolveTagColor(color);
+  if (resolved !== "default" || isValidTagColor(color)) {
+    return getTagColorValues(resolved, isDark).text;
+  }
+  return color;
+}
+
+// Get a random named tag color (excludes "default")
+export function getRandomTagColor(): TagColor {
+  const colors = TAG_COLORS.filter((c) => c !== "default");
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+// Tailwind classes for tag text colors (Notion-style)
 const TAG_TEXT_CLASSES: Record<TagColor, string> = {
-  default: "text-gray-600 dark:text-gray-400",
-  gray: "text-gray-600 dark:text-gray-400",
-  red: "text-red-700 dark:text-red-400",
-  orange: "text-orange-700 dark:text-orange-400",
-  yellow: "text-yellow-800 dark:text-yellow-500",
-  green: "text-green-700 dark:text-green-400",
-  blue: "text-blue-700 dark:text-blue-400",
-  purple: "text-purple-700 dark:text-purple-400",
-  pink: "text-pink-700 dark:text-pink-400",
-  brown: "text-amber-800 dark:text-amber-400",
+  default: "text-[#787774] dark:text-[#9b9a97]",
+  gray: "text-[#787774] dark:text-[#9b9a97]",
+  red: "text-[#e03e3e] dark:text-[#df5452]",
+  orange: "text-[#d9730d] dark:text-[#c77d48]",
+  yellow: "text-[#dfab01] dark:text-[#c29343]",
+  green: "text-[#0f7b6c] dark:text-[#529e72]",
+  blue: "text-[#0b6e99] dark:text-[#5e87c9]",
+  purple: "text-[#6940a5] dark:text-[#9a6dd7]",
+  pink: "text-[#ad1a72] dark:text-[#b65590]",
+  brown: "text-[#64473a] dark:text-[#b4836d]",
 };
 
-// Tailwind classes for color swatches
+// Tailwind classes for color swatches (Notion-style)
 const TAG_SWATCH_CLASSES: Record<TagColor, string> = {
   default:
-    "bg-gray-400/15 border-gray-400/25 dark:bg-gray-400/15 dark:border-gray-500/25",
-  gray: "bg-gray-400/15 border-gray-400/25 dark:bg-gray-400/15 dark:border-gray-500/25",
-  red: "bg-red-500/15 border-red-400/25 dark:bg-red-400/15 dark:border-red-500/25",
+    "bg-[#f1f1ef] border-[#78777433] dark:bg-[#ffffff0f] dark:border-[#9b9a9733]",
+  gray: "bg-[#f1f1ef] border-[#78777433] dark:bg-[#ffffff0f] dark:border-[#9b9a9733]",
+  red: "bg-[#ffe2dd] border-[#e03e3e33] dark:bg-[#ea575226] dark:border-[#df545233]",
   orange:
-    "bg-orange-500/15 border-orange-400/25 dark:bg-orange-400/15 dark:border-orange-500/25",
+    "bg-[#fadec9] border-[#d9730d33] dark:bg-[#ffa34426] dark:border-[#c77d4833]",
   yellow:
-    "bg-yellow-500/15 border-yellow-400/25 dark:bg-yellow-400/15 dark:border-yellow-500/25",
+    "bg-[#fdecc8] border-[#dfab0133] dark:bg-[#ffdc4924] dark:border-[#c2934333]",
   green:
-    "bg-green-500/15 border-green-400/25 dark:bg-green-400/15 dark:border-green-500/25",
-  blue: "bg-blue-500/15 border-blue-400/25 dark:bg-blue-400/15 dark:border-blue-500/25",
+    "bg-[#dbeddb] border-[#0f7b6c33] dark:bg-[#4dab9a24] dark:border-[#529e7233]",
+  blue: "bg-[#d3e5ef] border-[#0b6e9933] dark:bg-[#529cca26] dark:border-[#5e87c933]",
   purple:
-    "bg-purple-500/15 border-purple-400/25 dark:bg-purple-400/15 dark:border-purple-500/25",
-  pink: "bg-pink-500/15 border-pink-400/25 dark:bg-pink-400/15 dark:border-pink-500/25",
+    "bg-[#e8deee] border-[#6940a533] dark:bg-[#9a6dd726] dark:border-[#9a6dd733]",
+  pink: "bg-[#f5e0e9] border-[#ad1a7233] dark:bg-[#e255a126] dark:border-[#b6559033]",
   brown:
-    "bg-amber-800/15 border-amber-700/25 dark:bg-amber-600/15 dark:border-amber-500/25",
+    "bg-[#eee0da] border-[#64473a33] dark:bg-[#93726426] dark:border-[#b4836d33]",
 };
 
 // Get Tailwind class for tag text color

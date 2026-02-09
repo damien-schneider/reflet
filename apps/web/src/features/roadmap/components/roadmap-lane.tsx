@@ -6,6 +6,7 @@ import {
   type RoadmapItemData,
 } from "@/features/roadmap/components/roadmap-item-card";
 import type { RoadmapLaneWithBacklog } from "@/lib/constants";
+import { getColorBadgeStyles, getTagDotColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 export interface LaneConfig {
@@ -71,12 +72,16 @@ export function RoadmapLaneColumn({
       {/* Lane header */}
       <div
         className="flex items-center justify-between border-b px-4 py-3"
-        style={{ borderColor: `${laneConfig.color}30` }}
+        style={{
+          borderColor: getColorBadgeStyles(laneConfig.color).borderColor,
+        }}
       >
         <div className="flex items-center gap-2">
           <div
             className="h-3 w-3 rounded-full"
-            style={{ backgroundColor: laneConfig.color }}
+            style={{
+              backgroundColor: getTagDotColor(laneConfig.color),
+            }}
           />
           <h3 className="font-semibold text-sm">{laneConfig.label}</h3>
           <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">

@@ -48,47 +48,57 @@ const buttonVariants = cva(
   }
 );
 
-// Pill color classes - base and active states
+// Pill color classes - Notion-style base and active states
 const pillColorStyles: Record<string, { base: string; active: string }> = {
   default: {
-    base: "text-gray-600 dark:text-gray-400",
-    active: "bg-gray-500/15 text-gray-700 dark:text-gray-300",
+    base: "text-[#787774] dark:text-[#9b9a97]",
+    active:
+      "bg-[#f1f1ef] text-[#787774] dark:bg-[#ffffff0f] dark:text-[#9b9a97]",
   },
   gray: {
-    base: "text-gray-600 dark:text-gray-400",
-    active: "bg-gray-500/15 text-gray-700 dark:text-gray-300",
+    base: "text-[#787774] dark:text-[#9b9a97]",
+    active:
+      "bg-[#f1f1ef] text-[#787774] dark:bg-[#ffffff0f] dark:text-[#9b9a97]",
   },
   brown: {
-    base: "text-amber-700 dark:text-amber-400",
-    active: "bg-amber-500/15 text-amber-800 dark:text-amber-400",
+    base: "text-[#64473a] dark:text-[#b4836d]",
+    active:
+      "bg-[#eee0da] text-[#64473a] dark:bg-[#93726426] dark:text-[#b4836d]",
   },
   orange: {
-    base: "text-orange-600 dark:text-orange-400",
-    active: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
+    base: "text-[#d9730d] dark:text-[#c77d48]",
+    active:
+      "bg-[#fadec9] text-[#d9730d] dark:bg-[#ffa34426] dark:text-[#c77d48]",
   },
   yellow: {
-    base: "text-yellow-700 dark:text-yellow-500",
-    active: "bg-yellow-500/15 text-yellow-800 dark:text-yellow-500",
+    base: "text-[#dfab01] dark:text-[#c29343]",
+    active:
+      "bg-[#fdecc8] text-[#dfab01] dark:bg-[#ffdc4924] dark:text-[#c29343]",
   },
   green: {
-    base: "text-green-600 dark:text-green-400",
-    active: "bg-green-500/15 text-green-700 dark:text-green-400",
+    base: "text-[#0f7b6c] dark:text-[#529e72]",
+    active:
+      "bg-[#dbeddb] text-[#0f7b6c] dark:bg-[#4dab9a24] dark:text-[#529e72]",
   },
   blue: {
-    base: "text-blue-600 dark:text-blue-400",
-    active: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
+    base: "text-[#0b6e99] dark:text-[#5e87c9]",
+    active:
+      "bg-[#d3e5ef] text-[#0b6e99] dark:bg-[#529cca26] dark:text-[#5e87c9]",
   },
   purple: {
-    base: "text-purple-600 dark:text-purple-400",
-    active: "bg-purple-500/15 text-purple-700 dark:text-purple-400",
+    base: "text-[#6940a5] dark:text-[#9a6dd7]",
+    active:
+      "bg-[#e8deee] text-[#6940a5] dark:bg-[#9a6dd726] dark:text-[#9a6dd7]",
   },
   pink: {
-    base: "text-pink-600 dark:text-pink-400",
-    active: "bg-pink-500/15 text-pink-700 dark:text-pink-400",
+    base: "text-[#ad1a72] dark:text-[#b65590]",
+    active:
+      "bg-[#f5e0e9] text-[#ad1a72] dark:bg-[#e255a126] dark:text-[#b65590]",
   },
   red: {
-    base: "text-red-600 dark:text-red-400",
-    active: "bg-red-500/15 text-red-700 dark:text-red-400",
+    base: "text-[#e03e3e] dark:text-[#df5452]",
+    active:
+      "bg-[#ffe2dd] text-[#e03e3e] dark:bg-[#ea575226] dark:text-[#df5452]",
   },
 };
 

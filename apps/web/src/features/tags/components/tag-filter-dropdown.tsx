@@ -10,7 +10,7 @@ import {
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,12 +24,19 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
+import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { COLOR_PALETTE } from "@/lib/constants";
+import {
+  getRandomTagColor,
+  getTagDotColor,
+  isValidTagColor,
+  migrateHexToNamedColor,
+  type TagColor,
+} from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 import { DeleteTagDialog } from "./delete-tag-dialog";
@@ -49,10 +56,6 @@ interface TagFilterDropdownProps {
   isAdmin: boolean;
 }
 
-function getRandomColor(): string {
-  return COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
-}
-
 interface TagEditButtonProps {
   tag: Tag;
 }
@@ -60,17 +63,30 @@ interface TagEditButtonProps {
 const TagEditButton = memo(function TagEditButton({ tag }: TagEditButtonProps) {
   const [open, setOpen] = useState(false);
   const [editedName, setEditedName] = useState(tag.name);
-  const [editedColor, setEditedColor] = useState(tag.color);
+  const [editedColor, setEditedColor] = useState<TagColor>(
+    isValidTagColor(tag.color) ? tag.color : migrateHexToNamedColor(tag.color)
+  );
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const updateTag = useMutation(api.tag_manager_actions.update);
+
+  // Sync color state when tag color changes
+  useEffect(() => {
+    setEditedColor(
+      isValidTagColor(tag.color) ? tag.color : migrateHexToNamedColor(tag.color)
+    );
+  }, [tag.color]);
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
       setOpen(isOpen);
       if (isOpen) {
         setEditedName(tag.name);
-        setEditedColor(tag.color);
+        setEditedColor(
+          isValidTagColor(tag.color)
+            ? tag.color
+            : migrateHexToNamedColor(tag.color)
+        );
       }
     },
     [tag.name, tag.color]
@@ -134,21 +150,7 @@ const TagEditButton = memo(function TagEditButton({ tag }: TagEditButtonProps) {
               value={editedName}
             />
 
-            <div className="grid grid-cols-5 gap-1.5">
-              {COLOR_PALETTE.map((paletteColor) => (
-                <button
-                  className={cn(
-                    "h-6 w-6 rounded-full transition-transform hover:scale-110",
-                    paletteColor === editedColor &&
-                      "ring-2 ring-primary ring-offset-2"
-                  )}
-                  key={paletteColor}
-                  onClick={() => setEditedColor(paletteColor)}
-                  style={{ backgroundColor: paletteColor }}
-                  type="button"
-                />
-              ))}
-            </div>
+            <NotionColorPicker onChange={setEditedColor} value={editedColor} />
 
             <div className="flex items-center justify-between gap-2 pt-1">
               <Button
@@ -226,7 +228,7 @@ export const TagFilterDropdown = memo(function TagFilterDropdown({
       await createTag({
         organizationId,
         name: searchValue.trim(),
-        color: getRandomColor(),
+        color: getRandomTagColor(),
       });
       setSearchValue("");
     } finally {
@@ -297,7 +299,7 @@ export const TagFilterDropdown = memo(function TagFilterDropdown({
                     </div>
                     <div
                       className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: tag.color }}
+                      style={{ backgroundColor: getTagDotColor(tag.color) }}
                     />
                     <span className="flex-1 truncate">
                       {tag.icon && <span className="mr-1">{tag.icon}</span>}

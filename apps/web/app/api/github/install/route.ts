@@ -1,3 +1,4 @@
+import { env } from "@reflet-v2/env/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -24,7 +25,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     );
   }
 
-  const githubAppSlug = process.env.GITHUB_APP_SLUG;
+  const githubAppSlug = env.GITHUB_APP_SLUG;
 
   if (!githubAppSlug) {
     return NextResponse.json(

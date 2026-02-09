@@ -36,7 +36,7 @@ export const listPublic = query({
       )
       .collect();
 
-    feedbackItems = feedbackItems.filter((f) => f.isApproved);
+    feedbackItems = feedbackItems.filter((f) => f.isApproved && !f.deletedAt);
 
     // Sort
     const sortBy = args.sortBy || "votes";
@@ -126,16 +126,17 @@ export const createPublicOrg = mutation({
       throw new Error("Organization not found or not public");
     }
 
-    // Check feedback limit
+    // Check feedback limit (excluding soft-deleted)
     const existingFeedback = await ctx.db
       .query("feedback")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .collect();
+    const activeFeedback = existingFeedback.filter((f) => !f.deletedAt);
 
     const limit = PLAN_LIMITS[org.subscriptionTier].maxFeedbackPerBoard;
-    if (existingFeedback.length >= limit) {
+    if (activeFeedback.length >= limit) {
       throw new Error(
         `Feedback limit reached. This organization allows ${limit} feedback items.`
       );
@@ -305,7 +306,7 @@ export const removeTag = mutation({
 });
 
 /**
- * Delete feedback
+ * Soft-delete feedback (moves to trash, permanently deleted after 30 days)
  */
 export const remove = mutation({
   args: { id: v.id("feedback") },
@@ -315,6 +316,10 @@ export const remove = mutation({
     const feedback = await ctx.db.get(args.id);
     if (!feedback) {
       throw new Error("Feedback not found");
+    }
+
+    if (feedback.deletedAt) {
+      throw new Error("Feedback is already deleted");
     }
 
     // Check permissions
@@ -333,54 +338,52 @@ export const remove = mutation({
       throw new Error("You don't have permission to delete this feedback");
     }
 
-    // Delete related data
-    // Votes
-    const votes = await ctx.db
-      .query("feedbackVotes")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.id))
-      .collect();
-    for (const vote of votes) {
-      await ctx.db.delete(vote._id);
+    const now = Date.now();
+    await ctx.db.patch(args.id, {
+      deletedAt: now,
+      updatedAt: now,
+    });
+
+    return true;
+  },
+});
+
+/**
+ * Restore a soft-deleted feedback (admin/owner only)
+ */
+export const restore = mutation({
+  args: { id: v.id("feedback") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    const feedback = await ctx.db.get(args.id);
+    if (!feedback) {
+      throw new Error("Feedback not found");
     }
 
-    // Comments
-    const comments = await ctx.db
-      .query("comments")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.id))
-      .collect();
-    for (const comment of comments) {
-      await ctx.db.delete(comment._id);
+    if (!feedback.deletedAt) {
+      throw new Error("Feedback is not deleted");
     }
 
-    // Tags
-    const tags = await ctx.db
-      .query("feedbackTags")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.id))
-      .collect();
-    for (const tag of tags) {
-      await ctx.db.delete(tag._id);
+    // Check admin permission
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (
+      !membership ||
+      (membership.role !== "admin" && membership.role !== "owner")
+    ) {
+      throw new Error("Only admins can restore feedback");
     }
 
-    // Release links
-    const releaseLinks = await ctx.db
-      .query("releaseFeedback")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.id))
-      .collect();
-    for (const link of releaseLinks) {
-      await ctx.db.delete(link._id);
-    }
-
-    // Notifications
-    const notifications = await ctx.db
-      .query("notifications")
-      .filter((q) => q.eq(q.field("feedbackId"), args.id))
-      .collect();
-    for (const notification of notifications) {
-      await ctx.db.delete(notification._id);
-    }
-
-    // Delete feedback
-    await ctx.db.delete(args.id);
+    await ctx.db.patch(args.id, {
+      deletedAt: undefined,
+      updatedAt: Date.now(),
+    });
 
     return true;
   },

@@ -18,6 +18,7 @@ interface FeedbackTag {
   _id: Id<"tags">;
   name: string;
   color: string;
+  icon?: string;
 }
 
 interface BoardStatusInfo {
@@ -62,7 +63,7 @@ export function FeedbackListItem({
     if (
       // biome-ignore lint/suspicious/noAlert: Simple confirmation for destructive action
       !window.confirm(
-        `Are you sure you want to delete "${feedback.title}"? This action cannot be undone.`
+        `Are you sure you want to delete "${feedback.title}"? It will be moved to trash and permanently deleted after 30 days.`
       )
     ) {
       return;
@@ -132,6 +133,7 @@ export function FeedbackListItem({
                         color={tag.color}
                         key={tag._id}
                       >
+                        {tag.icon && <span>{tag.icon}</span>}
                         {tag.name}
                       </Badge>
                     ))}
@@ -143,12 +145,7 @@ export function FeedbackListItem({
               {feedback.organizationStatus && (
                 <Badge
                   className="shrink-0"
-                  style={{
-                    backgroundColor: `${feedback.organizationStatus.color}20`,
-                    color: feedback.organizationStatus.color,
-                    borderColor: feedback.organizationStatus.color,
-                  }}
-                  variant="outline"
+                  color={feedback.organizationStatus.color}
                 >
                   {feedback.organizationStatus.name}
                 </Badge>

@@ -8,36 +8,36 @@ import { H1, H2, H3, Lead } from "@/components/ui/typography";
 
 export default function Hero() {
   return (
-    <section className="mx-auto flex max-w-7xl flex-col items-start px-4 py-12 text-left sm:px-6 sm:py-20 lg:px-8">
+    <section className="mx-auto flex max-w-7xl flex-col items-start px-4 py-10 text-left sm:px-6 sm:py-20 lg:px-8">
       {/* Announcement Pill */}
       <a
-        className="group mb-8 inline-flex cursor-pointer items-center gap-2 rounded-full bg-muted/50 px-3 py-1 transition-colors hover:bg-muted"
+        className="group mb-6 inline-flex cursor-pointer flex-wrap items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 transition-colors hover:bg-muted sm:mb-8 sm:gap-2"
         href="https://github.com/damien-schneider/reflet"
         rel="noopener noreferrer"
         target="_blank"
       >
-        <span className="font-medium text-foreground text-sm">
+        <span className="font-medium text-foreground text-xs sm:text-sm">
           Reflet is now Open Source
         </span>
-        <span className="text-muted-foreground">|</span>
-        <span className="flex items-center font-medium text-muted-foreground text-sm group-hover:text-foreground">
+        <span className="hidden text-muted-foreground sm:inline">|</span>
+        <span className="flex items-center font-medium text-muted-foreground text-xs group-hover:text-foreground sm:text-sm">
           Star on GitHub <CaretRight className="ml-1" size={14} />
         </span>
       </a>
 
       {/* Headings */}
-      <H1 className="mb-6 w-2/3" variant="hero">
+      <H1 className="mb-4 w-full sm:mb-6 sm:w-2/3" variant="hero">
         A modern product feedback and roadmap platform.
       </H1>
 
-      <Lead className="mb-10 max-w-2xl">
+      <Lead className="mb-8 max-w-2xl sm:mb-10">
         Collect feedback, prioritize features, and keep your users in the loop
         with a real-time collaborative board. Changes appear across all devices
         in milliseconds.
       </Lead>
 
       {/* Buttons */}
-      <div className="mb-20 flex flex-col items-center gap-4 sm:flex-row">
+      <div className="mb-12 flex flex-col items-center gap-4 sm:mb-20 sm:flex-row">
         <Link href="/dashboard">
           <Button
             className="w-full rounded-full sm:w-auto"
@@ -69,8 +69,8 @@ export default function Hero() {
 
 function DashboardMockup() {
   return (
-    <div className="relative w-full overflow-hidden rounded-3xl bg-muted p-4 shadow-2xl md:p-8">
-      <div className="mx-auto flex h-[500px] max-w-[1200px] overflow-hidden rounded-xl border border-border bg-card text-left shadow-lg md:h-[600px]">
+    <div className="relative w-full overflow-hidden rounded-2xl bg-muted p-2 shadow-2xl sm:rounded-3xl sm:p-4 md:p-8">
+      <div className="mx-auto flex h-[350px] max-w-[1200px] overflow-hidden rounded-lg border border-border bg-card text-left shadow-lg sm:h-[500px] sm:rounded-xl md:h-[600px]">
         {/* Sidebar */}
         <MockupSidebar />
         {/* List View */}

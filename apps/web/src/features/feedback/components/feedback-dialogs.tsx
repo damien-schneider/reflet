@@ -129,8 +129,8 @@ export function DeleteFeedbackDialog({
         <DialogHeader>
           <DialogTitle>Delete feedback</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this feedback? This action cannot be
-            undone.
+            This feedback will be moved to trash. You can restore it within 30
+            days.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -138,7 +138,7 @@ export function DeleteFeedbackDialog({
             Cancel
           </Button>
           <Button onClick={handleDelete} variant="destructive">
-            Delete
+            Move to trash
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -47,6 +47,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
+import { getTagDotColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 import { AIClarification } from "./ai-clarification";
@@ -393,7 +394,9 @@ export function FeedbackDetailDialog({
                   <div className="flex items-center gap-2">
                     <div
                       className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: currentStatus.color }}
+                      style={{
+                        backgroundColor: getTagDotColor(currentStatus.color),
+                      }}
                     />
                     {currentStatus.name}
                   </div>
@@ -406,7 +409,7 @@ export function FeedbackDetailDialog({
                   <div className="flex items-center gap-2">
                     <div
                       className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: status.color }}
+                      style={{ backgroundColor: getTagDotColor(status.color) }}
                     />
                     {status.name}
                   </div>
@@ -473,6 +476,7 @@ export function FeedbackDetailDialog({
               .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
               .map((tag) => (
                 <Badge className="font-normal" color={tag.color} key={tag._id}>
+                  {tag.icon && <span>{tag.icon}</span>}
                   {tag.name}
                 </Badge>
               ))}

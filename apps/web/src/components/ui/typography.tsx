@@ -16,7 +16,7 @@ const h1Variants = cva(
     variants: {
       variant: {
         default: "text-5xl leading-tight tracking-tight",
-        hero: "text-6xl leading-tight tracking-tight sm:text-7xl",
+        hero: "text-4xl leading-[1.1] tracking-tight sm:text-6xl sm:leading-tight md:text-7xl",
         page: "text-4xl leading-tight tracking-tight sm:text-5xl",
       },
     },
@@ -191,7 +191,7 @@ type LeadProps = ComponentPropsWithRef<"p">;
 const Lead = forwardRef<HTMLParagraphElement, LeadProps>(
   ({ className, ...props }, ref) => (
     <p
-      className={cn("text-muted-foreground text-xl", className)}
+      className={cn("text-muted-foreground text-base sm:text-xl", className)}
       ref={ref}
       {...props}
     />

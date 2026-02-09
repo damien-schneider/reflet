@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 
@@ -149,6 +150,19 @@ export const send = mutation({
         isRead: false,
         createdAt: now,
       });
+
+      // Trigger push notification
+      await ctx.scheduler.runAfter(
+        0,
+        internal.push_notifications.sendPushNotification,
+        {
+          userId: conversation.userId,
+          type: "new_support_message",
+          title: "New support message",
+          message: `You have a new reply from support${conversation.subject ? `: ${conversation.subject}` : ""}`,
+          url: "/dashboard",
+        }
+      );
     }
 
     return messageId;

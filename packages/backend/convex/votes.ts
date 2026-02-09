@@ -1,6 +1,6 @@
 import { ShardedCounter } from "@convex-dev/sharded-counter";
 import { v } from "convex/values";
-import { components } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 
@@ -203,6 +203,19 @@ export const toggle = mutation({
         isRead: false,
         createdAt: Date.now(),
       });
+
+      // Trigger push notification
+      await ctx.scheduler.runAfter(
+        0,
+        internal.push_notifications.sendPushNotification,
+        {
+          userId: feedback.authorId,
+          type: "vote_milestone",
+          title: "Vote milestone reached!",
+          message: `Your feedback "${feedback.title}" has reached ${roundedCount} votes!`,
+          url: "/dashboard",
+        }
+      );
     }
 
     return { voted: true, voteCount: roundedCount };

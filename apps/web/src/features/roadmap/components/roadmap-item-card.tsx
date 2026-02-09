@@ -18,6 +18,7 @@ export interface RoadmapItemData {
     _id: Id<"tags">;
     name: string;
     color: string;
+    icon?: string;
   }>;
 }
 
@@ -92,6 +93,7 @@ export function RoadmapItemCard({
               color={tag.color}
               key={tag._id}
             >
+              {tag.icon && <span>{tag.icon}</span>}
               {tag.name}
             </Badge>
           ))}

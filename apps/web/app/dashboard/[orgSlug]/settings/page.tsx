@@ -67,7 +67,7 @@ export default function GeneralSettingsPage({
 
   if (!org) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
           <h2 className="font-semibold text-xl">Organization not found</h2>
           <p className="mt-2 text-muted-foreground">

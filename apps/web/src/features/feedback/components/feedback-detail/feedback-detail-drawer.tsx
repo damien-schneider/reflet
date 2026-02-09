@@ -290,12 +290,14 @@ function FeedbackDetailContent({
       <div className="flex flex-col">
         {/* Metadata bar */}
         <FeedbackMetadataBar
+          assignee={feedback.assignee}
           author={feedback.author}
           createdAt={feedback.createdAt}
           feedbackId={feedbackId}
           isAdmin={isAdmin}
           organizationId={feedback.organizationId}
           organizationStatusId={feedback.organizationStatusId}
+          tags={feedback.tags}
           userVoteType={feedback.userVoteType ?? null}
           voteCount={feedback.voteCount ?? 0}
         />
@@ -311,7 +313,6 @@ function FeedbackDetailContent({
             description={feedback.description ?? ""}
             feedbackId={feedbackId}
             isAdmin={isAdmin}
-            tags={feedback.tags}
             title={feedback.title}
           />
         </div>

@@ -14,6 +14,7 @@ import {
   Globe,
   SignOut,
   Spinner,
+  Trash,
   User,
   Users,
 } from "@phosphor-icons/react";
@@ -70,6 +71,11 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
 
   const adminUnreadCount = useQuery(
     api.support_conversations.getUnreadCountForAdmin,
+    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+  );
+
+  const deletedCount = useQuery(
+    api.feedback_trash.getDeletedCount,
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
 
@@ -143,6 +149,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           icon: CreditCard,
           label: "Billing",
           badge: undefined,
+        },
+        {
+          href: "/dashboard/$orgSlug/trash",
+          icon: Trash,
+          label: "Trash",
+          badge: deletedCount && deletedCount > 0 ? deletedCount : undefined,
         },
       ]
     : [];

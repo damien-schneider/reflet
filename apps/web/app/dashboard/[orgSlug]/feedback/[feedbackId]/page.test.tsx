@@ -51,9 +51,14 @@ vi.mock("convex/react", () => ({
 vi.mock("@reflet-v2/backend/convex/_generated/api", () => ({
   api: {
     feedback: { get: "feedback.get" },
+    feedback_actions: { assign: "feedback_actions.assign" },
     organizations: { getBySlug: "organizations.getBySlug" },
     organization_statuses: { list: "organization_statuses.list" },
     comments: { list: "comments.list" },
+    members: {
+      getMembership: "members.getMembership",
+      list: "members.list",
+    },
     votes: { toggle: "votes.toggle" },
     tags: { list: "tags.list" },
   },
@@ -93,6 +98,7 @@ vi.mock("@phosphor-icons/react", () => ({
   CaretUp: () => <span data-testid="caret-up" />,
   ChatCircle: () => <span data-testid="chat-circle" />,
   PushPin: () => <span data-testid="push-pin" />,
+  User: () => <span data-testid="user-icon" />,
 }));
 
 // Mock UI components
@@ -174,9 +180,74 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
+vi.mock("@/components/ui/avatar", () => ({
+  Avatar: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <span className={className} data-testid="avatar">
+      {children}
+    </span>
+  ),
+  AvatarImage: ({ src }: { src?: string }) => (
+    <span data-src={src} data-testid="avatar-image" />
+  ),
+  AvatarFallback: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <span className={className} data-testid="avatar-fallback">
+      {children}
+    </span>
+  ),
+}));
+
+vi.mock("@/components/ui/select", () => ({
+  Select: ({
+    children,
+  }: {
+    children: React.ReactNode;
+    onValueChange?: (value: string) => void;
+    value?: string;
+  }) => <div data-testid="select">{children}</div>,
+  SelectTrigger: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <div className={className} data-testid="select-trigger">
+      {children}
+    </div>
+  ),
+  SelectValue: ({
+    children,
+  }: {
+    children?: React.ReactNode;
+    placeholder?: string;
+  }) => <span data-testid="select-value">{children}</span>,
+  SelectContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="select-content">{children}</div>
+  ),
+  SelectItem: ({ children }: { children: React.ReactNode; value: string }) => (
+    <div data-testid="select-item">{children}</div>
+  ),
+}));
+
 vi.mock("@/components/ui/typography", () => ({
-  H1: ({ children }: { children: React.ReactNode }) => <h1>{children}</h1>,
-  H2: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
+  H1: ({ children }: { children: React.ReactNode; variant?: string }) => (
+    <h1>{children}</h1>
+  ),
+  H2: ({ children }: { children: React.ReactNode; variant?: string }) => (
+    <h2>{children}</h2>
+  ),
   Muted: ({ children }: { children: React.ReactNode }) => (
     <span data-testid="muted">{children}</span>
   ),
@@ -192,7 +263,10 @@ import FeedbackDetailPage from "./page";
 
 describe("FeedbackDetailPage", () => {
   beforeEach(() => {
-    mockUseQuery.mockImplementation((queryFn) => {
+    mockUseQuery.mockImplementation((queryFn, args) => {
+      if (args === "skip") {
+        return undefined;
+      }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
         return mockFeedback;
@@ -205,6 +279,12 @@ describe("FeedbackDetailPage", () => {
       }
       if (queryName === "comments.list") {
         return mockComments;
+      }
+      if (queryName === "members.getMembership") {
+        return { role: "member" };
+      }
+      if (queryName === "members.list") {
+        return [];
       }
       if (queryName === "tags.list") {
         return [];
@@ -295,13 +375,19 @@ describe("FeedbackDetailPage", () => {
 
   it("should show not found message when feedback is null", async () => {
     // Override mock for this test
-    mockUseQuery.mockImplementation((queryFn) => {
+    mockUseQuery.mockImplementation((queryFn, args) => {
+      if (args === "skip") {
+        return undefined;
+      }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
         return null;
       }
       if (queryName === "organizations.getBySlug") {
         return mockOrg;
+      }
+      if (queryName === "members.getMembership") {
+        return { role: "member" };
       }
       return undefined;
     });

@@ -8,13 +8,13 @@ import { useCallback, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { COLOR_PALETTE } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { getTagDotColor, type TagColor } from "@/lib/tag-colors";
 
 interface AddColumnInlineProps {
   organizationId: Id<"organizations">;
@@ -23,7 +23,7 @@ interface AddColumnInlineProps {
 export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [name, setName] = useState("");
-  const [color, setColor] = useState<string>(COLOR_PALETTE[5]); // Default to blue
+  const [color, setColor] = useState<TagColor>("blue");
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -32,7 +32,7 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
   const handleStartAdding = useCallback(() => {
     setIsAdding(true);
     setName("");
-    setColor(COLOR_PALETTE[5]);
+    setColor("blue");
     setTimeout(() => inputRef.current?.focus(), 0);
   }, []);
 
@@ -91,29 +91,18 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
         {/* Color picker */}
         <Popover onOpenChange={setIsColorPickerOpen} open={isColorPickerOpen}>
           <PopoverTrigger
-            className="h-3 w-3 rounded-full transition-transform hover:scale-110"
-            style={{ backgroundColor: color }}
+            className="h-3 w-3 shrink-0 rounded-full transition-transform hover:scale-110"
+            style={{ backgroundColor: getTagDotColor(color) }}
             title="Choose color"
           />
-          <PopoverContent align="start" className="w-auto p-2">
-            <div className="grid grid-cols-3 gap-1">
-              {COLOR_PALETTE.map((paletteColor) => (
-                <button
-                  className={cn(
-                    "h-6 w-6 rounded-full transition-transform hover:scale-110",
-                    paletteColor === color &&
-                      "ring-2 ring-primary ring-offset-2"
-                  )}
-                  key={paletteColor}
-                  onClick={() => {
-                    setColor(paletteColor);
-                    setIsColorPickerOpen(false);
-                  }}
-                  style={{ backgroundColor: paletteColor }}
-                  type="button"
-                />
-              ))}
-            </div>
+          <PopoverContent align="start" className="w-[200px] p-2">
+            <NotionColorPicker
+              onChange={(newColor) => {
+                setColor(newColor);
+                setIsColorPickerOpen(false);
+              }}
+              value={color}
+            />
           </PopoverContent>
         </Popover>
 

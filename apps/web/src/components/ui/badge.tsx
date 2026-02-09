@@ -1,7 +1,7 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
-import type { TagColor } from "@/lib/tag-colors";
+import { migrateHexToNamedColor, type TagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
@@ -19,22 +19,22 @@ const badgeVariants = cva(
         ghost:
           "text-muted-foreground [a&]:hover:bg-muted [a&]:hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // Tailwind color variants
-        gray: "bg-gray-50 text-gray-600 dark:bg-gray-400/10 dark:text-gray-400",
-        red: "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-400",
+        // Notion-style color variants
+        gray: "bg-[#f1f1ef] text-[#787774] dark:bg-[#ffffff0f] dark:text-[#9b9a97]",
+        red: "bg-[#ffe2dd] text-[#e03e3e] dark:bg-[#ea575226] dark:text-[#df5452]",
         orange:
-          "bg-orange-50 text-orange-700 dark:bg-orange-400/10 dark:text-orange-400",
+          "bg-[#fadec9] text-[#d9730d] dark:bg-[#ffa34426] dark:text-[#c77d48]",
         yellow:
-          "bg-yellow-50 text-yellow-800 dark:bg-yellow-400/10 dark:text-yellow-500",
+          "bg-[#fdecc8] text-[#dfab01] dark:bg-[#ffdc4924] dark:text-[#c29343]",
         green:
-          "bg-green-50 text-green-700 dark:bg-green-400/10 dark:text-green-400",
-        blue: "bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-400",
+          "bg-[#dbeddb] text-[#0f7b6c] dark:bg-[#4dab9a24] dark:text-[#529e72]",
+        blue: "bg-[#d3e5ef] text-[#0b6e99] dark:bg-[#529cca26] dark:text-[#5e87c9]",
         purple:
-          "bg-purple-50 text-purple-700 dark:bg-purple-400/10 dark:text-purple-400",
-        pink: "bg-pink-50 text-pink-700 dark:bg-pink-400/10 dark:text-pink-400",
+          "bg-[#e8deee] text-[#6940a5] dark:bg-[#9a6dd726] dark:text-[#9a6dd7]",
+        pink: "bg-[#f5e0e9] text-[#ad1a72] dark:bg-[#e255a126] dark:text-[#b65590]",
         // Additional colors
         brown:
-          "bg-amber-50 text-amber-800 dark:bg-amber-400/10 dark:text-amber-400",
+          "bg-[#eee0da] text-[#64473a] dark:bg-[#93726426] dark:text-[#b4836d]",
       },
     },
     defaultVariants: {
@@ -84,9 +84,14 @@ interface BadgeProps
 }
 
 function Badge({ className, variant, color, render, ...props }: BadgeProps) {
-  // If color is provided, use it to determine the variant
-  const resolvedVariant = color
-    ? (colorToVariant[color] ?? "gray")
+  // If color is provided, resolve it (handles both named and legacy hex colors)
+  const resolvedColor = color
+    ? colorToVariant[color]
+      ? color
+      : migrateHexToNamedColor(color)
+    : undefined;
+  const resolvedVariant = resolvedColor
+    ? (colorToVariant[resolvedColor] ?? "gray")
     : (variant ?? "default");
 
   return useRender({

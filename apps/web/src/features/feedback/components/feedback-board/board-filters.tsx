@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TagFilterDropdown } from "@/features/tags/components/tag-filter-dropdown";
+import { getTagDotColor } from "@/lib/tag-colors";
 
 import type { FiltersBarProps } from "./types";
 import { SORT_OPTIONS } from "./types";
@@ -88,7 +89,7 @@ export function BoardFilters({
                   <div className="flex items-center gap-2">
                     <div
                       className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: status.color }}
+                      style={{ backgroundColor: getTagDotColor(status.color) }}
                     />
                     {status.name}
                   </div>

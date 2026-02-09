@@ -11,14 +11,16 @@ export const list = query({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    // Only show approved items in the roadmap
-    const feedbackItemsRaw = await ctx.db
-      .query("feedback")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .filter((q) => q.eq(q.field("isApproved"), true))
-      .collect();
+    // Only show approved, non-deleted items in the roadmap
+    const feedbackItemsRaw = (
+      await ctx.db
+        .query("feedback")
+        .withIndex("by_organization", (q) =>
+          q.eq("organizationId", args.organizationId)
+        )
+        .filter((q) => q.eq(q.field("isApproved"), true))
+        .collect()
+    ).filter((f) => !f.deletedAt);
 
     // Add tags
     const feedbackItems = await Promise.all(

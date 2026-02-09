@@ -2,6 +2,7 @@
 
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { env } from "@reflet-v2/env/web";
 import { IconRss } from "@tabler/icons-react";
 import { useQuery } from "convex/react";
 import { use } from "react";
@@ -32,7 +33,7 @@ export default function PublicChangelogPageClient({
     );
   }
 
-  const convexSiteUrl = process.env.NEXT_PUBLIC_CONVEX_URL?.replace(
+  const convexSiteUrl = env.NEXT_PUBLIC_CONVEX_URL.replace(
     ".convex.cloud",
     ".convex.site"
   );

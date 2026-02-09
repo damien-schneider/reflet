@@ -8,7 +8,7 @@ interface RoadmapCardProps {
     _id: string;
     title: string;
     voteCount: number;
-    tags?: { _id: string; name: string; color: string }[];
+    tags?: { _id: string; name: string; color: string; icon?: string }[];
   };
   orgSlug: string;
   boardSlug: string;
@@ -40,6 +40,7 @@ export function RoadmapCard({
                     color={tag.color}
                     key={tag._id}
                   >
+                    {tag.icon && <span>{tag.icon}</span>}
                     {tag.name}
                   </Badge>
                 ))}

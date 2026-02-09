@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getTagDotColor } from "@/lib/tag-colors";
 
 interface OrganizationStatus {
   _id: Id<"organizationStatuses">;
@@ -97,7 +98,7 @@ export function PublicFeedbackHeader({
                   <div className="flex items-center gap-2">
                     <div
                       className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: status.color }}
+                      style={{ backgroundColor: getTagDotColor(status.color) }}
                     />
                     {status.name}
                   </div>
@@ -107,15 +108,7 @@ export function PublicFeedbackHeader({
           </Select>
         ) : (
           currentStatus && (
-            <Badge
-              style={{
-                backgroundColor: `${currentStatus.color}20`,
-                color: currentStatus.color,
-              }}
-              variant="secondary"
-            >
-              {currentStatus.name}
-            </Badge>
+            <Badge color={currentStatus.color}>{currentStatus.name}</Badge>
           )
         )}
 

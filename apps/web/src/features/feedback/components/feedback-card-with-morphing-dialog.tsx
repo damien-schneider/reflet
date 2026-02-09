@@ -23,7 +23,12 @@ interface FeedbackCardWithMorphingDialogProps {
     userVoteType?: "upvote" | "downvote" | null;
     upvoteCount?: number;
     downvoteCount?: number;
-    tags?: Array<{ _id: string; name: string; color: string } | null>;
+    tags?: Array<{
+      _id: string;
+      name: string;
+      color: string;
+      icon?: string;
+    } | null>;
     organizationStatusId?: string;
     organizationStatus?: { name: string; color: string; icon?: string } | null;
   };
@@ -101,12 +106,7 @@ export function FeedbackCardWithMorphingDialog({
                 {status && (
                   <Badge
                     className="mt-1.5 font-normal text-[10px]"
-                    style={{
-                      backgroundColor: `${status.color}15`,
-                      color: status.color,
-                      borderColor: `${status.color}30`,
-                    }}
-                    variant="outline"
+                    color={status.color}
                   >
                     {status.name}
                   </Badge>
@@ -127,6 +127,7 @@ export function FeedbackCardWithMorphingDialog({
                       color={tag.color}
                       key={tag._id}
                     >
+                      {tag.icon && <span>{tag.icon}</span>}
                       {tag.name}
                     </Badge>
                   ))}

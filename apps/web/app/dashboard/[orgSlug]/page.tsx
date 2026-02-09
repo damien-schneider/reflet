@@ -45,7 +45,7 @@ export default function OrgDashboard({
 
   if (!org) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
           <H2 variant="card">Organization not found</H2>
           <Muted className="mt-2">

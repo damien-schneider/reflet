@@ -7,18 +7,20 @@ const mockMilestones = [
     _id: "m1",
     _creationTime: 1_700_000_000_000,
     name: "Alpha release",
-    emoji: "🚀",
+    emoji: "\u{1F680}",
     color: "blue",
     timeHorizon: "now",
+    status: "active",
     progress: { total: 5, completed: 2, inProgress: 1, percentage: 40 },
   },
   {
     _id: "m2",
     _creationTime: 1_700_000_001_000,
     name: "Beta release",
-    emoji: "🎯",
+    emoji: "\u{1F3AF}",
     color: "green",
     timeHorizon: "next_month",
+    status: "active",
     progress: { total: 3, completed: 0, inProgress: 1, percentage: 0 },
   },
 ];
@@ -28,15 +30,40 @@ vi.mock("convex/react", () => ({
   useMutation: () => vi.fn(),
 }));
 
-vi.mock("@phosphor-icons/react", () => ({
-  CalendarBlank: () => <svg data-testid="calendar-blank-icon" />,
-  Check: () => <svg data-testid="check-icon" />,
-  CheckCircle: () => <svg data-testid="check-circle-icon" />,
-  Flag: () => <svg data-testid="flag-icon" />,
-  PencilSimple: () => <svg data-testid="pencil-simple-icon" />,
-  Trash: () => <svg data-testid="trash-icon" />,
-  X: () => <svg data-testid="x-icon" />,
-  XIcon: () => <svg data-testid="x-icon-close" />,
+// Mock useIsMobile to avoid window.matchMedia errors in test env
+vi.mock("@/hooks/use-mobile", () => ({
+  useIsMobile: () => false,
+}));
+
+// Mock child components to avoid deep dependency chains
+vi.mock("./milestone-segment", () => ({
+  MilestoneSegment: ({
+    milestone,
+    onClick,
+  }: {
+    milestone: { _id: string; name: string };
+    onClick: () => void;
+  }) => (
+    <button
+      data-testid={`milestone-segment-${milestone._id}`}
+      onClick={onClick}
+      type="button"
+    >
+      {milestone.name}
+    </button>
+  ),
+}));
+
+vi.mock("./milestone-form-popover", () => ({
+  MilestoneFormPopover: () => (
+    <div data-testid="milestone-form-popover">Add</div>
+  ),
+}));
+
+vi.mock("./milestone-expanded-panel", () => ({
+  MilestoneExpandedPanel: () => (
+    <div data-testid="expanded-panel">Expanded</div>
+  ),
 }));
 
 vi.mock("motion/react", () => ({
@@ -83,27 +110,20 @@ vi.mock("motion/react", () => ({
   ),
 }));
 
-vi.mock("./milestone-date-picker", () => ({
-  MilestoneDatePicker: () => <div data-testid="date-picker">Date picker</div>,
-}));
-
-vi.mock("./milestone-expanded-panel", () => ({
-  MilestoneExpandedPanel: () => (
-    <div data-testid="expanded-panel">Expanded</div>
-  ),
-}));
-
-// Mock scroll area with data-slot attribute on the viewport,
-// matching the real component's DOM structure
+// Mock ScrollArea with ref forwarding and data-slot viewport attribute
+// The component passes ref={trackRef} to ScrollArea and then queries for
+// [data-slot="scroll-area-viewport"] inside it via trackRef.current.querySelector
 vi.mock("@/components/ui/scroll-area", () => ({
   ScrollArea: ({
     children,
     direction,
+    ref,
   }: {
     children: React.ReactNode;
     direction?: string;
+    ref?: React.Ref<HTMLDivElement>;
   }) => (
-    <div data-direction={direction} data-testid="scroll-area">
+    <div data-direction={direction} data-testid="scroll-area" ref={ref}>
       <div data-slot="scroll-area-viewport" data-testid="scroll-viewport">
         {children}
       </div>

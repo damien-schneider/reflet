@@ -112,7 +112,7 @@ export const listFeedbackByOrganization = internalQuery({
       return { items: [], total: 0, hasMore: false };
     }
 
-    // Get all feedback for this organization
+    // Get all feedback for this organization (excluding soft-deleted)
     let feedbackItems = await ctx.db
       .query("feedback")
       .withIndex("by_organization", (q) =>
@@ -120,8 +120,8 @@ export const listFeedbackByOrganization = internalQuery({
       )
       .collect();
 
-    // Filter to approved only (public API always shows approved)
-    feedbackItems = feedbackItems.filter((f) => f.isApproved);
+    // Filter to approved only and exclude soft-deleted (public API always shows approved)
+    feedbackItems = feedbackItems.filter((f) => f.isApproved && !f.deletedAt);
 
     // Filter by organization status
     if (args.statusId) {
@@ -310,7 +310,7 @@ export const getFeedbackByOrganization = internalQuery({
   },
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
+    if (!feedback || feedback.deletedAt) {
       return null;
     }
 
@@ -541,7 +541,7 @@ export const getRoadmapByOrganization = internalQuery({
 
     const sortedStatuses = orgStatuses.sort((a, b) => a.order - b.order);
 
-    // Get all approved feedback
+    // Get all approved feedback (excluding soft-deleted)
     const feedbackItems = await ctx.db
       .query("feedback")
       .withIndex("by_organization", (q) =>
@@ -549,7 +549,9 @@ export const getRoadmapByOrganization = internalQuery({
       )
       .collect();
 
-    const approvedFeedback = feedbackItems.filter((f) => f.isApproved);
+    const approvedFeedback = feedbackItems.filter(
+      (f) => f.isApproved && !f.deletedAt
+    );
 
     // Group by organization status
     const lanes = sortedStatuses.map((status) => ({

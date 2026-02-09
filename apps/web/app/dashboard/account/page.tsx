@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Bell,
   Check,
   Envelope,
   Eye,
@@ -30,6 +31,7 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { H1, Muted } from "@/components/ui/typography";
+import { NotificationSettings } from "@/features/account/notification-settings";
 import { authClient } from "@/lib/auth-client";
 
 const updateProfileSchema = z.object({
@@ -103,9 +105,9 @@ function PasswordInputField({
 
 export default function AccountPage() {
   const user = useQuery(api.auth.getCurrentUser);
-  const [activeTab, setActiveTab] = useState<"profile" | "email" | "password">(
-    "profile"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "email" | "password" | "notifications"
+  >("profile");
   const [isLoading, setIsLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
 
@@ -274,6 +276,18 @@ export default function AccountPage() {
           >
             <Envelope className="size-4" />
             Password
+          </button>
+          <button
+            className={`flex items-center gap-3 rounded-md px-3 py-2 text-left font-medium text-sm transition-colors ${
+              activeTab === "notifications"
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            }`}
+            onClick={() => setActiveTab("notifications")}
+            type="button"
+          >
+            <Bell className="size-4" />
+            Notifications
           </button>
         </nav>
 
@@ -511,6 +525,7 @@ export default function AccountPage() {
               </CardContent>
             </Card>
           )}
+          {activeTab === "notifications" && <NotificationSettings />}
         </div>
       </div>
     </div>

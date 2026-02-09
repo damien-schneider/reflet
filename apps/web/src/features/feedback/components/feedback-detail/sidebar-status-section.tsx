@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getTagDotColor } from "@/lib/tag-colors";
 
 interface SidebarStatusSectionProps {
   isAdmin: boolean;
@@ -43,7 +44,9 @@ export function SidebarStatusSection({
               <div className="flex items-center gap-2">
                 <div
                   className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: currentStatus.color }}
+                  style={{
+                    backgroundColor: getTagDotColor(currentStatus.color),
+                  }}
                 />
                 {currentStatus.name}
               </div>
@@ -56,7 +59,7 @@ export function SidebarStatusSection({
               <div className="flex items-center gap-2">
                 <div
                   className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: status.color }}
+                  style={{ backgroundColor: getTagDotColor(status.color) }}
                 />
                 {status.name}
               </div>
@@ -69,15 +72,7 @@ export function SidebarStatusSection({
 
   if (currentStatus) {
     return (
-      <Badge
-        className="px-3 py-1"
-        style={{
-          backgroundColor: `${currentStatus.color}20`,
-          color: currentStatus.color,
-          borderColor: currentStatus.color,
-        }}
-        variant="outline"
-      >
+      <Badge className="px-3 py-1" color={currentStatus.color}>
         {currentStatus.name}
       </Badge>
     );

@@ -172,11 +172,7 @@ export function MilestoneExpandedPanel({
                         {fb.organizationStatus && (
                           <Badge
                             className="font-normal text-[10px]"
-                            style={{
-                              backgroundColor: `${fb.organizationStatus.color}20`,
-                              color: fb.organizationStatus.color,
-                            }}
-                            variant="outline"
+                            color={fb.organizationStatus.color}
                           >
                             {fb.organizationStatus.name}
                           </Badge>
@@ -262,11 +258,7 @@ export function MilestoneExpandedPanel({
                         {fb.organizationStatus && (
                           <Badge
                             className="font-normal text-[10px]"
-                            style={{
-                              backgroundColor: `${fb.organizationStatus.color}20`,
-                              color: fb.organizationStatus.color,
-                            }}
-                            variant="outline"
+                            color={fb.organizationStatus.color}
                           >
                             {fb.organizationStatus.name}
                           </Badge>

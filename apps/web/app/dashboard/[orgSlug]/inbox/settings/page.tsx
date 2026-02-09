@@ -60,7 +60,7 @@ export default function InboxSettingsPage({
 
   if (!org) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
           <H2 variant="card">Organization not found</H2>
           <Muted className="mt-2">
@@ -73,7 +73,7 @@ export default function InboxSettingsPage({
 
   if (!isAdmin) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
           <H2 variant="card">Access Denied</H2>
           <Muted className="mt-2">

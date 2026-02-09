@@ -42,6 +42,15 @@ vi.mock("@reflet-v2/backend/convex/_generated/api", () => ({
   },
 }));
 
+vi.mock("@reflet-v2/env/web", () => ({
+  env: {
+    NEXT_PUBLIC_CONVEX_URL: "https://test.convex.cloud",
+    NEXT_PUBLIC_CONVEX_SITE_URL: "https://test.convex.site",
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: "test-vapid-key",
+    NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION: undefined,
+  },
+}));
+
 // Mock TanStack Pacer with controllable debounce
 let debouncedValue = "";
 const mockUseDebouncedValue = vi.fn((_value: string) => [debouncedValue]);

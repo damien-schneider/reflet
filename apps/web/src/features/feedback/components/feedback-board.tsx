@@ -17,7 +17,6 @@ import {
   useRef,
   useState,
 } from "react";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -188,6 +187,10 @@ function FeedbackBoardContent({
     attachments: [] as string[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitTagId, setSubmitTagId] = useState<string | undefined>();
+  const [submitAssigneeId, setSubmitAssigneeId] = useState<
+    string | undefined
+  >();
 
   // Optimistic vote tracking
   const [optimisticVotes, setOptimisticVotes] = useState<
@@ -236,6 +239,7 @@ function FeedbackBoardContent({
     api.feedback_actions.createPublicOrg
   );
   const createFeedbackMember = useMutation(api.feedback.create);
+  const assignFeedback = useMutation(api.feedback_actions.assign);
   const toggleVoteMutation = useMutation(api.votes.toggle);
   const ensureStatusDefaults = useMutation(
     api.organization_statuses.ensureDefaults
@@ -296,7 +300,8 @@ function FeedbackBoardContent({
 
   // Handlers
   const handleSubmitFeedback = async () => {
-    if (!newFeedback.title.trim()) {
+    const trimmedTitle = newFeedback.title.trim();
+    if (!trimmedTitle || trimmedTitle.length > 100) {
       return;
     }
 
@@ -306,20 +311,28 @@ function FeedbackBoardContent({
         newFeedback.attachments.length > 0
           ? newFeedback.attachments
           : undefined;
+      let createdFeedbackId: Id<"feedback"> | undefined;
       if (isMember) {
-        await createFeedbackMember({
+        createdFeedbackId = await createFeedbackMember({
           organizationId,
-          title: newFeedback.title.trim(),
+          title: trimmedTitle,
           description: newFeedback.description.trim() || "",
           attachments,
+          tagId: submitTagId as Id<"tags"> | undefined,
         });
       } else {
         await createFeedbackPublic({
           organizationId,
-          title: newFeedback.title.trim(),
+          title: trimmedTitle,
           description: newFeedback.description.trim() || undefined,
           email: newFeedback.email.trim() || undefined,
           attachments,
+        });
+      }
+      if (createdFeedbackId && submitAssigneeId) {
+        await assignFeedback({
+          feedbackId: createdFeedbackId,
+          assigneeId: submitAssigneeId,
         });
       }
       closeSubmitDrawer();
@@ -329,6 +342,10 @@ function FeedbackBoardContent({
         email: "",
         attachments: [],
       });
+      setSubmitTagId(undefined);
+      setSubmitAssigneeId(undefined);
+    } catch {
+      // Error is shown by Convex client; keep drawer open so user can fix and retry
     } finally {
       setIsSubmitting(false);
     }
@@ -432,8 +449,8 @@ function FeedbackBoardContent({
 
       {/* Toolbar area */}
       <div className={cn("mx-auto max-w-6xl px-4 pb-4")}>
-        <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-clip">
-          {/* Search bar - left */}
+        <div className="flex min-w-0 items-center gap-4">
+          {/* Search bar */}
           <div className="relative w-48 flex-shrink-0">
             <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -443,18 +460,19 @@ function FeedbackBoardContent({
               value={searchQuery}
             />
           </div>
-
-          {/* Submit button - right */}
-          <div className="flex shrink-0 justify-end">
-            <Button
-              className="h-10 min-w-10 rounded-full"
-              onClick={openSubmitDrawer}
-            >
-              <Plus className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">Submit Feedback</span>
-            </Button>
-          </div>
         </div>
+      </div>
+
+      {/* Submit Feedback - fixed bottom right */}
+      <div className="fixed right-4 bottom-4 z-50 md:right-8 md:bottom-8">
+        <Button
+          className="h-12 rounded-full shadow-lg"
+          onClick={openSubmitDrawer}
+          size="lg"
+        >
+          <Plus className="h-4 w-4" />
+          Submit Feedback
+        </Button>
       </div>
 
       {/* Tag filter bar */}
@@ -482,14 +500,9 @@ function FeedbackBoardContent({
             return (
               <Badge
                 className="cursor-pointer gap-1 pr-1"
+                color={status.color}
                 key={statusId}
                 onClick={() => handleStatusFilterChange(statusId, false)}
-                style={{
-                  backgroundColor: `${status.color}15`,
-                  color: status.color,
-                  borderColor: `${status.color}30`,
-                }}
-                variant="outline"
               >
                 {status.name}
                 <X className="h-3 w-3" />
@@ -560,9 +573,11 @@ function FeedbackBoardContent({
       {/* Submit Dialog */}
       <SubmitFeedbackDialog
         feedback={newFeedback}
+        isAdmin={isAdmin}
         isMember={isMember}
         isOpen={showSubmitDrawer}
         isSubmitting={isSubmitting}
+        onAssigneeChange={setSubmitAssigneeId}
         onFeedbackChange={setNewFeedback}
         onOpenChange={(open) => {
           if (open) {
@@ -572,6 +587,11 @@ function FeedbackBoardContent({
           }
         }}
         onSubmit={handleSubmitFeedback}
+        onTagChange={setSubmitTagId}
+        organizationId={organizationId}
+        selectedAssigneeId={submitAssigneeId}
+        selectedTagId={submitTagId}
+        tags={tags}
       />
     </div>
   );

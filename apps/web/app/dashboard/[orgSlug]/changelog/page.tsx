@@ -53,7 +53,7 @@ export default function ChangelogPage({
 
   if (!org) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
           <h2 className="font-semibold text-lg">Organization not found</h2>
           <Muted className="mt-2">

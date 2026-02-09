@@ -156,6 +156,7 @@ export function PublicFeedbackDetailContent({
                     color={tag.color}
                     key={tag._id}
                   >
+                    {tag.icon && <span>{tag.icon}</span>}
                     {tag.name}
                   </Badge>
                 ))}

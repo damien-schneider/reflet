@@ -15,7 +15,12 @@ interface FeedbackHeaderProps {
   feedbackId: Id<"feedback">;
   title: string;
   description: string;
-  tags?: Array<{ _id: Id<"tags">; name: string; color: string } | null>;
+  tags?: Array<{
+    _id: Id<"tags">;
+    name: string;
+    color: string;
+    icon?: string;
+  } | null>;
   isAdmin: boolean;
 }
 
@@ -126,7 +131,12 @@ export function FeedbackHeader({
 }
 
 interface TagsListProps {
-  tags: Array<{ _id: Id<"tags">; name: string; color: string } | null>;
+  tags: Array<{
+    _id: Id<"tags">;
+    name: string;
+    color: string;
+    icon?: string;
+  } | null>;
 }
 
 function TagsList({ tags }: TagsListProps) {
@@ -134,6 +144,7 @@ function TagsList({ tags }: TagsListProps) {
     _id: Id<"tags">;
     name: string;
     color: string;
+    icon?: string;
   }>;
 
   if (validTags.length === 0) {
@@ -145,6 +156,7 @@ function TagsList({ tags }: TagsListProps) {
       <Tag className="h-4 w-4 text-muted-foreground" />
       {validTags.map((tag) => (
         <Badge className="font-normal" color={tag.color} key={tag._id}>
+          {tag.icon && <span>{tag.icon}</span>}
           {tag.name}
         </Badge>
       ))}

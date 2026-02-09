@@ -7,6 +7,7 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { env } from "@reflet-v2/env/web";
 import { useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -121,9 +122,9 @@ export default function PublicOrgLayoutClient({
           )}
         </div>
 
-        {/* Desktop (sm:): Tabs */}
+        {/* Desktop (md:): Tabs */}
         <Tabs
-          className="hidden sm:block"
+          className="hidden md:block"
           onValueChange={handleTabChange}
           value={currentTab}
         >
@@ -146,10 +147,10 @@ export default function PublicOrgLayoutClient({
         </Tabs>
       </header>
 
-      <main className="min-h-[80vh] pt-22 pb-16 sm:pb-0">{children}</main>
+      <main className="min-h-[80vh] pt-22 pb-16 md:pb-0">{children}</main>
 
       {/* Mobile: Bottom tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background sm:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background md:hidden">
         <div className="flex items-center justify-around">
           <Link
             className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
@@ -195,7 +196,7 @@ export default function PublicOrgLayoutClient({
             Powered by{" "}
             <Link
               className="font-display font-medium text-lg text-olive-600 underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
-              href={process.env.NEXT_PUBLIC_SITE_URL ?? "https://reflet.app"}
+              href={env.NEXT_PUBLIC_SITE_URL ?? "https://reflet.app"}
               rel="noopener"
               target="_blank"
             >

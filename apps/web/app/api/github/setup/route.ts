@@ -1,5 +1,6 @@
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { env } from "@reflet-v2/env/server";
 import { fetchAction, fetchMutation, fetchQuery } from "convex/nextjs";
 import { NextResponse } from "next/server";
 
@@ -146,7 +147,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // Setup webhook if requested
     if (setupWebhook && !connection.webhookId) {
-      const siteUrl = process.env.SITE_URL;
+      const siteUrl = env.SITE_URL;
 
       // Validate SITE_URL is configured with a proper scheme
       if (!siteUrl?.startsWith("http")) {
@@ -194,7 +195,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       });
 
       if (org) {
-        const webhookUrl = `${process.env.SITE_URL}/api/github/webhook`;
+        const webhookUrl = `${env.SITE_URL}/api/github/webhook`;
 
         // Generate workflow content
         const workflowContent = await fetchAction(

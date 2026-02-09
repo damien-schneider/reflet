@@ -25,6 +25,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getTagDotColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 import type { FeedbackItem } from "./feed-feedback-view";
 import { AddColumnInline } from "./roadmap/add-column-inline";
@@ -224,7 +225,7 @@ function DroppableColumn({
       )}
       ref={setNodeRef}
       style={{
-        backgroundColor: `${status.color}${bgOpacity}`,
+        backgroundColor: `${getTagDotColor(status.color)}${bgOpacity}`,
       }}
     >
       <RoadmapColumnHeader

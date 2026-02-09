@@ -8,6 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getTagSwatchClass } from "@/lib/tag-colors";
+import { cn } from "@/lib/utils";
 
 interface FeedbackDetailSidebarProps {
   feedback: {
@@ -19,6 +21,7 @@ interface FeedbackDetailSidebarProps {
     _id: string;
     name: string;
     color: string;
+    icon?: string;
   } | null>;
   isAdmin: boolean;
   availableTags:
@@ -52,11 +55,8 @@ export function FeedbackDetailSidebar({
           <div className="flex flex-wrap gap-2">
             {feedbackTags.map((tag) =>
               tag ? (
-                <Badge
-                  className="group text-white"
-                  key={tag._id}
-                  style={{ backgroundColor: tag.color }}
-                >
+                <Badge className="group" color={tag.color} key={tag._id}>
+                  {tag.icon && <span>{tag.icon}</span>}
                   {tag.name}
                   {isAdmin && (
                     <button
@@ -85,8 +85,10 @@ export function FeedbackDetailSidebar({
                     <SelectItem key={tag._id} value={tag._id}>
                       <div className="flex items-center gap-2">
                         <div
-                          className="h-3 w-3 rounded"
-                          style={{ backgroundColor: tag.color }}
+                          className={cn(
+                            "h-3 w-3 shrink-0 rounded-sm border",
+                            getTagSwatchClass(tag.color)
+                          )}
                         />
                         {tag.name}
                       </div>

@@ -10,6 +10,8 @@ import {
   DropdownListItem,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getTagSwatchClass } from "@/lib/tag-colors";
+import { cn } from "@/lib/utils";
 
 interface TagCardProps {
   tag: {
@@ -29,8 +31,10 @@ export function TagCard({ tag, isAdmin, onEdit, onDelete }: TagCardProps) {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
             <div
-              className="h-4 w-4 rounded"
-              style={{ backgroundColor: tag.color }}
+              className={cn(
+                "h-4 w-4 rounded border",
+                getTagSwatchClass(tag.color)
+              )}
             />
             <CardTitle className="text-base">{tag.name}</CardTitle>
           </div>

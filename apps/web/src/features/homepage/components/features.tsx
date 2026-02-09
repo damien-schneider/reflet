@@ -49,10 +49,7 @@ const FEATURES = [
 
 export default function Features() {
   return (
-    <section
-      className="relative overflow-hidden bg-background py-24"
-      id="features"
-    >
+    <section className="relative py-24" id="features">
       <div className="relative z-10 mx-auto max-w-7xl px-4 text-left sm:px-6 lg:px-8">
         <div className="mb-4">
           <span className="font-semibold text-muted-foreground text-sm uppercase tracking-wide">

@@ -28,7 +28,7 @@ export const get = query({
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: query needs to check auth, org access, and build full response
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.id);
-    if (!feedback) {
+    if (!feedback || feedback.deletedAt) {
       return null;
     }
 
@@ -228,14 +228,15 @@ export const create = mutation({
       throw new Error("You don't have access to submit feedback");
     }
 
-    // Check feedback limit (org-level)
+    // Check feedback limit (org-level, excluding soft-deleted)
     const existingFeedback = await ctx.db
       .query("feedback")
       .withIndex("by_organization", (q) => q.eq("organizationId", org._id))
       .collect();
+    const activeFeedback = existingFeedback.filter((f) => !f.deletedAt);
 
     const limit = PLAN_LIMITS[org.subscriptionTier].maxFeedbackPerBoard * 10; // Org limit is higher
-    if (existingFeedback.length >= limit) {
+    if (activeFeedback.length >= limit) {
       throw new Error(
         `Feedback limit reached. This organization allows ${limit} feedback items.`
       );

@@ -109,16 +109,3 @@ export const LANE_CONFIG: Record<
     bgColor: "bg-gray-50 dark:bg-gray-900",
   },
 };
-
-// Color palette for tags and lanes
-export const COLOR_PALETTE = [
-  "#ef4444", // red
-  "#f97316", // orange
-  "#eab308", // yellow
-  "#22c55e", // green
-  "#14b8a6", // teal
-  "#3b82f6", // blue
-  "#8b5cf6", // violet
-  "#ec4899", // pink
-  "#6b7280", // gray
-] as const;
