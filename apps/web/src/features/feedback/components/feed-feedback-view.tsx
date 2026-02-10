@@ -43,35 +43,20 @@ export interface FeedbackItem {
 
 export interface FeedFeedbackViewProps {
   feedback: FeedbackItem[];
-  statuses: Array<{ _id: string; name: string; color: string }>;
   isLoading: boolean;
   hasActiveFilters: boolean;
-  /** Org brand color; when undefined, theme primary is used */
-  primaryColor?: string;
-  isAdmin?: boolean;
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
-  onVote: (
-    e: React.MouseEvent,
-    feedbackId: string,
-    voteType: "upvote" | "downvote"
-  ) => void;
   onSubmitClick: () => void;
-  onFeedbackClick: (feedbackId: string) => void;
 }
 
 export function FeedFeedbackView({
   feedback,
-  statuses,
   isLoading,
   hasActiveFilters,
-  primaryColor,
-  isAdmin,
   sortBy,
   onSortChange,
-  onVote,
   onSubmitClick,
-  onFeedbackClick,
 }: FeedFeedbackViewProps) {
   if (isLoading) {
     return (
@@ -123,14 +108,7 @@ export function FeedFeedbackView({
               layout
               transition={{ duration: 0.2 }}
             >
-              <FeedbackCardWithMorphingDialog
-                feedback={item}
-                isAdmin={isAdmin}
-                onFeedbackClick={onFeedbackClick}
-                onVote={onVote}
-                primaryColor={primaryColor}
-                statuses={statuses}
-              />
+              <FeedbackCardWithMorphingDialog feedback={item} />
             </motion.div>
           ))}
         </AnimatePresence>

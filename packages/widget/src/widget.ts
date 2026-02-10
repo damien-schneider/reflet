@@ -6,27 +6,14 @@ import {
   markMessagesAsRead,
   sendMessage,
 } from "./api";
-import { chatIcon, closeIcon, messageIcon, sendIcon } from "./icons";
 import { getWidgetStyles } from "./styles";
 import type { WidgetMessage, WidgetState } from "./types";
+import { renderWidgetHTML } from "./widget-html";
+import { generateVisitorId } from "./widget-utils";
 
 const STORAGE_KEY_VISITOR = "reflet_visitor_id";
 const STORAGE_KEY_CONVERSATION = "reflet_conversation_id";
 const POLL_INTERVAL = 5000;
-
-function generateVisitorId(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "v_";
-  for (let i = 0; i < 12; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return result;
-}
-
-function formatTime(timestamp: number): string {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
 
 export class RefletWidget {
   private readonly widgetId: string;
@@ -133,87 +120,7 @@ export class RefletWidget {
       return "";
     }
 
-    const positionClass = config.position;
-
-    let html = "";
-
-    if (config.showLauncher && !isOpen) {
-      html += `
-        <button class="reflet-launcher ${positionClass}" aria-label="Open chat">
-          <span class="reflet-launcher-icon">${chatIcon}</span>
-          ${unreadCount > 0 ? `<span class="reflet-launcher-badge">${unreadCount > 99 ? "99+" : unreadCount}</span>` : ""}
-        </button>
-      `;
-    }
-
-    if (isOpen) {
-      html += `
-        <div class="reflet-window ${positionClass}">
-          <div class="reflet-header">
-            <div class="reflet-header-content">
-              <h3 class="reflet-header-title">${config.welcomeMessage}</h3>
-              ${config.greetingMessage ? `<p class="reflet-header-subtitle">${config.greetingMessage}</p>` : ""}
-            </div>
-            <button class="reflet-close-btn" aria-label="Close chat">
-              ${closeIcon}
-            </button>
-          </div>
-          
-          <div class="reflet-messages">
-            ${isLoading ? '<div class="reflet-loading"><div class="reflet-spinner"></div></div>' : ""}
-            ${!isLoading && messages.length === 0 ? this.getEmptyStateHTML() : ""}
-            ${messages.map((msg) => this.getMessageHTML(msg)).join("")}
-          </div>
-          
-          <div class="reflet-input-container">
-            <textarea 
-              class="reflet-input" 
-              placeholder="Type a message..." 
-              rows="1"
-              aria-label="Message input"
-            ></textarea>
-            <button class="reflet-send-btn" aria-label="Send message">
-              ${sendIcon}
-            </button>
-          </div>
-          
-          <div class="reflet-powered-by">
-            Powered by <a href="https://reflet.app" target="_blank" rel="noopener">Reflet</a>
-          </div>
-        </div>
-      `;
-    }
-
-    return html;
-  }
-
-  private getEmptyStateHTML(): string {
-    return `
-      <div class="reflet-empty-state">
-        <div class="reflet-empty-icon">${messageIcon}</div>
-        <p>Start a conversation with us!</p>
-        <p>We typically respond within a few hours.</p>
-      </div>
-    `;
-  }
-
-  private getMessageHTML(message: WidgetMessage): string {
-    const className = message.isOwnMessage
-      ? "reflet-message own"
-      : "reflet-message other";
-
-    return `
-      <div class="${className}">
-        <div class="reflet-message-body">${this.escapeHtml(message.body)}</div>
-        <div class="reflet-message-time">${formatTime(message.createdAt)}</div>
-      </div>
-    `;
-  }
-
-  private escapeHtml(text: string): string {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
+    return renderWidgetHTML(config, isOpen, messages, unreadCount, isLoading);
   }
 
   private attachEventListeners(): void {

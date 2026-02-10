@@ -16,7 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag-dialog";
 import { TagFormPopover } from "@/features/tags/components/tag-form-popover";
 
-interface Tag {
+export interface Tag {
   _id: string;
   name: string;
   color: string;

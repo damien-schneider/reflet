@@ -46,7 +46,6 @@ export interface FeedbackDetailDrawerProps {
   feedbackId: Id<"feedback"> | null;
   isOpen: boolean;
   onClose: () => void;
-  isMember?: boolean;
   isAdmin?: boolean;
   // Initial data from the list for instant display
   feedbackList?: FeedbackListItem[];
@@ -63,7 +62,6 @@ export function FeedbackDetailDrawer({
   feedbackId,
   isOpen,
   onClose,
-  isMember: _isMember = false,
   isAdmin = false,
   feedbackList = [],
   feedbackIds = [],

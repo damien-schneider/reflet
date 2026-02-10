@@ -1,52 +1,18 @@
 import { ChangelogApi } from "./api";
-import {
-  closeIcon,
-  emptyIcon,
-  externalLinkIcon,
-  megaphoneIcon,
-  sparkleIcon,
-} from "./icons";
 import { getChangelogStyles } from "./styles";
 import type {
   ChangelogEntry,
   ChangelogWidgetConfig,
   ChangelogWidgetState,
 } from "./types";
+import {
+  renderCardModeHTML,
+  renderPanelHTML,
+  renderPopupModeHTML,
+  renderTriggerModeHTML,
+} from "./widget-html";
 
 const STORAGE_KEY_PREFIX = "reflet_changelog_seen_";
-
-function formatDate(timestamp: number): string {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    return "Today";
-  }
-  if (diffDays === 1) {
-    return "Yesterday";
-  }
-  if (diffDays < 7) {
-    return `${diffDays} days ago`;
-  }
-  if (diffDays < 30) {
-    const weeks = Math.floor(diffDays / 7);
-    return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
-  }
-
-  return date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-  });
-}
-
-function escapeHtml(text: string): string {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}
 
 export class RefletChangelogWidget {
   private readonly config: ChangelogWidgetConfig;
@@ -247,163 +213,39 @@ export class RefletChangelogWidget {
 
   private getHTML(): string {
     const { mode } = this.config;
+    const { isOpen, isLoading, entries, unreadCount, error } = this.state;
 
     switch (mode) {
       case "card":
-        return this.getCardModeHTML();
+        if (isOpen) {
+          return renderPanelHTML(
+            entries,
+            "popup",
+            isLoading,
+            error,
+            this.getLastSeenTimestamp()
+          );
+        }
+        return renderCardModeHTML(
+          entries,
+          unreadCount,
+          isOpen,
+          isLoading,
+          this.config.position
+        );
       case "popup":
-        return this.getPopupModeHTML();
+        return renderPopupModeHTML(entries, isOpen, isLoading, error);
       case "trigger":
-        return this.getTriggerModeHTML();
+        return renderTriggerModeHTML(entries, isOpen, isLoading, error);
       default:
-        return this.getCardModeHTML();
+        return renderCardModeHTML(
+          entries,
+          unreadCount,
+          isOpen,
+          isLoading,
+          this.config.position
+        );
     }
-  }
-
-  private getCardModeHTML(): string {
-    const { isOpen, isLoading, entries, unreadCount } = this.state;
-    const { position } = this.config;
-
-    // If panel is open, show full list
-    if (isOpen) {
-      return this.getPanelHTML("popup");
-    }
-
-    // Show nothing if loading or no entries
-    if (isLoading || entries.length === 0) {
-      return "";
-    }
-
-    const latest = entries[0];
-    if (!latest) {
-      return "";
-    }
-
-    return `
-      <div class="reflet-changelog-card ${position}" data-action="open-panel">
-        <div class="reflet-changelog-card-header">
-          <span class="reflet-changelog-card-icon">${megaphoneIcon}</span>
-          <span class="reflet-changelog-card-label">What's New</span>
-          ${unreadCount > 0 ? `<span class="reflet-changelog-card-badge">${unreadCount}</span>` : ""}
-          <button class="reflet-changelog-card-dismiss" data-action="dismiss" aria-label="Dismiss">${closeIcon}</button>
-        </div>
-        <div class="reflet-changelog-card-body">
-          <div class="reflet-changelog-card-title">${escapeHtml(latest.title)}</div>
-          ${latest.version ? `<div class="reflet-changelog-card-version">v${escapeHtml(latest.version)}</div>` : ""}
-        </div>
-      </div>
-    `;
-  }
-
-  private getPopupModeHTML(): string {
-    const { isOpen } = this.state;
-    if (!isOpen) {
-      return "";
-    }
-    return this.getPanelHTML("popup");
-  }
-
-  private getTriggerModeHTML(): string {
-    const { isOpen } = this.state;
-    if (!isOpen) {
-      return "";
-    }
-    return this.getPanelHTML("trigger");
-  }
-
-  private getPanelHTML(panelType: "popup" | "trigger"): string {
-    const { isLoading, entries, error } = this.state;
-
-    const overlayStart =
-      panelType === "popup"
-        ? `<div class="reflet-changelog-overlay" data-action="close">`
-        : "";
-    const overlayEnd = panelType === "popup" ? "</div>" : "";
-
-    return `
-      ${overlayStart}
-      <div class="reflet-changelog-panel ${panelType}" ${panelType === "popup" ? 'onclick="event.stopPropagation()"' : ""}>
-        <div class="reflet-changelog-panel-header">
-          <div class="reflet-changelog-panel-header-left">
-            <span class="reflet-changelog-panel-icon">${megaphoneIcon}</span>
-            <h3 class="reflet-changelog-panel-title">What's New</h3>
-          </div>
-          <button class="reflet-changelog-close-btn" data-action="close" aria-label="Close">${closeIcon}</button>
-        </div>
-
-        ${error ? this.getErrorHTML() : ""}
-        ${isLoading ? this.getLoadingHTML() : ""}
-        ${isLoading || error ? "" : this.getEntriesListHTML(entries)}
-
-        <div class="reflet-changelog-footer">
-          Powered by <a href="https://reflet.app" target="_blank" rel="noopener">Reflet</a>
-        </div>
-      </div>
-      ${overlayEnd}
-    `;
-  }
-
-  private getEntriesListHTML(entries: ChangelogEntry[]): string {
-    if (entries.length === 0) {
-      return `
-        <div class="reflet-changelog-empty">
-          <div class="reflet-changelog-empty-icon">${emptyIcon}</div>
-          <p>No updates yet</p>
-          <p style="margin-top: 4px; font-size: 13px;">Check back later for product updates.</p>
-        </div>
-      `;
-    }
-
-    const lastSeen = this.getLastSeenTimestamp();
-
-    let html = '<div class="reflet-changelog-list">';
-    for (const entry of entries) {
-      const isNew = !!(entry.publishedAt && entry.publishedAt > lastSeen);
-      html += `
-        <div class="reflet-changelog-entry" data-entry-id="${entry.id}">
-          <div class="reflet-changelog-entry-header">
-            ${entry.version ? `<span class="reflet-changelog-entry-version">v${escapeHtml(entry.version)}</span>` : ""}
-            ${entry.publishedAt ? `<span class="reflet-changelog-entry-date">${formatDate(entry.publishedAt)}</span>` : ""}
-            ${isNew ? `<span class="reflet-changelog-entry-new">${sparkleIcon} New</span>` : ""}
-          </div>
-          <div class="reflet-changelog-entry-title">${escapeHtml(entry.title)}</div>
-          ${entry.description ? `<div class="reflet-changelog-entry-description">${escapeHtml(entry.description)}</div>` : ""}
-          ${
-            entry.feedback.length > 0
-              ? `
-            <div class="reflet-changelog-entry-feedback">
-              ${entry.feedback
-                .map(
-                  (fb) =>
-                    `<span class="reflet-changelog-entry-feedback-item">${externalLinkIcon} ${escapeHtml(fb.title)}</span>`
-                )
-                .join("")}
-            </div>
-          `
-              : ""
-          }
-        </div>
-      `;
-    }
-    html += "</div>";
-    return html;
-  }
-
-  private getLoadingHTML(): string {
-    return `
-      <div class="reflet-changelog-loading">
-        <div class="reflet-changelog-spinner"></div>
-      </div>
-    `;
-  }
-
-  private getErrorHTML(): string {
-    return `
-      <div class="reflet-changelog-error">
-        <p>${escapeHtml(this.state.error ?? "An error occurred")}</p>
-        <button class="reflet-changelog-retry-btn" data-action="retry">Retry</button>
-      </div>
-    `;
   }
 
   private attachEventListeners(): void {
@@ -440,21 +282,23 @@ export class RefletChangelogWidget {
     }
 
     // All action buttons
-    const actionButtons = this.shadowRoot.querySelectorAll("[data-action]");
+    const actionButtons = Array.from(
+      this.shadowRoot.querySelectorAll("[data-action]")
+    );
     for (const btn of actionButtons) {
       const action = btn.getAttribute("data-action");
       if (action === "close") {
-        btn.addEventListener("click", (e) => {
+        btn.addEventListener("click", (e: Event) => {
           e.stopPropagation();
           this.close();
         });
       } else if (action === "dismiss") {
-        btn.addEventListener("click", (e) => {
+        btn.addEventListener("click", (e: Event) => {
           e.stopPropagation();
           this.dismiss();
         });
       } else if (action === "retry") {
-        btn.addEventListener("click", (e) => {
+        btn.addEventListener("click", (e: Event) => {
           e.stopPropagation();
           this.retry();
         });
@@ -462,8 +306,8 @@ export class RefletChangelogWidget {
     }
 
     // Entry clicks
-    const entryElements = this.shadowRoot.querySelectorAll(
-      ".reflet-changelog-entry"
+    const entryElements = Array.from(
+      this.shadowRoot.querySelectorAll(".reflet-changelog-entry")
     );
     for (const el of entryElements) {
       el.addEventListener("click", () => {

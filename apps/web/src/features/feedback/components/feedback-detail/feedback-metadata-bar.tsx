@@ -6,9 +6,6 @@ import {
   Bell,
   BellSlash,
   Calendar,
-  CaretDown,
-  Tag,
-  User,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
@@ -17,31 +14,19 @@ import { formatDistanceToNow } from "date-fns";
 import { useCallback } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
-interface FeedbackTag {
-  _id: Id<"tags">;
-  name: string;
-  color: string;
-  icon?: string;
-}
+import { AssigneeDisplay } from "./assignee-display";
+import type { FeedbackTag } from "./feedback-metadata-types";
+import { StatusDisplay } from "./status-display";
+import { TagDisplay } from "./tag-display";
 
 interface FeedbackMetadataBarProps {
   feedbackId: Id<"feedback">;
@@ -305,266 +290,5 @@ export function FeedbackMetadataBar({
         </TooltipContent>
       </Tooltip>
     </div>
-  );
-}
-
-interface TagDisplayProps {
-  isAdmin: boolean;
-  validTags: FeedbackTag[];
-  availableTags:
-    | Array<{
-        _id: Id<"tags">;
-        name: string;
-        color: string;
-        icon?: string;
-      }>
-    | undefined;
-  feedbackTagIds: Set<Id<"tags">>;
-  onToggleTag: (tagId: Id<"tags">, isCurrentlyApplied: boolean) => void;
-}
-
-function TagDisplay({
-  isAdmin,
-  validTags,
-  availableTags,
-  feedbackTagIds,
-  onToggleTag,
-}: TagDisplayProps) {
-  if (isAdmin && availableTags) {
-    return (
-      <DropdownMenu>
-        {validTags.length > 0 ? (
-          <DropdownMenuTrigger
-            className="flex cursor-pointer select-none items-center gap-1.5"
-            render={<button type="button" />}
-          >
-            {validTags.map((tag, index) => (
-              <Badge
-                className="h-8 rounded-full px-3 font-normal text-xs"
-                color={tag.color}
-                key={tag._id}
-              >
-                {tag.icon && <span>{tag.icon}</span>}
-                {tag.name}
-                {index === validTags.length - 1 && (
-                  <CaretDown className="h-3 w-3 opacity-70" />
-                )}
-              </Badge>
-            ))}
-          </DropdownMenuTrigger>
-        ) : (
-          <DropdownMenuTrigger
-            className="flex h-8 w-auto cursor-pointer select-none items-center gap-1.5 rounded-full border border-input border-dashed bg-transparent px-3 text-sm transition-colors"
-            render={<button type="button" />}
-          >
-            <Tag className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground text-xs">Tags</span>
-            <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />
-          </DropdownMenuTrigger>
-        )}
-        <DropdownMenuContent align="start" className="w-48">
-          {availableTags.map((tag) => {
-            const isApplied = feedbackTagIds.has(tag._id);
-            return (
-              <DropdownMenuCheckboxItem
-                checked={isApplied}
-                key={tag._id}
-                onCheckedChange={() => onToggleTag(tag._id, isApplied)}
-              >
-                <div
-                  className={cn(
-                    "h-3 w-3 shrink-0 rounded-sm border",
-                    getTagSwatchClass(tag.color)
-                  )}
-                />
-                {tag.icon && <span>{tag.icon}</span>}
-                {tag.name}
-              </DropdownMenuCheckboxItem>
-            );
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
-
-  if (validTags.length > 0) {
-    return (
-      <div className="flex items-center gap-1.5">
-        {validTags.map((tag) => (
-          <Badge
-            className="rounded-full px-2 py-0.5 font-normal text-xs"
-            color={tag.color}
-            key={tag._id}
-          >
-            {tag.icon && <span>{tag.icon}</span>}
-            {tag.name}
-          </Badge>
-        ))}
-      </div>
-    );
-  }
-
-  return null;
-}
-
-interface StatusDisplayProps {
-  isAdmin: boolean;
-  organizationStatuses:
-    | Array<{ _id: Id<"organizationStatuses">; name: string; color: string }>
-    | undefined;
-  currentStatus:
-    | { _id: Id<"organizationStatuses">; name: string; color: string }
-    | undefined;
-  statusId?: Id<"organizationStatuses"> | null;
-  onStatusChange: (statusId: Id<"organizationStatuses"> | null) => void;
-}
-
-function StatusDisplay({
-  isAdmin,
-  organizationStatuses,
-  currentStatus,
-  statusId,
-  onStatusChange,
-}: StatusDisplayProps) {
-  if (isAdmin && organizationStatuses) {
-    return (
-      <DropdownMenu>
-        {currentStatus ? (
-          <DropdownMenuTrigger
-            className="flex cursor-pointer select-none items-center"
-            render={<button type="button" />}
-          >
-            <Badge
-              className="h-8 rounded-full px-3 font-normal text-xs"
-              color={currentStatus.color}
-            >
-              {currentStatus.name}
-              <CaretDown className="h-3 w-3 opacity-70" />
-            </Badge>
-          </DropdownMenuTrigger>
-        ) : (
-          <DropdownMenuTrigger
-            className="flex h-8 w-auto cursor-pointer select-none items-center gap-1.5 rounded-full border border-input border-dashed bg-transparent px-3 text-sm transition-colors"
-            render={<button type="button" />}
-          >
-            <span className="text-muted-foreground text-xs">Status</span>
-            <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />
-          </DropdownMenuTrigger>
-        )}
-        <DropdownMenuContent align="start" className="w-48">
-          <DropdownMenuRadioGroup
-            onValueChange={(value) =>
-              onStatusChange(value as Id<"organizationStatuses">)
-            }
-            value={statusId ?? ""}
-          >
-            {organizationStatuses.map((status) => (
-              <DropdownMenuRadioItem key={status._id} value={status._id}>
-                <div
-                  className={cn(
-                    "h-3 w-3 shrink-0 rounded-full border",
-                    getTagSwatchClass(status.color)
-                  )}
-                />
-                {status.name}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
-
-  if (currentStatus) {
-    return (
-      <Badge
-        className="rounded-full px-2 py-0.5 font-normal text-xs"
-        color={currentStatus.color}
-      >
-        {currentStatus.name}
-      </Badge>
-    );
-  }
-
-  return null;
-}
-
-interface AssigneeDisplayProps {
-  isAdmin: boolean;
-  members:
-    | Array<{
-        userId: string;
-        user?: {
-          name?: string | null;
-          email?: string | null;
-          image?: string | null;
-        } | null;
-      }>
-    | undefined;
-  assignee?: {
-    id: string;
-    name?: string | null;
-    email?: string;
-    image?: string | null;
-  } | null;
-  onAssigneeChange: (assigneeId: string) => void;
-}
-
-function AssigneeDisplay({
-  isAdmin,
-  members,
-  assignee,
-  onAssigneeChange,
-}: AssigneeDisplayProps) {
-  if (!(isAdmin && members)) {
-    return null;
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        className="flex h-8 w-auto cursor-pointer select-none items-center gap-2 rounded-full border border-input border-dashed bg-transparent px-3 text-sm transition-colors"
-        render={<button type="button" />}
-      >
-        {assignee ? (
-          <div className="flex items-center gap-1.5">
-            <Avatar className="h-4 w-4">
-              <AvatarImage src={assignee.image ?? undefined} />
-              <AvatarFallback className="text-[8px]">
-                {assignee.name?.charAt(0) ?? "?"}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-xs">
-              {assignee.name ?? assignee.email ?? "Unknown"}
-            </span>
-          </div>
-        ) : (
-          <span className="text-muted-foreground text-xs">Assignee</span>
-        )}
-        <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-52">
-        <DropdownMenuRadioGroup
-          onValueChange={onAssigneeChange}
-          value={assignee?.id ?? "unassigned"}
-        >
-          <DropdownMenuRadioItem value="unassigned">
-            <User className="h-4 w-4 text-muted-foreground" />
-            Unassigned
-          </DropdownMenuRadioItem>
-          {members.map((member) => (
-            <DropdownMenuRadioItem key={member.userId} value={member.userId}>
-              <Avatar className="h-5 w-5">
-                <AvatarImage src={member.user?.image ?? undefined} />
-                <AvatarFallback className="text-[8px]">
-                  {member.user?.name?.charAt(0) ?? "?"}
-                </AvatarFallback>
-              </Avatar>
-              {member.user?.name ?? member.user?.email ?? "Unknown"}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

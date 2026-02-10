@@ -9,299 +9,30 @@ import {
   KeyboardSensor,
   PointerSensor,
   TouchSensor,
-  useDraggable,
-  useDroppable,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { CaretUp, ChatCircle, DotsSixVertical } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getTagDotColor } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 import type { FeedbackItem } from "./feed-feedback-view";
 import { AddColumnInline } from "./roadmap/add-column-inline";
 import { ColumnDeleteDialog } from "./roadmap/column-delete-dialog";
-import { RoadmapColumnHeader } from "./roadmap/roadmap-column-header";
+import { DroppableColumn } from "./roadmap/droppable-column";
+import { FeedbackCardContent } from "./roadmap/feedback-card-content";
+import { createAnnouncements } from "./roadmap/roadmap-announcements";
+import type {
+  OptimisticUpdate,
+  RoadmapViewProps,
+} from "./roadmap/roadmap-types";
 
-export interface RoadmapViewProps {
-  feedback: FeedbackItem[];
-  statuses: Array<{ _id: string; name: string; color: string }>;
-  onFeedbackClick: (feedbackId: string) => void;
-  organizationId: Id<"organizations">;
-  isAdmin: boolean;
-}
-
-interface DraggableFeedbackCardProps {
-  item: FeedbackItem;
-  isAdmin: boolean;
-  isDragging?: boolean;
-  isOverlay?: boolean;
-  onFeedbackClick: (feedbackId: string) => void;
-}
-
-type DragHandleListeners = Record<
-  string,
-  (event: React.SyntheticEvent) => void
->;
-
-function FeedbackCardContent({
-  item,
-  isDragging,
-  isOverlay,
-  isAdmin,
-  dragHandleListeners,
-  dragHandleAttributes,
-}: {
-  item: FeedbackItem;
-  isDragging?: boolean;
-  isOverlay?: boolean;
-  isAdmin?: boolean;
-  dragHandleListeners?: DragHandleListeners;
-  dragHandleAttributes?: React.HTMLAttributes<HTMLButtonElement>;
-}) {
-  return (
-    <Card
-      className={cn(
-        "relative p-3 transition-all duration-200",
-        "hover:scale-[1.02] hover:bg-accent/50 hover:shadow-md",
-        isDragging && "opacity-50 ring-2 ring-primary",
-        isOverlay && "shadow-xl ring-2 ring-primary"
-      )}
-    >
-      {isAdmin && dragHandleListeners && (
-        <button
-          {...dragHandleAttributes}
-          {...dragHandleListeners}
-          aria-label="Drag to reorder"
-          className={cn(
-            "absolute top-1/2 right-1 -translate-y-1/2",
-            "hidden items-center justify-center md:flex",
-            "h-6 w-6 rounded text-muted-foreground/50",
-            "hover:bg-muted hover:text-muted-foreground",
-            "cursor-grab active:cursor-grabbing",
-            "pointer-events-auto touch-none"
-          )}
-          type="button"
-        >
-          <DotsSixVertical className="h-4 w-4" weight="bold" />
-        </button>
-      )}
-      <h4 className="pr-6 font-medium text-sm">{item.title}</h4>
-      {item.tags && item.tags.length > 0 && (
-        <div className="mt-1 flex flex-wrap gap-1">
-          {item.tags.slice(0, 2).map(
-            (tag) =>
-              tag && (
-                <Badge
-                  className="font-normal text-[11px]"
-                  color={tag.color}
-                  key={tag._id}
-                >
-                  {tag.icon && <span>{tag.icon}</span>}
-                  {tag.name}
-                </Badge>
-              )
-          )}
-        </div>
-      )}
-      {item.milestones && item.milestones.length > 0 && (
-        <div className="mt-1 flex gap-1">
-          {item.milestones.slice(0, 2).map((m) => (
-            <span className="text-xs" key={m._id} title={m.name}>
-              {m.emoji ?? "🏁"}
-            </span>
-          ))}
-          {item.milestones.length > 2 && (
-            <span className="text-[10px] text-muted-foreground">
-              +{item.milestones.length - 2}
-            </span>
-          )}
-        </div>
-      )}
-      <div className="mt-2 flex items-center gap-2 text-muted-foreground text-xs">
-        <CaretUp className="h-3 w-3" />
-        <span>{item.voteCount}</span>
-        <ChatCircle className="ml-2 h-3 w-3" />
-        <span>{item.commentCount}</span>
-      </div>
-    </Card>
-  );
-}
-
-function DraggableFeedbackCard({
-  item,
-  isAdmin,
-  onFeedbackClick,
-}: DraggableFeedbackCardProps) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: item._id,
-    disabled: !isAdmin,
-  });
-
-  const handleClick = () => {
-    if (!isDragging) {
-      onFeedbackClick(item._id);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onFeedbackClick(item._id);
-    }
-  };
-
-  return (
-    <motion.div
-      animate={{ opacity: isDragging ? 0.4 : 1, scale: isDragging ? 0.98 : 1 }}
-      className="cursor-pointer"
-      initial={false}
-      layoutId={`feedback-card-${item._id}`}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      ref={setNodeRef}
-      role="button"
-      tabIndex={0}
-      transition={{ type: "spring", damping: 25, stiffness: 300 }}
-    >
-      {/* On mobile, apply touch listeners to the whole card for long press */}
-      <div
-        {...(isAdmin ? listeners : {})}
-        className="md:pointer-events-none md:contents"
-      >
-        <FeedbackCardContent
-          dragHandleAttributes={attributes}
-          dragHandleListeners={listeners as DragHandleListeners}
-          isAdmin={isAdmin}
-          isDragging={isDragging}
-          item={item}
-        />
-      </div>
-    </motion.div>
-  );
-}
-
-interface DroppableColumnProps {
-  status: { _id: string; name: string; color: string };
-  items: FeedbackItem[];
-  isAdmin: boolean;
-  isDragging: boolean;
-  onFeedbackClick: (feedbackId: string) => void;
-  onDeleteClick: () => void;
-}
-
-function DroppableColumn({
-  status,
-  items,
-  isAdmin,
-  isDragging,
-  onFeedbackClick,
-  onDeleteClick,
-}: DroppableColumnProps) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: status._id,
-    data: {
-      type: "column",
-      statusId: status._id,
-    },
-  });
-
-  // Background opacity: 8% normally, 28% when dragging over
-  const bgOpacity = isOver ? "28" : "08";
-
-  return (
-    <div
-      className={cn(
-        "group w-72 shrink-0 rounded-lg p-4 transition-colors duration-200"
-      )}
-      ref={setNodeRef}
-      style={{
-        backgroundColor: `${getTagDotColor(status.color)}${bgOpacity}`,
-      }}
-    >
-      <RoadmapColumnHeader
-        color={status.color}
-        count={items.length}
-        isAdmin={isAdmin}
-        name={status.name}
-        onDelete={onDeleteClick}
-        statusId={status._id as Id<"organizationStatuses">}
-      />
-      <div
-        className="min-h-[100px] space-y-2"
-        data-dragging={isDragging ? "true" : "false"}
-      >
-        {items.map((item) => (
-          <DraggableFeedbackCard
-            isAdmin={isAdmin}
-            item={item}
-            key={item._id}
-            onFeedbackClick={onFeedbackClick}
-          />
-        ))}
-        {items.length === 0 && (
-          <p
-            className={cn(
-              "py-4 text-center text-muted-foreground text-sm transition-colors",
-              isOver && "text-primary"
-            )}
-          >
-            {isOver ? "Drop here" : "No items"}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Type for optimistic status updates
-interface OptimisticUpdate {
-  feedbackId: string;
-  newStatusId: string;
-}
-
-// Accessibility announcements for screen readers
-const createAnnouncements = (
-  feedback: FeedbackItem[],
-  statuses: Array<{ _id: string; name: string; color: string }>
-) => ({
-  onDragStart({ active }: { active: { id: string | number } }) {
-    const item = feedback.find((f) => f._id === active.id);
-    return `Picked up ${item?.title}. Dragging.`;
-  },
-  onDragOver({
-    over,
-  }: {
-    active: { id: string | number };
-    over: { id: string | number } | null;
-  }) {
-    const status = statuses.find((s) => s._id === over?.id);
-    return status ? `Over ${status.name} column` : undefined;
-  },
-  onDragEnd({
-    active,
-    over,
-  }: {
-    active: { id: string | number };
-    over: { id: string | number } | null;
-  }) {
-    const item = feedback.find((f) => f._id === active.id);
-    const status = statuses.find((s) => s._id === over?.id);
-    return status
-      ? `Dropped ${item?.title} in ${status.name}`
-      : "Drag cancelled";
-  },
-  onDragCancel: () => "Drag cancelled",
-});
+export type { RoadmapViewProps } from "./roadmap/roadmap-types";
 
 export function RoadmapView({
   feedback,

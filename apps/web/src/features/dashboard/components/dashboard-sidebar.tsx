@@ -1,37 +1,28 @@
 import {
-  ArrowUpRight,
-  Bell,
   Brain,
   CaretUpDown,
   Chat,
   ChatCircle,
-  Check,
-  CircleHalf,
   Code,
   CreditCard,
   FileText,
   Gear,
-  Globe,
   SignOut,
-  Spinner,
   Trash,
   User,
   Users,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import Link from "next/link";
 import type * as React from "react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
   DropdownList,
   DropdownListContent,
   DropdownListItem,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NotificationsPopover } from "@/components/ui/notifications-popover";
 import {
   Sidebar,
   SidebarContent,
@@ -44,16 +35,11 @@ import {
   SidebarListButton,
   SidebarListItem,
 } from "@/components/ui/sidebar";
-import {
-  type Theme,
-  themeIcons,
-  themeLabels,
-  themes as themeOptions,
-  useThemeToggle,
-} from "@/components/ui/theme-toggle";
 import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { authClient } from "@/lib/auth-client";
+import { MakePublicBanner } from "./make-public-banner";
+import { SidebarFooterContent } from "./sidebar-footer-content";
 
 interface DashboardSidebarProps {
   orgSlug?: string;
@@ -66,8 +52,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     api.organizations.getBySlug,
     orgSlug ? { slug: orgSlug } : "skip"
   );
-  const updateOrg = useMutation(api.organizations.update);
-  const [isMakingPublic, setIsMakingPublic] = useState(false);
 
   const adminUnreadCount = useQuery(
     api.support_conversations.getUnreadCountForAdmin,
@@ -80,7 +64,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   );
 
   const isAdmin = org?.role === "admin" || org?.role === "owner";
-  const { mounted: themeMounted, setTheme, currentTheme } = useThemeToggle();
 
   const buildPath = (path: string) =>
     orgSlug ? path.replace("$orgSlug", orgSlug) : "";
@@ -189,22 +172,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   const handleSignOut = () => {
     authClient.signOut();
     window.location.href = "/";
-  };
-
-  const handleMakePublic = async () => {
-    if (!(org?._id && isAdmin)) {
-      return;
-    }
-
-    setIsMakingPublic(true);
-    try {
-      await updateOrg({
-        id: org._id as Id<"organizations">,
-        isPublic: true,
-      });
-    } finally {
-      setIsMakingPublic(false);
-    }
   };
 
   return (
@@ -326,98 +293,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
       </SidebarContent>
 
       {orgSlug && org && !org.isPublic && isAdmin && (
-        <div className="px-2 pb-2 group-data-[collapsible=icon]:hidden">
-          <div className="space-y-2 rounded-lg border border-olive-600/20 bg-olive-600/5 p-3">
-            <div className="flex items-center gap-2">
-              <Globe className="size-4 shrink-0 text-olive-600" />
-              <h3 className="font-medium text-olive-600 text-sm">
-                Rendre l&apos;organisation publique
-              </h3>
-            </div>
-            <p className="text-muted-foreground text-xs">
-              Partagez votre roadmap et votre changelog avec le monde entier.
-            </p>
-            <Button
-              className="h-7 w-full text-xs"
-              disabled={isMakingPublic}
-              onClick={handleMakePublic}
-              size="sm"
-              variant="default"
-            >
-              {isMakingPublic ? (
-                <>
-                  <Spinner className="mr-2 h-3 w-3 animate-spin" />
-                  En cours...
-                </>
-              ) : (
-                "Rendre publique"
-              )}
-            </Button>
-          </div>
-        </div>
+        <MakePublicBanner orgId={org._id as Id<"organizations">} />
       )}
 
       <SidebarFooter>
         <SidebarList>
-          <SidebarListItem>
-            <NotificationsPopover
-              render={(props: React.ComponentProps<"button">) => (
-                <SidebarListButton {...props}>
-                  <Bell className="h-4 w-4" />
-                  <span className="flex-1">Notifications</span>
-                </SidebarListButton>
-              )}
-            />
-          </SidebarListItem>
-          <SidebarListItem>
-            <DropdownList>
-              <DropdownListTrigger
-                render={(props: React.ComponentProps<"button">) => (
-                  <SidebarListButton {...props} disabled={!themeMounted}>
-                    <CircleHalf className="h-4 w-4" />
-                    <span className="flex-1">Theme</span>
-                  </SidebarListButton>
-                )}
-              />
-              <DropdownListContent
-                align="start"
-                className="min-w-36"
-                side="top"
-                sideOffset={4}
-              >
-                {themeOptions.map((t: Theme) => {
-                  const Icon = themeIcons[t];
-                  return (
-                    <DropdownListItem key={t} onClick={() => setTheme(t)}>
-                      <Icon className="mr-2 h-4 w-4" />
-                      <span className="flex-1">{themeLabels[t]}</span>
-                      {currentTheme === t && (
-                        <Check className="ml-auto h-4 w-4" />
-                      )}
-                    </DropdownListItem>
-                  );
-                })}
-              </DropdownListContent>
-            </DropdownList>
-          </SidebarListItem>
-          {orgSlug && org?.isPublic && (
-            <SidebarListItem>
-              <SidebarListButton
-                render={(props) => (
-                  <Link
-                    href={`/${orgSlug}`}
-                    rel="noopener"
-                    target="_blank"
-                    {...props}
-                  >
-                    <Globe className="h-4 w-4" />
-                    <span className="flex-1">Go to public page</span>
-                    <ArrowUpRight className="ml-auto size-4" />
-                  </Link>
-                )}
-              />
-            </SidebarListItem>
-          )}
+          <SidebarFooterContent isPublic={org?.isPublic} orgSlug={orgSlug} />
         </SidebarList>
       </SidebarFooter>
     </Sidebar>

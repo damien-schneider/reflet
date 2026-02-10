@@ -30,6 +30,7 @@ import {
   ContextListTrigger,
 } from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
+import { useFeedbackBoard } from "./feedback-board/feedback-board-context";
 
 interface FeedbackCardWithMorphingDialogProps {
   feedback: {
@@ -53,27 +54,13 @@ interface FeedbackCardWithMorphingDialogProps {
     organizationStatusId?: string;
     organizationStatus?: { name: string; color: string; icon?: string } | null;
   };
-  statuses: Array<{ _id: string; name: string; color: string }>;
-  /** Org brand color; when undefined, theme primary is used */
-  primaryColor?: string;
-  isAdmin?: boolean;
-  onVote: (
-    e: React.MouseEvent,
-    feedbackId: string,
-    voteType: "upvote" | "downvote"
-  ) => void;
-  /** Called when the card is clicked to open feedback details */
-  onFeedbackClick: (feedbackId: string) => void;
 }
 
 export function FeedbackCardWithMorphingDialog({
   feedback,
-  statuses,
-  primaryColor,
-  isAdmin = false,
-  onVote,
-  onFeedbackClick,
 }: FeedbackCardWithMorphingDialogProps) {
+  const { statuses, primaryColor, isAdmin, onVote, onFeedbackClick } =
+    useFeedbackBoard();
   const deleteFeedback = useMutation(api.feedback_actions.remove);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 

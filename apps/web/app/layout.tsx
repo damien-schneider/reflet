@@ -6,11 +6,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthDialog } from "@/features/auth/components/auth-dialog";
 import { getToken } from "@/lib/auth-server";
 import { Providers } from "@/lib/providers";
-import {
-  defaultMetadata,
-  getHomePageJsonLd,
-  viewport as seoViewport,
-} from "@/lib/seo-config";
+import { defaultMetadata, viewport as seoViewport } from "@/lib/seo-config";
+import { getHomePageJsonLd } from "@/lib/seo-json-ld";
 
 import "./globals.css";
 

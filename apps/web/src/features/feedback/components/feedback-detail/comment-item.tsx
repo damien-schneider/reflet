@@ -8,6 +8,7 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
+import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useCallback, useState } from "react";
@@ -48,7 +49,10 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
     }
     setIsSubmitting(true);
     try {
-      await updateComment({ id: comment.id, body: editContent.trim() });
+      await updateComment({
+        id: comment.id as Id<"comments">,
+        body: editContent.trim(),
+      });
       setIsEditing(false);
     } finally {
       setIsSubmitting(false);
@@ -56,7 +60,7 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
   }, [comment.id, editContent, updateComment]);
 
   const handleDelete = useCallback(async () => {
-    await deleteComment({ id: comment.id });
+    await deleteComment({ id: comment.id as Id<"comments"> });
   }, [comment.id, deleteComment]);
 
   const handleReply = useCallback(async () => {
@@ -68,7 +72,7 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
       await addReply({
         feedbackId,
         body: replyContent.trim(),
-        parentId: comment.id,
+        parentId: comment.id as Id<"comments">,
       });
       setReplyContent("");
       setIsReplying(false);

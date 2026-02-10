@@ -1,140 +1,32 @@
 "use client";
 
-import {
-  Globe,
-  MagnifyingGlass as MagnifyingGlassIcon,
-  Plus,
-  X,
-} from "@phosphor-icons/react";
 import { api } from "@reflet-v2/backend/convex/_generated/api";
 import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { H1, Lead } from "@/components/ui/typography";
 import { MilestonesView } from "@/features/milestones/components/milestones-view";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { cn } from "@/lib/utils";
 import { useBoardFilters } from "../hooks/use-board-filters";
 import { useFeedbackDrawer } from "../hooks/use-feedback-drawer";
+import { sortFeedback } from "../lib/sort-feedback";
 import {
   BoardViewToggle,
   type BoardView as BoardViewType,
 } from "./board-view-toggle";
 import { type FeedbackItem, FeedFeedbackView } from "./feed-feedback-view";
+import { LoadingState, PrivateOrgMessage } from "./feedback-board/board-states";
+import { FeedbackBoardProvider } from "./feedback-board/feedback-board-context";
+import { FeedbackToolbar } from "./feedback-board/feedback-toolbar";
+import {
+  applyOptimisticVote,
+  useOptimisticVotes,
+} from "./feedback-board/use-optimistic-votes";
+import { useSubmitFeedback } from "./feedback-board/use-submit-feedback";
 import { FeedbackDetailDrawer } from "./feedback-detail/feedback-detail-drawer";
-import type { SortOption } from "./filters-bar";
 import { RoadmapView } from "./roadmap-view";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
-import { TagFilterBar } from "./tag-filter-bar";
-
-function getVoteValue(
-  voteType: "upvote" | "downvote" | null | undefined
-): number {
-  if (voteType === "upvote") {
-    return 1;
-  }
-  if (voteType === "downvote") {
-    return -1;
-  }
-  return 0;
-}
-
-function applyOptimisticVote(
-  item: FeedbackItem,
-  optimistic:
-    | { voteType: "upvote" | "downvote" | null; pending: boolean }
-    | undefined
-): FeedbackItem {
-  if (!optimistic) {
-    return item;
-  }
-
-  const originalVoteType = item.userVoteType;
-  const newVoteType = optimistic.voteType;
-
-  const oldUpvote = originalVoteType === "upvote" ? 1 : 0;
-  const oldDownvote = originalVoteType === "downvote" ? 1 : 0;
-  const newUpvote = newVoteType === "upvote" ? 1 : 0;
-  const newDownvote = newVoteType === "downvote" ? 1 : 0;
-
-  const upvoteDelta = newUpvote - oldUpvote;
-  const downvoteDelta = newDownvote - oldDownvote;
-  const voteCountDelta =
-    getVoteValue(newVoteType) - getVoteValue(originalVoteType);
-
-  return {
-    ...item,
-    userVoteType: newVoteType,
-    hasVoted: newVoteType !== null,
-    upvoteCount: (item.upvoteCount ?? 0) + upvoteDelta,
-    downvoteCount: (item.downvoteCount ?? 0) + downvoteDelta,
-    voteCount: item.voteCount + voteCountDelta,
-  };
-}
-
-function sortFeedback(
-  feedback: FeedbackItem[],
-  sortBy: SortOption
-): FeedbackItem[] {
-  return [...feedback].sort((a, b) => {
-    // Pinned items always first
-    if (a.isPinned && !b.isPinned) {
-      return -1;
-    }
-    if (!a.isPinned && b.isPinned) {
-      return 1;
-    }
-
-    switch (sortBy) {
-      case "votes":
-        return b.voteCount - a.voteCount;
-      case "newest":
-        return b.createdAt - a.createdAt;
-      case "oldest":
-        return a.createdAt - b.createdAt;
-      case "comments":
-        return b.commentCount - a.commentCount;
-      default:
-        return 0;
-    }
-  });
-}
-
-function LoadingState() {
-  return (
-    <div className="flex min-h-[280px] items-center justify-center px-4 py-8">
-      <Spinner aria-label="Loading" className="size-8 text-muted-foreground" />
-    </div>
-  );
-}
-
-function PrivateOrgMessage() {
-  return (
-    <div className="px-4 py-8">
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <Globe className="mb-4 h-12 w-12 text-muted-foreground" />
-          <h3 className="font-semibold text-lg">Private organization</h3>
-          <p className="text-muted-foreground">
-            This organization&apos;s feedback is not publicly accessible.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 // Props for the FeedbackBoard component
 export interface FeedbackBoardProps {
@@ -178,25 +70,6 @@ function FeedbackBoardContent({
     clearFilters,
     hasActiveFilters,
   } = useBoardFilters(defaultView);
-
-  // Local state (not URL-based)
-  const [newFeedback, setNewFeedback] = useState({
-    title: "",
-    description: "",
-    email: "",
-    attachments: [] as string[],
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitTagId, setSubmitTagId] = useState<string | undefined>();
-  const [submitAssigneeId, setSubmitAssigneeId] = useState<
-    string | undefined
-  >();
-
-  // Optimistic vote tracking
-  const [optimisticVotes, setOptimisticVotes] = useState<
-    Map<string, { voteType: "upvote" | "downvote" | null; pending: boolean }>
-  >(new Map());
-  const pendingVotesRef = useRef<Set<string>>(new Set());
 
   // Track if we've loaded data at least once (to avoid skeleton on filter/search changes)
   const hasLoadedOnce = useRef(false);
@@ -244,6 +117,33 @@ function FeedbackBoardContent({
   const ensureStatusDefaults = useMutation(
     api.organization_statuses.ensureDefaults
   );
+
+  // Submit feedback handler
+  const {
+    newFeedback,
+    setNewFeedback,
+    isSubmitting,
+    submitTagId,
+    setSubmitTagId,
+    submitAssigneeId,
+    setSubmitAssigneeId,
+    handleSubmitFeedback,
+  } = useSubmitFeedback({
+    organizationId,
+    isMember,
+    createFeedbackPublic,
+    createFeedbackMember,
+    assignFeedback,
+    closeSubmitDrawer,
+  });
+
+  // Optimistic vote handling
+  const { optimisticVotes, handleToggleVote } = useOptimisticVotes({
+    feedback: feedback as FeedbackItem[] | undefined,
+    toggleVoteMutation,
+    isAuthenticated,
+    authGuard,
+  });
 
   // Ensure default statuses exist for this organization
   useEffect(() => {
@@ -298,115 +198,6 @@ function FeedbackBoardContent({
     goToNext,
   } = useFeedbackDrawer(feedbackIds);
 
-  // Handlers
-  const handleSubmitFeedback = async () => {
-    const trimmedTitle = newFeedback.title.trim();
-    if (!trimmedTitle || trimmedTitle.length > 100) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const attachments =
-        newFeedback.attachments.length > 0
-          ? newFeedback.attachments
-          : undefined;
-      let createdFeedbackId: Id<"feedback"> | undefined;
-      if (isMember) {
-        createdFeedbackId = await createFeedbackMember({
-          organizationId,
-          title: trimmedTitle,
-          description: newFeedback.description.trim() || "",
-          attachments,
-          tagId: submitTagId as Id<"tags"> | undefined,
-        });
-      } else {
-        await createFeedbackPublic({
-          organizationId,
-          title: trimmedTitle,
-          description: newFeedback.description.trim() || undefined,
-          email: newFeedback.email.trim() || undefined,
-          attachments,
-        });
-      }
-      if (createdFeedbackId && submitAssigneeId) {
-        await assignFeedback({
-          feedbackId: createdFeedbackId,
-          assigneeId: submitAssigneeId,
-        });
-      }
-      closeSubmitDrawer();
-      setNewFeedback({
-        title: "",
-        description: "",
-        email: "",
-        attachments: [],
-      });
-      setSubmitTagId(undefined);
-      setSubmitAssigneeId(undefined);
-    } catch {
-      // Error is shown by Convex client; keep drawer open so user can fix and retry
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleToggleVote = useCallback(
-    async (
-      e: React.MouseEvent,
-      feedbackId: string,
-      voteType: "upvote" | "downvote"
-    ) => {
-      e.stopPropagation();
-
-      if (!isAuthenticated) {
-        authGuard(() => undefined);
-        return;
-      }
-
-      const currentFeedback = (feedback as FeedbackItem[] | undefined)?.find(
-        (f) => f._id === feedbackId
-      );
-      const optimisticState = optimisticVotes.get(feedbackId);
-      const currentVoteType =
-        optimisticState?.voteType ?? currentFeedback?.userVoteType ?? null;
-
-      if (pendingVotesRef.current.has(feedbackId)) {
-        return;
-      }
-      pendingVotesRef.current.add(feedbackId);
-
-      const newVoteType = currentVoteType === voteType ? null : voteType;
-
-      setOptimisticVotes((prev) => {
-        const next = new Map(prev);
-        next.set(feedbackId, { voteType: newVoteType, pending: true });
-        return next;
-      });
-
-      try {
-        await toggleVoteMutation({
-          feedbackId: feedbackId as Id<"feedback">,
-          voteType,
-        });
-      } catch {
-        setOptimisticVotes((prev) => {
-          const next = new Map(prev);
-          next.delete(feedbackId);
-          return next;
-        });
-      } finally {
-        pendingVotesRef.current.delete(feedbackId);
-        setOptimisticVotes((prev) => {
-          const next = new Map(prev);
-          next.delete(feedbackId);
-          return next;
-        });
-      }
-    },
-    [feedback, optimisticVotes, toggleVoteMutation, isAuthenticated, authGuard]
-  );
-
   // Only show loading skeleton on initial load, not on filter/search changes
   if (feedback === undefined && !hasLoadedOnce.current) {
     return <LoadingState />;
@@ -418,183 +209,128 @@ function FeedbackBoardContent({
   }
 
   return (
-    <div
-      className={cn(
-        "py-8"
-        // view === "roadmap" ? "overflow-x-hidden" : "container mx-auto px-4"
-      )}
+    <FeedbackBoardProvider
+      isAdmin={isAdmin}
+      onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
+      onVote={handleToggleVote}
+      primaryColor={primaryColor}
+      statuses={orgStatuses || []}
     >
-      {/* Header */}
-      <div className={cn("mb-8 text-center", view === "roadmap" && "px-4")}>
-        <H1 variant="page">Feature Requests & Feedback</H1>
-        <Lead>
-          Help us improve by sharing your ideas and voting on features
-          you&apos;d like to see.
-        </Lead>
-      </div>
-
-      {/* View toggle - sticky on desktop, fixed at bottom on mobile */}
-      <div className="sticky top-12 z-10 mb-4 hidden justify-center md:flex">
-        <BoardViewToggle onChange={setView} view={view} />
-      </div>
       <div
-        className="fixed inset-x-0 z-50 flex justify-center md:hidden"
-        style={{
-          bottom:
-            "calc(var(--mobile-nav-bottom, 0.75rem) + var(--mobile-nav-height, 3rem) + 0.5rem)",
-        }}
+        className={cn(
+          "py-8"
+          // view === "roadmap" ? "overflow-x-hidden" : "container mx-auto px-4"
+        )}
       >
-        <BoardViewToggle onChange={setView} view={view} />
-      </div>
-
-      {/* Toolbar area */}
-      <div className={cn("mx-auto max-w-6xl px-4 pb-4")}>
-        <div className="flex min-w-0 items-center gap-4">
-          {/* Search bar */}
-          <div className="relative w-48 flex-shrink-0">
-            <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="h-10 rounded-full border-0 bg-muted pr-4 pl-10 focus-visible:ring-2"
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search..."
-              value={searchQuery}
-            />
-          </div>
+        {/* Header */}
+        <div className={cn("mb-8 text-center", view === "roadmap" && "px-4")}>
+          <H1 variant="page">Feature Requests & Feedback</H1>
+          <Lead>
+            Help us improve by sharing your ideas and voting on features
+            you&apos;d like to see.
+          </Lead>
         </div>
-      </div>
 
-      {/* Submit Feedback - fixed bottom right */}
-      <div className="fixed right-4 bottom-4 z-50 md:right-8 md:bottom-8">
-        <Button
-          className="h-12 rounded-full shadow-lg"
-          onClick={openSubmitDrawer}
-          size="lg"
+        {/* View toggle - sticky on desktop, fixed at bottom on mobile */}
+        <div className="sticky top-12 z-10 mb-4 hidden justify-center md:flex">
+          <BoardViewToggle onChange={setView} view={view} />
+        </div>
+        <div
+          className="fixed inset-x-0 z-50 flex justify-center md:hidden"
+          style={{
+            bottom:
+              "calc(var(--mobile-nav-bottom, 0.75rem) + var(--mobile-nav-height, 3rem) + 0.5rem)",
+          }}
         >
-          <Plus className="h-4 w-4" />
-          Submit Feedback
-        </Button>
-      </div>
-
-      {/* Tag filter bar */}
-      {(tags && tags.length > 0) || isAdmin ? (
-        <div>
-          <TagFilterBar
-            isAdmin={isAdmin}
-            onTagSelect={setSelectedTagId}
-            organizationId={organizationId}
-            selectedTagId={selectedTagId}
-            tags={tags ?? []}
-          />
+          <BoardViewToggle onChange={setView} view={view} />
         </div>
-      ) : null}
 
-      {/* Active status filter chips (only in feed view) */}
-      {view === "feed" && selectedStatusIds.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span className="text-muted-foreground text-sm">Status:</span>
-          {selectedStatusIds.map((statusId) => {
-            const status = (orgStatuses ?? []).find((s) => s._id === statusId);
-            if (!status) {
-              return null;
+        <FeedbackToolbar
+          isAdmin={isAdmin}
+          onClearFilters={clearFilters}
+          onSearchChange={setSearchQuery}
+          onStatusRemove={handleStatusFilterChange}
+          onSubmitClick={openSubmitDrawer}
+          onTagSelect={setSelectedTagId}
+          organizationId={organizationId}
+          searchQuery={searchQuery}
+          selectedStatusIds={selectedStatusIds}
+          selectedTagId={selectedTagId}
+          statuses={orgStatuses ?? []}
+          tags={tags ?? []}
+          view={view}
+        />
+
+        {/* Content */}
+        <div className={view === "feed" ? "mx-auto max-w-3xl" : ""}>
+          {view === "milestones" && (
+            <MilestonesView
+              isAdmin={isAdmin}
+              onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
+              organizationId={organizationId}
+            />
+          )}
+          {view === "roadmap" && (
+            <RoadmapView
+              feedback={filteredFeedback}
+              isAdmin={isAdmin}
+              onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
+              organizationId={organizationId}
+              statuses={orgStatuses ?? []}
+            />
+          )}
+          {view === "feed" && (
+            <FeedFeedbackView
+              feedback={filteredFeedback}
+              hasActiveFilters={hasActiveFilters}
+              isLoading={feedback === undefined && !hasLoadedOnce.current}
+              onSortChange={setSortBy}
+              onSubmitClick={openSubmitDrawer}
+              sortBy={sortBy}
+            />
+          )}
+        </div>
+
+        {/* Feedback Detail Drawer */}
+        <FeedbackDetailDrawer
+          currentIndex={currentIndex}
+          feedbackId={selectedFeedbackId}
+          feedbackIds={feedbackIds}
+          feedbackList={filteredFeedback}
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          isAdmin={isAdmin}
+          isOpen={isDrawerOpen}
+          onClose={closeFeedback}
+          onNext={goToNext}
+          onPrevious={goToPrevious}
+        />
+
+        {/* Submit Dialog */}
+        <SubmitFeedbackDialog
+          feedback={newFeedback}
+          isAdmin={isAdmin}
+          isMember={isMember}
+          isOpen={showSubmitDrawer}
+          isSubmitting={isSubmitting}
+          onAssigneeChange={setSubmitAssigneeId}
+          onFeedbackChange={setNewFeedback}
+          onOpenChange={(open) => {
+            if (open) {
+              openSubmitDrawer();
+            } else {
+              closeSubmitDrawer();
             }
-            return (
-              <Badge
-                className="cursor-pointer gap-1 pr-1"
-                color={status.color}
-                key={statusId}
-                onClick={() => handleStatusFilterChange(statusId, false)}
-              >
-                {status.name}
-                <X className="h-3 w-3" />
-              </Badge>
-            );
-          })}
-          <Button
-            className="text-xs"
-            onClick={clearFilters}
-            size="sm"
-            variant="ghost"
-          >
-            Clear
-          </Button>
-        </div>
-      )}
-
-      {/* Content */}
-      <div className={view === "feed" ? "mx-auto max-w-3xl" : ""}>
-        {view === "milestones" && (
-          <MilestonesView
-            isAdmin={isAdmin}
-            onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
-            organizationId={organizationId}
-          />
-        )}
-        {view === "roadmap" && (
-          <RoadmapView
-            feedback={filteredFeedback}
-            isAdmin={isAdmin}
-            onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
-            organizationId={organizationId}
-            statuses={orgStatuses ?? []}
-          />
-        )}
-        {view === "feed" && (
-          <FeedFeedbackView
-            feedback={filteredFeedback}
-            hasActiveFilters={hasActiveFilters}
-            isAdmin={isAdmin}
-            isLoading={feedback === undefined && !hasLoadedOnce.current}
-            onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
-            onSortChange={setSortBy}
-            onSubmitClick={openSubmitDrawer}
-            onVote={handleToggleVote}
-            primaryColor={primaryColor}
-            sortBy={sortBy}
-            statuses={orgStatuses || []}
-          />
-        )}
+          }}
+          onSubmit={handleSubmitFeedback}
+          onTagChange={setSubmitTagId}
+          organizationId={organizationId}
+          selectedAssigneeId={submitAssigneeId}
+          selectedTagId={submitTagId}
+          tags={tags}
+        />
       </div>
-
-      {/* Feedback Detail Drawer */}
-      <FeedbackDetailDrawer
-        currentIndex={currentIndex}
-        feedbackId={selectedFeedbackId}
-        feedbackIds={feedbackIds}
-        feedbackList={filteredFeedback}
-        hasNext={hasNext}
-        hasPrevious={hasPrevious}
-        isAdmin={isAdmin}
-        isMember={isMember}
-        isOpen={isDrawerOpen}
-        onClose={closeFeedback}
-        onNext={goToNext}
-        onPrevious={goToPrevious}
-      />
-
-      {/* Submit Dialog */}
-      <SubmitFeedbackDialog
-        feedback={newFeedback}
-        isAdmin={isAdmin}
-        isMember={isMember}
-        isOpen={showSubmitDrawer}
-        isSubmitting={isSubmitting}
-        onAssigneeChange={setSubmitAssigneeId}
-        onFeedbackChange={setNewFeedback}
-        onOpenChange={(open) => {
-          if (open) {
-            openSubmitDrawer();
-          } else {
-            closeSubmitDrawer();
-          }
-        }}
-        onSubmit={handleSubmitFeedback}
-        onTagChange={setSubmitTagId}
-        organizationId={organizationId}
-        selectedAssigneeId={submitAssigneeId}
-        selectedTagId={submitTagId}
-        tags={tags}
-      />
-    </div>
+    </FeedbackBoardProvider>
   );
 }
 

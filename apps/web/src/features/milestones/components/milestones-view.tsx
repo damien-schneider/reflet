@@ -349,7 +349,7 @@ export function MilestonesView({
       </div>
 
       {/* Desktop: expanded panel below track (accordion) */}
-      <div className="hidden px-4 md:block">
+      <div className="mx-auto max-w-3xl">
         <AnimatePresence>
           {activeMilestoneId && (
             <motion.div
