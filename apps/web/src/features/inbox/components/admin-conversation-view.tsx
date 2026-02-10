@@ -11,7 +11,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { H2, H3, Muted, Text } from "@/components/ui/typography";
@@ -105,17 +104,16 @@ export function AdminConversationView({
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
                 <DropdownMenuLabel>Change status</DropdownMenuLabel>
+                {STATUS_OPTIONS.map((option) => (
+                  <DropdownMenuCheckboxItem
+                    checked={conversation.status === option.value}
+                    key={option.value}
+                    onCheckedChange={() => onStatusChange(option.value)}
+                  >
+                    {option.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
               </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              {STATUS_OPTIONS.map((option) => (
-                <DropdownMenuCheckboxItem
-                  checked={conversation.status === option.value}
-                  key={option.value}
-                  onCheckedChange={() => onStatusChange(option.value)}
-                >
-                  {option.label}
-                </DropdownMenuCheckboxItem>
-              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -86,46 +86,44 @@ export function AssignMemberDropdown({
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Assign to</DropdownMenuLabel>
+          <DropdownMenuItem
+            className={cn(!assignedTo && "bg-accent")}
+            onClick={() => onAssign(undefined)}
+          >
+            <UserCircle className="h-4 w-4 text-muted-foreground" />
+            <span>Unassigned</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          {members.map((member) => {
+            const isSelected = assignedTo === member.id;
+            const memberName = member.name || member.email;
+
+            return (
+              <DropdownMenuItem
+                className={cn(isSelected && "bg-accent")}
+                key={member.id}
+                onClick={() => onAssign(member.id)}
+              >
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={member.image} />
+                  <AvatarFallback className="text-[10px]">
+                    {getInitials(member.name, member.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-sm">{memberName}</span>
+                  {member.name && (
+                    <span className="text-muted-foreground text-xs">
+                      {member.email}
+                    </span>
+                  )}
+                </div>
+              </DropdownMenuItem>
+            );
+          })}
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem
-          className={cn(!assignedTo && "bg-accent")}
-          onClick={() => onAssign(undefined)}
-        >
-          <UserCircle className="h-4 w-4 text-muted-foreground" />
-          <span>Unassigned</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        {members.map((member) => {
-          const isSelected = assignedTo === member.id;
-          const memberName = member.name || member.email;
-
-          return (
-            <DropdownMenuItem
-              className={cn(isSelected && "bg-accent")}
-              key={member.id}
-              onClick={() => onAssign(member.id)}
-            >
-              <Avatar className="h-5 w-5">
-                <AvatarImage src={member.image} />
-                <AvatarFallback className="text-[10px]">
-                  {getInitials(member.name, member.email)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <span className="text-sm">{memberName}</span>
-                {member.name && (
-                  <span className="text-muted-foreground text-xs">
-                    {member.email}
-                  </span>
-                )}
-              </div>
-            </DropdownMenuItem>
-          );
-        })}
 
         {members.length === 0 && (
           <div className="flex items-center justify-center gap-2 py-4 text-center text-muted-foreground">

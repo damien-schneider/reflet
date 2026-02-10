@@ -10,7 +10,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { H1, Muted } from "@/components/ui/typography";
@@ -62,17 +61,16 @@ export function AdminInboxHeader({
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
                 <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
+                {STATUS_OPTIONS.map((option) => (
+                  <DropdownMenuCheckboxItem
+                    checked={statusFilter.includes(option.value)}
+                    key={option.value}
+                    onCheckedChange={() => onToggleStatusFilter(option.value)}
+                  >
+                    {option.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
               </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              {STATUS_OPTIONS.map((option) => (
-                <DropdownMenuCheckboxItem
-                  checked={statusFilter.includes(option.value)}
-                  key={option.value}
-                  onCheckedChange={() => onToggleStatusFilter(option.value)}
-                >
-                  {option.label}
-                </DropdownMenuCheckboxItem>
-              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
