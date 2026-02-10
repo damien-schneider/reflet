@@ -4,7 +4,6 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["VAPID_PUBLIC_KEY"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "dist/**"]
     },
