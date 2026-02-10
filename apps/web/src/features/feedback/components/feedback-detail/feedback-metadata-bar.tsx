@@ -51,7 +51,6 @@ interface FeedbackMetadataBarProps {
   tags?: Array<FeedbackTag | null>;
   title: string;
   description: string | null;
-  attachments?: string[];
 }
 
 export function FeedbackMetadataBar({
@@ -67,7 +66,6 @@ export function FeedbackMetadataBar({
   tags: feedbackTags,
   title,
   description,
-  attachments,
 }: FeedbackMetadataBarProps) {
   const { guard: authGuard, isAuthenticated } = useAuthGuard({
     message: "Sign in to vote on this feedback",
@@ -230,7 +228,6 @@ export function FeedbackMetadataBar({
       {/* Copy for agents (admin only) */}
       {isAdmin && (
         <CopyForAgents
-          attachments={attachments}
           description={description}
           organizationId={organizationId}
           tags={feedbackTags}
