@@ -289,6 +289,11 @@ function FeedbackDetailContent({
         {/* Metadata bar */}
         <FeedbackMetadataBar
           assignee={feedback.assignee}
+          attachments={
+            "attachments" in feedback
+              ? (feedback.attachments as string[] | undefined)
+              : undefined
+          }
           author={feedback.author}
           createdAt={feedback.createdAt}
           description={feedback.description}

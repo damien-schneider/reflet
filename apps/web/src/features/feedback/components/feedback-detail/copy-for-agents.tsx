@@ -40,6 +40,7 @@ interface CopyForAgentsProps {
   title: string;
   description: string | null;
   tags?: Array<FeedbackTag | null>;
+  attachments?: string[];
 }
 
 interface AgentTarget {
@@ -48,6 +49,68 @@ interface AgentTarget {
   icon: React.ReactNode;
   type: "copy" | "deeplink" | "cloud";
   description: string;
+}
+
+// ============================================
+// Image handling
+// ============================================
+
+async function fetchImageAsBlob(url: string): Promise<Blob | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return null;
+    }
+    return await response.blob();
+  } catch (error) {
+    console.error("Failed to fetch image:", error);
+    return null;
+  }
+}
+
+async function copyTextAndImages(
+  text: string,
+  imageUrls: string[]
+): Promise<boolean> {
+  try {
+    // Check if ClipboardItem is supported
+    if (!(navigator.clipboard && window.ClipboardItem)) {
+      // Fallback to text-only
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+
+    // Fetch all images in parallel
+    const imagePromises = imageUrls.map((url) => fetchImageAsBlob(url));
+    const imageBlobs = await Promise.all(imagePromises);
+    const validBlobs = imageBlobs.filter((blob): blob is Blob => blob !== null);
+
+    // Create clipboard items for text and images
+    const clipboardItems: Record<string, Blob> = {
+      "text/plain": new Blob([text], { type: "text/plain" }),
+    };
+
+    // Add images to clipboard data
+    for (const blob of validBlobs) {
+      if (blob.type.startsWith("image/")) {
+        clipboardItems[blob.type] = blob;
+      }
+    }
+
+    const item = new ClipboardItem(clipboardItems);
+    await navigator.clipboard.write([item]);
+    return true;
+  } catch (error) {
+    console.error("Failed to copy with images:", error);
+    // Fallback to text-only
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (fallbackError) {
+      console.error("Failed to copy text:", fallbackError);
+      return false;
+    }
+  }
 }
 
 // ============================================
@@ -286,6 +349,7 @@ export function CopyForAgents({
   title,
   description,
   tags,
+  attachments,
 }: CopyForAgentsProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -330,29 +394,61 @@ export function CopyForAgents({
     });
   }, [title, description, validTags, getProjectContext]);
 
+  const getCopyMessage = useCallback((imageCount: number) => {
+    if (imageCount > 0) {
+      return `Prompt and ${imageCount} image${imageCount > 1 ? "s" : ""} copied to clipboard`;
+    }
+    return "Prompt copied to clipboard";
+  }, []);
+
+  const handleCopyAction = useCallback(
+    async (agentId: string, prompt: string, imageUrls: string[]) => {
+      const success = await copyTextAndImages(prompt, imageUrls);
+      if (success) {
+        setCopiedId(agentId);
+        toast.success(getCopyMessage(imageUrls.length));
+        setTimeout(() => setCopiedId(null), 2000);
+      } else {
+        toast.error("Failed to copy to clipboard");
+      }
+    },
+    [getCopyMessage]
+  );
+
+  const handleDeeplinkAction = useCallback(
+    async (agent: AgentTarget, prompt: string, imageUrls: string[]) => {
+      const success = await copyTextAndImages(prompt, imageUrls);
+      const opened = openDeepLink(agent.id, prompt);
+
+      if (opened) {
+        const message =
+          imageUrls.length > 0
+            ? `Opening ${agent.label}... Prompt and ${imageUrls.length} image${imageUrls.length > 1 ? "s" : ""} copied.`
+            : `Opening ${agent.label}... Prompt also copied.`;
+        toast.success(message);
+      } else if (success) {
+        toast.success("Prompt copied to clipboard");
+      } else {
+        toast.error("Failed to copy to clipboard");
+      }
+      setCopiedId(agent.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    },
+    []
+  );
+
   const handleAgentAction = useCallback(
     async (agent: AgentTarget) => {
       const prompt = getPrompt();
+      const imageUrls = attachments ?? [];
 
       switch (agent.type) {
         case "copy": {
-          await navigator.clipboard.writeText(prompt);
-          setCopiedId(agent.id);
-          toast.success("Prompt copied to clipboard");
-          setTimeout(() => setCopiedId(null), 2000);
+          await handleCopyAction(agent.id, prompt, imageUrls);
           break;
         }
         case "deeplink": {
-          // Copy first as fallback, then try deep link
-          await navigator.clipboard.writeText(prompt);
-          const opened = openDeepLink(agent.id, prompt);
-          if (opened) {
-            toast.success(`Opening ${agent.label}... Prompt also copied.`);
-          } else {
-            toast.success("Prompt copied to clipboard");
-          }
-          setCopiedId(agent.id);
-          setTimeout(() => setCopiedId(null), 2000);
+          await handleDeeplinkAction(agent, prompt, imageUrls);
           break;
         }
         case "cloud": {
@@ -366,7 +462,7 @@ export function CopyForAgents({
           break;
       }
     },
-    [getPrompt, repository]
+    [getPrompt, repository, attachments, handleCopyAction, handleDeeplinkAction]
   );
 
   // Filter cloud agents that need GitHub
