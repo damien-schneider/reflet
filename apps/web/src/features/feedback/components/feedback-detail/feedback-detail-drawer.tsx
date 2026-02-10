@@ -291,11 +291,13 @@ function FeedbackDetailContent({
           assignee={feedback.assignee}
           author={feedback.author}
           createdAt={feedback.createdAt}
+          description={feedback.description}
           feedbackId={feedbackId}
           isAdmin={isAdmin}
           organizationId={feedback.organizationId}
           organizationStatusId={feedback.organizationStatusId}
           tags={feedback.tags}
+          title={feedback.title}
           userVoteType={feedback.userVoteType ?? null}
           voteCount={feedback.voteCount ?? 0}
         />

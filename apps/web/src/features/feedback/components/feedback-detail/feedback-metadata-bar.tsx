@@ -24,6 +24,7 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { cn } from "@/lib/utils";
 
 import { AssigneeDisplay } from "./assignee-display";
+import { CopyForAgents } from "./copy-for-agents";
 import type { FeedbackTag } from "./feedback-metadata-types";
 import { StatusDisplay } from "./status-display";
 import { TagDisplay } from "./tag-display";
@@ -48,6 +49,8 @@ interface FeedbackMetadataBarProps {
   } | null;
   isAdmin: boolean;
   tags?: Array<FeedbackTag | null>;
+  title: string;
+  description: string | null;
 }
 
 export function FeedbackMetadataBar({
@@ -61,6 +64,8 @@ export function FeedbackMetadataBar({
   assignee,
   isAdmin,
   tags: feedbackTags,
+  title,
+  description,
 }: FeedbackMetadataBarProps) {
   const { guard: authGuard, isAuthenticated } = useAuthGuard({
     message: "Sign in to vote on this feedback",
@@ -219,6 +224,16 @@ export function FeedbackMetadataBar({
         members={members}
         onAssigneeChange={handleAssigneeChange}
       />
+
+      {/* Copy for agents (admin only) */}
+      {isAdmin && (
+        <CopyForAgents
+          description={description}
+          organizationId={organizationId}
+          tags={feedbackTags}
+          title={title}
+        />
+      )}
 
       {/* Spacer */}
       <div className="flex-1" />
