@@ -542,6 +542,7 @@ function FeedbackBoardContent({
           <FeedFeedbackView
             feedback={filteredFeedback}
             hasActiveFilters={hasActiveFilters}
+            isAdmin={isAdmin}
             isLoading={feedback === undefined && !hasLoadedOnce.current}
             onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
             onSortChange={setSortBy}

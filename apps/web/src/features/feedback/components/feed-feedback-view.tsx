@@ -48,6 +48,7 @@ export interface FeedFeedbackViewProps {
   hasActiveFilters: boolean;
   /** Org brand color; when undefined, theme primary is used */
   primaryColor?: string;
+  isAdmin?: boolean;
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
   onVote: (
@@ -65,6 +66,7 @@ export function FeedFeedbackView({
   isLoading,
   hasActiveFilters,
   primaryColor,
+  isAdmin,
   sortBy,
   onSortChange,
   onVote,
@@ -123,6 +125,7 @@ export function FeedFeedbackView({
             >
               <FeedbackCardWithMorphingDialog
                 feedback={item}
+                isAdmin={isAdmin}
                 onFeedbackClick={onFeedbackClick}
                 onVote={onVote}
                 primaryColor={primaryColor}

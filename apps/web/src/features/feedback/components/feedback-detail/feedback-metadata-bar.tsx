@@ -340,7 +340,7 @@ function TagDisplay({
           >
             {validTags.map((tag, index) => (
               <Badge
-                className="rounded-full px-2 py-0.5 font-normal text-xs"
+                className="h-8 rounded-full px-3 font-normal text-xs"
                 color={tag.color}
                 key={tag._id}
               >
@@ -435,7 +435,7 @@ function StatusDisplay({
             render={<button type="button" />}
           >
             <Badge
-              className="rounded-full px-2 py-0.5 font-normal text-xs"
+              className="h-8 rounded-full px-3 font-normal text-xs"
               color={currentStatus.color}
             >
               {currentStatus.name}

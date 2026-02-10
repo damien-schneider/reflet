@@ -1,3 +1,5 @@
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import type { BillingInterval } from "./billing-types";
 
 export function BillingToggle({
@@ -11,31 +13,24 @@ export function BillingToggle({
 }) {
   return (
     <div className="flex items-center justify-center gap-3">
-      <button
-        className={`rounded-full px-4 py-1.5 font-medium text-sm transition-colors ${
-          interval === "monthly"
-            ? "bg-foreground text-background"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-        onClick={() => onChange("monthly")}
-        type="button"
+      <Tabs
+        onValueChange={(value) => onChange(value as BillingInterval)}
+        value={interval}
       >
-        Monthly
-      </button>
-      <button
-        className={`rounded-full px-4 py-1.5 font-medium text-sm transition-colors ${
-          interval === "yearly"
-            ? "bg-foreground text-background"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-        onClick={() => onChange("yearly")}
-        type="button"
-      >
-        Yearly
-        {yearlySavings && (
-          <span className="ml-1.5 text-green-500">(Save €{yearlySavings})</span>
-        )}
-      </button>
+        <TabsList className="h-10">
+          <TabsTrigger className="h-8 px-4" value="monthly">
+            Monthly
+          </TabsTrigger>
+          <TabsTrigger className="h-8 px-4" value="yearly">
+            Yearly
+            {yearlySavings ? (
+              <span className="ml-1.5 text-green-500">
+                (Save €{yearlySavings})
+              </span>
+            ) : null}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
     </div>
   );
 }

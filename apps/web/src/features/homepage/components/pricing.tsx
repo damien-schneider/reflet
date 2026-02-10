@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H2, H3 } from "@/components/ui/typography";
 
 type BillingInterval = "monthly" | "yearly";
@@ -76,30 +77,19 @@ function BillingToggle({
 }) {
   return (
     <div className="mb-12 flex items-center justify-center gap-2">
-      <div className="inline-flex items-center rounded-full bg-secondary p-1">
-        <button
-          className={`rounded-full px-4 py-2 font-medium text-sm transition-colors ${
-            interval === "monthly"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-          onClick={() => onChange("monthly")}
-          type="button"
-        >
-          Monthly
-        </button>
-        <button
-          className={`rounded-full px-4 py-2 font-medium text-sm transition-colors ${
-            interval === "yearly"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-          onClick={() => onChange("yearly")}
-          type="button"
-        >
-          Yearly
-        </button>
-      </div>
+      <Tabs
+        onValueChange={(value) => onChange(value as BillingInterval)}
+        value={interval}
+      >
+        <TabsList className="h-10">
+          <TabsTrigger className="h-8 px-4" value="monthly">
+            Monthly
+          </TabsTrigger>
+          <TabsTrigger className="h-8 px-4" value="yearly">
+            Yearly
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
       <Badge
         className={`ml-2 transition-opacity ${interval === "yearly" ? "opacity-100" : "opacity-0"}`}
         color="green"

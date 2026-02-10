@@ -5,9 +5,30 @@ import {
   CaretUp as ChevronUp,
   Chat as MessageSquare,
   PushPin,
+  Trash,
 } from "@phosphor-icons/react";
+import { api } from "@reflet-v2/backend/convex/_generated/api";
+import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
+import { useCallback, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  ContextList,
+  ContextListContent,
+  ContextListItem,
+  ContextListTrigger,
+} from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
 
 interface FeedbackCardWithMorphingDialogProps {
@@ -35,6 +56,7 @@ interface FeedbackCardWithMorphingDialogProps {
   statuses: Array<{ _id: string; name: string; color: string }>;
   /** Org brand color; when undefined, theme primary is used */
   primaryColor?: string;
+  isAdmin?: boolean;
   onVote: (
     e: React.MouseEvent,
     feedbackId: string,
@@ -48,9 +70,13 @@ export function FeedbackCardWithMorphingDialog({
   feedback,
   statuses,
   primaryColor,
+  isAdmin = false,
   onVote,
   onFeedbackClick,
 }: FeedbackCardWithMorphingDialogProps) {
+  const deleteFeedback = useMutation(api.feedback_actions.remove);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
   // Get status from organizationStatus or find by organizationStatusId
   const status =
     feedback.organizationStatus ??
@@ -60,10 +86,15 @@ export function FeedbackCardWithMorphingDialog({
     onFeedbackClick(feedback._id);
   };
 
-  return (
+  const handleDelete = useCallback(async () => {
+    await deleteFeedback({ id: feedback._id as Id<"feedback"> });
+    setShowDeleteDialog(false);
+  }, [feedback._id, deleteFeedback]);
+
+  const card = (
     // biome-ignore lint/a11y/useSemanticElements: Using div because button cannot contain nested buttons
     <div
-      className="w-full cursor-pointer text-left"
+      className="w-full cursor-pointer text-left outline-none"
       onClick={handleClick}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -199,5 +230,44 @@ export function FeedbackCardWithMorphingDialog({
         </div>
       </div>
     </div>
+  );
+
+  if (!isAdmin) {
+    return card;
+  }
+
+  return (
+    <>
+      <ContextList>
+        <ContextListTrigger>{card}</ContextListTrigger>
+        <ContextListContent>
+          <ContextListItem
+            onClick={() => setShowDeleteDialog(true)}
+            variant="destructive"
+          >
+            <Trash className="mr-2 h-4 w-4" />
+            Delete
+          </ContextListItem>
+        </ContextListContent>
+      </ContextList>
+
+      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete feedback</AlertDialogTitle>
+            <AlertDialogDescription>
+              This feedback will be moved to trash. You can restore it within 30
+              days.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} variant="destructive">
+              Move to trash
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

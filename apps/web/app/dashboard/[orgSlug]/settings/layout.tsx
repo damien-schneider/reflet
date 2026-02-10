@@ -72,40 +72,42 @@ export default function SettingsLayout({
     return pathname?.startsWith(href) ?? false;
   };
 
+  const navContent = navItems.map((item) => {
+    const active = isActive(item.href);
+    return (
+      <Link
+        className={cn(
+          "flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+          active
+            ? "bg-accent text-accent-foreground"
+            : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
+        )}
+        href={item.href}
+        key={item.title}
+      >
+        <item.icon className="h-4 w-4 shrink-0" />
+        <div className="flex flex-col">
+          <span className="font-medium">{item.title}</span>
+          <span className="hidden text-muted-foreground text-xs md:block">
+            {item.description}
+          </span>
+        </div>
+      </Link>
+    );
+  });
+
   return (
     <div className="mx-auto max-w-5xl px-4 pt-12 pb-8">
       <div className="flex flex-col md:flex-row md:gap-8">
-        {/* Sidebar navigation - horizontal scroll on mobile, vertical on md+ */}
-        <ScrollArea
-          className="md:!overflow-visible -mx-4 mb-6 md:mx-0 md:mb-0 md:w-56 md:shrink-0"
-          direction="horizontal"
-        >
-          <nav className="flex gap-1 px-4 md:flex-col md:px-0">
-            {navItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  className={cn(
-                    "flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-                    active
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
-                  )}
-                  href={item.href}
-                  key={item.title}
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="font-medium">{item.title}</span>
-                    <span className="hidden text-muted-foreground text-xs md:block">
-                      {item.description}
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
-          </nav>
+        {/* Mobile: horizontal scroll nav */}
+        <ScrollArea className="-mx-4 mb-6 md:hidden" direction="horizontal">
+          <nav className="flex gap-1 px-4">{navContent}</nav>
         </ScrollArea>
+
+        {/* Desktop: sticky vertical nav */}
+        <nav className="sticky top-12 hidden w-56 shrink-0 self-start md:flex md:flex-col md:gap-1">
+          {navContent}
+        </nav>
 
         {/* Content area */}
         <div className="min-w-0 flex-1">{children}</div>
