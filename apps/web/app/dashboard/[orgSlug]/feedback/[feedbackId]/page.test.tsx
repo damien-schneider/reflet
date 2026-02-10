@@ -1,4 +1,4 @@
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -48,7 +48,7 @@ vi.mock("convex/react", () => ({
   useMutation: () => mockUseMutation(),
 }));
 
-vi.mock("@reflet-v2/backend/convex/_generated/api", () => ({
+vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: { get: "feedback.get" },
     feedback_actions: { assign: "feedback_actions.assign" },

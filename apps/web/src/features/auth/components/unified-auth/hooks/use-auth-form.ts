@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { api } from "@reflet-v2/backend/convex/_generated/api";
-import { env } from "@reflet-v2/env/web";
+import { api } from "@reflet/backend/convex/_generated/api";
+import { env } from "@reflet/env/web";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";

@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/reflet-app/reflet-v2.git",
+    "url": "https://github.com/reflet-app/reflet.git",
     "directory": "packages/feedback-widget"
   },
   "keywords": [

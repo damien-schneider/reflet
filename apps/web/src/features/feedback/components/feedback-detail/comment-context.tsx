@@ -1,6 +1,6 @@
 "use client";
 
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { createContext, type ReactNode, useContext } from "react";
 
 interface CommentContextValue {

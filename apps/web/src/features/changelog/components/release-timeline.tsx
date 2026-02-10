@@ -1,7 +1,7 @@
 "use client";
 
 import { Megaphone } from "@phosphor-icons/react";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type * as React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { H3, Muted } from "@/components/ui/typography";

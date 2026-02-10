@@ -1,4 +1,4 @@
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type { FeedbackItem } from "../feed-feedback-view";
 
 export interface RoadmapViewProps {

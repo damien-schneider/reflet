@@ -1,7 +1,7 @@
 "use client";
 
 import { Copy, Eye, EyeSlash, Plus, Trash } from "@phosphor-icons/react";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

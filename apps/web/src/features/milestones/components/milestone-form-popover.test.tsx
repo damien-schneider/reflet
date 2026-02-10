@@ -125,7 +125,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { MilestoneFormPopover } from "./milestone-form-popover";
 
 const defaultProps = {

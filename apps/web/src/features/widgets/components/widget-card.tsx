@@ -1,8 +1,8 @@
 "use client";
 
 import { Check, Copy, Gear, Power, Trash } from "@phosphor-icons/react";
-import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";

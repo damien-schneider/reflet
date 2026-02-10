@@ -1,5 +1,5 @@
 {
-  "name": "@reflet-v2/backend",
+  "name": "@reflet/backend",
   "version": "1.0.0",
   "description": "",
   "license": "ISC",
@@ -23,7 +23,7 @@
     "@convex-dev/stripe": "^0.1.0",
     "@openrouter/ai-sdk-provider": "^1.2.0",
     "@react-email/render": "^2.0.4",
-    "@reflet-v2/email": "workspace:*",
+    "@reflet/email": "workspace:*",
     "ai": "^5.0.117",
     "better-auth": "catalog:",
     "convex": "catalog:",
@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
-    "@reflet-v2/config": "workspace:*",
+    "@reflet/config": "workspace:*",
     "@types/node": "^25.2.0",
     "@types/web-push": "^3.6.4",
     "convex-test": "^0.0.41",

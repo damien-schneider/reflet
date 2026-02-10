@@ -1,5 +1,5 @@
 import { Chat } from "@phosphor-icons/react";
-import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { VoteButton } from "@/features/feedback/components/vote-button";
 import { cn } from "@/lib/utils";

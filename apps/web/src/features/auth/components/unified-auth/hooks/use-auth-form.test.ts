@@ -34,7 +34,7 @@ vi.mock("convex/react", () => ({
   useQuery: vi.fn(() => mockEmailExistsData),
 }));
 
-vi.mock("@reflet-v2/backend/convex/_generated/api", () => ({
+vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     auth_helpers: {
       checkEmailExists: "checkEmailExists",
@@ -42,7 +42,7 @@ vi.mock("@reflet-v2/backend/convex/_generated/api", () => ({
   },
 }));
 
-vi.mock("@reflet-v2/env/web", () => ({
+vi.mock("@reflet/env/web", () => ({
   env: {
     NEXT_PUBLIC_CONVEX_URL: "https://test.convex.cloud",
     NEXT_PUBLIC_CONVEX_SITE_URL: "https://test.convex.site",

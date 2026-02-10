@@ -1,5 +1,5 @@
 import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
-import { env } from "@reflet-v2/env/web";
+import { env } from "@reflet/env/web";
 
 export const {
   handler,

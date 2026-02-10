@@ -3,16 +3,16 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "reflet-v2",
+      "name": "reflet",
       "dependencies": {
-        "@reflet-v2/env": "workspace:*",
+        "@reflet/env": "workspace:*",
         "dotenv": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
         "@biomejs/biome": "2.3.13",
         "@playwright/test": "^1.58.1",
-        "@reflet-v2/config": "workspace:*",
+        "@reflet/config": "workspace:*",
         "@types/node": "^25.2.0",
         "husky": "^9.1.7",
         "turbo": "^2.8.1",
@@ -44,9 +44,9 @@
         "@radix-ui/react-separator": "^1.1.8",
         "@radix-ui/react-tabs": "^1.1.13",
         "@radix-ui/react-tooltip": "^1.2.8",
-        "@reflet-v2/backend": "workspace:*",
-        "@reflet-v2/env": "workspace:*",
-        "@reflet-v2/widget": "workspace:*",
+        "@reflet/backend": "workspace:*",
+        "@reflet/env": "workspace:*",
+        "@reflet/widget": "workspace:*",
         "@tabler/icons-react": "^3.36.1",
         "@tailwindcss/postcss": "^4.1.18",
         "@tanstack/pacer": "^0.18.0",
@@ -99,7 +99,7 @@
         "zod": "catalog:",
       },
       "devDependencies": {
-        "@reflet-v2/config": "workspace:*",
+        "@reflet/config": "workspace:*",
         "@testing-library/dom": "^10.4.0",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.2.0",
@@ -117,7 +117,7 @@
       },
     },
     "packages/backend": {
-      "name": "@reflet-v2/backend",
+      "name": "@reflet/backend",
       "version": "1.0.0",
       "dependencies": {
         "@ai-sdk/google": "^2.0.52",
@@ -129,7 +129,7 @@
         "@convex-dev/stripe": "^0.1.0",
         "@openrouter/ai-sdk-provider": "^1.2.0",
         "@react-email/render": "^2.0.4",
-        "@reflet-v2/email": "workspace:*",
+        "@reflet/email": "workspace:*",
         "ai": "^5.0.117",
         "better-auth": "catalog:",
         "convex": "catalog:",
@@ -140,7 +140,7 @@
       },
       "devDependencies": {
         "@edge-runtime/vm": "^5.0.0",
-        "@reflet-v2/config": "workspace:*",
+        "@reflet/config": "workspace:*",
         "@types/node": "^25.2.0",
         "@types/web-push": "^3.6.4",
         "convex-test": "^0.0.41",
@@ -162,11 +162,11 @@
       },
     },
     "packages/config": {
-      "name": "@reflet-v2/config",
+      "name": "@reflet/config",
       "version": "0.0.0",
     },
     "packages/email": {
-      "name": "@reflet-v2/email",
+      "name": "@reflet/email",
       "version": "0.0.0",
       "dependencies": {
         "@react-email/components": "^1.0.6",
@@ -176,7 +176,7 @@
       },
       "devDependencies": {
         "@react-email/preview-server": "^5.2.5",
-        "@reflet-v2/config": "workspace:*",
+        "@reflet/config": "workspace:*",
         "@types/react": "^19.2.10",
         "react-email": "^5.2.5",
         "typescript": "catalog:",
@@ -184,7 +184,7 @@
       },
     },
     "packages/env": {
-      "name": "@reflet-v2/env",
+      "name": "@reflet/env",
       "version": "0.0.0",
       "dependencies": {
         "@t3-oss/env-core": "^0.13.1",
@@ -192,7 +192,7 @@
         "zod": "catalog:",
       },
       "devDependencies": {
-        "@reflet-v2/config": "workspace:*",
+        "@reflet/config": "workspace:*",
         "typescript": "catalog:",
       },
     },
@@ -223,7 +223,7 @@
       ],
     },
     "packages/widget": {
-      "name": "@reflet-v2/widget",
+      "name": "@reflet/widget",
       "version": "1.0.0",
       "dependencies": {
         "convex": "catalog:",
@@ -760,19 +760,19 @@
 
     "@react-email/text": ["@react-email/text@0.1.6", "", { "peerDependencies": { "react": "^18.0 || ^19.0 || ^19.0.0-rc" } }, "sha512-TYqkioRS45wTR5il3dYk/SbUjjEdhSwh9BtRNB99qNH1pXAwA45H7rAuxehiu8iJQJH0IyIr+6n62gBz9ezmsw=="],
 
-    "@reflet-v2/backend": ["@reflet-v2/backend@workspace:packages/backend"],
-
-    "@reflet-v2/config": ["@reflet-v2/config@workspace:packages/config"],
-
-    "@reflet-v2/email": ["@reflet-v2/email@workspace:packages/email"],
-
-    "@reflet-v2/env": ["@reflet-v2/env@workspace:packages/env"],
-
-    "@reflet-v2/widget": ["@reflet-v2/widget@workspace:packages/widget"],
+    "@reflet/backend": ["@reflet/backend@workspace:packages/backend"],
 
     "@reflet/changelog-widget": ["@reflet/changelog-widget@workspace:packages/changelog-widget"],
 
+    "@reflet/config": ["@reflet/config@workspace:packages/config"],
+
+    "@reflet/email": ["@reflet/email@workspace:packages/email"],
+
+    "@reflet/env": ["@reflet/env@workspace:packages/env"],
+
     "@reflet/feedback-widget": ["@reflet/feedback-widget@workspace:packages/feedback-widget"],
+
+    "@reflet/widget": ["@reflet/widget@workspace:packages/widget"],
 
     "@remirror/core-constants": ["@remirror/core-constants@3.0.0", "", {}, "sha512-42aWfPrimMfDKDi4YegyS7x+/0tlzaqwPQCULLanv3DMIlu96KTJR0fM5isWX2UViOqlGnX6YFgqWepcX+XMNg=="],
 

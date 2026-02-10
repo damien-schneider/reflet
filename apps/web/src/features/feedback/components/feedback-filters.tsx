@@ -6,8 +6,8 @@ import {
   SortDescending,
   X,
 } from "@phosphor-icons/react";
-import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Doc, Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useAtom } from "jotai";
 import { useState } from "react";

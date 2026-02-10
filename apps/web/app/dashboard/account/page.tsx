@@ -1,7 +1,7 @@
 "use client";
 
 import { SignOut } from "@phosphor-icons/react";
-import { api } from "@reflet-v2/backend/convex/_generated/api";
+import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

@@ -1,5 +1,5 @@
 {
-  "name": "@reflet-v2/email",
+  "name": "@reflet/email",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@react-email/preview-server": "^5.2.5",
-    "@reflet-v2/config": "workspace:*",
+    "@reflet/config": "workspace:*",
     "@types/react": "^19.2.10",
     "react-email": "^5.2.5",
     "typescript": "catalog:",

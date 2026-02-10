@@ -1,4 +1,4 @@
-import { env } from "@reflet-v2/env/server";
+import { env } from "@reflet/env/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 

@@ -1,6 +1,6 @@
-import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { env } from "@reflet-v2/env/server";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { env } from "@reflet/env/server";
 import { fetchAction, fetchMutation, fetchQuery } from "convex/nextjs";
 import { NextResponse } from "next/server";
 

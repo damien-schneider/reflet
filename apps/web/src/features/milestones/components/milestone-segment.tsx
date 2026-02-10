@@ -1,8 +1,8 @@
 "use client";
 
 import { CheckCircle, PencilSimple, Trash } from "@phosphor-icons/react";
-import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { motion } from "motion/react";
 import { useCallback, useState } from "react";

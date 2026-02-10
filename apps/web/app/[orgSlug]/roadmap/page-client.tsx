@@ -1,8 +1,8 @@
 "use client";
 
 import { CaretUp as ChevronUp } from "@phosphor-icons/react";
-import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { use } from "react";
 

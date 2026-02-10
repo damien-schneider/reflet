@@ -9,7 +9,7 @@ import {
   PencilSimple,
   Trash,
 } from "@phosphor-icons/react";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { format } from "date-fns";
 import Link from "next/link";
 import type * as React from "react";

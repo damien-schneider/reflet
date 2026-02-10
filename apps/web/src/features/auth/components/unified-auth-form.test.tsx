@@ -64,7 +64,7 @@ vi.mock("@/components/ui/field", () => ({
     ) : null,
 }));
 
-vi.mock("@reflet-v2/env/web", () => ({
+vi.mock("@reflet/env/web", () => ({
   env: {
     NEXT_PUBLIC_CONVEX_URL: "https://test.convex.cloud",
     NEXT_PUBLIC_CONVEX_SITE_URL: "https://test.convex.site",
@@ -77,7 +77,7 @@ vi.mock("@tanstack/react-pacer", () => ({
   useDebouncedValue: (value: string) => [value],
 }));
 
-vi.mock("@reflet-v2/backend/convex/_generated/api", () => ({
+vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     organizations_personal: {
       ensurePersonalOrganization: vi.fn(),

@@ -6,7 +6,7 @@ import {
   DotsThreeVertical,
   PushPin,
 } from "@phosphor-icons/react";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 
 import { Badge } from "@/components/ui/badge";

@@ -1,7 +1,7 @@
 "use client";
 
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
-import { env } from "@reflet-v2/env/web";
+import { env } from "@reflet/env/web";
 import { ConvexReactClient } from "convex/react";
 import { ThemeProvider } from "next-themes";
 

@@ -122,7 +122,7 @@ Our pre-commit hook (Husky) will automatically run Ultracite on staged files.
 ## Project Structure
 
 ```
-reflet-v2/
+reflet/
 ├── apps/
 │   └── web/                      # Main web application
 │       ├── src/

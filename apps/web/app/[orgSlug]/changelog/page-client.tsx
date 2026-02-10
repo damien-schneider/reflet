@@ -1,8 +1,8 @@
 "use client";
 
-import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { env } from "@reflet-v2/env/web";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { env } from "@reflet/env/web";
 import { IconRss } from "@tabler/icons-react";
 import { useQuery } from "convex/react";
 import { use } from "react";

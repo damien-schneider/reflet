@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "@phosphor-icons/react";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ApiKeyCard } from "./api-key-card";

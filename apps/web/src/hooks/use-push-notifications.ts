@@ -1,7 +1,7 @@
 "use client";
 
-import { api } from "@reflet-v2/backend/convex/_generated/api";
-import { env } from "@reflet-v2/env/web";
+import { api } from "@reflet/backend/convex/_generated/api";
+import { env } from "@reflet/env/web";
 import { useMutation } from "convex/react";
 import { useCallback, useEffect, useState } from "react";
 

@@ -11,7 +11,7 @@ import {
   TrendUp,
   Warning,
 } from "@phosphor-icons/react";
-import { api } from "@reflet-v2/backend/convex/_generated/api";
+import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";

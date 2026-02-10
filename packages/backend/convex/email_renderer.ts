@@ -1,9 +1,9 @@
 "use node";
 
 import { render } from "@react-email/render";
-import { InvitationEmail } from "@reflet-v2/email/templates/invitation-email";
-import { VerificationEmail } from "@reflet-v2/email/templates/verification-email";
-import { WelcomeEmail } from "@reflet-v2/email/templates/welcome-email";
+import { InvitationEmail } from "@reflet/email/templates/invitation-email";
+import { VerificationEmail } from "@reflet/email/templates/verification-email";
+import { WelcomeEmail } from "@reflet/email/templates/welcome-email";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
@@ -60,7 +60,7 @@ export const sendPasswordResetEmail = internalAction({
   },
   handler: async (ctx, args) => {
     const { PasswordResetEmail } = await import(
-      "@reflet-v2/email/templates/password-reset-email"
+      "@reflet/email/templates/password-reset-email"
     );
 
     const html = await render(
@@ -206,7 +206,7 @@ export const sendChangelogNotificationEmail = internalAction({
   },
   handler: async (ctx, args) => {
     const { ChangelogNotificationEmail } = await import(
-      "@reflet-v2/email/templates/changelog-notification-email"
+      "@reflet/email/templates/changelog-notification-email"
     );
 
     const html = await render(

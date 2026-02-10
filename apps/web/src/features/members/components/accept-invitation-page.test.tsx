@@ -40,7 +40,7 @@ vi.mock("@/features/auth/components/unified-auth/unified-auth-form", () => ({
   ),
 }));
 
-vi.mock("@reflet-v2/backend/convex/_generated/api", () => ({
+vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     invitations: {
       getByToken: "invitations.getByToken",

@@ -1,6 +1,6 @@
 "use client";
 
-import { api } from "@reflet-v2/backend/convex/_generated/api";
+import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";

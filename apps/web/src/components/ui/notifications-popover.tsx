@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, Chat, Envelope, TrendUp, UserPlus } from "@phosphor-icons/react";
-import { api } from "@reflet-v2/backend/convex/_generated/api";
+import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";

@@ -1,5 +1,5 @@
-import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useAtomValue } from "jotai";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -1,7 +1,7 @@
 "use client";
 
 import { UserPlus } from "@phosphor-icons/react";
-import { api } from "@reflet-v2/backend/convex/_generated/api";
+import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

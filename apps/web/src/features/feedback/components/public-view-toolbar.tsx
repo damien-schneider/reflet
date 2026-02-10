@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft } from "@phosphor-icons/react";
-import { api } from "@reflet-v2/backend/convex/_generated/api";
+import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import Link from "next/link";
 

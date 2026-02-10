@@ -15,7 +15,7 @@ vi.mock("convex/react", () => ({
   useMutation: () => mockInviteMutation,
 }));
 
-vi.mock("@reflet-v2/backend/convex/_generated/api", () => ({
+vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     invitations: {
       create: "invitations.create",

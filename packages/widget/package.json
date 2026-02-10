@@ -1,5 +1,5 @@
 {
-  "name": "@reflet-v2/widget",
+  "name": "@reflet/widget",
   "version": "1.0.0",
   "description": "Embeddable chat widget for Reflet",
   "type": "module",

@@ -5,9 +5,9 @@ import {
   FileText,
   Chat as MessageSquare,
 } from "@phosphor-icons/react";
-import { api } from "@reflet-v2/backend/convex/_generated/api";
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
-import { env } from "@reflet-v2/env/web";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { env } from "@reflet/env/web";
 import { useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";

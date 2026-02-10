@@ -2,7 +2,7 @@ import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
 
 // Import env to validate at build time
-import "@reflet-v2/env/web";
+import "@reflet/env/web";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  transpilePackages: ["@reflet-v2/backend", "@reflet-v2/env"],
+  transpilePackages: ["@reflet/backend", "@reflet/env"],
   serverExternalPackages: ["isomorphic-dompurify"],
   turbopack: {
     resolveAlias: {

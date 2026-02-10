@@ -132,7 +132,7 @@ vi.mock("@/components/ui/scroll-area", () => ({
   ScrollBar: () => null,
 }));
 
-import type { Id } from "@reflet-v2/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { MilestonesView } from "./milestones-view";
 
 const defaultProps = {
