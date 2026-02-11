@@ -97,17 +97,8 @@ export default function ChangelogPage({
       );
     }
 
-    return (
-      <Button
-        onClick={() => setShowSetupWizard(true)}
-        size="sm"
-        variant="outline"
-      >
-        <GithubLogo className="mr-1 h-4 w-4" />
-        <span className="hidden sm:inline">Setup Sync</span>
-        <span className="sm:hidden">Setup</span>
-      </Button>
-    );
+    // When the setup banner is shown, don't duplicate with another button
+    return null;
   };
 
   const handleDeleteRelease = async () => {
