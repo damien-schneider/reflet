@@ -101,6 +101,7 @@ ${options.workflowYaml}\`\`\`
 ## Important
 
 - This workflow uses GitHub Actions' built-in token ($GITHUB_TOKEN) which is automatically available in every workflow run — you do NOT need to create, generate, or configure any token or secret
+- This works with both public and private repositories
 - The webhook URL is already configured to accept events from this repository
 - Do NOT modify the webhook URL or the JSON payload structure`;
 }

@@ -120,10 +120,10 @@ export function SetupMethodStep({
               <div className="relative">
                 <ScrollArea
                   className="min-w-0 rounded-lg border bg-muted/50"
-                  classNameViewport="max-h-[160px]"
+                  classNameViewport="max-h-[200px]"
                   direction="both"
                 >
-                  <pre className="p-3 pr-20 font-mono text-[11px] leading-relaxed">
+                  <pre className="overflow-x-auto whitespace-pre p-3 pr-20 font-mono text-[11px] leading-relaxed">
                     {aiPrompt}
                   </pre>
                 </ScrollArea>
@@ -150,7 +150,8 @@ export function SetupMethodStep({
               <p className="text-[10px] text-muted-foreground">
                 The workflow uses GitHub Actions' built-in token ($GITHUB_TOKEN)
                 which is automatically available — you don't need to create,
-                generate, or configure any token or secret.
+                generate, or configure any token or secret. Works with both
+                public and private repositories.
               </p>
             </div>
           </TabsContent>
@@ -167,10 +168,10 @@ export function SetupMethodStep({
               <div className="relative">
                 <ScrollArea
                   className="min-w-0 rounded-lg border bg-muted/50"
-                  classNameViewport="max-h-[160px]"
+                  classNameViewport="max-h-[200px]"
                   direction="both"
                 >
-                  <pre className="p-3 pr-20 font-mono text-[11px] leading-relaxed">
+                  <pre className="overflow-x-auto whitespace-pre p-3 pr-20 font-mono text-[11px] leading-relaxed">
                     {workflowYaml}
                   </pre>
                 </ScrollArea>
@@ -197,7 +198,8 @@ export function SetupMethodStep({
               <p className="text-[10px] text-muted-foreground">
                 This workflow uses GitHub Actions' built-in token, which is
                 automatically available in every workflow run. You don't need to
-                create any token or add any secret — just commit the file.
+                create any token or add any secret — just commit the file. Works
+                with both public and private repositories.
               </p>
             </div>
           </TabsContent>

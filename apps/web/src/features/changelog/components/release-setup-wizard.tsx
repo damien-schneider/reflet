@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Check,
   GithubLogo,
+  X,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -12,13 +13,15 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { AutomationStep } from "./wizard-steps/automation-step";
 import { SetupMethodStep } from "./wizard-steps/setup-method-step";
 import { SyncDirectionStep } from "./wizard-steps/sync-direction-step";
@@ -156,21 +159,41 @@ export function ReleaseSetupWizard({
   const isLastStep = step === TOTAL_STEPS;
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-[540px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <GithubLogo className="h-5 w-5" />
-            GitHub Sync Setup
-          </DialogTitle>
-          <DialogDescription>
-            Step {step} of {TOTAL_STEPS} — Configure how releases sync with
-            GitHub
-          </DialogDescription>
-        </DialogHeader>
+    <Sheet onOpenChange={onOpenChange} open={open}>
+      <SheetContent
+        className="gap-0 overflow-hidden p-0 md:w-140 md:max-w-140"
+        showCloseButton={false}
+        side="right"
+        variant="panel"
+      >
+        {/* Header */}
+        <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
+          <div className="flex flex-col gap-0.5">
+            <SheetTitle className="flex items-center gap-2">
+              <GithubLogo className="h-5 w-5" />
+              GitHub Sync Setup
+            </SheetTitle>
+            <SheetDescription>
+              Step {step} of {TOTAL_STEPS} — Configure how releases sync with
+              GitHub
+            </SheetDescription>
+          </div>
+          <SheetClose
+            render={
+              <Button
+                onClick={() => onOpenChange(false)}
+                size="icon-sm"
+                variant="ghost"
+              />
+            }
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </SheetClose>
+        </SheetHeader>
 
         {/* Progress bar */}
-        <div className="flex gap-1">
+        <div className="flex gap-1 px-4 pt-3">
           {Array.from({ length: TOTAL_STEPS }, (_, i) => (
             <div
               className={`h-1 flex-1 rounded-full transition-colors ${
@@ -182,36 +205,38 @@ export function ReleaseSetupWizard({
         </div>
 
         {/* Step content */}
-        <div className="min-h-[280px] py-2">
-          {step === 1 && (
-            <SyncDirectionStep
-              onBranchChange={(branch) =>
-                updateConfig({ targetBranch: branch })
-              }
-              onChange={handleSyncDirectionChange}
-              organizationId={organizationId}
-              targetBranch={config.targetBranch}
-              value={config.syncDirection}
-            />
-          )}
-          {step === 2 && (
-            <AutomationStep config={config} onChange={updateConfig} />
-          )}
-          {step === 3 && (
-            <VersioningStep config={config} onChange={updateConfig} />
-          )}
-          {step === 4 && (
-            <SetupMethodStep
-              config={config}
-              githubConnection={githubConnection}
-              organizationId={organizationId}
-              orgSlug={orgSlug}
-            />
-          )}
-        </div>
+        <ScrollArea className="flex-1">
+          <div className="px-4 py-4">
+            {step === 1 && (
+              <SyncDirectionStep
+                onBranchChange={(branch) =>
+                  updateConfig({ targetBranch: branch })
+                }
+                onChange={handleSyncDirectionChange}
+                organizationId={organizationId}
+                targetBranch={config.targetBranch}
+                value={config.syncDirection}
+              />
+            )}
+            {step === 2 && (
+              <AutomationStep config={config} onChange={updateConfig} />
+            )}
+            {step === 3 && (
+              <VersioningStep config={config} onChange={updateConfig} />
+            )}
+            {step === 4 && (
+              <SetupMethodStep
+                config={config}
+                githubConnection={githubConnection}
+                organizationId={organizationId}
+                orgSlug={orgSlug}
+              />
+            )}
+          </div>
+        </ScrollArea>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex shrink-0 items-center justify-between border-t px-4 py-3">
           <Button
             disabled={!canGoBack}
             onClick={() => setStep((s) => s - 1)}
@@ -245,7 +270,7 @@ export function ReleaseSetupWizard({
             </Button>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
