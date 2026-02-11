@@ -40,6 +40,7 @@ interface CopyForAgentsProps {
   title: string;
   description: string | null;
   tags?: Array<FeedbackTag | null>;
+  attachments?: string[];
 }
 
 interface AgentTarget {
@@ -54,16 +55,18 @@ interface AgentTarget {
 // Prompt generation
 // ============================================
 
-function buildAgentPrompt({
+export function buildAgentPrompt({
   title,
   description,
   tags,
   projectContext,
+  attachments,
 }: {
   title: string;
   description: string | null;
   tags: FeedbackTag[];
   projectContext: string | null;
+  attachments?: string[];
 }): string {
   const parts: string[] = [];
 
@@ -91,6 +94,15 @@ function buildAgentPrompt({
   if (projectContext) {
     parts.push("## Project Context\n");
     parts.push(`${projectContext}\n`);
+  }
+
+  // Attached screenshots/images
+  if (attachments && attachments.length > 0) {
+    parts.push("## Attached Screenshots\n");
+    for (const url of attachments) {
+      parts.push(`- ${url}`);
+    }
+    parts.push("");
   }
 
   // Instructions
@@ -286,6 +298,7 @@ export function CopyForAgents({
   title,
   description,
   tags,
+  attachments,
 }: CopyForAgentsProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -327,8 +340,9 @@ export function CopyForAgents({
       description,
       tags: validTags,
       projectContext: getProjectContext(),
+      attachments,
     });
-  }, [title, description, validTags, getProjectContext]);
+  }, [title, description, validTags, getProjectContext, attachments]);
 
   const handleAgentAction = useCallback(
     async (agent: AgentTarget) => {
