@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { cn } from "@/lib/utils";
+import { GenerateFromCommits } from "./generate-from-commits";
+import { PublishConfirmDialog } from "./publish-confirm-dialog";
+import { VersionPicker } from "./version-picker";
 
 type SaveStatus = "idle" | "saving" | "saved";
 
@@ -40,6 +42,7 @@ export function ReleaseEditor({
   const [version, setVersion] = useState(release?.version ?? "");
   const [description, setDescription] = useState(release?.description ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
 
   // Auto-save state - initialize with release._id if editing
   const [releaseId, setReleaseId] = useState<Id<"releases"> | null>(
@@ -160,6 +163,7 @@ export function ReleaseEditor({
       }
 
       await publishRelease({ id: idToPublish });
+      setShowPublishConfirm(false);
       toast.success("Release published!");
       navigateToChangelog();
     } catch (error) {
@@ -228,12 +232,18 @@ export function ReleaseEditor({
       <div className="flex min-h-[500px] flex-col">
         {/* Version badge and status */}
         <div className="flex items-center gap-2 px-6 pt-4">
-          <Input
-            className="h-7 w-28 text-xs"
+          <VersionPicker
             disabled={isSubmitting}
-            onChange={(e) => setVersion(e.target.value)}
-            placeholder="v1.0.0"
+            excludeReleaseId={release?._id}
+            onChange={setVersion}
+            organizationId={organizationId}
             value={version}
+          />
+          <GenerateFromCommits
+            disabled={isSubmitting}
+            onGenerated={setDescription}
+            organizationId={organizationId}
+            version={version}
           />
           {isPublished && (
             <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700 text-xs dark:bg-green-900/30 dark:text-green-400">
@@ -277,7 +287,9 @@ export function ReleaseEditor({
         >
           <Button
             disabled={isSubmitting || !title.trim()}
-            onClick={isPublished ? handleUnpublish : handlePublish}
+            onClick={
+              isPublished ? handleUnpublish : () => setShowPublishConfirm(true)
+            }
             size="sm"
             type="button"
             variant={isPublished ? "outline" : "default"}
@@ -296,6 +308,16 @@ export function ReleaseEditor({
           </Button>
         </div>
       </div>
+
+      <PublishConfirmDialog
+        isSubmitting={isSubmitting}
+        onConfirm={handlePublish}
+        onOpenChange={setShowPublishConfirm}
+        open={showPublishConfirm}
+        organizationId={organizationId}
+        title={title}
+        version={version}
+      />
     </div>
   );
 }

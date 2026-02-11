@@ -204,6 +204,15 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
     }
   }, [router, orgSlug, organizations]);
 
+  const orgNotAccessible =
+    orgSlug && org !== undefined && (org === null || !org.role);
+
+  useEffect(() => {
+    if (orgNotAccessible) {
+      router.replace("/dashboard");
+    }
+  }, [router, orgNotAccessible]);
+
   return (
     <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>
       <CommandPalette isAdmin={isAdmin} orgSlug={orgSlug} />
@@ -293,7 +302,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           </div>
         ) : null}
 
-        {orgSlug ? (
+        {orgSlug && !orgNotAccessible ? (
           <>
             <PushNotificationPrompt />
             {children}

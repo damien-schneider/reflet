@@ -13,6 +13,39 @@ function generateUnsubscribeToken(): string {
 }
 
 /**
+ * Get the subscriber count for an organization (admin only)
+ */
+export const getSubscriberCount = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await authComponent.safeGetAuthUser(ctx);
+    if (!user) {
+      return 0;
+    }
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership) {
+      return 0;
+    }
+
+    const subscribers = await ctx.db
+      .query("changelogSubscribers")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    return subscribers.length;
+  },
+});
+
+/**
  * Check if user is subscribed to changelog
  */
 export const isSubscribed = query({

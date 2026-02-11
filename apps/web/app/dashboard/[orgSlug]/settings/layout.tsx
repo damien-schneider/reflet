@@ -5,6 +5,7 @@ import {
   Buildings,
   CreditCard,
   GithubLogo,
+  Megaphone,
   PaintBrush,
   Users,
 } from "@phosphor-icons/react";
@@ -56,6 +57,12 @@ export default function SettingsLayout({
       description: "Repository and sync",
       icon: GithubLogo,
       href: `${basePath}/github`,
+    },
+    {
+      title: "Releases",
+      description: "Changelog and versioning",
+      icon: Megaphone,
+      href: `${basePath}/releases`,
     },
     {
       title: "Billing",

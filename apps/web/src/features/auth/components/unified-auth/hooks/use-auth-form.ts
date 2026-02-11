@@ -166,11 +166,19 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
             router.push("/pending-invitations");
           },
           onError: (error) => {
-            setApiError(
-              formatAuthError(
-                error.error.message || error.error.statusText || "Sign in error"
-              )
-            );
+            const message = error.error.message || error.error.statusText || "";
+            const lowerMessage = message.toLowerCase();
+            if (
+              lowerMessage.includes("email not verified") ||
+              lowerMessage.includes("verify your email")
+            ) {
+              onSuccess?.();
+              router.push(
+                `/auth/check-email?email=${encodeURIComponent(data.email)}`
+              );
+              return;
+            }
+            setApiError(formatAuthError(message || "Sign in error"));
           },
         }
       );

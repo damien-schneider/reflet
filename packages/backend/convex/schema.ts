@@ -108,7 +108,11 @@ export default defineSchema({
     // Changelog settings
     changelogSettings: v.optional(
       v.object({
+        autoPublishImported: v.optional(v.boolean()),
         autoVersioning: v.optional(v.boolean()),
+        pushToGithubOnPublish: v.optional(v.boolean()),
+        syncDirection: v.optional(v.string()),
+        targetBranch: v.optional(v.string()),
         versionIncrement: v.optional(v.string()),
         versionPrefix: v.optional(v.string()),
       })

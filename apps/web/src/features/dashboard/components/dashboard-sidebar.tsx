@@ -4,13 +4,11 @@ import {
   Chat,
   ChatCircle,
   Code,
-  CreditCard,
   FileText,
   Gear,
   SignOut,
   Trash,
   User,
-  Users,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -38,6 +36,7 @@ import {
 import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { authClient } from "@/lib/auth-client";
+import { GoProBanner } from "./go-pro-banner";
 import { MakePublicBanner } from "./make-public-banner";
 import { SidebarFooterContent } from "./sidebar-footer-content";
 
@@ -65,6 +64,11 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
 
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
+  const subscription = useQuery(
+    api.subscriptions.getStatus,
+    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+  );
+
   const buildPath = (path: string) =>
     orgSlug ? path.replace("$orgSlug", orgSlug) : "";
 
@@ -75,7 +79,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     return path.replace("$orgSlug", orgSlug);
   };
 
-  const mainNavItems = orgSlug
+  const workspaceNavItems = orgSlug
     ? [
         {
           href: "/dashboard/$orgSlug",
@@ -83,17 +87,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           label: "Feedback",
           badge: undefined,
         },
-        {
-          href: "/dashboard/$orgSlug/settings",
-          icon: Gear,
-          label: "Settings",
-          badge: undefined,
-        },
-      ]
-    : [];
-
-  const adminNavItems = orgSlug
-    ? [
         {
           href: "/dashboard/$orgSlug/changelog",
           icon: FileText,
@@ -109,6 +102,11 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
               ? adminUnreadCount
               : undefined,
         },
+      ]
+    : [];
+
+  const adminNavItems = orgSlug
+    ? [
         {
           href: "/dashboard/$orgSlug/widgets",
           icon: Code,
@@ -122,22 +120,21 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           badge: undefined,
         },
         {
-          href: "/dashboard/$orgSlug/settings/members",
-          icon: Users,
-          label: "Members",
-          badge: undefined,
-        },
-        {
-          href: "/dashboard/$orgSlug/settings/billing",
-          icon: CreditCard,
-          label: "Billing",
-          badge: undefined,
-        },
-        {
           href: "/dashboard/$orgSlug/trash",
           icon: Trash,
           label: "Trash",
           badge: deletedCount && deletedCount > 0 ? deletedCount : undefined,
+        },
+      ]
+    : [];
+
+  const orgNavItems = orgSlug
+    ? [
+        {
+          href: "/dashboard/$orgSlug/settings",
+          icon: Gear,
+          label: "Settings",
+          badge: undefined,
         },
       ]
     : [];
@@ -157,7 +154,11 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     }
 
     // Don't highlight if a more specific nav item also matches the current path
-    const allNavItems = [...mainNavItems, ...adminNavItems];
+    const allNavItems = [
+      ...workspaceNavItems,
+      ...adminNavItems,
+      ...orgNavItems,
+    ];
     const hasMoreSpecificMatch = allNavItems.some((item) => {
       const itemPath = buildPath(item.href);
       return (
@@ -230,10 +231,10 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
         {orgSlug ? (
           <>
             <SidebarGroup>
-              <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+              <SidebarGroupLabel>Workspace</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarList>
-                  {mainNavItems.map((item) => (
+                  {workspaceNavItems.map((item) => (
                     <SidebarListItem key={item.href}>
                       <SidebarListButton
                         isActive={isActive(item.href)}
@@ -255,11 +256,39 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
               </SidebarGroupContent>
             </SidebarGroup>
 
+            {isAdmin && (
+              <SidebarGroup>
+                <SidebarGroupLabel>Admin</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarList>
+                    {adminNavItems.map((item) => (
+                      <SidebarListItem key={item.href}>
+                        <SidebarListButton
+                          isActive={isActive(item.href)}
+                          render={(props) => (
+                            <Link href={buildHref(item.href)} {...props}>
+                              <item.icon className="h-4 w-4" />
+                              <span className="flex-1">{item.label}</span>
+                              {item.badge !== undefined && (
+                                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
+                                  {item.badge > 99 ? "99+" : item.badge}
+                                </span>
+                              )}
+                            </Link>
+                          )}
+                        />
+                      </SidebarListItem>
+                    ))}
+                  </SidebarList>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+
             <SidebarGroup>
-              <SidebarGroupLabel>Admin</SidebarGroupLabel>
+              <SidebarGroupLabel>Organization</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarList>
-                  {adminNavItems.map((item) => (
+                  {orgNavItems.map((item) => (
                     <SidebarListItem key={item.href}>
                       <SidebarListButton
                         isActive={isActive(item.href)}
@@ -267,11 +296,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                           <Link href={buildHref(item.href)} {...props}>
                             <item.icon className="h-4 w-4" />
                             <span className="flex-1">{item.label}</span>
-                            {item.badge !== undefined && (
-                              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
-                                {item.badge > 99 ? "99+" : item.badge}
-                              </span>
-                            )}
                           </Link>
                         )}
                       />
@@ -294,6 +318,10 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
 
       {orgSlug && org && !org.isPublic && isAdmin && (
         <MakePublicBanner orgId={org._id as Id<"organizations">} />
+      )}
+
+      {orgSlug && isAdmin && subscription?.tier === "free" && (
+        <GoProBanner orgSlug={orgSlug} />
       )}
 
       <SidebarFooter>
