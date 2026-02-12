@@ -1,0 +1,54 @@
+name: Reflet Release Sync
+
+on:
+  release:
+    types: [published, edited, deleted]
+  push:
+    branches:
+      - main
+    paths:
+      - 'CHANGELOG.md'
+
+jobs:
+  notify-reflet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Reflet of release
+        if: github.event_name == 'release'
+        run: |
+          curl -X POST "https://www.reflet.app/api/github/webhook" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: release" \
+            -d '{
+              "action": "${{ github.event.action }}",
+              "release": {
+                "id": "${{ github.event.release.id }}",
+                "tag_name": "${{ github.event.release.tag_name }}",
+                "name": "${{ github.event.release.name }}",
+                "body": "${{ github.event.release.body }}",
+                "html_url": "${{ github.event.release.html_url }}",
+                "draft": ${{ github.event.release.draft }},
+                "prerelease": ${{ github.event.release.prerelease }},
+                "published_at": "${{ github.event.release.published_at }}",
+                "created_at": "${{ github.event.release.created_at }}"
+              },
+              "repository": {
+                "full_name": "${{ github.repository }}"
+              },
+              "installation": {
+                "id": 0
+              }
+            }'
+
+      - name: Notify Reflet of changelog update
+        if: github.event_name == 'push'
+        run: |
+          curl -X POST "https://www.reflet.app/api/github/webhook" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: push" \
+            -d '{
+              "ref": "${{ github.ref }}",
+              "repository": {
+                "full_name": "${{ github.repository }}"
+              }
+            }'
