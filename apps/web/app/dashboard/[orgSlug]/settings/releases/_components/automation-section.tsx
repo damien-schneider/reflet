@@ -1,13 +1,26 @@
 "use client";
 
-import { GitBranch } from "@phosphor-icons/react";
-import { Input } from "@/components/ui/input";
+import { GitBranch, Spinner } from "@phosphor-icons/react";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+
+interface BranchInfo {
+  name: string;
+  isProtected: boolean;
+}
 
 interface AutomationSectionProps {
   autoPublishImported?: boolean;
+  branches: BranchInfo[];
   isAdmin: boolean;
+  isLoadingBranches: boolean;
   isSaving: boolean;
   onUpdate: (updates: Record<string, unknown>) => Promise<void>;
   pushToGithubOnPublish?: boolean;
@@ -16,7 +29,9 @@ interface AutomationSectionProps {
 
 export const AutomationSection = ({
   autoPublishImported,
+  branches,
   isAdmin,
+  isLoadingBranches,
   isSaving,
   onUpdate,
   pushToGithubOnPublish,
@@ -36,13 +51,34 @@ export const AutomationSection = ({
             </p>
           </div>
         </div>
-        <Input
-          className="h-8 w-32 text-xs"
-          defaultValue={targetBranch ?? "main"}
-          disabled={!isAdmin || isSaving}
-          onBlur={(e) => onUpdate({ targetBranch: e.target.value })}
-          placeholder="main"
-        />
+        {isLoadingBranches ? (
+          <div className="flex h-8 w-40 items-center gap-1.5 text-muted-foreground text-xs">
+            <Spinner className="h-3 w-3 animate-spin" />
+            Loading branches…
+          </div>
+        ) : (
+          <Select
+            disabled={!isAdmin || isSaving}
+            onValueChange={(val) => {
+              if (val) {
+                onUpdate({ targetBranch: val });
+              }
+            }}
+            value={targetBranch ?? "main"}
+          >
+            <SelectTrigger className="h-8 w-40 text-xs">
+              <SelectValue placeholder="Select branch" />
+            </SelectTrigger>
+            <SelectContent>
+              {branches.map((branch) => (
+                <SelectItem key={branch.name} value={branch.name}>
+                  {branch.name}
+                  {branch.isProtected ? " 🔒" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       <div className="flex items-center justify-between">

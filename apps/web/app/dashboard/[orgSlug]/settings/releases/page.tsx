@@ -3,9 +3,9 @@
 import { GithubLogo, MagicWand } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import Link from "next/link";
-import { use, useCallback, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { H1, Muted, Text } from "@/components/ui/typography";
@@ -14,6 +14,11 @@ import { AutomationSection } from "./_components/automation-section";
 import { CurrentConfigSection } from "./_components/current-config-section";
 import { SyncDirectionSection } from "./_components/sync-direction-section";
 import { VersioningSection } from "./_components/versioning-section";
+
+interface BranchInfo {
+  name: string;
+  isProtected: boolean;
+}
 
 export default function ReleaseSettingsPage({
   params,
@@ -30,11 +35,21 @@ export default function ReleaseSettingsPage({
     api.github.getConnectionStatus,
     org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
   );
+  const githubConnection = useQuery(
+    api.github.getConnection,
+    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+  );
 
   const updateOrg = useMutation(api.organizations.update);
+  const getToken = useAction(api.github_node_actions.getInstallationToken);
+  const fetchBranchesAction = useAction(
+    api.github_release_actions.fetchBranches
+  );
 
   const [showWizard, setShowWizard] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [branches, setBranches] = useState<BranchInfo[]>([]);
+  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
 
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
@@ -42,6 +57,41 @@ export default function ReleaseSettingsPage({
   const settings = org?.changelogSettings;
   const orgId = org?._id as Id<"organizations"> | undefined;
   const isGitHubConnected = githubStatus?.isConnected === true;
+
+  const loadBranches = useCallback(async () => {
+    if (
+      !(githubConnection?.installationId && githubConnection.repositoryFullName)
+    ) {
+      return;
+    }
+
+    setIsLoadingBranches(true);
+    try {
+      const { token } = await getToken({
+        installationId: githubConnection.installationId,
+      });
+      const result = await fetchBranchesAction({
+        installationToken: token,
+        repositoryFullName: githubConnection.repositoryFullName,
+      });
+      setBranches(result);
+    } catch {
+      setBranches([]);
+    } finally {
+      setIsLoadingBranches(false);
+    }
+  }, [
+    githubConnection?.installationId,
+    githubConnection?.repositoryFullName,
+    getToken,
+    fetchBranchesAction,
+  ]);
+
+  useEffect(() => {
+    if (isGitHubConnected) {
+      loadBranches();
+    }
+  }, [isGitHubConnected, loadBranches]);
 
   const handleUpdate = useCallback(
     async (updates: Record<string, unknown>) => {
@@ -128,7 +178,9 @@ export default function ReleaseSettingsPage({
 
           <AutomationSection
             autoPublishImported={settings?.autoPublishImported}
+            branches={branches}
             isAdmin={isAdmin}
+            isLoadingBranches={isLoadingBranches}
             isSaving={isSaving}
             onUpdate={handleUpdate}
             pushToGithubOnPublish={settings?.pushToGithubOnPublish}
