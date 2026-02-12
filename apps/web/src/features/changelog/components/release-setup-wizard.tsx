@@ -22,14 +22,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { AutomationStep } from "./wizard-steps/automation-step";
+import { ConfigureStep } from "./wizard-steps/configure-step";
 import { SetupMethodStep } from "./wizard-steps/setup-method-step";
-import { SyncDirectionStep } from "./wizard-steps/sync-direction-step";
-import { VersioningStep } from "./wizard-steps/versioning-step";
+import { WorkflowStep } from "./wizard-steps/workflow-step";
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
+
+export type Workflow = "ai_powered" | "automated" | "manual";
 
 export interface WizardConfig {
+  workflow: Workflow;
   syncDirection: "github_first" | "reflet_first" | "bidirectional" | "none";
   autoSyncReleases: boolean;
   pushToGithubOnPublish: boolean;
@@ -38,17 +40,26 @@ export interface WizardConfig {
   versionPrefix: string;
   versionIncrement: "patch" | "minor" | "major";
   targetBranch: string;
+  manualSyncEnabled: boolean;
+  manualSyncDirection:
+    | "github_first"
+    | "reflet_first"
+    | "bidirectional"
+    | "none";
 }
 
 const DEFAULT_CONFIG: WizardConfig = {
-  syncDirection: "github_first",
-  autoSyncReleases: true,
-  pushToGithubOnPublish: false,
-  autoPublishImported: false,
+  workflow: "ai_powered",
+  syncDirection: "reflet_first",
+  autoSyncReleases: false,
+  pushToGithubOnPublish: true,
+  autoPublishImported: true,
   autoVersioning: true,
   versionPrefix: "v",
   versionIncrement: "patch",
   targetBranch: "main",
+  manualSyncEnabled: false,
+  manualSyncDirection: "bidirectional",
 };
 
 interface ReleaseSetupWizardProps {
@@ -91,27 +102,26 @@ export function ReleaseSetupWizard({
     setConfig((prev) => ({ ...prev, ...partial }));
   };
 
-  // When sync direction changes, auto-configure related settings
-  const handleSyncDirectionChange = (
-    direction: WizardConfig["syncDirection"]
-  ) => {
-    const updates: Partial<WizardConfig> = { syncDirection: direction };
+  // When workflow changes, auto-configure internal sync settings
+  const handleWorkflowChange = (workflow: Workflow) => {
+    const updates: Partial<WizardConfig> = { workflow };
 
-    if (direction === "github_first") {
-      updates.autoSyncReleases = true;
-      updates.pushToGithubOnPublish = false;
-      updates.autoPublishImported = false;
-    } else if (direction === "reflet_first") {
+    if (workflow === "ai_powered") {
+      updates.syncDirection = "reflet_first";
       updates.autoSyncReleases = false;
       updates.pushToGithubOnPublish = true;
       updates.autoPublishImported = true;
-    } else if (direction === "bidirectional") {
+    } else if (workflow === "automated") {
+      updates.syncDirection = "github_first";
       updates.autoSyncReleases = true;
-      updates.pushToGithubOnPublish = true;
+      updates.pushToGithubOnPublish = false;
       updates.autoPublishImported = false;
     } else {
+      // Manual — sync settings determined by sub-options in configure step
+      updates.syncDirection = "none";
       updates.autoSyncReleases = false;
       updates.pushToGithubOnPublish = false;
+      updates.autoPublishImported = false;
     }
 
     updateConfig(updates);
@@ -120,12 +130,29 @@ export function ReleaseSetupWizard({
   const handleComplete = async () => {
     setIsSaving(true);
     try {
+      // Resolve final syncDirection for manual workflow
+      const finalSyncDirection =
+        config.workflow === "manual" && config.manualSyncEnabled
+          ? config.manualSyncDirection
+          : config.syncDirection;
+
+      const finalAutoSync =
+        config.workflow === "manual" && config.manualSyncEnabled
+          ? config.manualSyncDirection !== "none"
+          : config.autoSyncReleases;
+
+      const finalPushToGithub =
+        config.workflow === "manual" && config.manualSyncEnabled
+          ? config.manualSyncDirection === "reflet_first" ||
+            config.manualSyncDirection === "bidirectional"
+          : config.pushToGithubOnPublish;
+
       // Save changelog settings to org
       await updateOrg({
         id: organizationId,
         changelogSettings: {
-          syncDirection: config.syncDirection,
-          pushToGithubOnPublish: config.pushToGithubOnPublish,
+          syncDirection: finalSyncDirection,
+          pushToGithubOnPublish: finalPushToGithub,
           autoPublishImported: config.autoPublishImported,
           autoVersioning: config.autoVersioning,
           versionPrefix: config.versionPrefix,
@@ -138,7 +165,7 @@ export function ReleaseSetupWizard({
       if (githubConnection) {
         await toggleAutoSync({
           organizationId,
-          enabled: config.autoSyncReleases,
+          enabled: finalAutoSync,
         });
       }
 
@@ -171,11 +198,10 @@ export function ReleaseSetupWizard({
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="flex items-center gap-2">
               <GithubLogo className="h-5 w-5" />
-              GitHub Sync Setup
+              Release Setup
             </SheetTitle>
             <SheetDescription>
-              Step {step} of {TOTAL_STEPS} — Configure how releases sync with
-              GitHub
+              Step {step} of {TOTAL_STEPS} — Configure your release workflow
             </SheetDescription>
           </div>
           <SheetClose
@@ -208,23 +234,20 @@ export function ReleaseSetupWizard({
         <ScrollArea className="flex-1">
           <div className="px-4 py-4">
             {step === 1 && (
-              <SyncDirectionStep
+              <WorkflowStep
                 onBranchChange={(branch) =>
                   updateConfig({ targetBranch: branch })
                 }
-                onChange={handleSyncDirectionChange}
+                onChange={handleWorkflowChange}
                 organizationId={organizationId}
                 targetBranch={config.targetBranch}
-                value={config.syncDirection}
+                value={config.workflow}
               />
             )}
             {step === 2 && (
-              <AutomationStep config={config} onChange={updateConfig} />
+              <ConfigureStep config={config} onChange={updateConfig} />
             )}
             {step === 3 && (
-              <VersioningStep config={config} onChange={updateConfig} />
-            )}
-            {step === 4 && (
               <SetupMethodStep
                 config={config}
                 githubConnection={githubConnection}
