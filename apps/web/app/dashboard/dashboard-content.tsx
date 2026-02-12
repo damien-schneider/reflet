@@ -27,6 +27,7 @@ import { DashboardSidebar } from "@/features/dashboard/components/dashboard-side
 import { PushNotificationPrompt } from "@/features/dashboard/components/push-notification-prompt";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
+import { computeDashboardNavigation } from "./use-dashboard-navigation";
 
 const routeLabels: Record<string, string> = {
   feedback: "Feedback",
@@ -183,8 +184,10 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   const [ensureAttempted, setEnsureAttempted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom);
 
-  const hasOrganizations = !!organizations && organizations.length > 0;
   const isAdmin = org?.role === "admin" || org?.role === "owner";
+
+  const { redirectTo, orgNotAccessible, hasOrganizations } =
+    computeDashboardNavigation({ orgSlug, org, organizations });
 
   useEffect(() => {
     if (organizations?.length === 0 && !ensureAttempted) {
@@ -196,22 +199,10 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   }, [organizations, ensureAttempted, ensurePersonalOrganization]);
 
   useEffect(() => {
-    if (!orgSlug && organizations?.length === 1) {
-      const org = organizations[0];
-      if (org) {
-        router.replace(`/dashboard/${org.slug}`);
-      }
+    if (redirectTo) {
+      router.replace(redirectTo);
     }
-  }, [router, orgSlug, organizations]);
-
-  const orgNotAccessible =
-    orgSlug && org !== undefined && (org === null || !org.role);
-
-  useEffect(() => {
-    if (orgNotAccessible) {
-      router.replace("/dashboard");
-    }
-  }, [router, orgNotAccessible]);
+  }, [router, redirectTo]);
 
   return (
     <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>
@@ -298,6 +289,32 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
               <div>
                 <OrganizationSwitcher currentOrgSlug={undefined} />
               </div>
+            </div>
+          </div>
+        ) : null}
+
+        {orgSlug && orgNotAccessible ? (
+          <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
+            <div className="w-full max-w-sm text-center">
+              <div className="mb-6 flex justify-center">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-800/30">
+                  <Buildings
+                    className="size-7 text-red-600 dark:text-red-400"
+                    weight="duotone"
+                  />
+                </div>
+              </div>
+              <H2>Organization not accessible</H2>
+              <Muted className="mt-2">
+                You don&apos;t have access to this organization, or it
+                doesn&apos;t exist.
+              </Muted>
+              <Link
+                className="mt-6 inline-block rounded-lg bg-olive-600 px-4 py-2 font-medium text-sm text-white transition-colors hover:bg-olive-700"
+                href="/dashboard"
+              >
+                Back to dashboard
+              </Link>
             </div>
           </div>
         ) : null}

@@ -176,6 +176,15 @@ export function useTiptapMarkdownEditor(
     }
   }, [editor]);
 
+  // Sync external value changes to editor (e.g. from AI generation)
+  useEffect(() => {
+    if (!editor) return;
+    const currentMarkdown = getMarkdown(editor.storage);
+    if (value !== currentMarkdown) {
+      editor.commands.setContent(value);
+    }
+  }, [editor, value]);
+
   useEffect(() => {
     if (!editor) return;
     editor.setEditable(editable && !disabled);

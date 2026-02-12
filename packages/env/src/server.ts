@@ -16,6 +16,8 @@ export const env = createEnv({
     GITHUB_APP_SLUG: z.string().optional(),
     GITHUB_APP_PRIVATE_KEY: z.string().optional(),
     GITHUB_WEBHOOK_SECRET: z.string().optional(),
+    // OpenRouter API key (optional - for AI features)
+    OPENROUTER_API_KEY: z.string().optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

@@ -120,10 +120,13 @@ export default function GitHubSettingsPage({
 
         {queries.connectionStatus?.isConnected ? (
           <RepositorySelectorCard
-            hasRepository={queries.connectionStatus.hasRepository}
+            hasRepository={
+              queries.connectionStatus.hasRepository &&
+              !settings.isChangingRepository
+            }
             isAdmin={isAdmin}
             loadingRepos={settings.loadingRepos}
-            onChangeRepository={settings.fetchRepositories}
+            onChangeRepository={settings.handleChangeRepository}
             onConnectRepository={settings.handleSelectRepository}
             onSelectRepo={settings.setSelectedRepo}
             repositories={settings.repositories}

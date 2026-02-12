@@ -85,6 +85,7 @@ export function useGitHubSettings({
   const [isSyncingIssues, setIsSyncingIssues] = useState(false);
   const [githubLabels, setGithubLabels] = useState<GitHubLabel[]>([]);
   const [isLoadingLabels, setIsLoadingLabels] = useState(false);
+  const [isChangingRepository, setIsChangingRepository] = useState(false);
   const [webhookSetupError, setWebhookSetupError] = useState<{
     code: string;
     message: string;
@@ -148,6 +149,12 @@ export function useGitHubSettings({
     window.location.href = `/api/github/install?organizationId=${orgId}&orgSlug=${encodeURIComponent(orgSlug)}`;
   }, [orgId, orgSlug]);
 
+  const handleChangeRepository = useCallback(async () => {
+    setIsChangingRepository(true);
+    setSelectedRepo("");
+    await fetchRepositories();
+  }, [fetchRepositories]);
+
   const handleSelectRepository = useCallback(async () => {
     if (!(orgId && selectedRepo)) {
       return;
@@ -162,6 +169,7 @@ export function useGitHubSettings({
       repositoryFullName: repo.fullName,
       defaultBranch: repo.defaultBranch,
     });
+    setIsChangingRepository(false);
   }, [orgId, selectedRepo, repositories, selectRepository]);
 
   const handleSyncReleases = useCallback(async () => {
@@ -360,6 +368,7 @@ export function useGitHubSettings({
     selectedRepo,
     isSyncing,
     isSettingUp,
+    isChangingRepository,
     isDisconnecting,
     isSyncingIssues,
     githubLabels,
@@ -369,6 +378,7 @@ export function useGitHubSettings({
     setSelectedRepo,
     // Handlers
     fetchRepositories,
+    handleChangeRepository,
     fetchLabels,
     handleConnectGitHub,
     handleSelectRepository,

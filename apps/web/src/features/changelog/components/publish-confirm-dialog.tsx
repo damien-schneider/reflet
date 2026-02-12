@@ -4,6 +4,7 @@ import { GithubLogo, PaperPlaneTilt } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ interface PublishConfirmDialogProps {
   title: string;
   version: string;
   organizationId: Id<"organizations">;
+  orgSlug: string;
 }
 
 export function PublishConfirmDialog({
@@ -33,6 +35,7 @@ export function PublishConfirmDialog({
   title,
   version,
   organizationId,
+  orgSlug,
 }: PublishConfirmDialogProps) {
   const orgData = useQuery(api.organizations.get, {
     id: organizationId,
@@ -99,7 +102,15 @@ export function PublishConfirmDialog({
             {pushToGithub && !hasGithub && (
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <GithubLogo className="h-4 w-4" />
-                <span>GitHub push enabled but no repo connected</span>
+                <span>
+                  GitHub push enabled but no repo connected.{" "}
+                  <Link
+                    className="underline hover:text-foreground"
+                    href={`/dashboard/${orgSlug}/settings/github`}
+                  >
+                    Connect repository
+                  </Link>
+                </span>
               </div>
             )}
           </div>

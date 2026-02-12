@@ -150,8 +150,10 @@ export function RepositorySelectorCard({
                     }}
                     value={
                       selectedRepo
-                        ? flatRepositories.find((r) => r.id === selectedRepo)
-                        : undefined
+                        ? (flatRepositories.find(
+                            (r) => r.id === selectedRepo
+                          ) ?? null)
+                        : null
                     }
                   >
                     <ComboboxInput placeholder="Search repositories..." />

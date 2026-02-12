@@ -5,6 +5,7 @@ import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
@@ -43,6 +44,10 @@ export function ReleaseEditor({
   const [description, setDescription] = useState(release?.description ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
+
+  // Streaming AI generation state
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamedContent, setStreamedContent] = useState("");
 
   // Auto-save state - initialize with release._id if editing
   const [releaseId, setReleaseId] = useState<Id<"releases"> | null>(
@@ -132,6 +137,27 @@ export function ReleaseEditor({
   const navigateToChangelog = () => {
     router.push(`/dashboard/${orgSlug}/changelog`);
   };
+
+  const handleStreamStart = useCallback(() => {
+    setIsStreaming(true);
+    setStreamedContent("");
+  }, []);
+
+  const handleStreamChunk = useCallback((content: string) => {
+    setStreamedContent(content);
+  }, []);
+
+  const handleStreamComplete = useCallback((content: string) => {
+    setIsStreaming(false);
+    setStreamedContent("");
+    if (content) {
+      setDescription(content);
+    }
+  }, []);
+
+  const handleTitleGenerated = useCallback((generatedTitle: string) => {
+    setTitle(generatedTitle);
+  }, []);
 
   const handlePublish = async () => {
     if (!title.trim()) {
@@ -233,7 +259,7 @@ export function ReleaseEditor({
         {/* Version badge and status */}
         <div className="flex items-center gap-2 px-6 pt-4">
           <VersionPicker
-            disabled={isSubmitting}
+            disabled={isSubmitting || isStreaming}
             excludeReleaseId={release?._id}
             onChange={setVersion}
             organizationId={organizationId}
@@ -241,8 +267,13 @@ export function ReleaseEditor({
           />
           <GenerateFromCommits
             disabled={isSubmitting}
-            onGenerated={setDescription}
+            isStreaming={isStreaming}
+            onComplete={handleStreamComplete}
+            onStreamChunk={handleStreamChunk}
+            onStreamStart={handleStreamStart}
+            onTitleGenerated={handleTitleGenerated}
             organizationId={organizationId}
+            orgSlug={orgSlug}
             version={version}
           />
           {isPublished && (
@@ -257,7 +288,7 @@ export function ReleaseEditor({
         <div className="px-6 pt-4 pb-2">
           <TiptapTitleEditor
             autoFocus
-            disabled={isSubmitting}
+            disabled={isSubmitting || isStreaming}
             onChange={setTitle}
             placeholder="What's New in v1.0"
             value={title}
@@ -269,13 +300,21 @@ export function ReleaseEditor({
 
         {/* Description area - takes up remaining space */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          <TiptapMarkdownEditor
-            disabled={isSubmitting}
-            minimal
-            onChange={setDescription}
-            placeholder="Describe what's new in this release... Type '/' for commands, or drag and drop images/videos"
-            value={description}
-          />
+          {isStreaming ? (
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <Streamdown caret="block" isAnimating mode="streaming">
+                {streamedContent}
+              </Streamdown>
+            </div>
+          ) : (
+            <TiptapMarkdownEditor
+              disabled={isSubmitting}
+              minimal
+              onChange={setDescription}
+              placeholder="Describe what's new in this release... Type '/' for commands, or drag and drop images/videos"
+              value={description}
+            />
+          )}
         </div>
 
         {/* Footer */}
@@ -286,7 +325,7 @@ export function ReleaseEditor({
           )}
         >
           <Button
-            disabled={isSubmitting || !title.trim()}
+            disabled={isSubmitting || isStreaming || !title.trim()}
             onClick={
               isPublished ? handleUnpublish : () => setShowPublishConfirm(true)
             }
@@ -298,7 +337,7 @@ export function ReleaseEditor({
           </Button>
 
           <Button
-            disabled={isSubmitting}
+            disabled={isSubmitting || isStreaming}
             onClick={handleCancel}
             size="sm"
             type="button"
@@ -315,6 +354,7 @@ export function ReleaseEditor({
         onOpenChange={setShowPublishConfirm}
         open={showPublishConfirm}
         organizationId={organizationId}
+        orgSlug={orgSlug}
         title={title}
         version={version}
       />
