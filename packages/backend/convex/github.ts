@@ -781,6 +781,22 @@ export const handleInstallationDeleted = internalMutation({
 // ============================================
 
 /**
+ * Internal query to get GitHub connection by installation ID
+ * Used by webhook handler to look up the connection from the payload
+ */
+export const getConnectionByInstallation = internalQuery({
+  args: { installationId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("githubConnections")
+      .withIndex("by_installation", (q) =>
+        q.eq("installationId", args.installationId)
+      )
+      .first();
+  },
+});
+
+/**
  * Internal query to get GitHub connection for an organization
  * Called from github_actions.getConnectionFromCallback action
  * No user auth required - used by API routes after verifying session
@@ -796,5 +812,117 @@ export const getConnectionInternal = internalQuery({
       .first();
 
     return connection;
+  },
+});
+
+/**
+ * Get release sync status: GitHub-only, Reflet-only, and synced releases
+ */
+export const getReleaseSyncStatus = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership) {
+      return { githubOnly: [], refletOnly: [], synced: [] };
+    }
+
+    const connection = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+
+    if (!connection) {
+      return { githubOnly: [], refletOnly: [], synced: [] };
+    }
+
+    // Get all GitHub releases for this connection
+    const githubReleases = await ctx.db
+      .query("githubReleases")
+      .withIndex("by_connection", (q) =>
+        q.eq("githubConnectionId", connection._id)
+      )
+      .collect();
+
+    // Get all Reflet releases for this org
+    const refletReleases = await ctx.db
+      .query("releases")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    // Build a set of GitHub release IDs that are linked to Reflet releases
+    const linkedGithubIds = new Set(
+      refletReleases
+        .filter((r) => r.githubReleaseId)
+        .map((r) => r.githubReleaseId)
+    );
+
+    // GitHub-only: releases in githubReleases with no linked Reflet release
+    const githubOnly = githubReleases
+      .filter(
+        (gr) => !(gr.refletReleaseId || linkedGithubIds.has(gr.githubReleaseId))
+      )
+      .map((gr) => ({
+        _id: gr._id,
+        githubReleaseId: gr.githubReleaseId,
+        tagName: gr.tagName,
+        name: gr.name,
+        htmlUrl: gr.htmlUrl,
+        publishedAt: gr.publishedAt,
+        createdAt: gr.createdAt,
+      }));
+
+    // Reflet-only: published releases with no githubReleaseId and not synced from GitHub
+    const refletOnly = refletReleases
+      .filter((r) => r.publishedAt && !r.githubReleaseId && !r.syncedFromGithub)
+      .map((r) => ({
+        _id: r._id,
+        title: r.title,
+        version: r.version,
+        publishedAt: r.publishedAt,
+      }));
+
+    // Synced: Reflet releases that have a githubReleaseId
+    const synced = refletReleases
+      .filter((r) => r.githubReleaseId)
+      .map((r) => ({
+        _id: r._id,
+        title: r.title,
+        version: r.version,
+        publishedAt: r.publishedAt,
+        githubReleaseId: r.githubReleaseId,
+        githubHtmlUrl: r.githubHtmlUrl,
+      }));
+
+    return { githubOnly, refletOnly, synced };
+  },
+});
+
+/**
+ * Link a GitHub release to a Reflet release after pushing to GitHub
+ */
+export const linkGithubRelease = internalMutation({
+  args: {
+    releaseId: v.id("releases"),
+    githubReleaseId: v.string(),
+    githubHtmlUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.releaseId, {
+      githubReleaseId: args.githubReleaseId,
+      githubHtmlUrl: args.githubHtmlUrl,
+      updatedAt: Date.now(),
+    });
   },
 });

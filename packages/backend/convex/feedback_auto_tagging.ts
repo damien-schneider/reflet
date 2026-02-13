@@ -13,6 +13,18 @@ import {
 } from "./_generated/server";
 import { getAuthUser } from "./utils";
 
+// Priority levels for feedback
+const PRIORITY_LEVELS = ["critical", "high", "medium", "low", "none"] as const;
+
+// Complexity levels for feedback
+const COMPLEXITY_LEVELS = [
+  "trivial",
+  "simple",
+  "moderate",
+  "complex",
+  "very_complex",
+] as const;
+
 // Zod schema for auto-tagging response
 const autoTaggingResponseSchema = z.object({
   selectedTagIds: z
@@ -23,6 +35,27 @@ const autoTaggingResponseSchema = z.object({
   reasoning: z
     .string()
     .describe("Brief explanation of why these tags were selected"),
+  priority: z
+    .enum(PRIORITY_LEVELS)
+    .describe(
+      "Priority level: critical (blocking/urgent), high (important/impactful), medium (standard), low (nice-to-have), none (informational only)"
+    ),
+  priorityReasoning: z
+    .string()
+    .describe("Brief explanation of why this priority level was assigned"),
+  complexity: z
+    .enum(COMPLEXITY_LEVELS)
+    .describe(
+      "Implementation complexity: trivial (<1h), simple (1-4h), moderate (1-2 days), complex (3-5 days), very_complex (1+ weeks)"
+    ),
+  complexityReasoning: z
+    .string()
+    .describe("Brief explanation of the complexity assessment"),
+  timeEstimate: z
+    .string()
+    .describe(
+      "Estimated implementation time as a human-readable range, e.g. '2-4 hours', '1-2 days', '1-2 weeks'"
+    ),
 });
 
 type AutoTaggingResponse = z.infer<typeof autoTaggingResponseSchema>;
@@ -217,6 +250,64 @@ export const applyAutoTags = internalMutation({
         });
       }
     }
+  },
+});
+
+/**
+ * Internal mutation to save AI analysis (priority, complexity, time estimate) to feedback
+ */
+export const saveAiAnalysis = internalMutation({
+  args: {
+    feedbackId: v.id("feedback"),
+    priority: v.optional(
+      v.union(
+        v.literal("critical"),
+        v.literal("high"),
+        v.literal("medium"),
+        v.literal("low"),
+        v.literal("none")
+      )
+    ),
+    priorityReasoning: v.optional(v.string()),
+    complexity: v.optional(
+      v.union(
+        v.literal("trivial"),
+        v.literal("simple"),
+        v.literal("moderate"),
+        v.literal("complex"),
+        v.literal("very_complex")
+      )
+    ),
+    complexityReasoning: v.optional(v.string()),
+    timeEstimate: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      return;
+    }
+
+    const now = Date.now();
+    const updates: Record<string, unknown> = { updatedAt: now };
+
+    if (args.priority) {
+      updates.aiPriority = args.priority;
+      updates.aiPriorityReasoning = args.priorityReasoning;
+      updates.aiPriorityGeneratedAt = now;
+    }
+
+    if (args.complexity) {
+      updates.aiComplexity = args.complexity;
+      updates.aiComplexityReasoning = args.complexityReasoning;
+      updates.aiComplexityGeneratedAt = now;
+    }
+
+    if (args.timeEstimate) {
+      updates.aiTimeEstimate = args.timeEstimate;
+      updates.aiTimeEstimateGeneratedAt = now;
+    }
+
+    await ctx.db.patch(args.feedbackId, updates);
   },
 });
 
@@ -419,14 +510,22 @@ export const processAutoTagging = internalAction({
       )
       .join("\n");
 
-    const systemPrompt = `You are a feedback categorization assistant. Your job is to analyze user feedback and select the most appropriate tags from the available list.
+    const systemPrompt = `You are a feedback analysis assistant. Your job is to analyze user feedback and:
+1. Select the most appropriate tags from the available list
+2. Assess the priority level of the feedback
+3. Estimate the implementation complexity
+4. Provide a time estimate for implementation
 
 IMPORTANT:
 - Only select tag IDs from the provided list
 - Select 1-3 tags that best match the feedback content
-- If no tags match well, return an empty array for selectedTagIds`;
+- If no tags match well, return an empty array for selectedTagIds
+- Be realistic about priority, complexity, and time estimates
+- Priority levels: critical (blocking/urgent issue), high (important/impactful), medium (standard priority), low (nice-to-have), none (informational only)
+- Complexity levels: trivial (quick config change, <1 hour), simple (straightforward, 1-4 hours), moderate (some investigation needed, 1-2 days), complex (significant changes, 3-5 days), very_complex (major feature/architecture, 1+ weeks)
+- Time estimate should be a human-readable range like "2-4 hours" or "1-2 days"`;
 
-    const userPrompt = `Categorize this feedback:
+    const userPrompt = `Analyze this feedback and provide tags, priority, complexity, and time estimate:
 
 FEEDBACK:
 Title: ${feedback.title}
@@ -489,12 +588,27 @@ ${tagsDescription}`;
         feedbackId: args.feedbackId,
         tagIds: selectedTagIds as Id<"tags">[],
       });
+    }
+
+    // Save AI analysis (priority, complexity, time estimate) regardless of tag matching
+    await ctx.runMutation(internal.feedback_auto_tagging.saveAiAnalysis, {
+      feedbackId: args.feedbackId,
+      priority: result.priority,
+      priorityReasoning: result.priorityReasoning,
+      complexity: result.complexity,
+      complexityReasoning: result.complexityReasoning,
+      timeEstimate: result.timeEstimate,
+    });
+
+    if (selectedTagIds.length > 0) {
       return { success: true, tagCount: selectedTagIds.length };
     }
 
     return {
-      success: false,
-      reason: result.reasoning || "AI selected no matching tags",
+      success: true,
+      reason:
+        result.reasoning ||
+        "AI selected no matching tags but analysis was saved",
       tagCount: 0,
     };
   },

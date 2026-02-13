@@ -5,6 +5,7 @@ import {
   CaretUp as ChevronUp,
   Chat as MessageSquare,
   PushPin,
+  Sparkle,
   Trash,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -30,6 +31,7 @@ import {
   ContextListTrigger,
 } from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
+import { AiMiniIndicator } from "./ai-mini-indicator";
 import { useFeedbackBoard } from "./feedback-board/feedback-board-context";
 
 interface FeedbackCardWithMorphingDialogProps {
@@ -50,9 +52,14 @@ interface FeedbackCardWithMorphingDialogProps {
       name: string;
       color: string;
       icon?: string;
+      appliedByAi?: boolean;
     } | null>;
     organizationStatusId?: string;
     organizationStatus?: { name: string; color: string; icon?: string } | null;
+    aiPriority?: string | null;
+    aiComplexity?: string | null;
+    priority?: string | null;
+    complexity?: string | null;
   };
 }
 
@@ -147,10 +154,47 @@ export function FeedbackCardWithMorphingDialog({
                     >
                       {tag.icon && <span>{tag.icon}</span>}
                       {tag.name}
+                      {tag.appliedByAi && (
+                        <span title="Applied by AI">
+                          <Sparkle
+                            className="h-2.5 w-2.5 opacity-60"
+                            weight="fill"
+                          />
+                        </span>
+                      )}
                     </Badge>
                   ))}
               </div>
             )}
+
+            {/* AI Analysis indicators */}
+            {(() => {
+              const effectivePriority =
+                feedback.priority ?? feedback.aiPriority;
+              const effectiveComplexity =
+                feedback.complexity ?? feedback.aiComplexity;
+              if (!(effectivePriority || effectiveComplexity)) {
+                return null;
+              }
+              return (
+                <div className="mt-1 flex items-center gap-1">
+                  {effectivePriority && (
+                    <AiMiniIndicator
+                      isAiValue={!feedback.priority}
+                      label={`P: ${effectivePriority}`}
+                      type={effectivePriority}
+                    />
+                  )}
+                  {effectiveComplexity && (
+                    <AiMiniIndicator
+                      isAiValue={!feedback.complexity}
+                      label={`C: ${effectiveComplexity}`}
+                      type={effectiveComplexity}
+                    />
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Meta */}
             <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">

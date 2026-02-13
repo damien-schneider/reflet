@@ -206,6 +206,15 @@ export const publish = mutation({
       }
     );
 
+    // Schedule push to GitHub if enabled
+    await ctx.scheduler.runAfter(
+      0,
+      internal.github_node_actions.pushReleaseToGithub,
+      {
+        releaseId: args.id,
+      }
+    );
+
     return args.id;
   },
 });
@@ -282,5 +291,81 @@ export const remove = mutation({
     await ctx.db.delete(args.id);
 
     return true;
+  },
+});
+
+/**
+ * Push a single Reflet release to GitHub manually
+ */
+export const pushToGithub = mutation({
+  args: { releaseId: v.id("releases") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    const release = await ctx.db.get(args.releaseId);
+    if (!release) {
+      throw new Error("Release not found");
+    }
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", release.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role === "member") {
+      throw new Error("Only admins can push releases to GitHub");
+    }
+
+    if (release.githubReleaseId) {
+      throw new Error("Release is already linked to GitHub");
+    }
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.github_node_actions.pushReleaseToGithub,
+      { releaseId: args.releaseId, manual: true }
+    );
+
+    return { scheduled: true };
+  },
+});
+
+/**
+ * Trigger a full GitHub release sync (fetch all releases from GitHub)
+ */
+export const triggerGithubSync = mutation({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role === "member") {
+      throw new Error("Only admins can trigger sync");
+    }
+
+    const connection = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+
+    if (!connection) {
+      throw new Error("No GitHub connection found");
+    }
+
+    await ctx.scheduler.runAfter(0, internal.github_sync.syncAllReleases, {
+      organizationId: args.organizationId,
+    });
+
+    return { scheduled: true };
   },
 });

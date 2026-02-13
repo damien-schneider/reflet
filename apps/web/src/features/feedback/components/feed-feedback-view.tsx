@@ -32,6 +32,7 @@ export interface FeedbackItem {
     name: string;
     color: string;
     icon?: string;
+    appliedByAi?: boolean;
   } | null>;
   organizationStatus?: { name: string; color: string; icon?: string } | null;
   milestones?: Array<{
@@ -39,6 +40,10 @@ export interface FeedbackItem {
     name: string;
     emoji?: string;
   }>;
+  aiPriority?: string | null;
+  aiComplexity?: string | null;
+  priority?: string | null;
+  complexity?: string | null;
 }
 
 export interface FeedFeedbackViewProps {

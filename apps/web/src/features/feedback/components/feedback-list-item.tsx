@@ -1,4 +1,4 @@
-import { Chat, PushPin, Trash } from "@phosphor-icons/react";
+import { Chat, PushPin, Sparkle, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -13,12 +13,14 @@ import {
 } from "@/components/ui/context-menu";
 import { VoteButton } from "@/features/feedback/components/vote-button";
 import { cn } from "@/lib/utils";
+import { AiMiniIndicator } from "./ai-mini-indicator";
 
 interface FeedbackTag {
   _id: Id<"tags">;
   name: string;
   color: string;
   icon?: string;
+  appliedByAi?: boolean;
 }
 
 interface BoardStatusInfo {
@@ -135,10 +137,47 @@ export function FeedbackListItem({
                       >
                         {tag.icon && <span>{tag.icon}</span>}
                         {tag.name}
+                        {tag.appliedByAi && (
+                          <span title="Applied by AI">
+                            <Sparkle
+                              className="h-3 w-3 opacity-60"
+                              weight="fill"
+                            />
+                          </span>
+                        )}
                       </Badge>
                     ))}
                   </div>
                 )}
+
+                {/* AI Analysis indicators */}
+                {(() => {
+                  const effectivePriority =
+                    feedback.priority ?? feedback.aiPriority;
+                  const effectiveComplexity =
+                    feedback.complexity ?? feedback.aiComplexity;
+                  if (!(effectivePriority || effectiveComplexity)) {
+                    return null;
+                  }
+                  return (
+                    <div className="mt-1.5 flex items-center gap-1">
+                      {effectivePriority && (
+                        <AiMiniIndicator
+                          isAiValue={!feedback.priority}
+                          label={`P: ${effectivePriority}`}
+                          type={effectivePriority}
+                        />
+                      )}
+                      {effectiveComplexity && (
+                        <AiMiniIndicator
+                          isAiValue={!feedback.complexity}
+                          label={`C: ${effectiveComplexity}`}
+                          type={effectiveComplexity}
+                        />
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Status Badge from organizationStatus */}

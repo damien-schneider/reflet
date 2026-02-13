@@ -42,6 +42,7 @@ import type * as github_actions_node from "../github_actions_node.js";
 import type * as github_issues from "../github_issues.js";
 import type * as github_node_actions from "../github_node_actions.js";
 import type * as github_release_actions from "../github_release_actions.js";
+import type * as github_sync from "../github_sync.js";
 import type * as healthCheck from "../healthCheck.js";
 import type * as http from "../http.js";
 import type * as invitations from "../invitations.js";
@@ -121,6 +122,7 @@ declare const fullApi: ApiFromModules<{
   github_issues: typeof github_issues;
   github_node_actions: typeof github_node_actions;
   github_release_actions: typeof github_release_actions;
+  github_sync: typeof github_sync;
   healthCheck: typeof healthCheck;
   http: typeof http;
   invitations: typeof invitations;

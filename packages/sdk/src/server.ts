@@ -104,7 +104,10 @@ export async function verifyUser(
     return null;
   }
 
-  const [headerB64, payloadB64, signature] = parts;
+  // TypeScript doesn't narrow array destructuring, so we use direct indexing
+  const headerB64 = parts[0] as string;
+  const payloadB64 = parts[1] as string;
+  const signature = parts[2] as string;
 
   // Verify signature using constant-time comparison
   const expectedSignature = await createHmacSha256Signature(

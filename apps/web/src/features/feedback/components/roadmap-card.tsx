@@ -1,4 +1,4 @@
-import { CaretUp } from "@phosphor-icons/react";
+import { CaretUp, Sparkle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,7 +8,13 @@ interface RoadmapCardProps {
     _id: string;
     title: string;
     voteCount: number;
-    tags?: { _id: string; name: string; color: string; icon?: string }[];
+    tags?: {
+      _id: string;
+      name: string;
+      color: string;
+      icon?: string;
+      appliedByAi?: boolean;
+    }[];
   };
   orgSlug: string;
   boardSlug: string;
@@ -42,6 +48,14 @@ export function RoadmapCard({
                   >
                     {tag.icon && <span>{tag.icon}</span>}
                     {tag.name}
+                    {tag.appliedByAi && (
+                      <span title="Applied by AI">
+                        <Sparkle
+                          className="h-2.5 w-2.5 opacity-60"
+                          weight="fill"
+                        />
+                      </span>
+                    )}
                   </Badge>
                 ))}
             </div>

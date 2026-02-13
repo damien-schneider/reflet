@@ -70,7 +70,13 @@ export const get = query({
       .collect();
 
     const tags = await Promise.all(
-      feedbackTags.map(async (ft) => ctx.db.get(ft.tagId))
+      feedbackTags.map(async (ft) => {
+        const tag = await ctx.db.get(ft.tagId);
+        if (!tag) {
+          return null;
+        }
+        return { ...tag, appliedByAi: ft.appliedByAi ?? false };
+      })
     );
 
     // Check if user voted

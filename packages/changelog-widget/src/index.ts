@@ -62,9 +62,8 @@ function registerCommandApi(widget: RefletChangelogWidget): void {
     // Preserve existing properties
     if (wrappedFn) {
       for (const key of Object.keys(existingReflet)) {
-        (wrappedFn as Record<string, unknown>)[key] = (
-          existingReflet as Record<string, unknown>
-        )[key];
+        // biome-ignore lint/suspicious/noExplicitAny: Dynamic property copying
+        (wrappedFn as any)[key] = (existingReflet as any)[key];
       }
       wrappedFn._changelogWidget = widget;
       window.Reflet = wrappedFn;

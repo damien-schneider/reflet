@@ -330,6 +330,57 @@ export default defineSchema({
     ),
     aiDifficultyReasoning: v.optional(v.string()),
     aiDifficultyGeneratedAt: v.optional(v.number()),
+    // AI priority estimation fields
+    aiPriority: v.optional(
+      v.union(
+        v.literal("critical"),
+        v.literal("high"),
+        v.literal("medium"),
+        v.literal("low"),
+        v.literal("none")
+      )
+    ),
+    aiPriorityReasoning: v.optional(v.string()),
+    aiPriorityGeneratedAt: v.optional(v.number()),
+    // AI complexity estimation fields
+    aiComplexity: v.optional(
+      v.union(
+        v.literal("trivial"),
+        v.literal("simple"),
+        v.literal("moderate"),
+        v.literal("complex"),
+        v.literal("very_complex")
+      )
+    ),
+    aiComplexityReasoning: v.optional(v.string()),
+    aiComplexityGeneratedAt: v.optional(v.number()),
+    // AI time estimation fields
+    aiTimeEstimate: v.optional(v.string()), // e.g., "2-4 hours", "1-2 days"
+    aiTimeEstimateGeneratedAt: v.optional(v.number()),
+    // Human-overridden priority (undefined = using AI value)
+    priority: v.optional(
+      v.union(
+        v.literal("critical"),
+        v.literal("high"),
+        v.literal("medium"),
+        v.literal("low"),
+        v.literal("none")
+      )
+    ),
+    // Human-overridden complexity (undefined = using AI value)
+    complexity: v.optional(
+      v.union(
+        v.literal("trivial"),
+        v.literal("simple"),
+        v.literal("moderate"),
+        v.literal("complex"),
+        v.literal("very_complex")
+      )
+    ),
+    // Human-overridden time estimate (undefined = using AI value)
+    timeEstimate: v.optional(v.string()),
+    // Deadline set by a member (timestamp)
+    deadline: v.optional(v.number()),
     // External user support (for public API)
     externalUserId: v.optional(v.id("externalUsers")),
     // Assignee (team member assigned to this feedback)

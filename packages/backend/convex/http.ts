@@ -179,6 +179,133 @@ registerStripeRoutes(http, components.stripe, {
 // GITHUB WEBHOOK HANDLER
 // ============================================
 
+type WebhookCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
+
+function webhookJson(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+async function handleInstallationWebhook(
+  ctx: WebhookCtx,
+  payload: Record<string, unknown>
+): Promise<Response | null> {
+  const action = payload.action as string;
+  if (action !== "deleted") {
+    return null;
+  }
+  const installation = payload.installation as { id: number };
+  await ctx.runMutation(internal.github.handleInstallationDeleted, {
+    installationId: String(installation.id),
+  });
+  return webhookJson({ success: true, action: "installation_deleted" });
+}
+
+async function handleReleaseWebhook(
+  ctx: WebhookCtx,
+  payload: Record<string, unknown>
+): Promise<Response> {
+  const release = payload.release as {
+    id: number;
+    tag_name: string;
+    name: string | null;
+    body: string | null;
+    html_url: string;
+    draft: boolean;
+    prerelease: boolean;
+    published_at: string | null;
+    created_at: string;
+  };
+  const action = payload.action as string;
+  const installationId = String((payload.installation as { id: number }).id);
+
+  const connection = await ctx.runQuery(
+    internal.github.getConnectionByInstallation,
+    { installationId }
+  );
+
+  if (connection) {
+    await ctx.runMutation(internal.github_actions.processReleaseWebhook, {
+      connectionId: connection._id,
+      organizationId: connection.organizationId,
+      release: {
+        id: String(release.id),
+        tagName: release.tag_name,
+        name: release.name ?? undefined,
+        body: release.body ?? undefined,
+        htmlUrl: release.html_url,
+        isDraft: release.draft,
+        isPrerelease: release.prerelease,
+        publishedAt: release.published_at
+          ? new Date(release.published_at).getTime()
+          : undefined,
+        createdAt: new Date(release.created_at).getTime(),
+      },
+      action,
+    });
+  }
+
+  return webhookJson({ success: true, action: "release_processed" });
+}
+
+async function handleIssueWebhook(
+  ctx: WebhookCtx,
+  payload: Record<string, unknown>
+): Promise<Response> {
+  const issue = payload.issue as {
+    id: number;
+    number: number;
+    title: string;
+    body: string | null;
+    html_url: string;
+    state: "open" | "closed";
+    labels: Array<{ name: string }>;
+    user: { login: string; avatar_url: string } | null;
+    milestone: { title: string } | null;
+    assignees: Array<{ login: string }>;
+    created_at: string;
+    updated_at: string;
+    closed_at: string | null;
+  };
+  const action = payload.action as string;
+  const installationId = String((payload.installation as { id: number }).id);
+
+  const connection = await ctx.runQuery(
+    internal.github.getConnectionByInstallation,
+    { installationId }
+  );
+
+  if (connection) {
+    await ctx.runMutation(internal.github_actions.processIssueWebhook, {
+      connectionId: connection._id,
+      organizationId: connection.organizationId,
+      issue: {
+        id: String(issue.id),
+        number: issue.number,
+        title: issue.title,
+        body: issue.body ?? undefined,
+        htmlUrl: issue.html_url,
+        state: issue.state,
+        labels: issue.labels.map((l) => l.name),
+        author: issue.user?.login,
+        authorAvatarUrl: issue.user?.avatar_url,
+        milestone: issue.milestone?.title,
+        assignees: issue.assignees.map((a) => a.login),
+        createdAt: new Date(issue.created_at).getTime(),
+        updatedAt: new Date(issue.updated_at).getTime(),
+        closedAt: issue.closed_at
+          ? new Date(issue.closed_at).getTime()
+          : undefined,
+      },
+      action,
+    });
+  }
+
+  return webhookJson({ success: true, action: "issue_processed" });
+}
+
 http.route({
   path: "/github-webhook",
   method: "POST",
@@ -196,61 +323,30 @@ http.route({
     try {
       const payload = JSON.parse(body) as Record<string, unknown>;
 
-      // Handle installation events (app installed/uninstalled)
       if (eventType === "installation") {
-        const action = payload.action as string;
-        const installation = payload.installation as {
-          id: number;
-          account: { login: string };
-        };
-
-        if (action === "deleted") {
-          // App was uninstalled - remove the connection
-          await ctx.runMutation(internal.github.handleInstallationDeleted, {
-            installationId: String(installation.id),
-          });
-          return new Response(
-            JSON.stringify({ success: true, action: "installation_deleted" }),
-            {
-              status: 200,
-              headers: { "Content-Type": "application/json" },
-            }
-          );
+        const result = await handleInstallationWebhook(ctx, payload);
+        if (result) {
+          return result;
         }
       }
 
-      // Handle release events (placeholder for future implementation)
       if (eventType === "release") {
-        const release = payload.release as { tag_name: string };
-        return new Response(
-          JSON.stringify({
-            success: true,
-            action: "release_event_received",
-            release: release.tag_name,
-          }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
+        return await handleReleaseWebhook(ctx, payload);
       }
 
-      // Acknowledge other events
-      return new Response(JSON.stringify({ success: true, event: eventType }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      if (eventType === "issues") {
+        return await handleIssueWebhook(ctx, payload);
+      }
+
+      return webhookJson({ success: true, event: eventType });
     } catch (error) {
       console.error("GitHub webhook error:", error);
-      return new Response(
-        JSON.stringify({
+      return webhookJson(
+        {
           error: "Failed to process webhook",
           message: error instanceof Error ? error.message : "Unknown error",
-        }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
+        },
+        500
       );
     }
   }),

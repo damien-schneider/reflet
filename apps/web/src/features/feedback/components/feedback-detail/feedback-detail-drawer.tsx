@@ -1,11 +1,13 @@
 "use client";
 
-import { CaretLeft, CaretRight, X } from "@phosphor-icons/react";
+import { CalendarBlank, CaretLeft, CaretRight, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
+import { formatDistanceToNow } from "date-fns";
 import { useHotkeys } from "react-hotkeys-hook";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -17,6 +19,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { CommentsSection } from "./comments-section";
 import { FeedbackContent } from "./feedback-content";
@@ -175,6 +182,59 @@ export function FeedbackDetailDrawer({
             View and manage feedback details
           </SheetDescription>
 
+          {/* Metadata: Author & Date */}
+          <div className="flex items-center gap-3">
+            {/* Author */}
+            {feedback?.author && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className="flex items-center gap-1.5">
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={feedback.author.image ?? undefined} />
+                      <AvatarFallback className="text-[10px]">
+                        {feedback.author.name?.charAt(0) ?? "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-muted-foreground text-xs">
+                      {feedback.author.name ?? "Anonymous"}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Posted by {feedback.author.name ?? "Anonymous"}
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Date */}
+            {feedback?.createdAt && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className="flex items-center gap-1 text-muted-foreground text-xs">
+                    <CalendarBlank className="h-3.5 w-3.5" />
+                    <span>
+                      {formatDistanceToNow(feedback.createdAt, {
+                        addSuffix: true,
+                      })}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {new Date(feedback.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
           {/* Navigation controls */}
           <div className="flex items-center gap-1">
             {showNavigation && (
@@ -239,6 +299,7 @@ interface FeedbackDetailContentProps {
           _id: Id<"tags">;
           name: string;
           color: string;
+          appliedByAi?: boolean;
         } | null>;
         hasVoted?: boolean;
         userVoteType?: "upvote" | "downvote" | null;
@@ -288,6 +349,43 @@ function FeedbackDetailContent({
       <div className="flex flex-col">
         {/* Metadata bar */}
         <FeedbackMetadataBar
+          aiComplexity={
+            "aiComplexity" in feedback
+              ? (feedback.aiComplexity as
+                  | "trivial"
+                  | "simple"
+                  | "moderate"
+                  | "complex"
+                  | "very_complex"
+                  | undefined)
+              : undefined
+          }
+          aiComplexityReasoning={
+            "aiComplexityReasoning" in feedback
+              ? (feedback.aiComplexityReasoning as string | undefined)
+              : undefined
+          }
+          aiPriority={
+            "aiPriority" in feedback
+              ? (feedback.aiPriority as
+                  | "critical"
+                  | "high"
+                  | "medium"
+                  | "low"
+                  | "none"
+                  | undefined)
+              : undefined
+          }
+          aiPriorityReasoning={
+            "aiPriorityReasoning" in feedback
+              ? (feedback.aiPriorityReasoning as string | undefined)
+              : undefined
+          }
+          aiTimeEstimate={
+            "aiTimeEstimate" in feedback
+              ? (feedback.aiTimeEstimate as string | undefined)
+              : undefined
+          }
           assignee={feedback.assignee}
           attachments={
             "attachments" in feedback
@@ -295,13 +393,45 @@ function FeedbackDetailContent({
               : undefined
           }
           author={feedback.author}
+          complexity={
+            "complexity" in feedback
+              ? (feedback.complexity as
+                  | "trivial"
+                  | "simple"
+                  | "moderate"
+                  | "complex"
+                  | "very_complex"
+                  | undefined)
+              : undefined
+          }
           createdAt={feedback.createdAt}
+          deadline={
+            "deadline" in feedback
+              ? (feedback.deadline as number | undefined)
+              : undefined
+          }
           description={feedback.description}
           feedbackId={feedbackId}
           isAdmin={isAdmin}
           organizationId={feedback.organizationId}
           organizationStatusId={feedback.organizationStatusId}
+          priority={
+            "priority" in feedback
+              ? (feedback.priority as
+                  | "critical"
+                  | "high"
+                  | "medium"
+                  | "low"
+                  | "none"
+                  | undefined)
+              : undefined
+          }
           tags={feedback.tags}
+          timeEstimate={
+            "timeEstimate" in feedback
+              ? (feedback.timeEstimate as string | undefined)
+              : undefined
+          }
           title={feedback.title}
           userVoteType={feedback.userVoteType ?? null}
           voteCount={feedback.voteCount ?? 0}

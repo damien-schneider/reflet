@@ -165,7 +165,13 @@ export const listByOrganization = query({
         .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
         .collect();
       const tags = await Promise.all(
-        feedbackTags.map(async (ft) => ctx.db.get(ft.tagId))
+        feedbackTags.map(async (ft) => {
+          const tag = await ctx.db.get(ft.tagId);
+          if (!tag) {
+            return null;
+          }
+          return { ...tag, appliedByAi: ft.appliedByAi ?? false };
+        })
       );
 
       // Get all votes

@@ -5,4 +5,5 @@ export interface FeedbackTag {
   name: string;
   color: string;
   icon?: string;
+  appliedByAi?: boolean;
 }

@@ -15,6 +15,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag-dialog";
 import { TagFormPopover } from "@/features/tags/components/tag-form-popover";
+import { AutoTagButton } from "./auto-tag-button";
 
 export interface Tag {
   _id: string;
@@ -124,6 +125,9 @@ export const TagFilterBar = memo(function TagFilterBar({
         className="mx-auto max-w-6xl"
         classNameViewport="flex gap-2 pb-5 pt-1 px-4"
       >
+        {/* AI Auto-tag button (admin only) */}
+        {isAdmin && <AutoTagButton organizationId={organizationId} />}
+
         {/* All button */}
         <Button
           active={isAllSelected}

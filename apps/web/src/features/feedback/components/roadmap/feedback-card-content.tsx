@@ -1,4 +1,9 @@
-import { CaretUp, ChatCircle, DotsSixVertical } from "@phosphor-icons/react";
+import {
+  CaretUp,
+  ChatCircle,
+  DotsSixVertical,
+  Sparkle,
+} from "@phosphor-icons/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -63,6 +68,14 @@ export function FeedbackCardContent({
                 >
                   {tag.icon && <span>{tag.icon}</span>}
                   {tag.name}
+                  {tag.appliedByAi && (
+                    <span title="Applied by AI">
+                      <Sparkle
+                        className="h-2.5 w-2.5 opacity-60"
+                        weight="fill"
+                      />
+                    </span>
+                  )}
                 </Badge>
               )
           )}

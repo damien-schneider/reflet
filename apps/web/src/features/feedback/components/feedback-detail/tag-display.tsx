@@ -1,4 +1,4 @@
-import { CaretDown, Tag } from "@phosphor-icons/react";
+import { CaretDown, Sparkle, Tag, X } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 
 import { Badge } from "@/components/ui/badge";
@@ -37,27 +37,31 @@ export function TagDisplay({
 }: TagDisplayProps) {
   if (isAdmin && availableTags) {
     return (
-      <DropdownMenu>
-        {validTags.length > 0 ? (
-          <DropdownMenuTrigger
-            className="flex cursor-pointer select-none items-center gap-1.5"
-            render={<button type="button" />}
+      <div className="flex items-center gap-1.5">
+        {validTags.map((tag) => (
+          <Badge
+            className="h-8 gap-1 rounded-full px-3 font-normal text-xs"
+            color={tag.color}
+            key={tag._id}
           >
-            {validTags.map((tag, index) => (
-              <Badge
-                className="h-8 rounded-full px-3 font-normal text-xs"
-                color={tag.color}
-                key={tag._id}
-              >
-                {tag.icon && <span>{tag.icon}</span>}
-                {tag.name}
-                {index === validTags.length - 1 && (
-                  <CaretDown className="h-3 w-3 opacity-70" />
-                )}
-              </Badge>
-            ))}
-          </DropdownMenuTrigger>
-        ) : (
+            {tag.icon && <span>{tag.icon}</span>}
+            {tag.name}
+            {tag.appliedByAi && (
+              <span title="Applied by AI">
+                <Sparkle className="h-3 w-3 opacity-60" weight="fill" />
+              </span>
+            )}
+            <button
+              className="ml-0.5 rounded-full p-0.5 opacity-60 transition-opacity hover:opacity-100"
+              onClick={() => onToggleTag(tag._id, true)}
+              title={`Remove ${tag.name}`}
+              type="button"
+            >
+              <X className="h-2.5 w-2.5" />
+            </button>
+          </Badge>
+        ))}
+        <DropdownMenu>
           <DropdownMenuTrigger
             className="flex h-8 w-auto cursor-pointer select-none items-center gap-1.5 rounded-full border border-input border-dashed bg-transparent px-3 text-sm transition-colors"
             render={<button type="button" />}
@@ -66,29 +70,29 @@ export function TagDisplay({
             <span className="text-muted-foreground text-xs">Tags</span>
             <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />
           </DropdownMenuTrigger>
-        )}
-        <DropdownMenuContent align="start" className="w-48">
-          {availableTags.map((tag) => {
-            const isApplied = feedbackTagIds.has(tag._id);
-            return (
-              <DropdownMenuCheckboxItem
-                checked={isApplied}
-                key={tag._id}
-                onCheckedChange={() => onToggleTag(tag._id, isApplied)}
-              >
-                <div
-                  className={cn(
-                    "h-3 w-3 shrink-0 rounded-sm border",
-                    getTagSwatchClass(tag.color)
-                  )}
-                />
-                {tag.icon && <span>{tag.icon}</span>}
-                {tag.name}
-              </DropdownMenuCheckboxItem>
-            );
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <DropdownMenuContent align="start" className="w-48">
+            {availableTags.map((tag) => {
+              const isApplied = feedbackTagIds.has(tag._id);
+              return (
+                <DropdownMenuCheckboxItem
+                  checked={isApplied}
+                  key={tag._id}
+                  onCheckedChange={() => onToggleTag(tag._id, isApplied)}
+                >
+                  <div
+                    className={cn(
+                      "h-3 w-3 shrink-0 rounded-sm border",
+                      getTagSwatchClass(tag.color)
+                    )}
+                  />
+                  {tag.icon && <span>{tag.icon}</span>}
+                  {tag.name}
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     );
   }
 
@@ -103,6 +107,11 @@ export function TagDisplay({
           >
             {tag.icon && <span>{tag.icon}</span>}
             {tag.name}
+            {tag.appliedByAi && (
+              <span title="Applied by AI">
+                <Sparkle className="h-3 w-3 opacity-60" weight="fill" />
+              </span>
+            )}
           </Badge>
         ))}
       </div>

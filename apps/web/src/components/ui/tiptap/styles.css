@@ -239,7 +239,18 @@
   color: var(--foreground);
 }
 
-/* Headings */
+/* Headings - Uses Instrument Serif (font-display) to match app typography */
+.tiptap-markdown-editor h1,
+.tiptap-markdown-editor h2,
+.tiptap-markdown-editor h3,
+.tiptap-renderer h1,
+.tiptap-renderer h2,
+.tiptap-renderer h3 {
+  font-family: var(--font-display);
+  font-variation-settings: var(--font-display--font-variation-settings);
+  text-wrap: balance;
+}
+
 .tiptap-markdown-editor h1,
 .tiptap-renderer h1 {
   font-size: 1.25rem;
@@ -469,7 +480,15 @@
   opacity: 0.5;
 }
 
-/* Minimal editor headings */
+/* Minimal editor headings - Uses Instrument Serif (font-display) to match app typography */
+.tiptap-minimal-editor h1,
+.tiptap-minimal-editor h2,
+.tiptap-minimal-editor h3 {
+  font-family: var(--font-display);
+  font-variation-settings: var(--font-display--font-variation-settings);
+  text-wrap: balance;
+}
+
 .tiptap-minimal-editor h1 {
   font-size: 1.25rem;
   font-weight: 500;

@@ -12,6 +12,7 @@ import { H1, Muted, Text } from "@/components/ui/typography";
 import { ReleaseSetupWizard } from "@/features/changelog/components/release-setup-wizard";
 import { AutomationSection } from "./_components/automation-section";
 import { CurrentConfigSection } from "./_components/current-config-section";
+import { ManualSyncSection } from "./_components/manual-sync-section";
 import { SyncDirectionSection } from "./_components/sync-direction-section";
 import { VersioningSection } from "./_components/versioning-section";
 
@@ -190,6 +191,13 @@ export default function ReleaseSettingsPage({
           {settings?.syncDirection && (
             <CurrentConfigSection settings={settings} />
           )}
+
+          <ManualSyncSection
+            isAdmin={isAdmin}
+            lastSyncAt={githubStatus?.lastSyncAt}
+            lastSyncStatus={githubStatus?.lastSyncStatus}
+            organizationId={orgId}
+          />
 
           <ReleaseSetupWizard
             onOpenChange={setShowWizard}
