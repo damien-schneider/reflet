@@ -237,7 +237,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
                 <Muted className="mt-2">Choose a workspace to continue.</Muted>
               </div>
               <nav aria-label="Organizations" className="flex flex-col gap-2">
-                {organizations.map((org) =>
+                {organizations?.map((org) =>
                   org ? (
                     <Link
                       className="group flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-all hover:ring-olive-400 dark:hover:ring-olive-600"

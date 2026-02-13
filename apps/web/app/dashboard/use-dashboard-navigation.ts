@@ -11,7 +11,7 @@ type OrgFromQuery = {
 export interface DashboardNavigationState {
   orgSlug: string | undefined;
   org: OrgFromQuery | undefined;
-  organizations: OrgFromList[] | undefined;
+  organizations: (OrgFromList | null)[] | undefined;
 }
 
 export interface DashboardNavigationResult {
