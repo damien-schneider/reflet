@@ -653,61 +653,48 @@ export const processBulkAutoTagging = internalAction({
       status: "processing",
     });
 
-    let processedItems = 0;
+    // Process all items in parallel
+    const results = await Promise.allSettled(
+      untaggedIds.map((feedbackId) =>
+        ctx
+          .runAction(internal.feedback_auto_tagging.processAutoTagging, {
+            feedbackId,
+          })
+          .then((result) => ({ feedbackId, result }))
+      )
+    );
+
+    // Collect results
+    const errors: { feedbackId: Id<"feedback">; error: string }[] = [];
     let successfulItems = 0;
     let failedItems = 0;
 
-    // Process all items
-    for (const feedbackId of untaggedIds) {
-      try {
-        const result = await ctx.runAction(
-          internal.feedback_auto_tagging.processAutoTagging,
-          { feedbackId }
-        );
-
-        processedItems++;
-        if (result.success) {
+    for (const settled of results) {
+      if (settled.status === "fulfilled") {
+        if (settled.value.result.success) {
           successfulItems++;
         } else {
           failedItems++;
-          await ctx.runMutation(
-            internal.feedback_auto_tagging.updateJobProgress,
-            {
-              jobId,
-              processedItems,
-              successfulItems,
-              failedItems,
-              error: {
-                feedbackId,
-                error: result.reason || "Unknown error",
-              },
-            }
-          );
+          errors.push({
+            feedbackId: settled.value.feedbackId,
+            error: settled.value.result.reason || "Unknown error",
+          });
         }
-      } catch (err) {
-        processedItems++;
+      } else {
         failedItems++;
-        await ctx.runMutation(
-          internal.feedback_auto_tagging.updateJobProgress,
-          {
-            jobId,
-            processedItems,
-            successfulItems,
-            failedItems,
-            error: {
-              feedbackId,
-              error: err instanceof Error ? err.message : "Unknown error",
-            },
-          }
-        );
       }
+    }
 
-      // Update progress after each item
+    const processedItems = successfulItems + failedItems;
+
+    // Report errors
+    for (const error of errors) {
       await ctx.runMutation(internal.feedback_auto_tagging.updateJobProgress, {
         jobId,
         processedItems,
         successfulItems,
         failedItems,
+        error,
       });
     }
 
