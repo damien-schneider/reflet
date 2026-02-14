@@ -8,7 +8,7 @@ import { generateSimpleToken } from "./widget-utils";
 export class RefletFeedbackWidget {
   private readonly config: WidgetConfig;
   private readonly api: FeedbackApi;
-  private container: HTMLDivElement | null = null;
+  private container: HTMLElement | null = null;
   private shadowRoot: ShadowRoot | null = null;
   private readonly state: WidgetState = {
     isOpen: false,
@@ -76,7 +76,7 @@ export class RefletFeedbackWidget {
     if (mode === "inline" && targetId) {
       const target = document.getElementById(targetId);
       if (target) {
-        this.container = target as HTMLDivElement;
+        this.container = target;
         this.shadowRoot = this.container.attachShadow({ mode: "closed" });
         this.state.isOpen = true; // Inline mode is always "open"
         return;
@@ -261,14 +261,15 @@ export class RefletFeedbackWidget {
       return;
     }
 
-    const titleInput = this.shadowRoot.querySelector(
-      "#feedback-title"
-    ) as HTMLInputElement;
-    const descInput = this.shadowRoot.querySelector(
-      "#feedback-description"
-    ) as HTMLTextAreaElement;
+    const titleInput = this.shadowRoot.querySelector("#feedback-title");
+    const descInput = this.shadowRoot.querySelector("#feedback-description");
 
-    if (!(titleInput && descInput)) {
+    if (
+      !(
+        titleInput instanceof HTMLInputElement &&
+        descInput instanceof HTMLTextAreaElement
+      )
+    ) {
       return;
     }
 
@@ -300,10 +301,8 @@ export class RefletFeedbackWidget {
       return;
     }
 
-    const input = this.shadowRoot.querySelector(
-      "#comment-input"
-    ) as HTMLTextAreaElement;
-    if (!input) {
+    const input = this.shadowRoot.querySelector("#comment-input");
+    if (!(input instanceof HTMLTextAreaElement)) {
       return;
     }
 
@@ -323,10 +322,8 @@ export class RefletFeedbackWidget {
       this.render();
 
       // Clear input
-      const newInput = this.shadowRoot.querySelector(
-        "#comment-input"
-      ) as HTMLTextAreaElement;
-      if (newInput) {
+      const newInput = this.shadowRoot.querySelector("#comment-input");
+      if (newInput instanceof HTMLTextAreaElement) {
         newInput.value = "";
       }
     } catch (error) {

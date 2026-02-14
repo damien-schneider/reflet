@@ -1,6 +1,7 @@
 "use client";
 
 import { DotsThreeVertical, Pencil, Trash } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,7 +16,7 @@ import {
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 
 export interface CommentData {
-  _id: string;
+  _id: Id<"comments">;
   body: string;
   createdAt: number;
   authorName?: string;
@@ -28,20 +29,20 @@ export interface CommentItemProps {
   comment: CommentData;
   replies: CommentData[];
   isAdmin: boolean;
-  replyingTo: string | null;
+  replyingTo: Id<"comments"> | null;
   replyContent: string;
-  editingCommentId: string | null;
+  editingCommentId: Id<"comments"> | null;
   editCommentContent: string;
   isSubmittingComment: boolean;
-  onReply: (id: string) => void;
+  onReply: (id: Id<"comments">) => void;
   onReplyCancel: () => void;
   onReplyContentChange: (content: string) => void;
-  onSubmitReply: (parentId: string) => Promise<void>;
-  onEdit: (id: string, content: string) => void;
+  onSubmitReply: (parentId: Id<"comments">) => Promise<void>;
+  onEdit: (id: Id<"comments">, content: string) => void;
   onEditCancel: () => void;
   onEditContentChange: (content: string) => void;
-  onUpdate: (id: string) => Promise<void>;
-  onDelete: (id: string) => void;
+  onUpdate: (id: Id<"comments">) => Promise<void>;
+  onDelete: (id: Id<"comments">) => void;
 }
 
 export function CommentItem({
@@ -211,13 +212,13 @@ export function CommentItem({
 interface ReplyItemProps {
   reply: CommentData;
   isAdmin: boolean;
-  editingCommentId: string | null;
+  editingCommentId: Id<"comments"> | null;
   editCommentContent: string;
-  onEdit: (id: string, content: string) => void;
+  onEdit: (id: Id<"comments">, content: string) => void;
   onEditCancel: () => void;
   onEditContentChange: (content: string) => void;
-  onUpdate: (id: string) => Promise<void>;
-  onDelete: (id: string) => void;
+  onUpdate: (id: Id<"comments">) => Promise<void>;
+  onDelete: (id: Id<"comments">) => void;
 }
 
 function ReplyItem({

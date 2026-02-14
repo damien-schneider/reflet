@@ -1,11 +1,121 @@
 import { registerRoutes as registerStripeRoutes } from "@convex-dev/stripe";
 import { httpRouter } from "convex/server";
+import { z } from "zod";
 import { components, internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Id, TableNames } from "./_generated/dataModel";
 import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { decodeUserToken } from "./feedback_api_auth";
 import { generateRssFeed } from "./rss";
+
+// ============================================
+// ZOD SCHEMAS & TYPE-SAFE HELPERS
+// ============================================
+
+const webhookInstallationSchema = z.object({ id: z.number() });
+
+const releasePayloadSchema = z.object({
+  release: z.object({
+    id: z.number(),
+    tag_name: z.string(),
+    name: z.string().nullable(),
+    body: z.string().nullable(),
+    html_url: z.string(),
+    draft: z.boolean(),
+    prerelease: z.boolean(),
+    published_at: z.string().nullable(),
+    created_at: z.string(),
+  }),
+  action: z.string(),
+  installation: webhookInstallationSchema,
+});
+
+const issuePayloadSchema = z.object({
+  issue: z.object({
+    id: z.number(),
+    number: z.number(),
+    title: z.string(),
+    body: z.string().nullable(),
+    html_url: z.string(),
+    state: z.enum(["open", "closed"]),
+    labels: z.array(z.object({ name: z.string() })),
+    user: z.object({ login: z.string(), avatar_url: z.string() }).nullable(),
+    milestone: z.object({ title: z.string() }).nullable(),
+    assignees: z.array(z.object({ login: z.string() })),
+    created_at: z.string(),
+    updated_at: z.string(),
+    closed_at: z.string().nullable(),
+  }),
+  action: z.string(),
+  installation: webhookInstallationSchema,
+});
+
+const createFeedbackSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  tagId: z.string().optional(),
+});
+
+const voteFeedbackSchema = z.object({
+  feedbackId: z.string().optional(),
+  voteType: z.enum(["upvote", "downvote"]).optional(),
+});
+
+const commentBodySchema = z.object({
+  feedbackId: z.string().optional(),
+  body: z.string().optional(),
+  parentId: z.string().optional(),
+});
+
+const feedbackIdBodySchema = z.object({
+  feedbackId: z.string().optional(),
+});
+
+const FEEDBACK_STATUSES = [
+  "open",
+  "under_review",
+  "planned",
+  "in_progress",
+  "completed",
+  "closed",
+] as const;
+const FEEDBACK_SORT_OPTIONS = [
+  "votes",
+  "newest",
+  "oldest",
+  "comments",
+] as const;
+const COMMENTS_SORT_OPTIONS = ["newest", "oldest"] as const;
+
+function parseEnumParam<T extends string>(
+  value: string | null,
+  validValues: readonly T[]
+): T | undefined {
+  if (value && (validValues as readonly string[]).includes(value)) {
+    return value as T;
+  }
+  return undefined;
+}
+
+function parseId<T extends TableNames>(
+  value: string | null | undefined,
+  fieldName: string
+): Id<T> {
+  if (!value) {
+    throw new Error(`Missing required ID: ${fieldName}`);
+  }
+  return value as Id<T>;
+}
+
+function parseOptionalId<T extends TableNames>(
+  value: string | null | undefined
+): Id<T> | undefined {
+  return value ? (value as Id<T>) : undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 const http = httpRouter();
 
@@ -192,11 +302,10 @@ async function handleInstallationWebhook(
   ctx: WebhookCtx,
   payload: Record<string, unknown>
 ): Promise<Response | null> {
-  const action = payload.action as string;
-  if (action !== "deleted") {
+  if (typeof payload.action !== "string" || payload.action !== "deleted") {
     return null;
   }
-  const installation = payload.installation as { id: number };
+  const installation = webhookInstallationSchema.parse(payload.installation);
   await ctx.runMutation(internal.github.handleInstallationDeleted, {
     installationId: String(installation.id),
   });
@@ -207,19 +316,8 @@ async function handleReleaseWebhook(
   ctx: WebhookCtx,
   payload: Record<string, unknown>
 ): Promise<Response> {
-  const release = payload.release as {
-    id: number;
-    tag_name: string;
-    name: string | null;
-    body: string | null;
-    html_url: string;
-    draft: boolean;
-    prerelease: boolean;
-    published_at: string | null;
-    created_at: string;
-  };
-  const action = payload.action as string;
-  const installationId = String((payload.installation as { id: number }).id);
+  const { release, action, installation } = releasePayloadSchema.parse(payload);
+  const installationId = String(installation.id);
 
   const connection = await ctx.runQuery(
     internal.github.getConnectionByInstallation,
@@ -254,23 +352,8 @@ async function handleIssueWebhook(
   ctx: WebhookCtx,
   payload: Record<string, unknown>
 ): Promise<Response> {
-  const issue = payload.issue as {
-    id: number;
-    number: number;
-    title: string;
-    body: string | null;
-    html_url: string;
-    state: "open" | "closed";
-    labels: Array<{ name: string }>;
-    user: { login: string; avatar_url: string } | null;
-    milestone: { title: string } | null;
-    assignees: Array<{ login: string }>;
-    created_at: string;
-    updated_at: string;
-    closed_at: string | null;
-  };
-  const action = payload.action as string;
-  const installationId = String((payload.installation as { id: number }).id);
+  const { issue, action, installation } = issuePayloadSchema.parse(payload);
+  const installationId = String(installation.id);
 
   const connection = await ctx.runQuery(
     internal.github.getConnectionByInstallation,
@@ -321,7 +404,11 @@ http.route({
     // TODO: Verify webhook signature using GITHUB_WEBHOOK_SECRET for production
 
     try {
-      const payload = JSON.parse(body) as Record<string, unknown>;
+      const parsed: unknown = JSON.parse(body);
+      if (!isRecord(parsed)) {
+        return webhookJson({ error: "Invalid webhook payload" }, 400);
+      }
+      const payload = parsed;
 
       if (eventType === "installation") {
         const result = await handleInstallationWebhook(ctx, payload);
@@ -421,21 +508,15 @@ http.route({
       const url = new URL(request.url);
       const statusId = url.searchParams.get("statusId");
       const tagId = url.searchParams.get("tagId");
-      const status = url.searchParams.get("status") as
-        | "open"
-        | "under_review"
-        | "planned"
-        | "in_progress"
-        | "completed"
-        | "closed"
-        | null;
+      const status = parseEnumParam(
+        url.searchParams.get("status"),
+        FEEDBACK_STATUSES
+      );
       const search = url.searchParams.get("search");
-      const sortBy = url.searchParams.get("sortBy") as
-        | "votes"
-        | "newest"
-        | "oldest"
-        | "comments"
-        | null;
+      const sortBy = parseEnumParam(
+        url.searchParams.get("sortBy"),
+        FEEDBACK_SORT_OPTIONS
+      );
       const limit = url.searchParams.get("limit");
       const offset = url.searchParams.get("offset");
 
@@ -452,9 +533,8 @@ http.route({
         internal.feedback_api.listFeedbackByOrganization,
         {
           organizationId,
-          statusId:
-            (statusId as Id<"organizationStatuses"> | undefined) ?? undefined,
-          tagId: (tagId as Id<"tags"> | undefined) ?? undefined,
+          statusId: parseOptionalId<"organizationStatuses">(statusId),
+          tagId: parseOptionalId<"tags">(tagId),
           status: status ?? undefined,
           search: search ?? undefined,
           sortBy: sortBy ?? undefined,
@@ -496,11 +576,13 @@ http.route({
       const { organizationId, externalUserId, isSecretKey } = authResult.auth;
 
       const url = new URL(request.url);
-      const feedbackId = url.searchParams.get("id") as Id<"feedback"> | null;
+      const feedbackIdParam = url.searchParams.get("id");
 
-      if (!feedbackId) {
+      if (!feedbackIdParam) {
         return errorResponse("Missing feedback ID", 400);
       }
+
+      const feedbackId = parseId<"feedback">(feedbackIdParam, "id");
 
       const access = await checkOrganizationAccess(
         ctx,
@@ -562,13 +644,9 @@ http.route({
         );
       }
 
-      let body: { title?: string; description?: string; tagId?: string };
+      let body: z.infer<typeof createFeedbackSchema>;
       try {
-        body = (await request.json()) as {
-          title?: string;
-          description?: string;
-          tagId?: string;
-        };
+        body = createFeedbackSchema.parse(await request.json());
       } catch {
         return errorResponse("Invalid JSON body", 400);
       }
@@ -593,7 +671,7 @@ http.route({
           organizationId,
           title,
           description,
-          tagId: tagId as Id<"tags"> | undefined,
+          tagId: parseOptionalId<"tags">(tagId),
           externalUserId,
         }
       );
@@ -636,9 +714,9 @@ http.route({
         );
       }
 
-      let body: { feedbackId?: string; voteType?: "upvote" | "downvote" };
+      let body: z.infer<typeof voteFeedbackSchema>;
       try {
-        body = (await request.json()) as typeof body;
+        body = voteFeedbackSchema.parse(await request.json());
       } catch {
         return errorResponse("Invalid JSON body", 400);
       }
@@ -661,7 +739,7 @@ http.route({
         internal.feedback_api.voteFeedbackByOrganization,
         {
           organizationId,
-          feedbackId: feedbackId as Id<"feedback">,
+          feedbackId: parseId<"feedback">(feedbackId, "feedbackId"),
           externalUserId,
           voteType,
         }
@@ -697,14 +775,17 @@ http.route({
 
     const { organizationId } = authResult.auth;
     const url = new URL(request.url);
-    const feedbackId = url.searchParams.get(
-      "feedbackId"
-    ) as Id<"feedback"> | null;
-    const sortBy = url.searchParams.get("sortBy") as "newest" | "oldest" | null;
+    const feedbackIdParam = url.searchParams.get("feedbackId");
+    const sortBy = parseEnumParam(
+      url.searchParams.get("sortBy"),
+      COMMENTS_SORT_OPTIONS
+    );
 
-    if (!feedbackId) {
+    if (!feedbackIdParam) {
       return errorResponse("Feedback ID is required", 400);
     }
+
+    const feedbackId = parseId<"feedback">(feedbackIdParam, "feedbackId");
 
     const result = await ctx.runQuery(
       internal.feedback_api.listCommentsByOrganization,
@@ -745,11 +826,7 @@ http.route({
       );
     }
 
-    const body = (await request.json()) as {
-      feedbackId?: string;
-      body?: string;
-      parentId?: string;
-    };
+    const body = commentBodySchema.parse(await request.json());
 
     if (!(body.feedbackId && body.body)) {
       return errorResponse("Feedback ID and comment body are required", 400);
@@ -760,9 +837,9 @@ http.route({
         internal.feedback_api.addCommentByOrganization,
         {
           organizationId,
-          feedbackId: body.feedbackId as Id<"feedback">,
+          feedbackId: parseId<"feedback">(body.feedbackId, "feedbackId"),
           body: body.body,
-          parentId: body.parentId as Id<"comments"> | undefined,
+          parentId: parseOptionalId<"comments">(body.parentId),
           externalUserId,
         }
       );
@@ -803,7 +880,7 @@ http.route({
       );
     }
 
-    const body = (await request.json()) as { feedbackId?: string };
+    const body = feedbackIdBodySchema.parse(await request.json());
 
     if (!body.feedbackId) {
       return errorResponse("Feedback ID is required", 400);
@@ -814,7 +891,7 @@ http.route({
         internal.feedback_api.subscribeFeedbackByOrganization,
         {
           organizationId,
-          feedbackId: body.feedbackId as Id<"feedback">,
+          feedbackId: parseId<"feedback">(body.feedbackId, "feedbackId"),
           externalUserId,
         }
       );
@@ -855,7 +932,7 @@ http.route({
       );
     }
 
-    const body = (await request.json()) as { feedbackId?: string };
+    const body = feedbackIdBodySchema.parse(await request.json());
 
     if (!body.feedbackId) {
       return errorResponse("Feedback ID is required", 400);
@@ -866,7 +943,7 @@ http.route({
         internal.feedback_api.unsubscribeFeedbackByOrganization,
         {
           organizationId,
-          feedbackId: body.feedbackId as Id<"feedback">,
+          feedbackId: parseId<"feedback">(body.feedbackId, "feedbackId"),
           externalUserId,
         }
       );

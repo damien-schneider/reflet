@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 
 interface DeleteTagDialogProps {
-  tagId: string | null;
+  tagId: Id<"tags"> | null;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
@@ -32,7 +32,7 @@ export function DeleteTagDialog({
     }
 
     try {
-      await deleteTag({ id: tagId as Id<"tags"> });
+      await deleteTag({ id: tagId });
       onSuccess();
     } catch (error) {
       console.error("Failed to delete tag:", error);

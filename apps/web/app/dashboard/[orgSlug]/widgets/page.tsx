@@ -2,7 +2,6 @@
 
 import { ChatCircle, Code, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { use, useState } from "react";
 
@@ -31,7 +30,7 @@ export default function WidgetsPage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const widgets = useQuery(
     api.widget_admin.list,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const createWidget = useMutation(api.widget_admin.create);
 
@@ -61,7 +60,7 @@ export default function WidgetsPage({
     setIsCreating(true);
     try {
       await createWidget({
-        organizationId: org._id as Id<"organizations">,
+        organizationId: org._id,
         name: widgetName.trim(),
       });
       setWidgetName("");

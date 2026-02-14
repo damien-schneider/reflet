@@ -15,6 +15,27 @@ declare global {
   }
 }
 
+function parseMode(value: string | null): WidgetConfig["mode"] {
+  if (value === "floating" || value === "inline" || value === "portal") {
+    return value;
+  }
+  return "floating";
+}
+
+function parsePosition(value: string | null): WidgetConfig["position"] {
+  if (value === "bottom-right" || value === "bottom-left") {
+    return value;
+  }
+  return "bottom-right";
+}
+
+function parseTheme(value: string | null): WidgetConfig["theme"] {
+  if (value === "light" || value === "dark" || value === "auto") {
+    return value;
+  }
+  return "light";
+}
+
 /**
  * Initialize the widget from global config
  */
@@ -24,22 +45,17 @@ function initWidget(): void {
 
   if (!config?.publicKey) {
     // Also try data attributes on script tag
-    const script = document.currentScript as HTMLScriptElement | null;
+    const currentScript = document.currentScript;
+    const script =
+      currentScript instanceof HTMLScriptElement ? currentScript : null;
     if (script) {
       const publicKey = script.getAttribute("data-public-key");
       if (publicKey) {
         const widgetConfig: WidgetConfig = {
           publicKey,
-          mode:
-            (script.getAttribute("data-mode") as WidgetConfig["mode"]) ??
-            "floating",
-          position:
-            (script.getAttribute(
-              "data-position"
-            ) as WidgetConfig["position"]) ?? "bottom-right",
-          theme:
-            (script.getAttribute("data-theme") as WidgetConfig["theme"]) ??
-            "light",
+          mode: parseMode(script.getAttribute("data-mode")),
+          position: parsePosition(script.getAttribute("data-position")),
+          theme: parseTheme(script.getAttribute("data-theme")),
           primaryColor: script.getAttribute("data-color") ?? undefined,
         };
 

@@ -96,10 +96,10 @@ export function generateRssFeed(
     })
     .join("\n");
 
-  const lastBuildDate =
-    releases.length > 0 && releases[0].publishedAt
-      ? new Date(releases[0].publishedAt).toUTCString()
-      : new Date().toUTCString();
+  const firstRelease = releases[0];
+  const lastBuildDate = firstRelease?.publishedAt
+    ? new Date(firstRelease.publishedAt).toUTCString()
+    : new Date().toUTCString();
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">

@@ -1,13 +1,11 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { use } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { H2, Muted } from "@/components/ui/typography";
-import type { BoardView as BoardViewType } from "@/features/feedback/components/board-view-toggle";
 import { FeedbackBoard } from "@/features/feedback/components/feedback-board";
 
 export default function OrgDashboard({
@@ -21,7 +19,7 @@ export default function OrgDashboard({
   // Check if user is a member
   const membership = useQuery(
     api.members.getMembership,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const isMember = !!membership;
   const isAdmin = membership?.role === "admin" || membership?.role === "owner";
@@ -59,8 +57,7 @@ export default function OrgDashboard({
 
   /** When undefined, FeedbackBoard uses theme primary (olive brand) */
   const primaryColor = org.primaryColor;
-  const defaultView =
-    (org.feedbackSettings?.defaultView as BoardViewType) ?? "feed";
+  const defaultView = org.feedbackSettings?.defaultView ?? "feed";
 
   return (
     <FeedbackBoard
@@ -68,7 +65,7 @@ export default function OrgDashboard({
       isAdmin={isAdmin}
       isMember={isMember}
       isPublic={org.isPublic ?? false}
-      organizationId={org._id as Id<"organizations">}
+      organizationId={org._id}
       orgSlug={orgSlug}
       primaryColor={primaryColor}
     />

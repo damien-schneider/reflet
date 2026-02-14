@@ -7,6 +7,16 @@ import { useMutation } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +50,7 @@ interface WidgetCardProps {
 export function WidgetCard({ widget }: WidgetCardProps) {
   const [copied, setCopied] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const updateWidget = useMutation(api.widget_admin.update);
   const removeWidget = useMutation(api.widget_admin.remove);
 
@@ -67,16 +78,9 @@ export function WidgetCard({ widget }: WidgetCardProps) {
   };
 
   const handleDelete = async () => {
-    if (
-      // biome-ignore lint/suspicious/noAlert: Simple confirmation for destructive action
-      !window.confirm(
-        "Are you sure you want to delete this widget? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
     try {
       await removeWidget({ widgetId: widget._id as Id<"widgets"> });
+      setShowDeleteDialog(false);
       toast.success("Widget deleted");
     } catch {
       toast.error("Failed to delete widget");
@@ -114,7 +118,7 @@ export function WidgetCard({ widget }: WidgetCardProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive"
-                  onClick={handleDelete}
+                  onClick={() => setShowDeleteDialog(true)}
                 >
                   <Trash className="mr-2 h-4 w-4" />
                   Delete
@@ -177,6 +181,24 @@ export function WidgetCard({ widget }: WidgetCardProps) {
         open={settingsOpen}
         widget={widget}
       />
+
+      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete widget</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this widget? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} variant="destructive">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

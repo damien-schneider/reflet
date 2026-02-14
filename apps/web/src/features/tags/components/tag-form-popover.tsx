@@ -4,6 +4,7 @@ import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
+import type React from "react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
@@ -25,7 +26,7 @@ import {
 interface TagFormPopoverProps {
   organizationId: Id<"organizations">;
   editingTag?: {
-    _id: string;
+    _id: Id<"tags">;
     name: string;
     color: string;
     icon?: string;
@@ -89,7 +90,7 @@ export function TagFormPopover({
     try {
       if (editingTag) {
         await updateTag({
-          id: editingTag._id as Id<"tags">,
+          id: editingTag._id,
           name: formData.name.trim(),
           color: formData.color,
           icon: formData.icon,
@@ -165,23 +166,16 @@ export function TagFormPopover({
       <Popover onOpenChange={onOpenChange} open={open}>
         <PopoverTrigger
           nativeButton={false}
-          render={(props) => (
-            // biome-ignore lint/a11y/noStaticElementInteractions: Intentionally blocking events for externally-controlled popover
-            // biome-ignore lint/a11y/noNoninteractiveElementInteractions: Intentionally blocking events for externally-controlled popover
-            <span
-              {...props}
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.stopPropagation();
-                }
-              }}
-            >
-              {trigger}
-            </span>
-          )}
+          render={(
+            props: React.HTMLAttributes<HTMLElement> & {
+              ref?: React.Ref<HTMLElement>;
+            }
+          ) => {
+            // Strip click/keyboard handlers to prevent the popover from opening
+            // on trigger interaction — the popover is controlled externally
+            const { onClick: _click, onKeyDown: _keyDown, ...rest } = props;
+            return <span {...rest}>{trigger}</span>;
+          }}
         />
         <PopoverContent align="start" className="w-[280px] p-3">
           {popoverForm}
@@ -193,7 +187,11 @@ export function TagFormPopover({
   return (
     <Popover onOpenChange={onOpenChange} open={open}>
       <PopoverTrigger
-        render={(props) => (
+        render={(
+          props: React.HTMLAttributes<HTMLElement> & {
+            ref?: React.Ref<HTMLButtonElement>;
+          }
+        ) => (
           <button
             {...props}
             aria-label="Add tag"

@@ -1,5 +1,6 @@
 "use client";
 
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -24,10 +25,10 @@ interface MessageBubbleProps {
   timestamp?: number;
   showAvatar?: boolean;
   showTimestamp?: boolean;
-  messageId?: string;
+  messageId?: Id<"supportMessages">;
   reactions?: MessageReaction[];
-  onAddReaction?: (messageId: string, emoji: string) => void;
-  onRemoveReaction?: (messageId: string, emoji: string) => void;
+  onAddReaction?: (messageId: Id<"supportMessages">, emoji: string) => void;
+  onRemoveReaction?: (messageId: Id<"supportMessages">, emoji: string) => void;
   currentUserId?: string;
 }
 

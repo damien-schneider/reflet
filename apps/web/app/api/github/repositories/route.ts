@@ -1,16 +1,15 @@
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { fetchAction } from "convex/nextjs";
 import { NextResponse } from "next/server";
+import { toOrgId } from "@/lib/convex-helpers";
 
 /**
  * Fetch repositories from GitHub installation
  */
 export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const organizationId = searchParams.get(
-    "organizationId"
-  ) as Id<"organizations">;
+  const orgIdParam = searchParams.get("organizationId");
+  const organizationId = orgIdParam ? toOrgId(orgIdParam) : null;
 
   if (!organizationId) {
     return NextResponse.json(

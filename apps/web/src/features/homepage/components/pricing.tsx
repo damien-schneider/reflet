@@ -78,7 +78,11 @@ function BillingToggle({
   return (
     <div className="mb-12 flex items-center justify-center gap-2">
       <Tabs
-        onValueChange={(value) => onChange(value as BillingInterval)}
+        onValueChange={(value) => {
+          if (value === "monthly" || value === "yearly") {
+            onChange(value);
+          }
+        }}
         value={interval}
       >
         <TabsList className="h-10">

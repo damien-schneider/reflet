@@ -96,7 +96,7 @@ export default function EditReleasePage({
 
       <ReleaseEditor
         className="max-w-4xl"
-        organizationId={org._id as Id<"organizations">}
+        organizationId={org._id}
         orgSlug={orgSlug}
         release={release}
       />

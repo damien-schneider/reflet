@@ -1,15 +1,17 @@
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { fetchAction, fetchMutation } from "convex/nextjs";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { toOrgId } from "@/lib/convex-helpers";
 
 /**
  * Sync releases from GitHub
  */
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as { organizationId: string };
-    const organizationId = body.organizationId as Id<"organizations">;
+    const syncBodySchema = z.object({ organizationId: z.string().min(1) });
+    const body = syncBodySchema.parse(await request.json());
+    const organizationId = toOrgId(body.organizationId);
 
     if (!organizationId) {
       return NextResponse.json(

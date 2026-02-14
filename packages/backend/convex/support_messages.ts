@@ -3,10 +3,10 @@ import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 
-const getAuthUser = async (ctx: { auth: unknown }) => {
-  const user = await authComponent.safeGetAuthUser(
-    ctx as Parameters<typeof authComponent.safeGetAuthUser>[0]
-  );
+const getAuthUser = async (
+  ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
+) => {
+  const user = await authComponent.safeGetAuthUser(ctx);
   if (!user) {
     throw new Error("Not authenticated");
   }
@@ -355,17 +355,19 @@ export const listReactions = query({
           .withIndex("by_message", (q) => q.eq("messageId", messageId))
           .collect();
 
-        const reactionsByEmoji = messageReactions.reduce(
-          (acc, reaction) => {
-            if (!acc[reaction.emoji]) {
-              acc[reaction.emoji] = { count: 0, userIds: [] };
-            }
-            acc[reaction.emoji].count += 1;
-            acc[reaction.emoji].userIds.push(reaction.userId);
-            return acc;
-          },
-          {} as Record<string, { count: number; userIds: string[] }>
-        );
+        const reactionsByEmoji = messageReactions.reduce<
+          Record<string, { count: number; userIds: string[] }>
+        >((acc, reaction) => {
+          if (!acc[reaction.emoji]) {
+            acc[reaction.emoji] = { count: 0, userIds: [] };
+          }
+          const entry = acc[reaction.emoji];
+          if (entry) {
+            entry.count += 1;
+            entry.userIds.push(reaction.userId);
+          }
+          return acc;
+        }, {});
 
         return {
           messageId,

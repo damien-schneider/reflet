@@ -131,7 +131,12 @@ export function useImageUpload({
       input.type = "file";
       input.accept = "image/*";
       input.onchange = async (event) => {
-        const file = (event.target as HTMLInputElement).files?.[0];
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) {
+          resolve(null);
+          return;
+        }
+        const file = target.files?.[0];
         if (file) {
           const url = await uploadImage(file);
           resolve(url);

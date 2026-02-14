@@ -1,5 +1,4 @@
 import { useDroppable } from "@dnd-kit/core";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 
 import { getTagDotColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
@@ -42,7 +41,7 @@ export function DroppableColumn({
         isAdmin={isAdmin}
         name={status.name}
         onDelete={onDeleteClick}
-        statusId={status._id as Id<"organizationStatuses">}
+        statusId={status._id}
       />
       <div
         className="min-h-[100px] space-y-2"

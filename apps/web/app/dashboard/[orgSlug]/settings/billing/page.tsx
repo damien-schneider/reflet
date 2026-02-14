@@ -1,7 +1,6 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useQuery } from "convex/react";
 import { use, useState } from "react";
 
@@ -22,7 +21,7 @@ export default function BillingPage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const subscriptionStatus = useQuery(
     api.subscriptions.getStatus,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const createCheckoutSession = useAction(
@@ -65,7 +64,7 @@ export default function BillingPage({
     setIsLoading(priceKey);
     try {
       const result = await createCheckoutSession({
-        organizationId: org._id as Id<"organizations">,
+        organizationId: org._id,
         priceKey: priceKey as "proMonthly" | "proYearly",
         successUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing?success=true`,
         cancelUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing?canceled=true`,
@@ -89,7 +88,7 @@ export default function BillingPage({
     setIsLoading("portal");
     try {
       const result = await createPortalSession({
-        organizationId: org._id as Id<"organizations">,
+        organizationId: org._id,
         returnUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing`,
       });
 

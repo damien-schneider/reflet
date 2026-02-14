@@ -4,8 +4,8 @@ import {
   MagnifyingGlass as MagnifyingGlassIcon,
   Plus,
 } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { AnimatePresence, motion } from "motion/react";
-
 import { Button } from "@/components/ui/button";
 
 import { FeedbackCardWithMorphingDialog } from "./feedback-card-with-morphing-dialog";
@@ -14,21 +14,21 @@ import { FiltersBar, type SortOption } from "./filters-bar";
 export type { SortOption } from "./filters-bar";
 
 export interface FeedbackItem {
-  _id: string;
+  _id: Id<"feedback">;
   title: string;
   description?: string;
   voteCount: number;
   commentCount: number;
   createdAt: number;
-  organizationStatusId?: string;
+  organizationStatusId?: Id<"organizationStatuses">;
   isPinned?: boolean;
   hasVoted?: boolean;
   userVoteType?: "upvote" | "downvote" | null;
   upvoteCount?: number;
   downvoteCount?: number;
-  organizationId: string;
+  organizationId: Id<"organizations">;
   tags?: Array<{
-    _id: string;
+    _id: Id<"tags">;
     name: string;
     color: string;
     icon?: string;
@@ -36,7 +36,7 @@ export interface FeedbackItem {
   } | null>;
   organizationStatus?: { name: string; color: string; icon?: string } | null;
   milestones?: Array<{
-    _id: string;
+    _id: Id<"milestones">;
     name: string;
     emoji?: string;
   }>;

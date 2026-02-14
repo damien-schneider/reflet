@@ -9,7 +9,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { TimeHorizon } from "@/lib/milestone-constants";
-import { TIME_HORIZON_CONFIG, TIME_HORIZONS } from "@/lib/milestone-constants";
+import {
+  isTimeHorizon,
+  TIME_HORIZON_CONFIG,
+  TIME_HORIZONS,
+} from "@/lib/milestone-constants";
 
 import { MilestoneExpandedPanel } from "./milestone-expanded-panel";
 import { MilestoneFormPopover } from "./milestone-form-popover";
@@ -19,6 +23,14 @@ export interface MilestonesViewProps {
   organizationId: Id<"organizations">;
   isAdmin: boolean;
   onFeedbackClick: (feedbackId: string) => void;
+}
+
+interface SafariGestureEvent extends Event {
+  scale: number;
+}
+
+function isSafariGestureEvent(event: Event): event is SafariGestureEvent {
+  return "scale" in event;
 }
 
 // Zoom: continuous value controlled by trackpad pinch
@@ -39,9 +51,8 @@ export function MilestonesView({
 }: MilestonesViewProps) {
   const milestones = useQuery(api.milestones.list, { organizationId });
   const isMobile = useIsMobile();
-  const [activeMilestoneId, setActiveMilestoneId] = useState<string | null>(
-    null
-  );
+  const [activeMilestoneId, setActiveMilestoneId] =
+    useState<Id<"milestones"> | null>(null);
   const [popoverOpenHorizon, setPopoverOpenHorizon] =
     useState<TimeHorizon | null>(null);
   const [zoneMinWidth, setZoneMinWidth] = useState(DEFAULT_ZONE_WIDTH);
@@ -90,9 +101,11 @@ export function MilestonesView({
 
     const handleGestureChange = (e: Event) => {
       e.preventDefault();
-      const gestureScale = (e as unknown as { scale: number }).scale;
-      const scaleDelta = gestureScale / lastGestureScaleRef.current;
-      lastGestureScaleRef.current = gestureScale;
+      if (!isSafariGestureEvent(e)) {
+        return;
+      }
+      const scaleDelta = e.scale / lastGestureScaleRef.current;
+      lastGestureScaleRef.current = e.scale;
       setZoneMinWidth((prev) =>
         Math.min(MAX_ZONE_WIDTH, Math.max(MIN_ZONE_WIDTH, prev * scaleDelta))
       );
@@ -113,7 +126,7 @@ export function MilestonesView({
     };
   }, [hasMilestones]);
 
-  const handleMilestoneClick = useCallback((milestoneId: string) => {
+  const handleMilestoneClick = useCallback((milestoneId: Id<"milestones">) => {
     setActiveMilestoneId((prev) => (prev === milestoneId ? null : milestoneId));
   }, []);
 
@@ -132,7 +145,10 @@ export function MilestonesView({
     }
     if (milestones) {
       for (const milestone of milestones) {
-        const group = groups.get(milestone.timeHorizon as TimeHorizon);
+        if (!isTimeHorizon(milestone.timeHorizon)) {
+          continue;
+        }
+        const group = groups.get(milestone.timeHorizon);
         if (group) {
           group.push(milestone);
         }
@@ -318,7 +334,7 @@ export function MilestonesView({
                           <div className="pt-2">
                             <MilestoneExpandedPanel
                               isAdmin={isAdmin}
-                              milestoneId={milestone._id as Id<"milestones">}
+                              milestoneId={milestone._id}
                               onFeedbackClick={onFeedbackClick}
                               organizationId={organizationId}
                             />
@@ -363,7 +379,7 @@ export function MilestonesView({
               <div className="pt-2">
                 <MilestoneExpandedPanel
                   isAdmin={isAdmin}
-                  milestoneId={activeMilestoneId as Id<"milestones">}
+                  milestoneId={activeMilestoneId}
                   onFeedbackClick={onFeedbackClick}
                   organizationId={organizationId}
                 />

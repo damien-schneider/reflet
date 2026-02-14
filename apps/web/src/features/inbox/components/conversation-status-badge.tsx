@@ -46,16 +46,21 @@ interface ConversationStatusBadgeProps {
   showIcon?: boolean;
 }
 
+const isConversationStatus = (value: string): value is ConversationStatus =>
+  value in STATUS_CONFIG;
+
 export function ConversationStatusBadge({
   status,
   className,
   showIcon = true,
 }: ConversationStatusBadgeProps) {
-  const config = STATUS_CONFIG[status as ConversationStatus] ?? {
-    label: status,
-    icon: Circle,
-    className: "bg-zinc-500/10 text-zinc-600",
-  };
+  const config = isConversationStatus(status)
+    ? STATUS_CONFIG[status]
+    : {
+        label: status,
+        icon: Circle,
+        className: "bg-zinc-500/10 text-zinc-600",
+      };
 
   const Icon = config.icon;
 

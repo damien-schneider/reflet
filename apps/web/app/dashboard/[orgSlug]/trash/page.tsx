@@ -19,7 +19,7 @@ export default function TrashPage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const deletedFeedback = useQuery(
     api.feedback_trash.listDeleted,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const restoreFeedback = useMutation(api.feedback_actions.restore);
   const [restoringId, setRestoringId] = useState<string | null>(null);

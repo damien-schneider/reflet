@@ -7,12 +7,6 @@ const CONVEX_URL =
     ? __CONVEX_URL__
     : "https://grateful-butterfly-1.convex.cloud";
 
-interface ConvexResponse<T> {
-  status: "success" | "error";
-  value?: T;
-  errorMessage?: string;
-}
-
 async function convexQuery<T>(
   fnName: string,
   args: Record<string, unknown>
@@ -34,12 +28,20 @@ async function convexQuery<T>(
     return null;
   }
 
-  const data = (await response.json()) as ConvexResponse<T>;
+  const data: unknown = await response.json();
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    !("status" in data) ||
+    !("value" in data)
+  ) {
+    return null;
+  }
   if (data.status === "error") {
     return null;
   }
 
-  return data.value ?? null;
+  return (data.value as T) ?? null;
 }
 
 async function convexMutation<T>(
@@ -63,12 +65,20 @@ async function convexMutation<T>(
     return null;
   }
 
-  const data = (await response.json()) as ConvexResponse<T>;
+  const data: unknown = await response.json();
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    !("status" in data) ||
+    !("value" in data)
+  ) {
+    return null;
+  }
   if (data.status === "error") {
     return null;
   }
 
-  return data.value ?? null;
+  return (data.value as T) ?? null;
 }
 
 export function fetchWidgetConfig(

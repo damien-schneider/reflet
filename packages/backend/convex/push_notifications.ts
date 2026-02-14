@@ -50,7 +50,7 @@ function getVapidConfig(): {
 }
 
 interface PushSubscription {
-  _id: string;
+  _id: Id<"pushSubscriptions">;
   endpoint: string;
   p256dh: string;
   auth: string;
@@ -153,7 +153,7 @@ export const sendPushNotification = internalAction({
       if (result.success) {
         sent++;
       } else if (result.expired) {
-        expiredIds.push(subscription._id as Id<"pushSubscriptions">);
+        expiredIds.push(subscription._id);
       }
     }
 

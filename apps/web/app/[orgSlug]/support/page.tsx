@@ -25,14 +25,12 @@ export default function PublicSupportPage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const supportSettings = useQuery(
     api.support_conversations.getSupportSettings,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const conversations = useQuery(
     api.support_conversations.listForUser,
-    org?._id && isLoggedIn
-      ? { organizationId: org._id as Id<"organizations"> }
-      : "skip"
+    org?._id && isLoggedIn ? { organizationId: org._id } : "skip"
   );
 
   const [view, setView] = useState<"list" | "chat" | "new">("list");
@@ -89,7 +87,7 @@ export default function PublicSupportPage({
     setIsSubmitting(true);
     try {
       const conversationId = await createConversation({
-        organizationId: org._id as Id<"organizations">,
+        organizationId: org._id,
         subject: newSubject.trim() || undefined,
         initialMessage: trimmedMessage,
       });

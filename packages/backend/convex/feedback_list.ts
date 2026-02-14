@@ -108,11 +108,9 @@ export const listByOrganization = query({
 
     // Filter by statusIds (any of the selected statuses)
     if (args.statusIds && args.statusIds.length > 0) {
-      const statusIdSet = new Set(args.statusIds as string[]);
+      const statusIdSet = new Set<string>(args.statusIds);
       feedbackItems = feedbackItems.filter(
-        (f) =>
-          f.organizationStatusId &&
-          statusIdSet.has(f.organizationStatusId as string)
+        (f) => f.organizationStatusId && statusIdSet.has(f.organizationStatusId)
       );
     }
 
@@ -123,14 +121,14 @@ export const listByOrganization = query({
 
     // Filter by tags (any of the selected tags - "or" semantics)
     if (args.tagIds && args.tagIds.length > 0) {
-      const selectedTagIds = new Set(args.tagIds as string[]);
+      const selectedTagIds = new Set<string>(args.tagIds);
       const feedbackWithTags = await Promise.all(
         feedbackItems.map(async (f) => {
           const tags = await ctx.db
             .query("feedbackTags")
             .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
             .collect();
-          const tagIds = tags.map((t) => t.tagId as string);
+          const tagIds = tags.map((t) => t.tagId);
           // Check if feedback has ANY of the selected tags
           const hasAnyTag = tagIds.some((tagId) => selectedTagIds.has(tagId));
           return hasAnyTag ? f : null;
@@ -271,14 +269,14 @@ export const listForRoadmapByOrganization = query({
 
     // Filter by tags (any of the selected tags - "or" semantics)
     if (args.tagIds && args.tagIds.length > 0) {
-      const selectedTagIds = new Set(args.tagIds as string[]);
+      const selectedTagIds = new Set<string>(args.tagIds);
       const feedbackWithTags = await Promise.all(
         feedbackItems.map(async (f) => {
           const tags = await ctx.db
             .query("feedbackTags")
             .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
             .collect();
-          const tagIds = tags.map((t) => t.tagId as string);
+          const tagIds = tags.map((t) => t.tagId);
           const hasAnyTag = tagIds.some((tagId) => selectedTagIds.has(tagId));
           return hasAnyTag ? f : null;
         })

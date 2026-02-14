@@ -281,8 +281,10 @@ async function fetchRepoData(repositoryFullName: string): Promise<{
       { headers }
     );
     if (treeResponse.ok) {
-      const treeData = await treeResponse.json();
-      const tree = treeData.tree || [];
+      const treeData = (await treeResponse.json()) as {
+        tree?: Array<{ path: string; type: string }>;
+      };
+      const tree = treeData.tree ?? [];
       const limitedTree = tree.slice(0, 100);
       fileTree = limitedTree
         .map((item: { path: string; type: string }) => item.path)
@@ -303,7 +305,7 @@ async function fetchRepoData(repositoryFullName: string): Promise<{
       { headers }
     );
     if (readmeResponse.ok) {
-      const readmeData = await readmeResponse.json();
+      const readmeData = (await readmeResponse.json()) as { content?: string };
       if (readmeData.content) {
         readme = Buffer.from(readmeData.content, "base64").toString("utf-8");
         if (readme.length > 5000) {
@@ -323,7 +325,7 @@ async function fetchRepoData(repositoryFullName: string): Promise<{
       { headers }
     );
     if (pkgResponse.ok) {
-      const pkgData = await pkgResponse.json();
+      const pkgData = (await pkgResponse.json()) as { content?: string };
       if (pkgData.content) {
         packageJson = Buffer.from(pkgData.content, "base64").toString("utf-8");
       }
@@ -461,8 +463,9 @@ function parseAnalysisResponse(response: string): {
 
   for (const [index, pattern] of ANALYSIS_PATTERNS.entries()) {
     const match = response.match(pattern);
-    if (match?.[1]) {
-      sections[ANALYSIS_KEYS[index]] = match[1].trim();
+    const key = ANALYSIS_KEYS[index];
+    if (match?.[1] && key) {
+      sections[key] = match[1].trim();
     }
   }
 

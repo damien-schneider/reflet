@@ -1,5 +1,6 @@
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { atom } from "jotai";
-import type { SortOption } from "@/lib/constants";
+import type { SortOption } from "../lib/constants";
 
 // ============================================
 // FEEDBACK STORE
@@ -29,7 +30,7 @@ export const feedbackSortAtom = atom<SortOption>("most_votes");
 /**
  * Selected board status IDs for filtering (uses boardStatuses table)
  */
-export const selectedStatusIdsAtom = atom<string[]>([]);
+export const selectedStatusIdsAtom = atom<Id<"organizationStatuses">[]>([]);
 
 /**
  * @deprecated Use selectedStatusIdsAtom instead
@@ -40,7 +41,7 @@ export const selectedStatusesAtom = atom<string[]>([]);
 /**
  * Selected tag IDs for filtering
  */
-export const selectedTagIdsAtom = atom<string[]>([]);
+export const selectedTagIdsAtom = atom<Id<"tags">[]>([]);
 
 /**
  * Feedback filter state (combined - legacy)

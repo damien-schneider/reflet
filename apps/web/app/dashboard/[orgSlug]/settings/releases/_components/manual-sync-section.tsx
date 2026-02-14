@@ -215,7 +215,7 @@ export const ManualSyncSection = ({
                   <Button
                     className="ml-2 shrink-0"
                     disabled={!isAdmin || importingId === gr._id}
-                    onClick={() => handleImport(gr._id as Id<"githubReleases">)}
+                    onClick={() => handleImport(gr._id)}
                     size="sm"
                     variant="ghost"
                   >
@@ -256,7 +256,7 @@ export const ManualSyncSection = ({
                   <Button
                     className="ml-2 shrink-0"
                     disabled={!isAdmin || pushingId === r._id}
-                    onClick={() => handlePush(r._id as Id<"releases">)}
+                    onClick={() => handlePush(r._id)}
                     size="sm"
                     variant="ghost"
                   >

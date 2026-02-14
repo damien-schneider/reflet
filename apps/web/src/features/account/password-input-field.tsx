@@ -24,15 +24,23 @@ export function PasswordInputField({
   placeholder,
   error,
 }: PasswordInputProps) {
+  const { onChange, onBlur, ref: registerRef, ...restRegister } = register;
   return (
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <div className="relative">
         <Input
           id={id}
+          onBlur={(e) => {
+            onBlur(e);
+          }}
+          onChange={(e) => {
+            onChange(e);
+          }}
           placeholder={placeholder}
+          ref={registerRef}
           type={showPassword ? "text" : "password"}
-          {...(register as React.ComponentProps<typeof Input>)}
+          {...restRegister}
         />
         <button
           className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"

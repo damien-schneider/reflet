@@ -22,17 +22,12 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
-// Cast to access pushManager (types are present in DOM lib but may not be picked up by language server)
-type PushManagerRegistration = ServiceWorkerRegistration & {
-  pushManager: PushManager;
-};
-
 interface PushNotificationState {
   isSupported: boolean;
   permissionState: NotificationPermission | "unsupported";
   isSubscribed: boolean;
   isLoading: boolean;
-  registration: PushManagerRegistration | null;
+  registration: ServiceWorkerRegistration | null;
 }
 
 /**
@@ -78,15 +73,14 @@ export function usePushNotifications() {
         const registration = await navigator.serviceWorker.register("/sw.js");
         await navigator.serviceWorker.ready;
 
-        const reg = registration as unknown as PushManagerRegistration;
-        const subscription = await reg.pushManager.getSubscription();
+        const subscription = await registration.pushManager.getSubscription();
 
         setState({
           isSupported: true,
           permissionState: Notification.permission,
           isSubscribed: !!subscription,
           isLoading: false,
-          registration: reg,
+          registration,
         });
       } catch (error) {
         console.error("[Push] Service worker registration failed:", error);

@@ -11,10 +11,10 @@ function generateWidgetId(): string {
   return result;
 }
 
-const getAuthUser = async (ctx: { auth: unknown }) => {
-  const user = await authComponent.safeGetAuthUser(
-    ctx as Parameters<typeof authComponent.safeGetAuthUser>[0]
-  );
+const getAuthUser = async (
+  ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
+) => {
+  const user = await authComponent.safeGetAuthUser(ctx);
   if (!user) {
     throw new Error("Not authenticated");
   }

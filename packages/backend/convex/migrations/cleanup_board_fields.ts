@@ -18,10 +18,7 @@ export const findFeedbackWithBoardFields = query({
     const feedback = await ctx.db.query("feedback").collect();
 
     // Filter to feedback that has boardId or statusId
-    const toMigrate = feedback.filter((f) => {
-      const doc = f as Record<string, unknown>;
-      return doc.boardId !== undefined || doc.statusId !== undefined;
-    });
+    const toMigrate = feedback.filter((f) => "boardId" in f || "statusId" in f);
 
     return {
       total: feedback.length,
@@ -39,13 +36,10 @@ export const cleanupBoardFields = mutation({
 
     let cleaned = 0;
     for (const f of feedback) {
-      const doc = f as Record<string, unknown>;
-      if (doc.boardId !== undefined || doc.statusId !== undefined) {
+      if ("boardId" in f || "statusId" in f) {
         // Remove the deprecated fields by patching with undefined
-        await ctx.db.patch(f._id, {
-          boardId: undefined,
-          statusId: undefined,
-        } as Record<string, unknown>);
+        // @ts-expect-error migration: patching deprecated fields not in current schema
+        await ctx.db.patch(f._id, { boardId: undefined, statusId: undefined });
         cleaned++;
       }
     }

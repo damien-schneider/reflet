@@ -1,4 +1,6 @@
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "./constants";
@@ -17,6 +19,183 @@ export const feedbackStatus = v.union(
 );
 
 // ============================================
+// HELPERS
+// ============================================
+
+interface UserProfile {
+  name?: string;
+  email?: string;
+  image?: string | null;
+}
+
+type FeedbackStatusValue =
+  | "open"
+  | "under_review"
+  | "planned"
+  | "in_progress"
+  | "completed"
+  | "closed";
+
+const FEEDBACK_STATUS_VALUES: readonly string[] = [
+  "open",
+  "under_review",
+  "planned",
+  "in_progress",
+  "completed",
+  "closed",
+];
+
+const isFeedbackStatusValue = (value: unknown): value is FeedbackStatusValue =>
+  typeof value === "string" && FEEDBACK_STATUS_VALUES.includes(value);
+
+const getMembershipInfo = async (
+  ctx: QueryCtx,
+  organizationId: Id<"organizations">,
+  userId: string
+): Promise<{ isMember: boolean; role: string | null }> => {
+  const membership = await ctx.db
+    .query("organizationMembers")
+    .withIndex("by_org_user", (q) =>
+      q.eq("organizationId", organizationId).eq("userId", userId)
+    )
+    .unique();
+  return { isMember: !!membership, role: membership?.role ?? null };
+};
+
+const getFeedbackTags = async (ctx: QueryCtx, feedbackId: Id<"feedback">) => {
+  const feedbackTags = await ctx.db
+    .query("feedbackTags")
+    .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
+    .collect();
+
+  const tags = await Promise.all(
+    feedbackTags.map(async (ft) => {
+      const tag = await ctx.db.get(ft.tagId);
+      if (!tag) {
+        return null;
+      }
+      return { ...tag, appliedByAi: ft.appliedByAi ?? false };
+    })
+  );
+
+  return tags.filter(Boolean);
+};
+
+const getUserVoteInfo = async (
+  ctx: QueryCtx,
+  feedbackId: Id<"feedback">,
+  userId: string
+): Promise<{
+  hasVoted: boolean;
+  userVoteType: "upvote" | "downvote" | null;
+}> => {
+  const vote = await ctx.db
+    .query("feedbackVotes")
+    .withIndex("by_feedback_user", (q) =>
+      q.eq("feedbackId", feedbackId).eq("userId", userId)
+    )
+    .unique();
+  return { hasVoted: !!vote, userVoteType: vote?.voteType ?? null };
+};
+
+const resolveUserProfile = async (
+  ctx: QueryCtx,
+  userId: string
+): Promise<UserProfile | null> => {
+  const userData = await authComponent.getAnyUserById(ctx, userId);
+  if (!userData) {
+    return null;
+  }
+  return {
+    name: userData.name ?? null,
+    email: userData.email ?? "",
+    image: userData.image ?? null,
+  };
+};
+
+const resolveTagSettings = async (
+  ctx: MutationCtx,
+  tagId: Id<"tags"> | undefined,
+  organizationId: Id<"organizations">
+): Promise<{
+  requireApproval: boolean;
+  defaultStatus: FeedbackStatusValue;
+}> => {
+  if (!tagId) {
+    return { requireApproval: false, defaultStatus: "open" };
+  }
+
+  const tag = await ctx.db.get(tagId);
+  if (!tag || tag.organizationId !== organizationId) {
+    return { requireApproval: false, defaultStatus: "open" };
+  }
+
+  return {
+    requireApproval: tag.settings?.requireApproval ?? false,
+    defaultStatus: isFeedbackStatusValue(tag.settings?.defaultStatus)
+      ? tag.settings.defaultStatus
+      : "open",
+  };
+};
+
+const validateCreateAccess = async (
+  ctx: MutationCtx,
+  org: { _id: Id<"organizations">; isPublic: boolean },
+  userId: string,
+  tagId?: Id<"tags">
+): Promise<void> => {
+  const membership = await ctx.db
+    .query("organizationMembers")
+    .withIndex("by_org_user", (q) =>
+      q.eq("organizationId", org._id).eq("userId", userId)
+    )
+    .unique();
+
+  const isMember = !!membership;
+  let hasAccess = isMember || org.isPublic;
+
+  if (tagId && !isMember) {
+    const tag = await ctx.db.get(tagId);
+    hasAccess = hasAccess && (tag?.settings?.isPublic ?? false);
+  }
+
+  if (!hasAccess) {
+    throw new Error("You don't have access to submit feedback");
+  }
+};
+
+const enforceFeedbackLimit = async (
+  ctx: MutationCtx,
+  orgId: Id<"organizations">,
+  subscriptionTier: keyof typeof PLAN_LIMITS
+): Promise<void> => {
+  const existingFeedback = await ctx.db
+    .query("feedback")
+    .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+    .collect();
+  const activeFeedback = existingFeedback.filter((f) => !f.deletedAt);
+
+  const limit = PLAN_LIMITS[subscriptionTier].maxFeedbackPerBoard * 10;
+  if (activeFeedback.length >= limit) {
+    throw new Error(
+      `Feedback limit reached. This organization allows ${limit} feedback items.`
+    );
+  }
+};
+
+const getDefaultOrganizationStatusId = async (
+  ctx: MutationCtx,
+  orgId: Id<"organizations">
+): Promise<Id<"organizationStatuses"> | undefined> => {
+  const orgStatuses = await ctx.db
+    .query("organizationStatuses")
+    .withIndex("by_org_order", (q) => q.eq("organizationId", orgId))
+    .collect();
+  const sorted = orgStatuses.sort((a, b) => a.order - b.order);
+  return sorted[0]?._id;
+};
+
+// ============================================
 // QUERIES
 // ============================================
 
@@ -25,7 +204,6 @@ export const feedbackStatus = v.union(
  */
 export const get = query({
   args: { id: v.id("feedback") },
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: query needs to check auth, org access, and build full response
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.id);
     if (!feedback || feedback.deletedAt) {
@@ -39,104 +217,36 @@ export const get = query({
 
     const user = await authComponent.safeGetAuthUser(ctx);
 
-    // Check access
-    let isMember = false;
-    let role: string | null = null;
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-        )
-        .unique();
-      isMember = !!membership;
-      role = membership?.role ?? null;
-    }
+    const { isMember, role } = user
+      ? await getMembershipInfo(ctx, feedback.organizationId, user._id)
+      : { isMember: false, role: null };
 
-    // Check visibility: member OR org is public
     if (!(isMember || org.isPublic)) {
       return null;
     }
-
-    // Non-members can't see unapproved feedback
     if (!(isMember || feedback.isApproved)) {
       return null;
     }
 
-    // Get tags
-    const feedbackTags = await ctx.db
-      .query("feedbackTags")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.id))
-      .collect();
+    const tags = await getFeedbackTags(ctx, args.id);
 
-    const tags = await Promise.all(
-      feedbackTags.map(async (ft) => {
-        const tag = await ctx.db.get(ft.tagId);
-        if (!tag) {
-          return null;
-        }
-        return { ...tag, appliedByAi: ft.appliedByAi ?? false };
-      })
-    );
+    const { hasVoted, userVoteType } = user
+      ? await getUserVoteInfo(ctx, args.id, user._id)
+      : { hasVoted: false, userVoteType: null };
 
-    // Check if user voted
-    let hasVoted = false;
-    let userVoteType: "upvote" | "downvote" | null = null;
-    if (user) {
-      const vote = await ctx.db
-        .query("feedbackVotes")
-        .withIndex("by_feedback_user", (q) =>
-          q.eq("feedbackId", args.id).eq("userId", user._id)
-        )
-        .unique();
-      hasVoted = !!vote;
-      userVoteType = vote?.voteType ?? null;
-    }
-
-    // Get organization status if set
     const organizationStatus = feedback.organizationStatusId
       ? await ctx.db.get(feedback.organizationStatusId)
       : null;
 
-    // Get author info from Better Auth
-    let author: {
-      name?: string;
-      email?: string;
-      image?: string | null;
-    } | null = null;
-    if (feedback.authorId) {
-      const userData = await authComponent.getAnyUserById(
-        ctx,
-        feedback.authorId
-      );
-      if (userData) {
-        author = {
-          name: userData.name ?? null,
-          email: userData.email ?? "",
-          image: userData.image ?? null,
-        };
-      }
-    }
+    const author = feedback.authorId
+      ? await resolveUserProfile(ctx, feedback.authorId)
+      : null;
 
-    // Get assignee info from Better Auth
-    let assignee: {
-      id: string;
-      name?: string;
-      email?: string;
-      image?: string | null;
-    } | null = null;
+    let assignee: ({ id: string } & UserProfile) | null = null;
     if (feedback.assigneeId) {
-      const assigneeData = await authComponent.getAnyUserById(
-        ctx,
-        feedback.assigneeId
-      );
-      if (assigneeData) {
-        assignee = {
-          id: feedback.assigneeId,
-          name: assigneeData.name ?? null,
-          email: assigneeData.email ?? "",
-          image: assigneeData.image ?? null,
-        };
+      const profile = await resolveUserProfile(ctx, feedback.assigneeId);
+      if (profile) {
+        assignee = { id: feedback.assigneeId, ...profile };
       }
     }
 
@@ -144,7 +254,7 @@ export const get = query({
       ...feedback,
       organization: org,
       organizationStatus,
-      tags: tags.filter(Boolean),
+      tags,
       hasVoted,
       userVoteType,
       isMember,
@@ -171,11 +281,9 @@ export const create = mutation({
     description: v.string(),
     attachments: v.optional(v.array(v.string())),
   },
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: mutation needs validation, limit checks, and status lookup
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    // Validate input lengths
     validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
     validateInputLength(
       args.description,
@@ -183,77 +291,33 @@ export const create = mutation({
       "Description"
     );
 
-    let requireApproval = false;
-    let defaultStatus:
-      | "open"
-      | "under_review"
-      | "planned"
-      | "in_progress"
-      | "completed"
-      | "closed" = "open";
-
-    // Check tag settings if tag provided
-    if (args.tagId) {
-      const tag = await ctx.db.get(args.tagId);
-      if (tag && tag.organizationId === args.organizationId) {
-        requireApproval = tag.settings?.requireApproval ?? false;
-        defaultStatus = tag.settings?.defaultStatus ?? "open";
-      }
-    }
+    const tagSettings = await resolveTagSettings(
+      ctx,
+      args.tagId,
+      args.organizationId
+    );
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
       throw new Error("Organization not found");
     }
 
-    // Fall back to org settings
-    if (org.feedbackSettings) {
-      requireApproval =
-        requireApproval || (org.feedbackSettings.requireApproval ?? false);
-      defaultStatus =
-        defaultStatus || (org.feedbackSettings.defaultStatus ?? "open");
-    }
+    const requireApproval =
+      tagSettings.requireApproval ||
+      (org.feedbackSettings?.requireApproval ?? false);
+    const defaultStatus =
+      tagSettings.defaultStatus ||
+      (isFeedbackStatusValue(org.feedbackSettings?.defaultStatus)
+        ? org.feedbackSettings.defaultStatus
+        : "open");
 
-    // Check access - need to be member OR org is public
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", org._id).eq("userId", user._id)
-      )
-      .unique();
+    await validateCreateAccess(ctx, org, user._id, args.tagId);
+    await enforceFeedbackLimit(ctx, org._id, org.subscriptionTier);
 
-    const isMember = !!membership;
-
-    // Check org visibility or tag visibility
-    let hasAccess = isMember || org.isPublic;
-    if (args.tagId && !isMember) {
-      const tag = await ctx.db.get(args.tagId);
-      hasAccess = hasAccess && (tag?.settings?.isPublic ?? false);
-    }
-    if (!hasAccess) {
-      throw new Error("You don't have access to submit feedback");
-    }
-
-    // Check feedback limit (org-level, excluding soft-deleted)
-    const existingFeedback = await ctx.db
-      .query("feedback")
-      .withIndex("by_organization", (q) => q.eq("organizationId", org._id))
-      .collect();
-    const activeFeedback = existingFeedback.filter((f) => !f.deletedAt);
-
-    const limit = PLAN_LIMITS[org.subscriptionTier].maxFeedbackPerBoard * 10; // Org limit is higher
-    if (activeFeedback.length >= limit) {
-      throw new Error(
-        `Feedback limit reached. This organization allows ${limit} feedback items.`
-      );
-    }
-
-    // Get the default organization status (first by order)
-    const orgStatuses = await ctx.db
-      .query("organizationStatuses")
-      .withIndex("by_org_order", (q) => q.eq("organizationId", org._id))
-      .collect();
-    const defaultOrgStatus = orgStatuses.sort((a, b) => a.order - b.order)[0];
+    const defaultOrgStatusId = await getDefaultOrganizationStatusId(
+      ctx,
+      org._id
+    );
 
     const now = Date.now();
     const feedbackId = await ctx.db.insert("feedback", {
@@ -261,9 +325,9 @@ export const create = mutation({
       title: args.title,
       description: args.description,
       status: defaultStatus,
-      organizationStatusId: defaultOrgStatus?._id,
+      organizationStatusId: defaultOrgStatusId,
       authorId: user._id,
-      voteCount: 1, // Auto-vote for author
+      voteCount: 1,
       commentCount: 0,
       isApproved: !requireApproval,
       isPinned: false,
@@ -272,7 +336,6 @@ export const create = mutation({
       updatedAt: now,
     });
 
-    // Auto-vote for the author
     await ctx.db.insert("feedbackVotes", {
       feedbackId,
       userId: user._id,
@@ -280,7 +343,6 @@ export const create = mutation({
       createdAt: now,
     });
 
-    // Add tag if provided
     if (args.tagId) {
       const tag = await ctx.db.get(args.tagId);
       if (tag && tag.organizationId === args.organizationId) {

@@ -92,6 +92,12 @@ const COMPLEXITY_OPTIONS: Complexity[] = [
   "very_complex",
 ];
 
+const isPriority = (value: string): value is Priority =>
+  (PRIORITY_OPTIONS as readonly string[]).includes(value);
+
+const isComplexity = (value: string): value is Complexity =>
+  (COMPLEXITY_OPTIONS as readonly string[]).includes(value);
+
 function PriorityBadge({
   feedbackId,
   effectivePriority,
@@ -115,9 +121,12 @@ function PriorityBadge({
 
   const handleChange = useCallback(
     async (value: string) => {
+      if (!isPriority(value)) {
+        return;
+      }
       await updateAnalysis({
         feedbackId,
-        priority: value as Priority,
+        priority: value,
       });
     },
     [feedbackId, updateAnalysis]
@@ -232,9 +241,12 @@ function ComplexityBadge({
 
   const handleChange = useCallback(
     async (value: string) => {
+      if (!isComplexity(value)) {
+        return;
+      }
       await updateAnalysis({
         feedbackId,
-        complexity: value as Complexity,
+        complexity: value,
       });
     },
     [feedbackId, updateAnalysis]
@@ -334,6 +346,11 @@ const TIME_UNIT_OPTIONS: { value: TimeUnit; label: string }[] = [
   { value: "days", label: "d" },
   { value: "weeks", label: "w" },
 ];
+
+const TIME_UNIT_VALUES: TimeUnit[] = TIME_UNIT_OPTIONS.map((o) => o.value);
+
+const isTimeUnit = (value: string): value is TimeUnit =>
+  (TIME_UNIT_VALUES as readonly string[]).includes(value);
 
 const TIME_UNIT_LABELS: Record<TimeUnit, string> = {
   minutes: "minutes",
@@ -435,7 +452,10 @@ function TimeEstimateBadge({
 
   const handleUnitChange = useCallback(
     (value: string) => {
-      const newUnit = value as TimeUnit;
+      if (!isTimeUnit(value)) {
+        return;
+      }
+      const newUnit = value;
       setUnit(newUnit);
       const options = NUMBER_OPTIONS_BY_UNIT[newUnit];
       const closestAmount = options.reduce((prev, curr) =>

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { getAuthUser } from "./utils";
 
@@ -54,7 +54,7 @@ export const list = query({
 export const roadmapMoveToLane = mutation({
   args: {
     feedbackId: v.id("feedback"),
-    laneId: v.optional(v.string()),
+    laneId: v.optional(v.id("tags")),
     order: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -88,7 +88,7 @@ export const roadmapMoveToLane = mutation({
 
     // If laneId corresponds to a tag, we might want to update status too
     if (laneId) {
-      const tag = await ctx.db.get(laneId as Id<"tags">);
+      const tag = await ctx.db.get(laneId);
       if (tag?.isDoneStatus) {
         data.status = "completed";
       } else if (tag) {

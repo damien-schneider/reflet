@@ -54,7 +54,7 @@ export function useSubmitFeedback({
   const [newFeedback, setNewFeedback] =
     useState<NewFeedbackState>(INITIAL_FEEDBACK);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitTagId, setSubmitTagId] = useState<string | undefined>();
+  const [submitTagId, setSubmitTagId] = useState<Id<"tags"> | undefined>();
   const [submitAssigneeId, setSubmitAssigneeId] = useState<
     string | undefined
   >();
@@ -78,7 +78,7 @@ export function useSubmitFeedback({
           title: trimmedTitle,
           description: newFeedback.description.trim() || "",
           attachments,
-          tagId: submitTagId as Id<"tags"> | undefined,
+          tagId: submitTagId,
         });
       } else {
         await createFeedbackPublic({

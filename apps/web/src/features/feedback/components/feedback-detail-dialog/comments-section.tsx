@@ -5,7 +5,7 @@ import {
   PaperPlaneRight,
   Sparkle,
 } from "@phosphor-icons/react";
-
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
@@ -16,7 +16,7 @@ import { CommentItem } from "./comment-item";
 interface CommentsSectionProps {
   comments: CommentData[] | undefined;
   topLevelComments: CommentData[];
-  commentReplies: (parentId: string) => CommentData[];
+  commentReplies: (parentId: Id<"comments">) => CommentData[];
   effectiveIsAdmin: boolean;
   isGeneratingDraft: boolean;
   onGenerateDraftReply: () => void;
@@ -25,18 +25,18 @@ interface CommentsSectionProps {
   isSubmittingComment: boolean;
   onSubmitComment: () => void;
   editCommentContent: string;
-  editingCommentId: string | null;
-  replyingTo: string | null;
+  editingCommentId: Id<"comments"> | null;
+  replyingTo: Id<"comments"> | null;
   replyContent: string;
-  onDelete: (id: string) => void;
-  onEdit: (id: string, content: string) => void;
+  onDelete: (id: Id<"comments">) => void;
+  onEdit: (id: Id<"comments">, content: string) => void;
   onEditCancel: () => void;
   onEditContentChange: (content: string) => void;
-  onReply: (id: string) => void;
+  onReply: (id: Id<"comments">) => void;
   onReplyCancel: () => void;
   onReplyContentChange: (content: string) => void;
-  onSubmitReply: (parentId: string) => Promise<void>;
-  onUpdateComment: (id: string) => Promise<void>;
+  onSubmitReply: (parentId: Id<"comments">) => Promise<void>;
+  onUpdateComment: (id: Id<"comments">) => Promise<void>;
 }
 
 const renderLoadingSkeleton = () => (

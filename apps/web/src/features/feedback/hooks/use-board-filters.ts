@@ -1,5 +1,6 @@
 "use client";
 
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 
@@ -19,11 +20,18 @@ const URL_PARAM_KEYS = {
 const DEFAULT_VIEW: BoardView = "feed";
 const DEFAULT_SORT: SortOption = "votes";
 
-function parseArrayParam(value: string | null): string[] {
+function parseArrayParam<T extends string = string>(value: string | null): T[] {
   if (!value) {
     return [];
   }
-  return value.split(",").filter(Boolean);
+  return value.split(",").filter(Boolean) as T[];
+}
+
+function parseIdParam<T extends string>(value: string | null): T | null {
+  if (!value) {
+    return null;
+  }
+  return value as T;
 }
 
 function serializeArrayParam(values: string[]): string | null {
@@ -36,9 +44,9 @@ function serializeArrayParam(values: string[]): string | null {
 export interface BoardFiltersState {
   view: BoardView;
   sortBy: SortOption;
-  selectedStatusIds: string[];
-  selectedTagIds: string[];
-  selectedTagId: string | null; // Single tag filter (from tag filter bar)
+  selectedStatusIds: Id<"organizationStatuses">[];
+  selectedTagIds: Id<"tags">[];
+  selectedTagId: Id<"tags"> | null; // Single tag filter (from tag filter bar)
   searchQuery: string;
   showSubmitDrawer: boolean; // Submit feedback drawer state
 }
@@ -87,11 +95,15 @@ export function useBoardFilters(
     return {
       view,
       sortBy,
-      selectedStatusIds: parseArrayParam(
+      selectedStatusIds: parseArrayParam<Id<"organizationStatuses">>(
         searchParams.get(URL_PARAM_KEYS.status)
       ),
-      selectedTagIds: parseArrayParam(searchParams.get(URL_PARAM_KEYS.tags)),
-      selectedTagId: searchParams.get(URL_PARAM_KEYS.tag) ?? null,
+      selectedTagIds: parseArrayParam<Id<"tags">>(
+        searchParams.get(URL_PARAM_KEYS.tags)
+      ),
+      selectedTagId: parseIdParam<Id<"tags">>(
+        searchParams.get(URL_PARAM_KEYS.tag)
+      ),
       searchQuery: searchParams.get(URL_PARAM_KEYS.search) ?? "",
       showSubmitDrawer: searchParams.get(URL_PARAM_KEYS.newFeedback) === "1",
     };

@@ -21,7 +21,6 @@ import {
   type LaneConfig,
   RoadmapLaneColumn,
 } from "@/features/roadmap/components/roadmap-lane";
-import type { RoadmapLaneWithBacklog } from "@/lib/constants";
 import type { TagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +37,9 @@ export function RoadmapKanban({
   onAddItem,
   onItemClick,
 }: RoadmapKanbanProps) {
-  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
+  const [draggingItemId, setDraggingItemId] = useState<Id<"feedback"> | null>(
+    null
+  );
 
   // Modal state for adding columns
   const [showAddColumnModal, setShowAddColumnModal] = useState(false);
@@ -82,7 +83,8 @@ export function RoadmapKanban({
   // Transform data for display - group by organizationStatusId
   const itemsByLane = useMemo(() => {
     if (!roadmapData) {
-      return { backlog: [] as RoadmapItemData[] };
+      const empty: Record<string, RoadmapItemData[]> = { backlog: [] };
+      return empty;
     }
 
     const grouped: Record<string, RoadmapItemData[]> = {
@@ -96,7 +98,25 @@ export function RoadmapKanban({
 
     // Group feedback by organizationStatusId
     for (const item of roadmapData) {
-      const feedbackItem = item as unknown as RoadmapItemData;
+      const feedbackItem: RoadmapItemData = {
+        _id: item._id,
+        title: item.title,
+        description: item.description,
+        status: item.status,
+        voteCount: item.voteCount,
+        commentCount: item.commentCount,
+        organizationStatusId: item.organizationStatusId ?? null,
+        roadmapOrder: item.roadmapOrder ?? null,
+        hasVoted: item.hasVoted,
+        tags: item.tags
+          ?.filter((tag): tag is NonNullable<typeof tag> => tag !== null)
+          .map((tag) => ({
+            _id: tag._id,
+            name: tag.name,
+            color: tag.color,
+            icon: tag.icon,
+          })),
+      };
       if (item.organizationStatusId && grouped[item.organizationStatusId]) {
         grouped[item.organizationStatusId].push(feedbackItem);
       } else {
@@ -124,48 +144,32 @@ export function RoadmapKanban({
     setDraggingItemId(null);
   }, []);
 
-  const getDraggedItemId = useCallback(
-    (e: React.DragEvent<HTMLDivElement>): string | null => {
-      try {
-        const data = JSON.parse(e.dataTransfer.getData("application/json"));
-        return data.itemId;
-      } catch {
-        return e.dataTransfer.getData("text/plain");
-      }
-    },
-    []
-  );
-
   const handleDrop = useCallback(
     async (e: React.DragEvent<HTMLDivElement>, targetLane: string) => {
       e.preventDefault();
+      const currentDraggedId = draggingItemId;
       setDraggingItemId(null);
 
-      if (!isAdmin) {
-        return;
-      }
-
-      const draggedItemId = getDraggedItemId(e);
-      if (!draggedItemId) {
+      if (!(isAdmin && currentDraggedId)) {
         return;
       }
 
       // If dropping into backlog, remove statusId
       if (targetLane === "backlog") {
         await updateFeedbackStatus({
-          feedbackId: draggedItemId as Id<"feedback">,
+          feedbackId: currentDraggedId,
           organizationStatusId: undefined,
         });
         return;
       }
 
-      // Update feedback with new statusId
+      // Update feedback with new statusId (lane ID is an organization status ID)
       await updateFeedbackStatus({
-        feedbackId: draggedItemId as Id<"feedback">,
+        feedbackId: currentDraggedId,
         organizationStatusId: targetLane as Id<"organizationStatuses">,
       });
     },
-    [isAdmin, getDraggedItemId, updateFeedbackStatus]
+    [isAdmin, draggingItemId, updateFeedbackStatus]
   );
 
   // Handle creating a new column (board status)
@@ -234,7 +238,7 @@ export function RoadmapKanban({
               isAdmin={isAdmin}
               items={itemsByLane[laneConfig.id] ?? []}
               key={laneConfig.id}
-              lane={laneConfig.id as RoadmapLaneWithBacklog}
+              lane={laneConfig.id}
               laneConfig={laneConfig}
               onAddItem={onAddItem}
               onDragEnd={handleDragEnd}

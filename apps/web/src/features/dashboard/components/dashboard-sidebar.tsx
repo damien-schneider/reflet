@@ -11,7 +11,6 @@ import {
   User,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Link from "next/link";
 import type * as React from "react";
@@ -54,19 +53,19 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
 
   const adminUnreadCount = useQuery(
     api.support_conversations.getUnreadCountForAdmin,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const deletedCount = useQuery(
     api.feedback_trash.getDeletedCount,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
   const subscription = useQuery(
     api.subscriptions.getStatus,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const buildPath = (path: string) =>
@@ -317,7 +316,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
       </SidebarContent>
 
       {orgSlug && org && !org.isPublic && isAdmin && (
-        <MakePublicBanner orgId={org._id as Id<"organizations">} />
+        <MakePublicBanner orgId={org._id} />
       )}
 
       {orgSlug && isAdmin && subscription?.tier === "free" && (

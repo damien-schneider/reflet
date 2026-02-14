@@ -2,7 +2,6 @@
 
 import { GithubLogo, MagicWand } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
@@ -30,15 +29,15 @@ export default function ReleaseSettingsPage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
     api.members.getCurrentMember,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const githubStatus = useQuery(
     api.github.getConnectionStatus,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const githubConnection = useQuery(
     api.github.getConnection,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const updateOrg = useMutation(api.organizations.update);
@@ -56,7 +55,7 @@ export default function ReleaseSettingsPage({
     currentMember?.role === "admin" || currentMember?.role === "owner";
 
   const settings = org?.changelogSettings;
-  const orgId = org?._id as Id<"organizations"> | undefined;
+  const orgId = org?._id;
   const isGitHubConnected = githubStatus?.isConnected === true;
 
   const loadBranches = useCallback(async () => {

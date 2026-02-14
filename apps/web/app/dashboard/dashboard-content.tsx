@@ -170,7 +170,8 @@ function DashboardBreadcrumb({
 
 export function DashboardContent({ children }: { children: React.ReactNode }) {
   const params = useParams();
-  const orgSlug = params?.orgSlug as string | undefined;
+  const rawOrgSlug = params?.orgSlug;
+  const orgSlug = typeof rawOrgSlug === "string" ? rawOrgSlug : undefined;
   const router = useRouter();
   const pathname = usePathname();
   const organizations = useQuery(api.organizations.list);

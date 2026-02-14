@@ -32,12 +32,15 @@ export function useCommentEditing({
   deleteComment,
 }: UseCommentEditingParams) {
   const [newComment, setNewComment] = useState("");
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<Id<"comments"> | null>(null);
   const [replyContent, setReplyContent] = useState("");
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentId, setEditingCommentId] =
+    useState<Id<"comments"> | null>(null);
   const [editCommentContent, setEditCommentContent] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const [commentToDelete, setCommentToDelete] = useState<Id<"comments"> | null>(
+    null
+  );
 
   const handleSubmitComment = useCallback(async () => {
     const trimmedComment = newComment.trim();
@@ -54,7 +57,7 @@ export function useCommentEditing({
   }, [feedbackId, newComment, createComment]);
 
   const handleSubmitReply = useCallback(
-    async (parentId: string) => {
+    async (parentId: Id<"comments">) => {
       const trimmedReply = replyContent.trim();
       if (!(feedbackId && trimmedReply)) {
         return;
@@ -64,7 +67,7 @@ export function useCommentEditing({
         await createComment({
           feedbackId,
           body: trimmedReply,
-          parentId: parentId as Id<"comments">,
+          parentId,
         });
         setReplyContent("");
         setReplyingTo(null);
@@ -76,13 +79,13 @@ export function useCommentEditing({
   );
 
   const handleUpdateComment = useCallback(
-    async (commentId: string) => {
+    async (commentId: Id<"comments">) => {
       const trimmedContent = editCommentContent.trim();
       if (!trimmedContent) {
         return;
       }
       await updateComment({
-        id: commentId as Id<"comments">,
+        id: commentId,
         body: trimmedContent,
       });
       setEditingCommentId(null);
@@ -95,7 +98,7 @@ export function useCommentEditing({
     if (!commentToDelete) {
       return;
     }
-    await deleteComment({ id: commentToDelete as Id<"comments"> });
+    await deleteComment({ id: commentToDelete });
     setCommentToDelete(null);
   }, [commentToDelete, deleteComment]);
 

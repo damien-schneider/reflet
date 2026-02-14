@@ -12,9 +12,9 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } {
     return { h: 0, s: 0, l: 50 };
   }
 
-  const r = Number.parseInt(result[1], 16) / 255;
-  const g = Number.parseInt(result[2], 16) / 255;
-  const b = Number.parseInt(result[3], 16) / 255;
+  const r = Number.parseInt(result[1] ?? "0", 16) / 255;
+  const g = Number.parseInt(result[2] ?? "0", 16) / 255;
+  const b = Number.parseInt(result[3] ?? "0", 16) / 255;
 
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
@@ -99,9 +99,9 @@ function isLightColor(hex: string): boolean {
     return false;
   }
 
-  const r = Number.parseInt(result[1], 16);
-  const g = Number.parseInt(result[2], 16);
-  const b = Number.parseInt(result[3], 16);
+  const r = Number.parseInt(result[1] ?? "0", 16);
+  const g = Number.parseInt(result[2] ?? "0", 16);
+  const b = Number.parseInt(result[3] ?? "0", 16);
 
   // Calculate relative luminance using sRGB formula
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;

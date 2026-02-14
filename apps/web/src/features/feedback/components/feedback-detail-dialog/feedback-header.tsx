@@ -31,7 +31,7 @@ import { getTagDotColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 interface StatusData {
-  _id: string;
+  _id: Id<"organizationStatuses">;
   name: string;
   color: string;
 }
@@ -41,7 +41,7 @@ interface FeedbackHeaderProps {
     hasVoted?: boolean;
     voteCount?: number;
     isPinned?: boolean;
-    organizationStatusId?: string | null;
+    organizationStatusId?: Id<"organizationStatuses"> | null;
     commentCount?: number;
     createdAt: number;
   };
@@ -144,11 +144,7 @@ export function FeedbackHeader({
             onValueChange={(val) =>
               onStatusChange(val as Id<"organizationStatuses">)
             }
-            value={
-              (feedback?.organizationStatusId || undefined) as
-                | string
-                | undefined
-            }
+            value={feedback?.organizationStatusId ?? undefined}
           >
             <SelectTrigger className="w-35">
               <SelectValue placeholder="Set status">

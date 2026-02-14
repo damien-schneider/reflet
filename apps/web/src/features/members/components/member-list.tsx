@@ -44,7 +44,7 @@ interface MemberInfo {
 interface MemberListProps {
   members: MemberInfo[] | undefined;
   isOwner: boolean;
-  onRemoveMember: (id: string, name: string) => void;
+  onRemoveMember: (id: Id<"organizationMembers">, name: string) => void;
 }
 
 export function MemberList({
@@ -55,12 +55,12 @@ export function MemberList({
   const updateRole = useMutation(api.members.updateRole);
 
   const handleUpdateRole = async (
-    memberId: string,
+    memberId: Id<"organizationMembers">,
     role: "admin" | "member"
   ) => {
     try {
       await updateRole({
-        memberId: memberId as Id<"organizationMembers">,
+        memberId,
         role,
       });
     } catch (error) {

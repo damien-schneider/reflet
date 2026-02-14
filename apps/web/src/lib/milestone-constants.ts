@@ -9,6 +9,10 @@ export const TIME_HORIZONS = [
 
 export type TimeHorizon = (typeof TIME_HORIZONS)[number];
 
+export function isTimeHorizon(value: string): value is TimeHorizon {
+  return (TIME_HORIZONS as readonly string[]).includes(value);
+}
+
 export const TIME_HORIZON_CONFIG: Record<
   TimeHorizon,
   { label: string; shortLabel: string; description: string }

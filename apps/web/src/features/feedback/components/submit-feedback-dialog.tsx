@@ -60,8 +60,8 @@ interface SubmitFeedbackDialogProps {
   isAdmin?: boolean;
   organizationId?: Id<"organizations">;
   tags?: Tag[];
-  selectedTagId?: string;
-  onTagChange?: (tagId: string | undefined) => void;
+  selectedTagId?: Id<"tags">;
+  onTagChange?: (tagId: Id<"tags"> | undefined) => void;
   selectedAssigneeId?: string;
   onAssigneeChange?: (assigneeId: string | undefined) => void;
 }
@@ -210,7 +210,11 @@ export function SubmitFeedbackDialog({
               {showTagSelector && (
                 <Select
                   onValueChange={(value) =>
-                    onTagChange(value && value !== "none" ? value : undefined)
+                    onTagChange(
+                      value && value !== "none"
+                        ? (value as Id<"tags">)
+                        : undefined
+                    )
                   }
                   value={selectedTagId || "none"}
                 >

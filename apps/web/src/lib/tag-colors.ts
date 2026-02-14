@@ -98,7 +98,7 @@ const COLOR_VALUES: Record<TagColor, ColorValue> = {
 };
 
 export function isValidTagColor(color: string): color is TagColor {
-  return TAG_COLORS.includes(color as TagColor);
+  return (TAG_COLORS as readonly string[]).includes(color);
 }
 
 // Resolve any color (named or legacy hex) to a TagColor.
@@ -181,7 +181,7 @@ export function getTagDotColor(color: string, isDark = false): string {
 // Get a random named tag color (excludes "default")
 export function getRandomTagColor(): TagColor {
   const colors = TAG_COLORS.filter((c) => c !== "default");
-  return colors[Math.floor(Math.random() * colors.length)];
+  return colors[Math.floor(Math.random() * colors.length)] ?? "default";
 }
 
 // Tailwind classes for tag text colors (Notion-style)

@@ -8,8 +8,8 @@ declare global {
 }
 
 function initWidget(): void {
-  const script = document.currentScript as HTMLScriptElement | null;
-  if (!script) {
+  const script = document.currentScript;
+  if (!(script instanceof HTMLScriptElement)) {
     return;
   }
 

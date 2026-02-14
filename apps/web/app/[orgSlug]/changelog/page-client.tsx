@@ -1,7 +1,6 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { env } from "@reflet/env/web";
 import { IconRss } from "@tabler/icons-react";
 import { useQuery } from "convex/react";
@@ -22,7 +21,7 @@ export default function PublicChangelogPageClient({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const releases = useQuery(
     api.changelog.listPublished,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   if (!org) {
@@ -63,14 +62,12 @@ export default function PublicChangelogPageClient({
               <span className="sr-only">RSS Feed</span>
             </a>
           )}
-          <ChangelogSubscribe organizationId={org._id as Id<"organizations">} />
+          <ChangelogSubscribe organizationId={org._id} />
         </div>
       </div>
 
       <ReleaseTimeline
-        emptyAction={
-          <ChangelogSubscribe organizationId={org._id as Id<"organizations">} />
-        }
+        emptyAction={<ChangelogSubscribe organizationId={org._id} />}
         isAdmin={false}
         orgSlug={orgSlug}
         releases={releases ?? []}

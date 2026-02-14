@@ -52,10 +52,11 @@ export function VersionPicker({
     }
   }, [versionSuggestions, value, isAutoVersioning, onChange]);
 
-  const hasSuggestions =
-    versionSuggestions?.patch ||
-    versionSuggestions?.minor ||
-    versionSuggestions?.major;
+  const patchVersion = versionSuggestions?.patch;
+  const minorVersion = versionSuggestions?.minor;
+  const majorVersion = versionSuggestions?.major;
+
+  const hasSuggestions = patchVersion || minorVersion || majorVersion;
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
@@ -81,37 +82,37 @@ export function VersionPicker({
       </div>
       {hasSuggestions && !disabled && (
         <div className="flex items-center gap-1">
-          {versionSuggestions.patch && (
+          {patchVersion && (
             <Button
               className="h-5 px-1.5 text-[10px]"
-              onClick={() => onChange(versionSuggestions.patch as string)}
+              onClick={() => onChange(patchVersion)}
               size="sm"
               type="button"
-              variant={value === versionSuggestions.patch ? "default" : "ghost"}
+              variant={value === patchVersion ? "default" : "ghost"}
             >
-              Patch {versionSuggestions.patch}
+              Patch {patchVersion}
             </Button>
           )}
-          {versionSuggestions.minor && (
+          {minorVersion && (
             <Button
               className="h-5 px-1.5 text-[10px]"
-              onClick={() => onChange(versionSuggestions.minor as string)}
+              onClick={() => onChange(minorVersion)}
               size="sm"
               type="button"
-              variant={value === versionSuggestions.minor ? "default" : "ghost"}
+              variant={value === minorVersion ? "default" : "ghost"}
             >
-              Minor {versionSuggestions.minor}
+              Minor {minorVersion}
             </Button>
           )}
-          {versionSuggestions.major && (
+          {majorVersion && (
             <Button
               className="h-5 px-1.5 text-[10px]"
-              onClick={() => onChange(versionSuggestions.major as string)}
+              onClick={() => onChange(majorVersion)}
               size="sm"
               type="button"
-              variant={value === versionSuggestions.major ? "default" : "ghost"}
+              variant={value === majorVersion ? "default" : "ghost"}
             >
-              Major {versionSuggestions.major}
+              Major {majorVersion}
             </Button>
           )}
         </div>

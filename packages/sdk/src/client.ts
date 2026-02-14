@@ -247,20 +247,30 @@ export class Reflet {
   }
 
   /**
-   * Parse JSON response text safely
+   * Parse JSON response text safely.
+   * Returns `unknown` — callers must narrow before use.
    */
-  private parseJsonSafely<T>(
-    text: string,
-    status: number
-  ): T | { error: string } {
+  private parseJsonSafely(text: string, status: number): unknown {
     try {
-      return JSON.parse(text) as T | { error: string };
+      return JSON.parse(text);
     } catch (parseError) {
       throw new RefletError(
         `Invalid response: ${parseError instanceof Error ? parseError.message : "Failed to parse JSON"}`,
         status
       );
     }
+  }
+
+  /**
+   * Type guard for API error responses
+   */
+  private isErrorResponse(data: unknown): data is { error: string } {
+    return (
+      typeof data === "object" &&
+      data !== null &&
+      "error" in data &&
+      typeof (data as Record<string, unknown>).error === "string"
+    );
   }
 
   /**
@@ -309,18 +319,22 @@ export class Reflet {
           response.status
         );
       }
-      return {} as T;
+      // Successful empty body (e.g. 204 No Content) — return empty object
+      // narrowed through unknown for type-safe assertion
+      const emptyResponse: unknown = {};
+      return emptyResponse as T;
     }
 
-    const data = this.parseJsonSafely<T>(text, response.status);
+    const data = this.parseJsonSafely(text, response.status);
 
     if (!response.ok) {
-      const errorMessage =
-        (data as { error?: string }).error ??
-        `Request failed with status ${response.status}`;
+      const errorMessage = this.isErrorResponse(data)
+        ? data.error
+        : `Request failed with status ${response.status}`;
       this.throwHttpError(errorMessage, response.status);
     }
 
+    // Standard unknown → T assertion for runtime-parsed JSON
     return data as T;
   }
 

@@ -33,21 +33,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { TimeHorizon } from "@/lib/milestone-constants";
-import { TIME_HORIZON_CONFIG, TIME_HORIZONS } from "@/lib/milestone-constants";
+import {
+  isTimeHorizon,
+  TIME_HORIZON_CONFIG,
+  TIME_HORIZONS,
+} from "@/lib/milestone-constants";
 import { getDeadlineInfo } from "@/lib/milestone-deadline";
 import type { TagColor } from "@/lib/tag-colors";
-import { getTagColorValues } from "@/lib/tag-colors";
+import { getTagColorValues, isValidTagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 import { MilestoneDatePicker } from "./milestone-date-picker";
 
 interface MilestoneSegmentProps {
   milestone: {
-    _id: string;
+    _id: Id<"milestones">;
     name: string;
     emoji?: string;
     color: string;
-    timeHorizon: string;
+    timeHorizon: TimeHorizon;
     targetDate?: number;
     status: string;
     progress: {
@@ -83,10 +87,10 @@ export function MilestoneSegment({
     milestone.emoji
   );
   const [editColor, setEditColor] = useState<TagColor>(
-    milestone.color as TagColor
+    isValidTagColor(milestone.color) ? milestone.color : "default"
   );
   const [editHorizon, setEditHorizon] = useState<TimeHorizon>(
-    milestone.timeHorizon as TimeHorizon
+    milestone.timeHorizon
   );
   const [editTargetDate, setEditTargetDate] = useState<number | undefined>(
     milestone.targetDate
@@ -99,8 +103,10 @@ export function MilestoneSegment({
   const handleEditOpen = useCallback(() => {
     setEditName(milestone.name);
     setEditEmoji(milestone.emoji);
-    setEditColor(milestone.color as TagColor);
-    setEditHorizon(milestone.timeHorizon as TimeHorizon);
+    setEditColor(
+      isValidTagColor(milestone.color) ? milestone.color : "default"
+    );
+    setEditHorizon(milestone.timeHorizon);
     setEditTargetDate(milestone.targetDate);
     setEditOpen(true);
   }, [
@@ -128,7 +134,7 @@ export function MilestoneSegment({
         dateUpdate = { targetDate: editTargetDate };
       }
       await updateMilestone({
-        id: milestone._id as Id<"milestones">,
+        id: milestone._id,
         name: trimmedName,
         emoji: editEmoji,
         color: editColor,
@@ -162,13 +168,13 @@ export function MilestoneSegment({
 
   const handleComplete = useCallback(async () => {
     await updateMilestone({
-      id: milestone._id as Id<"milestones">,
+      id: milestone._id,
       status: "completed",
     });
   }, [milestone._id, updateMilestone]);
 
   const handleDelete = useCallback(async () => {
-    await removeMilestone({ id: milestone._id as Id<"milestones"> });
+    await removeMilestone({ id: milestone._id });
   }, [milestone._id, removeMilestone]);
 
   const isCompleted = milestone.status === "completed";
@@ -342,7 +348,11 @@ export function MilestoneSegment({
             />
 
             <Select
-              onValueChange={(val) => setEditHorizon(val as TimeHorizon)}
+              onValueChange={(val) => {
+                if (val && isTimeHorizon(val)) {
+                  setEditHorizon(val);
+                }
+              }}
               value={editHorizon}
             >
               <SelectTrigger className="h-8 text-xs">

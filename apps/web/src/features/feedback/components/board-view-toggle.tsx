@@ -7,6 +7,15 @@ import { cn } from "@/lib/utils";
 
 export type BoardView = "roadmap" | "feed" | "milestones";
 
+const BOARD_VIEWS: readonly BoardView[] = [
+  "roadmap",
+  "feed",
+  "milestones",
+] as const;
+
+const isBoardView = (value: string): value is BoardView =>
+  (BOARD_VIEWS as readonly string[]).includes(value);
+
 interface BoardViewToggleProps {
   view: BoardView;
   onChange: (view: BoardView) => void;
@@ -21,7 +30,11 @@ export function BoardViewToggle({
   return (
     <Tabs
       className={cn("flex-col", className)}
-      onValueChange={(value) => onChange(value as BoardView)}
+      onValueChange={(value) => {
+        if (isBoardView(value)) {
+          onChange(value);
+        }
+      }}
       value={view}
     >
       <TabsList className="h-10">

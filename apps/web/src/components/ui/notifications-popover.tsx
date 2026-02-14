@@ -146,9 +146,15 @@ export function NotificationsPopover({
               {notifications.map((notification) => (
                 <NotificationItem
                   key={notification._id}
-                  notification={
-                    notification as NotificationItemProps["notification"]
-                  }
+                  notification={{
+                    _id: notification._id,
+                    type: notification.type,
+                    title: notification.title,
+                    message: notification.message,
+                    isRead: notification.isRead,
+                    createdAt: notification.createdAt,
+                    invitationToken: notification.invitationToken,
+                  }}
                 />
               ))}
             </div>

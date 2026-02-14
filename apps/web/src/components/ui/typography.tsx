@@ -3,6 +3,7 @@ import {
   type ComponentPropsWithRef,
   type ElementType,
   forwardRef,
+  type Ref,
 } from "react";
 
 import { cn } from "@/lib/utils";
@@ -148,11 +149,11 @@ type TextProps<T extends TextElement = "p"> = ComponentPropsWithRef<T> &
 
 const Text = forwardRef<HTMLElement, TextProps>(
   ({ as = "p", variant, align, className, ...props }, ref) => {
-    const Component = as as ElementType;
+    const Component: ElementType = as;
     return (
       <Component
         className={cn(textVariants({ variant, align }), className)}
-        ref={ref}
+        ref={ref as Ref<never>}
         {...props}
       />
     );
@@ -168,14 +169,14 @@ type MutedProps = ComponentPropsWithRef<"p"> & {
   as?: TextElement;
 };
 
-const Muted = forwardRef<HTMLParagraphElement, MutedProps>(
+const Muted = forwardRef<HTMLElement, MutedProps>(
   ({ as = "p", className, ...props }, ref) => {
-    const Component = as as ElementType;
+    const Component: ElementType = as;
     return (
       <Component
         className={cn("text-muted-foreground text-sm", className)}
-        ref={ref}
-        {...props}
+        ref={ref as Ref<never>}
+        {...(props as Record<string, unknown>)}
       />
     );
   }

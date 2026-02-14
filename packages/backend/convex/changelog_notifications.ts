@@ -156,10 +156,10 @@ export const sendReleaseNotifications = internalAction({
       return { success: true, skipped: true, reason: "Not Pro tier" };
     }
 
-    const subscribers = (await ctx.runQuery(
+    const subscribers: Subscriber[] = await ctx.runQuery(
       internal.changelog_subscriptions.getSubscribersByOrganization,
       { organizationId: release.organizationId }
-    )) as Subscriber[];
+    );
 
     if (subscribers.length === 0) {
       console.log("[Changelog Notifications] No subscribers found");

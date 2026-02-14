@@ -133,10 +133,9 @@ export class RefletChangelogWidget {
     const { unreadCount } = this.state;
     for (const el of this.triggerElements) {
       const badge = el.querySelector("[data-reflet-changelog-badge]");
-      if (badge) {
+      if (badge instanceof HTMLElement) {
         badge.textContent = unreadCount > 0 ? String(unreadCount) : "";
-        (badge as HTMLElement).style.display =
-          unreadCount > 0 ? "inline-flex" : "none";
+        badge.style.display = unreadCount > 0 ? "inline-flex" : "none";
       }
     }
   }
@@ -274,7 +273,10 @@ export class RefletChangelogWidget {
     if (card) {
       card.addEventListener("click", (e) => {
         // Don't open if dismiss was clicked
-        if ((e.target as HTMLElement).closest("[data-action='dismiss']")) {
+        if (
+          e.target instanceof HTMLElement &&
+          e.target.closest("[data-action='dismiss']")
+        ) {
           return;
         }
         this.open();

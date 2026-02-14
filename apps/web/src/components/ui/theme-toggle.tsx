@@ -25,6 +25,12 @@ export const themeLabels: Record<Theme, string> = {
   dark: "Dark",
 };
 
+const isValidTheme = (value: string | undefined): value is Theme =>
+  typeof value === "string" && (themes as readonly string[]).includes(value);
+
+const getTheme = (theme: string | undefined): Theme =>
+  isValidTheme(theme) ? theme : "system";
+
 export function useThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -34,12 +40,12 @@ export function useThemeToggle() {
   }, []);
 
   const cycleTheme = () => {
-    const currentIndex = themes.indexOf(theme as Theme);
+    const currentIndex = themes.indexOf(getTheme(theme));
     const nextIndex = (currentIndex + 1) % themes.length;
     setTheme(themes[nextIndex]);
   };
 
-  const currentTheme = ((mounted ? theme : undefined) as Theme) ?? "system";
+  const currentTheme = mounted ? getTheme(theme) : "system";
   const Icon = themeIcons[currentTheme];
   const label = themeLabels[currentTheme];
 
@@ -55,7 +61,7 @@ export function ThemeToggle({ className }: { className?: string }) {
   }, []);
 
   const cycleTheme = () => {
-    const currentIndex = themes.indexOf(theme as Theme);
+    const currentIndex = themes.indexOf(getTheme(theme));
     const nextIndex = (currentIndex + 1) % themes.length;
     setTheme(themes[nextIndex]);
   };
@@ -75,7 +81,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     );
   }
 
-  const currentTheme = (theme as Theme) ?? "system";
+  const currentTheme = getTheme(theme);
   const Icon = themeIcons[currentTheme];
 
   return (
@@ -103,7 +109,7 @@ export function ThemeToggleWithLabel({ className }: { className?: string }) {
   }, []);
 
   const cycleTheme = () => {
-    const currentIndex = themes.indexOf(theme as Theme);
+    const currentIndex = themes.indexOf(getTheme(theme));
     const nextIndex = (currentIndex + 1) % themes.length;
     setTheme(themes[nextIndex]);
   };
@@ -121,7 +127,7 @@ export function ThemeToggleWithLabel({ className }: { className?: string }) {
     );
   }
 
-  const currentTheme = (theme as Theme) ?? "system";
+  const currentTheme = getTheme(theme);
   const Icon = themeIcons[currentTheme];
 
   return (

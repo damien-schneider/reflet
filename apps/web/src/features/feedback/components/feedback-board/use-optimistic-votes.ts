@@ -78,7 +78,7 @@ export function useOptimisticVotes({
   const handleToggleVote = useCallback(
     async (
       e: React.MouseEvent,
-      feedbackId: string,
+      feedbackId: Id<"feedback">,
       voteType: "upvote" | "downvote"
     ) => {
       e.stopPropagation();
@@ -88,9 +88,7 @@ export function useOptimisticVotes({
         return;
       }
 
-      const currentFeedback = (feedback as FeedbackItem[] | undefined)?.find(
-        (f) => f._id === feedbackId
-      );
+      const currentFeedback = feedback?.find((f) => f._id === feedbackId);
       const optimisticState = optimisticVotes.get(feedbackId);
       const currentVoteType =
         optimisticState?.voteType ?? currentFeedback?.userVoteType ?? null;
@@ -110,7 +108,7 @@ export function useOptimisticVotes({
 
       try {
         await toggleVoteMutation({
-          feedbackId: feedbackId as Id<"feedback">,
+          feedbackId,
           voteType,
         });
       } catch {

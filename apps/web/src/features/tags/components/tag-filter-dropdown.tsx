@@ -42,7 +42,7 @@ import { cn } from "@/lib/utils";
 import { DeleteTagDialog } from "./delete-tag-dialog";
 
 interface Tag {
-  _id: string;
+  _id: Id<"tags">;
   name: string;
   color: string;
   icon?: string;
@@ -104,7 +104,7 @@ const TagEditButton = memo(function TagEditButton({ tag }: TagEditButtonProps) {
 
     if (hasNameChanged || hasColorChanged) {
       await updateTag({
-        id: tag._id as Id<"tags">,
+        id: tag._id,
         name: trimmedName,
         color: editedColor,
       });

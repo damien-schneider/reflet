@@ -24,7 +24,9 @@ export function MilestoneFeedbackPreview({
   onFeedbackClick,
   className,
 }: MilestoneFeedbackPreviewProps) {
-  const validItems = items.filter(Boolean) as FeedbackPreviewItem[];
+  const validItems = items.filter(
+    (item): item is FeedbackPreviewItem => item !== null
+  );
   const overflow = totalCount - validItems.length;
 
   if (validItems.length === 0) {

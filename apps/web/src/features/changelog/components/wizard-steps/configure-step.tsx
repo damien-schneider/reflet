@@ -25,6 +25,11 @@ const INCREMENT_OPTIONS = [
   { id: "major" as const, label: "Major", example: "v1.0.0 → v2.0.0" },
 ] as const;
 
+const isSyncDirection = (
+  val: string
+): val is WizardConfig["manualSyncDirection"] =>
+  val === "github_first" || val === "reflet_first" || val === "bidirectional";
+
 export function ConfigureStep({ config, onChange }: ConfigureStepProps) {
   if (config.workflow === "ai_powered") {
     return <AiPoweredConfig config={config} onChange={onChange} />;
@@ -267,12 +272,11 @@ function ManualConfig({ config, onChange }: ConfigureStepProps) {
               Sync direction
             </Label>
             <Select
-              onValueChange={(val) =>
-                onChange({
-                  manualSyncDirection:
-                    val as WizardConfig["manualSyncDirection"],
-                })
-              }
+              onValueChange={(val) => {
+                if (val && isSyncDirection(val)) {
+                  onChange({ manualSyncDirection: val });
+                }
+              }}
               value={config.manualSyncDirection}
             >
               <SelectTrigger className="h-8 text-sm" id="sync-direction">

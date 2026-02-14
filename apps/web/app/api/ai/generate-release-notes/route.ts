@@ -1,5 +1,6 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { streamText } from "ai";
+import { z } from "zod";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -8,30 +9,30 @@ const openrouter = createOpenRouter({
 const MAX_COMMITS_FOR_CONTEXT = 100;
 const MAX_FILES_FOR_CONTEXT = 50;
 
-interface CommitInput {
-  sha: string;
-  message: string;
-  fullMessage?: string;
-  author: string;
-}
+const commitInputSchema = z.object({
+  sha: z.string(),
+  message: z.string(),
+  fullMessage: z.string().optional(),
+  author: z.string(),
+});
 
-interface FileInput {
-  filename: string;
-  status: string;
-  additions: number;
-  deletions: number;
-}
+const fileInputSchema = z.object({
+  filename: z.string(),
+  status: z.string(),
+  additions: z.number(),
+  deletions: z.number(),
+});
 
-interface RequestBody {
-  commits: CommitInput[];
-  files?: FileInput[];
-  version?: string;
-  previousVersion?: string;
-  repositoryName?: string;
-}
+const requestBodySchema = z.object({
+  commits: z.array(commitInputSchema),
+  files: z.array(fileInputSchema).optional(),
+  version: z.string().optional(),
+  previousVersion: z.string().optional(),
+  repositoryName: z.string().optional(),
+});
 
 export async function POST(request: Request): Promise<Response> {
-  const body = (await request.json()) as RequestBody;
+  const body = requestBodySchema.parse(await request.json());
   const { commits, files, version, previousVersion, repositoryName } = body;
 
   if (!commits || commits.length === 0) {

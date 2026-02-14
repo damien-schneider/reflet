@@ -28,6 +28,17 @@ import {
 } from "@/components/ui/select";
 import type { SortOption } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+
+const SORT_OPTIONS: readonly SortOption[] = [
+  "newest",
+  "oldest",
+  "most_votes",
+  "most_comments",
+] as const;
+
+const isSortOption = (value: string): value is SortOption =>
+  (SORT_OPTIONS as readonly string[]).includes(value);
+
 import {
   feedbackMagnifyingGlassAtom,
   feedbackSortAtom,
@@ -71,19 +82,17 @@ export function FeedbackFunnels({
   const hasFunnels = selectedStatusIds.length > 0 || selectedTagIds.length > 0;
   const filterCount = selectedStatusIds.length + selectedTagIds.length;
 
-  const toggleStatus = (statusId: string) => {
-    setSelectedStatusIds((prev: string[]) =>
+  const toggleStatus = (statusId: Id<"organizationStatuses">) => {
+    setSelectedStatusIds((prev) =>
       prev.includes(statusId)
-        ? prev.filter((s: string) => s !== statusId)
+        ? prev.filter((s) => s !== statusId)
         : [...prev, statusId]
     );
   };
 
-  const toggleTag = (tagId: string) => {
-    setSelectedTagIds((prev: string[]) =>
-      prev.includes(tagId)
-        ? prev.filter((t: string) => t !== tagId)
-        : [...prev, tagId]
+  const toggleTag = (tagId: Id<"tags">) => {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
     );
   };
 
@@ -195,7 +204,11 @@ export function FeedbackFunnels({
 
           {/* Sort */}
           <Select
-            onValueChange={(v) => setSortBy(v as SortOption)}
+            onValueChange={(v) => {
+              if (v && isSortOption(v)) {
+                setSortBy(v);
+              }
+            }}
             value={sortBy}
           >
             <SelectTrigger className="w-40">
@@ -227,7 +240,7 @@ export function FeedbackFunnels({
       {hasFunnels && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-muted-foreground text-sm">Active filters:</span>
-          {selectedStatusIds.map((statusId: string) => {
+          {selectedStatusIds.map((statusId) => {
             const status = organizationStatuses?.find(
               (s) => s._id === statusId
             );
@@ -246,7 +259,7 @@ export function FeedbackFunnels({
               </Badge>
             );
           })}
-          {selectedTagIds.map((tagId: string) => {
+          {selectedTagIds.map((tagId) => {
             const tag = tags.find((t) => t._id === tagId);
             if (!tag) {
               return null;

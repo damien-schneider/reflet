@@ -18,7 +18,7 @@ import { TagFormPopover } from "@/features/tags/components/tag-form-popover";
 import { AutoTagButton } from "./auto-tag-button";
 
 export interface Tag {
-  _id: string;
+  _id: Id<"tags">;
   name: string;
   color: string;
   icon?: string;
@@ -106,7 +106,7 @@ export const TagFilterBar = memo(function TagFilterBar({
   const isAllSelected = selectedTagId === null;
 
   const [showCreatePopover, setShowCreatePopover] = useState(false);
-  const [deletingTagId, setDeletingTagId] = useState<string | null>(null);
+  const [deletingTagId, setDeletingTagId] = useState<Id<"tags"> | null>(null);
 
   const handleCreateSuccess = () => {
     setShowCreatePopover(false);

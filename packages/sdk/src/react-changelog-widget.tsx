@@ -25,6 +25,14 @@ interface WidgetInstance {
   markAsRead: () => void;
 }
 
+declare global {
+  interface Window {
+    RefletChangelogWidget?: new (
+      config: ChangelogWidgetProps
+    ) => WidgetInstance;
+  }
+}
+
 /**
  * React component that wraps the Reflet Changelog Widget.
  *
@@ -57,13 +65,7 @@ export function ChangelogWidget({
 
   const initWidget = useCallback(async () => {
     // Check if RefletChangelogWidget is available globally
-    const WidgetClass = (
-      window as unknown as {
-        RefletChangelogWidget?: new (
-          config: ChangelogWidgetProps
-        ) => WidgetInstance;
-      }
-    ).RefletChangelogWidget;
+    const WidgetClass = window.RefletChangelogWidget;
 
     if (WidgetClass) {
       const instance = new WidgetClass({
@@ -95,13 +97,7 @@ export function ChangelogWidget({
       script.src = "https://cdn.reflet.app/widget/reflet-changelog.v1.js";
       script.async = true;
       script.onload = () => {
-        const LoadedClass = (
-          window as unknown as {
-            RefletChangelogWidget?: new (
-              config: ChangelogWidgetProps
-            ) => WidgetInstance;
-          }
-        ).RefletChangelogWidget;
+        const LoadedClass = window.RefletChangelogWidget;
 
         if (LoadedClass) {
           const instance = new LoadedClass({

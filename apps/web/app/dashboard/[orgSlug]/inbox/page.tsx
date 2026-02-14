@@ -55,7 +55,7 @@ export default function InboxPage({
   );
   const supportSettings = useQuery(
     api.support_conversations.getSupportSettings,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const [selectedConversationId, setSelectedConversationId] =

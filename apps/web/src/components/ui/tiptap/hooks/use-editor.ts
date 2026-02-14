@@ -161,7 +161,7 @@ export function useTiptapMarkdownEditor(
   });
 
   useEffect(() => {
-    (editorRef as React.MutableRefObject<typeof editor>).current = editor;
+    editorRef.current = editor;
   }, [editor]);
 
   useEffect(() => {

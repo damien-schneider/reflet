@@ -1,5 +1,7 @@
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+
 export interface CommentData {
-  id: string;
+  id: Id<"comments">;
   content: string;
   createdAt: number;
   author?: {

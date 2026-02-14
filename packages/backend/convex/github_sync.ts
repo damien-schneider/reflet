@@ -2,7 +2,6 @@
 
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import type { Doc } from "./_generated/dataModel";
 import { internalAction } from "./_generated/server";
 
 const GITHUB_API_URL = "https://api.github.com";
@@ -17,10 +16,10 @@ export const syncAllReleases = internalAction({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const connection = (await ctx.runQuery(
+    const connection = await ctx.runQuery(
       internal.github.getConnectionInternal,
       { organizationId: args.organizationId }
-    )) as Doc<"githubConnections"> | null;
+    );
 
     if (!connection?.repositoryFullName) {
       console.error(

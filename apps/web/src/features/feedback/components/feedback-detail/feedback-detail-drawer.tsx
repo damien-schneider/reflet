@@ -31,18 +31,18 @@ import { FeedbackMetadataBar } from "./feedback-metadata-bar";
 
 // Minimal feedback data from the list (for instant display)
 export interface FeedbackListItem {
-  _id: string;
+  _id: Id<"feedback">;
   title: string;
   description?: string;
   voteCount: number;
   commentCount: number;
   createdAt: number;
-  organizationStatusId?: string;
+  organizationStatusId?: Id<"organizationStatuses">;
   hasVoted?: boolean;
   userVoteType?: "upvote" | "downvote" | null;
-  organizationId: string;
+  organizationId: Id<"organizations">;
   tags?: Array<{
-    _id: string;
+    _id: Id<"tags">;
     name: string;
     color: string;
     icon?: string;
@@ -92,15 +92,15 @@ export function FeedbackDetailDrawer({
   // Merge: use full details if available, otherwise use list data
   const feedback =
     feedbackDetails ??
-    (listItem
+    (listItem && feedbackId
       ? {
-          _id: feedbackId as Id<"feedback">,
+          _id: feedbackId,
           title: listItem.title,
           description: listItem.description ?? null,
           tags: listItem.tags
             ?.filter((t): t is NonNullable<typeof t> => t !== null)
             .map((t) => ({
-              _id: t._id as Id<"tags">,
+              _id: t._id,
               name: t.name,
               color: t.color,
             })),
@@ -108,13 +108,11 @@ export function FeedbackDetailDrawer({
           userVoteType: listItem.userVoteType,
           voteCount: listItem.voteCount,
           commentCount: listItem.commentCount,
-          organizationStatusId: listItem.organizationStatusId as
-            | Id<"organizationStatuses">
-            | undefined,
+          organizationStatusId: listItem.organizationStatusId,
           createdAt: listItem.createdAt,
           author: null, // Will load from full details
           assignee: null, // Will load from full details
-          organizationId: listItem.organizationId as Id<"organizations">,
+          organizationId: listItem.organizationId,
         }
       : null);
 
@@ -288,6 +286,14 @@ export function FeedbackDetailDrawer({
   );
 }
 
+type PriorityLevel = "critical" | "high" | "medium" | "low" | "none";
+type ComplexityLevel =
+  | "trivial"
+  | "simple"
+  | "moderate"
+  | "complex"
+  | "very_complex";
+
 interface FeedbackDetailContentProps {
   isLoading: boolean | null;
   feedback:
@@ -319,6 +325,17 @@ interface FeedbackDetailContentProps {
           image?: string | null;
         } | null;
         organizationId: Id<"organizations">;
+        // Optional fields from full feedback details
+        aiPriority?: PriorityLevel;
+        aiPriorityReasoning?: string;
+        aiComplexity?: ComplexityLevel;
+        aiComplexityReasoning?: string;
+        aiTimeEstimate?: string;
+        priority?: PriorityLevel;
+        complexity?: ComplexityLevel;
+        timeEstimate?: string;
+        deadline?: number;
+        attachments?: string[];
       }
     | null
     | undefined;
@@ -349,89 +366,25 @@ function FeedbackDetailContent({
       <div className="flex flex-col">
         {/* Metadata bar */}
         <FeedbackMetadataBar
-          aiComplexity={
-            "aiComplexity" in feedback
-              ? (feedback.aiComplexity as
-                  | "trivial"
-                  | "simple"
-                  | "moderate"
-                  | "complex"
-                  | "very_complex"
-                  | undefined)
-              : undefined
-          }
-          aiComplexityReasoning={
-            "aiComplexityReasoning" in feedback
-              ? (feedback.aiComplexityReasoning as string | undefined)
-              : undefined
-          }
-          aiPriority={
-            "aiPriority" in feedback
-              ? (feedback.aiPriority as
-                  | "critical"
-                  | "high"
-                  | "medium"
-                  | "low"
-                  | "none"
-                  | undefined)
-              : undefined
-          }
-          aiPriorityReasoning={
-            "aiPriorityReasoning" in feedback
-              ? (feedback.aiPriorityReasoning as string | undefined)
-              : undefined
-          }
-          aiTimeEstimate={
-            "aiTimeEstimate" in feedback
-              ? (feedback.aiTimeEstimate as string | undefined)
-              : undefined
-          }
+          aiComplexity={feedback.aiComplexity}
+          aiComplexityReasoning={feedback.aiComplexityReasoning}
+          aiPriority={feedback.aiPriority}
+          aiPriorityReasoning={feedback.aiPriorityReasoning}
+          aiTimeEstimate={feedback.aiTimeEstimate}
           assignee={feedback.assignee}
-          attachments={
-            "attachments" in feedback
-              ? (feedback.attachments as string[] | undefined)
-              : undefined
-          }
+          attachments={feedback.attachments}
           author={feedback.author}
-          complexity={
-            "complexity" in feedback
-              ? (feedback.complexity as
-                  | "trivial"
-                  | "simple"
-                  | "moderate"
-                  | "complex"
-                  | "very_complex"
-                  | undefined)
-              : undefined
-          }
+          complexity={feedback.complexity}
           createdAt={feedback.createdAt}
-          deadline={
-            "deadline" in feedback
-              ? (feedback.deadline as number | undefined)
-              : undefined
-          }
+          deadline={feedback.deadline}
           description={feedback.description}
           feedbackId={feedbackId}
           isAdmin={isAdmin}
           organizationId={feedback.organizationId}
           organizationStatusId={feedback.organizationStatusId}
-          priority={
-            "priority" in feedback
-              ? (feedback.priority as
-                  | "critical"
-                  | "high"
-                  | "medium"
-                  | "low"
-                  | "none"
-                  | undefined)
-              : undefined
-          }
+          priority={feedback.priority}
           tags={feedback.tags}
-          timeEstimate={
-            "timeEstimate" in feedback
-              ? (feedback.timeEstimate as string | undefined)
-              : undefined
-          }
+          timeEstimate={feedback.timeEstimate}
           title={feedback.title}
           userVoteType={feedback.userVoteType ?? null}
           voteCount={feedback.voteCount ?? 0}
@@ -440,11 +393,7 @@ function FeedbackDetailContent({
         {/* Main content */}
         <div className="min-h-[60vh] px-6 py-4">
           <FeedbackContent
-            attachments={
-              "attachments" in feedback
-                ? (feedback.attachments as string[] | undefined)
-                : undefined
-            }
+            attachments={feedback.attachments}
             description={feedback.description ?? ""}
             feedbackId={feedbackId}
             isAdmin={isAdmin}

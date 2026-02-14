@@ -48,7 +48,7 @@ export function RoadmapView({
   } | null>(null);
   const [activeItem, setActiveItem] = useState<FeedbackItem | null>(null);
   const [optimisticUpdates, setOptimisticUpdates] = useState<
-    Map<string, OptimisticUpdate>
+    Map<Id<"feedback">, OptimisticUpdate>
   >(new Map());
 
   const updateFeedbackStatus = useMutation(
@@ -115,7 +115,7 @@ export function RoadmapView({
         return;
       }
 
-      const feedbackId = active.id as string;
+      const feedbackId = active.id as Id<"feedback">;
       const targetItem = feedback.find((f) => f._id === over.id);
       const targetStatusId = targetItem?.organizationStatusId;
 
@@ -142,8 +142,8 @@ export function RoadmapView({
 
       try {
         await updateFeedbackStatus({
-          feedbackId: feedbackId as Id<"feedback">,
-          organizationStatusId: finalStatusId as Id<"organizationStatuses">,
+          feedbackId,
+          organizationStatusId: finalStatusId,
         });
       } finally {
         // Clear optimistic update after server responds
@@ -201,7 +201,7 @@ export function RoadmapView({
                   key={status._id}
                   onDeleteClick={() =>
                     setDeleteDialogStatus({
-                      id: status._id as Id<"organizationStatuses">,
+                      id: status._id,
                       name: status.name,
                       color: status.color,
                     })

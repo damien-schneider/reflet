@@ -27,7 +27,7 @@ import {
 interface TagFormDialogProps {
   organizationId: Id<"organizations">;
   editingTag: {
-    _id: string;
+    _id: Id<"tags">;
     name: string;
     color: string;
     icon?: string;
@@ -105,7 +105,7 @@ export function TagFormDialog({
     setIsSubmitting(true);
     try {
       await updateTag({
-        id: editingTag._id as Id<"tags">,
+        id: editingTag._id,
         name: formData.name.trim(),
         color: formData.color,
         icon: formData.icon,

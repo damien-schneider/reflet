@@ -5,7 +5,6 @@ import {
   RoadmapItemCard,
   type RoadmapItemData,
 } from "@/features/roadmap/components/roadmap-item-card";
-import type { RoadmapLaneWithBacklog } from "@/lib/constants";
 import { getColorBadgeStyles, getTagDotColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +18,7 @@ export interface LaneConfig {
 }
 
 interface RoadmapLaneProps {
-  lane: RoadmapLaneWithBacklog;
+  lane: string;
   laneConfig: LaneConfig;
   items: RoadmapItemData[];
   isAdmin?: boolean;
@@ -57,16 +56,15 @@ export function RoadmapLaneColumn({
   };
 
   return (
-    /* biome-ignore lint/a11y/noNoninteractiveElementInteractions: drag-and-drop lane requires pointer events */
-    /* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop lane requires pointer events */
     <div
+      aria-label={`${laneConfig.label} lane`}
       className={cn(
         "flex min-h-[500px] min-w-[280px] flex-col rounded-lg border",
         laneConfig.bgColor
       )}
       onDragOver={isAdmin ? handleDragOver : undefined}
       onDrop={isAdmin ? handleDrop : undefined}
-      role={isAdmin ? "listbox" : undefined}
+      role="listbox"
       tabIndex={isAdmin ? 0 : undefined}
     >
       {/* Lane header */}

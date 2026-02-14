@@ -1,8 +1,9 @@
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { env } from "@reflet/env/server";
 import { fetchAction, fetchMutation, fetchQuery } from "convex/nextjs";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { toOrgId } from "@/lib/convex-helpers";
 
 /**
  * Generate a random webhook secret
@@ -89,21 +90,18 @@ function parseGitHubError(errorMessage: string): {
  */
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as {
-      organizationId: string;
-      setupWebhook?: boolean;
-      setupCi?: boolean;
-      ciBranch?: string;
-    };
+    const setupBodySchema = z.object({
+      organizationId: z.string().min(1),
+      setupWebhook: z.boolean().optional().default(true),
+      setupCi: z.boolean().optional().default(false),
+      ciBranch: z.string().optional(),
+    });
 
-    const {
-      organizationId: orgId,
-      setupWebhook = true,
-      setupCi = false,
-      ciBranch,
-    } = body;
+    const body = setupBodySchema.parse(await request.json());
 
-    const organizationId = orgId as Id<"organizations">;
+    const { organizationId: orgId, setupWebhook, setupCi, ciBranch } = body;
+
+    const organizationId = toOrgId(orgId);
 
     if (!organizationId) {
       return NextResponse.json(

@@ -99,9 +99,8 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
   const watchedConfirmPassword = watch("confirmPassword");
   const [debouncedEmail] = useDebouncedValue(watchedEmail, { wait: 800 });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: watchedPassword triggers revalidation intentionally
   useEffect(() => {
-    if (mode === "signUp" && watchedConfirmPassword) {
+    if (mode === "signUp" && watchedPassword && watchedConfirmPassword) {
       trigger("confirmPassword");
     }
   }, [watchedPassword, mode, trigger, watchedConfirmPassword]);

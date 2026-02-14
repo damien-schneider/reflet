@@ -28,7 +28,7 @@ interface MessageReaction {
 }
 
 interface Message {
-  _id: string;
+  _id: Id<"supportMessages">;
   senderId: string;
   senderType: "user" | "admin";
   body: string;
@@ -107,35 +107,40 @@ export function MessageList({
 
   const reactionsData = useQuery(
     api.support_messages.listReactions,
-    messageIds.length > 0
-      ? { messageIds: messageIds as Id<"supportMessages">[] }
-      : "skip"
+    messageIds.length > 0 ? { messageIds } : "skip"
   );
 
   const addReaction = useMutation(api.support_messages.addReaction);
   const removeReaction = useMutation(api.support_messages.removeReaction);
 
-  const reactionsMap = reactionsData?.reduce(
+  const reactionsMap = reactionsData?.reduce<Record<string, MessageReaction[]>>(
     (acc, item) => {
       acc[item.messageId] = item.reactions;
       return acc;
     },
-    {} as Record<string, MessageReaction[]>
+    {}
   );
 
-  const handleAddReaction = (messageId: string, emoji: string) => {
-    addReaction({ messageId: messageId as Id<"supportMessages">, emoji });
+  const handleAddReaction = (
+    messageId: Id<"supportMessages">,
+    emoji: string
+  ) => {
+    addReaction({ messageId, emoji });
   };
 
-  const handleRemoveReaction = (messageId: string, emoji: string) => {
-    removeReaction({ messageId: messageId as Id<"supportMessages">, emoji });
+  const handleRemoveReaction = (
+    messageId: Id<"supportMessages">,
+    emoji: string
+  ) => {
+    removeReaction({ messageId, emoji });
   };
 
   const messagesLength = messages?.length ?? 0;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: We intentionally scroll when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesLength > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messagesLength]);
 
   if (isLoading) {

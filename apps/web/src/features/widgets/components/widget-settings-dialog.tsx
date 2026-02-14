@@ -1,9 +1,9 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useState } from "react";
+import { type ChangeEvent, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -70,7 +70,7 @@ export function WidgetSettingsDialog({
     setIsSaving(true);
     try {
       await updateSettings({
-        widgetId: widget._id as Id<"widgets">,
+        widgetId: widget._id,
         primaryColor,
         position,
         welcomeMessage,
@@ -106,7 +106,9 @@ export function WidgetSettingsDialog({
                 className="w-12 p-1"
                 disabled={isSaving}
                 id="primary-color-picker"
-                onChange={(e) => setPrimaryColor(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setPrimaryColor(e.target.value)
+                }
                 type="color"
                 value={primaryColor}
               />
@@ -114,7 +116,9 @@ export function WidgetSettingsDialog({
                 className="flex-1"
                 disabled={isSaving}
                 id="primary-color"
-                onChange={(e) => setPrimaryColor(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setPrimaryColor(e.target.value)
+                }
                 placeholder="#5c6d4f"
                 value={primaryColor}
               />
@@ -127,7 +131,11 @@ export function WidgetSettingsDialog({
           <div className="grid gap-2">
             <Label htmlFor="position">Position</Label>
             <Select
-              onValueChange={(val) => setPosition(val as WidgetPosition)}
+              onValueChange={(val) => {
+                if (val === "bottom-right" || val === "bottom-left") {
+                  setPosition(val);
+                }
+              }}
               value={position}
             >
               <SelectTrigger className="w-full">
@@ -148,7 +156,9 @@ export function WidgetSettingsDialog({
             <Input
               disabled={isSaving}
               id="welcome-message"
-              onChange={(e) => setWelcomeMessage(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setWelcomeMessage(e.target.value)
+              }
               placeholder="Hi there! How can we help you?"
               value={welcomeMessage}
             />
@@ -162,7 +172,9 @@ export function WidgetSettingsDialog({
             <Input
               disabled={isSaving}
               id="greeting-message"
-              onChange={(e) => setGreetingMessage(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setGreetingMessage(e.target.value)
+              }
               placeholder="We typically reply within a few hours"
               value={greetingMessage}
             />
@@ -177,7 +189,9 @@ export function WidgetSettingsDialog({
               disabled={isSaving}
               id="z-index"
               min={1}
-              onChange={(e) => setZIndex(Number(e.target.value))}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setZIndex(Number(e.target.value))
+              }
               type="number"
               value={zIndex}
             />

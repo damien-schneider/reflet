@@ -12,7 +12,7 @@ export interface FeedbackDrawerState {
 }
 
 export interface FeedbackDrawerActions {
-  openFeedback: (id: Id<"feedback">) => void;
+  openFeedback: (id: string) => void;
   closeFeedback: () => void;
   navigateToFeedback: (id: Id<"feedback">) => void;
 }
@@ -66,7 +66,7 @@ export function useFeedbackDrawer(
 
   // Actions
   const openFeedback = useCallback(
-    (id: Id<"feedback">) => {
+    (id: string) => {
       updateParams(id);
     },
     [updateParams]

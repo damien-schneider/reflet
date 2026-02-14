@@ -15,7 +15,7 @@ import {
   BoardViewToggle,
   type BoardView as BoardViewType,
 } from "./board-view-toggle";
-import { type FeedbackItem, FeedFeedbackView } from "./feed-feedback-view";
+import { FeedFeedbackView } from "./feed-feedback-view";
 import { LoadingState, PrivateOrgMessage } from "./feedback-board/board-states";
 import { FeedbackBoardProvider } from "./feedback-board/feedback-board-context";
 import { FeedbackToolbar } from "./feedback-board/feedback-toolbar";
@@ -73,8 +73,6 @@ function FeedbackBoardContent({
 
   // Track if we've loaded data at least once (to avoid skeleton on filter/search changes)
   const hasLoadedOnce = useRef(false);
-  // Store previous feedback to prevent blinking during refetch
-  const previousFeedbackRef = useRef<FeedbackItem[]>([]);
 
   // Auth guard
   const { guard: authGuard, isAuthenticated } = useAuthGuard({
@@ -87,16 +85,16 @@ function FeedbackBoardContent({
     organizationId,
     search: searchQuery.trim() || undefined,
     sortBy,
-    statusIds:
-      selectedStatusIds.length > 0
-        ? (selectedStatusIds as Id<"organizationStatuses">[])
-        : undefined,
+    statusIds: selectedStatusIds.length > 0 ? selectedStatusIds : undefined,
   });
+
+  // Store previous feedback to prevent blinking during refetch
+  const previousFeedbackRef = useRef<NonNullable<typeof feedback>>([]);
 
   // Track when we've loaded data at least once and store previous feedback
   if (feedback !== undefined) {
     hasLoadedOnce.current = true;
-    previousFeedbackRef.current = feedback as FeedbackItem[];
+    previousFeedbackRef.current = feedback;
   }
 
   const orgStatuses = useQuery(api.organization_statuses.list, {
@@ -139,7 +137,7 @@ function FeedbackBoardContent({
 
   // Optimistic vote handling
   const { optimisticVotes, handleToggleVote } = useOptimisticVotes({
-    feedback: feedback as FeedbackItem[] | undefined,
+    feedback,
     toggleVoteMutation,
     isAuthenticated,
     authGuard,
@@ -163,7 +161,7 @@ function FeedbackBoardContent({
       return [];
     }
 
-    let result = (currentFeedback as FeedbackItem[]).map((item) =>
+    let result = currentFeedback.map((item) =>
       applyOptimisticVote(item, optimisticVotes.get(item._id))
     );
 
@@ -181,7 +179,7 @@ function FeedbackBoardContent({
 
   // Extract feedback IDs for drawer navigation
   const feedbackIds = useMemo(
-    () => filteredFeedback.map((f) => f._id as Id<"feedback">),
+    () => filteredFeedback.map((f) => f._id),
     [filteredFeedback]
   );
 
@@ -211,7 +209,7 @@ function FeedbackBoardContent({
   return (
     <FeedbackBoardProvider
       isAdmin={isAdmin}
-      onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
+      onFeedbackClick={openFeedback}
       onVote={handleToggleVote}
       primaryColor={primaryColor}
       statuses={orgStatuses || []}
@@ -266,7 +264,7 @@ function FeedbackBoardContent({
           {view === "milestones" && (
             <MilestonesView
               isAdmin={isAdmin}
-              onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
+              onFeedbackClick={openFeedback}
               organizationId={organizationId}
             />
           )}
@@ -274,7 +272,7 @@ function FeedbackBoardContent({
             <RoadmapView
               feedback={filteredFeedback}
               isAdmin={isAdmin}
-              onFeedbackClick={(id) => openFeedback(id as Id<"feedback">)}
+              onFeedbackClick={openFeedback}
               organizationId={organizationId}
               statuses={orgStatuses ?? []}
             />

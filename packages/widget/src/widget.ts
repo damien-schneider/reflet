@@ -139,11 +139,9 @@ export class RefletWidget {
     }
 
     const sendBtn = this.shadowRoot.querySelector(".reflet-send-btn");
-    const input = this.shadowRoot.querySelector(
-      ".reflet-input"
-    ) as HTMLTextAreaElement | null;
+    const input = this.shadowRoot.querySelector(".reflet-input");
 
-    if (sendBtn && input) {
+    if (sendBtn && input instanceof HTMLTextAreaElement) {
       sendBtn.addEventListener("click", () => this.handleSend(input));
       input.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.shiftKey) {

@@ -49,13 +49,13 @@ export function PublicFeedbackDetailContent({
   }, [feedbackId, toggleVote]);
 
   const handleStatusChange = useCallback(
-    async (statusId: string | null) => {
+    async (statusId: Id<"organizationStatuses"> | null) => {
       if (!statusId) {
         return;
       }
       await updateFeedbackStatus({
         feedbackId,
-        organizationStatusId: statusId as Id<"organizationStatuses">,
+        organizationStatusId: statusId,
       });
     },
     [feedbackId, updateFeedbackStatus]

@@ -138,11 +138,10 @@ interface NavLinkProps {
 
 function NavLink({ link, onScrollTo }: NavLinkProps) {
   if ("external" in link && link.external) {
-    const externalLink = link as Extract<typeof link, { external: true }>;
     return (
       <a
         className="group relative font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
-        href={externalLink.href}
+        href={link.href}
         rel="noopener noreferrer"
         target="_blank"
       >
@@ -152,7 +151,7 @@ function NavLink({ link, onScrollTo }: NavLinkProps) {
     );
   }
 
-  if ("href" in link && !("external" in link)) {
+  if ("href" in link) {
     return (
       <Link
         className="group relative font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
@@ -164,11 +163,14 @@ function NavLink({ link, onScrollTo }: NavLinkProps) {
     );
   }
 
-  const internalLink = link as Extract<typeof link, { targetId: string }>;
+  if (!("targetId" in link)) {
+    return null;
+  }
+
   return (
     <button
       className="group relative font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
-      onClick={() => onScrollTo(internalLink.targetId)}
+      onClick={() => onScrollTo(link.targetId)}
       type="button"
     >
       {link.label}

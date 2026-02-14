@@ -25,7 +25,7 @@ export default function GitHubSettingsPage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
     api.members.getCurrentMember,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const queries = useGitHubSettingsQueries({ orgId: org?._id });
@@ -209,10 +209,10 @@ interface RepositorySettingsSectionProps {
       }
     | undefined;
   labelMappings: Array<{
-    _id: string;
+    _id: Id<"githubLabelMappings">;
     githubLabelName: string;
     githubLabelColor?: string;
-    targetTagId?: string;
+    targetTagId?: Id<"tags">;
     autoSync: boolean;
     syncClosedIssues?: boolean;
     defaultStatus?:
@@ -229,7 +229,7 @@ interface RepositorySettingsSectionProps {
   onAddMapping: (mapping: {
     githubLabelName: string;
     githubLabelColor?: string;
-    targetTagId?: string;
+    targetTagId?: Id<"tags">;
     autoSync: boolean;
     syncClosedIssues?: boolean;
     defaultStatus?:
@@ -241,14 +241,14 @@ interface RepositorySettingsSectionProps {
       | "closed";
   }) => void;
   onClearWebhookError: () => void;
-  onDeleteMapping: (mappingId: string) => void;
+  onDeleteMapping: (mappingId: Id<"githubLabelMappings">) => void;
   onFetchLabels: () => void;
   onResyncGitHub: () => void;
   onSyncIssues: () => void;
   onSyncReleases: () => void;
   onToggleAutoSync: (enabled: boolean) => void;
   onToggleIssuesSync: (enabled: boolean, autoSync: boolean) => void;
-  tags: Array<{ _id: string; name: string; color: string }>;
+  tags: Array<{ _id: Id<"tags">; name: string; color: string }>;
   webhookSetupError?: { code: string; message: string } | null;
 }
 

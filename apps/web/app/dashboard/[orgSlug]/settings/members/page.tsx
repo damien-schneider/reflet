@@ -29,21 +29,21 @@ export default function MembersGearPage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const members = useQuery(
     api.members.list,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const invitations = useQuery(
     api.invitations.listPending,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const currentMember = useQuery(
     api.members.getCurrentMember,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const removeMember = useMutation(api.members.remove);
 
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [removingMember, setRemovingMember] = useState<{
-    id: string;
+    id: Id<"organizationMembers">;
     name: string;
   } | null>(null);
 
@@ -68,8 +68,8 @@ export default function MembersGearPage({
       return;
     }
     await removeMember({
-      organizationId: org._id as Id<"organizations">,
-      memberId: removingMember.id as Id<"organizationMembers">,
+      organizationId: org._id,
+      memberId: removingMember.id,
     });
     setRemovingMember(null);
   };

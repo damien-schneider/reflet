@@ -1,8 +1,8 @@
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { env } from "@reflet/env/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { toOrgId } from "@/lib/convex-helpers";
 
 /**
  * GitHub App installation callback handler
@@ -113,7 +113,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     // (actions don't require user auth, and we've already verified the installation via GitHub's API)
     const { fetchAction } = await import("convex/nextjs");
     await fetchAction(api.github_actions.saveInstallationFromCallback, {
-      organizationId: organizationId as Id<"organizations">,
+      organizationId: toOrgId(organizationId),
       installationId,
       accountType:
         installation.account.type === "Organization" ? "organization" : "user",

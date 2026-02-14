@@ -469,12 +469,13 @@ export const assign = mutation({
 
     // If assigning to someone, verify they are a member of the org
     if (args.assigneeId) {
+      const assigneeId = args.assigneeId;
       const assigneeMembership = await ctx.db
         .query("organizationMembers")
         .withIndex("by_org_user", (q) =>
           q
             .eq("organizationId", feedback.organizationId)
-            .eq("userId", args.assigneeId as string)
+            .eq("userId", assigneeId)
         )
         .unique();
 

@@ -399,7 +399,12 @@ export const reorder = mutation({
       return true;
     }
 
-    const first = await ctx.db.get(args.milestoneIds[0]);
+    const firstId = args.milestoneIds[0];
+    if (!firstId) {
+      return true;
+    }
+
+    const first = await ctx.db.get(firstId);
     if (!first) {
       throw new Error("Milestone not found");
     }
@@ -417,7 +422,11 @@ export const reorder = mutation({
 
     const now = Date.now();
     for (let i = 0; i < args.milestoneIds.length; i++) {
-      await ctx.db.patch(args.milestoneIds[i], {
+      const milestoneId = args.milestoneIds[i];
+      if (!milestoneId) {
+        continue;
+      }
+      await ctx.db.patch(milestoneId, {
         order: i,
         updatedAt: now,
       });

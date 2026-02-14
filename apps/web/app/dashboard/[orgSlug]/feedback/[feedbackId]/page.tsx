@@ -31,22 +31,22 @@ import { cn } from "@/lib/utils";
 export default function FeedbackDetailPage({
   params,
 }: {
-  params: Promise<{ orgSlug: string; feedbackId: string }>;
+  params: Promise<{ orgSlug: string; feedbackId: Id<"feedback"> }>;
 }) {
   const { orgSlug, feedbackId } = use(params);
 
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const feedback = useQuery(
     api.feedback.get,
-    feedbackId ? { id: feedbackId as Id<"feedback"> } : "skip"
+    feedbackId ? { id: feedbackId } : "skip"
   );
   const statuses = useQuery(
     api.organization_statuses.list,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const comments = useQuery(
     api.comments.list,
-    feedbackId ? { feedbackId: feedbackId as Id<"feedback"> } : "skip"
+    feedbackId ? { feedbackId } : "skip"
   );
   const membership = useQuery(
     api.members.getMembership,
@@ -64,7 +64,7 @@ export default function FeedbackDetailPage({
   const handleVote = useCallback(async () => {
     if (feedbackId) {
       await toggleVote({
-        feedbackId: feedbackId as Id<"feedback">,
+        feedbackId,
         voteType: "upvote",
       });
     }
@@ -76,7 +76,7 @@ export default function FeedbackDetailPage({
         return;
       }
       await assignFeedback({
-        feedbackId: feedbackId as Id<"feedback">,
+        feedbackId,
         assigneeId:
           !assigneeId || assigneeId === "unassigned" ? undefined : assigneeId,
       });

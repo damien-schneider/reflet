@@ -25,17 +25,17 @@ export default function AIPage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
     api.members.getCurrentMember,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const githubStatus = useQuery(
     api.github.getConnectionStatus,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const latestAnalysis = useQuery(
     api.repo_analysis.getLatestAnalysis,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const startAnalysis = useMutation(api.repo_analysis.startAnalysis);
@@ -56,7 +56,7 @@ export default function AIPage({
     }
     setIsStarting(true);
     try {
-      await startAnalysis({ organizationId: org._id as Id<"organizations"> });
+      await startAnalysis({ organizationId: org._id });
     } finally {
       setIsStarting(false);
     }
@@ -138,7 +138,7 @@ export default function AIPage({
               <AnalysisResults
                 analysis={latestAnalysis}
                 isAdmin={isAdmin}
-                organizationId={org._id as Id<"organizations">}
+                organizationId={org._id}
               />
             )}
 
@@ -161,10 +161,7 @@ export default function AIPage({
             <div className="mb-4">
               <H2 variant="card">Website References</H2>
             </div>
-            <WebsiteReferenceList
-              isAdmin={isAdmin}
-              organizationId={org._id as Id<"organizations">}
-            />
+            <WebsiteReferenceList isAdmin={isAdmin} organizationId={org._id} />
           </section>
         )}
       </div>

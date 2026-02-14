@@ -7,6 +7,30 @@ const CONVEX_URL =
     ? __CONVEX_URL__
     : "https://grateful-butterfly-1.convex.cloud";
 
+function isErrorResponse(data: unknown): data is { error: string } {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "error" in data &&
+    typeof data.error === "string"
+  );
+}
+
+function isChangelogEntryArray(data: unknown): data is ChangelogEntry[] {
+  return (
+    Array.isArray(data) &&
+    data.every(
+      (item): item is ChangelogEntry =>
+        typeof item === "object" &&
+        item !== null &&
+        "id" in item &&
+        typeof item.id === "string" &&
+        "title" in item &&
+        typeof item.title === "string"
+    )
+  );
+}
+
 export class ChangelogApi {
   private readonly publicKey: string;
 
@@ -31,16 +55,19 @@ export class ChangelogApi {
       },
     });
 
-    const data = (await response.json()) as
-      | ChangelogEntry[]
-      | { error: string };
+    const data: unknown = await response.json();
 
     if (!response.ok) {
-      throw new Error(
-        (data as { error?: string }).error ?? "Failed to fetch changelog"
-      );
+      const message = isErrorResponse(data)
+        ? data.error
+        : "Failed to fetch changelog";
+      throw new Error(message);
     }
 
-    return data as ChangelogEntry[];
+    if (!isChangelogEntryArray(data)) {
+      throw new Error("Invalid changelog data format");
+    }
+
+    return data;
   }
 }

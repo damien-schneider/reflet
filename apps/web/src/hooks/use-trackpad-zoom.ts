@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+/** Safari-specific gesture event with scale/rotation properties. */
+interface GestureEvent extends Event {
+  readonly scale: number;
+  readonly rotation: number;
+}
+
 interface UseTrackpadZoomOptions {
   /** Minimum zoom value */
   min: number;
@@ -67,31 +73,41 @@ export function useTrackpadZoom({
     };
 
     // Safari: native gesture events
-    const handleGestureStart = (e: Event) => {
+    const handleGestureStart = (e: GestureEvent) => {
       e.preventDefault();
       lastGestureScaleRef.current = 1;
     };
 
-    const handleGestureChange = (e: Event) => {
+    const handleGestureChange = (e: GestureEvent) => {
       e.preventDefault();
-      const gestureScale = (e as unknown as { scale: number }).scale;
+      const gestureScale = e.scale;
       const scaleDelta = gestureScale / lastGestureScaleRef.current;
       lastGestureScaleRef.current = gestureScale;
       setZoom((prev) => clamp(prev * scaleDelta));
     };
 
     target.addEventListener("wheel", handleWheel, { passive: false });
-    target.addEventListener("gesturestart", handleGestureStart, {
-      passive: false,
-    });
-    target.addEventListener("gesturechange", handleGestureChange, {
-      passive: false,
-    });
+    target.addEventListener(
+      "gesturestart",
+      handleGestureStart as EventListener,
+      { passive: false }
+    );
+    target.addEventListener(
+      "gesturechange",
+      handleGestureChange as EventListener,
+      { passive: false }
+    );
 
     return () => {
       target.removeEventListener("wheel", handleWheel);
-      target.removeEventListener("gesturestart", handleGestureStart);
-      target.removeEventListener("gesturechange", handleGestureChange);
+      target.removeEventListener(
+        "gesturestart",
+        handleGestureStart as EventListener
+      );
+      target.removeEventListener(
+        "gesturechange",
+        handleGestureChange as EventListener
+      );
     };
   }, [enabled, clamp, sensitivity]);
 

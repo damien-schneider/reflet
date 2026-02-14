@@ -46,10 +46,10 @@ export function MilestoneExpandedPanel({
   const removeFeedbackMutation = useMutation(api.milestones.removeFeedback);
 
   const handleAddFeedback = useCallback(
-    async (feedbackId: string) => {
+    async (feedbackId: Id<"feedback">) => {
       await addFeedback({
         milestoneId,
-        feedbackId: feedbackId as Id<"feedback">,
+        feedbackId,
       });
       setSearchQuery("");
     },
@@ -57,10 +57,10 @@ export function MilestoneExpandedPanel({
   );
 
   const handleRemoveFeedback = useCallback(
-    async (feedbackId: string) => {
+    async (feedbackId: Id<"feedback">) => {
       await removeFeedbackMutation({
         milestoneId,
-        feedbackId: feedbackId as Id<"feedback">,
+        feedbackId,
       });
     },
     [milestoneId, removeFeedbackMutation]

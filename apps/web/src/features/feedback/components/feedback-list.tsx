@@ -44,7 +44,7 @@ export function FeedbackList({
       case "most_comments":
         return "comments" as const;
       default:
-        return sortBy as "newest" | "oldest";
+        return sortBy;
     }
   })();
 
@@ -53,12 +53,8 @@ export function FeedbackList({
     organizationId,
     search: search || undefined,
     sortBy: convexSortBy,
-    statusIds:
-      selectedStatusIds.length > 0
-        ? (selectedStatusIds as Id<"organizationStatuses">[])
-        : undefined,
-    tagIds:
-      selectedTagIds.length > 0 ? (selectedTagIds as Id<"tags">[]) : undefined,
+    statusIds: selectedStatusIds.length > 0 ? selectedStatusIds : undefined,
+    tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
   });
 
   // Get tags for the board's organization

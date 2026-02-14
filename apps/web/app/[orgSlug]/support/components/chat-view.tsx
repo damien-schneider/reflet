@@ -19,7 +19,7 @@ interface MessageSender {
 }
 
 interface Message {
-  _id: string;
+  _id: Id<"supportMessages">;
   senderId: string;
   senderType: "user" | "admin";
   body: string;

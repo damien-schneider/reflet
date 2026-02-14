@@ -335,7 +335,7 @@ export function useGitHubSettings({
     async (mapping: {
       githubLabelName: string;
       githubLabelColor?: string;
-      targetTagId?: string;
+      targetTagId?: Id<"tags">;
       autoSync: boolean;
       syncClosedIssues?: boolean;
       defaultStatus?: IssueStatus;
@@ -346,16 +346,16 @@ export function useGitHubSettings({
       await upsertLabelMapping({
         organizationId: orgId,
         ...mapping,
-        targetTagId: mapping.targetTagId as Id<"tags"> | undefined,
+        targetTagId: mapping.targetTagId,
       });
     },
     [orgId, upsertLabelMapping]
   );
 
   const handleDeleteLabelMapping = useCallback(
-    async (mappingId: string) => {
+    async (mappingId: Id<"githubLabelMappings">) => {
       await deleteLabelMapping({
-        mappingId: mappingId as Id<"githubLabelMappings">,
+        mappingId,
       });
     },
     [deleteLabelMapping]

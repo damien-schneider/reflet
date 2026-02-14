@@ -1,7 +1,6 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { use } from "react";
 
@@ -20,7 +19,7 @@ export default function PublicOrgPage({
   // Check if user is a member
   const membership = useQuery(
     api.members.getMembership,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const isMember = !!membership;
   const isAdmin = membership?.role === "admin" || membership?.role === "owner";
@@ -47,8 +46,13 @@ export default function PublicOrgPage({
   }
 
   const primaryColor = org.primaryColor ?? "#3b82f6";
-  const defaultView =
-    (org.feedbackSettings?.defaultView as BoardViewType) ?? "feed";
+  const rawDefaultView = org.feedbackSettings?.defaultView;
+  const defaultView: BoardViewType =
+    rawDefaultView === "roadmap" ||
+    rawDefaultView === "feed" ||
+    rawDefaultView === "milestones"
+      ? rawDefaultView
+      : "feed";
 
   return (
     <FeedbackBoard
@@ -56,7 +60,7 @@ export default function PublicOrgPage({
       isAdmin={isAdmin}
       isMember={isMember}
       isPublic={org.isPublic ?? false}
-      organizationId={org._id as Id<"organizations">}
+      organizationId={org._id}
       orgSlug={orgSlug}
       primaryColor={primaryColor}
     />

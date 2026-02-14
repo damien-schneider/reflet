@@ -1,6 +1,7 @@
 "use client";
 
 import { ChatCircle } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ interface TeamMember {
 }
 
 interface Message {
-  _id: string;
+  _id: Id<"supportMessages">;
   senderId: string;
   senderType: "user" | "admin";
   body: string;

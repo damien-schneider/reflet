@@ -51,12 +51,23 @@ export async function getAllBlogPosts(): Promise<BlogPost[]> {
   );
 }
 
+const isBlogPostMeta = (value: unknown): value is BlogPostMeta =>
+  typeof value === "object" &&
+  value !== null &&
+  "title" in value &&
+  "description" in value &&
+  "date" in value &&
+  "author" in value &&
+  "category" in value &&
+  "tags" in value &&
+  "readingTime" in value;
+
 export async function getBlogPostMeta(
   slug: string
 ): Promise<BlogPostMeta | null> {
   try {
     const { meta } = await import(`@app/blog/(posts)/${slug}/page.mdx`);
-    return meta as BlogPostMeta;
+    return isBlogPostMeta(meta) ? meta : null;
   } catch {
     return null;
   }

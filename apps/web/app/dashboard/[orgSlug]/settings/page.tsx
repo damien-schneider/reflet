@@ -8,7 +8,6 @@ import {
   Spinner,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
@@ -43,7 +42,7 @@ export default function GeneralSettingsPage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
     api.members.getCurrentMember,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const updateOrg = useMutation(api.organizations_actions.update);
 
@@ -99,7 +98,7 @@ export default function GeneralSettingsPage({
     try {
       const trimmedSlug = slug.trim();
       await updateOrg({
-        organizationId: org._id as Id<"organizations">,
+        organizationId: org._id,
         name: name.trim(),
         slug: trimmedSlug,
         isPublic,

@@ -3,7 +3,11 @@ import type { FeedbackItem } from "../feed-feedback-view";
 
 export interface RoadmapViewProps {
   feedback: FeedbackItem[];
-  statuses: Array<{ _id: string; name: string; color: string }>;
+  statuses: Array<{
+    _id: Id<"organizationStatuses">;
+    name: string;
+    color: string;
+  }>;
   onFeedbackClick: (feedbackId: string) => void;
   organizationId: Id<"organizations">;
   isAdmin: boolean;
@@ -17,13 +21,11 @@ export interface DraggableFeedbackCardProps {
   onFeedbackClick: (feedbackId: string) => void;
 }
 
-export type DragHandleListeners = Record<
-  string,
-  (event: React.SyntheticEvent) => void
->;
+export type DragHandleListeners =
+  import("@dnd-kit/core").DraggableSyntheticListeners;
 
 export interface DroppableColumnProps {
-  status: { _id: string; name: string; color: string };
+  status: { _id: Id<"organizationStatuses">; name: string; color: string };
   items: FeedbackItem[];
   isAdmin: boolean;
   isDragging: boolean;
@@ -32,6 +34,6 @@ export interface DroppableColumnProps {
 }
 
 export interface OptimisticUpdate {
-  feedbackId: string;
-  newStatusId: string;
+  feedbackId: Id<"feedback">;
+  newStatusId: Id<"organizationStatuses">;
 }

@@ -31,19 +31,25 @@ export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
       if (isImageActive) {
         // Update alignment state from current image
         const attrs = editor.getAttributes("image");
-        setCurrentAlign((attrs.align as ImageAlignment) || "center");
+        const align = attrs.align;
+        const isValidAlignment =
+          align === "left" || align === "center" || align === "right";
+        setCurrentAlign(isValidAlignment ? align : "center");
 
         const { view } = editor;
         const { from } = view.state.selection;
-        const node = view.domAtPos(from);
-        const element = node.node as HTMLElement;
+        const domPos = view.domAtPos(from);
+        const element: Element | null =
+          domPos.node instanceof Element
+            ? domPos.node
+            : domPos.node.parentElement;
 
         // Find the image element
         const img =
-          element.tagName === "IMG"
+          element?.tagName === "IMG"
             ? element
-            : element.querySelector?.("img") ||
-              element.parentElement?.querySelector?.("img");
+            : element?.querySelector?.("img") ||
+              element?.parentElement?.querySelector?.("img");
 
         if (img) {
           const rect = img.getBoundingClientRect();

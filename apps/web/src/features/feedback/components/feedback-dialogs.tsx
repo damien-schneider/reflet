@@ -101,7 +101,7 @@ export function CreateFeedbackDialog({
 }
 
 interface DeleteFeedbackDialogProps {
-  feedbackId: string | null;
+  feedbackId: Id<"feedback"> | null;
   onClose: () => void;
 }
 
@@ -116,7 +116,7 @@ export function DeleteFeedbackDialog({
       return;
     }
     try {
-      await deleteFeedback({ id: feedbackId as Id<"feedback"> });
+      await deleteFeedback({ id: feedbackId });
       onClose();
     } catch (error) {
       console.error("Failed to delete feedback:", error);

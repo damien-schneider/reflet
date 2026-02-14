@@ -45,7 +45,7 @@ interface PublicFeedbackHeaderProps {
   currentStatus: OrganizationStatus | undefined;
   isAdmin: boolean;
   onVote: () => void;
-  onStatusChange: (statusId: string | null) => void;
+  onStatusChange: (statusId: Id<"organizationStatuses"> | null) => void;
   onTogglePin: () => void;
 }
 
@@ -86,8 +86,10 @@ export function PublicFeedbackHeader({
       <div className="flex items-center gap-2">
         {isAdmin && organizationStatuses && organizationStatuses.length > 0 ? (
           <Select
-            onValueChange={onStatusChange}
-            value={organizationStatusId || ""}
+            onValueChange={(value) =>
+              onStatusChange(value as Id<"organizationStatuses">)
+            }
+            value={organizationStatusId ?? ""}
           >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Select status" />

@@ -26,6 +26,15 @@ type WidgetMode = "card" | "popup" | "trigger";
 type WidgetPosition = "bottom-right" | "bottom-left";
 type WidgetTheme = "light" | "dark" | "auto";
 
+const isWidgetMode = (value: string): value is WidgetMode =>
+  value === "card" || value === "popup" || value === "trigger";
+
+const isWidgetPosition = (value: string): value is WidgetPosition =>
+  value === "bottom-right" || value === "bottom-left";
+
+const isWidgetTheme = (value: string): value is WidgetTheme =>
+  value === "light" || value === "dark" || value === "auto";
+
 export function ChangelogWidgetTab({
   publicKey,
   hasApiKeys,
@@ -170,7 +179,12 @@ export function MyApp() {
             <select
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               id="widget-mode"
-              onChange={(e) => setMode(e.target.value as WidgetMode)}
+              onChange={(e) => {
+                const { value } = e.target;
+                if (isWidgetMode(value)) {
+                  setMode(value);
+                }
+              }}
               value={mode}
             >
               <option value="card">Card</option>
@@ -193,7 +207,12 @@ export function MyApp() {
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               disabled={mode === "trigger"}
               id="widget-position"
-              onChange={(e) => setPosition(e.target.value as WidgetPosition)}
+              onChange={(e) => {
+                const { value } = e.target;
+                if (isWidgetPosition(value)) {
+                  setPosition(value);
+                }
+              }}
               value={position}
             >
               <option value="bottom-right">Bottom Right</option>
@@ -214,7 +233,12 @@ export function MyApp() {
             <select
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               id="widget-theme"
-              onChange={(e) => setTheme(e.target.value as WidgetTheme)}
+              onChange={(e) => {
+                const { value } = e.target;
+                if (isWidgetTheme(value)) {
+                  setTheme(value);
+                }
+              }}
               value={theme}
             >
               <option value="auto">Auto (match system)</option>

@@ -51,38 +51,50 @@ function registerCommandApi(widget: RefletChangelogWidget): void {
     // Feedback widget already registered a function-based Reflet
     // Wrap it to also handle changelog commands
     const originalFn = existingReflet;
-    const wrappedFn = ((...args: unknown[]) => {
-      const command = args[0];
-      if (typeof command === "string" && command.includes("changelog")) {
-        return handleCommand(command, widget);
-      }
-      return originalFn(...args);
-    }) as typeof window.Reflet;
-
-    // Preserve existing properties
-    if (wrappedFn) {
-      for (const key of Object.keys(existingReflet)) {
-        // biome-ignore lint/suspicious/noExplicitAny: Dynamic property copying
-        (wrappedFn as any)[key] = (existingReflet as any)[key];
-      }
-      wrappedFn._changelogWidget = widget;
-      window.Reflet = wrappedFn;
-    }
+    const wrappedFn = Object.assign(
+      (...args: unknown[]) => {
+        const command = args[0];
+        if (typeof command === "string" && command.includes("changelog")) {
+          return handleCommand(command, widget);
+        }
+        return originalFn(...args);
+      },
+      existingReflet,
+      { _changelogWidget: widget }
+    );
+    window.Reflet = wrappedFn;
   } else {
     // No existing Reflet or it's a config object - create new function
-    const refletFn = ((...args: unknown[]) => {
-      const command = args[0];
-      if (typeof command === "string") {
-        return handleCommand(command, widget);
-      }
-      return undefined;
-    }) as typeof window.Reflet;
-
-    if (refletFn) {
-      refletFn._changelogWidget = widget;
-      window.Reflet = refletFn;
-    }
+    const refletFn = Object.assign(
+      (...args: unknown[]) => {
+        const command = args[0];
+        if (typeof command === "string") {
+          return handleCommand(command, widget);
+        }
+        return undefined;
+      },
+      { _changelogWidget: widget }
+    );
+    window.Reflet = refletFn;
   }
+}
+
+function isValidMode(
+  value: string | null
+): value is NonNullable<ChangelogWidgetConfig["mode"]> {
+  return value === "card" || value === "popup" || value === "trigger";
+}
+
+function isValidPosition(
+  value: string | null
+): value is NonNullable<ChangelogWidgetConfig["position"]> {
+  return value === "bottom-right" || value === "bottom-left";
+}
+
+function isValidTheme(
+  value: string | null
+): value is NonNullable<ChangelogWidgetConfig["theme"]> {
+  return value === "light" || value === "dark" || value === "auto";
 }
 
 /**
@@ -93,9 +105,10 @@ function initWidget(): void {
   const globalConfig = window.RefletChangelog;
 
   if (globalConfig?.publicKey) {
-    const widget = new RefletChangelogWidget(
-      globalConfig as ChangelogWidgetConfig
-    );
+    const widget = new RefletChangelogWidget({
+      ...globalConfig,
+      publicKey: globalConfig.publicKey,
+    });
     window.__refletChangelogWidgetInstance = widget;
     registerCommandApi(widget);
     widget.init();
@@ -103,23 +116,19 @@ function initWidget(): void {
   }
 
   // Try data attributes on the current script tag
-  const script = document.currentScript as HTMLScriptElement | null;
+  const script = document.currentScript;
   if (script) {
     const publicKey = script.getAttribute("data-public-key");
     if (publicKey) {
+      const modeAttr = script.getAttribute("data-mode");
+      const positionAttr = script.getAttribute("data-position");
+      const themeAttr = script.getAttribute("data-theme");
+
       const config: ChangelogWidgetConfig = {
         publicKey,
-        mode:
-          (script.getAttribute("data-mode") as ChangelogWidgetConfig["mode"]) ??
-          "card",
-        position:
-          (script.getAttribute(
-            "data-position"
-          ) as ChangelogWidgetConfig["position"]) ?? "bottom-right",
-        theme:
-          (script.getAttribute(
-            "data-theme"
-          ) as ChangelogWidgetConfig["theme"]) ?? "light",
+        mode: isValidMode(modeAttr) ? modeAttr : "card",
+        position: isValidPosition(positionAttr) ? positionAttr : "bottom-right",
+        theme: isValidTheme(themeAttr) ? themeAttr : "light",
         primaryColor: script.getAttribute("data-color") ?? undefined,
         maxEntries: script.getAttribute("data-max-entries")
           ? Number(script.getAttribute("data-max-entries"))
@@ -142,7 +151,7 @@ function initWidget(): void {
   if (
     refletConfig &&
     typeof refletConfig !== "function" &&
-    (refletConfig as Partial<ChangelogWidgetConfig>).publicKey
+    "publicKey" in refletConfig
   ) {
     // Don't auto-init from feedback widget's config - only from dedicated config
     return;

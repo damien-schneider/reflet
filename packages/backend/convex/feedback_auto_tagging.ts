@@ -129,6 +129,10 @@ export const getActiveJob = query({
     const sortedJobs = jobs.sort((a, b) => b.startedAt - a.startedAt);
     const mostRecentJob = sortedJobs[0];
 
+    if (!mostRecentJob) {
+      return null;
+    }
+
     // Return active jobs immediately
     if (
       mostRecentJob.status === "pending" ||
@@ -534,12 +538,10 @@ Description: ${feedback.description || "(no description)"}
 AVAILABLE TAGS (use exact IDs):
 ${tagsDescription}`;
 
-    const validTagIds = new Set<string>(
-      tags.map(
-        (t: { _id: Id<"tags">; name: string; description?: string }) =>
-          t._id as string
-      )
-    );
+    const validTagMap = new Map<string, Id<"tags">>();
+    for (const t of tags) {
+      validTagMap.set(t._id, t._id);
+    }
 
     // Try models in fallback chain
     let result: AutoTaggingResponse | null = null;
@@ -574,19 +576,19 @@ ${tagsDescription}`;
     }
 
     // Filter to only valid tag IDs that exist in the org
-    const selectedTagIds = result.selectedTagIds.filter((id) =>
-      validTagIds.has(id)
-    );
+    const selectedTagIds = result.selectedTagIds
+      .map((id) => validTagMap.get(id))
+      .filter((id): id is Id<"tags"> => id !== undefined);
 
     console.log("AI reasoning:", result.reasoning);
-    console.log("Valid tag IDs:", Array.from(validTagIds));
+    console.log("Valid tag IDs:", Array.from(validTagMap.keys()));
     console.log("AI returned IDs:", result.selectedTagIds);
     console.log("Matched tag IDs:", selectedTagIds);
 
     if (selectedTagIds.length > 0) {
       await ctx.runMutation(internal.feedback_auto_tagging.applyAutoTags, {
         feedbackId: args.feedbackId,
-        tagIds: selectedTagIds as Id<"tags">[],
+        tagIds: selectedTagIds,
       });
     }
 

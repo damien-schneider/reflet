@@ -163,7 +163,7 @@ export function FeedbackDetailDialog({
 
   // Build comment tree
   const topLevelComments = comments?.filter((c) => !c.parentId) || [];
-  const commentReplies = (parentId: string) =>
+  const commentReplies = (parentId: Id<"comments">) =>
     comments?.filter((c) => c.parentId === parentId) || [];
 
   const renderFeedbackContent = () => (

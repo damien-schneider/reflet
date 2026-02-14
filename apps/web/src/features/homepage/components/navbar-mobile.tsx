@@ -12,14 +12,26 @@ import {
 } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { useState } from "react";
+import { type ComponentType, useState } from "react";
 
-const PRIMARY_LINKS = [
+type IconComponent = ComponentType<{ className?: string }>;
+
+type NavLink =
+  | { label: string; targetId: string; icon: IconComponent }
+  | {
+      label: string;
+      href: string;
+      external: true;
+      icon: IconComponent;
+    }
+  | { label: string; href: string; icon: IconComponent };
+
+const PRIMARY_LINKS: NavLink[] = [
   { label: "Pricing", targetId: "pricing", icon: CurrencyCircleDollar },
   { label: "Features", targetId: "features", icon: Sparkle },
-] as const;
+];
 
-const SECONDARY_LINKS = [
+const SECONDARY_LINKS: NavLink[] = [
   {
     label: "Roadmap",
     href: "https://www.reflet.app/reflet?view=roadmap",
@@ -33,17 +45,7 @@ const SECONDARY_LINKS = [
     external: true,
     icon: GithubLogo,
   },
-] as const;
-
-type NavLink =
-  | { label: string; targetId: string; icon: typeof Sparkle }
-  | {
-      label: string;
-      href: string;
-      external: true;
-      icon: typeof Sparkle;
-    }
-  | { label: string; href: string; icon: typeof Sparkle };
+];
 
 const linkClassName =
   "flex flex-col items-center gap-1 whitespace-nowrap rounded-full px-4 py-1 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground";
@@ -120,22 +122,14 @@ export default function NavbarMobile() {
       >
         <div className="flex h-13 items-center justify-around px-2 pt-2">
           {SECONDARY_LINKS.map((link) => (
-            <NavLinkItem
-              key={link.label}
-              link={link as NavLink}
-              onNavigate={collapse}
-            />
+            <NavLinkItem key={link.label} link={link} onNavigate={collapse} />
           ))}
         </div>
       </motion.div>
 
       <div className="flex items-center justify-around px-2 py-3">
         {PRIMARY_LINKS.map((link) => (
-          <NavLinkItem
-            key={link.label}
-            link={link as NavLink}
-            onNavigate={collapse}
-          />
+          <NavLinkItem key={link.label} link={link} onNavigate={collapse} />
         ))}
 
         <Link className={linkClassName} href="/dashboard" onClick={collapse}>

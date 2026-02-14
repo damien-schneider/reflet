@@ -2,7 +2,6 @@
 
 import { ChatCircle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { use, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +22,7 @@ export default function InboxSettingsPage({
   );
   const supportSettings = useQuery(
     api.support_conversations.getSupportSettings,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const updateSupportSettings = useMutation(
     api.support_conversations.updateSupportSettings
@@ -50,7 +49,7 @@ export default function InboxSettingsPage({
     setIsSaving(true);
     try {
       await updateSupportSettings({
-        organizationId: org._id as Id<"organizations">,
+        organizationId: org._id,
         supportEnabled: checked,
       });
     } finally {

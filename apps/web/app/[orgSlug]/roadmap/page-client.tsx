@@ -2,7 +2,6 @@
 
 import { CaretUp as ChevronUp } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { use } from "react";
 
@@ -18,11 +17,11 @@ export default function PublicRoadmapPageClient({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const roadmapConfig = useQuery(
     api.tag_manager.getRoadmapConfig,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const roadmapFeedback = useQuery(
     api.feedback_roadmap.list,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   if (!(org && roadmapConfig)) {
@@ -50,15 +49,14 @@ export default function PublicRoadmapPageClient({
     );
   }
 
-  const feedbackByLane = roadmapLanes.reduce(
-    (acc, lane) => {
-      acc[lane._id] = allFeedback.filter((f) =>
-        f?.tags?.filter(Boolean).some((t) => t?._id === lane._id)
-      );
-      return acc;
-    },
-    {} as Record<string, typeof allFeedback>
-  );
+  const feedbackByLane = roadmapLanes.reduce<
+    Record<string, typeof allFeedback>
+  >((acc, lane) => {
+    acc[lane._id] = allFeedback.filter((f) =>
+      f?.tags?.filter(Boolean).some((t) => t?._id === lane._id)
+    );
+    return acc;
+  }, {});
 
   return (
     <div className="container mx-auto px-4 py-8">

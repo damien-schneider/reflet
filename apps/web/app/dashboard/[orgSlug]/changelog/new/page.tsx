@@ -2,7 +2,6 @@
 
 import { ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Link from "next/link";
 import { use } from "react";
@@ -20,7 +19,7 @@ export default function NewReleasePage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
     api.members.getCurrentMember,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const isAdmin =
@@ -76,7 +75,7 @@ export default function NewReleasePage({
 
       <ReleaseEditor
         className="max-w-4xl"
-        organizationId={org._id as Id<"organizations">}
+        organizationId={org._id}
         orgSlug={orgSlug}
       />
     </div>

@@ -1,17 +1,18 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
+import { z } from "zod";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-interface RequestBody {
-  description: string;
-  version?: string;
-}
+const requestBodySchema = z.object({
+  description: z.string(),
+  version: z.string().optional(),
+});
 
 export async function POST(request: Request): Promise<Response> {
-  const body = (await request.json()) as RequestBody;
+  const body = requestBodySchema.parse(await request.json());
   const { description, version } = body;
 
   if (!description) {

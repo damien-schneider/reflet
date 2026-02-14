@@ -2,7 +2,6 @@
 
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import type { Doc } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 
 // GitHub API base URL
@@ -161,10 +160,10 @@ export const pushReleaseToGithub = internalAction({
       return;
     }
 
-    const org = (await ctx.runQuery(
+    const org = await ctx.runQuery(
       internal.changelog_notifications_helpers.getOrganization,
       { organizationId: release.organizationId }
-    )) as Doc<"organizations"> | null;
+    );
 
     if (!org) {
       console.error(
@@ -178,10 +177,10 @@ export const pushReleaseToGithub = internalAction({
       return;
     }
 
-    const connection = (await ctx.runQuery(
+    const connection = await ctx.runQuery(
       internal.github.getConnectionInternal,
       { organizationId: release.organizationId }
-    )) as Doc<"githubConnections"> | null;
+    );
 
     if (!connection?.repositoryFullName) {
       console.error(

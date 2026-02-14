@@ -24,19 +24,19 @@ export default function ChangelogPage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const releases = useQuery(
     api.releases.list,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const currentMember = useQuery(
     api.members.getCurrentMember,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const githubStatus = useQuery(
     api.github.getConnectionStatus,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const apiKeys = useQuery(
     api.feedback_api_admin.getApiKeys,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const deleteRelease = useMutation(api.changelog_actions.remove);
   const publishRelease = useMutation(api.changelog_actions.publish);
@@ -197,7 +197,7 @@ export default function ChangelogPage({
         <TabsContent className="mt-6" value="widget">
           <ChangelogWidgetTab
             hasApiKeys={hasApiKeys}
-            organizationId={org._id as Id<"organizations">}
+            organizationId={org._id}
             orgSlug={orgSlug}
             primaryColor={org.primaryColor}
             publicKey={publicKey}
@@ -217,7 +217,7 @@ export default function ChangelogPage({
         <ReleaseSetupWizard
           onOpenChange={setShowSetupWizard}
           open={showSetupWizard}
-          organizationId={org._id as Id<"organizations">}
+          organizationId={org._id}
           orgSlug={orgSlug}
         />
       )}

@@ -2,7 +2,6 @@
 
 import { Check, PaintBrush, Sparkle, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -39,7 +38,7 @@ export default function BrandingSettingsPage({
   const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
     api.members.getCurrentMember,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
   const updateOrg = useMutation(api.organizations.update);
 
@@ -76,7 +75,7 @@ export default function BrandingSettingsPage({
       setSaveStatus("saving");
       try {
         await updateOrg({
-          id: org._id as Id<"organizations">,
+          id: org._id,
           logo: newLogo ?? undefined,
           ...(isProTier ? { primaryColor: newColor } : {}),
         });

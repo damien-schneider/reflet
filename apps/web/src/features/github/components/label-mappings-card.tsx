@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, Tag, Trash } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +40,7 @@ interface GitHubLabel {
 }
 
 interface RefletTag {
-  _id: string;
+  _id: Id<"tags">;
   name: string;
   color: string;
 }
@@ -53,10 +54,10 @@ type IssueStatus =
   | "closed";
 
 interface LabelMapping {
-  _id: string;
+  _id: Id<"githubLabelMappings">;
   githubLabelName: string;
   githubLabelColor?: string;
-  targetTagId?: string;
+  targetTagId?: Id<"tags">;
   autoSync: boolean;
   syncClosedIssues?: boolean;
   defaultStatus?: IssueStatus;
@@ -73,12 +74,12 @@ interface LabelMappingsCardProps {
   onAddMapping: (mapping: {
     githubLabelName: string;
     githubLabelColor?: string;
-    targetTagId?: string;
+    targetTagId?: Id<"tags">;
     autoSync: boolean;
     syncClosedIssues?: boolean;
     defaultStatus?: IssueStatus;
   }) => void;
-  onDeleteMapping: (mappingId: string) => void;
+  onDeleteMapping: (mappingId: Id<"githubLabelMappings">) => void;
   onFetchLabels: () => void;
 }
 
@@ -115,7 +116,7 @@ export function LabelMappingsCard({
     onAddMapping({
       githubLabelName: selectedLabel,
       githubLabelColor: label?.color,
-      targetTagId: selectedTag || undefined,
+      targetTagId: tags.find((t) => t._id === selectedTag)?._id,
       autoSync,
       syncClosedIssues,
     });

@@ -29,7 +29,8 @@ export default function SettingsLayout({
 }) {
   const params = useParams();
   const pathname = usePathname();
-  const orgSlug = params?.orgSlug as string;
+  const rawOrgSlug = params?.orgSlug;
+  const orgSlug = typeof rawOrgSlug === "string" ? rawOrgSlug : "";
 
   const basePath = `/dashboard/${orgSlug}/settings`;
 

@@ -1,5 +1,7 @@
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { FeedbackItem } from "./feed-feedback-view";
 import { RoadmapView } from "./roadmap-view";
 
 // Regex patterns for text matching - defined at top level for performance
@@ -88,31 +90,43 @@ vi.mock("./roadmap/roadmap-column-header", () => ({
 }));
 
 const mockStatuses = [
-  { _id: "status-1", name: "Backlog", color: "#6b7280" },
-  { _id: "status-2", name: "In Progress", color: "#3b82f6" },
-  { _id: "status-3", name: "Done", color: "#22c55e" },
+  {
+    _id: "status-1" as Id<"organizationStatuses">,
+    name: "Backlog",
+    color: "#6b7280",
+  },
+  {
+    _id: "status-2" as Id<"organizationStatuses">,
+    name: "In Progress",
+    color: "#3b82f6",
+  },
+  {
+    _id: "status-3" as Id<"organizationStatuses">,
+    name: "Done",
+    color: "#22c55e",
+  },
 ];
 
-const mockFeedback = [
+const mockFeedback: FeedbackItem[] = [
   {
-    _id: "feedback-1",
+    _id: "feedback-1" as Id<"feedback">,
     title: "Test feedback 1",
     description: "Description 1",
     voteCount: 5,
     commentCount: 2,
-    organizationStatusId: "status-1",
-    organizationId: "org-1",
+    organizationStatusId: "status-1" as Id<"organizationStatuses">,
+    organizationId: "org-1" as Id<"organizations">,
     createdAt: Date.now(),
     tags: [],
   },
   {
-    _id: "feedback-2",
+    _id: "feedback-2" as Id<"feedback">,
     title: "Test feedback 2",
     description: "Description 2",
     voteCount: 3,
     commentCount: 1,
-    organizationStatusId: "status-2",
-    organizationId: "org-1",
+    organizationStatusId: "status-2" as Id<"organizationStatuses">,
+    organizationId: "org-1" as Id<"organizations">,
     createdAt: Date.now(),
     tags: [],
   },

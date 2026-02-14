@@ -33,7 +33,7 @@ interface ColumnDeleteDialogProps {
     color: string;
   } | null;
   otherStatuses: Array<{
-    _id: string;
+    _id: Id<"organizationStatuses">;
     name: string;
     color: string;
   }>;
@@ -47,7 +47,8 @@ export function ColumnDeleteDialog({
   otherStatuses,
   feedbackCount,
 }: ColumnDeleteDialogProps) {
-  const [moveToStatusId, setMoveToStatusId] = useState<string>("");
+  const [moveToStatusId, setMoveToStatusId] =
+    useState<Id<"organizationStatuses"> | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const removeStatus = useMutation(api.organization_statuses.remove);
@@ -61,18 +62,18 @@ export function ColumnDeleteDialog({
     try {
       await removeStatus({
         id: statusToDelete.id,
-        moveToStatusId: moveToStatusId as Id<"organizationStatuses">,
+        moveToStatusId,
       });
       onOpenChange(false);
     } finally {
       setIsDeleting(false);
-      setMoveToStatusId("");
+      setMoveToStatusId(null);
     }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      setMoveToStatusId("");
+      setMoveToStatusId(null);
     }
     onOpenChange(newOpen);
   };
@@ -108,9 +109,9 @@ export function ColumnDeleteDialog({
             </span>
             <Select
               onValueChange={(value) =>
-                setMoveToStatusId((value as string | null) || "")
+                setMoveToStatusId(value as Id<"organizationStatuses">)
               }
-              value={moveToStatusId || null}
+              value={moveToStatusId ?? undefined}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a column..." />

@@ -69,9 +69,11 @@ vi.mock("react", async () => {
   const actual = await vi.importActual<typeof React>("react");
   return {
     ...actual,
-    use: (_promise: Promise<{ orgSlug: string; feedbackId: string }>) => ({
+    use: (
+      _promise: Promise<{ orgSlug: string; feedbackId: Id<"feedback"> }>
+    ) => ({
       orgSlug: "my-organization",
-      feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79",
+      feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
     }),
   };
 });
@@ -303,7 +305,7 @@ describe("FeedbackDetailPage", () => {
       <FeedbackDetailPage
         params={Promise.resolve({
           orgSlug: "my-organization",
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
         })}
       />
     );
@@ -318,7 +320,7 @@ describe("FeedbackDetailPage", () => {
       <FeedbackDetailPage
         params={Promise.resolve({
           orgSlug: "my-organization",
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
         })}
       />
     );
@@ -333,7 +335,7 @@ describe("FeedbackDetailPage", () => {
       <FeedbackDetailPage
         params={Promise.resolve({
           orgSlug: "my-organization",
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
         })}
       />
     );
@@ -348,7 +350,7 @@ describe("FeedbackDetailPage", () => {
       <FeedbackDetailPage
         params={Promise.resolve({
           orgSlug: "my-organization",
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
         })}
       />
     );
@@ -363,7 +365,7 @@ describe("FeedbackDetailPage", () => {
       <FeedbackDetailPage
         params={Promise.resolve({
           orgSlug: "my-organization",
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
         })}
       />
     );
@@ -396,7 +398,7 @@ describe("FeedbackDetailPage", () => {
       <FeedbackDetailPage
         params={Promise.resolve({
           orgSlug: "my-organization",
-          feedbackId: "nonexistent-id",
+          feedbackId: "nonexistent-id" as Id<"feedback">,
         })}
       />
     );
@@ -411,7 +413,7 @@ describe("FeedbackDetailPage", () => {
       <FeedbackDetailPage
         params={Promise.resolve({
           orgSlug: "my-organization",
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
         })}
       />
     );

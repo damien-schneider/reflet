@@ -13,6 +13,16 @@ import {
 
 export type SortOption = "votes" | "newest" | "oldest" | "comments";
 
+const SORT_OPTIONS: readonly SortOption[] = [
+  "votes",
+  "newest",
+  "oldest",
+  "comments",
+] as const;
+
+const isSortOption = (value: string): value is SortOption =>
+  (SORT_OPTIONS as readonly string[]).includes(value);
+
 const sortLabels: Record<SortOption, string> = {
   votes: "Most Votes",
   newest: "Newest",
@@ -39,7 +49,11 @@ export function FiltersBar({ sortBy, onSortChange }: FiltersBarProps) {
         />
         <DropdownMenuContent align="end">
           <DropdownMenuRadioGroup
-            onValueChange={(v) => onSortChange(v as SortOption)}
+            onValueChange={(v) => {
+              if (isSortOption(v)) {
+                onSortChange(v);
+              }
+            }}
             value={sortBy}
           >
             <DropdownMenuRadioItem value="votes">

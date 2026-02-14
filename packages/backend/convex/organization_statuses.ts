@@ -295,7 +295,11 @@ export const reorder = mutation({
 
     const now = Date.now();
     for (let i = 0; i < args.statusIds.length; i++) {
-      await ctx.db.patch(args.statusIds[i], {
+      const statusId = args.statusIds[i];
+      if (!statusId) {
+        continue;
+      }
+      await ctx.db.patch(statusId, {
         order: i,
         updatedAt: now,
       });

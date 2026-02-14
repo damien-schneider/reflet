@@ -1,5 +1,17 @@
 import type { WidgetState } from "./types";
 
+const VALID_VIEWS: ReadonlySet<string> = new Set([
+  "list",
+  "detail",
+  "create",
+  "roadmap",
+  "changelog",
+]);
+
+function isValidView(value: string): value is WidgetState["view"] {
+  return VALID_VIEWS.has(value);
+}
+
 export interface WidgetEventCallbacks {
   open: () => void;
   close: () => void;
@@ -27,9 +39,9 @@ export function attachWidgetEventListeners(
   const navItems = Array.from(shadowRoot.querySelectorAll(".reflet-nav-item"));
   for (const item of navItems) {
     item.addEventListener("click", () => {
-      const view = item.getAttribute("data-view") as WidgetState["view"];
-      if (view) {
-        callbacks.setView(view);
+      const viewAttr = item.getAttribute("data-view");
+      if (viewAttr && isValidView(viewAttr)) {
+        callbacks.setView(viewAttr);
       }
     });
   }

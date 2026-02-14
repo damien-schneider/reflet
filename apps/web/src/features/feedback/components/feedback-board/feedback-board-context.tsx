@@ -1,14 +1,19 @@
 "use client";
 
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { createContext, type ReactNode, useContext } from "react";
 
 interface FeedbackBoardContextValue {
   isAdmin: boolean;
   primaryColor?: string;
-  statuses: Array<{ _id: string; name: string; color: string }>;
+  statuses: Array<{
+    _id: Id<"organizationStatuses">;
+    name: string;
+    color: string;
+  }>;
   onVote: (
     e: React.MouseEvent,
-    feedbackId: string,
+    feedbackId: Id<"feedback">,
     voteType: "upvote" | "downvote"
   ) => void;
   onFeedbackClick: (feedbackId: string) => void;

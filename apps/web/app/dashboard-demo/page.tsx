@@ -1,6 +1,5 @@
 "use client";
 
-import type * as React from "react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/features/app-shell/components/app-sidebar";
 import { SiteHeader } from "@/features/navigation/components/site-header";
@@ -13,12 +12,10 @@ import data from "./data.json";
 export default function Page() {
   return (
     <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
+      style={{
+        "--sidebar-width": "calc(var(--spacing) * 72)",
+        "--header-height": "calc(var(--spacing) * 12)",
+      }}
     >
       <AppSidebar />
       <SidebarInset>

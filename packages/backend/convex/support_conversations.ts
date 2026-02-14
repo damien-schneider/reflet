@@ -2,10 +2,10 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 
-const getAuthUser = async (ctx: { auth: unknown }) => {
-  const user = await authComponent.safeGetAuthUser(
-    ctx as Parameters<typeof authComponent.safeGetAuthUser>[0]
-  );
+const getAuthUser = async (
+  ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
+) => {
+  const user = await authComponent.safeGetAuthUser(ctx);
   if (!user) {
     throw new Error("Not authenticated");
   }
@@ -277,12 +277,13 @@ export const assign = mutation({
     }
 
     if (args.assignedTo) {
+      const { assignedTo } = args;
       const assigneeMembership = await ctx.db
         .query("organizationMembers")
         .withIndex("by_org_user", (q) =>
           q
             .eq("organizationId", conversation.organizationId)
-            .eq("userId", args.assignedTo as string)
+            .eq("userId", assignedTo)
         )
         .unique();
 

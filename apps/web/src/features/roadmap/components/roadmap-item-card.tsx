@@ -42,9 +42,8 @@ export function RoadmapItemCard({
   const tags = item.tags ?? [];
 
   return (
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: drag interactions required for roadmap
-    // biome-ignore lint/a11y/noStaticElementInteractions: drag interactions required for roadmap
     <div
+      aria-label={item.title}
       className={cn(
         "rounded-lg border bg-card p-3 shadow-sm transition-all",
         isDragging && "opacity-50 ring-2 ring-primary",
@@ -53,7 +52,7 @@ export function RoadmapItemCard({
       draggable={isAdmin}
       onDragEnd={onDragEnd}
       onDragStart={onDragStart}
-      role={isAdmin ? "option" : undefined}
+      role="option"
       tabIndex={isAdmin ? 0 : undefined}
     >
       {/* Header with vote button */}

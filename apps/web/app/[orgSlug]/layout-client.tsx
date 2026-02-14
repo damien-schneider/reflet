@@ -6,7 +6,6 @@ import {
   Chat as MessageSquare,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { env } from "@reflet/env/web";
 import { useQuery } from "convex/react";
 import Image from "next/image";
@@ -39,7 +38,7 @@ export default function PublicOrgLayoutClient({
 
   const supportSettings = useQuery(
     api.support_conversations.getSupportSettings,
-    org?._id ? { organizationId: org._id as Id<"organizations"> } : "skip"
+    org?._id ? { organizationId: org._id } : "skip"
   );
 
   const supportEnabled = supportSettings?.supportEnabled ?? false;
@@ -106,7 +105,7 @@ export default function PublicOrgLayoutClient({
   }
 
   return (
-    <div className="min-h-screen" style={colorCssVars as React.CSSProperties}>
+    <div className="min-h-screen" style={colorCssVars}>
       <header className="fixed z-40 mx-auto flex w-full items-center justify-between px-4 py-4">
         <div className="flex items-center gap-3">
           {org.logo ? (

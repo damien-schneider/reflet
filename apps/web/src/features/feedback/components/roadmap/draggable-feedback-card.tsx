@@ -2,10 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { motion } from "motion/react";
 
 import { FeedbackCardContent } from "./feedback-card-content";
-import type {
-  DraggableFeedbackCardProps,
-  DragHandleListeners,
-} from "./roadmap-types";
+import type { DraggableFeedbackCardProps } from "./roadmap-types";
 
 export function DraggableFeedbackCard({
   item,
@@ -50,7 +47,7 @@ export function DraggableFeedbackCard({
       >
         <FeedbackCardContent
           dragHandleAttributes={attributes}
-          dragHandleListeners={listeners as DragHandleListeners}
+          dragHandleListeners={listeners}
           isAdmin={isAdmin}
           isDragging={isDragging}
           item={item}

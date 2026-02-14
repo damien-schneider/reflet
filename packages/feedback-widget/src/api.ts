@@ -2,6 +2,15 @@ import type { BoardConfig, Comment, FeedbackItem } from "./types";
 
 declare const __CONVEX_URL__: string;
 
+function isErrorResponse(data: unknown): data is { error: string } {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "error" in data &&
+    typeof data.error === "string"
+  );
+}
+
 const CONVEX_URL =
   typeof __CONVEX_URL__ !== "undefined"
     ? __CONVEX_URL__
@@ -39,10 +48,11 @@ class FeedbackApi {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const data = (await response.json()) as T | { error: string };
+    const data: unknown = await response.json();
 
     if (!response.ok) {
-      throw new Error((data as { error?: string }).error ?? "Request failed");
+      const message = isErrorResponse(data) ? data.error : "Request failed";
+      throw new Error(message);
     }
 
     return data as T;

@@ -36,7 +36,7 @@ import { useFeedbackBoard } from "./feedback-board/feedback-board-context";
 
 interface FeedbackCardWithMorphingDialogProps {
   feedback: {
-    _id: string;
+    _id: Id<"feedback">;
     title: string;
     description?: string;
     voteCount: number;
@@ -81,38 +81,27 @@ export function FeedbackCardWithMorphingDialog({
   };
 
   const handleDelete = useCallback(async () => {
-    await deleteFeedback({ id: feedback._id as Id<"feedback"> });
+    await deleteFeedback({ id: feedback._id });
     setShowDeleteDialog(false);
   }, [feedback._id, deleteFeedback]);
 
   const card = (
-    // biome-ignore lint/a11y/useSemanticElements: Using div because button cannot contain nested buttons
-    <div
-      className="w-full cursor-pointer text-left outline-none"
-      onClick={handleClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleClick();
-        }
-      }}
-      role="button"
-      tabIndex={0}
-    >
+    <div className="w-full">
       <div className="group flex gap-3">
         {/* Main card */}
-        <div
+        <button
           className={cn(
-            "feedback-card flex-1 cursor-pointer rounded-xl border border-border/50 bg-card transition-all hover:border-border hover:shadow-black/5",
+            "cursor-pointer text-left outline-none",
+            "feedback-card flex-1 rounded-xl border border-border/50 bg-card transition-all hover:border-border hover:shadow-black/5",
             feedback.isPinned &&
               "border-olive-300/50 from-olive-50 to-olive-100/50 dark:border-olive-700/50 dark:from-olive-950/50 dark:to-olive-950/30",
             "min-w-0"
           )}
-          style={
-            {
-              "--feedback-card-name": `feedback-${feedback._id}`,
-            } as React.CSSProperties
-          }
+          onClick={handleClick}
+          style={{
+            "--feedback-card-name": `feedback-${feedback._id}`,
+          }}
+          type="button"
         >
           <div className="space-y-3 px-4 pt-4">
             <div className="flex items-start gap-2">
@@ -209,7 +198,7 @@ export function FeedbackCardWithMorphingDialog({
               </span>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Vote buttons */}
         <div className="flex flex-col gap-1 self-stretch">

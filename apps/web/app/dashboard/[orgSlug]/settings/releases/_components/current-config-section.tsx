@@ -7,6 +7,9 @@ import {
   type SyncDirectionKey,
 } from "./sync-direction-section";
 
+const isSyncDirectionKey = (value: unknown): value is SyncDirectionKey =>
+  typeof value === "string" && value in SYNC_DIRECTION_LABELS;
+
 interface ChangelogSettings {
   autoPublishImported?: boolean;
   autoVersioning?: boolean;
@@ -28,8 +31,9 @@ export const CurrentConfigSection = ({
     </p>
     <div className="flex flex-wrap gap-2">
       <Badge variant="outline">
-        {SYNC_DIRECTION_LABELS[settings.syncDirection as SyncDirectionKey] ??
-          settings.syncDirection}
+        {isSyncDirectionKey(settings.syncDirection)
+          ? SYNC_DIRECTION_LABELS[settings.syncDirection]
+          : (settings.syncDirection ?? "Not configured")}
       </Badge>
       {settings.pushToGithubOnPublish && (
         <Badge variant="secondary">Push to GitHub</Badge>
