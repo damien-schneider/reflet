@@ -108,7 +108,7 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   );
 
   return (
-    <div className="w-full max-w-md p-6">
+    <div className="mx-auto w-full max-w-md p-6">
       <AuthHeader mode={mode} />
 
       <AuthSocialProviders />
