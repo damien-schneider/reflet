@@ -1,6 +1,5 @@
 import { CaretDown } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -9,6 +8,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toId } from "@/lib/convex-helpers";
 import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +59,7 @@ export function StatusDisplay({
         <DropdownMenuContent align="start" className="w-48">
           <DropdownMenuRadioGroup
             onValueChange={(value) =>
-              onStatusChange(value as Id<"organizationStatuses">)
+              onStatusChange(toId("organizationStatuses", value))
             }
             value={statusId ?? ""}
           >

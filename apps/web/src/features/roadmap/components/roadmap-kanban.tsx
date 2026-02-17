@@ -21,6 +21,7 @@ import {
   type LaneConfig,
   RoadmapLaneColumn,
 } from "@/features/roadmap/components/roadmap-lane";
+import { toId } from "@/lib/convex-helpers";
 import type { TagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
@@ -166,7 +167,7 @@ export function RoadmapKanban({
       // Update feedback with new statusId (lane ID is an organization status ID)
       await updateFeedbackStatus({
         feedbackId: currentDraggedId,
-        organizationStatusId: targetLane as Id<"organizationStatuses">,
+        organizationStatusId: toId("organizationStatuses", targetLane),
       });
     },
     [isAdmin, draggingItemId, updateFeedbackStatus]

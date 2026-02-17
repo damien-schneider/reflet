@@ -22,6 +22,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 import { ConfigureStep } from "./wizard-steps/configure-step";
 import { SetupMethodStep } from "./wizard-steps/setup-method-step";
 import { WorkflowStep } from "./wizard-steps/workflow-step";
@@ -222,9 +223,10 @@ export function ReleaseSetupWizard({
         <div className="flex gap-1 px-4 pt-3">
           {Array.from({ length: TOTAL_STEPS }, (_, i) => (
             <div
-              className={`h-1 flex-1 rounded-full transition-colors ${
+              className={cn(
+                "h-1 flex-1 rounded-full transition-colors",
                 i < step ? "bg-primary" : "bg-muted"
-              }`}
+              )}
               key={`step-${i + 1}`}
             />
           ))}

@@ -14,7 +14,7 @@ const BOARD_VIEWS: readonly BoardView[] = [
 ] as const;
 
 const isBoardView = (value: string): value is BoardView =>
-  (BOARD_VIEWS as readonly string[]).includes(value);
+  BOARD_VIEWS.some((o) => o === value);
 
 interface BoardViewToggleProps {
   view: BoardView;

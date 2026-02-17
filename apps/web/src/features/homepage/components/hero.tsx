@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { H1, H2, H3, Lead } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 export default function Hero() {
   return (
@@ -235,7 +236,12 @@ function FeedbackListItem({ item }: FeedbackListItemProps) {
 
   return (
     <div
-      className={`cursor-pointer border-border border-b p-4 transition-colors hover:bg-card ${item.active ? "border-l-4 border-l-foreground bg-card shadow-sm" : "border-l-4 border-l-transparent"}`}
+      className={cn(
+        "cursor-pointer border-border border-b p-4 transition-colors hover:bg-card",
+        item.active
+          ? "border-l-4 border-l-foreground bg-card shadow-sm"
+          : "border-l-4 border-l-transparent"
+      )}
     >
       <div className="flex gap-4">
         <div className="flex h-12 min-w-[40px] flex-col items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:border-foreground/20">
@@ -251,7 +257,10 @@ function FeedbackListItem({ item }: FeedbackListItemProps) {
           </p>
           <div className="flex items-center gap-2">
             <span
-              className={`rounded-full border px-2 py-0.5 font-medium text-[10px] ${statusClasses}`}
+              className={cn(
+                "rounded-full border px-2 py-0.5 font-medium text-[10px]",
+                statusClasses
+              )}
             >
               {item.status}
             </span>

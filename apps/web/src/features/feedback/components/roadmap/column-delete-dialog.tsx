@@ -5,7 +5,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
 
 interface ColumnDeleteDialogProps {
@@ -109,7 +109,7 @@ export function ColumnDeleteDialog({
             </span>
             <Select
               onValueChange={(value) =>
-                setMoveToStatusId(value as Id<"organizationStatuses">)
+                setMoveToStatusId(toId("organizationStatuses", value))
               }
               value={moveToStatusId ?? undefined}
             >

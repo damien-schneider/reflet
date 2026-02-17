@@ -16,6 +16,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface WebsiteReference {
   _id: Id<"websiteReferences">;
@@ -112,7 +113,10 @@ export function WebsiteReferenceCard({
                 variant="ghost"
               >
                 <ArrowsClockwise
-                  className={`h-4 w-4 ${isRefreshing || isLoading ? "animate-spin" : ""}`}
+                  className={cn(
+                    "h-4 w-4",
+                    (isRefreshing || isLoading) && "animate-spin"
+                  )}
                 />
               </Button>
               <Button

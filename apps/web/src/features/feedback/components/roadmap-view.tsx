@@ -18,9 +18,9 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toId } from "@/lib/convex-helpers";
 import type { FeedbackItem } from "./feed-feedback-view";
 import { AddColumnInline } from "./roadmap/add-column-inline";
 import { ColumnDeleteDialog } from "./roadmap/column-delete-dialog";
@@ -115,7 +115,7 @@ export function RoadmapView({
         return;
       }
 
-      const feedbackId = active.id as Id<"feedback">;
+      const feedbackId = toId("feedback", active.id);
       const targetItem = feedback.find((f) => f._id === over.id);
       const targetStatusId = targetItem?.organizationStatusId;
 

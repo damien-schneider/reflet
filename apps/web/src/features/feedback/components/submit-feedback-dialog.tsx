@@ -4,7 +4,6 @@ import { User, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +24,7 @@ import {
 } from "@/components/ui/sheet";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
+import { toId } from "@/lib/convex-helpers";
 import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 import { AttachmentUpload } from "./attachment-upload";
@@ -212,7 +212,7 @@ export function SubmitFeedbackDialog({
                   onValueChange={(value) =>
                     onTagChange(
                       value && value !== "none"
-                        ? (value as Id<"tags">)
+                        ? toId("tags", value)
                         : undefined
                     )
                   }

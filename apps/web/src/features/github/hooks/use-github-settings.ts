@@ -3,6 +3,26 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useCallback, useState } from "react";
 
+interface ApiErrorResponse {
+  success?: boolean;
+  error?: string;
+  code?: string;
+  message?: string;
+}
+
+const parseApiError = (json: unknown): ApiErrorResponse => {
+  if (!json || typeof json !== "object") {
+    return {};
+  }
+  const obj = json as Record<string, unknown>;
+  return {
+    success: typeof obj.success === "boolean" ? obj.success : undefined,
+    error: typeof obj.error === "string" ? obj.error : undefined,
+    code: typeof obj.code === "string" ? obj.code : undefined,
+    message: typeof obj.message === "string" ? obj.message : undefined,
+  };
+};
+
 type IssueStatus =
   | "open"
   | "under_review"
@@ -97,23 +117,20 @@ export function useGitHubSettings({
     }
     setLoadingRepos(true);
     try {
-      console.log("[Frontend] Fetching repositories for org:", orgId);
       const response = await fetch(
         `/api/github/repositories?organizationId=${orgId}`,
         {
           cache: "no-store",
         }
       );
-      const data = (await response.json()) as { repositories: Repository[] };
-      console.log(
-        `[Frontend] Received ${data.repositories?.length ?? 0} repositories`
-      );
-      if (data.repositories) {
-        setRepositories(data.repositories);
-        console.log(
-          "[Frontend] Repositories set in state:",
-          data.repositories.length
-        );
+      const data: unknown = await response.json();
+      if (
+        data &&
+        typeof data === "object" &&
+        "repositories" in data &&
+        Array.isArray(data.repositories)
+      ) {
+        setRepositories(data.repositories as Repository[]);
       }
     } catch (error) {
       console.error("Error fetching repositories:", error);
@@ -131,9 +148,14 @@ export function useGitHubSettings({
       const response = await fetch(
         `/api/github/labels?organizationId=${orgId}`
       );
-      const data = (await response.json()) as { labels: GitHubLabel[] };
-      if (data.labels) {
-        setGithubLabels(data.labels);
+      const data: unknown = await response.json();
+      if (
+        data &&
+        typeof data === "object" &&
+        "labels" in data &&
+        Array.isArray(data.labels)
+      ) {
+        setGithubLabels(data.labels as GitHubLabel[]);
       }
     } catch (error) {
       console.error("Error fetching labels:", error);
@@ -225,12 +247,7 @@ export function useGitHubSettings({
         }),
       });
 
-      const data = (await response.json()) as {
-        success?: boolean;
-        error?: string;
-        code?: string;
-        message?: string;
-      };
+      const data = parseApiError(await response.json());
 
       if (!response.ok || data.error) {
         setWebhookSetupError({
@@ -288,12 +305,7 @@ export function useGitHubSettings({
             }),
           });
 
-          const data = (await response.json()) as {
-            success?: boolean;
-            error?: string;
-            code?: string;
-            message?: string;
-          };
+          const data = parseApiError(await response.json());
 
           if (!response.ok || data.error) {
             setWebhookSetupError({

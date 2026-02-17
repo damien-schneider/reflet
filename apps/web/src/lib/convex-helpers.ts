@@ -1,16 +1,28 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 
+type ConvexTableName =
+  | "organizations"
+  | "organizationStatuses"
+  | "feedback"
+  | "tags"
+  | "widgets"
+  | "githubLabelMappings";
+
 /**
- * Validates that a string looks like a Convex ID and casts it.
- * Convex IDs are non-empty strings — this provides a centralized
- * runtime check instead of scattered `as Id<...>` assertions.
+ * Validates that a value is a non-empty string suitable for use as a Convex ID.
+ * Use at boundaries (event handlers, URL params) instead of bare `as Id<...>`.
  */
-export const toOrgId = (value: string): Id<"organizations"> => {
-  if (!value || typeof value !== "string" || value.trim().length === 0) {
-    throw new Error(
-      "Invalid organization ID: value must be a non-empty string"
-    );
+const validateIdString = (value: unknown, table: string): string => {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`Invalid ${table} ID: value must be a non-empty string`);
   }
-  // Convex IDs are opaque strings; we validate non-emptiness at the boundary.
-  return value as Id<"organizations">;
+  return value;
 };
+
+export const toId = <T extends ConvexTableName>(
+  table: T,
+  value: unknown
+): Id<T> => validateIdString(value, table) as unknown as Id<T>;
+
+export const toOrgId = (value: string): Id<"organizations"> =>
+  toId("organizations", value);

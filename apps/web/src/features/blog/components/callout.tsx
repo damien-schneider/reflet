@@ -1,6 +1,7 @@
 import { AlertCircle, CheckCircle, Info, Lightbulb } from "lucide-react";
 
 import { Text } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 type CalloutType = "info" | "tip" | "warning" | "success";
 
@@ -46,7 +47,7 @@ export function Callout({ type = "info", title, children }: CalloutProps) {
   const style = styles[type];
 
   return (
-    <div className={`my-6 rounded-lg border ${style.border} ${style.bg} p-4`}>
+    <div className={cn("my-6 rounded-lg border p-4", style.border, style.bg)}>
       <div className="flex gap-3">
         <div className="flex-shrink-0">{style.icon}</div>
         <div>

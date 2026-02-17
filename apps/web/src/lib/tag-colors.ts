@@ -98,7 +98,7 @@ const COLOR_VALUES: Record<TagColor, ColorValue> = {
 };
 
 export function isValidTagColor(color: string): color is TagColor {
-  return (TAG_COLORS as readonly string[]).includes(color);
+  return TAG_COLORS.some((c) => c === color);
 }
 
 // Resolve any color (named or legacy hex) to a TagColor.

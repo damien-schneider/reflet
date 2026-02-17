@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { label: "Pricing", targetId: "pricing", icon: CurrencyCircleDollar },
@@ -49,19 +50,21 @@ export default function NavbarDesktop() {
   return (
     <motion.nav
       animate={{ y: 0 }}
-      className={`sticky top-0 z-50 hidden border-border border-b transition-[height,background-color,box-shadow] duration-300 md:block ${
+      className={cn(
+        "sticky top-0 z-50 hidden border-border border-b transition-[height,background-color,box-shadow] duration-300 md:block",
         hasScrolled
           ? "bg-background/95 shadow-sm backdrop-blur-lg"
           : "bg-background/80 backdrop-blur-md"
-      }`}
+      )}
       initial={{ y: -100 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div
-          className={`flex items-center justify-between transition-[height] duration-300 ${
+          className={cn(
+            "flex items-center justify-between transition-[height] duration-300",
             hasScrolled ? "h-16" : "h-20"
-          }`}
+          )}
         >
           <div className="flex items-center gap-8">
             {/* Logo */}

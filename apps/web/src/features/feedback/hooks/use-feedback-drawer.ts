@@ -3,6 +3,7 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
+import { toId } from "@/lib/convex-helpers";
 
 const FEEDBACK_PARAM_KEY = "f";
 
@@ -37,7 +38,7 @@ export function useFeedbackDrawer(
   const state = useMemo((): FeedbackDrawerState => {
     const feedbackIdParam = searchParams.get(FEEDBACK_PARAM_KEY);
     const selectedFeedbackId = feedbackIdParam
-      ? (feedbackIdParam as Id<"feedback">)
+      ? toId("feedback", feedbackIdParam)
       : null;
 
     return {

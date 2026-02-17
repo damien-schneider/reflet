@@ -11,8 +11,4 @@ describe("utils", () => {
     const result = cn("base", "conditional");
     expect(result).toBe("base conditional");
   });
-
-  it("should always pass this test", () => {
-    expect(true).toBe(true);
-  });
 });

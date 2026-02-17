@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { H3 } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 interface FeedbackMainContentProps {
   feedback: {
@@ -63,11 +64,12 @@ export function FeedbackMainContent({
       <CardHeader>
         <div className="flex items-start gap-4">
           <button
-            className={`flex flex-col items-center rounded-lg border p-3 transition-colors ${
+            className={cn(
+              "flex flex-col items-center rounded-lg border p-3 transition-colors",
               feedback.hasVoted
                 ? "border-olive-600 bg-olive-600/10 text-olive-600"
                 : "border-border hover:border-olive-600"
-            }`}
+            )}
             onClick={handleToggleVote}
             type="button"
           >

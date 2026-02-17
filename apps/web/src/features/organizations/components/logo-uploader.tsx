@@ -12,6 +12,7 @@ import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useImageUpload } from "@/components/ui/tiptap/use-image-upload";
 import { Muted } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 interface LogoUploaderProps {
   currentLogo?: string | null;
@@ -194,7 +195,10 @@ export function LogoUploader({
   return (
     <div className="space-y-3">
       <button
-        className={`relative flex min-h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${getDropZoneClassName()}`}
+        className={cn(
+          "relative flex min-h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors",
+          getDropZoneClassName()
+        )}
         disabled={disabled}
         onClick={handleClick}
         onDragLeave={handleDragLeave}

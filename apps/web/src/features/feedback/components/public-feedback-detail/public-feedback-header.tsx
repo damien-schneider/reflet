@@ -8,7 +8,6 @@ import {
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
 
 interface OrganizationStatus {
@@ -87,7 +87,7 @@ export function PublicFeedbackHeader({
         {isAdmin && organizationStatuses && organizationStatuses.length > 0 ? (
           <Select
             onValueChange={(value) =>
-              onStatusChange(value as Id<"organizationStatuses">)
+              onStatusChange(toId("organizationStatuses", value))
             }
             value={organizationStatusId ?? ""}
           >

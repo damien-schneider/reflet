@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H2, H3 } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 type BillingInterval = "monthly" | "yearly";
 
@@ -95,7 +96,10 @@ function BillingToggle({
         </TabsList>
       </Tabs>
       <Badge
-        className={`ml-2 transition-opacity ${interval === "yearly" ? "opacity-100" : "opacity-0"}`}
+        className={cn(
+          "ml-2 transition-opacity",
+          interval === "yearly" ? "opacity-100" : "opacity-0"
+        )}
         color="green"
       >
         Save 2 months
@@ -180,7 +184,10 @@ function PricingCard({ tier, billingInterval }: PricingCardProps) {
           )}
           {"yearlySavings" in tier && tier.yearlySavings > 0 && (
             <Badge
-              className={`ml-2 transition-opacity ${showSavings ? "opacity-100" : "opacity-0"}`}
+              className={cn(
+                "ml-2 transition-opacity",
+                showSavings ? "opacity-100" : "opacity-0"
+              )}
               color="green"
             >
               Save €
@@ -193,7 +200,10 @@ function PricingCard({ tier, billingInterval }: PricingCardProps) {
           )}
           {displayPrice > 0 && (
             <p
-              className={`absolute bottom-0 left-0 text-primary-foreground/70 text-sm transition-opacity ${isYearly ? "opacity-100" : "opacity-0"}`}
+              className={cn(
+                "absolute bottom-0 left-0 text-primary-foreground/70 text-sm transition-opacity",
+                isYearly ? "opacity-100" : "opacity-0"
+              )}
             >
               Billed yearly (€{yearlyPrice})
             </p>
@@ -253,7 +263,10 @@ function PricingCard({ tier, billingInterval }: PricingCardProps) {
         {displayPrice > 0 && <span className="text-muted-foreground">/mo</span>}
         {"yearlySavings" in tier && tier.yearlySavings > 0 && (
           <Badge
-            className={`ml-2 transition-opacity ${showSavings ? "opacity-100" : "opacity-0"}`}
+            className={cn(
+              "ml-2 transition-opacity",
+              showSavings ? "opacity-100" : "opacity-0"
+            )}
             color="green"
           >
             Save €
@@ -266,7 +279,10 @@ function PricingCard({ tier, billingInterval }: PricingCardProps) {
         )}
         {displayPrice > 0 && (
           <p
-            className={`absolute bottom-0 left-0 text-muted-foreground text-sm transition-opacity ${isYearly ? "opacity-100" : "opacity-0"}`}
+            className={cn(
+              "absolute bottom-0 left-0 text-muted-foreground text-sm transition-opacity",
+              isYearly ? "opacity-100" : "opacity-0"
+            )}
           >
             Billed yearly (€{yearlyPrice})
           </p>

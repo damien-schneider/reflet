@@ -21,7 +21,7 @@ const SORT_OPTIONS: readonly SortOption[] = [
 ] as const;
 
 const isSortOption = (value: string): value is SortOption =>
-  (SORT_OPTIONS as readonly string[]).includes(value);
+  SORT_OPTIONS.some((o) => o === value);
 
 const sortLabels: Record<SortOption, string> = {
   votes: "Most Votes",

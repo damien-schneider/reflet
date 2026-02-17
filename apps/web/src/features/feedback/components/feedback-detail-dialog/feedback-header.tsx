@@ -10,7 +10,6 @@ import {
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownList,
@@ -27,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
+import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
@@ -142,7 +142,7 @@ export function FeedbackHeader({
         {effectiveIsAdmin && effectiveStatuses.length > 0 && (
           <Select
             onValueChange={(val) =>
-              onStatusChange(val as Id<"organizationStatuses">)
+              onStatusChange(toId("organizationStatuses", val))
             }
             value={feedback?.organizationStatusId ?? undefined}
           >

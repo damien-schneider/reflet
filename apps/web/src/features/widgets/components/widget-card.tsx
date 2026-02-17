@@ -2,7 +2,7 @@
 
 import { Check, Copy, Gear, Power, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -66,7 +66,7 @@ export function WidgetCard({ widget }: WidgetCardProps) {
   const toggleActive = async () => {
     try {
       await updateWidget({
-        widgetId: widget._id as Id<"widgets">,
+        widgetId: widget._id,
         isActive: !widget.isActive,
       });
       toast.success(
@@ -79,7 +79,7 @@ export function WidgetCard({ widget }: WidgetCardProps) {
 
   const handleDelete = async () => {
     try {
-      await removeWidget({ widgetId: widget._id as Id<"widgets"> });
+      await removeWidget({ widgetId: widget._id });
       setShowDeleteDialog(false);
       toast.success("Widget deleted");
     } catch {

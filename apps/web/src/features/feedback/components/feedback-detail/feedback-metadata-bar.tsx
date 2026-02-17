@@ -1,47 +1,27 @@
 "use client";
 
-import {
-  ArrowDown,
-  ArrowUp,
-  Bell,
-  BellSlash,
-  CalendarCheck,
-  CaretDown,
-  CaretUp,
-  X,
-} from "@phosphor-icons/react";
+import { CaretDown, CaretUp } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { format, isPast, isToday } from "date-fns";
 import { useCallback, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { cn } from "@/lib/utils";
 import { AiAnalysisDisplay } from "./ai-analysis-display";
 import { AssigneeDisplay } from "./assignee-display";
 import { CopyForAgents } from "./copy-for-agents";
+import { DeadlineDisplay } from "./deadline-display";
 import type { FeedbackTag } from "./feedback-metadata-types";
 import { StatusDisplay } from "./status-display";
+import { SubscribeButton } from "./subscribe-button";
 import { TagDisplay } from "./tag-display";
+import { VoteButtons } from "./vote-buttons";
 
 interface FeedbackMetadataBarProps {
   feedbackId: Id<"feedback">;
@@ -328,164 +308,5 @@ export function FeedbackMetadataBar({
         </div>
       </CollapsibleContent>
     </Collapsible>
-  );
-}
-
-function VoteButtons({
-  voteCount,
-  userVoteType,
-  onVote,
-}: {
-  voteCount: number;
-  userVoteType: "upvote" | "downvote" | null;
-  onVote: (voteType: "upvote" | "downvote") => void;
-}) {
-  return (
-    <div className="flex items-center gap-1">
-      <Button
-        className={cn(
-          "h-8 gap-1.5 rounded-full px-3",
-          userVoteType === "upvote" &&
-            "border-primary bg-primary/10 text-primary"
-        )}
-        onClick={() => onVote("upvote")}
-        size="sm"
-        variant="outline"
-      >
-        <ArrowUp
-          className={cn(
-            "h-3.5 w-3.5",
-            userVoteType === "upvote" && "fill-current"
-          )}
-          weight={userVoteType === "upvote" ? "fill" : "regular"}
-        />
-        <span className="font-semibold tabular-nums">{voteCount}</span>
-      </Button>
-      <Button
-        className={cn(
-          "h-8 rounded-full px-2.5",
-          userVoteType === "downvote" &&
-            "border-destructive bg-destructive/10 text-destructive"
-        )}
-        onClick={() => onVote("downvote")}
-        size="sm"
-        variant="outline"
-      >
-        <ArrowDown
-          className={cn(
-            "h-3.5 w-3.5",
-            userVoteType === "downvote" && "fill-current"
-          )}
-          weight={userVoteType === "downvote" ? "fill" : "regular"}
-        />
-      </Button>
-    </div>
-  );
-}
-
-function SubscribeButton({
-  isSubscribed,
-  onToggle,
-}: {
-  isSubscribed: boolean | undefined;
-  onToggle: () => void;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger render={<span />}>
-        <Button
-          className={cn("h-8 w-8", isSubscribed === true && "text-primary")}
-          onClick={onToggle}
-          size="icon-sm"
-          variant="ghost"
-        >
-          {isSubscribed === true ? (
-            <Bell className="h-4 w-4" weight="fill" />
-          ) : (
-            <BellSlash className="h-4 w-4" />
-          )}
-          <span className="sr-only">
-            {isSubscribed === true ? "Unsubscribe" : "Subscribe"} to updates
-          </span>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        {isSubscribed === true
-          ? "Unsubscribe from updates"
-          : "Subscribe to updates"}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-function DeadlineDisplay({
-  deadline,
-  isOpen,
-  onOpenChange,
-  onChange,
-  onClear,
-}: {
-  deadline?: number | null;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onChange: (date: Date) => void;
-  onClear: () => void;
-}) {
-  const hasDeadline = deadline && deadline > 0;
-  const deadlineDate = hasDeadline ? new Date(deadline) : null;
-  const isOverdue = deadlineDate
-    ? isPast(deadlineDate) && !isToday(deadlineDate)
-    : false;
-
-  return (
-    <Popover onOpenChange={onOpenChange} open={isOpen}>
-      {hasDeadline && deadlineDate ? (
-        <PopoverTrigger
-          className="flex cursor-pointer select-none items-center"
-          render={<button type="button" />}
-        >
-          <Badge
-            className={cn(
-              "h-8 gap-1 rounded-full px-3 font-normal text-xs",
-              isOverdue &&
-                "border-destructive/30 bg-destructive/10 text-destructive"
-            )}
-            color={isOverdue ? "red" : "violet"}
-          >
-            <CalendarCheck className="h-3 w-3" />
-            <span>{format(deadlineDate, "MMM d")}</span>
-          </Badge>
-        </PopoverTrigger>
-      ) : (
-        <PopoverTrigger
-          className="flex h-8 cursor-pointer select-none items-center gap-1.5 rounded-full border border-input border-dashed bg-transparent px-3 text-xs transition-colors"
-          render={<button type="button" />}
-        >
-          <CalendarCheck className="h-3 w-3 text-muted-foreground" />
-          <span className="text-muted-foreground">Deadline</span>
-        </PopoverTrigger>
-      )}
-      <PopoverContent align="start" className="w-auto p-2" sideOffset={4}>
-        <Calendar
-          mode="single"
-          onSelect={(date) => {
-            if (date) {
-              onChange(date);
-            }
-          }}
-          selected={deadlineDate ?? undefined}
-        />
-        {hasDeadline && (
-          <button
-            className="flex w-full items-center justify-center gap-1 border-t pt-2 text-muted-foreground text-xs hover:text-foreground"
-            onClick={onClear}
-            type="button"
-          >
-            <X className="h-3 w-3" />
-            Clear deadline
-          </button>
-        )}
-      </PopoverContent>
-    </Popover>
   );
 }

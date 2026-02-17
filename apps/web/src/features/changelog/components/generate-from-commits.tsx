@@ -176,8 +176,15 @@ export function GenerateFromCommits({
         return;
       }
 
-      const data = (await response.json()) as { title: string };
-      onTitleGenerated(data.title);
+      const data: unknown = await response.json();
+      if (
+        data &&
+        typeof data === "object" &&
+        "title" in data &&
+        typeof data.title === "string"
+      ) {
+        onTitleGenerated(data.title);
+      }
     } catch {
       // Title generation is best-effort, don't show errors
     }
