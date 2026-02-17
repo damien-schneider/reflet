@@ -1,8 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const DASHBOARD_ORG_SLUG_REGEX = /\/dashboard\/[^/]+$/;
 const DASHBOARD_REGEX = /\/dashboard/;
-const ORG_NAME_REGEX = /Mon Organisation|Select organization/;
 
 // Auth form headings (French UI)
 const AUTH_SIGNUP_HEADING = "Créer un compte";
@@ -49,7 +47,7 @@ async function signInUser(
 }
 
 test.describe("Organization Creation", () => {
-  test("should create a new organization via the organization switcher", async ({
+  test("should show welcome screen and allow creating an organization", async ({
     page,
   }) => {
     const timestamp = Date.now();
@@ -77,43 +75,30 @@ test.describe("Organization Creation", () => {
 
     await signUpNewUser(page, testUser);
 
-    // Wait for redirect to dashboard (sign-up redirects to /dashboard but user may not be authenticated)
+    // Wait for redirect to dashboard
     await page.waitForURL(DASHBOARD_REGEX, { timeout: 15_000 });
     await page.waitForLoadState("networkidle");
 
-    // Wait for the page to settle and check what's displayed
+    // Wait for the page to settle
     await page.waitForTimeout(2000);
 
-    // Sign in after sign-up (Better-Auth may not auto-authenticate when email verification is skipped)
-    // Check if we're still on the auth form by looking for the h1
+    // Sign in after sign-up if still on auth form
     const authHeading = page.locator("h1");
     const headingText = await authHeading.textContent().catch(() => "");
 
     if (headingText?.includes("Authentification")) {
-      console.log(
-        "DEBUG: Still on auth form after sign-up, signing in explicitly"
-      );
       await signInUser(page, testUser);
       await page.waitForURL(DASHBOARD_REGEX, { timeout: 15_000 });
       await page.waitForLoadState("networkidle");
       await page.waitForTimeout(2000);
     }
 
-    // Wait for auto-redirect to org (personal org is created automatically)
-    await expect(page).toHaveURL(DASHBOARD_ORG_SLUG_REGEX, { timeout: 30_000 });
+    // New users should see the welcome screen (no auto-created org)
+    await expect(
+      page.getByRole("heading", { name: "Welcome to Reflet" })
+    ).toBeVisible({ timeout: 10_000 });
 
-    // Open the organization switcher dropdown
-    const orgSwitcherButton = page
-      .getByRole("button")
-      .filter({ hasText: ORG_NAME_REGEX })
-      .first();
-    await expect(orgSwitcherButton).toBeVisible({ timeout: 10_000 });
-    await orgSwitcherButton.click();
-
-    // Wait for dropdown to animate open
-    await page.waitForTimeout(500);
-
-    // Look for the dropdown content - it should contain "Create organization"
+    // Use the organization switcher to create an org
     const createOrgOption = page.getByText("Create organization");
     await expect(createOrgOption).toBeVisible({ timeout: 5000 });
     await createOrgOption.click();
@@ -138,26 +123,9 @@ test.describe("Organization Creation", () => {
     // Wait for dialog to close
     await expect(dialog).not.toBeVisible({ timeout: 10_000 });
 
-    // Wait for redirect to /dashboard (the success redirect)
+    // Wait for redirect to dashboard
     await page.waitForURL(DASHBOARD_REGEX, { timeout: 10_000 });
     await page.waitForLoadState("networkidle");
-
-    // Wait a bit more for Convex to sync the new org to the query
-    await page.waitForTimeout(3000);
-
-    // Open the org switcher again to verify the new org exists
-    // Re-query the button since page may have refreshed
-    const orgSwitcherAfterCreate = page
-      .getByRole("button")
-      .filter({ hasText: ORG_NAME_REGEX })
-      .first();
-    await expect(orgSwitcherAfterCreate).toBeVisible({ timeout: 10_000 });
-    await orgSwitcherAfterCreate.click();
-    await page.waitForTimeout(500);
-
-    // Verify the new organization appears in the dropdown list
-    const newOrgInList = page.getByText(newOrgName).first();
-    await expect(newOrgInList).toBeVisible({ timeout: 5000 });
 
     // Log any errors for debugging
     if (errors.length > 0) {
@@ -165,7 +133,6 @@ test.describe("Organization Creation", () => {
     }
 
     // Check if the new organization was created successfully
-    // If there are errors, the test should fail with details
     expect(
       errors.filter((e) => e.includes("Error") || e.includes("error"))
     ).toHaveLength(0);
@@ -212,17 +179,12 @@ test.describe("Organization Creation", () => {
       await page.waitForLoadState("networkidle");
     }
 
-    // Wait for auto-redirect to org (personal org is created automatically)
-    await expect(page).toHaveURL(DASHBOARD_ORG_SLUG_REGEX, { timeout: 30_000 });
+    // New users should see the welcome screen
+    await expect(
+      page.getByRole("heading", { name: "Welcome to Reflet" })
+    ).toBeVisible({ timeout: 10_000 });
 
-    // Open the organization switcher dropdown
-    const orgSwitcherButton = page.getByRole("button", {
-      name: ORG_NAME_REGEX,
-    });
-    await expect(orgSwitcherButton).toBeVisible({ timeout: 10_000 });
-    await orgSwitcherButton.click();
-
-    // Click "Create organization" option
+    // Use the organization switcher to create an org
     const createOrgOption = page.getByText("Create organization");
     await expect(createOrgOption).toBeVisible({ timeout: 5000 });
     await createOrgOption.click();

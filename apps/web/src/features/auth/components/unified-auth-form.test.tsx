@@ -79,9 +79,6 @@ vi.mock("@tanstack/react-pacer", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    organizations_personal: {
-      ensurePersonalOrganization: vi.fn(),
-    },
     auth_helpers: {
       checkEmailExists: vi.fn(),
     },

@@ -2,12 +2,12 @@
 
 import { Buildings, CaretRight } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { useAtom } from "jotai";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -179,25 +179,12 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
     api.organizations.getBySlug,
     orgSlug ? { slug: orgSlug } : "skip"
   );
-  const ensurePersonalOrganization = useMutation(
-    api.organizations_personal.ensurePersonalOrganization
-  );
-  const [ensureAttempted, setEnsureAttempted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom);
 
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
   const { redirectTo, orgNotAccessible, hasOrganizations } =
     computeDashboardNavigation({ orgSlug, org, organizations });
-
-  useEffect(() => {
-    if (organizations?.length === 0 && !ensureAttempted) {
-      setEnsureAttempted(true);
-      ensurePersonalOrganization({}).catch(() => {
-        // Silent fail - user can create manually
-      });
-    }
-  }, [organizations, ensureAttempted, ensurePersonalOrganization]);
 
   useEffect(() => {
     if (redirectTo) {

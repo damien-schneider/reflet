@@ -54,7 +54,6 @@ import type * as notifications from "../notifications.js";
 import type * as organization_statuses from "../organization_statuses.js";
 import type * as organizations from "../organizations.js";
 import type * as organizations_actions from "../organizations_actions.js";
-import type * as organizations_personal from "../organizations_personal.js";
 import type * as privateData from "../privateData.js";
 import type * as push_notifications from "../push_notifications.js";
 import type * as push_notifications_queries from "../push_notifications_queries.js";
@@ -134,7 +133,6 @@ declare const fullApi: ApiFromModules<{
   organization_statuses: typeof organization_statuses;
   organizations: typeof organizations;
   organizations_actions: typeof organizations_actions;
-  organizations_personal: typeof organizations_personal;
   privateData: typeof privateData;
   push_notifications: typeof push_notifications;
   push_notifications_queries: typeof push_notifications_queries;
