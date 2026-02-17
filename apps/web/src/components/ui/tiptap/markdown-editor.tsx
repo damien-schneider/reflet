@@ -77,7 +77,9 @@ export function TiptapMarkdownEditor({
       >
         <div className="relative">
           <EditorContent editor={editor} />
-          {editor && <ImageBubbleMenu editor={editor} />}
+          {editor && editable && !disabled && (
+            <ImageBubbleMenu editor={editor} />
+          )}
         </div>
 
         <input
@@ -137,7 +139,7 @@ export function TiptapMarkdownEditor({
     >
       <div className="relative">
         <EditorContent editor={editor} />
-        {editor && <ImageBubbleMenu editor={editor} />}
+        {editor && editable && !disabled && <ImageBubbleMenu editor={editor} />}
       </div>
 
       <input

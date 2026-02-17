@@ -85,7 +85,7 @@ vi.mock("./slash-command", () => ({
 }));
 
 vi.mock("./image-bubble-menu", () => ({
-  ImageBubbleMenu: () => null,
+  ImageBubbleMenu: () => <div data-testid="image-bubble-menu">Bubble Menu</div>,
 }));
 
 vi.mock("./image-extension", () => ({
@@ -237,5 +237,31 @@ describe("TiptapMarkdownEditor", () => {
     // The placeholder is passed through extension configuration
     const callArgs = mockUseEditor.mock.calls[0][0];
     expect(callArgs.extensions).toBeDefined();
+  });
+
+  describe("ImageBubbleMenu visibility", () => {
+    it("renders ImageBubbleMenu when editable is true", () => {
+      render(
+        <TiptapMarkdownEditor editable={true} onChange={() => {}} value="" />
+      );
+
+      expect(screen.getByTestId("image-bubble-menu")).toBeInTheDocument();
+    });
+
+    it("does not render ImageBubbleMenu when editable is false", () => {
+      render(
+        <TiptapMarkdownEditor editable={false} onChange={() => {}} value="" />
+      );
+
+      expect(screen.queryByTestId("image-bubble-menu")).not.toBeInTheDocument();
+    });
+
+    it("does not render ImageBubbleMenu when disabled is true", () => {
+      render(
+        <TiptapMarkdownEditor disabled={true} onChange={() => {}} value="" />
+      );
+
+      expect(screen.queryByTestId("image-bubble-menu")).not.toBeInTheDocument();
+    });
   });
 });
