@@ -89,8 +89,11 @@ export function SubmitFeedbackDialog({
 
   const titleLength = feedback.title.length;
   const isTitleOverLimit = titleLength > MAX_TITLE_LENGTH;
+  const isTitleEmpty = feedback.title.trim().length === 0;
   const showTitleCounter = titleLength >= TITLE_COUNTER_THRESHOLD;
-  const canSubmit = !isSubmitting && feedback.title.trim() && !isTitleOverLimit;
+  const isTitleValid =
+    feedback.title.trim().length > 0 && titleLength <= MAX_TITLE_LENGTH;
+  const canSubmit = !isSubmitting && isTitleValid;
 
   const handleSubmit = () => {
     if (canSubmit) {
@@ -155,7 +158,7 @@ export function SubmitFeedbackDialog({
                     : "text-muted-foreground"
                 )}
               >
-                {titleLength}/{MAX_TITLE_LENGTH}
+                Title: {titleLength}/{MAX_TITLE_LENGTH}
               </p>
             )}
           </div>
@@ -297,6 +300,14 @@ export function SubmitFeedbackDialog({
 
             {/* Right side - actions */}
             <div className="flex items-center gap-2">
+              {isTitleOverLimit && (
+                <p className="text-destructive text-xs">Title is too long</p>
+              )}
+              {!isTitleOverLimit &&
+                isTitleEmpty &&
+                feedback.description.trim() && (
+                  <p className="text-destructive text-xs">Title is required</p>
+                )}
               <Button
                 onClick={() => onOpenChange(false)}
                 size="sm"
