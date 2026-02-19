@@ -135,7 +135,7 @@
   width: 8px;
   height: 8px;
   background: var(--background);
-  border: 1.5px solid var(--olive-600);
+  border: 1.5px solid var(--color-olive-600);
   border-radius: 2px;
   pointer-events: auto;
   transition:
@@ -144,7 +144,7 @@
 }
 
 .tiptap-resize-handle:hover {
-  background: var(--olive-100);
+  background: var(--color-olive-100);
   transform: scale(1.2);
 }
 

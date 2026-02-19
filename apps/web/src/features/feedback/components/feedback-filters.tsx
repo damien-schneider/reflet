@@ -42,6 +42,7 @@ const isSortOption = (value: string): value is SortOption =>
 import {
   feedbackMagnifyingGlassAtom,
   feedbackSortAtom,
+  hideCompletedAtom,
   selectedStatusIdsAtom,
   selectedTagIdsAtom,
 } from "@/store/feedback";
@@ -73,14 +74,17 @@ export function FeedbackFunnels({
     selectedStatusIdsAtom
   );
   const [selectedTagIds, setSelectedTagIds] = useAtom(selectedTagIdsAtom);
+  const [hideCompleted, setHideCompleted] = useAtom(hideCompletedAtom);
 
   // Get organization statuses for the filter options
   const organizationStatuses = useQuery(api.organization_statuses.list, {
     organizationId,
   });
 
-  const hasFunnels = selectedStatusIds.length > 0 || selectedTagIds.length > 0;
-  const filterCount = selectedStatusIds.length + selectedTagIds.length;
+  const hasFunnels =
+    selectedStatusIds.length > 0 || selectedTagIds.length > 0 || hideCompleted;
+  const filterCount =
+    selectedStatusIds.length + selectedTagIds.length + (hideCompleted ? 1 : 0);
 
   const toggleStatus = (statusId: Id<"organizationStatuses">) => {
     setSelectedStatusIds((prev) =>
@@ -96,9 +100,10 @@ export function FeedbackFunnels({
     );
   };
 
-  const clearStatusAndTagFunnels = () => {
+  const clearAllFilters = () => {
     setSelectedStatusIds([]);
     setSelectedTagIds([]);
+    setHideCompleted(false);
   };
 
   return (
@@ -191,7 +196,7 @@ export function FeedbackFunnels({
                 {hasFunnels && (
                   <Button
                     className="w-full"
-                    onClick={clearStatusAndTagFunnels}
+                    onClick={clearAllFilters}
                     size="sm"
                     variant="ghost"
                   >
@@ -201,6 +206,14 @@ export function FeedbackFunnels({
               </div>
             </PopoverContent>
           </Popover>
+
+          {/* Hide Completed toggle */}
+          <Button
+            onClick={() => setHideCompleted((prev) => !prev)}
+            variant={hideCompleted ? "secondary" : "outline"}
+          >
+            {hideCompleted ? "Hide Completed" : "Show Completed"}
+          </Button>
 
           {/* Sort */}
           <Select
@@ -240,6 +253,16 @@ export function FeedbackFunnels({
       {hasFunnels && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-muted-foreground text-sm">Active filters:</span>
+          {hideCompleted && (
+            <Badge
+              className="cursor-pointer gap-1"
+              onClick={() => setHideCompleted(false)}
+              variant="secondary"
+            >
+              Completed hidden
+              <X className="h-3 w-3" />
+            </Badge>
+          )}
           {selectedStatusIds.map((statusId) => {
             const status = organizationStatuses?.find(
               (s) => s._id === statusId
@@ -278,7 +301,7 @@ export function FeedbackFunnels({
           })}
           <Button
             className="h-6 text-xs"
-            onClick={clearStatusAndTagFunnels}
+            onClick={clearAllFilters}
             size="sm"
             variant="ghost"
           >

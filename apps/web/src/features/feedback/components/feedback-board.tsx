@@ -67,8 +67,11 @@ function FeedbackBoardContent({
     openSubmitDrawer,
     closeSubmitDrawer,
     handleStatusChange: handleStatusFilterChange,
+    handleTagChange,
     clearFilters,
     hasActiveFilters,
+    hideCompleted,
+    setHideCompleted,
   } = useBoardFilters(defaultView);
 
   // Track if we've loaded data at least once (to avoid skeleton on filter/search changes)
@@ -81,12 +84,50 @@ function FeedbackBoardContent({
 
   // Queries - organization level
   // Note: tagIds filtering is done client-side to avoid loading state when changing tag filters
-  const feedback = useQuery(api.feedback_list.listByOrganization, {
+
+  // Fetch statuses first so we can compute effectiveStatusIds for the feedback query
+  const orgStatuses = useQuery(api.organization_statuses.list, {
     organizationId,
-    search: searchQuery.trim() || undefined,
-    sortBy,
-    statusIds: selectedStatusIds.length > 0 ? selectedStatusIds : undefined,
   });
+
+  const tags = useQuery(api.tags.list, {
+    organizationId,
+  });
+
+  // When hideCompleted=true and no explicit status filter, exclude the highest-order (Done) status.
+  // Skip the feedback query until orgStatuses loads to avoid a flash of completed items.
+  const skipFeedback =
+    hideCompleted &&
+    selectedStatusIds.length === 0 &&
+    orgStatuses === undefined;
+
+  const effectiveStatusIds = (() => {
+    if (selectedStatusIds.length > 0) {
+      return selectedStatusIds;
+    }
+    if (hideCompleted && orgStatuses && orgStatuses.length > 0) {
+      const doneStatus = orgStatuses.reduce((max, s) =>
+        s.order > max.order ? s : max
+      );
+      const filteredIds = orgStatuses
+        .filter((s) => s._id !== doneStatus._id)
+        .map((s) => s._id);
+      return filteredIds.length > 0 ? filteredIds : undefined;
+    }
+    return undefined;
+  })();
+
+  const feedback = useQuery(
+    api.feedback_list.listByOrganization,
+    skipFeedback
+      ? "skip"
+      : {
+          organizationId,
+          search: searchQuery.trim() || undefined,
+          sortBy,
+          statusIds: effectiveStatusIds,
+        }
+  );
 
   // Store previous feedback to prevent blinking during refetch
   const previousFeedbackRef = useRef<NonNullable<typeof feedback>>([]);
@@ -96,14 +137,6 @@ function FeedbackBoardContent({
     hasLoadedOnce.current = true;
     previousFeedbackRef.current = feedback;
   }
-
-  const orgStatuses = useQuery(api.organization_statuses.list, {
-    organizationId,
-  });
-
-  const tags = useQuery(api.tags.list, {
-    organizationId,
-  });
 
   // Mutations
   const createFeedbackPublic = useMutation(
@@ -245,18 +278,13 @@ function FeedbackBoardContent({
 
         <FeedbackToolbar
           isAdmin={isAdmin}
-          onClearFilters={clearFilters}
           onSearchChange={setSearchQuery}
-          onStatusRemove={handleStatusFilterChange}
           onSubmitClick={openSubmitDrawer}
           onTagSelect={setSelectedTagId}
           organizationId={organizationId}
           searchQuery={searchQuery}
-          selectedStatusIds={selectedStatusIds}
           selectedTagId={selectedTagId}
-          statuses={orgStatuses ?? []}
           tags={tags ?? []}
-          view={view}
         />
 
         {/* Content */}
@@ -281,10 +309,19 @@ function FeedbackBoardContent({
             <FeedFeedbackView
               feedback={filteredFeedback}
               hasActiveFilters={hasActiveFilters}
+              hideCompleted={hideCompleted}
               isLoading={feedback === undefined && !hasLoadedOnce.current}
+              onClearFilters={clearFilters}
+              onHideCompletedToggle={() => setHideCompleted(!hideCompleted)}
               onSortChange={setSortBy}
+              onStatusChange={handleStatusFilterChange}
               onSubmitClick={openSubmitDrawer}
+              onTagChange={handleTagChange}
+              selectedStatusIds={selectedStatusIds}
+              selectedTagIds={selectedTagIds}
               sortBy={sortBy}
+              statuses={orgStatuses ?? []}
+              tags={tags ?? []}
             />
           )}
         </div>

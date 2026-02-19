@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import {
   feedbackMagnifyingGlassAtom,
   feedbackSortAtom,
+  hideCompletedAtom,
   selectedStatusIdsAtom,
   selectedTagIdsAtom,
 } from "@/store/feedback";
@@ -35,6 +36,12 @@ export function FeedbackList({
   const sortBy = useAtomValue(feedbackSortAtom);
   const selectedStatusIds = useAtomValue(selectedStatusIdsAtom);
   const selectedTagIds = useAtomValue(selectedTagIdsAtom);
+  const hideCompleted = useAtomValue(hideCompletedAtom);
+
+  // Get organization statuses to identify the "Done" (highest-order) status
+  const organizationStatuses = useQuery(api.organization_statuses.list, {
+    organizationId,
+  });
 
   // Map sort option to Convex sort type
   const convexSortBy = (() => {
@@ -48,12 +55,35 @@ export function FeedbackList({
     }
   })();
 
+  // Compute effective statusIds for the backend query
+  const effectiveStatusIds = (() => {
+    if (selectedStatusIds.length > 0) {
+      // Explicit user selection takes precedence
+      return selectedStatusIds;
+    }
+    if (
+      hideCompleted &&
+      organizationStatuses &&
+      organizationStatuses.length > 0
+    ) {
+      // Find the highest-order status (the "Done" status) and exclude it
+      const doneStatus = organizationStatuses.reduce((max, s) =>
+        s.order > max.order ? s : max
+      );
+      const filteredIds = organizationStatuses
+        .filter((s) => s._id !== doneStatus._id)
+        .map((s) => s._id);
+      return filteredIds.length > 0 ? filteredIds : undefined;
+    }
+    return undefined;
+  })();
+
   // Query feedback from Convex
   const feedbackList = useQuery(api.feedback_list.listByOrganization, {
     organizationId,
     search: search || undefined,
     sortBy: convexSortBy,
-    statusIds: selectedStatusIds.length > 0 ? selectedStatusIds : undefined,
+    statusIds: effectiveStatusIds,
     tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
   });
 
@@ -61,6 +91,19 @@ export function FeedbackList({
   const tags = useQuery(api.tag_manager.list, { organizationId });
 
   const isLoading = feedbackList === undefined;
+
+  const hasActiveFilters =
+    search || selectedStatusIds.length > 0 || selectedTagIds.length > 0;
+
+  const emptyMessage = (() => {
+    if (hasActiveFilters) {
+      return "No feedback matches your filters";
+    }
+    if (hideCompleted) {
+      return "No feedback yet. Completed items are hidden — use the filter to show them.";
+    }
+    return "No feedback yet. Be the first to share your thoughts!";
+  })();
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -84,11 +127,7 @@ export function FeedbackList({
       {/* Empty state */}
       {!isLoading && feedbackList?.length === 0 && (
         <div className="py-12 text-center">
-          <p className="text-muted-foreground">
-            {search || selectedStatusIds.length > 0 || selectedTagIds.length > 0
-              ? "No feedback matches your filters"
-              : "No feedback yet. Be the first to share your thoughts!"}
-          </p>
+          <p className="text-muted-foreground">{emptyMessage}</p>
         </div>
       )}
 

@@ -15,6 +15,7 @@ const URL_PARAM_KEYS = {
   tag: "tag", // Single tag filter (from tag filter bar)
   search: "q",
   newFeedback: "new", // Submit feedback drawer
+  hideCompleted: "hide_completed", // "0" = show completed; absent = hide (default)
 } as const;
 
 const DEFAULT_VIEW: BoardView = "feed";
@@ -49,6 +50,7 @@ export interface BoardFiltersState {
   selectedTagId: Id<"tags"> | null; // Single tag filter (from tag filter bar)
   searchQuery: string;
   showSubmitDrawer: boolean; // Submit feedback drawer state
+  hideCompleted: boolean; // Hide the highest-order (Done) status by default
 }
 
 export interface BoardFiltersActions {
@@ -63,6 +65,7 @@ export interface BoardFiltersActions {
   handleStatusChange: (statusId: string, checked: boolean) => void;
   handleTagChange: (tagId: string, checked: boolean) => void;
   clearFilters: () => void;
+  setHideCompleted: (hide: boolean) => void;
   hasActiveFilters: boolean;
 }
 
@@ -106,6 +109,8 @@ export function useBoardFilters(
       ),
       searchQuery: searchParams.get(URL_PARAM_KEYS.search) ?? "",
       showSubmitDrawer: searchParams.get(URL_PARAM_KEYS.newFeedback) === "1",
+      // Default true (hide); set "0" in URL to show completed
+      hideCompleted: searchParams.get(URL_PARAM_KEYS.hideCompleted) !== "0",
     };
   }, [searchParams, defaultView]);
 
@@ -237,6 +242,14 @@ export function useBoardFilters(
     router.replace(newUrl, { scroll: false });
   }, [router, pathname, state.view, defaultView]);
 
+  const setHideCompleted = useCallback(
+    (hide: boolean) => {
+      // "hide" is the default, so only store "0" (show) in the URL
+      updateParams({ hideCompleted: hide ? null : "0" });
+    },
+    [updateParams]
+  );
+
   const hasActiveFilters =
     !!state.searchQuery ||
     state.selectedStatusIds.length > 0 ||
@@ -257,6 +270,7 @@ export function useBoardFilters(
     handleStatusChange,
     handleTagChange,
     clearFilters,
+    setHideCompleted,
     hasActiveFilters,
   };
 }

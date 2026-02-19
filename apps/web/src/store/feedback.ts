@@ -61,6 +61,11 @@ export const feedbackFiltersAtom = atom<FeedbackFilters>({
 });
 
 /**
+ * Hide completed (highest-order status) feedback items by default
+ */
+export const hideCompletedAtom = atom<boolean>(true);
+
+/**
  * New feedback dialog state
  */
 export const newFeedbackDialogOpenAtom = atom(false);
