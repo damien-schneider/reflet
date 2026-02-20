@@ -20,7 +20,7 @@ export const metadata: Metadata = generatePageMetadata({
 });
 
 const SOURCE_CODE = readFileSync(
-  join(process.cwd(), "src/components/ui/feedback-minimal-notch.tsx"),
+  join(process.cwd(), "../../packages/ui/registry/feedback-minimal-notch.tsx"),
   "utf-8"
 );
 

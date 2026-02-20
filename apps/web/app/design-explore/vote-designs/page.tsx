@@ -15,169 +15,27 @@ import {
   UserIcon,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
+import {
+  EditorialFeedPreview,
+  MinimalNotchPreview,
+  SweepCornerPreview,
+} from "@/components/docs/feedback-card-previews";
 import { Badge } from "@/components/ui/badge";
+import {
+  MOCK,
+  MOCK_VOTERS,
+} from "@/features/feedback/components/card-design-previews/mock-data";
+import {
+  AnimatedCount,
+  CardMeta,
+  CardTags,
+  CardTitle,
+  FullCard,
+  MockCard,
+  useVoteState,
+} from "@/features/feedback/components/card-design-previews/shared-helpers";
 import { cn } from "@/lib/utils";
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-interface MockFeedback {
-  title: string;
-  status: { name: string; color: string };
-  tags: Array<{ id: string; name: string; color: string }>;
-  commentCount: number;
-  timeAgo: string;
-  upvotes: number;
-  downvotes: number;
-}
-
-const MOCK: MockFeedback = {
-  title: "Add keyboard shortcuts for common actions",
-  status: { name: "Planned", color: "blue" },
-  tags: [
-    { id: "1", name: "UX", color: "purple" },
-    { id: "2", name: "Feature", color: "green" },
-  ],
-  commentCount: 7,
-  timeAgo: "3 days ago",
-  upvotes: 24,
-  downvotes: 3,
-};
-
-const MOCK_VOTERS = ["AS", "JD", "MK", "RL", "TS"];
-
-// ─── Vote hook ────────────────────────────────────────────────────────────────
-
-type VoteType = "upvote" | "downvote" | null;
-
-function useVoteState(initialUp: number, initialDown: number) {
-  const [voteType, setVoteType] = useState<VoteType>(null);
-  const [upvotes, setUpvotes] = useState(initialUp);
-  const [downvotes, setDownvotes] = useState(initialDown);
-
-  const vote = useCallback(
-    (type: "upvote" | "downvote") => {
-      if (voteType === type) {
-        setVoteType(null);
-        if (type === "upvote") {
-          setUpvotes((v) => v - 1);
-        } else {
-          setDownvotes((v) => v - 1);
-        }
-      } else {
-        if (voteType === "upvote") {
-          setUpvotes((v) => v - 1);
-        }
-        if (voteType === "downvote") {
-          setDownvotes((v) => v - 1);
-        }
-        setVoteType(type);
-        if (type === "upvote") {
-          setUpvotes((v) => v + 1);
-        } else {
-          setDownvotes((v) => v + 1);
-        }
-      }
-    },
-    [voteType]
-  );
-
-  return { voteType, upvotes, downvotes, vote };
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function AnimatedCount({
-  value,
-  className,
-  direction = "vertical",
-}: {
-  value: number;
-  className?: string;
-  direction?: "vertical" | "vertical-reverse";
-}) {
-  const exitY = direction === "vertical" ? -8 : 8;
-  const initialY = direction === "vertical" ? 8 : -8;
-  return (
-    <AnimatePresence mode="popLayout">
-      <motion.span
-        animate={{ y: 0, opacity: 1 }}
-        className={cn("tabular-nums", className)}
-        exit={{ y: exitY, opacity: 0 }}
-        initial={{ y: initialY, opacity: 0 }}
-        key={value}
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-      >
-        {value}
-      </motion.span>
-    </AnimatePresence>
-  );
-}
-
-function CardMeta() {
-  return (
-    <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-      <span className="flex items-center gap-1">
-        <ChatIcon className="h-3 w-3" />
-        {MOCK.commentCount}
-      </span>
-      <span className="opacity-70">{MOCK.timeAgo}</span>
-    </div>
-  );
-}
-
-function CardTags() {
-  return (
-    <div className="flex flex-wrap gap-1">
-      {MOCK.tags.map((tag) => (
-        <Badge
-          className="font-normal text-[10px]"
-          color={tag.color}
-          key={tag.id}
-        >
-          {tag.name}
-        </Badge>
-      ))}
-    </div>
-  );
-}
-
-function CardTitle() {
-  return (
-    <div>
-      <h3 className="font-medium text-sm leading-snug">{MOCK.title}</h3>
-      <Badge
-        className="mt-1.5 font-normal text-[10px]"
-        color={MOCK.status.color}
-      >
-        {MOCK.status.name}
-      </Badge>
-    </div>
-  );
-}
-
-function MockCard({ voteSlot }: { voteSlot: React.ReactNode }) {
-  return (
-    <div className="group flex gap-3">
-      <div className="flex-1 rounded-xl border border-border/50 bg-card px-4 py-4 transition-all hover:border-border hover:shadow-sm">
-        <div className="space-y-3">
-          <CardTitle />
-          <CardTags />
-          <CardMeta />
-        </div>
-      </div>
-      {voteSlot}
-    </div>
-  );
-}
-
-function FullCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-border/50 bg-card transition-all hover:border-border hover:shadow-sm">
-      {children}
-    </div>
-  );
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECTION A — LAYOUT EXPLORATIONS
@@ -691,93 +549,6 @@ function DesignHackerNews() {
         </div>
       </div>
     </div>
-  );
-}
-
-// ── A7 · Minimal Notch — right column, ultra-subtle indicator ────────────────
-
-function DesignMinimalNotch() {
-  const { voteType, upvotes, downvotes, vote } = useVoteState(
-    MOCK.upvotes,
-    MOCK.downvotes
-  );
-
-  let notchColor = "var(--color-border)";
-  if (voteType === "upvote") {
-    notchColor = "var(--color-primary)";
-  } else if (voteType === "downvote") {
-    notchColor = "var(--color-destructive)";
-  }
-
-  return (
-    <MockCard
-      voteSlot={
-        <div className="relative flex flex-col items-center justify-center gap-0 self-stretch">
-          <AnimatePresence>
-            {voteType && (
-              <motion.div
-                animate={{ opacity: 0.5, scale: 1 }}
-                className={cn(
-                  "absolute top-1/2 left-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl",
-                  voteType === "upvote" ? "bg-primary/25" : "bg-destructive/25"
-                )}
-                exit={{ opacity: 0, scale: 0.5 }}
-                initial={{ opacity: 0, scale: 0.5 }}
-                transition={{ duration: 0.3 }}
-              />
-            )}
-          </AnimatePresence>
-          <button
-            className={cn(
-              "relative flex flex-1 flex-col items-center justify-end gap-0.5 pb-1 transition-colors duration-200",
-              voteType === "upvote"
-                ? "text-primary"
-                : "text-muted-foreground/40 hover:text-muted-foreground"
-            )}
-            onClick={() => vote("upvote")}
-            type="button"
-          >
-            <CaretUpIcon
-              className="h-3.5 w-3.5"
-              weight={voteType === "upvote" ? "bold" : "regular"}
-            />
-            <span className="font-medium text-[10px] tabular-nums">
-              {upvotes}
-            </span>
-          </button>
-          <motion.div
-            animate={{
-              height: voteType ? 4 : 3,
-              backgroundColor: notchColor,
-              width: voteType ? 24 : 12,
-              boxShadow: voteType
-                ? `0 0 8px 1px ${notchColor}`
-                : "0 0 0px 0px transparent",
-            }}
-            className="rounded-full"
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-          />
-          <button
-            className={cn(
-              "relative flex flex-1 flex-col items-center justify-start gap-0.5 pt-1 transition-colors duration-200",
-              voteType === "downvote"
-                ? "text-destructive"
-                : "text-muted-foreground/40 hover:text-muted-foreground"
-            )}
-            onClick={() => vote("downvote")}
-            type="button"
-          >
-            <span className="font-medium text-[10px] tabular-nums">
-              {downvotes}
-            </span>
-            <CaretDownIcon
-              className="h-3.5 w-3.5"
-              weight={voteType === "downvote" ? "bold" : "regular"}
-            />
-          </button>
-        </div>
-      }
-    />
   );
 }
 
@@ -1543,112 +1314,6 @@ function DesignInkBlot() {
 // New designs combining the best elements from favorites.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const MOCK_LIST: readonly MockFeedback[] = [
-  MOCK,
-  {
-    title: "Dark mode support for the dashboard",
-    status: { name: "In Progress", color: "amber" },
-    tags: [{ id: "3", name: "Design", color: "pink" }],
-    commentCount: 12,
-    timeAgo: "1 day ago",
-    upvotes: 41,
-    downvotes: 2,
-  },
-  {
-    title: "Export feedback data as CSV",
-    status: { name: "Under Review", color: "purple" },
-    tags: [{ id: "4", name: "Data", color: "blue" }],
-    commentCount: 3,
-    timeAgo: "5 days ago",
-    upvotes: 8,
-    downvotes: 1,
-  },
-];
-
-// ── C1 · Editorial Feed — serif titles, margin votes, stacked list ───────────
-// Combines: Magazine Editorial serif + Pill Cluster `24↑ 4↓` + list context
-
-function DesignEditorialFeed() {
-  return (
-    <div className="space-y-0 divide-y divide-border/20">
-      {MOCK_LIST.map((item) => (
-        <EditorialFeedItem item={item} key={item.title} />
-      ))}
-    </div>
-  );
-}
-
-function EditorialFeedItem({ item }: { item: MockFeedback }) {
-  const { voteType, upvotes, downvotes, vote } = useVoteState(
-    item.upvotes,
-    item.downvotes
-  );
-
-  return (
-    <div className="relative py-4 pl-16">
-      {/* Margin vote annotation */}
-      <div className="absolute top-4 left-0 flex w-12 flex-col items-center gap-0.5">
-        <motion.button
-          className={cn(
-            "transition-colors",
-            voteType === "upvote"
-              ? "text-primary"
-              : "text-muted-foreground/30 hover:text-primary"
-          )}
-          onClick={() => vote("upvote")}
-          type="button"
-          whileTap={{ scale: 0.8 }}
-        >
-          <ArrowUpIcon
-            className="h-3 w-3"
-            weight={voteType === "upvote" ? "bold" : "regular"}
-          />
-        </motion.button>
-        <span className="text-[9px] text-muted-foreground/40 tabular-nums">
-          {upvotes}↑ {downvotes}↓
-        </span>
-        <motion.button
-          className={cn(
-            "transition-colors",
-            voteType === "downvote"
-              ? "text-destructive"
-              : "text-muted-foreground/30 hover:text-destructive"
-          )}
-          onClick={() => vote("downvote")}
-          type="button"
-          whileTap={{ scale: 0.8 }}
-        >
-          <ArrowDownIcon
-            className="h-3 w-3"
-            weight={voteType === "downvote" ? "bold" : "regular"}
-          />
-        </motion.button>
-      </div>
-
-      {/* Thin vertical rule */}
-      <div className="absolute top-0 bottom-0 left-14 w-px bg-border/20" />
-
-      {/* Content */}
-      <h3 className="font-display text-base leading-snug tracking-tight">
-        {item.title}
-      </h3>
-      <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground/60">
-        <Badge className="font-normal text-[10px]" color={item.status.color}>
-          {item.status.name}
-        </Badge>
-        {item.tags.map((tag) => (
-          <span className="italic" key={tag.id}>
-            #{tag.name}
-          </span>
-        ))}
-        <span>·</span>
-        <span>{item.commentCount} comments</span>
-        <span className="italic">{item.timeAgo}</span>
-      </div>
-    </div>
-  );
-}
-
 // ── C2 · Metric Action Bar — hero number + condensed content + sweep action bar
 // Combines: Dashboard Metric hero + Action Bar footer + Bottom Bar sweep effect
 
@@ -2283,127 +1948,6 @@ function DesignEditorialNotch() {
   );
 }
 
-// ── C8 · Sweep Corner — corner badge with sweep animation + pill details ─────
-// Combines: Corner Badge placement + Bottom Bar sweep + Pill Cluster breakdown
-
-function DesignSweepCorner() {
-  const { voteType, upvotes, downvotes, vote } = useVoteState(
-    MOCK.upvotes,
-    MOCK.downvotes
-  );
-  const total = upvotes + downvotes;
-  const upPercent = total > 0 ? Math.round((upvotes / total) * 100) : 50;
-  const net = upvotes - downvotes;
-
-  return (
-    <div className="relative">
-      <div className="rounded-xl border border-border/50 bg-card transition-all hover:border-border hover:shadow-sm">
-        <div className="space-y-3 px-4 pt-4 pr-20">
-          <CardTitle />
-          <CardTags />
-        </div>
-        {/* Bottom pill details with sweep */}
-        <div className="relative mt-3 overflow-hidden border-border/30 border-t">
-          <AnimatePresence>
-            {voteType && (
-              <motion.div
-                animate={{ x: "100%", opacity: 0 }}
-                className={cn(
-                  "absolute inset-0",
-                  voteType === "upvote"
-                    ? "bg-gradient-to-r from-transparent via-primary/12 to-transparent"
-                    : "bg-gradient-to-r from-transparent via-destructive/12 to-transparent"
-                )}
-                exit={{ opacity: 0 }}
-                initial={{ x: "-100%", opacity: 1 }}
-                key={voteType}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-              />
-            )}
-          </AnimatePresence>
-          <div className="relative flex items-center gap-2 px-4 py-2">
-            <CardMeta />
-            <span className="text-[9px] text-muted-foreground/30 tabular-nums">
-              {upvotes}↑ {downvotes}↓
-            </span>
-            <span className="text-[9px] text-muted-foreground/30 tabular-nums">
-              {upPercent}%
-            </span>
-          </div>
-        </div>
-      </div>
-      {/* Corner badge */}
-      <motion.div
-        animate={{
-          borderRadius: voteType ? "0 12px 0 16px" : "0 12px 0 12px",
-        }}
-        className="absolute top-0 right-0 flex items-center gap-0 overflow-hidden border-border/30 border-b border-l bg-card shadow-sm"
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      >
-        <motion.button
-          animate={{
-            backgroundColor:
-              voteType === "upvote" ? "var(--color-primary)" : "transparent",
-          }}
-          className={cn(
-            "relative px-2.5 py-2 text-xs transition-colors",
-            voteType === "upvote"
-              ? "text-primary-foreground"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
-          onClick={() => vote("upvote")}
-          type="button"
-          whileTap={{ scale: 0.85 }}
-        >
-          <CaretUpIcon
-            className="h-3.5 w-3.5"
-            weight={voteType === "upvote" ? "bold" : "regular"}
-          />
-        </motion.button>
-        <AnimatePresence mode="popLayout">
-          <motion.span
-            animate={{ y: 0, opacity: 1 }}
-            className={cn(
-              "px-2 py-1.5 font-bold text-xs tabular-nums",
-              voteType === "upvote" && "text-primary",
-              voteType === "downvote" && "text-destructive",
-              !voteType && "text-foreground"
-            )}
-            exit={{ y: -6, opacity: 0 }}
-            initial={{ y: 6, opacity: 0 }}
-            key={net}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-          >
-            {net}
-          </motion.span>
-        </AnimatePresence>
-        <motion.button
-          animate={{
-            backgroundColor:
-              voteType === "downvote"
-                ? "var(--color-destructive)"
-                : "transparent",
-          }}
-          className={cn(
-            "relative px-2.5 py-2 text-xs transition-colors",
-            voteType === "downvote"
-              ? "text-destructive-foreground"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-          )}
-          onClick={() => vote("downvote")}
-          type="button"
-          whileTap={{ scale: 0.85 }}
-        >
-          <CaretDownIcon
-            className="h-3.5 w-3.5"
-            weight={voteType === "downvote" ? "bold" : "regular"}
-          />
-        </motion.button>
-      </motion.div>
-    </div>
-  );
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2469,7 +2013,7 @@ const DESIGNS = [
     name: "Minimal Notch",
     description:
       "Right column, but ultra-minimal. A single glowing notch communicates direction without clutter.",
-    component: DesignMinimalNotch,
+    component: MinimalNotchPreview,
     traits: ["Minimal", "Elegant"],
     category: "layout",
   },
@@ -2569,7 +2113,7 @@ const DESIGNS = [
     name: "Editorial Feed",
     description:
       "Serif titles with margin votes and stacked list. Combines Magazine Editorial serif + Pill Cluster `24↑ 4↓` breakdown.",
-    component: DesignEditorialFeed,
+    component: EditorialFeedPreview,
     traits: ["Editorial", "List"],
     category: "beyond",
     question: "What if feedback felt like reading a curated editorial feed?",
@@ -2639,7 +2183,7 @@ const DESIGNS = [
     name: "Sweep Corner",
     description:
       "Corner badge with sweep animation and pill details in footer. Combines Corner Badge + Bottom Bar sweep + Pill Cluster.",
-    component: DesignSweepCorner,
+    component: SweepCornerPreview,
     traits: ["Corner", "Animated"],
     category: "beyond",
     question: "What if the corner badge had sweep feedback?",

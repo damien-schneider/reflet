@@ -114,25 +114,48 @@ function useMinimalNotchContext(): VoteState {
 // ─── Root Provider ──────────────────────────────────────────────────────────
 
 interface MinimalNotchProps {
-  defaultUpvotes: number;
-  defaultDownvotes: number;
+  defaultUpvotes?: number;
+  defaultDownvotes?: number;
   onVoteChange?: (
     voteType: VoteType,
     upvotes: number,
     downvotes: number
   ) => void;
+  upvotes?: number;
+  downvotes?: number;
+  voteType?: VoteType;
+  onVote?: (direction: "upvote" | "downvote") => void;
   children: ReactNode;
   className?: string;
 }
 
 function MinimalNotch({
-  defaultUpvotes,
-  defaultDownvotes,
+  defaultUpvotes = 0,
+  defaultDownvotes = 0,
   onVoteChange,
+  upvotes: controlledUpvotes,
+  downvotes: controlledDownvotes,
+  voteType: controlledVoteType,
+  onVote,
   children,
   className,
 }: MinimalNotchProps) {
-  const state = useVoteState(defaultUpvotes, defaultDownvotes, onVoteChange);
+  const internalState = useVoteState(
+    defaultUpvotes,
+    defaultDownvotes,
+    onVoteChange
+  );
+
+  const isControlled = controlledUpvotes !== undefined;
+
+  const state: VoteState = isControlled
+    ? {
+        upvotes: controlledUpvotes,
+        downvotes: controlledDownvotes ?? 0,
+        voteType: controlledVoteType ?? null,
+        vote: (type) => onVote?.(type),
+      }
+    : internalState;
 
   return (
     <MinimalNotchContext.Provider value={state}>
@@ -308,7 +331,10 @@ function MinimalNotchVote() {
             ? "text-primary"
             : "text-muted-foreground/40 hover:text-muted-foreground"
         )}
-        onClick={() => vote("upvote")}
+        onClick={(e) => {
+          e.stopPropagation();
+          vote("upvote");
+        }}
         type="button"
       >
         <CaretUp
@@ -340,7 +366,10 @@ function MinimalNotchVote() {
             ? "text-destructive"
             : "text-muted-foreground/40 hover:text-muted-foreground"
         )}
-        onClick={() => vote("downvote")}
+        onClick={(e) => {
+          e.stopPropagation();
+          vote("downvote");
+        }}
         type="button"
       >
         <span className="font-medium text-[10px] tabular-nums">

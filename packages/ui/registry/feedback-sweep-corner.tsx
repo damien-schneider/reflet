@@ -127,30 +127,47 @@ function AnimatedCount({
 // ─── SweepCorner (Root Provider) ────────────────────────────────────────────
 
 interface SweepCornerProps {
-  defaultUpvotes: number;
-  defaultDownvotes: number;
+  defaultUpvotes?: number;
+  defaultDownvotes?: number;
   onVoteChange?: (voteType: VoteType) => void;
+  upvotes?: number;
+  downvotes?: number;
+  voteType?: VoteType;
+  onVote?: (direction: "upvote" | "downvote") => void;
   children: ReactNode;
   className?: string;
 }
 
 function SweepCorner({
-  defaultUpvotes,
-  defaultDownvotes,
+  defaultUpvotes = 0,
+  defaultDownvotes = 0,
   onVoteChange,
+  upvotes: controlledUpvotes,
+  downvotes: controlledDownvotes,
+  voteType: controlledVoteType,
+  onVote,
   children,
   className,
 }: SweepCornerProps) {
-  const voteState = useVoteState(
+  const internalState = useVoteState(
     defaultUpvotes,
     defaultDownvotes,
     onVoteChange
   );
 
-  const contextValue = useMemo<SweepCornerContextValue>(
-    () => voteState,
-    [voteState]
+  const isControlled = controlledUpvotes !== undefined;
+
+  const controlledState = useMemo<SweepCornerContextValue>(
+    () => ({
+      upvotes: controlledUpvotes ?? 0,
+      downvotes: controlledDownvotes ?? 0,
+      voteType: controlledVoteType ?? null,
+      vote: (type) => onVote?.(type),
+    }),
+    [controlledUpvotes, controlledDownvotes, controlledVoteType, onVote]
   );
+
+  const contextValue = isControlled ? controlledState : internalState;
 
   return (
     <SweepCornerContext.Provider value={contextValue}>
@@ -271,7 +288,10 @@ function SweepCornerBadge() {
             ? "text-primary-foreground"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
-        onClick={() => vote("upvote")}
+        onClick={(e) => {
+          e.stopPropagation();
+          vote("upvote");
+        }}
         type="button"
         whileTap={{ scale: 0.85 }}
       >
@@ -305,7 +325,10 @@ function SweepCornerBadge() {
             ? "text-destructive-foreground"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
-        onClick={() => vote("downvote")}
+        onClick={(e) => {
+          e.stopPropagation();
+          vote("downvote");
+        }}
         type="button"
         whileTap={{ scale: 0.85 }}
       >

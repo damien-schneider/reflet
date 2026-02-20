@@ -39,6 +39,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@reflet/backend": "workspace:*",
     "@reflet/env": "workspace:*",
+    "@reflet/ui": "workspace:*",
     "@reflet/widget": "workspace:*",
     "@tabler/icons-react": "^3.36.1",
     "@tailwindcss/postcss": "^4.1.18",

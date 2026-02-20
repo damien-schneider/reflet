@@ -21,7 +21,7 @@ export const metadata: Metadata = generatePageMetadata({
 });
 
 const SOURCE_CODE = readFileSync(
-  join(process.cwd(), "src/components/ui/feedback-sweep-corner.tsx"),
+  join(process.cwd(), "../../packages/ui/registry/feedback-sweep-corner.tsx"),
   "utf-8"
 );
 

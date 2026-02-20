@@ -12,7 +12,7 @@ import {
   EditorialFeedTime,
   EditorialFeedTitle,
   EditorialFeedVote,
-} from "@/components/ui/feedback-editorial-feed";
+} from "@reflet/ui/feedback-editorial-feed";
 import {
   MinimalNotch,
   MinimalNotchCard,
@@ -22,7 +22,7 @@ import {
   MinimalNotchTags,
   MinimalNotchTitle,
   MinimalNotchVote,
-} from "@/components/ui/feedback-minimal-notch";
+} from "@reflet/ui/feedback-minimal-notch";
 import {
   SweepCorner,
   SweepCornerBadge,
@@ -32,7 +32,7 @@ import {
   SweepCornerTag,
   SweepCornerTags,
   SweepCornerTitle,
-} from "@/components/ui/feedback-sweep-corner";
+} from "@reflet/ui/feedback-sweep-corner";
 
 // ─── Sweep Corner ────────────────────────────────────────────────────────────
 

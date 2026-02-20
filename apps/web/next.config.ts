@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  transpilePackages: ["@reflet/backend", "@reflet/env"],
+  transpilePackages: ["@reflet/backend", "@reflet/env", "@reflet/ui"],
   serverExternalPackages: ["isomorphic-dompurify"],
   turbopack: {
     resolveAlias: {

@@ -23,7 +23,7 @@ export default function PrivacyPolicy() {
           <H1 className="mt-6" variant="page">
             Privacy Policy
           </H1>
-          <Lead className="mt-4">Effective Date: February 3, 2025</Lead>
+          <Lead className="mt-4">Effective Date: February 20, 2026</Lead>
           <Text className="mt-2 text-muted-foreground">
             Damien Schneider EI, France
           </Text>
@@ -47,7 +47,8 @@ export default function PrivacyPolicy() {
               When you create an account, we collect your email address, name
               (optional), and password (stored in hashed form). If you sign in
               via GitHub OAuth, we also receive your GitHub username, avatar,
-              and account type.
+              and account type. If you sign in via Google OAuth, we receive your
+              Google email address, name, and profile picture.
             </Text>
 
             <H3 className="text-lg">Organization Data</H3>
@@ -154,7 +155,14 @@ export default function PrivacyPolicy() {
                     <td className="px-4 py-2">Account info, repository data</td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-2">Google / Anthropic</td>
+                    <td className="px-4 py-2">Google</td>
+                    <td className="px-4 py-2">OAuth and AI features</td>
+                    <td className="px-4 py-2">
+                      Account info, feedback content for AI processing
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2">Anthropic</td>
                     <td className="px-4 py-2">AI features</td>
                     <td className="px-4 py-2">
                       Feedback content for processing

@@ -23,7 +23,7 @@ export default function CookiePolicy() {
           <H1 className="mt-6" variant="page">
             Cookie Policy
           </H1>
-          <Lead className="mt-4">Effective Date: February 3, 2025</Lead>
+          <Lead className="mt-4">Effective Date: February 20, 2026</Lead>
           <Text className="mt-2 text-muted-foreground">
             Damien Schneider EI, France
           </Text>
@@ -196,6 +196,10 @@ export default function CookiePolicy() {
                 sessions
               </li>
               <li>
+                <strong>Google:</strong> OAuth authentication cookies when
+                signing in with your Google account
+              </li>
+              <li>
                 <strong>GitHub:</strong> OAuth authentication cookies when
                 connecting your GitHub account
               </li>
@@ -213,6 +217,16 @@ export default function CookiePolicy() {
                   target="_blank"
                 >
                   Stripe Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a
+                  className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                  href="https://policies.google.com/privacy"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Google Privacy Policy
                 </a>
               </li>
               <li>

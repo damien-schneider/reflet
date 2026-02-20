@@ -6,7 +6,6 @@ import { describe, expect, it } from "vitest";
 const ROOT = resolve(__dirname, "../../../../..");
 const REGISTRY_SRC = resolve(ROOT, "packages/ui/registry");
 const REGISTRY_JSON = resolve(ROOT, "apps/web/public/r");
-const APP_UI = resolve(ROOT, "apps/web/src/components/ui");
 
 const COMPONENTS = [
   "feedback-sweep-corner",
@@ -14,26 +13,19 @@ const COMPONENTS = [
   "feedback-editorial-feed",
 ] as const;
 
-describe("registry sync — installed component matches doc preview", () => {
+describe("registry sync — JSON matches registry source", () => {
   for (const name of COMPONENTS) {
-    describe(name, () => {
+    it(`${name} JSON content matches registry source`, () => {
       const registrySource = readFileSync(
         resolve(REGISTRY_SRC, `${name}.tsx`),
         "utf-8"
       );
-      const appUiSource = readFileSync(resolve(APP_UI, `${name}.tsx`), "utf-8");
       const registryJson = JSON.parse(
         readFileSync(resolve(REGISTRY_JSON, `${name}.json`), "utf-8")
       );
       const jsonContent: string = registryJson.files[0].content;
 
-      it("registry source matches app/web UI copy", () => {
-        expect(appUiSource).toBe(registrySource);
-      });
-
-      it("registry JSON content matches registry source", () => {
-        expect(jsonContent).toBe(registrySource);
-      });
+      expect(jsonContent).toBe(registrySource);
     });
   }
 });

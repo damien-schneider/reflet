@@ -72,6 +72,10 @@ interface EditorialFeedItemProps {
   defaultUpvotes?: number;
   defaultDownvotes?: number;
   onVoteChange?: (upvotes: number, downvotes: number) => void;
+  upvotes?: number;
+  downvotes?: number;
+  voteType?: VoteDirection;
+  onVote?: (direction: "upvote" | "downvote") => void;
   children: ReactNode;
   className?: string;
 }
@@ -80,20 +84,26 @@ function EditorialFeedItem({
   defaultUpvotes = 0,
   defaultDownvotes = 0,
   onVoteChange,
+  upvotes: controlledUpvotes,
+  downvotes: controlledDownvotes,
+  voteType: controlledVoteType,
+  onVote,
   children,
   className,
 }: EditorialFeedItemProps) {
-  const [voteType, setVoteType] = useState<VoteDirection>(null);
-  const [upvotes, setUpvotes] = useState(defaultUpvotes);
-  const [downvotes, setDownvotes] = useState(defaultDownvotes);
+  const [internalVoteType, setInternalVoteType] = useState<VoteDirection>(null);
+  const [internalUpvotes, setInternalUpvotes] = useState(defaultUpvotes);
+  const [internalDownvotes, setInternalDownvotes] = useState(defaultDownvotes);
 
-  const vote = useCallback(
+  const isControlled = controlledUpvotes !== undefined;
+
+  const internalVote = useCallback(
     (direction: "upvote" | "downvote") => {
-      setVoteType((prev) => {
+      setInternalVoteType((prev) => {
         const isToggleOff = prev === direction;
         const next = isToggleOff ? null : direction;
 
-        setUpvotes((u) => {
+        setInternalUpvotes((u) => {
           let newUp = u;
           if (prev === "upvote") {
             newUp -= 1;
@@ -104,7 +114,7 @@ function EditorialFeedItem({
           return newUp;
         });
 
-        setDownvotes((d) => {
+        setInternalDownvotes((d) => {
           let newDown = d;
           if (prev === "downvote") {
             newDown -= 1;
@@ -118,10 +128,8 @@ function EditorialFeedItem({
         return next;
       });
 
-      // Fire callback after state update is scheduled
-      // We compute the expected values synchronously for the callback
-      setUpvotes((currentUp) => {
-        setDownvotes((currentDown) => {
+      setInternalUpvotes((currentUp) => {
+        setInternalDownvotes((currentDown) => {
           onVoteChange?.(currentUp, currentDown);
           return currentDown;
         });
@@ -132,8 +140,31 @@ function EditorialFeedItem({
   );
 
   const contextValue = useMemo(
-    () => ({ voteType, upvotes, downvotes, vote }),
-    [voteType, upvotes, downvotes, vote]
+    () =>
+      isControlled
+        ? {
+            voteType: controlledVoteType ?? null,
+            upvotes: controlledUpvotes,
+            downvotes: controlledDownvotes ?? 0,
+            vote: (direction: "upvote" | "downvote") => onVote?.(direction),
+          }
+        : {
+            voteType: internalVoteType,
+            upvotes: internalUpvotes,
+            downvotes: internalDownvotes,
+            vote: internalVote,
+          },
+    [
+      isControlled,
+      controlledVoteType,
+      controlledUpvotes,
+      controlledDownvotes,
+      onVote,
+      internalVoteType,
+      internalUpvotes,
+      internalDownvotes,
+      internalVote,
+    ]
   );
 
   return (
@@ -158,7 +189,10 @@ function EditorialFeedVote() {
             ? "text-primary"
             : "text-muted-foreground/30 hover:text-primary"
         )}
-        onClick={() => vote("upvote")}
+        onClick={(e) => {
+          e.stopPropagation();
+          vote("upvote");
+        }}
         type="button"
         whileTap={{ scale: 0.8 }}
       >
@@ -178,7 +212,10 @@ function EditorialFeedVote() {
             ? "text-destructive"
             : "text-muted-foreground/30 hover:text-destructive"
         )}
-        onClick={() => vote("downvote")}
+        onClick={(e) => {
+          e.stopPropagation();
+          vote("downvote");
+        }}
         type="button"
         whileTap={{ scale: 0.8 }}
       >

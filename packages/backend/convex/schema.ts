@@ -130,6 +130,13 @@ export default defineSchema({
     feedbackSettings: v.optional(
       v.object({
         allowAnonymousVoting: v.optional(v.boolean()),
+        cardStyle: v.optional(
+          v.union(
+            v.literal("sweep-corner"),
+            v.literal("minimal-notch"),
+            v.literal("editorial-feed")
+          )
+        ),
         defaultTagId: v.optional(v.id("tags")),
         defaultView: v.optional(
           v.union(v.literal("roadmap"), v.literal("feed"))

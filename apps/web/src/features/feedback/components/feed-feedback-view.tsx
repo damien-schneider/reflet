@@ -9,7 +9,13 @@ import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
-import { FeedbackCardWithMorphingDialog } from "./feedback-card-with-morphing-dialog";
+import {
+  type CardStyle,
+  DEFAULT_CARD_STYLE,
+  getCardComponent,
+} from "../lib/card-styles";
+import { useFeedbackBoard } from "./feedback-board/feedback-board-context";
+import { FeedbackCardAdminWrapper } from "./feedback-card-admin-wrapper";
 import { FiltersBar, type SortOption } from "./filters-bar";
 
 export type { SortOption } from "./filters-bar";
@@ -63,6 +69,8 @@ export interface FeedFeedbackViewProps {
   selectedTagIds: string[];
   onTagChange: (id: string, checked: boolean) => void;
   onClearFilters: () => void;
+  /** Card design style */
+  cardStyle?: CardStyle;
 }
 
 function getEmptyContent({
@@ -131,7 +139,11 @@ export function FeedFeedbackView({
   selectedTagIds,
   onTagChange,
   onClearFilters,
+  cardStyle,
 }: FeedFeedbackViewProps) {
+  const style = cardStyle ?? DEFAULT_CARD_STYLE;
+  const { onFeedbackClick } = useFeedbackBoard();
+  const CardComponent = getCardComponent(style);
   if (isLoading) {
     return (
       <div className="space-y-4 px-4">
@@ -181,7 +193,9 @@ export function FeedFeedbackView({
               layout
               transition={{ duration: 0.2 }}
             >
-              <FeedbackCardWithMorphingDialog feedback={item} />
+              <FeedbackCardAdminWrapper feedbackId={item._id}>
+                <CardComponent feedback={item} onClick={onFeedbackClick} />
+              </FeedbackCardAdminWrapper>
             </motion.div>
           ))}
         </AnimatePresence>

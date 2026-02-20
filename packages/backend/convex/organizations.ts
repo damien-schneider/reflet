@@ -443,6 +443,33 @@ export const update = mutation({
         versionPrefix: v.optional(v.string()),
       })
     ),
+    feedbackSettings: v.optional(
+      v.object({
+        allowAnonymousVoting: v.optional(v.boolean()),
+        cardStyle: v.optional(
+          v.union(
+            v.literal("sweep-corner"),
+            v.literal("minimal-notch"),
+            v.literal("editorial-feed")
+          )
+        ),
+        defaultTagId: v.optional(v.id("tags")),
+        defaultView: v.optional(
+          v.union(v.literal("roadmap"), v.literal("feed"))
+        ),
+        requireApproval: v.optional(v.boolean()),
+        defaultStatus: v.optional(
+          v.union(
+            v.literal("open"),
+            v.literal("under_review"),
+            v.literal("planned"),
+            v.literal("in_progress"),
+            v.literal("completed"),
+            v.literal("closed")
+          )
+        ),
+      })
+    ),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);

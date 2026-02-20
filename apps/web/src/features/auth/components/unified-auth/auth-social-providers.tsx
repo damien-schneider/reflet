@@ -1,12 +1,26 @@
 "use client";
 
-import { GithubLogo } from "@phosphor-icons/react";
+import { GithubLogo, GoogleLogo } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
 export function AuthSocialProviders() {
   return (
-    <div className="mb-6">
+    <div className="mb-6 space-y-2">
+      <Button
+        className="w-full"
+        onClick={() => {
+          authClient.signIn.social({
+            provider: "google",
+            callbackURL: "/dashboard",
+          });
+        }}
+        type="button"
+        variant="outline"
+      >
+        <GoogleLogo className="mr-2 size-5" weight="bold" />
+        Continue with Google
+      </Button>
       <Button
         className="w-full"
         onClick={() => {

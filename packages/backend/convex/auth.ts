@@ -10,6 +10,10 @@ import authConfig from "./auth.config";
 const githubClientId = process.env.GITHUB_CLIENT_ID;
 const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
 
+// Google OAuth configuration (optional)
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
 // Skip email verification for e2e tests
 const skipEmailVerification = process.env.SKIP_EMAIL_VERIFICATION === "true";
 
@@ -35,15 +39,22 @@ function createAuth(ctx: GenericCtx<DataModel>) {
       // Refresh session when it's 7 days old
       updateAge: 60 * 60 * 24 * 7,
     },
-    socialProviders:
-      githubClientId && githubClientSecret
-        ? {
-            github: {
-              clientId: githubClientId,
-              clientSecret: githubClientSecret,
-            },
-          }
-        : undefined,
+    socialProviders: {
+      ...(githubClientId &&
+        githubClientSecret && {
+          github: {
+            clientId: githubClientId,
+            clientSecret: githubClientSecret,
+          },
+        }),
+      ...(googleClientId &&
+        googleClientSecret && {
+          google: {
+            clientId: googleClientId,
+            clientSecret: googleClientSecret,
+          },
+        }),
+    },
     emailAndPassword: {
       enabled: true,
       // Require email verification (can be disabled for e2e tests via SKIP_EMAIL_VERIFICATION=true)

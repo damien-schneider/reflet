@@ -23,7 +23,7 @@ export default function TermsOfService() {
           <H1 className="mt-6" variant="page">
             Terms of Service
           </H1>
-          <Lead className="mt-4">Effective Date: February 3, 2025</Lead>
+          <Lead className="mt-4">Effective Date: February 20, 2026</Lead>
           <Text className="mt-2 text-muted-foreground">
             Damien Schneider EI, France
           </Text>
@@ -217,10 +217,10 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <H2>11. Third-Party Services</H2>
             <Text>
-              The Service integrates with third-party services including GitHub,
-              Stripe, and AI providers. Your use of these integrations is
-              subject to the respective third-party terms of service. We are not
-              responsible for third-party services.
+              The Service integrates with third-party services including Google,
+              GitHub, Stripe, and AI providers. Your use of these integrations
+              is subject to the respective third-party terms of service. We are
+              not responsible for third-party services.
             </Text>
           </section>
 

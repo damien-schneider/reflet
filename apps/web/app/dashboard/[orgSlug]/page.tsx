@@ -58,9 +58,11 @@ export default function OrgDashboard({
   /** When undefined, FeedbackBoard uses theme primary (olive brand) */
   const primaryColor = org.primaryColor;
   const defaultView = org.feedbackSettings?.defaultView ?? "feed";
+  const cardStyle = org.feedbackSettings?.cardStyle ?? "minimal-notch";
 
   return (
     <FeedbackBoard
+      cardStyle={cardStyle}
       defaultView={defaultView}
       isAdmin={isAdmin}
       isMember={isMember}

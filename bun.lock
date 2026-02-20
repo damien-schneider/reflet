@@ -47,6 +47,7 @@
         "@radix-ui/react-tooltip": "^1.2.8",
         "@reflet/backend": "workspace:*",
         "@reflet/env": "workspace:*",
+        "@reflet/ui": "workspace:*",
         "@reflet/widget": "workspace:*",
         "@tabler/icons-react": "^3.36.1",
         "@tailwindcss/postcss": "^4.1.18",
@@ -228,8 +229,10 @@
       "name": "@reflet/ui",
       "version": "0.1.0",
       "dependencies": {
+        "@phosphor-icons/react": "^2.1.10",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "motion": "^12.15.0",
         "tailwind-merge": "^3.3.1",
       },
       "devDependencies": {

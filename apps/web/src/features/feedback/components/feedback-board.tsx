@@ -10,6 +10,7 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { cn } from "@/lib/utils";
 import { useBoardFilters } from "../hooks/use-board-filters";
 import { useFeedbackDrawer } from "../hooks/use-feedback-drawer";
+import type { CardStyle } from "../lib/card-styles";
 import { sortFeedback } from "../lib/sort-feedback";
 import {
   BoardViewToggle,
@@ -41,6 +42,8 @@ export interface FeedbackBoardProps {
   isPublic: boolean;
   /** Default view mode */
   defaultView?: BoardViewType;
+  /** Card design style for the feed view */
+  cardStyle?: CardStyle;
 }
 
 function FeedbackBoardContent({
@@ -50,6 +53,7 @@ function FeedbackBoardContent({
   isAdmin,
   isPublic,
   defaultView = "feed",
+  cardStyle,
 }: Omit<FeedbackBoardProps, "orgSlug">) {
   // URL-based filter state
   const {
@@ -307,6 +311,7 @@ function FeedbackBoardContent({
           )}
           {view === "feed" && (
             <FeedFeedbackView
+              cardStyle={cardStyle}
               feedback={filteredFeedback}
               hasActiveFilters={hasActiveFilters}
               hideCompleted={hideCompleted}
@@ -377,10 +382,12 @@ export function FeedbackBoard({
   isAdmin,
   isPublic,
   defaultView,
+  cardStyle,
 }: FeedbackBoardProps) {
   return (
     <Suspense fallback={<LoadingState />}>
       <FeedbackBoardContent
+        cardStyle={cardStyle}
         defaultView={defaultView}
         isAdmin={isAdmin}
         isMember={isMember}

@@ -12,13 +12,20 @@
   },
   "type": "module",
   "private": true,
+  "exports": {
+    "./feedback-sweep-corner": "./registry/feedback-sweep-corner.tsx",
+    "./feedback-minimal-notch": "./registry/feedback-minimal-notch.tsx",
+    "./feedback-editorial-feed": "./registry/feedback-editorial-feed.tsx"
+  },
   "scripts": {
     "build": "bun run scripts/build-registry.ts",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "motion": "^12.15.0",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
