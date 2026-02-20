@@ -4,7 +4,7 @@ import { ChatText, Check, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import type { ComponentType } from "react";
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import {
   EditorialFeedPreview,
   MinimalNotchPreview,
@@ -57,37 +57,40 @@ export default function FeedbackSettingsPage({
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
 
-  useEffect(() => {
-    if (org?.feedbackSettings?.cardStyle) {
-      setCardStyle(org.feedbackSettings.cardStyle);
-    }
-  }, [org?.feedbackSettings?.cardStyle]);
-
-  const save = useCallback(
-    async (style: CardStyle) => {
-      if (!(org?._id && isAdmin)) {
-        return;
-      }
-      setSaveStatus("saving");
-      try {
-        await updateOrg({
-          id: org._id,
-          feedbackSettings: {
-            ...org.feedbackSettings,
-            cardStyle: style,
-          },
-        });
-        setSaveStatus("saved");
-        if (savedTimerRef.current) {
-          clearTimeout(savedTimerRef.current);
-        }
-        savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
-      } catch {
-        setSaveStatus("idle");
-      }
-    },
-    [org?._id, org?.feedbackSettings, isAdmin, updateOrg]
+  // Sync cardStyle from org settings using render-time state update pattern
+  const orgCardStyle = org?.feedbackSettings?.cardStyle;
+  const [lastSyncedStyle, setLastSyncedStyle] = useState<string | undefined>(
+    undefined
   );
+  if (orgCardStyle !== lastSyncedStyle) {
+    setLastSyncedStyle(orgCardStyle);
+    if (orgCardStyle) {
+      setCardStyle(orgCardStyle);
+    }
+  }
+
+  const save = async (style: CardStyle) => {
+    if (!(org?._id && isAdmin)) {
+      return;
+    }
+    setSaveStatus("saving");
+    try {
+      await updateOrg({
+        id: org._id,
+        feedbackSettings: {
+          ...org.feedbackSettings,
+          cardStyle: style,
+        },
+      });
+      setSaveStatus("saved");
+      if (savedTimerRef.current) {
+        clearTimeout(savedTimerRef.current);
+      }
+      savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch {
+      setSaveStatus("idle");
+    }
+  };
 
   const handleStyleChange = (style: CardStyle) => {
     setCardStyle(style);

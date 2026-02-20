@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { H1, Lead } from "@/components/ui/typography";
 import { MilestonesView } from "@/features/milestones/components/milestones-view";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
@@ -78,9 +78,6 @@ function FeedbackBoardContent({
     setHideCompleted,
   } = useBoardFilters(defaultView);
 
-  // Track if we've loaded data at least once (to avoid skeleton on filter/search changes)
-  const hasLoadedOnce = useRef(false);
-
   // Auth guard
   const { guard: authGuard, isAuthenticated } = useAuthGuard({
     message: "Sign in to vote on this feedback",
@@ -134,13 +131,14 @@ function FeedbackBoardContent({
   );
 
   // Store previous feedback to prevent blinking during refetch
-  const previousFeedbackRef = useRef<NonNullable<typeof feedback>>([]);
-
-  // Track when we've loaded data at least once and store previous feedback
-  if (feedback !== undefined) {
-    hasLoadedOnce.current = true;
-    previousFeedbackRef.current = feedback;
+  // Uses render-time state update pattern (React docs: "Adjusting state based on props")
+  const [previousFeedback, setPreviousFeedback] = useState<NonNullable<
+    typeof feedback
+  > | null>(null);
+  if (feedback !== undefined && feedback !== previousFeedback) {
+    setPreviousFeedback(feedback);
   }
+  const hasLoadedOnce = previousFeedback !== null;
 
   // Mutations
   const createFeedbackPublic = useMutation(
@@ -193,7 +191,7 @@ function FeedbackBoardContent({
   // Apply optimistic updates, client-side tag filtering, and sort feedback
   const filteredFeedback = useMemo(() => {
     // Use previous feedback during refetch to prevent blinking
-    const currentFeedback = feedback ?? previousFeedbackRef.current;
+    const currentFeedback = feedback ?? previousFeedback ?? [];
     if (currentFeedback.length === 0) {
       return [];
     }
@@ -212,7 +210,14 @@ function FeedbackBoardContent({
     }
 
     return sortFeedback(result, sortBy);
-  }, [feedback, sortBy, optimisticVotes, selectedTagId, selectedTagIds]);
+  }, [
+    feedback,
+    sortBy,
+    optimisticVotes,
+    selectedTagId,
+    selectedTagIds,
+    previousFeedback,
+  ]);
 
   // Extract feedback IDs for drawer navigation
   const feedbackIds = useMemo(
@@ -234,7 +239,7 @@ function FeedbackBoardContent({
   } = useFeedbackDrawer(feedbackIds);
 
   // Only show loading skeleton on initial load, not on filter/search changes
-  if (feedback === undefined && !hasLoadedOnce.current) {
+  if (feedback === undefined && !hasLoadedOnce) {
     return <LoadingState />;
   }
 
@@ -315,7 +320,7 @@ function FeedbackBoardContent({
               feedback={filteredFeedback}
               hasActiveFilters={hasActiveFilters}
               hideCompleted={hideCompleted}
-              isLoading={feedback === undefined && !hasLoadedOnce.current}
+              isLoading={feedback === undefined && !hasLoadedOnce}
               onClearFilters={clearFilters}
               onHideCompletedToggle={() => setHideCompleted(!hideCompleted)}
               onSortChange={setSortBy}

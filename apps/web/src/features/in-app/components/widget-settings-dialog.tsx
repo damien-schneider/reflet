@@ -68,13 +68,14 @@ export function WidgetSettingsDialog({
 
   const handleSave = async () => {
     setIsSaving(true);
+    const greetingValue = greetingMessage || undefined;
     try {
       await updateSettings({
         widgetId: widget._id,
         primaryColor,
         position,
         welcomeMessage,
-        greetingMessage: greetingMessage || undefined,
+        greetingMessage: greetingValue,
         showLauncher,
         autoOpen,
         zIndex,
@@ -83,9 +84,8 @@ export function WidgetSettingsDialog({
       onOpenChange(false);
     } catch {
       toast.error("Failed to save settings");
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   return (

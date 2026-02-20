@@ -90,7 +90,15 @@ vi.mock("@/components/ui/input", () => ({
     placeholder,
     readOnly,
     className,
-  }: any) => (
+  }: {
+    id?: string;
+    type?: string;
+    value?: string;
+    onChange?: React.ChangeEventHandler<HTMLInputElement>;
+    placeholder?: string;
+    readOnly?: boolean;
+    className?: string;
+  }) => (
     <input
       className={className}
       data-testid={`input-${id}`}
@@ -105,33 +113,47 @@ vi.mock("@/components/ui/input", () => ({
 }));
 
 vi.mock("@/components/ui/label", () => ({
-  Label: ({ children, htmlFor }: any) => (
-    <label htmlFor={htmlFor}>{children}</label>
-  ),
+  Label: ({
+    children,
+    htmlFor,
+  }: {
+    children: React.ReactNode;
+    htmlFor?: string;
+  }) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
 vi.mock("@/components/ui/select", () => ({
-  Select: ({ children, value }: any) => (
+  Select: ({
+    children,
+    value,
+  }: {
+    children: React.ReactNode;
+    value?: string;
+  }) => (
     <div data-testid="select" data-value={value}>
       {children}
     </div>
   ),
-  SelectTrigger: ({ children }: any) => (
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="select-trigger">{children}</div>
   ),
   SelectValue: () => <span data-testid="select-value" />,
-  SelectContent: ({ children }: any) => (
+  SelectContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="select-content">{children}</div>
   ),
-  SelectItem: ({ children, value }: any) => (
-    <div data-testid={`select-item-${value}`}>{children}</div>
-  ),
+  SelectItem: ({
+    children,
+    value,
+  }: {
+    children: React.ReactNode;
+    value?: string;
+  }) => <div data-testid={`select-item-${value}`}>{children}</div>,
 }));
 
 describe("InviteMemberDialog", () => {
   const mockOnOpenChange = vi.fn();
   const defaultProps = {
-    organizationId: "org123" as any,
+    organizationId: "org123" as unknown as Id<"organizations">,
     open: true,
     onOpenChange: mockOnOpenChange,
   };

@@ -1,10 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import {
-  type ComponentPropsWithRef,
-  type ElementType,
-  forwardRef,
-  type Ref,
-} from "react";
+import { type ComponentPropsWithRef, type ElementType, type Ref } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -99,42 +94,21 @@ const textVariants = cva("text-foreground", {
 
 type H1Props = ComponentPropsWithRef<"h1"> & VariantProps<typeof h1Variants>;
 
-const H1 = forwardRef<HTMLHeadingElement, H1Props>(
-  ({ variant, className, ...props }, ref) => (
-    <h1
-      className={cn(h1Variants({ variant }), className)}
-      ref={ref}
-      {...props}
-    />
-  )
+const H1 = ({ variant, className, ref, ...props }: H1Props) => (
+  <h1 className={cn(h1Variants({ variant }), className)} ref={ref} {...props} />
 );
-H1.displayName = "H1";
 
 type H2Props = ComponentPropsWithRef<"h2"> & VariantProps<typeof h2Variants>;
 
-const H2 = forwardRef<HTMLHeadingElement, H2Props>(
-  ({ variant, className, ...props }, ref) => (
-    <h2
-      className={cn(h2Variants({ variant }), className)}
-      ref={ref}
-      {...props}
-    />
-  )
+const H2 = ({ variant, className, ref, ...props }: H2Props) => (
+  <h2 className={cn(h2Variants({ variant }), className)} ref={ref} {...props} />
 );
-H2.displayName = "H2";
 
 type H3Props = ComponentPropsWithRef<"h3"> & VariantProps<typeof h3Variants>;
 
-const H3 = forwardRef<HTMLHeadingElement, H3Props>(
-  ({ variant, className, ...props }, ref) => (
-    <h3
-      className={cn(h3Variants({ variant }), className)}
-      ref={ref}
-      {...props}
-    />
-  )
+const H3 = ({ variant, className, ref, ...props }: H3Props) => (
+  <h3 className={cn(h3Variants({ variant }), className)} ref={ref} {...props} />
 );
-H3.displayName = "H3";
 
 // ============================================================================
 // Text Component - General purpose text with variants
@@ -147,19 +121,23 @@ type TextProps<T extends TextElement = "p"> = ComponentPropsWithRef<T> &
     as?: T;
   };
 
-const Text = forwardRef<HTMLElement, TextProps>(
-  ({ as = "p", variant, align, className, ...props }, ref) => {
-    const Component: ElementType = as;
-    return (
-      <Component
-        className={cn(textVariants({ variant, align }), className)}
-        ref={ref as Ref<never>}
-        {...props}
-      />
-    );
-  }
-);
-Text.displayName = "Text";
+const Text = ({
+  as = "p",
+  variant,
+  align,
+  className,
+  ref,
+  ...props
+}: TextProps) => {
+  const Component: ElementType = as;
+  return (
+    <Component
+      className={cn(textVariants({ variant, align }), className)}
+      ref={ref as Ref<never>}
+      {...props}
+    />
+  );
+};
 
 // ============================================================================
 // Muted Text - For secondary/muted content
@@ -169,19 +147,16 @@ type MutedProps = ComponentPropsWithRef<"p"> & {
   as?: TextElement;
 };
 
-const Muted = forwardRef<HTMLElement, MutedProps>(
-  ({ as = "p", className, ...props }, ref) => {
-    const Component: ElementType = as;
-    return (
-      <Component
-        className={cn("text-muted-foreground text-sm", className)}
-        ref={ref as Ref<never>}
-        {...(props as Record<string, unknown>)}
-      />
-    );
-  }
-);
-Muted.displayName = "Muted";
+const Muted = ({ as = "p", className, ref, ...props }: MutedProps) => {
+  const Component: ElementType = as;
+  return (
+    <Component
+      className={cn("text-muted-foreground text-sm", className)}
+      ref={ref as Ref<never>}
+      {...(props as Record<string, unknown>)}
+    />
+  );
+};
 
 // ============================================================================
 // Lead Text - For intro paragraphs
@@ -189,16 +164,13 @@ Muted.displayName = "Muted";
 
 type LeadProps = ComponentPropsWithRef<"p">;
 
-const Lead = forwardRef<HTMLParagraphElement, LeadProps>(
-  ({ className, ...props }, ref) => (
-    <p
-      className={cn("text-muted-foreground text-base sm:text-xl", className)}
-      ref={ref}
-      {...props}
-    />
-  )
+const Lead = ({ className, ref, ...props }: LeadProps) => (
+  <p
+    className={cn("text-muted-foreground text-base sm:text-xl", className)}
+    ref={ref}
+    {...props}
+  />
 );
-Lead.displayName = "Lead";
 
 // ============================================================================
 // Large Text - Emphasized body text
@@ -206,16 +178,9 @@ Lead.displayName = "Lead";
 
 type LargeProps = ComponentPropsWithRef<"p">;
 
-const Large = forwardRef<HTMLParagraphElement, LargeProps>(
-  ({ className, ...props }, ref) => (
-    <p
-      className={cn("font-semibold text-lg", className)}
-      ref={ref}
-      {...props}
-    />
-  )
+const Large = ({ className, ref, ...props }: LargeProps) => (
+  <p className={cn("font-semibold text-lg", className)} ref={ref} {...props} />
 );
-Large.displayName = "Large";
 
 // ============================================================================
 // Small Text - Fine print, captions
@@ -223,16 +188,13 @@ Large.displayName = "Large";
 
 type SmallProps = ComponentPropsWithRef<"small">;
 
-const Small = forwardRef<HTMLElement, SmallProps>(
-  ({ className, ...props }, ref) => (
-    <small
-      className={cn("font-medium text-sm leading-none", className)}
-      ref={ref}
-      {...props}
-    />
-  )
+const Small = ({ className, ref, ...props }: SmallProps) => (
+  <small
+    className={cn("font-medium text-sm leading-none", className)}
+    ref={ref}
+    {...props}
+  />
 );
-Small.displayName = "Small";
 
 // ============================================================================
 // Inline Code
@@ -240,19 +202,16 @@ Small.displayName = "Small";
 
 type InlineCodeProps = ComponentPropsWithRef<"code">;
 
-const InlineCode = forwardRef<HTMLElement, InlineCodeProps>(
-  ({ className, ...props }, ref) => (
-    <code
-      className={cn(
-        "relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm",
-        className
-      )}
-      ref={ref}
-      {...props}
-    />
-  )
+const InlineCode = ({ className, ref, ...props }: InlineCodeProps) => (
+  <code
+    className={cn(
+      "relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm",
+      className
+    )}
+    ref={ref}
+    {...props}
+  />
 );
-InlineCode.displayName = "InlineCode";
 
 // ============================================================================
 // Blockquote
@@ -260,16 +219,13 @@ InlineCode.displayName = "InlineCode";
 
 type BlockquoteProps = ComponentPropsWithRef<"blockquote">;
 
-const Blockquote = forwardRef<HTMLQuoteElement, BlockquoteProps>(
-  ({ className, ...props }, ref) => (
-    <blockquote
-      className={cn("mt-6 border-olive-300 border-l-2 pl-6 italic", className)}
-      ref={ref}
-      {...props}
-    />
-  )
+const Blockquote = ({ className, ref, ...props }: BlockquoteProps) => (
+  <blockquote
+    className={cn("mt-6 border-olive-300 border-l-2 pl-6 italic", className)}
+    ref={ref}
+    {...props}
+  />
 );
-Blockquote.displayName = "Blockquote";
 
 // ============================================================================
 // Exports

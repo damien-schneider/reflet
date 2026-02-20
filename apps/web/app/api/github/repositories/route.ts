@@ -48,8 +48,6 @@ export async function GET(request: Request): Promise<NextResponse> {
       }
     );
 
-    console.log(`[API Route] Returning ${repositories.length} repositories`);
-
     return NextResponse.json(
       { repositories },
       {

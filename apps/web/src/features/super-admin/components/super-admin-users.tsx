@@ -3,7 +3,7 @@
 import { CaretLeft, CaretRight, MagnifyingGlass } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
 
@@ -49,16 +50,15 @@ export function SuperAdminUsers() {
   });
 
   // Cache previous result to avoid full skeleton flash on page change
-  const cachedResult = useRef<UsersResult | null>(null);
-  useEffect(() => {
-    if (result) {
-      cachedResult.current = result;
-    }
-  }, [result]);
+  // Uses render-time state update pattern instead of useEffect
+  const [cachedResult, setCachedResult] = useState<UsersResult | null>(null);
+  if (result !== undefined && result !== cachedResult) {
+    setCachedResult(result);
+  }
 
-  const displayResult = result ?? cachedResult.current;
+  const displayResult = result ?? cachedResult;
   const isLoading = result === undefined;
-  const isPageTransition = isLoading && cachedResult.current !== null;
+  const isPageTransition = isLoading && cachedResult !== null;
 
   const users = displayResult?.items;
   const totalCount = displayResult?.totalCount ?? 0;
@@ -110,7 +110,10 @@ export function SuperAdminUsers() {
       </div>
 
       <div
-        className={`rounded-xl border transition-opacity ${isPageTransition ? "opacity-50" : ""}`}
+        className={cn(
+          "rounded-xl border transition-opacity",
+          isPageTransition && "opacity-50"
+        )}
       >
         <Table>
           <TableHeader>

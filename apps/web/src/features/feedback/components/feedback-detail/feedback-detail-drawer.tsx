@@ -27,51 +27,29 @@ import {
 
 import { CommentsSection } from "./comments-section";
 import { FeedbackContent } from "./feedback-content";
+import type {
+  FeedbackDetailContentProps,
+  FeedbackDetailDrawerProps,
+  FeedbackListItem,
+} from "./feedback-detail-drawer-types";
 import { FeedbackMetadataBar } from "./feedback-metadata-bar";
 
-// Minimal feedback data from the list (for instant display)
-export interface FeedbackListItem {
-  _id: Id<"feedback">;
-  title: string;
-  description?: string;
-  voteCount: number;
-  commentCount: number;
-  createdAt: number;
-  organizationStatusId?: Id<"organizationStatuses">;
-  hasVoted?: boolean;
-  userVoteType?: "upvote" | "downvote" | null;
-  organizationId: Id<"organizations">;
-  tags?: Array<{
-    _id: Id<"tags">;
-    name: string;
-    color: string;
-    icon?: string;
-  } | null>;
-}
+const EMPTY_FEEDBACK_LIST: FeedbackListItem[] = [];
+const EMPTY_FEEDBACK_IDS: Id<"feedback">[] = [];
 
-export interface FeedbackDetailDrawerProps {
-  feedbackId: Id<"feedback"> | null;
-  isOpen: boolean;
-  onClose: () => void;
-  isAdmin?: boolean;
-  // Initial data from the list for instant display
-  feedbackList?: FeedbackListItem[];
-  // Navigation
-  feedbackIds?: Id<"feedback">[];
-  currentIndex?: number;
-  hasPrevious?: boolean;
-  hasNext?: boolean;
-  onPrevious?: () => void;
-  onNext?: () => void;
-}
+export type {
+  FeedbackDetailContentProps,
+  FeedbackDetailDrawerProps,
+  FeedbackListItem,
+} from "./feedback-detail-drawer-types";
 
 export function FeedbackDetailDrawer({
   feedbackId,
   isOpen,
   onClose,
   isAdmin = false,
-  feedbackList = [],
-  feedbackIds = [],
+  feedbackList = EMPTY_FEEDBACK_LIST,
+  feedbackIds = EMPTY_FEEDBACK_IDS,
   currentIndex = -1,
   hasPrevious = false,
   hasNext = false,
@@ -284,63 +262,6 @@ export function FeedbackDetailDrawer({
       </SheetContent>
     </Sheet>
   );
-}
-
-type PriorityLevel = "critical" | "high" | "medium" | "low" | "none";
-type ComplexityLevel =
-  | "trivial"
-  | "simple"
-  | "moderate"
-  | "complex"
-  | "very_complex";
-
-interface FeedbackDetailContentProps {
-  isLoading: boolean | null;
-  feedback:
-    | {
-        _id: Id<"feedback">;
-        title: string;
-        description: string | null;
-        tags?: Array<{
-          _id: Id<"tags">;
-          name: string;
-          color: string;
-          appliedByAi?: boolean;
-        } | null>;
-        hasVoted?: boolean;
-        userVoteType?: "upvote" | "downvote" | null;
-        voteCount?: number;
-        commentCount?: number;
-        organizationStatusId?: Id<"organizationStatuses"> | null;
-        createdAt: number;
-        author?: {
-          name?: string | null;
-          email?: string;
-          image?: string | null;
-        } | null;
-        assignee?: {
-          id: string;
-          name?: string | null;
-          email?: string;
-          image?: string | null;
-        } | null;
-        organizationId: Id<"organizations">;
-        // Optional fields from full feedback details
-        aiPriority?: PriorityLevel;
-        aiPriorityReasoning?: string;
-        aiComplexity?: ComplexityLevel;
-        aiComplexityReasoning?: string;
-        aiTimeEstimate?: string;
-        priority?: PriorityLevel;
-        complexity?: ComplexityLevel;
-        timeEstimate?: string;
-        deadline?: number;
-        attachments?: string[];
-      }
-    | null
-    | undefined;
-  feedbackId: Id<"feedback"> | null;
-  isAdmin: boolean;
 }
 
 function FeedbackDetailContent({

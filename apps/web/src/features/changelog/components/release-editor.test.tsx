@@ -93,6 +93,7 @@ vi.mock("@/components/ui/tiptap/use-media-upload", () => ({
 vi.mock("convex/react", () => ({
   useMutation: () => vi.fn(),
   useQuery: () => null,
+  useAction: () => vi.fn(),
 }));
 
 import { ReleaseEditor } from "./release-editor";

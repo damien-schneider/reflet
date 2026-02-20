@@ -70,36 +70,30 @@ export default function ChangelogPage({
     );
   }
 
-  const renderGitHubAction = () => {
-    if (!githubStatus?.isConnected) {
-      return (
-        <Button
-          onClick={() => {
-            window.location.href = `/api/github/install?organizationId=${org._id}&orgSlug=${encodeURIComponent(orgSlug)}`;
-          }}
-          variant="outline"
-        >
-          <GithubLogo className="mr-2 h-4 w-4" />
-          <span className="hidden sm:inline">Connect GitHub</span>
-          <span className="sm:hidden">GitHub</span>
+  let githubAction: React.ReactNode = null;
+  if (!githubStatus?.isConnected) {
+    githubAction = (
+      <Button
+        onClick={() => {
+          window.location.href = `/api/github/install?organizationId=${org._id}&orgSlug=${encodeURIComponent(orgSlug)}`;
+        }}
+        variant="outline"
+      >
+        <GithubLogo className="mr-2 h-4 w-4" />
+        <span className="hidden sm:inline">Connect GitHub</span>
+        <span className="sm:hidden">GitHub</span>
+      </Button>
+    );
+  } else if (hasConfiguredSync) {
+    githubAction = (
+      <Link href={`/dashboard/${orgSlug}/settings/releases`}>
+        <Button size="sm" variant="ghost">
+          <GearSix className="mr-1 h-4 w-4" />
+          <span className="hidden sm:inline">Settings</span>
         </Button>
-      );
-    }
-
-    if (hasConfiguredSync) {
-      return (
-        <Link href={`/dashboard/${orgSlug}/settings/releases`}>
-          <Button size="sm" variant="ghost">
-            <GearSix className="mr-1 h-4 w-4" />
-            <span className="hidden sm:inline">Settings</span>
-          </Button>
-        </Link>
-      );
-    }
-
-    // When the setup banner is shown, don't duplicate with another button
-    return null;
-  };
+      </Link>
+    );
+  }
 
   const handleDeleteRelease = async () => {
     if (!deletingRelease) {
@@ -128,7 +122,7 @@ export default function ChangelogPage({
         </div>
         {isAdmin && (
           <div className="flex items-center gap-2">
-            {renderGitHubAction()}
+            {githubAction}
             <Link href={`/dashboard/${orgSlug}/changelog/new`}>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />

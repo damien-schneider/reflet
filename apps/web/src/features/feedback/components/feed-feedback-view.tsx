@@ -5,7 +5,7 @@ import {
   Plus,
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -147,8 +147,8 @@ export function FeedFeedbackView({
   if (isLoading) {
     return (
       <div className="space-y-4 px-4">
-        {[1, 2, 3].map((i) => (
-          <div className="h-32 animate-pulse rounded-lg bg-muted" key={i} />
+        {["a", "b", "c"].map((id) => (
+          <div className="h-32 animate-pulse rounded-lg bg-muted" key={id} />
         ))}
       </div>
     );
@@ -183,22 +183,23 @@ export function FeedFeedbackView({
     <>
       <FiltersBar {...filtersBarProps} />
       <div className="space-y-4 px-4">
-        <AnimatePresence mode="popLayout">
-          {feedback.map((item) => (
-            <motion.div
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              initial={{ opacity: 0, scale: 0.95 }}
-              key={item._id}
-              layout
-              transition={{ duration: 0.2 }}
-            >
-              <FeedbackCardAdminWrapper feedbackId={item._id}>
-                <CardComponent feedback={item} onClick={onFeedbackClick} />
-              </FeedbackCardAdminWrapper>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        <LazyMotion features={domAnimation}>
+          <AnimatePresence mode="popLayout">
+            {feedback.map((item) => (
+              <m.div
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                key={item._id}
+                transition={{ duration: 0.2 }}
+              >
+                <FeedbackCardAdminWrapper feedbackId={item._id}>
+                  <CardComponent feedback={item} onClick={onFeedbackClick} />
+                </FeedbackCardAdminWrapper>
+              </m.div>
+            ))}
+          </AnimatePresence>
+        </LazyMotion>
       </div>
     </>
   );

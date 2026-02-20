@@ -64,14 +64,15 @@ export function WidgetCard({ widget }: WidgetCardProps) {
   };
 
   const toggleActive = async () => {
+    const successMessage = widget.isActive
+      ? "Widget deactivated"
+      : "Widget activated";
     try {
       await updateWidget({
         widgetId: widget._id,
         isActive: !widget.isActive,
       });
-      toast.success(
-        widget.isActive ? "Widget deactivated" : "Widget activated"
-      );
+      toast.success(successMessage);
     } catch {
       toast.error("Failed to update widget");
     }

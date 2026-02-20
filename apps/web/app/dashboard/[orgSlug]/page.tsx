@@ -33,8 +33,8 @@ export default function OrgDashboard({
           <Skeleton className="mx-auto mt-2 h-5 w-96" />
         </div>
         <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton className="h-32 w-full" key={i} />
+          {["a", "b", "c"].map((id) => (
+            <Skeleton className="h-32 w-full" key={id} />
           ))}
         </div>
       </div>

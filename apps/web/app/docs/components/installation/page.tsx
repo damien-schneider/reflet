@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
@@ -127,12 +128,12 @@ const item = {
           These components are presentational — they accept data via props and
           don&apos;t depend on any backend. To connect them to live Reflet data,
           use the{" "}
-          <a
+          <Link
             className="font-medium text-foreground underline underline-offset-4"
             href="/docs/sdk"
           >
             Reflet SDK
-          </a>{" "}
+          </Link>{" "}
           hooks like <InlineCode>useFeedbackList()</InlineCode> and pass the
           items as props.
         </p>

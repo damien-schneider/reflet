@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
@@ -121,12 +122,12 @@ function App() {
         <p className="text-muted-foreground text-sm leading-relaxed">
           To associate feedback with authenticated users, pass user data via the
           SDK or data attributes. See the{" "}
-          <a
+          <Link
             className="font-medium text-foreground underline underline-offset-4"
             href="/docs/sdk/installation"
           >
             SDK installation guide
-          </a>{" "}
+          </Link>{" "}
           for SSO user signing.
         </p>
       </section>

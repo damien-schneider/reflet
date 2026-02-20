@@ -1,7 +1,7 @@
 "use client";
 
 import { ChatIcon } from "@phosphor-icons/react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import { useCallback, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -62,18 +62,20 @@ export function AnimatedCount({
   const exitY = direction === "vertical" ? -8 : 8;
   const initialY = direction === "vertical" ? 8 : -8;
   return (
-    <AnimatePresence mode="popLayout">
-      <motion.span
-        animate={{ y: 0, opacity: 1 }}
-        className={cn("tabular-nums", className)}
-        exit={{ y: exitY, opacity: 0 }}
-        initial={{ y: initialY, opacity: 0 }}
-        key={value}
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-      >
-        {value}
-      </motion.span>
-    </AnimatePresence>
+    <LazyMotion features={domAnimation}>
+      <AnimatePresence mode="popLayout">
+        <m.span
+          animate={{ y: 0, opacity: 1 }}
+          className={cn("tabular-nums", className)}
+          exit={{ y: exitY, opacity: 0 }}
+          initial={{ y: initialY, opacity: 0 }}
+          key={value}
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        >
+          {value}
+        </m.span>
+      </AnimatePresence>
+    </LazyMotion>
   );
 }
 

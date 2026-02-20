@@ -65,9 +65,10 @@ export default function WidgetsPage({
       });
       setWidgetName("");
       setIsDialogOpen(false);
-    } finally {
-      setIsCreating(false);
+    } catch {
+      // Widget creation failed
     }
+    setIsCreating(false);
   };
 
   return (

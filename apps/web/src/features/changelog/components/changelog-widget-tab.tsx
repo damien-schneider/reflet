@@ -65,9 +65,8 @@ export function ChangelogWidgetTab({
       toast.error(
         error instanceof Error ? error.message : "Failed to generate API keys"
       );
-    } finally {
-      setIsGenerating(false);
     }
+    setIsGenerating(false);
   }, [organizationId, keyName, generateApiKeysMutation]);
 
   const copyToClipboard = useCallback((text: string, label: string) => {

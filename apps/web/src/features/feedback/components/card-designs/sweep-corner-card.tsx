@@ -52,10 +52,19 @@ export function SweepCornerFeedCard({
   }, [onClick, feedback._id]);
 
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: card uses nested buttons for vote actions
-    // biome-ignore lint/a11y/noStaticElementInteractions: intentional click-to-open pattern
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: matches existing FeedbackListItem pattern
-    <div className={cn("cursor-pointer", className)} onClick={handleClick}>
+    // biome-ignore lint/a11y/useSemanticElements: card container with nested interactive buttons cannot be a <button>
+    <div
+      className={cn("cursor-pointer", className)}
+      onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <SweepCorner
         downvotes={feedback.downvoteCount ?? 0}
         onVote={handleVote}

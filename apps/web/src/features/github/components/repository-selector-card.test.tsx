@@ -143,7 +143,7 @@ vi.mock("@/components/ui/combobox", async () => {
     onChange,
     onFocus,
     ...props
-  }: any) =>
+  }: React.InputHTMLAttributes<HTMLInputElement>) =>
     React.createElement("input", {
       placeholder,
       type: "text",
@@ -153,7 +153,7 @@ vi.mock("@/components/ui/combobox", async () => {
       ...props,
     });
 
-  const ComboboxContent = ({ children }: any) => {
+  const ComboboxContent = ({ children }: { children: React.ReactNode }) => {
     // Only render if parent combobox is open
     return React.createElement(
       "div",
@@ -162,21 +162,27 @@ vi.mock("@/components/ui/combobox", async () => {
     );
   };
 
-  const ComboboxList = ({ children }: any) =>
+  const ComboboxList = ({ children }: { children: React.ReactNode }) =>
     React.createElement("div", { "data-testid": "combobox-list" }, children);
 
-  const ComboboxItem = ({ children, value }: any) =>
+  const ComboboxItem = ({
+    children,
+    value,
+  }: {
+    children: React.ReactNode;
+    value?: string;
+  }) =>
     React.createElement(
       "div",
       { "data-value": value, role: "option" },
       children
     );
 
-  const ComboboxGroup = ({ children }: any) =>
+  const ComboboxGroup = ({ children }: { children: React.ReactNode }) =>
     React.createElement("div", null, children);
-  const ComboboxLabel = ({ children }: any) =>
+  const ComboboxLabel = ({ children }: { children: React.ReactNode }) =>
     React.createElement("div", null, children);
-  const ComboboxEmpty = ({ children }: any) =>
+  const ComboboxEmpty = ({ children }: { children: React.ReactNode }) =>
     React.createElement("div", null, children);
 
   return {

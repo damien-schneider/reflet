@@ -44,21 +44,44 @@ vi.mock("@/components/ui/button", () => ({
 }));
 
 vi.mock("@/components/ui/input", () => ({
-  Input: ({ id, type, disabled, ...props }: any) => (
+  Input: ({
+    id,
+    type,
+    disabled,
+    ...props
+  }: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input disabled={disabled} id={id} type={type} {...props} />
   ),
 }));
 
 vi.mock("@/components/ui/field", () => ({
-  Field: ({ children, className }: any) => (
-    <div className={className}>{children}</div>
-  ),
-  FieldLabel: ({ children, className, htmlFor }: any) => (
+  Field: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <div className={className}>{children}</div>,
+  FieldLabel: ({
+    children,
+    className,
+    htmlFor,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+    htmlFor?: string;
+  }) => (
     <label className={className} htmlFor={htmlFor}>
       {children}
     </label>
   ),
-  FieldError: ({ errors, className }: any) =>
+  FieldError: ({
+    errors,
+    className,
+  }: {
+    errors?: Array<{ message: string }>;
+    className?: string;
+  }) =>
     errors && errors.length > 0 ? (
       <div className={className}>{errors[0].message}</div>
     ) : null,

@@ -12,7 +12,7 @@ vi.mock("@phosphor-icons/react", () => ({
 const mockToggleVote = vi.fn();
 vi.mock("convex/react", () => ({
   useMutation: () => {
-    const fn = (...args: any[]) => mockToggleVote(...args);
+    const fn = (...args: unknown[]) => mockToggleVote(...args);
     fn.withOptimisticUpdate = () => fn;
     return fn;
   },
@@ -52,7 +52,7 @@ vi.mock("@/components/ui/button", () => ({
     "aria-label": ariaLabel,
     "aria-pressed": ariaPressed,
     ...props
-  }: any) => (
+  }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button
       aria-label={ariaLabel}
       aria-pressed={ariaPressed}
@@ -123,10 +123,13 @@ describe("VoteButton", () => {
   it("should stop propagation on click", () => {
     const handleParentClick = vi.fn();
     render(
-      // biome-ignore lint/a11y/useKeyWithClickEvents: testing click propagation
-      // biome-ignore lint/a11y/noStaticElementInteractions: testing click propagation
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: testing click propagation
-      <div onClick={handleParentClick}>
+      // biome-ignore lint/a11y/useSemanticElements: test wrapper for click propagation
+      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: test wrapper for click propagation
+      <div
+        onClick={handleParentClick}
+        onKeyDown={handleParentClick}
+        role="group"
+      >
         <VoteButton {...defaultProps} />
       </div>
     );

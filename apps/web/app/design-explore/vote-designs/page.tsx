@@ -14,7 +14,7 @@ import {
   TriangleIcon,
   UserIcon,
 } from "@phosphor-icons/react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import { useState } from "react";
 import {
   EditorialFeedPreview,
@@ -67,7 +67,7 @@ function DesignLeftColumn() {
         )}
       >
         {voteType && (
-          <motion.div
+          <m.div
             animate={{ opacity: 0.6 }}
             className={cn(
               "absolute inset-0",
@@ -79,7 +79,7 @@ function DesignLeftColumn() {
             transition={{ duration: 0.3 }}
           />
         )}
-        <motion.button
+        <m.button
           className={cn(
             "relative z-10 rounded-lg p-1.5 transition-colors",
             voteType === "upvote"
@@ -95,9 +95,9 @@ function DesignLeftColumn() {
             className="h-5 w-5"
             weight={voteType === "upvote" ? "bold" : "regular"}
           />
-        </motion.button>
+        </m.button>
         <AnimatePresence mode="popLayout">
-          <motion.span
+          <m.span
             animate={{ y: 0, opacity: 1 }}
             className={cn(
               "relative z-10 font-bold text-base tabular-nums",
@@ -111,9 +111,9 @@ function DesignLeftColumn() {
             transition={{ type: "spring", stiffness: 400, damping: 20 }}
           >
             {net}
-          </motion.span>
+          </m.span>
         </AnimatePresence>
-        <motion.button
+        <m.button
           className={cn(
             "relative z-10 rounded-lg p-1.5 transition-colors",
             voteType === "downvote"
@@ -129,7 +129,7 @@ function DesignLeftColumn() {
             className="h-5 w-5"
             weight={voteType === "downvote" ? "bold" : "regular"}
           />
-        </motion.button>
+        </m.button>
       </div>
       <div className="flex-1 space-y-3 px-4 py-4">
         <CardTitle />
@@ -156,7 +156,7 @@ function DesignBottomBar() {
       <div className="relative mt-3 overflow-hidden border-border/30 border-t">
         <AnimatePresence>
           {voteType && (
-            <motion.div
+            <m.div
               animate={{ x: "100%", opacity: 0 }}
               className={cn(
                 "absolute inset-0",
@@ -173,7 +173,7 @@ function DesignBottomBar() {
         </AnimatePresence>
         <div className="relative flex items-center gap-3 px-4 py-2.5">
           <div className="flex items-center gap-0.5">
-            <motion.button
+            <m.button
               className={cn(
                 "rounded-md p-1 transition-colors",
                 voteType === "upvote"
@@ -188,7 +188,7 @@ function DesignBottomBar() {
                 className="h-4 w-4"
                 weight={voteType === "upvote" ? "bold" : "regular"}
               />
-            </motion.button>
+            </m.button>
             <AnimatedCount
               className={cn(
                 "min-w-5 text-center font-semibold text-xs",
@@ -205,7 +205,7 @@ function DesignBottomBar() {
               direction="vertical-reverse"
               value={downvotes}
             />
-            <motion.button
+            <m.button
               className={cn(
                 "rounded-md p-1 transition-colors",
                 voteType === "downvote"
@@ -220,7 +220,7 @@ function DesignBottomBar() {
                 className="h-4 w-4"
                 weight={voteType === "downvote" ? "bold" : "regular"}
               />
-            </motion.button>
+            </m.button>
           </div>
           <div className="h-3 w-px bg-border/40" />
           <CardMeta />
@@ -246,11 +246,11 @@ function DesignFloatingStrip() {
           <CardMeta />
         </div>
       </FullCard>
-      <motion.div
+      <m.div
         className="absolute right-3 -bottom-1 flex items-center gap-0.5 rounded-full border border-border/40 bg-card/80 px-1.5 py-1 shadow-lg backdrop-blur-md"
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
-        <motion.button
+        <m.button
           className={cn(
             "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition-colors",
             voteType === "upvote"
@@ -269,9 +269,9 @@ function DesignFloatingStrip() {
             className="font-semibold text-[11px]"
             value={upvotes}
           />
-        </motion.button>
+        </m.button>
         <div className="h-4 w-px bg-border/40" />
-        <motion.button
+        <m.button
           className={cn(
             "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition-colors",
             voteType === "downvote"
@@ -291,8 +291,8 @@ function DesignFloatingStrip() {
             direction="vertical-reverse"
             value={downvotes}
           />
-        </motion.button>
-      </motion.div>
+        </m.button>
+      </m.div>
     </div>
   );
 }
@@ -320,7 +320,7 @@ function DesignEdgeGutter() {
     <div className="group relative flex overflow-hidden rounded-xl border border-border/50 bg-card transition-all hover:border-border hover:shadow-sm">
       <AnimatePresence>
         {voteType && (
-          <motion.div
+          <m.div
             animate={{ opacity: 1 }}
             className={cn(
               "absolute inset-0",
@@ -335,7 +335,7 @@ function DesignEdgeGutter() {
         )}
       </AnimatePresence>
       <div className="relative flex w-10 shrink-0 flex-col items-center justify-center gap-1 border-border/30 border-r">
-        <motion.div
+        <m.div
           animate={{
             background: gutterGradient,
             width: voteType ? 3 : 2,
@@ -344,7 +344,7 @@ function DesignEdgeGutter() {
           className="absolute top-2 bottom-2 left-0 rounded-r-full"
           transition={{ duration: 0.3 }}
         />
-        <motion.button
+        <m.button
           className={cn(
             "relative z-10 transition-colors",
             voteType === "upvote"
@@ -359,7 +359,7 @@ function DesignEdgeGutter() {
             className="h-4 w-4"
             weight={voteType === "upvote" ? "bold" : "regular"}
           />
-        </motion.button>
+        </m.button>
         <span
           className={cn(
             "relative z-10 font-bold text-[11px] tabular-nums",
@@ -370,7 +370,7 @@ function DesignEdgeGutter() {
         >
           {net}
         </span>
-        <motion.button
+        <m.button
           className={cn(
             "relative z-10 transition-colors",
             voteType === "downvote"
@@ -385,7 +385,7 @@ function DesignEdgeGutter() {
             className="h-4 w-4"
             weight={voteType === "downvote" ? "bold" : "regular"}
           />
-        </motion.button>
+        </m.button>
       </div>
       <div className="relative flex-1 space-y-3 px-4 py-4">
         <CardTitle />
@@ -413,14 +413,14 @@ function DesignCornerBadge() {
           <CardMeta />
         </div>
       </FullCard>
-      <motion.div
+      <m.div
         animate={{
           borderRadius: voteType ? "0 12px 0 16px" : "0 12px 0 12px",
         }}
         className="absolute top-0 right-0 flex items-center gap-0 overflow-hidden border-border/30 border-b border-l bg-card shadow-sm"
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
-        <motion.button
+        <m.button
           animate={{
             backgroundColor:
               voteType === "upvote" ? "var(--color-primary)" : "transparent",
@@ -439,9 +439,9 @@ function DesignCornerBadge() {
             className="h-3.5 w-3.5"
             weight={voteType === "upvote" ? "bold" : "regular"}
           />
-        </motion.button>
+        </m.button>
         <AnimatePresence mode="popLayout">
-          <motion.span
+          <m.span
             animate={{ y: 0, opacity: 1 }}
             className={cn(
               "px-2 py-1.5 font-bold text-xs tabular-nums",
@@ -455,9 +455,9 @@ function DesignCornerBadge() {
             transition={{ type: "spring", stiffness: 400, damping: 20 }}
           >
             {net}
-          </motion.span>
+          </m.span>
         </AnimatePresence>
-        <motion.button
+        <m.button
           animate={{
             backgroundColor:
               voteType === "downvote"
@@ -478,8 +478,8 @@ function DesignCornerBadge() {
             className="h-3.5 w-3.5"
             weight={voteType === "downvote" ? "bold" : "regular"}
           />
-        </motion.button>
-      </motion.div>
+        </m.button>
+      </m.div>
     </div>
   );
 }
@@ -496,7 +496,7 @@ function DesignHackerNews() {
     <div className="overflow-hidden rounded-xl border border-border/50 bg-card font-mono">
       <div className="flex items-start gap-2 px-3 py-3">
         <div className="flex flex-col items-center gap-0 pt-0.5">
-          <motion.button
+          <m.button
             className={cn(
               "transition-colors hover:text-primary",
               voteType === "upvote"
@@ -511,8 +511,8 @@ function DesignHackerNews() {
               className="h-3 w-3"
               weight={voteType === "upvote" ? "fill" : "regular"}
             />
-          </motion.button>
-          <motion.button
+          </m.button>
+          <m.button
             className={cn(
               "transition-colors hover:text-destructive",
               voteType === "downvote"
@@ -527,7 +527,7 @@ function DesignHackerNews() {
               className="h-3 w-3 rotate-180"
               weight={voteType === "downvote" ? "fill" : "regular"}
             />
-          </motion.button>
+          </m.button>
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-medium text-sm leading-snug">{MOCK.title}</h3>
@@ -570,7 +570,7 @@ function DesignTugOfWar() {
       </div>
       <div className="mt-3 px-4 pb-4">
         <div className="flex items-center gap-2">
-          <motion.button
+          <m.button
             className={cn(
               "flex items-center gap-1 transition-colors",
               voteType === "upvote"
@@ -586,25 +586,25 @@ function DesignTugOfWar() {
               weight={voteType === "upvote" ? "bold" : "regular"}
             />
             <span className="font-bold text-xs tabular-nums">{upvotes}</span>
-          </motion.button>
+          </m.button>
           <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
-            <motion.div
+            <m.div
               animate={{ width: `${upPercent}%` }}
               className="absolute inset-y-0 left-0 rounded-full bg-primary"
               transition={{ type: "spring", stiffness: 180, damping: 22 }}
             />
-            <motion.div
+            <m.div
               animate={{ width: `${100 - upPercent}%` }}
               className="absolute inset-y-0 right-0 rounded-full bg-destructive/50"
               transition={{ type: "spring", stiffness: 180, damping: 22 }}
             />
-            <motion.div
+            <m.div
               animate={{ left: `${upPercent}%` }}
               className="absolute top-1/2 z-10 h-4 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm"
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
             />
           </div>
-          <motion.button
+          <m.button
             className={cn(
               "flex items-center gap-1 transition-colors",
               voteType === "downvote"
@@ -620,7 +620,7 @@ function DesignTugOfWar() {
               className="h-4 w-4 rotate-90"
               weight={voteType === "downvote" ? "bold" : "regular"}
             />
-          </motion.button>
+          </m.button>
         </div>
       </div>
     </FullCard>
@@ -663,7 +663,7 @@ function DesignHoverReveal() {
         </div>
       </div>
       {/* Vote controls — slide in from right on hover */}
-      <motion.div
+      <m.div
         className="absolute top-0 right-0 bottom-0 flex items-center gap-0 border-border/30 border-l bg-card/95 px-1 backdrop-blur-sm"
         initial={false}
         style={{
@@ -672,7 +672,7 @@ function DesignHoverReveal() {
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
       >
         <div className="flex translate-x-full flex-col items-center gap-0 transition-transform duration-200 group-hover:translate-x-0">
-          <motion.button
+          <m.button
             className={cn(
               "rounded-md p-2 transition-colors",
               voteType === "upvote"
@@ -687,8 +687,8 @@ function DesignHoverReveal() {
               className="h-4 w-4"
               weight={voteType === "upvote" ? "bold" : "regular"}
             />
-          </motion.button>
-          <motion.button
+          </m.button>
+          <m.button
             className={cn(
               "rounded-md p-2 transition-colors",
               voteType === "downvote"
@@ -703,9 +703,9 @@ function DesignHoverReveal() {
               className="h-4 w-4"
               weight={voteType === "downvote" ? "bold" : "regular"}
             />
-          </motion.button>
+          </m.button>
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -723,7 +723,7 @@ function DesignCompactRow() {
     <div className="group flex items-center gap-3 rounded-lg border border-border/30 bg-card px-3 py-2.5 transition-all hover:border-border hover:shadow-sm">
       {/* Compact vote */}
       <div className="flex items-center gap-0">
-        <motion.button
+        <m.button
           className={cn(
             "rounded p-0.5 transition-colors",
             voteType === "upvote"
@@ -738,7 +738,7 @@ function DesignCompactRow() {
             className="h-2.5 w-2.5"
             weight={voteType === "upvote" ? "fill" : "regular"}
           />
-        </motion.button>
+        </m.button>
         <span
           className={cn(
             "min-w-6 text-center font-semibold text-xs tabular-nums",
@@ -749,7 +749,7 @@ function DesignCompactRow() {
         >
           {net}
         </span>
-        <motion.button
+        <m.button
           className={cn(
             "rounded p-0.5 transition-colors",
             voteType === "downvote"
@@ -764,7 +764,7 @@ function DesignCompactRow() {
             className="h-2.5 w-2.5 rotate-180"
             weight={voteType === "downvote" ? "fill" : "regular"}
           />
-        </motion.button>
+        </m.button>
       </div>
       {/* Content — single line */}
       <h3 className="min-w-0 flex-1 truncate font-medium text-sm">
@@ -804,7 +804,7 @@ function DesignActionBar() {
       {/* Full action bar */}
       <div className="mt-3 flex items-center border-border/30 border-t">
         {/* Upvote */}
-        <motion.button
+        <m.button
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs transition-colors",
             voteType === "upvote"
@@ -820,10 +820,10 @@ function DesignActionBar() {
             weight={voteType === "upvote" ? "bold" : "regular"}
           />
           <AnimatedCount className="font-semibold" value={upvotes} />
-        </motion.button>
+        </m.button>
         <div className="h-4 w-px bg-border/30" />
         {/* Downvote */}
-        <motion.button
+        <m.button
           className={cn(
             "flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs transition-colors",
             voteType === "downvote"
@@ -843,7 +843,7 @@ function DesignActionBar() {
             direction="vertical-reverse"
             value={downvotes}
           />
-        </motion.button>
+        </m.button>
         <div className="h-4 w-px bg-border/30" />
         {/* Comment */}
         <button
@@ -902,7 +902,7 @@ function DesignSocialProof() {
         {/* Avatar stack */}
         <div className="flex -space-x-2">
           {MOCK_VOTERS.slice(0, displayCount).map((initials, i) => (
-            <motion.div
+            <m.div
               animate={{ scale: 1, opacity: 1 }}
               className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-card bg-muted font-bold text-[8px] text-muted-foreground"
               initial={{ scale: 0.5, opacity: 0 }}
@@ -910,17 +910,17 @@ function DesignSocialProof() {
               transition={{ delay: i * 0.05 }}
             >
               {initials}
-            </motion.div>
+            </m.div>
           ))}
           {voteType === "upvote" && (
-            <motion.div
+            <m.div
               animate={{ scale: 1, opacity: 1 }}
               className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 font-bold text-[8px] text-primary"
-              initial={{ scale: 0, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               transition={{ type: "spring", stiffness: 400, damping: 15 }}
             >
               <UserIcon className="h-3 w-3" weight="fill" />
-            </motion.div>
+            </m.div>
           )}
         </div>
         {/* Social text */}
@@ -933,7 +933,7 @@ function DesignSocialProof() {
           </p>
         </div>
         {/* Vote button */}
-        <motion.button
+        <m.button
           className={cn(
             "rounded-full border px-3 py-1.5 font-medium text-xs transition-all",
             voteType === "upvote"
@@ -945,7 +945,7 @@ function DesignSocialProof() {
           whileTap={{ scale: 0.92 }}
         >
           {voteType === "upvote" ? "Agreed" : "Agree"}
-        </motion.button>
+        </m.button>
       </div>
     </FullCard>
   );
@@ -970,7 +970,7 @@ function DesignDrawerExpand() {
         <div className="flex items-start justify-between gap-2">
           <CardTitle />
           {/* Compact badge — click to expand */}
-          <motion.button
+          <m.button
             className={cn(
               "shrink-0 rounded-full border px-2 py-1 font-semibold text-[11px] tabular-nums transition-colors",
               (() => {
@@ -988,7 +988,7 @@ function DesignDrawerExpand() {
             whileTap={{ scale: 0.9 }}
           >
             +{net}
-          </motion.button>
+          </m.button>
         </div>
         <CardTags />
         <CardMeta />
@@ -996,7 +996,7 @@ function DesignDrawerExpand() {
       {/* Expanding vote drawer */}
       <AnimatePresence>
         {expanded && (
-          <motion.div
+          <m.div
             animate={{ height: "auto", opacity: 1 }}
             className="overflow-hidden border-border/30 border-t"
             exit={{ height: 0, opacity: 0 }}
@@ -1004,7 +1004,7 @@ function DesignDrawerExpand() {
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
           >
             <div className="flex items-center gap-3 px-4 py-3">
-              <motion.button
+              <m.button
                 className={cn(
                   "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-colors",
                   voteType === "upvote"
@@ -1020,16 +1020,16 @@ function DesignDrawerExpand() {
                   weight={voteType === "upvote" ? "bold" : "regular"}
                 />
                 <AnimatedCount className="font-semibold" value={upvotes} />
-              </motion.button>
+              </m.button>
               {/* Mini ratio bar */}
               <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                <motion.div
+                <m.div
                   animate={{ width: `${upPercent}%` }}
                   className="absolute inset-y-0 left-0 rounded-full bg-primary"
                   transition={{ type: "spring", stiffness: 200, damping: 20 }}
                 />
               </div>
-              <motion.button
+              <m.button
                 className={cn(
                   "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-colors",
                   voteType === "downvote"
@@ -1049,9 +1049,9 @@ function DesignDrawerExpand() {
                   className="h-3.5 w-3.5"
                   weight={voteType === "downvote" ? "bold" : "regular"}
                 />
-              </motion.button>
+              </m.button>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </FullCard>
@@ -1069,7 +1069,7 @@ function DesignSingleUpvote() {
   return (
     <div className="group flex gap-3">
       {/* Big upvote badge */}
-      <motion.button
+      <m.button
         animate={{
           borderColor:
             voteType === "upvote"
@@ -1086,7 +1086,7 @@ function DesignSingleUpvote() {
         type="button"
         whileTap={{ scale: 0.92 }}
       >
-        <motion.div
+        <m.div
           animate={{ y: voteType === "upvote" ? -2 : 0 }}
           transition={{ type: "spring", stiffness: 400, damping: 15 }}
         >
@@ -1094,9 +1094,9 @@ function DesignSingleUpvote() {
             className="h-6 w-6"
             weight={voteType === "upvote" ? "bold" : "regular"}
           />
-        </motion.div>
+        </m.div>
         <AnimatedCount className="font-bold text-base" value={upvotes} />
-      </motion.button>
+      </m.button>
       <div className="flex-1 rounded-xl border border-border/50 bg-card px-4 py-4 transition-all hover:border-border hover:shadow-sm">
         <div className="space-y-3">
           <CardTitle />
@@ -1130,14 +1130,14 @@ function DesignMagneticTilt() {
 
   return (
     <div style={{ perspective: 600 }}>
-      <motion.div
+      <m.div
         animate={{ rotateX, rotateY }}
         className="relative overflow-hidden rounded-xl border border-border/50 bg-card transition-shadow hover:shadow-md"
         style={{ transformStyle: "preserve-3d" }}
         transition={{ type: "spring", stiffness: 150, damping: 20 }}
       >
         {voteType && (
-          <motion.div
+          <m.div
             animate={{ opacity: 0.1 }}
             className="absolute inset-0 z-0"
             initial={{ opacity: 0 }}
@@ -1155,7 +1155,7 @@ function DesignMagneticTilt() {
           <CardTags />
         </div>
         <div className="relative z-10 mt-3 flex items-center justify-between px-4 pb-4">
-          <motion.button
+          <m.button
             className={cn(
               "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-colors",
               voteType === "upvote"
@@ -1171,9 +1171,9 @@ function DesignMagneticTilt() {
               weight={voteType === "upvote" ? "bold" : "regular"}
             />
             <AnimatedCount className="font-semibold" value={upvotes} />
-          </motion.button>
+          </m.button>
           <AnimatePresence mode="popLayout">
-            <motion.span
+            <m.span
               animate={{ y: 0, opacity: 1 }}
               className={cn(
                 "font-bold text-lg tabular-nums",
@@ -1187,9 +1187,9 @@ function DesignMagneticTilt() {
               transition={{ type: "spring", stiffness: 400, damping: 20 }}
             >
               {net > 0 ? `+${net}` : net}
-            </motion.span>
+            </m.span>
           </AnimatePresence>
-          <motion.button
+          <m.button
             className={cn(
               "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-colors",
               voteType === "downvote"
@@ -1209,9 +1209,9 @@ function DesignMagneticTilt() {
               className="h-4 w-4"
               weight={voteType === "downvote" ? "bold" : "regular"}
             />
-          </motion.button>
+          </m.button>
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -1244,11 +1244,11 @@ function DesignInkBlot() {
     <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card">
       <AnimatePresence mode="sync">
         {voteType && (
-          <motion.div
+          <m.div
             animate={{ scale: 4, opacity: 0.06 }}
             className="absolute z-0 h-32 w-32 rounded-full"
             exit={{ opacity: 0 }}
-            initial={{ scale: 0, opacity: 0.15 }}
+            initial={{ scale: 0.95, opacity: 0.15 }}
             key={blotKey}
             style={{
               backgroundColor: blotColor,
@@ -1265,7 +1265,7 @@ function DesignInkBlot() {
         <CardTags />
       </div>
       <div className="relative z-10 mt-3 flex items-center gap-3 px-4 pb-4">
-        <motion.button
+        <m.button
           className={cn(
             "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all",
             voteType === "upvote"
@@ -1281,9 +1281,9 @@ function DesignInkBlot() {
             weight={voteType === "upvote" ? "bold" : "regular"}
           />
           <AnimatedCount className="font-semibold" value={upvotes} />
-        </motion.button>
+        </m.button>
         <CardMeta />
-        <motion.button
+        <m.button
           className={cn(
             "ml-auto flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-all",
             voteType === "downvote"
@@ -1303,7 +1303,7 @@ function DesignInkBlot() {
             className="h-3.5 w-3.5"
             weight={voteType === "downvote" ? "bold" : "regular"}
           />
-        </motion.button>
+        </m.button>
       </div>
     </div>
   );
@@ -1374,7 +1374,7 @@ function DesignMetricActionBar() {
       <div className="relative overflow-hidden border-border/30 border-t">
         <AnimatePresence>
           {voteType && (
-            <motion.div
+            <m.div
               animate={{ x: "100%", opacity: 0 }}
               className={cn(
                 "absolute inset-0",
@@ -1390,7 +1390,7 @@ function DesignMetricActionBar() {
           )}
         </AnimatePresence>
         <div className="relative flex items-center">
-          <motion.button
+          <m.button
             className={cn(
               "flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs transition-colors",
               voteType === "upvote"
@@ -1406,9 +1406,9 @@ function DesignMetricActionBar() {
               weight={voteType === "upvote" ? "bold" : "regular"}
             />
             <AnimatedCount className="font-semibold" value={upvotes} />
-          </motion.button>
+          </m.button>
           <div className="h-4 w-px bg-border/30" />
-          <motion.button
+          <m.button
             className={cn(
               "flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs transition-colors",
               voteType === "downvote"
@@ -1428,7 +1428,7 @@ function DesignMetricActionBar() {
               direction="vertical-reverse"
               value={downvotes}
             />
-          </motion.button>
+          </m.button>
           <div className="h-4 w-px bg-border/30" />
           <button
             className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-muted-foreground text-xs transition-colors hover:text-foreground"
@@ -1497,13 +1497,13 @@ function DesignCornerPercentage() {
         </div>
       </FullCard>
       {/* Corner percentage badge */}
-      <motion.div
+      <m.div
         className={cn(
           "absolute top-0 right-0 flex flex-col items-center gap-0.5 overflow-hidden rounded-bl-2xl border-border/30 border-b border-l px-3 py-2 shadow-sm transition-colors duration-300",
           percentBg
         )}
       >
-        <motion.button
+        <m.button
           className={cn(
             "transition-colors",
             voteType === "upvote"
@@ -1518,12 +1518,12 @@ function DesignCornerPercentage() {
             className="h-4 w-4"
             weight={voteType === "upvote" ? "bold" : "regular"}
           />
-        </motion.button>
+        </m.button>
         <span className={cn("font-bold text-sm tabular-nums", percentColor)}>
           {upPercent}%
         </span>
         <span className="text-[8px] text-muted-foreground/40">positive</span>
-        <motion.button
+        <m.button
           className={cn(
             "transition-colors",
             voteType === "downvote"
@@ -1538,8 +1538,8 @@ function DesignCornerPercentage() {
             className="h-4 w-4"
             weight={voteType === "downvote" ? "bold" : "regular"}
           />
-        </motion.button>
-      </motion.div>
+        </m.button>
+      </m.div>
     </div>
   );
 }
@@ -1568,7 +1568,7 @@ function DesignNotchPercentage() {
         <div className="relative flex flex-col items-center justify-center gap-1 self-stretch">
           <AnimatePresence>
             {voteType && (
-              <motion.div
+              <m.div
                 animate={{ opacity: 0.5, scale: 1 }}
                 className={cn(
                   "absolute top-1/2 left-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl",
@@ -1595,7 +1595,7 @@ function DesignNotchPercentage() {
               weight={voteType === "upvote" ? "bold" : "regular"}
             />
           </button>
-          <motion.div
+          <m.div
             animate={{
               height: voteType ? 4 : 3,
               backgroundColor: notchColor,
@@ -1675,7 +1675,7 @@ function DesignSweepSplit() {
       >
         <AnimatePresence>
           {voteType && (
-            <motion.div
+            <m.div
               animate={{ y: "100%", opacity: 0 }}
               className={cn(
                 "absolute inset-0",
@@ -1690,7 +1690,7 @@ function DesignSweepSplit() {
             />
           )}
         </AnimatePresence>
-        <motion.button
+        <m.button
           className={cn(
             "relative z-10 rounded-full p-1.5 transition-colors",
             voteType === "upvote"
@@ -1705,7 +1705,7 @@ function DesignSweepSplit() {
             className="h-5 w-5"
             weight={voteType === "upvote" ? "bold" : "regular"}
           />
-        </motion.button>
+        </m.button>
 
         <AnimatedCount
           className={cn(
@@ -1717,7 +1717,7 @@ function DesignSweepSplit() {
           value={net}
         />
 
-        <motion.button
+        <m.button
           className={cn(
             "relative z-10 rounded-full p-1.5 transition-colors",
             voteType === "downvote"
@@ -1732,12 +1732,12 @@ function DesignSweepSplit() {
             className="h-5 w-5"
             weight={voteType === "downvote" ? "bold" : "regular"}
           />
-        </motion.button>
+        </m.button>
 
         {/* Percentage + bar */}
         <div className="relative z-10 mt-1 flex flex-col items-center gap-1">
           <div className="h-1 w-12 overflow-hidden rounded-full bg-border/30">
-            <motion.div
+            <m.div
               animate={{ width: `${upPercent}%` }}
               className="h-full rounded-full bg-primary/50"
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
@@ -1791,7 +1791,7 @@ function DesignCondensedPillRow() {
       <div className="flex flex-wrap items-center gap-1.5">
         {/* Vote pill */}
         <div className="flex items-center gap-0 rounded-full border border-border/40 bg-card">
-          <motion.button
+          <m.button
             className={cn(
               "rounded-l-full px-2 py-1 transition-colors",
               voteType === "upvote"
@@ -1806,11 +1806,11 @@ function DesignCondensedPillRow() {
               className="h-3 w-3"
               weight={voteType === "upvote" ? "bold" : "regular"}
             />
-          </motion.button>
+          </m.button>
           <span className="px-1 text-[9px] text-muted-foreground/40 tabular-nums">
             {upvotes}↑ {downvotes}↓
           </span>
-          <motion.button
+          <m.button
             className={cn(
               "rounded-r-full px-2 py-1 transition-colors",
               voteType === "downvote"
@@ -1825,7 +1825,7 @@ function DesignCondensedPillRow() {
               className="h-3 w-3"
               weight={voteType === "downvote" ? "bold" : "regular"}
             />
-          </motion.button>
+          </m.button>
         </div>
 
         {/* Percentage pill */}
@@ -1889,7 +1889,7 @@ function DesignEditorialNotch() {
       <div className="relative flex flex-col items-center justify-center gap-1 self-stretch">
         <AnimatePresence>
           {voteType && (
-            <motion.div
+            <m.div
               animate={{ opacity: 0.5, scale: 1 }}
               className={cn(
                 "absolute top-1/2 left-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl",
@@ -1916,7 +1916,7 @@ function DesignEditorialNotch() {
             weight={voteType === "upvote" ? "bold" : "regular"}
           />
         </button>
-        <motion.div
+        <m.div
           animate={{
             height: voteType ? 4 : 3,
             backgroundColor: notchColor,
@@ -2198,69 +2198,45 @@ export default function VoteDesignsPage() {
   const [favorite, setFavorite] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-border/50 border-b bg-card/50 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-6 py-8">
-          <p className="font-medium text-muted-foreground text-xs uppercase tracking-widest">
-            Design Exploration
-          </p>
-          <h1 className="mt-2 font-display text-3xl tracking-tight">
-            Vote Button Redesign
-          </h1>
-          <p className="mt-2 max-w-xl text-muted-foreground text-sm leading-relaxed">
-            {DESIGNS.length} interactive designs exploring layout, interaction
-            models, and feedback patterns. Click to interact. Heart your
-            favorite.
-          </p>
-          {favorite && (
-            <p className="mt-3 text-primary text-xs">
-              Favorite:{" "}
-              <span className="font-semibold">
-                {DESIGNS.find((d) => d.id === favorite)?.name}
-              </span>
+    <LazyMotion features={domAnimation}>
+      <div className="min-h-screen bg-background">
+        <div className="border-border/50 border-b bg-card/50 backdrop-blur-sm">
+          <div className="mx-auto max-w-6xl px-6 py-8">
+            <p className="font-medium text-muted-foreground text-xs uppercase tracking-widest">
+              Design Exploration
             </p>
-          )}
+            <h1 className="mt-2 font-display text-3xl tracking-tight">
+              Vote Button Redesign
+            </h1>
+            <p className="mt-2 max-w-xl text-muted-foreground text-sm leading-relaxed">
+              {DESIGNS.length} interactive designs exploring layout, interaction
+              models, and feedback patterns. Click to interact. Heart your
+              favorite.
+            </p>
+            {favorite && (
+              <p className="mt-3 text-primary text-xs">
+                Favorite:{" "}
+                <span className="font-semibold">
+                  {DESIGNS.find((d) => d.id === favorite)?.name}
+                </span>
+              </p>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Section A: Layouts */}
-      <div className="mx-auto max-w-6xl px-6 pt-10 pb-4">
-        <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-widest">
-          A. Layout explorations
-        </h2>
-        <p className="mt-1 text-[11px] text-muted-foreground/60">
-          Where do votes live? Different card structures, spatial arrangements,
-          information hierarchy.
-        </p>
-      </div>
-      <div className="mx-auto max-w-6xl px-6 pb-10">
-        <div className="grid gap-10 md:grid-cols-2">
-          {LAYOUT_DESIGNS.map((design, index) => (
-            <DesignCell
-              design={design}
-              favorite={favorite}
-              index={index}
-              key={design.id}
-              onFavorite={setFavorite}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Section B: UX models */}
-      <div className="border-border/30 border-t">
+        {/* Section A: Layouts */}
         <div className="mx-auto max-w-6xl px-6 pt-10 pb-4">
           <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-widest">
-            B. UX model explorations
+            A. Layout explorations
           </h2>
           <p className="mt-1 text-[11px] text-muted-foreground/60">
-            Different ways to think about the voting interaction. Each explores
-            a specific UX question.
+            Where do votes live? Different card structures, spatial
+            arrangements, information hierarchy.
           </p>
         </div>
-        <div className="mx-auto max-w-6xl px-6 pb-16">
+        <div className="mx-auto max-w-6xl px-6 pb-10">
           <div className="grid gap-10 md:grid-cols-2">
-            {UX_DESIGNS.map((design, index) => (
+            {LAYOUT_DESIGNS.map((design, index) => (
               <DesignCell
                 design={design}
                 favorite={favorite}
@@ -2271,34 +2247,60 @@ export default function VoteDesignsPage() {
             ))}
           </div>
         </div>
-      </div>
 
-      {/* Section C: Refined hybrids */}
-      <div className="border-border/30 border-t">
-        <div className="mx-auto max-w-6xl px-6 pt-10 pb-4">
-          <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-widest">
-            C. Refined hybrids
-          </h2>
-          <p className="mt-1 text-[11px] text-muted-foreground/60">
-            Combining the best elements from favorites. Editorial serifs, sweep
-            animations, percentage displays, out-of-card votes.
-          </p>
+        {/* Section B: UX models */}
+        <div className="border-border/30 border-t">
+          <div className="mx-auto max-w-6xl px-6 pt-10 pb-4">
+            <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-widest">
+              B. UX model explorations
+            </h2>
+            <p className="mt-1 text-[11px] text-muted-foreground/60">
+              Different ways to think about the voting interaction. Each
+              explores a specific UX question.
+            </p>
+          </div>
+          <div className="mx-auto max-w-6xl px-6 pb-16">
+            <div className="grid gap-10 md:grid-cols-2">
+              {UX_DESIGNS.map((design, index) => (
+                <DesignCell
+                  design={design}
+                  favorite={favorite}
+                  index={index}
+                  key={design.id}
+                  onFavorite={setFavorite}
+                />
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="mx-auto max-w-6xl px-6 pb-16">
-          <div className="grid gap-10 md:grid-cols-2">
-            {BEYOND_DESIGNS.map((design, index) => (
-              <DesignCell
-                design={design}
-                favorite={favorite}
-                index={index}
-                key={design.id}
-                onFavorite={setFavorite}
-              />
-            ))}
+
+        {/* Section C: Refined hybrids */}
+        <div className="border-border/30 border-t">
+          <div className="mx-auto max-w-6xl px-6 pt-10 pb-4">
+            <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-widest">
+              C. Refined hybrids
+            </h2>
+            <p className="mt-1 text-[11px] text-muted-foreground/60">
+              Combining the best elements from favorites. Editorial serifs,
+              sweep animations, percentage displays, out-of-card votes.
+            </p>
+          </div>
+          <div className="mx-auto max-w-6xl px-6 pb-16">
+            <div className="grid gap-10 md:grid-cols-2">
+              {BEYOND_DESIGNS.map((design, index) => (
+                <DesignCell
+                  design={design}
+                  favorite={favorite}
+                  index={index}
+                  key={design.id}
+                  onFavorite={setFavorite}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </LazyMotion>
   );
 }
 
@@ -2319,7 +2321,7 @@ function DesignCell({
   const isFavorite = favorite === design.id;
   const question = "question" in design ? design.question : null;
   return (
-    <motion.div
+    <m.div
       animate={{ opacity: 1, y: 0 }}
       className="space-y-3"
       initial={{ opacity: 0, y: 16 }}
@@ -2376,6 +2378,6 @@ function DesignCell({
       >
         <Component />
       </div>
-    </motion.div>
+    </m.div>
   );
 }

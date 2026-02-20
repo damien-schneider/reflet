@@ -11,7 +11,7 @@ import {
   User,
   X,
 } from "@phosphor-icons/react";
-import { motion } from "motion/react";
+import { domAnimation, LazyMotion, m } from "motion/react";
 import Link from "next/link";
 import { type ComponentType, useState } from "react";
 
@@ -110,50 +110,52 @@ export default function NavbarMobile() {
   const collapse = () => setIsExpanded(false);
 
   return (
-    <motion.nav
-      animate={{ y: 0, opacity: 1 }}
-      className="fixed inset-x-4 bottom-4 z-50 overflow-hidden rounded-3xl border border-border bg-background/95 shadow-lg backdrop-blur-md md:hidden"
-      initial={{ y: 100, opacity: 0 }}
-      transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <motion.div
-        animate={{ height: isExpanded ? 60 : 0 }}
-        className="overflow-hidden"
-        initial={false}
-        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+    <LazyMotion features={domAnimation}>
+      <m.nav
+        animate={{ y: 0, opacity: 1 }}
+        className="fixed inset-x-4 bottom-4 z-50 overflow-hidden rounded-3xl border border-border bg-background/95 shadow-lg backdrop-blur-md md:hidden"
+        initial={{ y: 100, opacity: 0 }}
+        transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="flex h-13 items-center justify-around px-2 pt-2">
-          {SECONDARY_LINKS.map((link) => (
+        <m.div
+          animate={{ height: isExpanded ? 60 : 0 }}
+          className="overflow-hidden"
+          initial={false}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="flex h-13 items-center justify-around px-2 pt-2">
+            {SECONDARY_LINKS.map((link) => (
+              <NavLinkItem key={link.label} link={link} onNavigate={collapse} />
+            ))}
+          </div>
+        </m.div>
+
+        <div className="flex items-center justify-around px-2 py-3">
+          {PRIMARY_LINKS.map((link) => (
             <NavLinkItem key={link.label} link={link} onNavigate={collapse} />
           ))}
+
+          <Link className={linkClassName} href="/dashboard" onClick={collapse}>
+            <User className="h-5 w-5" />
+            Log in
+          </Link>
+
+          <button
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? "Close menu" : "Open menu"}
+            className={linkClassName}
+            onClick={() => setIsExpanded((prev) => !prev)}
+            type="button"
+          >
+            {isExpanded ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <List className="h-5 w-5" />
+            )}
+            More
+          </button>
         </div>
-      </motion.div>
-
-      <div className="flex items-center justify-around px-2 py-3">
-        {PRIMARY_LINKS.map((link) => (
-          <NavLinkItem key={link.label} link={link} onNavigate={collapse} />
-        ))}
-
-        <Link className={linkClassName} href="/dashboard" onClick={collapse}>
-          <User className="h-5 w-5" />
-          Log in
-        </Link>
-
-        <button
-          aria-expanded={isExpanded}
-          aria-label={isExpanded ? "Close menu" : "Open menu"}
-          className={linkClassName}
-          onClick={() => setIsExpanded((prev) => !prev)}
-          type="button"
-        >
-          {isExpanded ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <List className="h-5 w-5" />
-          )}
-          More
-        </button>
-      </div>
-    </motion.nav>
+      </m.nav>
+    </LazyMotion>
   );
 }

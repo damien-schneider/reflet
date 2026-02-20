@@ -55,22 +55,24 @@ export type {
   FeedbackDialogProps,
 } from "./react-feedback-dialog";
 export { FeedbackDialog } from "./react-feedback-dialog";
-// Hooks - Queries
-export type { UseFeedbackListOptions } from "./react-hooks";
 // Hooks - Mutations
 export {
   useAddComment,
+  useCreateFeedback,
+  useSubscription,
+  useVote,
+} from "./react-mutation-hooks";
+// Hooks - Queries
+export type { UseFeedbackListOptions } from "./react-query-hooks";
+export {
   useChangelog,
   useComments,
-  useCreateFeedback,
   useFeedback,
   useFeedbackList,
   useOrganizationConfig,
   useRoadmap,
-  useSubscription,
   useUnreadChangelogCount,
-  useVote,
-} from "./react-hooks";
+} from "./react-query-hooks";
 // Re-export types from main package
 export type {
   AddCommentParams,
