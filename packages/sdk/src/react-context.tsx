@@ -13,10 +13,13 @@ import type { RefletConfig, RefletUser } from "./types";
 // Context Types
 // ============================================
 
-interface RefletContextValue {
+export interface RefletContextValue {
   client: Reflet;
+  publicKey: string;
+  baseUrl?: string;
   isReady: boolean;
   user: RefletUser | undefined;
+  userToken: string | undefined;
   setUser: (user: RefletUser | undefined) => void;
 }
 
@@ -24,7 +27,7 @@ interface RefletContextValue {
 // Context
 // ============================================
 
-const RefletContext = createContext<RefletContextValue | null>(null);
+export const RefletContext = createContext<RefletContextValue | null>(null);
 
 // ============================================
 // Provider
@@ -99,11 +102,14 @@ export function RefletProvider({
   const value = useMemo(
     () => ({
       client,
+      publicKey,
+      baseUrl,
       isReady,
       user,
+      userToken,
       setUser,
     }),
-    [client, isReady, user]
+    [client, publicKey, baseUrl, isReady, user, userToken]
   );
 
   return (

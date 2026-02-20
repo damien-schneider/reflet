@@ -20,5 +20,9 @@
   },
   "menuColor": "default",
   "menuAccent": "subtle",
-  "registries": {}
+  "registries": {
+    "reflet": {
+      "url": "https://reflet.app/r"
+    }
+  }
 }

@@ -1,6 +1,13 @@
 "use client";
 
-import { BookOpen, Copy, Key, Robot, Warning } from "@phosphor-icons/react";
+import {
+  BookOpen,
+  Copy,
+  Key,
+  PuzzlePiece,
+  Robot,
+  Warning,
+} from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AiPromptSection } from "./components/ai-prompt-section";
 import { ApiKeyDialogs } from "./components/api-key-dialogs";
 import { ApiKeysList } from "./components/api-keys-list";
+import { FeedbackButtonGuide } from "./components/feedback-button-guide";
 import { IntegrationGuide } from "./components/integration-guide";
 import { useApiKeys } from "./hooks/use-api-keys";
 
@@ -96,6 +104,10 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
 
         <Tabs defaultValue="ai">
           <TabsList>
+            <TabsTrigger value="react">
+              <PuzzlePiece className="mr-2 h-4 w-4" />
+              React
+            </TabsTrigger>
             <TabsTrigger value="docs">
               <BookOpen className="mr-2 h-4 w-4" />
               Documentation
@@ -105,6 +117,10 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
               AI Prompt
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent className="mt-6" value="react">
+            <FeedbackButtonGuide publicKey="fb_pub_xxxxxxxxxxxxxxxx" />
+          </TabsContent>
 
           <TabsContent className="mt-6" value="docs">
             <IntegrationGuide publicKey="fb_pub_xxxxxxxxxxxxxxxx" />
@@ -160,10 +176,14 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
       )}
 
       <Tabs defaultValue="keys">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="keys">
             <Key className="mr-2 h-4 w-4" />
             API Keys
+          </TabsTrigger>
+          <TabsTrigger value="react">
+            <PuzzlePiece className="mr-2 h-4 w-4" />
+            React
           </TabsTrigger>
           <TabsTrigger value="docs">
             <BookOpen className="mr-2 h-4 w-4" />
@@ -198,6 +218,12 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
             setNewKeyName={setNewKeyName}
             setShowSecretKey={setShowSecretKey}
             showSecretKey={showSecretKey}
+          />
+        </TabsContent>
+
+        <TabsContent className="mt-6" value="react">
+          <FeedbackButtonGuide
+            publicKey={firstKey?.publicKey ?? "fb_pub_xxx"}
           />
         </TabsContent>
 

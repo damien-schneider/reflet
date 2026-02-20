@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { H1, H3, Muted, Text } from "@/components/ui/typography";
-import { WidgetCard } from "@/features/widgets/components/widget-card";
+import { WidgetCard } from "@/features/in-app/components/widget-card";
 
 export default function WidgetsPage({
   params,
@@ -74,36 +74,36 @@ export default function WidgetsPage({
     <div className="admin-container">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <H1>Chat Widgets</H1>
+          <H1>In-App</H1>
           <Text variant="bodySmall">
-            Embed chat widgets on your website to collect support messages
+            Manage in-app integrations for your website and application
           </Text>
         </div>
         <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
           <DialogTrigger render={<Button />}>
             <Plus className="mr-2 h-4 w-4" />
-            Create Widget
+            Add Live Chat
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create a new widget</DialogTitle>
+              <DialogTitle>Create a new live chat</DialogTitle>
               <DialogDescription>
-                Create a chat widget to embed on your website. Messages will
-                appear in your inbox.
+                Add a live chat to your website. Messages will appear in your
+                inbox.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="widget-name">Widget name</Label>
+                <Label htmlFor="widget-name">Name</Label>
                 <Input
                   id="widget-name"
                   onChange={(e) => setWidgetName(e.target.value)}
-                  placeholder="Main Website Widget"
+                  placeholder="Main Website Chat"
                   value={widgetName}
                 />
                 <Muted className="text-xs">
-                  A name to identify this widget (e.g., &quot;Marketing
-                  Site&quot;, &quot;App Widget&quot;)
+                  A name to identify this chat (e.g., &quot;Marketing
+                  Site&quot;, &quot;Support Chat&quot;)
                 </Muted>
               </div>
             </div>
@@ -112,7 +112,7 @@ export default function WidgetsPage({
                 disabled={!widgetName.trim() || isCreating}
                 onClick={handleCreateWidget}
               >
-                {isCreating ? "Creating..." : "Create Widget"}
+                {isCreating ? "Creating..." : "Create"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -130,15 +130,15 @@ export default function WidgetsPage({
           <CardContent className="py-12 text-center">
             <ChatCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
             <H3 className="mb-2" variant="card">
-              No widgets yet
+              No integrations yet
             </H3>
             <Muted className="mb-4">
-              Create your first chat widget to embed on your website.
+              Add a live chat to your website to collect support messages.
             </Muted>
             <div className="flex flex-col items-center gap-2">
               <Button onClick={() => setIsDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
-                Create Widget
+                Add Live Chat
               </Button>
               <div className="mt-4 flex items-center gap-2 text-muted-foreground">
                 <Code className="h-4 w-4" />

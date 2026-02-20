@@ -224,6 +224,23 @@
         "react",
       ],
     },
+    "packages/ui": {
+      "name": "@reflet/ui",
+      "version": "0.1.0",
+      "dependencies": {
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "tailwind-merge": "^3.3.1",
+      },
+      "devDependencies": {
+        "@types/react": "^19.2.10",
+        "react": "^19.2.4",
+        "typescript": "catalog:",
+      },
+      "peerDependencies": {
+        "react": "^18.0.0 || ^19.0.0",
+      },
+    },
     "packages/widget": {
       "name": "@reflet/widget",
       "version": "1.0.0",
@@ -773,6 +790,8 @@
     "@reflet/env": ["@reflet/env@workspace:packages/env"],
 
     "@reflet/feedback-widget": ["@reflet/feedback-widget@workspace:packages/feedback-widget"],
+
+    "@reflet/ui": ["@reflet/ui@workspace:packages/ui"],
 
     "@reflet/widget": ["@reflet/widget@workspace:packages/widget"],
 

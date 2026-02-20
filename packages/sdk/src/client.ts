@@ -134,7 +134,7 @@ export class Reflet {
 
   /**
    * Create new feedback
-   * Requires user identification
+   * Works anonymously or with user identification
    */
   async create(params: CreateFeedbackParams): Promise<CreateFeedbackResponse> {
     return await this.request<CreateFeedbackResponse>(

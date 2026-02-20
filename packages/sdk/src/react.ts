@@ -38,13 +38,23 @@
 export { Reflet } from "./client";
 // Changelog Widget Component
 export { ChangelogWidget } from "./react-changelog-widget";
-export type { RefletProviderProps } from "./react-context";
+export type { RefletContextValue, RefletProviderProps } from "./react-context";
 // Provider
 export {
+  RefletContext,
   RefletProvider,
   useRefletClient,
   useRefletContext,
 } from "./react-context";
+export type { FeedbackButtonProps } from "./react-feedback-button";
+// Feedback Components
+export { FeedbackButton } from "./react-feedback-button";
+export type {
+  FeedbackCategory,
+  FeedbackDialogLabels,
+  FeedbackDialogProps,
+} from "./react-feedback-dialog";
+export { FeedbackDialog } from "./react-feedback-dialog";
 // Hooks - Queries
 export type { UseFeedbackListOptions } from "./react-hooks";
 // Hooks - Mutations

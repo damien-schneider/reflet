@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/lib/*": ["./lib/*"],
+      "@/components/ui/*": ["./primitives/*"]
+    }
+  },
+  "include": ["registry", "scripts", "lib"],
+  "exclude": ["node_modules"]
+}

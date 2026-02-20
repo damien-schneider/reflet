@@ -6,6 +6,7 @@ import {
   Code,
   FileText,
   Gear,
+  ShieldStar,
   SignOut,
   Trash,
   User,
@@ -63,6 +64,8 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
 
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
+  const isSuperAdmin = useQuery(api.super_admin.isSuperAdmin);
+
   const subscription = useQuery(
     api.subscriptions.getStatus,
     org?._id ? { organizationId: org._id } : "skip"
@@ -107,9 +110,9 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   const adminNavItems = orgSlug
     ? [
         {
-          href: "/dashboard/$orgSlug/widgets",
+          href: "/dashboard/$orgSlug/in-app",
           icon: Code,
-          label: "Widgets",
+          label: "In-App",
           badge: undefined,
         },
         {
@@ -310,6 +313,30 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
               <div className="px-2 py-4 text-muted-foreground text-sm group-data-[collapsible=icon]:hidden">
                 Select an organization to get started.
               </div>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {isSuperAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarList>
+                <SidebarListItem>
+                  <SidebarListButton
+                    isActive={
+                      pathname === "/dashboard/super-admin" ||
+                      pathname.startsWith("/dashboard/super-admin/")
+                    }
+                    render={(props) => (
+                      <Link href="/dashboard/super-admin" {...props}>
+                        <ShieldStar className="h-4 w-4" />
+                        <span>Super Admin</span>
+                      </Link>
+                    )}
+                  />
+                </SidebarListItem>
+              </SidebarList>
             </SidebarGroupContent>
           </SidebarGroup>
         )}

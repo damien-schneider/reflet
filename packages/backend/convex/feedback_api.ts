@@ -653,7 +653,7 @@ export const createFeedbackByOrganization = internalMutation({
     title: v.string(),
     description: v.string(),
     tagId: v.optional(v.id("tags")),
-    externalUserId: v.id("externalUsers"),
+    externalUserId: v.optional(v.id("externalUsers")),
   },
   handler: async (ctx, args) => {
     // Validate input
@@ -696,6 +696,8 @@ export const createFeedbackByOrganization = internalMutation({
       .collect();
     const defaultOrgStatus = orgStatuses.sort((a, b) => a.order - b.order)[0];
 
+    const isAnonymous = !args.externalUserId;
+
     const now = Date.now();
     const feedbackId = await ctx.db.insert("feedback", {
       organizationId: args.organizationId,
@@ -704,7 +706,7 @@ export const createFeedbackByOrganization = internalMutation({
       status: defaultStatus,
       organizationStatusId: defaultOrgStatus?._id,
       externalUserId: args.externalUserId,
-      voteCount: 1,
+      voteCount: isAnonymous ? 0 : 1,
       commentCount: 0,
       isApproved: !requireApproval,
       isPinned: false,
@@ -713,20 +715,21 @@ export const createFeedbackByOrganization = internalMutation({
       updatedAt: now,
     });
 
-    // Auto-vote for the author
-    await ctx.db.insert("feedbackVotes", {
-      feedbackId,
-      externalUserId: args.externalUserId,
-      voteType: "upvote",
-      createdAt: now,
-    });
+    // Auto-vote and auto-subscribe for identified users
+    if (args.externalUserId) {
+      await ctx.db.insert("feedbackVotes", {
+        feedbackId,
+        externalUserId: args.externalUserId,
+        voteType: "upvote",
+        createdAt: now,
+      });
 
-    // Auto-subscribe author
-    await ctx.db.insert("feedbackSubscriptions", {
-      feedbackId,
-      externalUserId: args.externalUserId,
-      createdAt: now,
-    });
+      await ctx.db.insert("feedbackSubscriptions", {
+        feedbackId,
+        externalUserId: args.externalUserId,
+        createdAt: now,
+      });
+    }
 
     // Add tag if provided
     if (args.tagId) {

@@ -40,7 +40,12 @@ const routeLabels: Record<string, string> = {
   inbox: "Inbox",
   github: "GitHub",
   branding: "Branding",
+  "super-admin": "Super Admin",
+  account: "Account",
 };
+
+/** Routes under /dashboard/ that don't require an org slug */
+const NON_ORG_ROUTES = ["super-admin", "account"] as const;
 
 function getRelevantPathSegments(pathname: string): string[] {
   const pathSegments = pathname.split("/").filter(Boolean);
@@ -87,6 +92,20 @@ function buildBreadcrumbItems(
       isActive: relevantSegments.length === 0,
     },
   ];
+
+  // Handle non-org routes (e.g., /dashboard/super-admin, /dashboard/account)
+  const firstSegment = relevantSegments[0];
+  if (
+    firstSegment &&
+    NON_ORG_ROUTES.includes(firstSegment as (typeof NON_ORG_ROUTES)[number])
+  ) {
+    items.push({
+      label: routeLabels[firstSegment] ?? firstSegment,
+      href: `/dashboard/${firstSegment}`,
+      isActive: true,
+    });
+    return items;
+  }
 
   if (relevantSegments.length === 0 || !orgSlug) {
     return items;
@@ -183,14 +202,20 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
 
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
+  // Detect non-org routes (e.g., /dashboard/super-admin, /dashboard/account)
+  const relevantSegments = getRelevantPathSegments(pathname ?? "");
+  const isNonOrgRoute = NON_ORG_ROUTES.includes(
+    relevantSegments[0] as (typeof NON_ORG_ROUTES)[number]
+  );
+
   const { redirectTo, orgNotAccessible, hasOrganizations } =
     computeDashboardNavigation({ orgSlug, org, organizations });
 
   useEffect(() => {
-    if (redirectTo) {
+    if (redirectTo && !isNonOrgRoute) {
       router.replace(redirectTo);
     }
-  }, [router, redirectTo]);
+  }, [router, redirectTo, isNonOrgRoute]);
 
   return (
     <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>
@@ -209,110 +234,122 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {!orgSlug && hasOrganizations ? (
-          <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
-            <div className="w-full max-w-sm">
-              <div className="mb-6 flex justify-center">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
-                  <Buildings
-                    className="size-7 text-olive-600 dark:text-olive-400"
-                    weight="duotone"
-                  />
-                </div>
-              </div>
-              <div className="mb-8 text-center">
-                <H2>Select an organization</H2>
-                <Muted className="mt-2">Choose a workspace to continue.</Muted>
-              </div>
-              <nav aria-label="Organizations" className="flex flex-col gap-2">
-                {organizations?.map((org) =>
-                  org ? (
-                    <Link
-                      className="group flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-all hover:ring-olive-400 dark:hover:ring-olive-600"
-                      href={`/dashboard/${org.slug}`}
-                      key={org._id}
-                    >
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-olive-100 font-display text-lg text-olive-700 dark:bg-olive-800/40 dark:text-olive-300">
-                        {org.logo ? (
-                          <Image
-                            alt={org.name}
-                            className="size-10 rounded-lg object-contain"
-                            height={40}
-                            src={org.logo}
-                            width={40}
-                          />
-                        ) : (
-                          org.name.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <span className="flex-1 truncate font-medium text-sm">
-                        {org.name}
-                      </span>
-                      <CaretRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                    </Link>
-                  ) : null
-                )}
-              </nav>
-            </div>
-          </div>
-        ) : null}
-
-        {!orgSlug && organizations?.length === 0 ? (
-          <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
-            <div className="w-full max-w-sm">
-              <div className="mb-6 flex justify-center">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
-                  <Buildings
-                    className="size-7 text-olive-600 dark:text-olive-400"
-                    weight="duotone"
-                  />
-                </div>
-              </div>
-              <div className="mb-8 text-center">
-                <H2>Welcome to Reflet</H2>
-                <Muted className="mt-2">
-                  Create your first organization to start collecting feedback.
-                </Muted>
-              </div>
-              <div>
-                <OrganizationSwitcher currentOrgSlug={undefined} />
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {orgSlug && orgNotAccessible ? (
-          <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
-            <div className="w-full max-w-sm text-center">
-              <div className="mb-6 flex justify-center">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-800/30">
-                  <Buildings
-                    className="size-7 text-red-600 dark:text-red-400"
-                    weight="duotone"
-                  />
-                </div>
-              </div>
-              <H2>Organization not accessible</H2>
-              <Muted className="mt-2">
-                You don&apos;t have access to this organization, or it
-                doesn&apos;t exist.
-              </Muted>
-              <Link
-                className="mt-6 inline-block rounded-lg bg-olive-600 px-4 py-2 font-medium text-sm text-white transition-colors hover:bg-olive-700"
-                href="/dashboard"
-              >
-                Back to dashboard
-              </Link>
-            </div>
-          </div>
-        ) : null}
-
-        {orgSlug && !orgNotAccessible ? (
+        {isNonOrgRoute ? (
+          children
+        ) : (
           <>
-            <PushNotificationPrompt />
-            {children}
+            {!orgSlug && hasOrganizations ? (
+              <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
+                <div className="w-full max-w-sm">
+                  <div className="mb-6 flex justify-center">
+                    <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
+                      <Buildings
+                        className="size-7 text-olive-600 dark:text-olive-400"
+                        weight="duotone"
+                      />
+                    </div>
+                  </div>
+                  <div className="mb-8 text-center">
+                    <H2>Select an organization</H2>
+                    <Muted className="mt-2">
+                      Choose a workspace to continue.
+                    </Muted>
+                  </div>
+                  <nav
+                    aria-label="Organizations"
+                    className="flex flex-col gap-2"
+                  >
+                    {organizations?.map((org) =>
+                      org ? (
+                        <Link
+                          className="group flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-all hover:ring-olive-400 dark:hover:ring-olive-600"
+                          href={`/dashboard/${org.slug}`}
+                          key={org._id}
+                        >
+                          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-olive-100 font-display text-lg text-olive-700 dark:bg-olive-800/40 dark:text-olive-300">
+                            {org.logo ? (
+                              <Image
+                                alt={org.name}
+                                className="size-10 rounded-lg object-contain"
+                                height={40}
+                                src={org.logo}
+                                width={40}
+                              />
+                            ) : (
+                              org.name.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <span className="flex-1 truncate font-medium text-sm">
+                            {org.name}
+                          </span>
+                          <CaretRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                        </Link>
+                      ) : null
+                    )}
+                  </nav>
+                </div>
+              </div>
+            ) : null}
+
+            {!orgSlug && organizations?.length === 0 ? (
+              <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
+                <div className="w-full max-w-sm">
+                  <div className="mb-6 flex justify-center">
+                    <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
+                      <Buildings
+                        className="size-7 text-olive-600 dark:text-olive-400"
+                        weight="duotone"
+                      />
+                    </div>
+                  </div>
+                  <div className="mb-8 text-center">
+                    <H2>Welcome to Reflet</H2>
+                    <Muted className="mt-2">
+                      Create your first organization to start collecting
+                      feedback.
+                    </Muted>
+                  </div>
+                  <div>
+                    <OrganizationSwitcher currentOrgSlug={undefined} />
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {orgSlug && orgNotAccessible ? (
+              <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
+                <div className="w-full max-w-sm text-center">
+                  <div className="mb-6 flex justify-center">
+                    <div className="flex size-14 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-800/30">
+                      <Buildings
+                        className="size-7 text-red-600 dark:text-red-400"
+                        weight="duotone"
+                      />
+                    </div>
+                  </div>
+                  <H2>Organization not accessible</H2>
+                  <Muted className="mt-2">
+                    You don&apos;t have access to this organization, or it
+                    doesn&apos;t exist.
+                  </Muted>
+                  <Link
+                    className="mt-6 inline-block rounded-lg bg-olive-600 px-4 py-2 font-medium text-sm text-white transition-colors hover:bg-olive-700"
+                    href="/dashboard"
+                  >
+                    Back to dashboard
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+
+            {orgSlug && !orgNotAccessible ? (
+              <>
+                <PushNotificationPrompt />
+                {children}
+              </>
+            ) : null}
           </>
-        ) : null}
+        )}
       </SidebarInset>
     </SidebarProvider>
   );

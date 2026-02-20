@@ -11,6 +11,7 @@
         "packages/backend/convex/_generated/**/*",
         "apps/web/playwright-report/**/*",
         "apps/web/test-results/**/*",
+        "apps/web/public/r/**/*",
         "**/node_modules/**",
         "**/*.gen.ts"
       ],

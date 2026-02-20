@@ -637,13 +637,6 @@ http.route({
 
       const { organizationId, externalUserId, isSecretKey } = authResult.auth;
 
-      if (!externalUserId) {
-        return errorResponse(
-          "User identification required. Provide X-User-Token header.",
-          401
-        );
-      }
-
       let body: z.infer<typeof createFeedbackSchema>;
       try {
         body = createFeedbackSchema.parse(await request.json());

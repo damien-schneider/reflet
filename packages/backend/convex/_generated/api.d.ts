@@ -67,6 +67,7 @@ import type * as stripe from "../stripe.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as subscriptions_actions from "../subscriptions_actions.js";
 import type * as subscriptions_internal from "../subscriptions_internal.js";
+import type * as super_admin from "../super_admin.js";
 import type * as support_conversations from "../support_conversations.js";
 import type * as support_messages from "../support_messages.js";
 import type * as tag_manager from "../tag_manager.js";
@@ -146,6 +147,7 @@ declare const fullApi: ApiFromModules<{
   subscriptions: typeof subscriptions;
   subscriptions_actions: typeof subscriptions_actions;
   subscriptions_internal: typeof subscriptions_internal;
+  super_admin: typeof super_admin;
   support_conversations: typeof support_conversations;
   support_messages: typeof support_messages;
   tag_manager: typeof tag_manager;

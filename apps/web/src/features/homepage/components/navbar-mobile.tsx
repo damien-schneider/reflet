@@ -2,6 +2,7 @@
 
 import {
   Article,
+  BookOpen,
   CurrencyCircleDollar,
   GithubLogo,
   List,
@@ -38,6 +39,7 @@ const SECONDARY_LINKS: NavLink[] = [
     external: true,
     icon: MapTrifold,
   },
+  { label: "Docs", href: "/docs", icon: BookOpen },
   { label: "Blog", href: "/blog", icon: Article },
   {
     label: "GitHub",

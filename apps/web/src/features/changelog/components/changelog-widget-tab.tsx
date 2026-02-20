@@ -162,7 +162,7 @@ export function MyApp() {
 
       {/* Section 1: Configuration Controls */}
       <div>
-        <h3 className="font-semibold text-lg">Widget Configuration</h3>
+        <h3 className="font-semibold text-lg">Embed Configuration</h3>
         <p className="mt-1 text-muted-foreground">
           Customize the widget appearance. The embed code below updates
           automatically.
