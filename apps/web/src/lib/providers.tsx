@@ -6,7 +6,6 @@ import { ConvexReactClient } from "convex/react";
 import { ThemeProvider } from "next-themes";
 
 import { authClient } from "./auth-client";
-import { PostHogProvider } from "./posthog-provider";
 
 const convexUrl = env.NEXT_PUBLIC_CONVEX_URL;
 if (!convexUrl) {
@@ -34,7 +33,7 @@ export function Providers({
         client={convex}
         initialToken={initialToken}
       >
-        <PostHogProvider>{children}</PostHogProvider>
+        {children}
       </ConvexBetterAuthProvider>
     </ThemeProvider>
   );
