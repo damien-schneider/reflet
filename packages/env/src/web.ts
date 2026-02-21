@@ -9,6 +9,8 @@ export const env = createEnv({
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1),
     NEXT_PUBLIC_SITE_URL: z.url().optional(),
     NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION: z.string().optional(),
+    NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1),
+    NEXT_PUBLIC_POSTHOG_HOST: z.url(),
   },
   runtimeEnv: {
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
@@ -17,6 +19,8 @@ export const env = createEnv({
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION:
       process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   },
   emptyStringAsUndefined: true,
 });
