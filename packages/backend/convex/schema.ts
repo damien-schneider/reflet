@@ -143,6 +143,13 @@ export default defineSchema({
         ),
         requireApproval: v.optional(v.boolean()),
         defaultStatus: v.optional(feedbackStatus),
+        milestoneStyle: v.optional(
+          v.union(
+            v.literal("track"),
+            v.literal("editorial-accordion"),
+            v.literal("dashboard-timeline")
+          )
+        ),
       })
     ),
   })

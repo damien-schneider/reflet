@@ -15,7 +15,10 @@
   "exports": {
     "./feedback-sweep-corner": "./registry/feedback-sweep-corner.tsx",
     "./feedback-minimal-notch": "./registry/feedback-minimal-notch.tsx",
-    "./feedback-editorial-feed": "./registry/feedback-editorial-feed.tsx"
+    "./feedback-editorial-feed": "./registry/feedback-editorial-feed.tsx",
+    "./milestone-track-view": "./registry/milestone-track-view.tsx",
+    "./milestone-editorial-accordion": "./registry/milestone-editorial-accordion.tsx",
+    "./milestone-dashboard-timeline": "./registry/milestone-dashboard-timeline.tsx"
   },
   "scripts": {
     "build": "bun run scripts/build-registry.ts",

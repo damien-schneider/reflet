@@ -1,0 +1,24 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "milestone-track-view",
+  "type": "registry:ui",
+  "title": "Milestone Track View",
+  "description": "Horizontal track grouped by time horizons.",
+  "dependencies": [
+    "motion",
+    "clsx",
+    "tailwind-merge"
+  ],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "ui/milestone-track-view.tsx",
+      "content": "\"use client\";\n\nimport { AnimatePresence, motion } from \"motion/react\";\nimport { useState } from \"react\";\n\nimport { cn } from \"@/lib/utils\";\n\nexport interface Milestone {\n  id: string;\n  name: string;\n  emoji: string;\n  colorHex: string;\n  horizonLabel: string;\n  horizonShort: string;\n  targetDate: string | null;\n  progress: {\n    total: number;\n    completed: number;\n    inProgress: number;\n    percentage: number;\n  };\n}\n\nexport interface MilestoneTrackViewProps {\n  milestones: Milestone[];\n  className?: string;\n}\n\nexport function MilestoneTrackView({\n  milestones,\n  className,\n}: MilestoneTrackViewProps) {\n  const [activeId, setActiveId] = useState<string | null>(null);\n\n  // Group milestones by horizonShort for the track view\n  const zones = [\n    {\n      label: \"Now\",\n      milestones: milestones.filter((m) => m.horizonShort === \"Now\"),\n    },\n    {\n      label: \"Next Quarter\",\n      milestones: milestones.filter((m) => m.horizonShort === \"3mo\"),\n    },\n    {\n      label: \"6 Months\",\n      milestones: milestones.filter((m) => m.horizonShort === \"6mo\"),\n    },\n  ];\n\n  return (\n    <div className={cn(\"w-full\", className)}>\n      <div className=\"rounded-xl bg-secondary p-3\">\n        <div className=\"flex items-stretch gap-0.5\">\n          {zones.map((zone, i) => (\n            <div\n              className=\"flex flex-1 flex-col gap-0.5\"\n              key={zone.label}\n              style={{ flexGrow: 1 + i * 0.12 }}\n            >\n              {zone.milestones.map((m) => (\n                <button\n                  className={cn(\n                    \"flex items-center gap-1.5 rounded-sm px-2 py-1.5 text-left text-xs transition-all\",\n                    activeId === m.id\n                      ? \"ring-1 ring-ring\"\n                      : \"hover:brightness-95\"\n                  )}\n                  key={m.id}\n                  onClick={() => setActiveId(activeId === m.id ? null : m.id)}\n                  style={{ backgroundColor: `${m.colorHex}18` }}\n                  type=\"button\"\n                >\n                  <span>{m.emoji}</span>\n                  <span className=\"truncate font-medium\">{m.name}</span>\n                </button>\n              ))}\n            </div>\n          ))}\n        </div>\n        <div className=\"mt-2 flex\">\n          {zones.map((zone) => (\n            <div className=\"flex-1 text-center\" key={zone.label}>\n              <span className=\"text-[10px] text-muted-foreground\">\n                {zone.label}\n              </span>\n            </div>\n          ))}\n        </div>\n        <div className=\"mt-1 flex items-center gap-1\">\n          <div className=\"h-2 w-[2px] rounded-full bg-primary\" />\n          <span className=\"text-[9px] text-primary\">Today</span>\n        </div>\n      </div>\n      <AnimatePresence>\n        {activeId && (\n          <motion.div\n            animate={{ height: \"auto\", opacity: 1 }}\n            className=\"overflow-hidden\"\n            exit={{ height: 0, opacity: 0 }}\n            initial={{ height: 0, opacity: 0 }}\n            transition={{ type: \"spring\", damping: 25, stiffness: 300 }}\n          >\n            <div className=\"mt-2 rounded-lg border bg-card p-3 text-muted-foreground text-xs\">\n              {milestones.find((m) => m.id === activeId)?.name} —{\" \"}\n              {milestones.find((m) => m.id === activeId)?.progress.completed ??\n                0}{\" \"}\n              / {milestones.find((m) => m.id === activeId)?.progress.total ?? 0}{\" \"}\n              complete\n            </div>\n          </motion.div>\n        )}\n      </AnimatePresence>\n    </div>\n  );\n}\n",
+      "type": "registry:ui",
+      "target": "components/ui/milestone-track-view.tsx"
+    }
+  ],
+  "meta": {
+    "importSpecifier": "@/components/ui/milestone-track-view"
+  }
+}

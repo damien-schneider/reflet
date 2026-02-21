@@ -69,6 +69,32 @@ const COMPONENTS: Array<{
     dependencies: ["motion", "@phosphor-icons/react", "clsx", "tailwind-merge"],
     registryDependencies: [],
   },
+  {
+    name: "milestone-track-view",
+    file: "milestone-track-view.tsx",
+    title: "Milestone Track View",
+    description: "Horizontal track grouped by time horizons.",
+    dependencies: ["motion", "clsx", "tailwind-merge"],
+    registryDependencies: [],
+  },
+  {
+    name: "milestone-editorial-accordion",
+    file: "milestone-editorial-accordion.tsx",
+    title: "Milestone Editorial Accordion",
+    description:
+      "Serif typography with percentage column and color-wash accordion.",
+    dependencies: ["motion", "clsx", "tailwind-merge"],
+    registryDependencies: [],
+  },
+  {
+    name: "milestone-dashboard-timeline",
+    file: "milestone-dashboard-timeline.tsx",
+    title: "Milestone Dashboard Timeline",
+    description:
+      "KPI summary bar at top with vertical timeline and sweep animation.",
+    dependencies: ["motion", "clsx", "tailwind-merge"],
+    registryDependencies: [],
+  },
 ];
 
 function build() {

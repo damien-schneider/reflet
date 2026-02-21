@@ -11,6 +11,11 @@ import {
   SweepCornerPreview,
 } from "@/components/docs/feedback-card-previews";
 import {
+  DashboardTimelinePreview,
+  EditorialAccordionPreview,
+  TrackViewPreview,
+} from "@/components/docs/milestone-view-previews";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -23,15 +28,25 @@ import {
   type CardStyle,
   DEFAULT_CARD_STYLE,
 } from "@/features/feedback/lib/card-styles";
+import {
+  DEFAULT_MILESTONE_VIEW_STYLE,
+  MILESTONE_VIEW_STYLE_OPTIONS,
+  type MilestoneViewStyle,
+} from "@/features/milestones/lib/view-styles";
 import { cn } from "@/lib/utils";
 
-const PREVIEW_COMPONENTS: Record<CardStyle, ComponentType> = {
+const CARD_PREVIEW_COMPONENTS: Record<CardStyle, ComponentType> = {
   "minimal-notch": MinimalNotchPreview,
   "sweep-corner": SweepCornerPreview,
   "editorial-feed": EditorialFeedPreview,
 };
 
-const AUTOSAVE_DEBOUNCE_MS = 800;
+const MILESTONE_PREVIEW_COMPONENTS: Record<MilestoneViewStyle, ComponentType> =
+  {
+    track: TrackViewPreview,
+    "editorial-accordion": EditorialAccordionPreview,
+    "dashboard-timeline": DashboardTimelinePreview,
+  };
 
 export default function FeedbackSettingsPage({
   params,
@@ -44,32 +59,47 @@ export default function FeedbackSettingsPage({
     api.members.getCurrentMember,
     org?._id ? { organizationId: org._id } : "skip"
   );
-  const updateOrg = useMutation(api.organizations.update);
 
-  const [cardStyle, setCardStyle] = useState<CardStyle>(DEFAULT_CARD_STYLE);
+  const updateOrg = useMutation(api.organizations.update).withOptimisticUpdate(
+    (localStore, args) => {
+      const current = localStore.getQuery(api.organizations.getBySlug, {
+        slug: orgSlug,
+      });
+      if (!current) {
+        return;
+      }
+      localStore.setQuery(
+        api.organizations.getBySlug,
+        { slug: orgSlug },
+        {
+          ...current,
+          feedbackSettings: {
+            ...current.feedbackSettings,
+            ...args.feedbackSettings,
+          },
+        }
+      );
+    }
+  );
+
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
-
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
 
-  // Sync cardStyle from org settings using render-time state update pattern
-  const orgCardStyle = org?.feedbackSettings?.cardStyle;
-  const [lastSyncedStyle, setLastSyncedStyle] = useState<string | undefined>(
-    undefined
-  );
-  if (orgCardStyle !== lastSyncedStyle) {
-    setLastSyncedStyle(orgCardStyle);
-    if (orgCardStyle) {
-      setCardStyle(orgCardStyle);
-    }
-  }
+  // Derive styles directly from org query (optimistic updates make this instant)
+  const cardStyle: CardStyle =
+    org?.feedbackSettings?.cardStyle ?? DEFAULT_CARD_STYLE;
+  const milestoneStyle: MilestoneViewStyle =
+    org?.feedbackSettings?.milestoneStyle ?? DEFAULT_MILESTONE_VIEW_STYLE;
 
-  const save = async (style: CardStyle) => {
+  const save = async (updates: {
+    cardStyle?: CardStyle;
+    milestoneStyle?: MilestoneViewStyle;
+  }) => {
     if (!(org?._id && isAdmin)) {
       return;
     }
@@ -79,7 +109,7 @@ export default function FeedbackSettingsPage({
         id: org._id,
         feedbackSettings: {
           ...org.feedbackSettings,
-          cardStyle: style,
+          ...updates,
         },
       });
       setSaveStatus("saved");
@@ -92,28 +122,17 @@ export default function FeedbackSettingsPage({
     }
   };
 
-  const handleStyleChange = (style: CardStyle) => {
-    setCardStyle(style);
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    debounceTimerRef.current = setTimeout(() => {
-      save(style);
-    }, AUTOSAVE_DEBOUNCE_MS);
-  };
-
   useEffect(() => {
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
       if (savedTimerRef.current) {
         clearTimeout(savedTimerRef.current);
       }
     };
   }, []);
 
-  const PreviewComponent = PREVIEW_COMPONENTS[cardStyle];
+  const CardPreviewComponent = CARD_PREVIEW_COMPONENTS[cardStyle];
+  const MilestonePreviewComponent =
+    MILESTONE_PREVIEW_COMPONENTS[milestoneStyle];
 
   if (!org) {
     return (
@@ -133,7 +152,7 @@ export default function FeedbackSettingsPage({
           <div>
             <H1>Feedback Display</H1>
             <Text variant="bodySmall">
-              Choose how feedback cards appear on your board
+              Choose how feedback cards and milestones appear on your board
             </Text>
           </div>
         </div>
@@ -161,7 +180,7 @@ export default function FeedbackSettingsPage({
                   )}
                   disabled={!isAdmin}
                   key={option.value}
-                  onClick={() => handleStyleChange(option.value)}
+                  onClick={() => save({ cardStyle: option.value })}
                   type="button"
                 >
                   <div className="mb-1 font-semibold text-sm">
@@ -186,7 +205,58 @@ export default function FeedbackSettingsPage({
           </CardHeader>
           <CardContent>
             <div className="rounded-2xl border border-border/30 bg-background p-3">
-              <PreviewComponent />
+              <CardPreviewComponent />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Milestone View</CardTitle>
+            <CardDescription>
+              Choose how the milestones timeline appears on your board. This
+              applies to both your dashboard and public board.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {MILESTONE_VIEW_STYLE_OPTIONS.map((option) => (
+                <button
+                  className={cn(
+                    "rounded-xl border-2 p-4 text-left transition-all",
+                    milestoneStyle === option.value
+                      ? "border-primary bg-primary/5 shadow-sm"
+                      : "border-border hover:border-border/80 hover:bg-accent/30",
+                    !isAdmin && "pointer-events-none opacity-60"
+                  )}
+                  disabled={!isAdmin}
+                  key={option.value}
+                  onClick={() => save({ milestoneStyle: option.value })}
+                  type="button"
+                >
+                  <div className="mb-1 font-semibold text-sm">
+                    {option.label}
+                  </div>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    {option.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Milestone Preview</CardTitle>
+            <CardDescription>
+              Interactive preview of the selected milestone view. Click
+              milestones to see expansion and animations.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-2xl border border-border/30 bg-background p-3">
+              <MilestonePreviewComponent />
             </div>
           </CardContent>
         </Card>

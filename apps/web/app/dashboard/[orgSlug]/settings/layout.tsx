@@ -2,6 +2,8 @@
 
 import type { Icon } from "@phosphor-icons/react";
 import {
+  ArrowUpRight,
+  BookOpen,
   Buildings,
   ChatText,
   CreditCard,
@@ -116,12 +118,50 @@ export default function SettingsLayout({
       <div className="flex flex-col md:flex-row md:gap-8">
         {/* Mobile: horizontal scroll nav */}
         <ScrollArea className="-mx-4 mb-6 md:hidden" direction="horizontal">
-          <nav className="flex gap-1 px-4">{navContent}</nav>
+          <nav className="flex gap-1 px-4">
+            {navContent}
+            <div className="mx-1 w-px bg-border" />
+            <Link
+              className="flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground text-sm transition-colors hover:bg-accent/50 hover:text-accent-foreground"
+              href="/docs"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <BookOpen className="h-4 w-4 shrink-0" />
+              <div className="flex flex-col">
+                <span className="flex items-center gap-1 font-medium">
+                  Documentation
+                  <ArrowUpRight className="h-3 w-3" />
+                </span>
+                <span className="hidden text-muted-foreground text-xs md:block">
+                  Learn how to use Reflet
+                </span>
+              </div>
+            </Link>
+          </nav>
         </ScrollArea>
 
         {/* Desktop: sticky vertical nav */}
         <nav className="sticky top-12 hidden w-56 shrink-0 self-start md:flex md:flex-col md:gap-1">
           {navContent}
+          <div className="my-2 h-px bg-border" />
+          <Link
+            className="flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground text-sm transition-colors hover:bg-accent/50 hover:text-accent-foreground"
+            href="/docs"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <BookOpen className="h-4 w-4 shrink-0" />
+            <div className="flex flex-col">
+              <span className="flex items-center gap-1 font-medium">
+                Documentation
+                <ArrowUpRight className="h-3 w-3" />
+              </span>
+              <span className="hidden text-muted-foreground text-xs md:block">
+                Learn how to use Reflet
+              </span>
+            </div>
+          </Link>
         </nav>
 
         {/* Content area */}

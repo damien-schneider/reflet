@@ -44,6 +44,8 @@ export interface FeedbackBoardProps {
   defaultView?: BoardViewType;
   /** Card design style for the feed view */
   cardStyle?: CardStyle;
+  /** Milestone view style */
+  milestoneViewStyle?: "track" | "editorial-accordion" | "dashboard-timeline";
 }
 
 function FeedbackBoardContent({
@@ -54,6 +56,7 @@ function FeedbackBoardContent({
   isPublic,
   defaultView = "feed",
   cardStyle,
+  milestoneViewStyle,
 }: Omit<FeedbackBoardProps, "orgSlug">) {
   // URL-based filter state
   const {
@@ -301,6 +304,7 @@ function FeedbackBoardContent({
           {view === "milestones" && (
             <MilestonesView
               isAdmin={isAdmin}
+              milestoneViewStyle={milestoneViewStyle}
               onFeedbackClick={openFeedback}
               organizationId={organizationId}
             />
@@ -388,6 +392,7 @@ export function FeedbackBoard({
   isPublic,
   defaultView,
   cardStyle,
+  milestoneViewStyle,
 }: FeedbackBoardProps) {
   return (
     <Suspense fallback={<LoadingState />}>
@@ -397,6 +402,7 @@ export function FeedbackBoard({
         isAdmin={isAdmin}
         isMember={isMember}
         isPublic={isPublic}
+        milestoneViewStyle={milestoneViewStyle}
         organizationId={organizationId}
         primaryColor={primaryColor}
       />

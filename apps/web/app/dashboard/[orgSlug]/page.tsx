@@ -59,6 +59,7 @@ export default function OrgDashboard({
   const primaryColor = org.primaryColor;
   const defaultView = org.feedbackSettings?.defaultView ?? "feed";
   const cardStyle = org.feedbackSettings?.cardStyle ?? "minimal-notch";
+  const milestoneViewStyle = org.feedbackSettings?.milestoneStyle ?? "track";
 
   return (
     <FeedbackBoard
@@ -67,6 +68,7 @@ export default function OrgDashboard({
       isAdmin={isAdmin}
       isMember={isMember}
       isPublic={org.isPublic ?? false}
+      milestoneViewStyle={milestoneViewStyle}
       organizationId={org._id}
       orgSlug={orgSlug}
       primaryColor={primaryColor}

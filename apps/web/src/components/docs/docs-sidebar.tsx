@@ -64,6 +64,23 @@ const NAV_SECTIONS: NavSection[] = [
           },
         ],
       },
+      {
+        label: "Milestone Views",
+        links: [
+          {
+            label: "Horizontal Track",
+            href: "/docs/components/milestone-views/track",
+          },
+          {
+            label: "Editorial Accordion",
+            href: "/docs/components/milestone-views/editorial-accordion",
+          },
+          {
+            label: "Dashboard Timeline",
+            href: "/docs/components/milestone-views/dashboard-timeline",
+          },
+        ],
+      },
     ],
   },
 ] as const;

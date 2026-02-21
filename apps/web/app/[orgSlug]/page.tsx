@@ -53,6 +53,7 @@ export default function PublicOrgPage({
     rawDefaultView === "milestones"
       ? rawDefaultView
       : "feed";
+  const milestoneViewStyle = org.feedbackSettings?.milestoneStyle ?? "track";
 
   return (
     <FeedbackBoard
@@ -60,6 +61,7 @@ export default function PublicOrgPage({
       isAdmin={isAdmin}
       isMember={isMember}
       isPublic={org.isPublic ?? false}
+      milestoneViewStyle={milestoneViewStyle}
       organizationId={org._id}
       orgSlug={orgSlug}
       primaryColor={primaryColor}

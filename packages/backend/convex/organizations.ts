@@ -468,6 +468,13 @@ export const update = mutation({
             v.literal("closed")
           )
         ),
+        milestoneStyle: v.optional(
+          v.union(
+            v.literal("track"),
+            v.literal("editorial-accordion"),
+            v.literal("dashboard-timeline")
+          )
+        ),
       })
     ),
   },
