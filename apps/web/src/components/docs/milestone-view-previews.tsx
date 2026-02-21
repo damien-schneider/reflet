@@ -46,7 +46,7 @@ const MOCK_MILESTONES = [
     targetDate: null,
     progress: { total: 6, completed: 0, inProgress: 0, percentage: 0 },
   },
-] as const;
+];
 
 // ─── Track View Preview ─────────────────────────────────────────────────────
 
