@@ -124,7 +124,6 @@ describe("VoteButton", () => {
     const handleParentClick = vi.fn();
     render(
       // biome-ignore lint/a11y/useSemanticElements: test wrapper for click propagation
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: test wrapper for click propagation
       <div
         onClick={handleParentClick}
         onKeyDown={handleParentClick}

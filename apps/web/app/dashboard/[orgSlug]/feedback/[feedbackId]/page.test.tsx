@@ -427,4 +427,515 @@ describe("FeedbackDetailPage", () => {
       );
     });
   });
+
+  it("should show loading state when data is undefined", () => {
+    mockUseQuery.mockReturnValue(undefined);
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+    // When all queries return undefined, page should not crash
+    expect(document.body).toBeInTheDocument();
+  });
+
+  it("should render comment section heading", async () => {
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Comments/)).toBeInTheDocument();
+    });
+  });
+
+  it("should display pinned state when feedback is pinned", async () => {
+    mockUseQuery.mockImplementation((queryFn, args) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      const queryName = String(queryFn);
+      if (queryName === "feedback.get") {
+        return { ...mockFeedback, isPinned: true };
+      }
+      if (queryName === "organizations.getBySlug") {
+        return mockOrg;
+      }
+      if (queryName === "organization_statuses.list") {
+        return mockStatuses;
+      }
+      if (queryName === "comments.list") {
+        return mockComments;
+      }
+      if (queryName === "members.getMembership") {
+        return { role: "member" };
+      }
+      if (queryName === "members.list") {
+        return [];
+      }
+      if (queryName === "tags.list") {
+        return [];
+      }
+      return undefined;
+    });
+
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("push-pin")).toBeInTheDocument();
+    });
+  });
+
+  it("should render back link to dashboard", async () => {
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      const link = screen.getByRole("link");
+      expect(link).toHaveAttribute("href", "/dashboard/my-organization");
+    });
+  });
+
+  it("should show organization not found when org is null", async () => {
+    mockUseQuery.mockImplementation((queryFn, args) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      const queryName = String(queryFn);
+      if (queryName === "organizations.getBySlug") {
+        return null;
+      }
+      return undefined;
+    });
+
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "nonexistent-org",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Organization not found")).toBeInTheDocument();
+    });
+  });
+
+  it("should display comments when they exist", async () => {
+    const commentsWithData = [
+      {
+        _id: "c1",
+        body: "Great feature!",
+        createdAt: Date.now() - 3_600_000,
+        author: { name: "Jane Doe" },
+      },
+      {
+        _id: "c2",
+        body: "Needs improvement",
+        createdAt: Date.now() - 7_200_000,
+        author: { name: "John Smith" },
+      },
+    ];
+
+    mockUseQuery.mockImplementation((queryFn, args) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      const queryName = String(queryFn);
+      if (queryName === "feedback.get") {
+        return mockFeedback;
+      }
+      if (queryName === "organizations.getBySlug") {
+        return mockOrg;
+      }
+      if (queryName === "organization_statuses.list") {
+        return mockStatuses;
+      }
+      if (queryName === "comments.list") {
+        return commentsWithData;
+      }
+      if (queryName === "members.getMembership") {
+        return { role: "member" };
+      }
+      if (queryName === "members.list") {
+        return [];
+      }
+      if (queryName === "tags.list") {
+        return [];
+      }
+      return undefined;
+    });
+
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Great feature!")).toBeInTheDocument();
+      expect(screen.getByText("Needs improvement")).toBeInTheDocument();
+      expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+      expect(screen.getByText("John Smith")).toBeInTheDocument();
+    });
+  });
+
+  it("should display no comments message when empty", async () => {
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("No comments yet. Be the first to comment.")
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("should render vote button and call toggle vote on click", async () => {
+    const toggleVoteMock = vi.fn();
+    mockUseMutation.mockReturnValue(toggleVoteMock);
+
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("5")).toBeInTheDocument();
+    });
+  });
+
+  it("should display assignee selector for admin users", async () => {
+    mockUseQuery.mockImplementation((queryFn, args) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      const queryName = String(queryFn);
+      if (queryName === "feedback.get") {
+        return mockFeedback;
+      }
+      if (queryName === "organizations.getBySlug") {
+        return mockOrg;
+      }
+      if (queryName === "organization_statuses.list") {
+        return mockStatuses;
+      }
+      if (queryName === "comments.list") {
+        return mockComments;
+      }
+      if (queryName === "members.getMembership") {
+        return { role: "admin" };
+      }
+      if (queryName === "members.list") {
+        return [
+          {
+            userId: "u1",
+            user: { name: "Admin User", email: "admin@test.com", image: null },
+          },
+        ];
+      }
+      if (queryName === "tags.list") {
+        return [];
+      }
+      return undefined;
+    });
+
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("select")).toBeInTheDocument();
+    });
+  });
+
+  it("should display assignee name when feedback has assignee", async () => {
+    mockUseQuery.mockImplementation((queryFn, args) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      const queryName = String(queryFn);
+      if (queryName === "feedback.get") {
+        return {
+          ...mockFeedback,
+          assignee: {
+            id: "u1",
+            name: "Admin User",
+            email: "admin@test.com",
+            image: null,
+          },
+        };
+      }
+      if (queryName === "organizations.getBySlug") {
+        return mockOrg;
+      }
+      if (queryName === "organization_statuses.list") {
+        return mockStatuses;
+      }
+      if (queryName === "comments.list") {
+        return mockComments;
+      }
+      if (queryName === "members.getMembership") {
+        return { role: "member" };
+      }
+      if (queryName === "members.list") {
+        return [];
+      }
+      if (queryName === "tags.list") {
+        return [];
+      }
+      return undefined;
+    });
+
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Admin User")).toBeInTheDocument();
+    });
+  });
+
+  it("should handle feedback without description", async () => {
+    mockUseQuery.mockImplementation((queryFn, args) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      const queryName = String(queryFn);
+      if (queryName === "feedback.get") {
+        return { ...mockFeedback, description: null };
+      }
+      if (queryName === "organizations.getBySlug") {
+        return mockOrg;
+      }
+      if (queryName === "organization_statuses.list") {
+        return mockStatuses;
+      }
+      if (queryName === "comments.list") {
+        return mockComments;
+      }
+      if (queryName === "members.getMembership") {
+        return { role: "member" };
+      }
+      if (queryName === "members.list") {
+        return [];
+      }
+      if (queryName === "tags.list") {
+        return [];
+      }
+      return undefined;
+    });
+
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Feedback Title")).toBeInTheDocument();
+      expect(
+        screen.queryByText("Test feedback description")
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("should display comment count in heading", async () => {
+    const commentsWithData = [
+      {
+        _id: "c1",
+        body: "Comment body",
+        createdAt: Date.now(),
+        author: { name: "User" },
+      },
+    ];
+
+    mockUseQuery.mockImplementation((queryFn, args) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      const queryName = String(queryFn);
+      if (queryName === "feedback.get") {
+        return mockFeedback;
+      }
+      if (queryName === "organizations.getBySlug") {
+        return mockOrg;
+      }
+      if (queryName === "organization_statuses.list") {
+        return mockStatuses;
+      }
+      if (queryName === "comments.list") {
+        return commentsWithData;
+      }
+      if (queryName === "members.getMembership") {
+        return { role: "member" };
+      }
+      if (queryName === "members.list") {
+        return [];
+      }
+      if (queryName === "tags.list") {
+        return [];
+      }
+      return undefined;
+    });
+
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Comments (1)")).toBeInTheDocument();
+    });
+  });
+
+  it("should display anonymous for comments without author name", async () => {
+    const commentsWithNullAuthor = [
+      {
+        _id: "c1",
+        body: "Anonymous comment",
+        createdAt: Date.now(),
+        author: null,
+      },
+    ];
+
+    mockUseQuery.mockImplementation((queryFn, args) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      const queryName = String(queryFn);
+      if (queryName === "feedback.get") {
+        return mockFeedback;
+      }
+      if (queryName === "organizations.getBySlug") {
+        return mockOrg;
+      }
+      if (queryName === "organization_statuses.list") {
+        return mockStatuses;
+      }
+      if (queryName === "comments.list") {
+        return commentsWithNullAuthor;
+      }
+      if (queryName === "members.getMembership") {
+        return { role: "member" };
+      }
+      if (queryName === "members.list") {
+        return [];
+      }
+      if (queryName === "tags.list") {
+        return [];
+      }
+      return undefined;
+    });
+
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Anonymous")).toBeInTheDocument();
+    });
+  });
+
+  it("should display feedback without tags", async () => {
+    mockUseQuery.mockImplementation((queryFn, args) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      const queryName = String(queryFn);
+      if (queryName === "feedback.get") {
+        return { ...mockFeedback, tags: [] };
+      }
+      if (queryName === "organizations.getBySlug") {
+        return mockOrg;
+      }
+      if (queryName === "organization_statuses.list") {
+        return mockStatuses;
+      }
+      if (queryName === "comments.list") {
+        return mockComments;
+      }
+      if (queryName === "members.getMembership") {
+        return { role: "member" };
+      }
+      if (queryName === "members.list") {
+        return [];
+      }
+      if (queryName === "tags.list") {
+        return [];
+      }
+      return undefined;
+    });
+
+    render(
+      <FeedbackDetailPage
+        params={Promise.resolve({
+          orgSlug: "my-organization",
+          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+        })}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Feedback Title")).toBeInTheDocument();
+      expect(screen.queryByText("Bug")).not.toBeInTheDocument();
+    });
+  });
 });

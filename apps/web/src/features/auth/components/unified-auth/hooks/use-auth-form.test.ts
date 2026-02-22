@@ -59,6 +59,7 @@ vi.mock("@tanstack/react-pacer", () => ({
     mockUseDebouncedValue(value),
 }));
 
+import { authClient } from "@/lib/auth-client";
 import { useAuthForm } from "./use-auth-form";
 
 describe("useAuthForm - button disabled state", () => {
@@ -446,5 +447,267 @@ describe("useAuthForm - button disabled state", () => {
     // Still should be false
     expect(result.current.isCheckingEmail).toBe(false);
     expect(result.current.mode).toBe("signIn");
+  });
+});
+
+describe("useAuthForm - onSubmit", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEmailExistsData = undefined;
+    debouncedValue = "";
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("sets apiError when mode is null on submit", async () => {
+    const { result } = renderHook(() => useAuthForm());
+    expect(result.current.mode).toBeNull();
+
+    await act(async () => {
+      await result.current.onSubmit({
+        email: "test@example.com",
+        password: "pw",
+        confirmPassword: "",
+      });
+    });
+
+    expect(result.current.apiError).toBe("Please verify your email");
+  });
+
+  it("calls authClient.signIn.email and navigates on signIn success", async () => {
+    const mockedSignIn = vi.mocked(authClient.signIn.email);
+    mockedSignIn.mockImplementation((_data, options) => {
+      options?.onSuccess?.({} as never);
+      return Promise.resolve({} as never);
+    });
+
+    const { result, rerender } = renderHook(() => useAuthForm());
+
+    // Set up signIn mode
+    debouncedValue = "user@example.com";
+    act(() => {
+      result.current.setValue("email", "user@example.com");
+    });
+    rerender();
+    mockEmailExistsData = { exists: true };
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.mode).toBe("signIn");
+    });
+
+    await act(async () => {
+      await result.current.onSubmit({
+        email: "user@example.com",
+        password: "pass123",
+        confirmPassword: "",
+      });
+    });
+
+    expect(mockedSignIn).toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("/pending-invitations");
+  });
+
+  it("sets apiError on signIn error", async () => {
+    const mockedSignIn = vi.mocked(authClient.signIn.email);
+    mockedSignIn.mockImplementation((_data, options) => {
+      options?.onError?.({
+        error: { message: "Invalid credentials", statusText: "" },
+      } as never);
+      return Promise.resolve({} as never);
+    });
+
+    const { result, rerender } = renderHook(() => useAuthForm());
+
+    debouncedValue = "user@example.com";
+    act(() => {
+      result.current.setValue("email", "user@example.com");
+    });
+    rerender();
+    mockEmailExistsData = { exists: true };
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.mode).toBe("signIn");
+    });
+
+    await act(async () => {
+      await result.current.onSubmit({
+        email: "user@example.com",
+        password: "wrongpw",
+        confirmPassword: "",
+      });
+    });
+
+    expect(result.current.apiError).not.toBeNull();
+  });
+
+  it("redirects to check-email on email not verified error", async () => {
+    const mockedSignIn = vi.mocked(authClient.signIn.email);
+    mockedSignIn.mockImplementation((_data, options) => {
+      options?.onError?.({
+        error: { message: "Email not verified", statusText: "" },
+      } as never);
+      return Promise.resolve({} as never);
+    });
+
+    const { result, rerender } = renderHook(() => useAuthForm());
+
+    debouncedValue = "user@example.com";
+    act(() => {
+      result.current.setValue("email", "user@example.com");
+    });
+    rerender();
+    mockEmailExistsData = { exists: true };
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.mode).toBe("signIn");
+    });
+
+    await act(async () => {
+      await result.current.onSubmit({
+        email: "user@example.com",
+        password: "pw",
+        confirmPassword: "",
+      });
+    });
+
+    expect(mockPush).toHaveBeenCalledWith(
+      "/auth/check-email?email=user%40example.com"
+    );
+  });
+
+  it("calls authClient.signUp.email and navigates on signUp success", async () => {
+    const mockedSignUp = vi.mocked(authClient.signUp.email);
+    mockedSignUp.mockImplementation((_data, options) => {
+      options?.onSuccess?.({} as never);
+      return Promise.resolve({} as never);
+    });
+
+    const { result, rerender } = renderHook(() => useAuthForm());
+
+    debouncedValue = "new@example.com";
+    act(() => {
+      result.current.setValue("email", "new@example.com");
+    });
+    rerender();
+    mockEmailExistsData = { exists: false };
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.mode).toBe("signUp");
+    });
+
+    await act(async () => {
+      await result.current.onSubmit({
+        email: "new@example.com",
+        password: "password123",
+        confirmPassword: "password123",
+      });
+    });
+
+    expect(mockedSignUp).toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith(
+      "/auth/check-email?email=new%40example.com"
+    );
+  });
+
+  it("sets apiError on signUp error", async () => {
+    const mockedSignUp = vi.mocked(authClient.signUp.email);
+    mockedSignUp.mockImplementation((_data, options) => {
+      options?.onError?.({
+        error: { message: "User already exists", statusText: "" },
+      } as never);
+      return Promise.resolve({} as never);
+    });
+
+    const { result, rerender } = renderHook(() => useAuthForm());
+
+    debouncedValue = "new@example.com";
+    act(() => {
+      result.current.setValue("email", "new@example.com");
+    });
+    rerender();
+    mockEmailExistsData = { exists: false };
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.mode).toBe("signUp");
+    });
+
+    await act(async () => {
+      await result.current.onSubmit({
+        email: "new@example.com",
+        password: "password123",
+        confirmPassword: "password123",
+      });
+    });
+
+    expect(result.current.apiError).not.toBeNull();
+  });
+});
+
+describe("useAuthForm - resetMode", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEmailExistsData = undefined;
+    debouncedValue = "";
+  });
+
+  it("resets mode, emailChecked, and email back to initial state", async () => {
+    const { result, rerender } = renderHook(() => useAuthForm());
+
+    // Set up signIn mode
+    debouncedValue = "test@example.com";
+    act(() => {
+      result.current.setValue("email", "test@example.com");
+    });
+    rerender();
+    mockEmailExistsData = { exists: true };
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.mode).toBe("signIn");
+    });
+
+    act(() => {
+      result.current.resetMode();
+    });
+    rerender();
+
+    expect(result.current.mode).toBeNull();
+    expect(result.current.emailChecked).toBe(false);
+    expect(result.current.email).toBe("");
+  });
+});
+
+describe("useAuthForm - handleEmailChange", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEmailExistsData = undefined;
+    debouncedValue = "";
+  });
+
+  it("clears apiError when email changes", async () => {
+    const { result, rerender } = renderHook(() => useAuthForm());
+
+    // Set an api error first
+    act(() => {
+      result.current.setApiError("Some error");
+    });
+    rerender();
+    expect(result.current.apiError).toBe("Some error");
+
+    act(() => {
+      result.current.handleEmailChange({
+        target: { value: "new@example.com" },
+      } as React.ChangeEvent<HTMLInputElement>);
+    });
+    rerender();
+
+    expect(result.current.apiError).toBeNull();
   });
 });

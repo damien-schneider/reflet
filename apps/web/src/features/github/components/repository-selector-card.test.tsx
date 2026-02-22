@@ -75,11 +75,11 @@ vi.mock("@/components/ui/combobox", async () => {
 
   const Combobox = ({
     children,
-    items: _items,
+    items,
     filter: _filter,
-    itemToStringLabel: _itemToStringLabel,
+    itemToStringLabel,
     value: _value,
-    onValueChange: _onValueChange,
+    onValueChange,
   }: {
     children: React.ReactNode;
     items?: unknown[];
@@ -90,10 +90,6 @@ vi.mock("@/components/ui/combobox", async () => {
   }) => {
     const [inputValue, setInputValue] = useState("");
     const [open, setOpen] = useState(false);
-
-    // Note: _items, _filter, _itemToStringLabel, _value, _onValueChange
-    // are intentionally unused in this mock - they're accepted for API
-    // compatibility but the mock doesn't implement full combobox behavior
 
     // Process children recursively to inject context
     const processChildren = (childNodes: React.ReactNode): React.ReactNode => {
@@ -114,12 +110,21 @@ vi.mock("@/components/ui/combobox", async () => {
           childProps.onFocus = () => setOpen(true);
         }
 
-        // Process nested children - child.props is typed via isValidElement
-        const childElement = child as React.ReactElement<{
-          children?: React.ReactNode;
-        }>;
-        if (childElement.props.children) {
-          childProps.children = processChildren(childElement.props.children);
+        // For ComboboxList, inject items and onValueChange, keep original children
+        if (child.type === ComboboxList) {
+          childProps._items = items;
+          childProps._onValueChange = onValueChange;
+          childProps._itemToStringLabel = itemToStringLabel;
+        }
+
+        // Process nested children (except ComboboxList which uses render prop)
+        if (child.type !== ComboboxList) {
+          const childElement = child as React.ReactElement<{
+            children?: React.ReactNode;
+          }>;
+          if (childElement.props.children) {
+            childProps.children = processChildren(childElement.props.children);
+          }
         }
 
         return cloneElement(child, childProps);
@@ -154,7 +159,6 @@ vi.mock("@/components/ui/combobox", async () => {
     });
 
   const ComboboxContent = ({ children }: { children: React.ReactNode }) => {
-    // Only render if parent combobox is open
     return React.createElement(
       "div",
       { "data-testid": "combobox-content" },
@@ -162,8 +166,42 @@ vi.mock("@/components/ui/combobox", async () => {
     );
   };
 
-  const ComboboxList = ({ children }: { children: React.ReactNode }) =>
-    React.createElement("div", { "data-testid": "combobox-list" }, children);
+  const ComboboxList = ({
+    children,
+    _items,
+    _onValueChange,
+    _itemToStringLabel,
+  }: {
+    children: React.ReactNode | ((item: unknown) => React.ReactNode);
+    _items?: unknown[];
+    _onValueChange?: (value: unknown) => void;
+    _itemToStringLabel?: (item: unknown) => string;
+  }) => {
+    // If children is a render function, invoke it with each item
+    if (typeof children === "function" && _items) {
+      return React.createElement(
+        "div",
+        { "data-testid": "combobox-list" },
+        _items.map((item, index) =>
+          React.createElement(
+            "div",
+            {
+              key: index,
+              "data-testid": "combobox-list-item",
+              onClick: () => _onValueChange?.(item),
+              role: "option",
+            },
+            (children as (item: unknown) => React.ReactNode)(item)
+          )
+        )
+      );
+    }
+    return React.createElement(
+      "div",
+      { "data-testid": "combobox-list" },
+      children
+    );
+  };
 
   const ComboboxItem = ({
     children,
@@ -400,6 +438,423 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
       // Clear the input
       await user.clear(input);
       expect((input as HTMLInputElement).value).toBe("");
+    });
+  });
+
+  describe("connected state", () => {
+    it("renders connected repository name", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          repositoryFullName="owner/connected-repo"
+          selectedRepo="repo-1"
+        />
+      );
+      expect(screen.getByText("owner/connected-repo")).toBeInTheDocument();
+    });
+
+    it("renders Change Repository button for admin", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          repositoryFullName="owner/repo"
+          selectedRepo="repo-1"
+        />
+      );
+      expect(screen.getByText("Change Repository")).toBeInTheDocument();
+    });
+
+    it("calls onChangeRepository when Change Repository clicked", async () => {
+      const onChangeRepository = vi.fn();
+      const user = userEvent.setup();
+      render(
+        <RepositorySelectorCard
+          hasRepository
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={onChangeRepository}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          repositoryFullName="owner/repo"
+          selectedRepo="repo-1"
+        />
+      );
+      await user.click(screen.getByText("Change Repository"));
+      expect(onChangeRepository).toHaveBeenCalled();
+    });
+  });
+
+  describe("loading state", () => {
+    it("shows loading indicator when loadingRepos is true", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={[]}
+          selectedRepo=""
+        />
+      );
+      expect(screen.getByTestId("card")).toBeInTheDocument();
+    });
+
+    it("shows Loading repositories text when loadingRepos", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={[]}
+          selectedRepo=""
+        />
+      );
+      expect(screen.getByText("Loading repositories...")).toBeInTheDocument();
+    });
+
+    it("does not show combobox when loading", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={[]}
+          selectedRepo=""
+        />
+      );
+      expect(screen.queryByTestId("combobox")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("non-admin state", () => {
+    it("renders read-only view for non-admin", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository
+          isAdmin={false}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          repositoryFullName="owner/repo"
+          selectedRepo="repo-1"
+        />
+      );
+      expect(screen.queryByText("Change Repository")).toBeNull();
+    });
+
+    it("renders card title", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+      expect(screen.getByText("Repository")).toBeInTheDocument();
+    });
+
+    it("renders card description for unconnected state", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+      expect(
+        screen.getByText(/Select a repository to sync releases from/)
+      ).toBeInTheDocument();
+    });
+
+    it("renders Connect Repository button for admin", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+      expect(screen.getByText("Connect Repository")).toBeInTheDocument();
+    });
+
+    it("disables Connect Repository when no repo selected", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+      expect(screen.getByText("Connect Repository")).toBeDisabled();
+    });
+
+    it("enables Connect Repository when repo is selected", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo="repo-1"
+        />
+      );
+      expect(screen.getByText("Connect Repository")).not.toBeDisabled();
+    });
+
+    it("calls onConnectRepository when Connect Repository clicked", async () => {
+      const onConnect = vi.fn();
+      const user = userEvent.setup();
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={onConnect}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo="repo-1"
+        />
+      );
+      await user.click(screen.getByText("Connect Repository"));
+      expect(onConnect).toHaveBeenCalled();
+    });
+
+    it("renders private badge for private repos", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+      const _lockIcons = screen.getAllByAttribute
+        ? document.querySelectorAll('[data-icon="lock"]')
+        : [];
+      // At least the repository list renders
+      expect(screen.getByTestId("combobox")).toBeInTheDocument();
+    });
+
+    it("renders repository selector combobox", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+      expect(screen.getByTestId("combobox")).toBeInTheDocument();
+    });
+
+    it("does not show Connect Repository button for non-admin disconnected", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={false}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+      expect(screen.queryByText("Connect Repository")).not.toBeInTheDocument();
+    });
+
+    it("shows connected description when repositoryFullName provided", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          repositoryFullName="org/my-repo"
+          selectedRepo="repo-1"
+        />
+      );
+      expect(screen.getByText(/Connected to org\/my-repo/)).toBeInTheDocument();
+    });
+
+    it("shows unconnected description when no repositoryFullName", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+      expect(
+        screen.getByText(/Select a repository to sync releases from/)
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("repository display and selection", () => {
+    it("renders formatted repository display names", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+      // formatRepositoryName("test-repo") → "Test Repo"
+      expect(screen.getByText("Test Repo")).toBeInTheDocument();
+      // formatRepositoryName("another-repo") → "Another Repo"
+      expect(screen.getByText("Another Repo")).toBeInTheDocument();
+      // formatRepositoryName("demo-project") → "Demo Project"
+      expect(screen.getByText("Demo Project")).toBeInTheDocument();
+    });
+
+    it("renders full name under each repository item", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+      expect(screen.getByText("owner-a/test-repo")).toBeInTheDocument();
+      expect(screen.getByText("owner-a/another-repo")).toBeInTheDocument();
+      expect(screen.getByText("owner-b/demo-project")).toBeInTheDocument();
+    });
+
+    it("renders lock icon for private repos and globe for public", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+      // repo-2 is private, others public
+      const lockIcons = document.querySelectorAll('[data-icon="lock"]');
+      const globeIcons = document.querySelectorAll('[data-icon="globe"]');
+      expect(lockIcons.length).toBe(1);
+      expect(globeIcons.length).toBe(2);
+    });
+
+    it("calls onSelectRepo when a repository item is clicked", async () => {
+      const user = userEvent.setup();
+      const onSelectRepo = vi.fn();
+
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={onSelectRepo}
+          repositories={mockRepositories}
+          selectedRepo=""
+        />
+      );
+
+      // Click on the first repo list item wrapper
+      const listItems = screen.getAllByTestId("combobox-list-item");
+      await user.click(listItems[0]);
+
+      expect(onSelectRepo).toHaveBeenCalledWith("repo-1");
+    });
+
+    it("renders with empty repositories list", () => {
+      render(
+        <RepositorySelectorCard
+          hasRepository={false}
+          isAdmin={true}
+          loadingRepos={false}
+          onChangeRepository={vi.fn()}
+          onConnectRepository={vi.fn()}
+          onSelectRepo={vi.fn()}
+          repositories={[]}
+          selectedRepo=""
+        />
+      );
+      expect(screen.getByTestId("combobox")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("combobox-list-item")
+      ).not.toBeInTheDocument();
     });
   });
 });

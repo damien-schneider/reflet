@@ -44,10 +44,11 @@ vi.mock("frimousse", () => ({
         Emoji: React.ComponentType<{ emoji: { emoji: string } }>;
       };
     }) => {
-      const { Emoji } = components;
-      // Render some test emojis
+      const { CategoryHeader, Emoji } = components;
+      // Render some test emojis and a category header
       return (
         <div data-testid="emoji-list">
+          <CategoryHeader category={{ label: "Smileys" }} />
           <Emoji emoji={{ emoji: "😀" }} />
           <Emoji emoji={{ emoji: "🎉" }} />
           <Emoji emoji={{ emoji: "🔥" }} />
@@ -243,6 +244,16 @@ describe("EmojiPicker", () => {
     const searchInput = screen.getByTestId("emoji-search");
     expect(searchInput).toBeInTheDocument();
     expect(searchInput).toHaveAttribute("placeholder", "Search emoji...");
+  });
+
+  it("renders category headers in the emoji list", () => {
+    const onChange = vi.fn();
+    render(<EmojiPicker onChange={onChange} />);
+
+    const triggerButton = screen.getByTestId("emoji-trigger-button");
+    fireEvent.click(triggerButton);
+
+    expect(screen.getByText("Smileys")).toBeInTheDocument();
   });
 
   it("emoji buttons have correct accessibility attributes", () => {

@@ -29,6 +29,43 @@
       }
     },
     {
+      "includes": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.spec.ts",
+        "**/*.spec.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noNoninteractiveElementInteractions": "off",
+            "useKeyWithClickEvents": "off",
+            "noStaticElementInteractions": "off",
+            "useFocusableInteractive": "off",
+            "useAriaPropsForRole": "off"
+          },
+          "performance": {
+            "useTopLevelRegex": "off",
+            "noImgElement": "off"
+          },
+          "suspicious": {
+            "useAwait": "off",
+            "noEmptyBlockStatements": "off",
+            "noExplicitAny": "off",
+            "noNonNullAssertedOptionalChain": "off"
+          },
+          "correctness": {
+            "noUnusedFunctionParameters": "off",
+            "useImageSize": "off",
+            "noUnusedVariables": "warn"
+          },
+          "style": {
+            "noNonNullAssertion": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["packages/backend/convex/**/*.ts"],
       "linter": {
         "rules": {
