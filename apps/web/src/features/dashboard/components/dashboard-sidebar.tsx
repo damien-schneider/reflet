@@ -14,6 +14,7 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import Link from "next/link";
+import posthog from "posthog-js";
 import type * as React from "react";
 import {
   DropdownList,
@@ -173,6 +174,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   };
 
   const handleSignOut = () => {
+    posthog.reset();
     authClient.signOut();
     window.location.href = "/";
   };

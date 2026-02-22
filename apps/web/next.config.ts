@@ -1,4 +1,5 @@
 import createMDX from "@next/mdx";
+import { withPostHogConfig } from "@posthog/nextjs-config";
 import type { NextConfig } from "next";
 
 // Import env to validate at build time
@@ -87,4 +88,15 @@ const withMDX = createMDX({
   },
 });
 
-export default withMDX(nextConfig);
+const configWithMDX = withMDX(nextConfig);
+
+export default withPostHogConfig(configWithMDX, {
+  personalApiKey: process.env.POSTHOG_PERSONAL_API_KEY,
+  projectId: process.env.POSTHOG_PROJECT_ID
+    ? Number(process.env.POSTHOG_PROJECT_ID)
+    : undefined,
+  host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+  sourcemaps: {
+    deleteAfterUpload: true,
+  },
+});

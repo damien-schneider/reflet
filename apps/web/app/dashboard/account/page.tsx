@@ -3,6 +3,7 @@
 import { SignOut } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
+import posthog from "posthog-js";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { H1, Muted } from "@/components/ui/typography";
@@ -19,6 +20,7 @@ export default function AccountPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignOut = () => {
+    posthog.reset();
     authClient.signOut({
       fetchOptions: {
         onSuccess: () => {

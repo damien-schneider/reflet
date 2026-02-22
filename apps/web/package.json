@@ -31,6 +31,7 @@
     "@number-flow/react": "^0.5.11",
     "@openrouter/ai-sdk-provider": "^2.2.3",
     "@phosphor-icons/react": "^2.1.10",
+    "@posthog/nextjs-config": "^1.8.18",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-select": "^2.2.6",

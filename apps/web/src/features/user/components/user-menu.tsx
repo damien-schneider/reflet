@@ -1,6 +1,7 @@
 import { SignOut, User } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
+import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import {
   DropdownList,
@@ -41,6 +42,7 @@ export default function UserList() {
         <DropdownListSeparator />
         <DropdownListItem
           onClick={() => {
+            posthog.reset();
             authClient.signOut();
             window.location.href = "/";
           }}

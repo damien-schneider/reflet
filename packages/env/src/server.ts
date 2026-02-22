@@ -18,6 +18,9 @@ export const env = createEnv({
     GITHUB_WEBHOOK_SECRET: z.string().optional(),
     // OpenRouter API key (optional - for AI features)
     OPENROUTER_API_KEY: z.string().optional(),
+    // PostHog source maps upload (optional - for error tracking with unminified stack traces)
+    POSTHOG_PERSONAL_API_KEY: z.string().optional(),
+    POSTHOG_PROJECT_ID: z.string().optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,
