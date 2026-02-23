@@ -90,13 +90,16 @@ const withMDX = createMDX({
 
 const configWithMDX = withMDX(nextConfig);
 
-export default withPostHogConfig(configWithMDX, {
-  personalApiKey: process.env.POSTHOG_PERSONAL_API_KEY,
-  projectId: process.env.POSTHOG_PROJECT_ID
-    ? Number(process.env.POSTHOG_PROJECT_ID)
-    : undefined,
-  host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-  sourcemaps: {
-    deleteAfterUpload: true,
-  },
-});
+const posthogApiKey = process.env.POSTHOG_PERSONAL_API_KEY;
+const posthogProjectId = process.env.POSTHOG_PROJECT_ID;
+
+export default posthogApiKey && posthogProjectId
+  ? withPostHogConfig(configWithMDX, {
+      personalApiKey: posthogApiKey,
+      projectId: posthogProjectId,
+      host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+      sourcemaps: {
+        deleteAfterUpload: true,
+      },
+    })
+  : configWithMDX;
