@@ -1,13 +1,13 @@
 "use client";
 
 import CTA from "./cta";
-import Features from "./features";
 import Footer from "./footer";
 import Hero from "./hero";
+import HowItWorks from "./how-it-works";
 import LiveDemo from "./live-demo";
 import Navbar from "./navbar";
 import Pricing from "./pricing";
-import Testimonials from "./testimonials";
+import ProductTour from "./product-tour";
 
 export default function Homepage() {
   return (
@@ -15,9 +15,9 @@ export default function Homepage() {
       <Navbar />
       <main className="flex-1">
         <Hero />
-        <Features />
+        <ProductTour />
+        <HowItWorks />
         <LiveDemo />
-        <Testimonials />
         <Pricing />
         <CTA />
       </main>

@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Article,
-  BookOpen,
-  CurrencyCircleDollar,
-  GithubLogo,
-  MapTrifold,
-  Sparkle,
-} from "@phosphor-icons/react";
+import { GithubLogo } from "@phosphor-icons/react";
 import {
   domAnimation,
   LazyMotion,
@@ -19,26 +12,72 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  NavigationList,
+  NavigationListContent,
+  NavigationListItem,
+  NavigationListLink,
+  NavigationListList,
+  NavigationListTrigger,
+  navigationListTriggerStyle,
+} from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 
-const NAV_LINKS = [
-  { label: "Pricing", targetId: "pricing", icon: CurrencyCircleDollar },
-  { label: "Features", targetId: "features", icon: Sparkle },
+const REFLET_BASE_URL = "https://www.reflet.app/reflet";
+
+interface DemoItem {
+  label: string;
+  description: string;
+  href: string;
+}
+
+const DEMO_ITEMS: DemoItem[] = [
+  {
+    label: "Feedback Board",
+    description: "Collect and organize user feedback with voting",
+    href: REFLET_BASE_URL,
+  },
   {
     label: "Roadmap",
-    href: "https://www.reflet.app/reflet?view=roadmap",
-    external: true,
-    icon: MapTrifold,
+    description: "Kanban-style board to plan and track progress",
+    href: `${REFLET_BASE_URL}?view=roadmap`,
   },
-  { label: "Docs", href: "/docs", icon: BookOpen },
-  { label: "Blog", href: "/blog", icon: Article },
   {
-    label: "GitHub",
-    href: "https://github.com/damien-schneider/reflet",
-    external: true,
-    icon: GithubLogo,
+    label: "Milestones",
+    description: "Track feature milestones and release goals",
+    href: `${REFLET_BASE_URL}?view=milestones`,
   },
-] as const;
+  {
+    label: "Changelog",
+    description: "Beautiful release notes linked to features",
+    href: `${REFLET_BASE_URL}/changelog`,
+  },
+  {
+    label: "Support",
+    description: "Help center with real-time conversations",
+    href: `${REFLET_BASE_URL}/support`,
+  },
+];
+
+interface ResourceItem {
+  label: string;
+  description: string;
+  href: string;
+  external?: boolean;
+}
+
+const RESOURCE_ITEMS: ResourceItem[] = [
+  {
+    label: "Documentation",
+    description: "Guides, SDK reference and API docs",
+    href: "/docs",
+  },
+  {
+    label: "Blog",
+    description: "Product updates, tips and insights",
+    href: "/blog",
+  },
+];
 
 export default function NavbarDesktop() {
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -47,13 +86,6 @@ export default function NavbarDesktop() {
   useMotionValueEvent(scrollY, "change", (latest) => {
     setHasScrolled(latest > 50);
   });
-
-  const scrollToSection = (targetId: string) => {
-    const element = document.getElementById(targetId);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
 
   return (
     <LazyMotion features={domAnimation}>
@@ -75,7 +107,7 @@ export default function NavbarDesktop() {
               hasScrolled ? "h-16" : "h-20"
             )}
           >
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-2">
               {/* Logo */}
               <m.div
                 animate={{ opacity: 1, y: 0 }}
@@ -91,23 +123,100 @@ export default function NavbarDesktop() {
                 </Link>
               </m.div>
 
-              {/* Desktop Links */}
-              <div className="flex items-center space-x-8">
-                {NAV_LINKS.map((link, index) => (
-                  <m.div
-                    animate={{ opacity: 1, y: 0 }}
-                    initial={{ opacity: 0, y: -20 }}
-                    key={link.label}
-                    transition={{ duration: 0.5, delay: 0.15 + index * 0.05 }}
-                  >
-                    <NavLink link={link} onScrollTo={scrollToSection} />
-                  </m.div>
-                ))}
-              </div>
+              {/* Navigation Menu */}
+              <m.div
+                animate={{ opacity: 1, y: 0 }}
+                className="ml-2"
+                initial={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+              >
+                <NavigationList>
+                  <NavigationListList>
+                    <NavigationListItem>
+                      <NavigationListLink
+                        className={navigationListTriggerStyle()}
+                        href="/#pricing"
+                      >
+                        Pricing
+                      </NavigationListLink>
+                    </NavigationListItem>
+
+                    <NavigationListItem>
+                      <NavigationListLink
+                        className={navigationListTriggerStyle()}
+                        href="/#features"
+                      >
+                        Features
+                      </NavigationListLink>
+                    </NavigationListItem>
+
+                    <NavigationListItem>
+                      <NavigationListTrigger>Demo</NavigationListTrigger>
+                      <NavigationListContent className="w-[300px]">
+                        <ul className="grid gap-1 p-1">
+                          {DEMO_ITEMS.map((item) => (
+                            <li key={item.label}>
+                              <NavigationListLink
+                                href={item.href}
+                                rel="noopener noreferrer"
+                                target="_blank"
+                              >
+                                <div>
+                                  <div className="font-medium text-sm leading-none">
+                                    {item.label}
+                                  </div>
+                                  <p className="mt-1 text-muted-foreground text-xs leading-snug">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </NavigationListLink>
+                            </li>
+                          ))}
+                        </ul>
+                      </NavigationListContent>
+                    </NavigationListItem>
+
+                    <NavigationListItem>
+                      <NavigationListTrigger>Resources</NavigationListTrigger>
+                      <NavigationListContent className="w-[280px]">
+                        <ul className="grid gap-1 p-1">
+                          {RESOURCE_ITEMS.map((item) => (
+                            <li key={item.label}>
+                              <NavigationListLink href={item.href}>
+                                <div>
+                                  <div className="font-medium text-sm leading-none">
+                                    {item.label}
+                                  </div>
+                                  <p className="mt-1 text-muted-foreground text-xs leading-snug">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </NavigationListLink>
+                            </li>
+                          ))}
+                        </ul>
+                      </NavigationListContent>
+                    </NavigationListItem>
+                  </NavigationListList>
+                </NavigationList>
+              </m.div>
             </div>
 
             {/* Desktop Right Actions */}
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center gap-4">
+              <m.a
+                animate={{ opacity: 1, y: 0 }}
+                aria-label="GitHub repository"
+                className="inline-flex items-center text-foreground transition-colors hover:text-muted-foreground"
+                href="https://github.com/damien-schneider/reflet"
+                initial={{ opacity: 0, y: -20 }}
+                rel="noopener noreferrer"
+                target="_blank"
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <GithubLogo className="h-5 w-5" />
+              </m.a>
+
               <m.div
                 animate={{ opacity: 1, y: 0 }}
                 initial={{ opacity: 0, y: -20 }}
@@ -141,53 +250,5 @@ export default function NavbarDesktop() {
         </div>
       </m.nav>
     </LazyMotion>
-  );
-}
-
-interface NavLinkProps {
-  link: (typeof NAV_LINKS)[number];
-  onScrollTo: (targetId: string) => void;
-}
-
-function NavLink({ link, onScrollTo }: NavLinkProps) {
-  if ("external" in link && link.external) {
-    return (
-      <a
-        className="group relative font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
-        href={link.href}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        {link.label}
-        <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
-      </a>
-    );
-  }
-
-  if ("href" in link) {
-    return (
-      <Link
-        className="group relative font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
-        href={link.href}
-      >
-        {link.label}
-        <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
-      </Link>
-    );
-  }
-
-  if (!("targetId" in link)) {
-    return null;
-  }
-
-  return (
-    <button
-      className="group relative font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
-      onClick={() => onScrollTo(link.targetId)}
-      type="button"
-    >
-      {link.label}
-      <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
-    </button>
   );
 }

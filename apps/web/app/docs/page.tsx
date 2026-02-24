@@ -20,6 +20,11 @@ const sections = [
     href: "/docs/widget",
   },
   {
+    title: "REST API",
+    description: "Full CRUD API for feedback, votes, comments, and more",
+    href: "/docs/api",
+  },
+  {
     title: "Component Library",
     description: "Pre-made UI components via shadcn registry",
     href: "/docs/components",

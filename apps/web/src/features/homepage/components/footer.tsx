@@ -26,7 +26,10 @@ const PRODUCT_LINKS = [
 const COMPANY_LINKS = [
   { label: "Features", href: "/#features", internal: true },
   { label: "Pricing", href: "/pricing", internal: true },
+  { label: "Integrations", href: "/integrations", internal: true },
+  { label: "Security", href: "/security", internal: true },
   { label: "Blog", href: "/blog", internal: true },
+  { label: "Docs", href: "/docs", internal: true },
   {
     label: "GitHub",
     href: "https://github.com/damien-schneider/reflet",

@@ -1,161 +1,206 @@
 "use client";
 
-import {
-  Article,
-  BookOpen,
-  CurrencyCircleDollar,
-  GithubLogo,
-  List,
-  MapTrifold,
-  Sparkle,
-  User,
-  X,
-} from "@phosphor-icons/react";
-import { domAnimation, LazyMotion, m } from "motion/react";
+import { GithubLogo, List, X } from "@phosphor-icons/react";
+import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import Link from "next/link";
-import { type ComponentType, useState } from "react";
+import { useEffect, useState } from "react";
 
-type IconComponent = ComponentType<{ className?: string }>;
+import { Button } from "@/components/ui/button";
 
-type NavLink =
-  | { label: string; targetId: string; icon: IconComponent }
-  | {
-      label: string;
-      href: string;
-      external: true;
-      icon: IconComponent;
-    }
-  | { label: string; href: string; icon: IconComponent };
+const REFLET_BASE = "https://www.reflet.app/reflet";
 
-const PRIMARY_LINKS: NavLink[] = [
-  { label: "Pricing", targetId: "pricing", icon: CurrencyCircleDollar },
-  { label: "Features", targetId: "features", icon: Sparkle },
-];
+const DEMO_LINKS = [
+  { label: "Feedback Board", href: REFLET_BASE },
+  { label: "Roadmap", href: `${REFLET_BASE}?view=roadmap` },
+  { label: "Milestones", href: `${REFLET_BASE}?view=milestones` },
+  { label: "Changelog", href: `${REFLET_BASE}/changelog` },
+  { label: "Support", href: `${REFLET_BASE}/support` },
+] as const;
 
-const SECONDARY_LINKS: NavLink[] = [
-  {
-    label: "Roadmap",
-    href: "https://www.reflet.app/reflet?view=roadmap",
-    external: true,
-    icon: MapTrifold,
-  },
-  { label: "Docs", href: "/docs", icon: BookOpen },
-  { label: "Blog", href: "/blog", icon: Article },
-  {
-    label: "GitHub",
-    href: "https://github.com/damien-schneider/reflet",
-    external: true,
-    icon: GithubLogo,
-  },
-];
+const RESOURCE_LINKS = [
+  { label: "Documentation", href: "/docs", internal: true },
+  { label: "Blog", href: "/blog", internal: true },
+] as const;
 
-const linkClassName =
-  "flex flex-col items-center gap-1 whitespace-nowrap rounded-full px-4 py-1 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground";
-
-function NavLinkItem({
-  link,
-  onNavigate,
-}: {
-  link: NavLink;
-  onNavigate?: () => void;
-}) {
-  const Icon = link.icon;
-
-  if ("external" in link && link.external) {
-    return (
-      <a
-        className={linkClassName}
-        href={link.href}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        <Icon className="h-5 w-5" />
-        {link.label}
-      </a>
-    );
-  }
-
-  if ("href" in link) {
-    return (
-      <Link className={linkClassName} href={link.href} onClick={onNavigate}>
-        <Icon className="h-5 w-5" />
-        {link.label}
-      </Link>
-    );
-  }
-
-  if ("targetId" in link) {
-    const scrollToSection = () => {
-      const element = document.getElementById(link.targetId);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
-      onNavigate?.();
-    };
-
-    return (
-      <button className={linkClassName} onClick={scrollToSection} type="button">
-        <Icon className="h-5 w-5" />
-        {link.label}
-      </button>
-    );
-  }
-
-  return null;
-}
+const menuLinkClassName =
+  "block rounded-lg px-3 py-3 font-medium text-foreground text-lg transition-colors hover:bg-muted";
 
 export default function NavbarMobile() {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const collapse = () => setIsExpanded(false);
+  const close = () => setIsOpen(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  const scrollToSection = (targetId: string) => {
+    close();
+    setTimeout(() => {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth" });
+    }, 150);
+  };
 
   return (
     <LazyMotion features={domAnimation}>
-      <m.nav
+      {/* Floating bottom bar */}
+      <m.div
         animate={{ y: 0, opacity: 1 }}
-        className="fixed inset-x-4 bottom-4 z-50 overflow-hidden rounded-3xl border border-border bg-background/95 shadow-lg backdrop-blur-md md:hidden"
+        className="fixed inset-x-4 bottom-4 z-50 flex items-center justify-between rounded-2xl border border-border bg-background/95 px-2 py-2 shadow-lg backdrop-blur-md md:hidden"
         initial={{ y: 100, opacity: 0 }}
         transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
       >
-        <m.div
-          animate={{ height: isExpanded ? 60 : 0 }}
-          className="overflow-hidden"
-          initial={false}
-          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        <button
+          aria-label="Open menu"
+          className="flex items-center gap-2 rounded-xl px-4 py-2.5 font-medium text-foreground text-sm transition-colors hover:bg-muted"
+          onClick={() => setIsOpen(true)}
+          type="button"
         >
-          <div className="flex h-13 items-center justify-around px-2 pt-2">
-            {SECONDARY_LINKS.map((link) => (
-              <NavLinkItem key={link.label} link={link} onNavigate={collapse} />
-            ))}
-          </div>
-        </m.div>
+          <List className="size-5" />
+          Menu
+        </button>
+        <Link href="/dashboard" prefetch={true}>
+          <Button size="sm">Get started</Button>
+        </Link>
+      </m.div>
 
-        <div className="flex items-center justify-around px-2 py-3">
-          {PRIMARY_LINKS.map((link) => (
-            <NavLinkItem key={link.label} link={link} onNavigate={collapse} />
-          ))}
-
-          <Link className={linkClassName} href="/dashboard" onClick={collapse}>
-            <User className="h-5 w-5" />
-            Log in
-          </Link>
-
-          <button
-            aria-expanded={isExpanded}
-            aria-label={isExpanded ? "Close menu" : "Open menu"}
-            className={linkClassName}
-            onClick={() => setIsExpanded((prev) => !prev)}
-            type="button"
+      {/* Full-screen menu overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <m.div
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[60] bg-background md:hidden"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
           >
-            {isExpanded ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <List className="h-5 w-5" />
-            )}
-            More
-          </button>
-        </div>
-      </m.nav>
+            <m.div
+              animate={{ opacity: 1, y: 0 }}
+              className="flex h-full flex-col overflow-y-auto px-6 pt-6 pb-8"
+              exit={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 8 }}
+              transition={{
+                duration: 0.3,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <Link
+                  className="font-serif text-2xl text-foreground tracking-tight"
+                  href="/"
+                  onClick={close}
+                >
+                  Reflet.
+                </Link>
+                <button
+                  aria-label="Close menu"
+                  className="rounded-xl p-2.5 text-foreground transition-colors hover:bg-muted"
+                  onClick={close}
+                  type="button"
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
+
+              {/* Navigation */}
+              <nav className="mt-10 flex flex-1 flex-col gap-8">
+                {/* Main links */}
+                <div className="flex flex-col gap-1">
+                  <button
+                    className={`${menuLinkClassName} text-left`}
+                    onClick={() => scrollToSection("pricing")}
+                    type="button"
+                  >
+                    Pricing
+                  </button>
+                  <button
+                    className={`${menuLinkClassName} text-left`}
+                    onClick={() => scrollToSection("features")}
+                    type="button"
+                  >
+                    Features
+                  </button>
+                </div>
+
+                {/* Demo section */}
+                <div>
+                  <p className="mb-2 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    Demo
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {DEMO_LINKS.map((link) => (
+                      <a
+                        className={menuLinkClassName}
+                        href={link.href}
+                        key={link.label}
+                        onClick={close}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Resources section */}
+                <div>
+                  <p className="mb-2 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    Resources
+                  </p>
+                  <div className="flex flex-col gap-1">
+                    {RESOURCE_LINKS.map((link) => (
+                      <Link
+                        className={menuLinkClassName}
+                        href={link.href}
+                        key={link.label}
+                        onClick={close}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                    <a
+                      className={`${menuLinkClassName} flex items-center gap-2.5`}
+                      href="https://github.com/damien-schneider/reflet"
+                      onClick={close}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      <GithubLogo className="size-5" />
+                      GitHub
+                    </a>
+                  </div>
+                </div>
+              </nav>
+
+              {/* Footer actions */}
+              <div className="flex flex-col gap-3 border-border border-t pt-6">
+                <Link
+                  className="rounded-lg py-3 text-center font-medium text-foreground text-sm transition-colors hover:bg-muted"
+                  href="/dashboard"
+                  onClick={close}
+                  prefetch={true}
+                >
+                  Log in
+                </Link>
+                <Link href="/dashboard" onClick={close} prefetch={true}>
+                  <Button className="w-full" size="lg">
+                    Get started
+                  </Button>
+                </Link>
+              </div>
+            </m.div>
+          </m.div>
+        )}
+      </AnimatePresence>
     </LazyMotion>
   );
 }
