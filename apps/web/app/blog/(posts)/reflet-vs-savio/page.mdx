@@ -1,0 +1,122 @@
+import { BlogPostLayout } from "@/features/blog/components/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/features/blog/components/comparison-table";
+import { Callout } from "@/features/blog/components/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs Savio: Open Source vs B2B Feedback Centralization",
+  description: "Compare Reflet and Savio for product feedback. See how an open-source platform compares to a B2B-focused feedback centralization tool.",
+  date: "2026-02-09",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["savio alternative", "comparison", "product feedback", "B2B feedback"],
+  readingTime: "5 min read",
+  seoKeywords: ["savio alternative", "reflet vs savio", "savio comparison", "savio feedback alternative"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-savio",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Savio specializes in centralizing feature requests from multiple sources — Slack, HubSpot, Intercom, Zendesk, and Salesforce. It's built for B2B SaaS companies that want to tie feedback to customer revenue. Reflet takes a different approach with open-source transparency and real-time collaboration.
+
+## Quick Summary
+
+| Aspect | Reflet | Savio |
+|--------|--------|-------|
+| **Pricing** | Free tier + $15-49/mo | $79-299/mo |
+| **Open Source** | Yes (SSPL) | No |
+| **Self-Hosting** | Available | Not available |
+| **Focus** | Public feedback & roadmaps | B2B feedback centralization |
+| **Best For** | All team sizes | Mid-market B2B SaaS |
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="Savio"
+  features={[
+    { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback" },
+    { name: "Feature Voting", reflet: "strong", competitor: "partial", description: "Public voting on feature requests" },
+    { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction publicly" },
+    { name: "Changelog", reflet: "yes", competitor: "partial", description: "Announce updates and new features" },
+    { name: "Multi-Source Ingestion", reflet: "partial", competitor: "strong", description: "Pull feedback from Slack, HubSpot, etc." },
+    { name: "Revenue Attribution", reflet: "no", competitor: "yes", description: "Tie feedback to customer revenue" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "partial", description: "Instant updates across all users" },
+    { name: "Open Source", reflet: "yes", competitor: "no", description: "Source code available for inspection" },
+    { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Deploy on your own infrastructure" },
+    { name: "AI-Powered Triage", reflet: "yes", competitor: "no", description: "Automatic feedback categorization" },
+    { name: "GitHub Integration", reflet: "yes", competitor: "partial", description: "Two-way sync with GitHub" },
+    { name: "Salesforce Integration", reflet: "no", competitor: "yes", description: "Sync with Salesforce CRM" },
+  ]}
+/>
+
+### Where Reflet Excels
+
+**Public Engagement**: Reflet's public feedback boards and voting system create genuine user engagement. Savio focuses more on internal team workflows.
+
+**Pricing**: At $15-49/mo vs Savio's $79-299/mo, Reflet is significantly more affordable.
+
+**Open Source**: Full code transparency, self-hosting, and community contributions.
+
+**AI Triage**: Automated categorization and duplicate detection.
+
+**Real-Time**: Sub-50ms synchronization for instant collaboration.
+
+### Where Savio Excels
+
+**Feedback Centralization**: Savio excels at pulling feedback from Slack, HubSpot, Intercom, Zendesk, and Salesforce into one place.
+
+**Revenue Attribution**: Tie feature requests to customer MRR, making it easier to prioritize high-value feedback.
+
+**B2B Workflows**: Purpose-built for B2B SaaS teams that manage feedback across sales, support, and customer success.
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="Savio"
+  refletPricing={{
+    free: "Included",
+    paid: "$15-49/mo",
+    enterprise: "Custom",
+  }}
+  competitorPricing={{
+    free: "Not available",
+    paid: "$79-299/mo",
+    enterprise: "Custom",
+  }}
+/>
+
+## When to Choose Reflet
+
+- **Public-facing feedback**: You want a user-facing feedback board with voting
+- **Budget matters**: Savio's pricing is 3-6x higher than Reflet's
+- **Open source is important**: Code transparency and self-hosting
+- **You're not B2B enterprise**: Your feedback workflow doesn't need CRM integration
+- **Developer workflow**: GitHub integration is your priority
+
+## When to Choose Savio
+
+- **Multi-source centralization**: You need to pull feedback from 5+ tools
+- **Revenue-based prioritization**: Tying feedback to customer MRR is critical
+- **B2B SaaS**: You have sales, support, and CS teams all collecting feedback
+- **Salesforce integration**: CRM sync is a must-have
+
+## The Verdict
+
+Savio and Reflet serve different primary use cases. Savio is a B2B feedback centralization tool. Reflet is a public-facing feedback platform.
+
+**Choose Reflet** if you want user-facing feedback boards, voting, roadmaps, and changelogs — at an affordable price with open-source benefits.
+
+**Choose Savio** if you specifically need to centralize internal feedback from CRM and support tools with revenue attribution.
+
+---
+
+Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.

@@ -36,6 +36,17 @@ const COMPANY_LINKS = [
   },
 ] as const;
 
+const COMPARE_LINKS = [
+  { label: "Reflet vs Canny", href: "/blog/reflet-vs-canny" },
+  { label: "Reflet vs Featurebase", href: "/blog/reflet-vs-featurebase" },
+  { label: "Reflet vs Productboard", href: "/blog/reflet-vs-productboard" },
+  { label: "Reflet vs UserVoice", href: "/blog/reflet-vs-uservoice" },
+  { label: "Reflet vs Fider", href: "/blog/reflet-vs-fider" },
+  { label: "Reflet vs Nolt", href: "/blog/reflet-vs-nolt" },
+  { label: "Reflet vs Frill", href: "/blog/reflet-vs-frill" },
+  { label: "Reflet vs Upvoty", href: "/blog/reflet-vs-upvoty" },
+] as const;
+
 const LEGAL_LINKS = [
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
@@ -46,7 +57,7 @@ export default function Footer() {
   return (
     <footer className="border-border border-t bg-background py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-5">
           {/* Brand */}
           <div className="col-span-2 sm:col-span-1">
             <span className="font-serif text-foreground text-xl tracking-tight">
@@ -117,6 +128,25 @@ export default function Footer() {
                   </li>
                 )
               )}
+            </ul>
+          </div>
+
+          {/* Compare */}
+          <div>
+            <h4 className="mb-3 font-semibold text-foreground text-sm">
+              Compare
+            </h4>
+            <ul className="space-y-2">
+              {COMPARE_LINKS.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    className="text-muted-foreground text-sm hover:text-foreground"
+                    href={link.href}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 

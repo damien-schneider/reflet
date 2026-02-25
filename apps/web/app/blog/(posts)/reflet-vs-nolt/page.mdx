@@ -1,0 +1,123 @@
+import { BlogPostLayout } from "@/features/blog/components/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/features/blog/components/comparison-table";
+import { Callout } from "@/features/blog/components/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs Nolt: Open Source Feedback Platform vs Simple Voting Board",
+  description: "Compare Reflet and Nolt for collecting user feedback. See how a full-featured open-source platform compares to a lightweight voting tool.",
+  date: "2026-02-16",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["nolt alternative", "comparison", "product feedback", "feature voting"],
+  readingTime: "6 min read",
+  seoKeywords: ["nolt alternative", "reflet vs nolt", "nolt comparison", "nolt feedback alternative"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-nolt",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Nolt is a beautifully designed, lightweight feedback tool focused on simplicity. Reflet offers similar simplicity but adds more depth — with changelogs, real-time sync, and the freedom of open source.
+
+## Quick Summary
+
+| Aspect | Reflet | Nolt |
+|--------|--------|------|
+| **Pricing** | Free tier + $15-49/mo | $29/mo (single plan) |
+| **Open Source** | Yes (SSPL) | No |
+| **Self-Hosting** | Available | Not available |
+| **Changelog** | Built-in | Not available |
+| **Best For** | Teams wanting full feedback workflow | Teams wanting simple voting boards |
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="Nolt"
+  features={[
+    { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback" },
+    { name: "Feature Voting", reflet: "yes", competitor: "yes", description: "Let users upvote feature requests" },
+    { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction publicly" },
+    { name: "Changelog", reflet: "yes", competitor: "no", description: "Announce updates and new features" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "partial", description: "Instant updates across users" },
+    { name: "Open Source", reflet: "yes", competitor: "no", description: "Source code available for inspection" },
+    { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Deploy on your own infrastructure" },
+    { name: "GitHub Integration", reflet: "yes", competitor: "partial", description: "Two-way sync with GitHub issues" },
+    { name: "Embeddable Widget", reflet: "yes", competitor: "yes", description: "Embed feedback collection in your app" },
+    { name: "Custom Branding", reflet: "yes", competitor: "yes", description: "White-label your portal" },
+    { name: "API Access", reflet: "yes", competitor: "yes", description: "Programmatic access to your data" },
+    { name: "AI-Powered Triage", reflet: "yes", competitor: "no", description: "Automatic feedback categorization" },
+  ]}
+/>
+
+### Where Reflet Excels
+
+**Complete Feedback Workflow**: Reflet covers the entire cycle — collect feedback, prioritize with voting, plan on roadmaps, and announce with changelogs. Nolt stops at feedback boards and roadmaps.
+
+**Changelog**: Nolt doesn't offer a changelog feature, so you'd need a separate tool. Reflet includes it natively, keeping your entire feedback loop in one place.
+
+**Open Source & Self-Hosting**: Full code transparency and the ability to host on your own infrastructure for data sovereignty.
+
+**Free Tier**: Reflet offers a generous free plan, while Nolt starts at $29/mo with no free option.
+
+### Where Nolt Excels
+
+**Simplicity**: Nolt is intentionally minimal. If all you need is a clean voting board with zero complexity, Nolt delivers that elegantly.
+
+**Design Polish**: Nolt has a beautifully crafted interface that's pleasant to use, with a focus on aesthetics.
+
+**Single Pricing Tier**: One plan at $29/mo makes the decision simple — no tier comparison needed.
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="Nolt"
+  refletPricing={{
+    free: "Included",
+    paid: "$15-49/mo",
+    enterprise: "Custom",
+  }}
+  competitorPricing={{
+    free: "Not available",
+    paid: "$29/mo flat",
+    enterprise: "Not available",
+  }}
+/>
+
+<Callout type="tip" title="Free to Start">
+  Reflet's free tier means you can start collecting feedback without any commitment. Nolt requires $29/mo from day one.
+</Callout>
+
+## When to Choose Reflet
+
+- **You want the full feedback loop**: Feedback, roadmaps, and changelogs in one tool
+- **Free tier matters**: You want to start without financial commitment
+- **Open source is important**: You value code transparency and self-hosting
+- **You need AI triage**: Automated feedback categorization saves time
+- **GitHub integration is key**: Two-way sync with your development workflow
+
+## When to Choose Nolt
+
+- **Maximum simplicity**: You only need a basic voting board
+- **Aesthetics matter most**: Nolt's design is its primary selling point
+- **You don't need changelogs**: Your announcement workflow lives elsewhere
+
+## The Verdict
+
+Nolt is a beautiful, simple tool — but it's limited. No changelog, no free tier, and no open-source option.
+
+**Choose Reflet** for a more complete, affordable, and flexible feedback platform.
+
+**Choose Nolt** if you specifically want the most minimal voting board possible and don't mind paying $29/mo for it.
+
+---
+
+Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.

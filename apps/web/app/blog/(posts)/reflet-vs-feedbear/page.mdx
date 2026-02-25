@@ -1,0 +1,120 @@
+import { BlogPostLayout } from "@/features/blog/components/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/features/blog/components/comparison-table";
+import { Callout } from "@/features/blog/components/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs FeedBear: Feature-Rich Open Source vs Basic Feedback Tool",
+  description: "Compare Reflet and FeedBear for product feedback. See how a modern, AI-powered open-source platform compares to a basic, simple feedback tool.",
+  date: "2026-02-08",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["feedbear alternative", "comparison", "product feedback", "feature voting"],
+  readingTime: "5 min read",
+  seoKeywords: ["feedbear alternative", "reflet vs feedbear", "feedbear comparison", "feedbear feedback alternative"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-feedbear",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+FeedBear is a very basic feedback tool that focuses on simplicity above all else. It offers feedback boards and roadmaps starting at $49/month. Reflet offers significantly more features, including AI triage, changelogs, and open source — at a lower price with a free tier.
+
+## Quick Summary
+
+| Aspect | Reflet | FeedBear |
+|--------|--------|----------|
+| **Pricing** | Free tier + $15-49/mo | $49-99/mo |
+| **Open Source** | Yes (SSPL) | No |
+| **Self-Hosting** | Available | Not available |
+| **API Access** | Full REST API | No API |
+| **Best For** | Teams wanting modern feedback tools | Teams wanting maximum simplicity |
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="FeedBear"
+  features={[
+    { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback" },
+    { name: "Feature Voting", reflet: "yes", competitor: "yes", description: "Let users upvote feature requests" },
+    { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction publicly" },
+    { name: "Changelog", reflet: "yes", competitor: "no", description: "Announce updates and new features" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "no", description: "Instant updates across all users" },
+    { name: "Open Source", reflet: "yes", competitor: "no", description: "Source code available for inspection" },
+    { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Deploy on your own infrastructure" },
+    { name: "API Access", reflet: "yes", competitor: "no", description: "Programmatic access to your data" },
+    { name: "AI-Powered Triage", reflet: "yes", competitor: "no", description: "Automatic feedback categorization" },
+    { name: "GitHub Integration", reflet: "yes", competitor: "no", description: "Two-way sync with GitHub" },
+    { name: "Embeddable Widget", reflet: "yes", competitor: "partial", description: "Embed feedback in your app" },
+    { name: "Custom Branding", reflet: "yes", competitor: "yes", description: "White-label your portal" },
+  ]}
+/>
+
+### Where Reflet Excels
+
+**Dramatically More Features**: Reflet includes changelogs, AI triage, API access, GitHub integration, and real-time sync — none of which FeedBear offers.
+
+**Better Pricing**: Reflet starts free and goes up to $49/mo. FeedBear starts at $49/mo for far fewer features.
+
+**API Access**: FeedBear has no API, making programmatic access impossible. Reflet offers a full REST API and webhooks.
+
+**Open Source**: Full code transparency and self-hosting. FeedBear is entirely closed-source.
+
+### Where FeedBear Excels
+
+**Extreme Simplicity**: FeedBear is perhaps the simplest feedback tool available. If you want an absolute bare minimum with no learning curve, FeedBear delivers.
+
+**Multi-Language**: FeedBear supports 8 languages out of the box.
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="FeedBear"
+  refletPricing={{
+    free: "Included",
+    paid: "$15-49/mo",
+    enterprise: "Custom",
+  }}
+  competitorPricing={{
+    free: "Not available",
+    paid: "$49-99/mo",
+    enterprise: "Not available",
+  }}
+/>
+
+<Callout type="tip" title="More for Less">
+  Reflet's $15/mo plan includes more features than FeedBear's $49/mo plan — changelogs, API access, GitHub integration, and AI triage are all included.
+</Callout>
+
+## When to Choose Reflet
+
+- **You want more than the basics**: Changelogs, AI triage, API access, and integrations matter
+- **Budget matters**: Get more features for less money
+- **Open source is valued**: Code transparency and self-hosting
+- **Developer workflow**: API and GitHub integration are essential
+- **Free to start**: Try everything before committing
+
+## When to Choose FeedBear
+
+- **Absolute simplicity**: You want the most basic possible feedback tool
+- **Multi-language**: You need built-in support for 8 languages
+
+## The Verdict
+
+FeedBear charges premium prices ($49/mo+) for a tool that lacks basic features like changelogs, API access, and integrations. Reflet offers significantly more at a lower price.
+
+**Choose Reflet** — it's objectively a better value with more features, a free tier, and open-source benefits.
+
+**Choose FeedBear** only if you specifically want the most stripped-down feedback experience possible.
+
+---
+
+Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.

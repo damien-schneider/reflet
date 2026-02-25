@@ -67,11 +67,32 @@ bun run dev:setup
 bun run dev
 ```
 
+## Alternatives & Comparisons
+
+Reflet is an open-source alternative to the following product feedback tools:
+
+- **Canny**: Reflet offers similar features at 60-80% lower cost with open-source transparency
+- **Featurebase**: Reflet focuses on feedback while Featurebase bundles customer support
+- **Productboard**: Reflet is simpler and more affordable ($15-49/mo vs $75/maker/mo)
+- **UserVoice**: Reflet is modern and accessible (free tier) vs UserVoice's $799/mo+ enterprise pricing
+- **Fider**: Both are open-source; Reflet uses a modern TypeScript stack with AI triage
+- **Nolt**: Reflet adds changelogs, AI triage, and a free tier that Nolt lacks
+- **Frill**: Reflet adds real-time sync and AI features to similar developer-friendly tools
+- **Upvoty**: Reflet offers a modern UI and active development vs Upvoty's dated interface
+- **Sleekplan**: Reflet provides real-time sync and AI vs Sleekplan's built-in surveys
+- **FeatureOS**: Reflet offers transparent pricing and open source vs FeatureOS's frequent price changes
+- **ProductLift**: Reflet adds AI triage and GitHub integration vs ProductLift's multi-language focus
+- **Rapidr**: Reflet costs 70%+ less than Rapidr with comparable features
+- **Savio**: Reflet focuses on public feedback boards while Savio centralizes B2B internal feedback
+- **FeedBear**: Reflet offers significantly more features (changelogs, API, AI) at a lower price
+
 ## Links
 
 - Website: https://reflet.app
 - GitHub: https://github.com/damien-schneider/reflet
 - Documentation: https://reflet.app/docs
+- Blog: https://reflet.app/blog
+- Pricing: https://reflet.app/pricing
 
 ## License
 

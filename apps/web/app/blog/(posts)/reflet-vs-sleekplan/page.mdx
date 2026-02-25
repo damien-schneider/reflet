@@ -1,0 +1,117 @@
+import { BlogPostLayout } from "@/features/blog/components/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/features/blog/components/comparison-table";
+import { Callout } from "@/features/blog/components/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs Sleekplan: Open Source vs Budget All-in-One Feedback Tool",
+  description: "Compare Reflet and Sleekplan for product feedback. See how a modern open-source platform compares to a budget-friendly all-in-one feedback tool.",
+  date: "2026-02-13",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["sleekplan alternative", "comparison", "product feedback", "feature voting"],
+  readingTime: "6 min read",
+  seoKeywords: ["sleekplan alternative", "reflet vs sleekplan", "sleekplan comparison", "sleekplan feedback alternative"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-sleekplan",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Sleekplan is a budget-friendly all-in-one feedback tool that includes NPS/CSAT surveys alongside feedback boards and changelogs. Reflet focuses on doing the feedback workflow exceptionally well, with the advantages of open source and real-time architecture.
+
+## Quick Summary
+
+| Aspect | Reflet | Sleekplan |
+|--------|--------|-----------|
+| **Pricing** | Free tier + $15-49/mo | Free (limited) / $15-63/mo |
+| **Open Source** | Yes (SSPL) | No |
+| **Self-Hosting** | Available | Not available |
+| **Surveys** | Not built-in | NPS & CSAT included |
+| **Real-Time** | Sub-50ms sync | Standard updates |
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="Sleekplan"
+  features={[
+    { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback" },
+    { name: "Feature Voting", reflet: "yes", competitor: "yes", description: "Let users upvote feature requests" },
+    { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction publicly" },
+    { name: "Changelog", reflet: "yes", competitor: "yes", description: "Announce updates and new features" },
+    { name: "NPS/CSAT Surveys", reflet: "no", competitor: "yes", description: "Built-in satisfaction surveys" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "partial", description: "Instant updates across all users" },
+    { name: "Open Source", reflet: "yes", competitor: "no", description: "Source code available for inspection" },
+    { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Deploy on your own infrastructure" },
+    { name: "AI-Powered Triage", reflet: "yes", competitor: "no", description: "Automatic feedback categorization" },
+    { name: "GitHub Integration", reflet: "yes", competitor: "partial", description: "Two-way sync with GitHub" },
+    { name: "Duplicate Detection", reflet: "yes", competitor: "no", description: "Detect and merge duplicate feedback" },
+    { name: "Embeddable Widget", reflet: "yes", competitor: "yes", description: "Embed feedback in your app" },
+  ]}
+/>
+
+### Where Reflet Excels
+
+**Real-Time Architecture**: Reflet's Convex-powered backend delivers instant synchronization. Changes appear in under 50ms for all connected users.
+
+**AI-Powered Features**: Automatic feedback triage and duplicate detection help teams manage high volumes of feedback efficiently.
+
+**Open Source**: Full code transparency, self-hosting capability, and community contributions.
+
+**Modern Interface**: Reflet's UI is built with modern web standards, offering a cleaner, more responsive experience than Sleekplan's dated interface.
+
+### Where Sleekplan Excels
+
+**Built-in Surveys**: NPS and CSAT surveys are included natively, so you don't need a separate survey tool.
+
+**All-in-One Simplicity**: If you want feedback, roadmaps, changelogs, and surveys in one tool at a budget price, Sleekplan bundles it all.
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="Sleekplan"
+  refletPricing={{
+    free: "Generous free tier",
+    paid: "$15-49/mo",
+    enterprise: "Custom",
+  }}
+  competitorPricing={{
+    free: "Very limited",
+    paid: "$15-63/mo",
+    enterprise: "Not available",
+  }}
+/>
+
+## When to Choose Reflet
+
+- **Real-time collaboration**: Instant updates are important for your team workflow
+- **Open source**: You value code transparency, self-hosting, or customization
+- **AI features**: Automated triage and duplicate detection save you time
+- **Modern UX**: A polished, responsive interface matters to your team
+- **Scalability**: You need a tool that grows from free to enterprise
+
+## When to Choose Sleekplan
+
+- **Built-in surveys**: NPS and CSAT surveys in the same tool is essential
+- **Budget all-in-one**: You want the most features per dollar without separate tools
+- **Simple needs**: Basic feedback management at a low price point
+
+## The Verdict
+
+Sleekplan offers decent value as a budget all-in-one, but its dated interface and lack of AI features show its age. Reflet provides a more modern, powerful experience with the bonus of open source.
+
+**Choose Reflet** for a more capable, modern, and flexible feedback platform.
+
+**Choose Sleekplan** if built-in NPS/CSAT surveys are a must-have and you want everything in one affordable tool.
+
+---
+
+Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.

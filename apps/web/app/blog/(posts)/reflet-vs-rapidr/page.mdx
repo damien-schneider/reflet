@@ -1,0 +1,122 @@
+import { BlogPostLayout } from "@/features/blog/components/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/features/blog/components/comparison-table";
+import { Callout } from "@/features/blog/components/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs Rapidr: Open Source vs Roadmap-Focused Feedback Platform",
+  description: "Compare Reflet and Rapidr for product feedback and roadmap management. See how an open-source tool compares to a roadmap-focused SaaS platform.",
+  date: "2026-02-10",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["rapidr alternative", "comparison", "product feedback", "product roadmap"],
+  readingTime: "5 min read",
+  seoKeywords: ["rapidr alternative", "reflet vs rapidr", "rapidr comparison", "rapidr feedback alternative"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-rapidr",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Rapidr is a roadmap-focused feedback platform with strong Jira and Intercom integrations. Reflet delivers the same core features with the advantages of open source, real-time sync, and a generous free tier.
+
+## Quick Summary
+
+| Aspect | Reflet | Rapidr |
+|--------|--------|--------|
+| **Pricing** | Free tier + $15-49/mo | $49-249/mo |
+| **Open Source** | Yes (SSPL) | No |
+| **Self-Hosting** | Available | Not available |
+| **Focus** | Complete feedback workflow | Roadmap-centric feedback |
+| **Best For** | Startups, growing teams | Mid-market SaaS companies |
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="Rapidr"
+  features={[
+    { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback" },
+    { name: "Feature Voting", reflet: "yes", competitor: "yes", description: "Let users upvote feature requests" },
+    { name: "Public Roadmap", reflet: "yes", competitor: "strong", description: "Share product direction publicly" },
+    { name: "Changelog", reflet: "yes", competitor: "yes", description: "Announce updates and new features" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "partial", description: "Instant updates across all users" },
+    { name: "Open Source", reflet: "yes", competitor: "no", description: "Source code available for inspection" },
+    { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Deploy on your own infrastructure" },
+    { name: "Intercom Integration", reflet: "partial", competitor: "yes", description: "Collect feedback from Intercom" },
+    { name: "Jira Integration", reflet: "partial", competitor: "yes", description: "Sync with Jira issues" },
+    { name: "AI-Powered Triage", reflet: "yes", competitor: "no", description: "Automatic feedback categorization" },
+    { name: "GitHub Integration", reflet: "yes", competitor: "partial", description: "Two-way sync with GitHub" },
+    { name: "Custom Branding", reflet: "yes", competitor: "yes", description: "White-label your portal" },
+  ]}
+/>
+
+### Where Reflet Excels
+
+**Pricing**: Reflet's plans start at $15/mo with a free tier. Rapidr starts at $49/mo — over 3x the cost.
+
+**Open Source**: Self-host, inspect code, and customize. Rapidr is cloud-only and closed-source.
+
+**AI Features**: Automated feedback triage and duplicate detection.
+
+**Real-Time Sync**: Sub-50ms updates powered by Convex.
+
+### Where Rapidr Excels
+
+**Intercom Integration**: Native Intercom integration pulls feedback directly from support conversations.
+
+**Jira Integration**: Tighter Jira sync for teams using the Atlassian ecosystem.
+
+**Roadmap Focus**: Rapidr's roadmap features are particularly polished for external stakeholder communication.
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="Rapidr"
+  refletPricing={{
+    free: "Included",
+    paid: "$15-49/mo",
+    enterprise: "Custom",
+  }}
+  competitorPricing={{
+    free: "Not available",
+    paid: "$49-249/mo",
+    enterprise: "Custom",
+  }}
+/>
+
+<Callout type="tip" title="Save 70%+">
+  Teams switching from Rapidr to Reflet typically save over 70% on their monthly feedback tool costs while gaining open-source benefits.
+</Callout>
+
+## When to Choose Reflet
+
+- **Budget-conscious**: You want powerful feedback tools at a fraction of Rapidr's cost
+- **Open source matters**: Code transparency and self-hosting are important
+- **AI features help**: Automated triage saves time as feedback grows
+- **GitHub-first workflow**: Two-way GitHub sync is essential
+
+## When to Choose Rapidr
+
+- **Intercom-heavy workflow**: Native Intercom integration is critical
+- **Jira ecosystem**: Deep Jira sync is a must-have
+- **Roadmap presentation**: External roadmap presentation is your primary use case
+
+## The Verdict
+
+Rapidr is a solid tool, but its premium pricing is hard to justify when Reflet offers comparable features at a fraction of the cost, plus open source.
+
+**Choose Reflet** for better value, open source, and modern architecture.
+
+**Choose Rapidr** if Intercom or Jira integration is your dealbreaker.
+
+---
+
+Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.

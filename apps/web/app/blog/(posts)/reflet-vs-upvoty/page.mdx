@@ -1,0 +1,119 @@
+import { BlogPostLayout } from "@/features/blog/components/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/features/blog/components/comparison-table";
+import { Callout } from "@/features/blog/components/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs Upvoty: Modern Open Source vs Budget Feedback Board",
+  description: "Compare Reflet and Upvoty for product feedback management. See how a modern, real-time open-source platform compares to a budget-friendly feedback tool.",
+  date: "2026-02-14",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["upvoty alternative", "comparison", "product feedback", "feature voting"],
+  readingTime: "6 min read",
+  seoKeywords: ["upvoty alternative", "reflet vs upvoty", "upvoty comparison", "upvoty feedback alternative"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-upvoty",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Upvoty is one of the most affordable feedback tools on the market, offering feedback boards, roadmaps, and changelogs starting at $15/month. Reflet matches that affordability with a free tier and adds modern features like real-time sync and open source.
+
+## Quick Summary
+
+| Aspect | Reflet | Upvoty |
+|--------|--------|--------|
+| **Pricing** | Free tier + $15-49/mo | $15-75/mo |
+| **Open Source** | Yes (SSPL) | No |
+| **Self-Hosting** | Available | Not available |
+| **UI Quality** | Modern, real-time | Dated interface |
+| **Active Development** | Very active | Slow updates |
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="Upvoty"
+  features={[
+    { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback" },
+    { name: "Feature Voting", reflet: "yes", competitor: "yes", description: "Let users upvote feature requests" },
+    { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction publicly" },
+    { name: "Changelog", reflet: "yes", competitor: "yes", description: "Announce updates and new features" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "no", description: "Instant updates across all users" },
+    { name: "Open Source", reflet: "yes", competitor: "no", description: "Source code available for inspection" },
+    { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Deploy on your own infrastructure" },
+    { name: "Modern UI", reflet: "strong", competitor: "partial", description: "Clean, responsive modern interface" },
+    { name: "AI-Powered Triage", reflet: "yes", competitor: "no", description: "Automatic feedback categorization" },
+    { name: "Embeddable Widget", reflet: "yes", competitor: "yes", description: "Embed feedback in your app" },
+    { name: "Custom Branding", reflet: "yes", competitor: "yes", description: "White-label your portal" },
+    { name: "GitHub Integration", reflet: "yes", competitor: "no", description: "Two-way sync with GitHub" },
+  ]}
+/>
+
+### Where Reflet Excels
+
+**Modern Experience**: Reflet's UI is built with React 19 and Convex real-time sync. It feels fast and responsive. Upvoty's interface feels dated and hasn't seen significant UI updates.
+
+**Active Development**: Reflet is under active development with frequent releases. Upvoty's development pace has slowed significantly.
+
+**AI Features**: Automated feedback triage and duplicate detection — features Upvoty doesn't offer.
+
+**GitHub Integration**: Two-way sync with GitHub issues lets developers stay in their workflow.
+
+**Free Tier**: Start for free, then scale. Upvoty requires payment from day one.
+
+### Where Upvoty Excels
+
+**Proven and Stable**: Upvoty has been running reliably for years. If you need a simple, stable feedback tool with no surprises, it delivers.
+
+**SSO Support**: Upvoty offers SSO on higher plans, useful for teams that need identity management.
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="Upvoty"
+  refletPricing={{
+    free: "Included",
+    paid: "$15-49/mo",
+    enterprise: "Custom",
+  }}
+  competitorPricing={{
+    free: "Not available",
+    paid: "$15-75/mo",
+    enterprise: "Not available",
+  }}
+/>
+
+## When to Choose Reflet
+
+- **Modern UX matters**: You want a polished, real-time experience
+- **Active development**: You want a tool that's improving rapidly
+- **Open source**: Code transparency and self-hosting are important
+- **AI triage**: You handle enough feedback to benefit from automation
+- **Free start**: You want to validate before paying
+
+## When to Choose Upvoty
+
+- **Proven stability**: You just need a basic tool that works
+- **SSO requirement**: Enterprise identity management is a must-have
+- **Minimal needs**: Basic boards, roadmaps, and changelogs are sufficient
+
+## The Verdict
+
+Upvoty is a reliable budget option, but it hasn't kept pace with modern expectations. Reflet offers a more complete, modern experience at the same price point — with the bonus of open source and a free tier.
+
+**Choose Reflet** for a modern, actively developed feedback platform with better features and pricing.
+
+**Choose Upvoty** if you need a simple, stable tool and don't mind its dated interface.
+
+---
+
+Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.

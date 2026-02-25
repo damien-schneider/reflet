@@ -1,0 +1,119 @@
+import { BlogPostLayout } from "@/features/blog/components/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/features/blog/components/comparison-table";
+import { Callout } from "@/features/blog/components/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs FeatureOS: Open Source vs SaaS Product Feedback Platform",
+  description: "Compare Reflet and FeatureOS (formerly Hellonext) for product feedback. See how an open-source feedback tool with real-time sync compares to an established SaaS platform.",
+  date: "2026-02-12",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["featureos alternative", "hellonext alternative", "comparison", "product feedback"],
+  readingTime: "6 min read",
+  seoKeywords: ["featureos alternative", "reflet vs featureos", "hellonext alternative", "featureos comparison"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-featureos",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+FeatureOS (formerly known as Hellonext) is a flexible feedback platform for SaaS product managers. Reflet offers a similar feature set but differentiates with open source, real-time architecture, and AI-powered feedback management.
+
+## Quick Summary
+
+| Aspect | Reflet | FeatureOS |
+|--------|--------|-----------|
+| **Pricing** | Free tier + $15-49/mo | $29-99/mo |
+| **Open Source** | Yes (SSPL) | No |
+| **Self-Hosting** | Available | Not available |
+| **Formerly Known As** | — | Hellonext |
+| **Best For** | Teams wanting open source + real-time | SaaS product managers |
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="FeatureOS"
+  features={[
+    { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback" },
+    { name: "Feature Voting", reflet: "yes", competitor: "yes", description: "Let users upvote feature requests" },
+    { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction publicly" },
+    { name: "Changelog", reflet: "yes", competitor: "yes", description: "Announce updates and new features" },
+    { name: "Knowledge Base", reflet: "no", competitor: "yes", description: "Self-serve documentation" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "partial", description: "Instant updates across all users" },
+    { name: "Open Source", reflet: "yes", competitor: "no", description: "Source code available for inspection" },
+    { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Deploy on your own infrastructure" },
+    { name: "AI-Powered Triage", reflet: "yes", competitor: "no", description: "Automatic feedback categorization" },
+    { name: "GitHub Integration", reflet: "yes", competitor: "yes", description: "Sync with development tools" },
+    { name: "Custom Branding", reflet: "yes", competitor: "yes", description: "White-label your portal" },
+    { name: "API Access", reflet: "yes", competitor: "yes", description: "Programmatic access to your data" },
+  ]}
+/>
+
+### Where Reflet Excels
+
+**Open Source Freedom**: Inspect the code, self-host, and customize. FeatureOS is closed-source and cloud-only.
+
+**Real-Time Architecture**: Convex-powered sub-50ms synchronization creates a responsive, collaborative experience.
+
+**AI Triage**: Automatic feedback categorization and duplicate detection, built on modern AI models.
+
+**Pricing Stability**: Reflet's pricing is transparent and stable. FeatureOS has had frequent pricing changes, making budgeting unpredictable.
+
+**Free Tier**: Start at no cost. FeatureOS starts at $29/mo.
+
+### Where FeatureOS Excels
+
+**Knowledge Base**: FeatureOS includes a built-in knowledge base / help center — useful if you don't have one already.
+
+**Flexibility**: FeatureOS offers more customization options for feedback workflows and board layouts.
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="FeatureOS"
+  refletPricing={{
+    free: "Included",
+    paid: "$15-49/mo",
+    enterprise: "Custom",
+  }}
+  competitorPricing={{
+    free: "Not available",
+    paid: "$29-99/mo",
+    enterprise: "Custom",
+  }}
+/>
+
+## When to Choose Reflet
+
+- **Open source matters**: Code transparency and self-hosting are important
+- **Real-time collaboration**: Instant updates create a better team experience
+- **Predictable pricing**: You want stable, transparent pricing
+- **AI features**: Automated triage helps manage feedback volume
+- **Free to start**: Validate your workflow before paying
+
+## When to Choose FeatureOS
+
+- **Knowledge base needed**: You want a built-in help center alongside feedback
+- **Workflow flexibility**: Advanced customization of feedback workflows is essential
+- **Established tool**: You prefer a tool with a longer track record
+
+## The Verdict
+
+FeatureOS is a capable feedback platform, but its lack of open source, no free tier, and unpredictable pricing changes are drawbacks. Reflet offers more features per dollar with the transparency of open source.
+
+**Choose Reflet** for a modern, open-source platform with AI features and transparent pricing.
+
+**Choose FeatureOS** if you specifically need a built-in knowledge base alongside your feedback tools.
+
+---
+
+Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.

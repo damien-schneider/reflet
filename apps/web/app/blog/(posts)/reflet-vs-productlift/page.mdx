@@ -1,0 +1,121 @@
+import { BlogPostLayout } from "@/features/blog/components/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/features/blog/components/comparison-table";
+import { Callout } from "@/features/blog/components/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs ProductLift: Open Source vs Affordable White-Label Feedback",
+  description: "Compare Reflet and ProductLift for product feedback. See how an open-source platform compares to the most affordable white-label feedback tool.",
+  date: "2026-02-11",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["productlift alternative", "comparison", "product feedback", "feature voting"],
+  readingTime: "5 min read",
+  seoKeywords: ["productlift alternative", "reflet vs productlift", "productlift comparison"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-productlift",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+ProductLift positions itself as the most affordable feedback tool on the market, with plans starting at $14/month. It offers 22 language support, white-labeling, and GDPR compliance. Reflet matches its affordability with a free tier and adds real-time sync, AI triage, and open source.
+
+## Quick Summary
+
+| Aspect | Reflet | ProductLift |
+|--------|--------|-------------|
+| **Pricing** | Free tier + $15-49/mo | $14-49/mo |
+| **Open Source** | Yes (SSPL) | No |
+| **Self-Hosting** | Available | Not available |
+| **Languages** | English (i18n planned) | 22 languages |
+| **Best For** | Developer teams, startups | Budget-conscious teams |
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="ProductLift"
+  features={[
+    { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback" },
+    { name: "Feature Voting", reflet: "yes", competitor: "yes", description: "Let users upvote feature requests" },
+    { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction publicly" },
+    { name: "Changelog", reflet: "yes", competitor: "yes", description: "Announce updates and new features" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "no", description: "Instant updates across all users" },
+    { name: "Open Source", reflet: "yes", competitor: "no", description: "Source code available for inspection" },
+    { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Deploy on your own infrastructure" },
+    { name: "Multi-Language", reflet: "partial", competitor: "strong", description: "Support for multiple languages" },
+    { name: "AI-Powered Triage", reflet: "yes", competitor: "no", description: "Automatic feedback categorization" },
+    { name: "White-Label", reflet: "yes", competitor: "strong", description: "Full white-labeling capability" },
+    { name: "Stripe Integration", reflet: "no", competitor: "yes", description: "Connect with Stripe for customer data" },
+    { name: "GitHub Integration", reflet: "yes", competitor: "no", description: "Two-way sync with GitHub" },
+  ]}
+/>
+
+### Where Reflet Excels
+
+**Real-Time Architecture**: Instant synchronization for all users. ProductLift uses standard HTTP requests with manual refreshes.
+
+**AI Features**: Automated feedback triage and duplicate detection reduce manual work.
+
+**Open Source**: Full code transparency, self-hosting for data sovereignty, and community contributions.
+
+**GitHub Integration**: Two-way sync with GitHub issues keeps developers in their workflow.
+
+**Free Tier**: Reflet's free plan means zero risk to start. ProductLift starts at $14/mo.
+
+### Where ProductLift Excels
+
+**22 Languages**: ProductLift's multi-language support is exceptional — the broadest in the category.
+
+**Stripe Integration**: Connect feedback to paying customers via Stripe for revenue-aware prioritization.
+
+**White-Label Depth**: ProductLift's white-labeling is particularly thorough, ideal for agencies and SaaS platforms embedding feedback for their customers.
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="ProductLift"
+  refletPricing={{
+    free: "Included",
+    paid: "$15-49/mo",
+    enterprise: "Custom",
+  }}
+  competitorPricing={{
+    free: "Not available",
+    paid: "$14-49/mo",
+    enterprise: "Not available",
+  }}
+/>
+
+## When to Choose Reflet
+
+- **Open source**: Code transparency and self-hosting are important
+- **Real-time**: Instant updates matter for your team
+- **AI features**: You want automated triage and duplicate detection
+- **Developer workflow**: GitHub integration is essential
+- **Free start**: You want to try before you buy
+
+## When to Choose ProductLift
+
+- **Multi-language is critical**: You serve users in many languages
+- **White-label for clients**: You need deep white-labeling for agency use
+- **Stripe integration**: Revenue-aware feedback prioritization is important
+
+## The Verdict
+
+Both tools are affordable and capable. Reflet edges ahead with AI features, real-time sync, and open source. ProductLift wins on multi-language support and white-label depth.
+
+**Choose Reflet** for a more modern, feature-rich feedback platform with open-source flexibility.
+
+**Choose ProductLift** if multi-language support or deep white-labeling is your top priority.
+
+---
+
+Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.

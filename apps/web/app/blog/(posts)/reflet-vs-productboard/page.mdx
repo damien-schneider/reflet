@@ -1,0 +1,132 @@
+import { BlogPostLayout } from "@/features/blog/components/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/features/blog/components/comparison-table";
+import { Callout } from "@/features/blog/components/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs Productboard: Which Product Management Tool Fits Your Team?",
+  description: "A detailed comparison of Reflet and Productboard for product feedback and roadmap management. Compare features, pricing, and find the best fit for your team.",
+  date: "2026-02-20",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["productboard alternative", "comparison", "product feedback", "product management"],
+  readingTime: "9 min read",
+  seoKeywords: ["productboard alternative", "reflet vs productboard", "productboard comparison", "open source productboard alternative", "productboard free alternative"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-productboard",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Productboard is one of the most established product management platforms on the market, used by companies like Microsoft and Zendesk. Reflet takes a different approach — focused, open-source, and built for teams that want simplicity over complexity.
+
+This comparison breaks down where each tool shines and which is the better fit for your workflow.
+
+## Quick Summary
+
+| Aspect | Reflet | Productboard |
+|--------|--------|--------------|
+| **Pricing** | Free tier + $15-49/mo | Free (50 notes) / $75/maker/mo |
+| **Open Source** | Yes (SSPL) | No |
+| **Self-Hosting** | Available | Not available |
+| **Focus** | Feedback collection & roadmaps | Full product management suite |
+| **Best For** | Startups, indie devs, growing teams | Enterprise product organizations |
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="Productboard"
+  features={[
+    { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback" },
+    { name: "Feature Voting", reflet: "strong", competitor: "partial", description: "Public voting on feature requests" },
+    { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction with users" },
+    { name: "Changelog", reflet: "yes", competitor: "partial", description: "Announce updates and new features" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "partial", description: "Instant updates across all users" },
+    { name: "Open Source", reflet: "yes", competitor: "no", description: "Source code available for inspection" },
+    { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Deploy on your own infrastructure" },
+    { name: "Prioritization Framework", reflet: "partial", competitor: "strong", description: "Weighted scoring and frameworks" },
+    { name: "Customer Insights Portal", reflet: "partial", competitor: "strong", description: "Deep customer intelligence features" },
+    { name: "Jira/GitHub Integration", reflet: "yes", competitor: "yes", description: "Sync with development tools" },
+    { name: "Custom Branding", reflet: "yes", competitor: "yes", description: "White-label your feedback portal" },
+    { name: "API Access", reflet: "yes", competitor: "yes", description: "Programmatic access to your data" },
+  ]}
+/>
+
+### Where Reflet Excels
+
+**Simplicity and Focus**: Reflet does one thing exceptionally well — collecting user feedback, managing feature requests, and sharing roadmaps. There's no learning curve for advanced product management frameworks you may not need.
+
+**Cost Efficiency**: At $15-49/mo compared to Productboard's $75/maker/month, Reflet is dramatically more affordable. A 5-person team would pay $49/mo with Reflet vs $375/mo with Productboard.
+
+**Open Source Transparency**: With Reflet, you can inspect every line of code, self-host for complete data ownership, and customize the platform to your needs.
+
+**Public Feature Voting**: Reflet's voting system is a first-class feature, making it easy for users to express which features matter most. Productboard's voting is more limited in comparison.
+
+### Where Productboard Excels
+
+**Prioritization Frameworks**: Productboard offers sophisticated prioritization with weighted scoring, RICE framework, and value-vs-effort matrices — ideal for large product organizations.
+
+**Customer Intelligence**: Productboard's Insights portal aggregates feedback from sales calls, support tickets, and research into a unified view tied to customer segments and revenue data.
+
+**Enterprise Scale**: Built for large organizations with multiple product lines, Productboard handles complex hierarchies, permissions, and cross-team coordination.
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="Productboard"
+  refletPricing={{
+    free: "Included",
+    paid: "$15-49/mo",
+    enterprise: "Custom",
+  }}
+  competitorPricing={{
+    free: "50 notes only",
+    paid: "$75/maker/mo",
+    enterprise: "Custom",
+  }}
+/>
+
+<Callout type="tip" title="Significant Cost Savings">
+  A 5-person product team saves over $3,900/year by choosing Reflet over Productboard's paid plans — while keeping the core feedback and roadmap features they actually use.
+</Callout>
+
+## When to Choose Reflet
+
+Reflet is the better choice when:
+
+- **You need feedback-focused tools**: Your primary need is collecting user feedback and sharing roadmaps, not full product management
+- **Budget matters**: You want powerful tools without enterprise-level pricing
+- **Open source is important**: You value code transparency, data ownership, and self-hosting
+- **You're a startup or indie dev**: You need to move fast with a lightweight, focused tool
+- **Real-time collaboration is key**: Your team works closely and needs instant updates
+
+## When to Choose Productboard
+
+Productboard might be better when:
+
+- **You need advanced prioritization**: RICE scoring, value-effort matrices, and weighted frameworks are essential
+- **Customer intelligence is critical**: You need to tie feedback to customer segments and revenue
+- **You're a large product org**: Multiple product lines with complex team structures
+- **Budget is flexible**: You can invest $75+/maker/month for a comprehensive suite
+
+## The Verdict
+
+Productboard is a powerful, enterprise-grade product management platform — but that power comes with complexity and cost that many teams don't need.
+
+**Choose Reflet** if you want a focused, affordable, open-source feedback platform that does the core job brilliantly.
+
+**Choose Productboard** if you need enterprise-scale product management with advanced prioritization and customer intelligence.
+
+For most startups, indie developers, and growing teams, Reflet delivers the feedback and roadmap features they need at a fraction of the cost.
+
+---
+
+Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.

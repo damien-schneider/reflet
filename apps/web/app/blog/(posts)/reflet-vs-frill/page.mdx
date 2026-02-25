@@ -1,0 +1,117 @@
+import { BlogPostLayout } from "@/features/blog/components/blog-post-layout";
+import { ComparisonTable, PricingComparison } from "@/features/blog/components/comparison-table";
+import { Callout } from "@/features/blog/components/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Reflet vs Frill: Open Source vs Developer-Friendly SaaS Feedback Tool",
+  description: "Compare Reflet and Frill for product feedback collection. See how an open-source platform with real-time sync compares to a developer-friendly SaaS tool.",
+  date: "2026-02-15",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "comparison",
+  tags: ["frill alternative", "comparison", "product feedback", "feature voting"],
+  readingTime: "6 min read",
+  seoKeywords: ["frill alternative", "reflet vs frill", "frill comparison", "frill feedback alternative"],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/reflet-vs-frill",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+}
+
+Frill is a developer-friendly feedback platform with clean integrations and a focus on simplicity. Reflet shares that developer-first ethos but goes further with open source, real-time architecture, and a generous free tier.
+
+## Quick Summary
+
+| Aspect | Reflet | Frill |
+|--------|--------|-------|
+| **Pricing** | Free tier + $15-49/mo | $25-149/mo |
+| **Open Source** | Yes (SSPL) | No |
+| **Self-Hosting** | Available | Not available |
+| **Real-Time** | Built on Convex (under 50ms) | Standard updates |
+| **Best For** | Open-source first teams | Small dev teams |
+
+## Feature Comparison
+
+<ComparisonTable
+  competitorName="Frill"
+  features={[
+    { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback" },
+    { name: "Feature Voting", reflet: "yes", competitor: "yes", description: "Let users upvote feature requests" },
+    { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction publicly" },
+    { name: "Changelog", reflet: "yes", competitor: "yes", description: "Announce updates and new features" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "partial", description: "Instant updates across all users" },
+    { name: "Open Source", reflet: "yes", competitor: "no", description: "Source code available for inspection" },
+    { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Deploy on your own infrastructure" },
+    { name: "GitHub Integration", reflet: "yes", competitor: "yes", description: "Sync with development tools" },
+    { name: "Jira Integration", reflet: "partial", competitor: "yes", description: "Sync with Jira issues" },
+    { name: "Embeddable Widget", reflet: "yes", competitor: "yes", description: "Embed feedback collection in your app" },
+    { name: "Custom Branding", reflet: "yes", competitor: "yes", description: "White-label your portal" },
+    { name: "AI-Powered Triage", reflet: "yes", competitor: "no", description: "Automatic feedback categorization" },
+  ]}
+/>
+
+### Where Reflet Excels
+
+**Real-Time Architecture**: Built on Convex, Reflet delivers sub-50ms synchronization. Votes, comments, and status changes appear instantly for all connected users.
+
+**Open Source Advantage**: Full code transparency, self-hosting capability, and the ability to contribute back. Frill is closed-source SaaS only.
+
+**AI-Powered Triage**: Reflet uses AI to automatically categorize and detect duplicate feedback — a feature Frill doesn't offer.
+
+**Free Tier**: Start collecting feedback at no cost. Frill's plans start at $25/mo.
+
+### Where Frill Excels
+
+**Jira Integration**: Frill offers a native Jira integration that's more mature, which is important for teams deeply invested in the Jira ecosystem.
+
+**Established Track Record**: Frill has been around longer and has a proven track record with small development teams.
+
+## Pricing Comparison
+
+<PricingComparison
+  competitorName="Frill"
+  refletPricing={{
+    free: "Included",
+    paid: "$15-49/mo",
+    enterprise: "Custom",
+  }}
+  competitorPricing={{
+    free: "Not available",
+    paid: "$25-149/mo",
+    enterprise: "Not available",
+  }}
+/>
+
+## When to Choose Reflet
+
+- **Open source matters**: You want code transparency and self-hosting
+- **Real-time is important**: Instant updates create a better team experience
+- **Free tier is needed**: You want to start without financial commitment
+- **AI features help**: Automated triage saves time on high-volume feedback
+- **You're growing**: Reflet scales from free to enterprise
+
+## When to Choose Frill
+
+- **Deep Jira integration**: Your team lives in Jira and needs tight sync
+- **Proven stability**: You prefer a longer-established tool
+- **Simple needs**: Basic feedback, roadmap, and changelog without extras
+
+## The Verdict
+
+Both Reflet and Frill are solid developer-friendly feedback tools. Reflet differentiates with open source, real-time sync, AI triage, and a free tier.
+
+**Choose Reflet** for more features, more flexibility, and better pricing.
+
+**Choose Frill** if Jira integration is your top priority and you prefer established SaaS.
+
+---
+
+Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.

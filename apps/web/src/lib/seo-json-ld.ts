@@ -52,7 +52,10 @@ export function getHomePageJsonLd() {
           caption: SITE_NAME,
         },
         image: { "@id": `${BASE_URL}/#logo` },
-        sameAs: ["https://github.com/damien-schneider/reflet"],
+        sameAs: [
+          "https://github.com/damien-schneider/reflet",
+          "https://x.com/reflet_app",
+        ],
       },
       {
         "@type": "SoftwareApplication",
@@ -100,10 +103,10 @@ function getHomePageFaqJsonLd() {
       },
       {
         "@type": "Question",
-        name: "How does Reflet compare to Canny or Productboard?",
+        name: "How does Reflet compare to Canny, Productboard, or Featurebase?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Reflet is an open-source alternative to Canny and Productboard. It provides feedback boards with upvoting, roadmap kanban boards, and changelog releases. Reflet uses Convex for real-time sync and supports multi-tenant organizations with role-based access (Owner, Admin, Member).",
+          text: "Reflet is an open-source alternative to Canny, Productboard, Featurebase, UserVoice, Nolt, Frill, and other feedback tools. Unlike closed-source competitors, Reflet offers full code transparency, self-hosting, and a generous free tier. It provides feedback boards with upvoting, roadmap kanban boards, changelog releases, and AI-powered triage. Reflet uses Convex for real-time sync (<50ms) and supports multi-tenant organizations with role-based access.",
         },
       },
       {
@@ -127,7 +130,23 @@ function getHomePageFaqJsonLd() {
         name: "What are Reflet's main features?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Reflet includes: feedback collection with upvoting and comments, kanban-style roadmaps, changelog and release notes, real-time collaboration, team and organization management, custom branding and domain, private and public boards, full-text search, and optional GitHub integration.",
+          text: "Reflet includes: feedback collection with upvoting and comments, kanban-style roadmaps, changelog and release notes, real-time collaboration, team and organization management, custom branding and domain, private and public boards, full-text search, AI-powered feedback triage, embeddable widget, REST API and webhooks, and two-way GitHub integration.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What are the best alternatives to Featurebase?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "The best alternatives to Featurebase include Reflet (open-source, free tier, self-hostable), Canny (established SaaS), Productboard (enterprise product management), Fider (open-source, Go-based), Nolt (simple voting boards), Frill (developer-friendly), and UserVoice (enterprise). Reflet stands out as the only modern, open-source alternative with real-time sync, AI triage, and transparent pricing starting at $0/month.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What is the best open-source feedback tool?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Reflet is a leading open-source product feedback tool built with React 19, Next.js, and Convex. It offers feedback collection, feature voting, roadmaps, changelogs, AI-powered triage, and GitHub integration. Unlike Fider (Go-based), Reflet uses a modern TypeScript stack and provides a polished UI with real-time synchronization. It's available as a hosted service at reflet.app or can be self-hosted under the SSPL license.",
         },
       },
     ],

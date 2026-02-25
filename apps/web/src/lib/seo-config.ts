@@ -22,6 +22,16 @@ const DEFAULT_KEYWORDS = [
   "feedback board",
   "canny alternative",
   "productboard alternative",
+  "featurebase alternative",
+  "uservoice alternative",
+  "nolt alternative",
+  "frill alternative",
+  "upvoty alternative",
+  "open source feedback tool",
+  "self-hosted feedback",
+  "feature request tool",
+  "feedback widget",
+  "product feedback platform",
 ];
 
 export const siteConfig = {
