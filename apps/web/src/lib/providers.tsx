@@ -3,12 +3,19 @@
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { env } from "@reflet/env/web";
 import { ConvexReactClient } from "convex/react";
+import dynamic from "next/dynamic";
 import { ThemeProvider } from "next-themes";
 import type { PostHog } from "posthog-js";
-import { PostHogProvider } from "posthog-js/react";
 import { useEffect, useState } from "react";
-import { PostHogIdentifier } from "@/components/posthog-identifier";
 import { authClient } from "./auth-client";
+
+const PostHogIdentifier = dynamic(
+  () =>
+    import("@/components/posthog-identifier").then((m) => ({
+      default: m.PostHogIdentifier,
+    })),
+  { ssr: false }
+);
 
 const convexUrl = env.NEXT_PUBLIC_CONVEX_URL;
 if (!convexUrl) {
@@ -29,12 +36,20 @@ export function Providers({
   initialToken?: string;
 }) {
   const [posthogClient, setPosthogClient] = useState<PostHog | null>(null);
+  const [PostHogProviderComp, setPostHogProviderComp] =
+    useState<React.ComponentType<{
+      client: PostHog;
+      children: React.ReactNode;
+    }> | null>(null);
 
   useEffect(() => {
     if (isPostHogEnabled) {
-      import("posthog-js").then(({ default: ph }) => {
-        setPosthogClient(ph);
-      });
+      Promise.all([import("posthog-js"), import("posthog-js/react")]).then(
+        ([posthogModule, reactModule]) => {
+          setPosthogClient(posthogModule.default);
+          setPostHogProviderComp(() => reactModule.PostHogProvider);
+        }
+      );
     }
   }, []);
 
@@ -56,9 +71,11 @@ export function Providers({
     </ThemeProvider>
   );
 
-  if (!(isPostHogEnabled && posthogClient)) {
+  if (!(PostHogProviderComp && posthogClient)) {
     return inner;
   }
 
-  return <PostHogProvider client={posthogClient}>{inner}</PostHogProvider>;
+  return (
+    <PostHogProviderComp client={posthogClient}>{inner}</PostHogProviderComp>
+  );
 }

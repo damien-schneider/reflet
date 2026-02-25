@@ -598,9 +598,9 @@ function ChangelogView() {
                     {entry.date}
                   </span>
                 </div>
-                <h4 className="mb-2 font-semibold text-foreground text-sm">
+                <p className="mb-2 font-semibold text-foreground text-sm">
                   {entry.title}
-                </h4>
+                </p>
                 <ul className="space-y-1">
                   {entry.items.map((item) => (
                     <li

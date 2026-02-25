@@ -763,9 +763,9 @@ function ChangelogCard() {
               </Badge>
             </div>
 
-            <h4 className="mb-2 font-semibold text-foreground text-sm">
+            <p className="mb-2 font-semibold text-foreground text-sm">
               {release.title}
-            </h4>
+            </p>
 
             {/* Shipped features */}
             <div className="space-y-1.5">

@@ -34,6 +34,7 @@ function NavigationListList({
         className
       )}
       data-slot="navigation-menu-list"
+      role="menubar"
       {...props}
     />
   );

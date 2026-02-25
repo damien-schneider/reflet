@@ -18,6 +18,20 @@ const nextConfig: NextConfig = {
     mdxRs: {
       mdxType: "gfm",
     },
+    optimizePackageImports: [
+      "@phosphor-icons/react",
+      "@tabler/icons-react",
+      "@hugeicons/react",
+      "@hugeicons/core-free-icons",
+      "recharts",
+      "motion",
+      "motion/react",
+      "@dnd-kit/core",
+      "@dnd-kit/sortable",
+      "embla-carousel-react",
+      "react-day-picker",
+      "cmdk",
+    ],
   },
 
   // GEO: redirect llm.txt to llms.txt for crawlers that expect the shorter path

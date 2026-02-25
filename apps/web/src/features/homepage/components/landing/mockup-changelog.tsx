@@ -78,9 +78,9 @@ export default function ChangelogMockup() {
               </div>
 
               {/* Title */}
-              <h4 className="mb-1.5 font-semibold text-[14px] text-foreground leading-snug">
+              <p className="mb-1.5 font-semibold text-[14px] text-foreground leading-snug">
                 {entry.title}
-              </h4>
+              </p>
 
               {/* Description */}
               <p className="mb-3 text-[12px] text-muted-foreground leading-relaxed">

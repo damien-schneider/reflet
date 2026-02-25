@@ -175,9 +175,9 @@ export default function FeedbackBoardMockup() {
               >
                 <div className="mb-4">
                   <Badge color={selected.statusColor}>{selected.status}</Badge>
-                  <h4 className="mt-2 font-semibold text-[13px] text-foreground">
+                  <p className="mt-2 font-semibold text-[13px] text-foreground">
                     {selected.title}
-                  </h4>
+                  </p>
                 </div>
 
                 {/* AI Confidence */}

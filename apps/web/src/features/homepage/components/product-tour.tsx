@@ -283,9 +283,9 @@ function ChangelogMockup() {
           <span className="text-muted-foreground text-xs">February 2026</span>
         </div>
 
-        <h4 className="mb-2 font-semibold text-base text-foreground">
+        <p className="mb-2 font-semibold text-base text-foreground">
           Public API &amp; Webhook Support
-        </h4>
+        </p>
         <p className="mb-4 text-muted-foreground text-sm leading-relaxed">
           Ship integrations faster with our new REST API. Create feedback
           programmatically, query votes, and subscribe to real-time webhook
