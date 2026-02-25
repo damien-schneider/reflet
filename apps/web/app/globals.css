@@ -304,6 +304,19 @@
   animation-duration: 0.5s;
 }
 
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes dialog-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
 .hero-delay-7 {
   animation-delay: 0.7s;
   animation-duration: 0.5s;
