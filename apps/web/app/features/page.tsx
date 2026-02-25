@@ -8,6 +8,7 @@ import {
   Sparkle,
 } from "@/components/phosphor-icons";
 import { Button } from "@/components/ui/button";
+import { FeatureMockup } from "@/features/homepage/components/feature-mockups";
 import Footer from "@/features/homepage/components/footer";
 import Navbar from "@/features/homepage/components/navbar";
 import { generatePageMetadata } from "@/lib/seo-config";
@@ -208,13 +209,9 @@ export default function FeaturesPage() {
                       </ul>
                     </div>
 
-                    {/* Visual placeholder */}
-                    <div className="flex items-center justify-center rounded-2xl border border-[#e8e6e1] bg-[#faf9f7] p-8 dark:border-[#ffffff0d] dark:bg-[#1e1d1a]">
-                      <div
-                        className={`flex size-20 items-center justify-center rounded-2xl ${feature.accentBg} ${feature.accent}`}
-                      >
-                        <Icon size={40} weight="duotone" />
-                      </div>
+                    {/* Feature mockup */}
+                    <div className="flex items-center justify-center">
+                      <FeatureMockup id={feature.id} />
                     </div>
                   </div>
                 );

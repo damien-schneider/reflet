@@ -112,7 +112,11 @@ export const defaultMetadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  alternates: {},
+  alternates: {
+    types: {
+      "application/rss+xml": `${BASE_URL}/feed.xml`,
+    },
+  },
   verification: {
     // Add your verification codes here when available
     // google: 'your-google-verification-code',

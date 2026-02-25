@@ -6,8 +6,8 @@ export const meta = {
   title: "Best Open Source Product Feedback Tools in 2026",
   description: "A practical guide to the best open source feedback tools in 2026. Compare Reflet, Fider, Astuto, Formbricks, LogChimp, ClearFlask, and Plane — with honest notes on features, self-hosting, and tradeoffs.",
   date: "2026-02-25",
-  author: "Reflet Team",
-  authorRole: "Product",
+  author: "Damien Schneider",
+  authorRole: "Founder",
   category: "guide",
   tags: ["open source feedback tool", "best feedback tools 2026", "self-hosted feedback", "product feedback", "feature voting"],
   readingTime: "10 min read",
@@ -56,19 +56,28 @@ Before comparing tools, it helps to know what features actually matter for a fee
 
 ## 1. Reflet
 
-**Best for: Teams that want a full-featured, modern feedback platform they can self-host or use as a managed service.**
+**Best for: Teams that want a full-featured, modern feedback platform with AI triage, an embeddable widget, and two-way GitHub sync — self-hosted or managed.**
 
-[Reflet](https://www.reflet.app) is a product feedback and roadmap tool built with Next.js, React 19, and Convex. It covers the complete feedback-to-roadmap workflow in a single, cohesive product.
+[Reflet](https://www.reflet.app) is a product feedback and roadmap tool built with Next.js, React 19, and Convex. It covers the complete feedback-to-roadmap workflow in a single, cohesive product — and adds capabilities that no other open source tool in this list offers: AI-powered triage, a TypeScript-first embeddable SDK, and two-way GitHub synchronization.
 
 ### What Reflet Does Well
 
+- **AI-Powered Triage** — Auto-tag, score priority, estimate complexity, and detect duplicates — all in milliseconds. Duplicate detection includes merge support, so redundant requests consolidate cleanly instead of fragmenting your feedback.
+- **Embeddable Widget** — Drop a React component into your app and users submit feedback without leaving your product. The TypeScript-first SDK is a two-line integration:
+
+```tsx
+<RefletProvider><FeedbackButton /></RefletProvider>
+```
+
+It also exposes hooks like `useFeedbackList()` and `useVote()` for custom UI.
+
+- **Two-Way GitHub Sync** — Link feedback directly to GitHub issues. When a pull request merges, the linked feedback request automatically moves to "Shipped" and a changelog entry is generated. No other open source tool in this list offers this.
+- **Real-Time Everything** — Built on Convex — votes, comments, and status changes sync instantly across all connected users without polling or page refreshes.
+- **REST API & Webhooks** — Full CRUD API for programmatic access to all feedback data. Webhooks fire on every status transition, making it straightforward to connect Reflet to any internal workflow.
+- **Integrations** — Slack, Discord, and more. Get notified when feedback changes status or create feedback directly from Slack and Discord messages.
 - **Full feedback workflow**: Boards with upvoting and commenting, a visual kanban roadmap, and a built-in changelog for release notes — all in one product.
-- **Real-time collaboration**: Built on Convex, which provides true real-time synchronization. Changes appear instantly for all connected users without polling or page refreshes.
-- **Custom branding**: Custom domain, custom CSS, and white-label branding are available without requiring an enterprise plan upgrade.
-- **Team management**: Role-based access control (RBAC) for team members, with granular permissions.
-- **Smart notifications**: Users are notified when feedback they care about changes status.
-- **Full-text search**: Find feedback across all boards quickly.
-- **Modern UX**: The interface reflects current design standards, not early 2010s patterns.
+- **Custom branding**: Custom domain, custom CSS, and white-label branding available without an enterprise upgrade.
+- **Team management**: Role-based access control (RBAC) with granular permissions.
 
 ### License and Self-Hosting
 
@@ -76,11 +85,14 @@ Reflet is licensed under the SSPL (Server Side Public License) and the source co
 
 ### Tradeoffs
 
-Reflet is newer than tools like Fider, so its community and ecosystem are still growing. It does not currently offer AI-powered feedback categorization or NPS surveys.
+Reflet is newer than tools like Fider, so its community and ecosystem are still growing. NPS surveys are not currently part of the product.
 
 ### Pricing
 
-Reflet offers a free tier with core functionality, paid plans for growing teams, and a self-hosted option at no software cost.
+- **Starter (Free)**: Unlimited feedback posts, 1 admin, embeddable widget. No credit card required.
+- **Growth ($15/mo)**: 5 admins, private boards, Slack and Discord integrations, custom domain.
+- **Business ($49/mo)**: Unlimited seats, SSO, white-label branding, full API access.
+- **Self-hosted**: No software cost — deploy on your own infrastructure.
 
 ---
 
@@ -111,7 +123,7 @@ docker run -d -p 3000:3000 \
 
 ### Tradeoffs
 
-Fider has no roadmap view and no changelog. If you need to communicate product status or announce releases, you will need a separate tool. The UI is functional but dated compared to more recently built alternatives. There are also no native integrations with project management tools like Jira or Linear.
+Fider has no roadmap view and no changelog. If you need to communicate product status or announce releases, you will need a separate tool. The UI is functional but dated compared to more recently built alternatives. There are no native integrations with project management tools like Jira or Linear, no embeddable widget SDK, no AI triage, and no GitHub sync.
 
 ### Pricing
 
@@ -140,7 +152,7 @@ Astuto is open source and self-hostable. The managed hosted version is available
 
 ### Tradeoffs
 
-Astuto's integrations are webhook-based rather than native, which means some setup is required for each connection. The roadmap and changelog are more basic than what you get in tools like Canny or Reflet. Real-time updates are limited.
+Astuto's integrations are webhook-based rather than native, which means some setup is required for each connection. The roadmap and changelog are more basic than what you get in tools like Canny or Reflet. Real-time updates are limited. There is no AI triage, no embeddable widget SDK, and no GitHub sync.
 
 ### Pricing
 
@@ -244,15 +256,15 @@ Plane has a free self-hosted version and a free cloud tier, with paid plans for 
 
 ## Comparison at a Glance
 
-| Tool | Feedback Board | Roadmap | Changelog | Self-Hostable | License | Best For |
-|---|---|---|---|---|---|---|
-| **Reflet** | Yes | Yes (Kanban) | Yes | Yes | SSPL | Full workflow, modern UX, real-time |
-| **Fider** | Yes | No | No | Yes | AGPL | Simplicity, minimal infra |
-| **Astuto** | Yes | Yes | Basic | Yes | Open source | Affordable hosted + roadmap |
-| **Formbricks** | No | No | No | Yes | AGPL | Surveys and in-app research |
-| **LogChimp** | Yes | No | No | Yes | GPL | Lightweight, developer-friendly |
-| **ClearFlask** | Yes | Yes | Yes | Yes | Apache 2.0 | Feature-complete, complex setups |
-| **Plane** | No (internal only) | Yes | No | Yes | AGPL | Dev teams, internal tracking |
+| Tool | Feedback Board | Roadmap | Changelog | AI Triage | Widget/SDK | GitHub Sync | API | Self-Hostable | License |
+|---|---|---|---|---|---|---|---|---|---|
+| **Reflet** | Yes | Yes (Kanban) | Yes | Yes | Yes (React SDK) | Yes (two-way) | Yes | Yes | SSPL |
+| **Fider** | Yes | No | No | No | No | No | No | Yes | AGPL |
+| **Astuto** | Yes | Yes | Basic | No | No | No | Yes | Yes | Open source |
+| **Formbricks** | No | No | No | No | Yes (survey) | No | Yes | Yes | AGPL |
+| **LogChimp** | Yes | No | No | No | No | No | No | Yes | GPL |
+| **ClearFlask** | Yes | Yes | Yes | No | No | No | Yes | Yes | Apache 2.0 |
+| **Plane** | No (internal only) | Yes | No | No | No | Partial | Yes | Yes | AGPL |
 
 ---
 
@@ -260,7 +272,7 @@ Plane has a free self-hosted version and a free cloud tier, with paid plans for 
 
 **You want to deploy in under an hour with minimal maintenance:** Fider. A single Docker container and a Postgres database is about as simple as self-hosting gets.
 
-**You want a full feedback-to-roadmap workflow with modern UX:** Reflet. It is the only tool in this list that covers feedback boards, kanban roadmap, and changelog in a cohesive real-time experience.
+**You want a full feedback-to-roadmap workflow with AI triage, an embeddable widget, and GitHub sync:** Reflet. It is the only tool in this list that combines feedback boards, kanban roadmap, changelog, AI-powered triage, a TypeScript SDK, two-way GitHub sync, and Slack/Discord integrations in a single cohesive real-time product.
 
 **You want surveys and in-product feedback research:** Formbricks. It is purpose-built for that use case.
 
@@ -280,6 +292,6 @@ The closed-source feedback tool market — Canny, UserVoice, ProductBoard, Aha �
 
 Open source fills that gap. The tools in this list represent genuine alternatives: they cover the core feedback workflow, they let you own your data, and they will not retroactively retire your plan or raise prices without notice.
 
-Reflet is one of the newer entrants in this space, but it is the one most focused on delivering the complete feedback workflow — boards, roadmap, changelog — with a modern real-time architecture and custom branding that does not require an enterprise upgrade.
+Reflet is one of the newer entrants in this space, but it is the most complete. AI triage that auto-tags and deduplicates feedback in milliseconds, a two-line React embed for in-app collection, two-way GitHub sync that marks requests as Shipped when a PR merges, and Slack/Discord integrations — none of the other tools in this list offer all of that together.
 
 Explore the [Reflet source code on GitHub](https://github.com/damien-schneider/reflet), or [start a free account](https://www.reflet.app/dashboard) to see the product in action.

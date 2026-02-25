@@ -1,6 +1,23 @@
 import { BASE_URL, DEFAULT_DESCRIPTION, SITE_NAME } from "./seo-config";
 
 /**
+ * BreadcrumbList JSON-LD for navigation hierarchy.
+ * Helps search engines understand page depth and display breadcrumbs in results.
+ */
+export function getBreadcrumbJsonLd(items: { name: string; path: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: `${BASE_URL}${item.path}`,
+    })),
+  };
+}
+
+/**
  * JSON-LD structured data for the homepage
  */
 export function getHomePageJsonLd() {

@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { H1, Lead, Muted } from "@/components/ui/typography";
 import type { BlogPostMeta } from "@/lib/blog";
 import { formatDate, getCategoryLabel } from "@/lib/blog";
-import { getBlogPostJsonLd, getComparisonJsonLd } from "@/lib/seo-json-ld";
+import {
+  getBlogPostJsonLd,
+  getBreadcrumbJsonLd,
+  getComparisonJsonLd,
+} from "@/lib/seo-json-ld";
 
 interface BlogPostLayoutProps {
   meta: BlogPostMeta;
@@ -33,9 +37,16 @@ export function BlogPostLayout({ meta, slug, children }: BlogPostLayoutProps) {
           ogImage: meta.ogImage,
         });
 
+  const breadcrumbJsonLd = getBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Blog", path: "/blog" },
+    { name: meta.title, path: `/blog/${slug}` },
+  ]);
+
   return (
     <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <JsonLd data={jsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
 
       {/* Header */}
       <header className="mb-10">

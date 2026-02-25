@@ -7,8 +7,8 @@ export const meta = {
   title: "Reflet vs UserVoice: Open Source Alternative in 2026",
   description: "Looking for a UserVoice alternative? Compare Reflet and UserVoice on pricing, open source access, self-hosting, and features. UserVoice starts at $699/mo — Reflet has a free tier.",
   date: "2026-02-25",
-  author: "Reflet Team",
-  authorRole: "Product",
+  author: "Damien Schneider",
+  authorRole: "Founder",
   category: "comparison",
   tags: ["uservoice alternative", "open source uservoice alternative", "comparison", "product feedback", "self-hosted feedback"],
   readingTime: "8 min read",
@@ -42,7 +42,7 @@ If you are searching for a UserVoice alternative — particularly one that is op
 
 | Aspect | Reflet | UserVoice |
 |---|---|---|
-| **Pricing** | Free tier + paid plans | From ~$699/mo (no free plan) |
+| **Pricing** | Free tier + paid plans from $15/mo | From ~$699/mo (no free plan) |
 | **Open Source** | Yes (SSPL) | No |
 | **Self-Hosting** | Available | Not available |
 | **Self-Serve Signup** | Yes | No — requires sales demo |
@@ -50,6 +50,10 @@ If you are searching for a UserVoice alternative — particularly one that is op
 | **Public Roadmap** | Yes | Yes (some plans) |
 | **Changelog** | Yes | Limited |
 | **Real-Time Sync** | Yes (Convex) | Partial |
+| **Embeddable Widget** | Yes (drop-in SDK) | Yes |
+| **GitHub Sync** | Yes (two-way) | No |
+| **AI Triage** | Yes (auto-tag, priority score, dedup) | No |
+| **API & Webhooks** | Yes (full CRUD + status webhooks) | Limited |
 | **Custom Domain** | Yes | Yes |
 | **RBAC / Permissions** | Yes | Yes |
 | **NPS Surveys** | No | Yes |
@@ -82,7 +86,11 @@ The average UserVoice customer spends approximately $21,000 per year. Contracts 
     { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction publicly" },
     { name: "Kanban Roadmap View", reflet: "strong", competitor: "partial", description: "Visual drag-and-drop kanban board" },
     { name: "Changelog / Release Notes", reflet: "yes", competitor: "partial", description: "Announce new features and updates" },
-    { name: "Real-Time Sync", reflet: "strong", competitor: "partial", description: "Instant updates across all connected users" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "partial", description: "Instant updates across all connected users via Convex" },
+    { name: "Embeddable Widget SDK", reflet: "yes", competitor: "yes", description: "Drop-in widget to collect feedback inside your app" },
+    { name: "Two-Way GitHub Sync", reflet: "strong", competitor: "no", description: "Link feedback to issues; PR merge auto-ships and generates changelog" },
+    { name: "AI Triage", reflet: "strong", competitor: "no", description: "Auto-tag, priority score (High/Medium/Low), complexity estimate, and duplicate detection" },
+    { name: "REST API & Webhooks", reflet: "yes", competitor: "partial", description: "Full CRUD API; webhooks fire on every status transition" },
     { name: "Open Source", reflet: "yes", competitor: "no", description: "Access and modify the source code" },
     { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Host on your own infrastructure" },
     { name: "Self-Serve Signup", reflet: "yes", competitor: "no", description: "Start immediately without a sales process" },
@@ -111,9 +119,46 @@ This is relevant for teams with:
 - Organizations in regulated industries (healthcare, finance, government)
 - A general preference for not being locked into a single vendor's infrastructure
 
-### Modern Architecture and User Experience
+### Embeddable Widget SDK
 
-UserVoice has faced consistent criticism in recent years for an interface that feels dated. The tool was built in 2008 and much of the UX reflects that era. Reflet is built on Next.js, React 19, and Convex, resulting in a fast, real-time experience that feels like a modern SaaS application — not a legacy enterprise tool.
+Reflet ships a drop-in JavaScript SDK that lets you collect feedback directly inside your product — no redirect to an external portal required. The React integration is two lines:
+
+```tsx
+<RefletProvider publicKey="pk_live_...">
+  <FeedbackButton />
+</RefletProvider>
+```
+
+Users can submit feedback, browse the roadmap, and check the changelog without ever leaving your app. UserVoice also offers a widget, but Reflet's is designed from the ground up for developer-first embedding, with full theming support and TypeScript types.
+
+### Two-Way GitHub Sync
+
+This is one of Reflet's most significant differentiators. The integration is genuinely bidirectional:
+
+- Link any feedback item to an existing GitHub issue, or create one directly from Reflet
+- When a pull request that references the issue is merged, Reflet automatically moves the feedback status to "Shipped"
+- A changelog entry is auto-generated from the PR title and description
+
+This closes the complete loop: **feedback → prioritization → development → shipped → changelog**, with no manual status updates required. UserVoice has no equivalent GitHub integration.
+
+### AI-Powered Triage
+
+When a new feedback item arrives, Reflet's AI triage pipeline runs in milliseconds:
+
+- **Auto-tagging**: Assigns relevant labels based on content
+- **Priority scoring**: Rates items High, Medium, or Low based on language signals and existing vote patterns
+- **Complexity estimation**: Surfaces an estimated implementation effort (e.g., ~2h) to help prioritization
+- **Duplicate detection**: Identifies near-duplicate submissions (e.g., "87% match") and offers a one-click merge option
+
+This means your feedback inbox stays organized without manual triage overhead. UserVoice does not offer AI-powered triage.
+
+### Real-Time Everything
+
+Reflet is built on Convex, a real-time database that pushes updates to all connected clients instantly. Votes, comments, status changes, and new submissions appear in real time for every user — no refresh required. UserVoice offers partial real-time behavior but relies on more traditional request-response patterns for most interactions.
+
+### REST API and Webhooks
+
+Reflet exposes a full CRUD REST API covering feedback posts, roadmap items, changelog entries, and user data. Webhooks fire on every status transition, making it straightforward to pipe Reflet events into your internal tooling, Slack, or custom dashboards. UserVoice's API access is limited and gated behind higher-tier plans.
 
 ### Accessible to Non-Enterprise Teams
 
@@ -146,8 +191,8 @@ UserVoice has years of investment in enterprise security, compliance, and suppor
 <PricingComparison
   competitorName="UserVoice"
   refletPricing={{
-    free: "Full-featured free tier, no credit card required",
-    paid: "Paid plans starting at $19/mo",
+    free: "Starter — free forever (unlimited posts, public roadmap & changelog, 1 admin, embeddable widget)",
+    paid: "Growth — $15/mo (private boards, 5 admin seats, Slack & Discord, custom domain) · Business — $49/mo (unlimited seats, SSO/SAML, white-label, full API, dedicated success manager)",
     enterprise: "Custom pricing",
   }}
   competitorPricing={{
@@ -158,7 +203,7 @@ UserVoice has years of investment in enterprise security, compliance, and suppor
 />
 
 <Callout type="info" title="Cost Context">
-  UserVoice's premium plan at $1,499/mo is approximately 30x the cost of Reflet's most expensive published plan. For a seed-stage startup, UserVoice's minimum contract represents a substantial portion of annual tooling budget.
+  UserVoice's premium plan at $1,499/mo is approximately 30x the cost of Reflet's Business plan at $49/mo. For a seed-stage startup, UserVoice's minimum contract represents a substantial portion of annual tooling budget — and you still would not get GitHub sync, AI triage, or a real-time architecture.
 </Callout>
 
 ## Who Should Consider Switching
@@ -168,6 +213,8 @@ If you are currently evaluating UserVoice, Reflet is a strong fit when:
 - **Your team is a startup or scale-up** that cannot justify $8,000–$21,000 per year on a single feedback tool
 - **Data ownership matters** to your security or compliance team
 - **You want to start collecting feedback immediately** without a sales cycle
+- **Your team ships on GitHub** and wants the feedback-to-shipped loop to be automatic
+- **AI-assisted triage** would save your team hours of inbox management each week
 - **A modern, real-time UI** matters to your internal team's daily experience
 - **You are already self-hosting** other parts of your stack and want consistency
 
@@ -180,7 +227,9 @@ Reflet may not be the right fit if:
 
 UserVoice is a capable enterprise platform, but it is explicitly designed for large organizations with large budgets. It is not a realistic option for most startups, and even for mid-market companies the cost is difficult to justify when the core feedback workflow — boards, voting, roadmap, changelog — is available elsewhere for a fraction of the price.
 
-Reflet delivers the same core feedback-to-roadmap workflow with the addition of open-source access, self-hosting, real-time collaboration, and transparent pricing. For teams that do not specifically need UserVoice's revenue-weighting or NPS features, Reflet is a practical, modern, and significantly more affordable alternative.
+Reflet delivers the same core feedback-to-roadmap workflow and goes further: two-way GitHub sync that automatically closes the loop between feedback and shipped features, AI-powered triage that keeps your inbox organized without manual effort, an embeddable widget SDK for in-app collection, a full REST API with status-transition webhooks, and real-time collaboration built on Convex. All of this starts free, with transparent paid plans at $15/mo and $49/mo.
+
+For teams that do not specifically need UserVoice's revenue-weighting or NPS features, Reflet is a practical, modern, and significantly more capable alternative at a fraction of the cost.
 
 ---
 
