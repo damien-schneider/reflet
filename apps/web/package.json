@@ -44,6 +44,7 @@
     "@reflet/widget": "workspace:*",
     "@tabler/icons-react": "^3.36.1",
     "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/typography": "^0.5.19",
     "@tanstack/pacer": "^0.18.0",
     "@tanstack/react-pacer": "^0.19.4",
     "@tiptap/core": "^3.18.0",
@@ -95,6 +96,12 @@
     "vaul": "^1.1.2",
     "zod": "catalog:"
   },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions",
+    "last 2 Edge versions"
+  ],
   "devDependencies": {
     "@reflet/config": "workspace:*",
     "@testing-library/dom": "^10.4.0",

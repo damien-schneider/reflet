@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import { H1, H2, H3, Lead, Text } from "@/components/ui/typography";
+import { generatePageMetadata } from "@/lib/seo-config";
 
-export const metadata: Metadata = {
+export const metadata = generatePageMetadata({
   title: "Cookie Policy | Reflet",
   description:
-    "Learn how Reflet uses cookies and similar technologies on our platform.",
-};
+    "Learn how Reflet uses essential, functional, and analytics cookies. Find out which third-party services may set cookies and how to manage your preferences.",
+  path: "/cookies",
+});
 
 export default function CookiePolicy() {
   return (

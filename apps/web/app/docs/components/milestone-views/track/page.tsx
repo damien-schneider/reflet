@@ -51,7 +51,7 @@ export default function TrackViewPage() {
           Installation
         </h2>
         <InstallTabs
-          cliCommand="npx shadcn add https://reflet.app/r/milestone-track-view.json"
+          cliCommand="npx shadcn add https://www.reflet.app/r/milestone-track-view.json"
           manualCode={SOURCE_CODE}
         />
       </section>

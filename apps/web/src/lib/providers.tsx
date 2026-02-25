@@ -4,8 +4,9 @@ import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { env } from "@reflet/env/web";
 import { ConvexReactClient } from "convex/react";
 import { ThemeProvider } from "next-themes";
-import posthog from "posthog-js";
+import type { PostHog } from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
+import { useEffect, useState } from "react";
 import { PostHogIdentifier } from "@/components/posthog-identifier";
 import { authClient } from "./auth-client";
 
@@ -27,6 +28,16 @@ export function Providers({
   children: React.ReactNode;
   initialToken?: string;
 }) {
+  const [posthogClient, setPosthogClient] = useState<PostHog | null>(null);
+
+  useEffect(() => {
+    if (isPostHogEnabled) {
+      import("posthog-js").then(({ default: ph }) => {
+        setPosthogClient(ph);
+      });
+    }
+  }, []);
+
   const inner = (
     <ThemeProvider
       attribute="class"
@@ -39,15 +50,15 @@ export function Providers({
         client={convex}
         initialToken={initialToken}
       >
-        {isPostHogEnabled && <PostHogIdentifier />}
+        {isPostHogEnabled && posthogClient && <PostHogIdentifier />}
         {children}
       </ConvexBetterAuthProvider>
     </ThemeProvider>
   );
 
-  if (!isPostHogEnabled) {
+  if (!(isPostHogEnabled && posthogClient)) {
     return inner;
   }
 
-  return <PostHogProvider client={posthog}>{inner}</PostHogProvider>;
+  return <PostHogProvider client={posthogClient}>{inner}</PostHogProvider>;
 }

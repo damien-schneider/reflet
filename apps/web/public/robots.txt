@@ -6,9 +6,13 @@ Allow: /
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /dashboard-demo/
+Disallow: /auth/
+Disallow: /invite/
+Disallow: /pending-invitations
+Disallow: /design-explore/
+Disallow: /test-tiptap
 
 # Public organization pages (feedback, roadmap, changelog, boards)
-Allow: /*/
 Allow: /*/roadmap
 Allow: /*/changelog
 Allow: /*/boards/
@@ -34,6 +38,6 @@ User-agent: Bytespider
 Allow: /
 
 # Sitemap and LLM-oriented content
-Sitemap: https://reflet.app/sitemap.xml
+Sitemap: https://www.reflet.app/sitemap.xml
 # LLM-friendly overview per https://llmstxt.org/
-LLMs-Txt: https://reflet.app/llms.txt
+# LLMs-Txt: https://www.reflet.app/llms.txt

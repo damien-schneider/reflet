@@ -90,7 +90,7 @@ export default function ComponentsOverviewPage() {
         <h2 className="mb-1 font-semibold text-sm">Quick install</h2>
         <p className="text-muted-foreground text-xs">
           <InlineCode>
-            npx shadcn add https://reflet.app/r/feedback-sweep-corner.json
+            npx shadcn add https://www.reflet.app/r/feedback-sweep-corner.json
           </InlineCode>
         </p>
       </div>

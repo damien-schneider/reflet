@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
 @source "../src/**/*.{js,ts,jsx,tsx,mdx}";
 @source "./**/*.{js,ts,jsx,tsx,mdx}";
 @source "../node_modules/streamdown/dist/*.js";
@@ -236,6 +237,81 @@
       transform: translateX(0);
     }
   }
+}
+
+/* Hero CSS animations — replaces motion/react for SSR-friendly LCP */
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hero-animate {
+  opacity: 0;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-fade-up {
+  animation-name: hero-fade-up;
+}
+
+.hero-fade-in {
+  animation-name: hero-fade-in;
+}
+
+.hero-delay-0 {
+  animation-delay: 0s;
+  animation-duration: 0.6s;
+}
+
+.hero-delay-1 {
+  animation-delay: 0.1s;
+  animation-duration: 0.7s;
+}
+
+.hero-delay-2 {
+  animation-delay: 0.2s;
+  animation-duration: 0.6s;
+}
+
+.hero-delay-3 {
+  animation-delay: 0.3s;
+  animation-duration: 0.5s;
+}
+
+.hero-delay-5 {
+  animation-delay: 0.5s;
+  animation-duration: 0.8s;
+}
+
+.hero-delay-6 {
+  animation-delay: 0.6s;
+  animation-duration: 0.5s;
+}
+
+.hero-delay-7 {
+  animation-delay: 0.7s;
+  animation-duration: 0.5s;
+}
+
+.hero-delay-8 {
+  animation-delay: 0.8s;
+  animation-duration: 0.5s;
 }
 
 @layer components {

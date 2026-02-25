@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
   // Enable MDX pages
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
 
+  // Use Rust-based MDX compiler with GFM support (tables, strikethrough, etc.)
+  // This is serializable for Turbopack unlike JS remark plugins
+  experimental: {
+    mdxRs: {
+      mdxType: "gfm",
+    },
+  },
+
   // GEO: redirect llm.txt to llms.txt for crawlers that expect the shorter path
   redirects() {
     return [{ source: "/llm.txt", destination: "/llms.txt", permanent: true }];
@@ -81,12 +89,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withMDX = createMDX({
-  options: {
-    remarkPlugins: [],
-    rehypePlugins: [],
-  },
-});
+const withMDX = createMDX({});
 
 const configWithMDX = withMDX(nextConfig);
 

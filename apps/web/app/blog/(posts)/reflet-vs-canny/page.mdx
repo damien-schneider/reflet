@@ -4,15 +4,22 @@ import { Callout } from "@/features/blog/components/callout";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const meta = {
-  title: "Reflet vs Canny: Which Product Feedback Tool is Right for You?",
-  description: "A detailed comparison of Reflet and Canny for product feedback management. Compare features, pricing, and find the best tool for your team.",
-  date: "2026-02-05",
+  title: "Reflet vs Canny: Open Source Alternative to Canny in 2026",
+  description: "Looking for a Canny alternative? Compare Reflet and Canny on pricing, open source, self-hosting, and features. Find out which product feedback tool is right for your team.",
+  date: "2026-02-25",
   author: "Reflet Team",
   authorRole: "Product",
   category: "comparison",
-  tags: ["canny alternative", "comparison", "product feedback", "feature voting"],
+  tags: ["canny alternative", "open source canny alternative", "comparison", "product feedback", "self-hosted feedback"],
   readingTime: "8 min read",
-  seoKeywords: ["canny alternative", "reflet vs canny", "canny comparison", "open source canny alternative"],
+  seoKeywords: [
+    "canny alternative",
+    "open source canny alternative",
+    "canny self hosted",
+    "reflet vs canny",
+    "canny open source",
+    "free canny alternative",
+  ],
 };
 
 export const metadata = generatePageMetadata({
@@ -20,24 +27,46 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-canny",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-canny">{children}</BlogPostLayout>;
 }
 
-Both Reflet and Canny help product teams collect user feedback, prioritize features, and communicate product direction. But they take different approaches to solving these challenges.
+Canny is one of the most well-known product feedback platforms, but it comes at a steep price — and with no self-hosting option. If you are searching for an open source Canny alternative that gives you full control over your data without a four-figure monthly bill, Reflet is worth a serious look.
 
-In this comparison, we'll examine how Reflet and Canny stack up across features, pricing, and use cases to help you choose the right tool for your team.
+This page compares Reflet and Canny across the dimensions that matter most: features, pricing model, open-source access, and self-hosting.
 
-## Quick Summary
+## At a Glance
 
 | Aspect | Reflet | Canny |
-|--------|--------|-------|
-| **Pricing** | Free tier + $15-49/mo | Limited free + $79-359/mo |
+|---|---|---|
+| **Pricing** | Free tier + paid plans | Free (25 users) then $99–$359+/mo |
 | **Open Source** | Yes (SSPL) | No |
 | **Self-Hosting** | Available | Not available |
-| **Best For** | Startups, indie devs, privacy-conscious teams | Established companies with budget |
+| **Feedback Boards** | Yes | Yes |
+| **Roadmap** | Visual kanban | Column-based |
+| **Changelog** | Yes | Yes |
+| **Real-Time Sync** | Yes (Convex) | Partial |
+| **Custom Domain** | Yes | Yes (Core plan+) |
+| **White-Label** | Yes | Business plan only (extra cost) |
+| **Best For** | Startups, privacy-conscious teams, developers | Established companies with budget |
+
+## Pricing: Where Canny Gets Complicated
+
+Canny uses a **tracked user pricing model**, which means costs can escalate quickly and unpredictably as your product grows. Here is how their plans break down in 2026:
+
+- **Free**: Up to 25 tracked users. In late 2025, Canny retired legacy free plans for users exceeding this limit.
+- **Core ($19/mo)**: 100+ tracked users, one feedback board, one roadmap, one integration.
+- **Pro (from $99/mo)**: Unlimited roadmaps, PM integrations (Jira, Linear, Asana), user segmentation. Scales to $379/mo at 700 users and $579/mo at 1,250 users.
+- **Business**: Custom pricing. Required for SSO and — importantly — for removing Canny branding, which is treated as an additional paid upsell even at this tier.
+
+The tracked user model creates a **growth penalty**: the more engaged your users are, the more you pay. A viral feature request can push you into a higher tier overnight.
+
+<Callout type="tip" title="What Self-Hosting Saves">
+  Reflet can be self-hosted from the open-source repository at no software cost. You pay only for your own infrastructure — typically a fraction of Canny's Pro pricing even for large user bases.
+</Callout>
 
 ## Feature Comparison
 
@@ -45,131 +74,103 @@ In this comparison, we'll examine how Reflet and Canny stack up across features,
   competitorName="Canny"
   features={[
     { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback in one place" },
-    { name: "Feature Voting", reflet: "yes", competitor: "yes", description: "Let users upvote features they want" },
+    { name: "Upvoting System", reflet: "yes", competitor: "yes", description: "Let users vote on feature requests" },
     { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction with users" },
-    { name: "Changelog", reflet: "yes", competitor: "yes", description: "Announce new features and updates" },
-    { name: "Real-Time Sync", reflet: "strong", competitor: "yes", description: "Instant updates across all users" },
+    { name: "Kanban Roadmap View", reflet: "strong", competitor: "yes", description: "Visual drag-and-drop kanban board" },
+    { name: "Changelog / Release Notes", reflet: "yes", competitor: "yes", description: "Announce new features and updates" },
+    { name: "Real-Time Collaboration", reflet: "strong", competitor: "partial", description: "Instant updates across all connected users" },
     { name: "Open Source", reflet: "yes", competitor: "no", description: "Access and modify the source code" },
     { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Host on your own infrastructure" },
-    { name: "AI Autopilot", reflet: "no", competitor: "yes", description: "AI-powered feedback categorization" },
-    { name: "Custom Domain", reflet: "yes", competitor: "yes", description: "Use your own domain for feedback portal" },
-    { name: "Integrations", reflet: "yes", competitor: "yes", description: "Connect with other tools" },
-    { name: "Team Collaboration", reflet: "yes", competitor: "yes", description: "Work together on feedback management" },
-    { name: "Private Boards", reflet: "yes", competitor: "yes", description: "Internal feedback boards" },
+    { name: "Custom Domain", reflet: "yes", competitor: "yes", description: "Use your own domain for the feedback portal" },
+    { name: "Custom Branding / CSS", reflet: "yes", competitor: "yes", description: "Customize the look and feel of your portal" },
+    { name: "White-Label (no vendor branding)", reflet: "yes", competitor: "partial", description: "Remove vendor branding from the portal" },
+    { name: "RBAC / Team Permissions", reflet: "yes", competitor: "yes", description: "Role-based access control for team members" },
+    { name: "Smart Notifications", reflet: "yes", competitor: "yes", description: "Notify users when status changes" },
+    { name: "Full-Text Search", reflet: "yes", competitor: "yes", description: "Search across all feedback" },
+    { name: "AI Autopilot / Categorization", reflet: "no", competitor: "yes", description: "AI-powered feedback triage and deduplication" },
+    { name: "PM Integrations (Jira, Linear)", reflet: "yes", competitor: "yes", description: "Connect to project management tools" },
+    { name: "Self-Serve Signup", reflet: "yes", competitor: "yes", description: "Start without a sales call" },
+    { name: "Predictable Pricing", reflet: "yes", competitor: "no", description: "Costs do not scale with user engagement" },
   ]}
 />
 
-### Where Reflet Excels
+## Where Reflet Has an Edge
 
-**Real-Time Collaboration**: Built on Convex, Reflet provides instant synchronization across all connected users. Changes appear immediately without page refreshes, creating a more responsive experience for teams managing feedback together.
+### Open Source and Self-Hostable
 
-**Open Source Flexibility**: Reflet's open-source nature means you can inspect the code, contribute improvements, and customize the platform to your exact needs. This transparency builds trust and enables deeper integrations.
+Canny is a fully closed-source SaaS product. There is no self-hosting option — your data lives on Canny's servers and you are bound by their pricing changes, which have now occurred four times. Reflet is open source under the SSPL license. You can inspect the code, audit security practices, and deploy the entire stack on your own infrastructure.
 
-**Self-Hosting Option**: For teams with strict data residency requirements or those who prefer complete control, Reflet can be deployed on your own infrastructure.
+This matters most for teams with data residency requirements, compliance mandates, or a philosophical preference for owning their own tooling.
 
-### Where Canny Excels
+### Real-Time Collaboration
 
-**AI Autopilot**: Canny offers AI-powered features that automatically categorize feedback, detect duplicates, and suggest related requests. This can save significant time for teams processing high volumes of feedback.
+Reflet is built on [Convex](https://convex.dev), a backend that provides true real-time synchronization out of the box. When a team member updates a feedback item's status or a user leaves a comment, all connected clients update instantly — no polling, no page refresh. Canny offers some real-time updates but is primarily server-rendered, which makes the experience feel less responsive in collaborative scenarios.
 
-**Mature Ecosystem**: As an established player, Canny has a broader range of native integrations and a more extensive documentation library.
+### Predictable, Usage-Independent Pricing
 
-**Enterprise Features**: Canny's higher-tier plans include advanced features like SSO, dedicated support, and custom contracts.
+Reflet's pricing is not tied to the number of tracked users. You are not penalized for having an engaged community. This makes budgeting straightforward and removes the anxiety of a popular post sending you into a higher tier.
 
-## Pricing Comparison
+### White-Label Without the Upsell
+
+Reflet includes custom branding, custom CSS, and custom domain support without treating them as premium add-ons. On Canny, removing Canny branding requires the Business plan — and is listed as an additional upsell even on that tier.
+
+## Where Canny Has an Edge
+
+### AI Autopilot
+
+Canny's Autopilot feature uses AI to automatically categorize incoming feedback, detect duplicates, and suggest related posts. This is genuinely useful for high-volume feedback workflows and is one of Canny's most differentiating capabilities. Reflet does not currently offer AI-powered triage.
+
+### Mature Ecosystem and Integrations
+
+Canny has been in market since 2016 and has a broader set of native integrations, more extensive documentation, and a larger community of users who have solved common deployment problems. If you have a specific integration requirement, Canny's catalog is wider.
+
+### Enterprise Compliance
+
+Canny's Business plan includes SSO integrations and enterprise-grade support SLAs. If your procurement process requires formal compliance certifications, Canny has more of this infrastructure in place.
+
+## Pricing Side-by-Side
 
 <PricingComparison
   competitorName="Canny"
   refletPricing={{
-    free: "Included",
-    paid: "$15-49/mo",
-    enterprise: "Custom",
+    free: "Full-featured free tier",
+    paid: "Paid plans starting at $19/mo",
+    enterprise: "Custom pricing",
   }}
   competitorPricing={{
-    free: "Limited (100 tracked users)",
-    paid: "$79-359/mo",
-    enterprise: "Custom",
+    free: "Limited to 25 tracked users",
+    paid: "Core $19/mo, Pro from $99/mo (scales to $579/mo+)",
+    enterprise: "Custom — required for white-label",
   }}
 />
 
-<Callout type="tip" title="Cost Savings">
-  Teams switching from Canny to Reflet typically save 60-80% on their monthly feedback management costs while retaining core functionality.
+<Callout type="info" title="The Hidden Cost of Tracked Users">
+  Canny's Pro plan starts at $99/mo for around 100 tracked users. At 1,250 tracked users that becomes $579/mo — and that is before any Business-tier add-ons. Teams switching to Reflet typically report 60–80% cost savings at equivalent user volumes.
 </Callout>
-
-### Reflet Pricing Details
-
-- **Free**: Full-featured for small teams and projects
-- **Pro ($15/mo)**: More boards, members, and custom branding
-- **Team ($49/mo)**: Advanced features for growing teams
-- **Self-Hosted**: Free (open source)
-
-### Canny Pricing Details
-
-- **Free**: Limited to 100 tracked users, 1 admin
-- **Growth ($79/mo)**: Core features for small teams
-- **Business ($359/mo)**: Advanced features and integrations
-- **Enterprise**: Custom pricing
 
 ## When to Choose Reflet
 
-Reflet is the better choice when:
-
-- **Budget matters**: You need powerful feedback tools without the premium price tag
-- **Data ownership is important**: You want the option to self-host and control your data
-- **Transparency is valued**: You prefer open-source software you can inspect and customize
-- **Real-time collaboration is key**: Your team works closely together on feedback management
-- **You're a startup or indie developer**: You need a cost-effective solution that scales with you
+- Your team values open-source software and code transparency
+- You want the option to self-host and keep data on your own servers
+- Predictable pricing matters more than usage-based scaling
+- You need custom branding without paying for an enterprise tier
+- You are a startup, indie developer, or small-to-mid-size team on a budget
+- Real-time collaboration is important to your internal team workflow
 
 ## When to Choose Canny
 
-Canny might be the better choice when:
+- AI-powered feedback categorization and duplicate detection are essential
+- You need SOC 2 compliance or enterprise-level support contracts
+- You rely on a specific native Canny integration that Reflet does not offer
+- Your team prefers a vendor-managed, zero-maintenance SaaS deployment
+- Budget is not a constraint
 
-- **You need AI automation**: AI-powered categorization and duplicate detection are essential
-- **Enterprise compliance is required**: You need SOC 2, HIPAA, or other compliance certifications
-- **Budget is not a constraint**: You can afford premium pricing for a mature platform
-- **You need specific integrations**: Canny has a native integration you require
+## The Bottom Line
 
-## Migration Guide: Moving from Canny to Reflet
+Canny is a polished product, but its closed-source model, tracked-user pricing, and escalating costs make it a poor fit for many teams — particularly startups and developers who want transparency and control.
 
-Thinking about switching? Here's how to migrate your feedback data:
-
-### Step 1: Export Your Data from Canny
-
-1. Go to your Canny admin dashboard
-2. Navigate to Settings > Export
-3. Download your posts, votes, and comments as CSV
-
-### Step 2: Prepare Your Reflet Account
-
-1. Sign up for Reflet at [reflet.app](/dashboard)
-2. Create your organization and feedback boards
-3. Invite your team members
-
-### Step 3: Import Your Feedback
-
-1. Map your Canny categories to Reflet boards
-2. Use Reflet's import tools or API to migrate feedback items
-3. Verify that votes and comments are preserved
-
-### Step 4: Update Your Embeds and Links
-
-1. Replace Canny widgets with Reflet embeds
-2. Update any documentation or links pointing to your old feedback portal
-3. Set up redirects if using custom domains
-
-<Callout type="info" title="Need Help Migrating?">
-  Our team is happy to assist with migrations from Canny. Reach out through our feedback board or GitHub discussions for support.
-</Callout>
-
-## The Verdict
-
-Both Reflet and Canny are capable product feedback platforms, but they serve different needs.
-
-**Choose Reflet** if you value open-source software, need budget-friendly pricing, want self-hosting options, or require real-time collaboration features.
-
-**Choose Canny** if you need AI automation, require enterprise compliance features, or have specific integration requirements that only Canny supports.
-
-For most startups, indie developers, and growing teams, Reflet provides the best balance of features, flexibility, and value.
+Reflet covers the same core feature set — feedback boards with upvoting, kanban roadmap, changelog, custom branding, team management with RBAC — while adding open-source access and self-hosting as first-class options. For teams that do not specifically need AI autopilot or Canny's enterprise compliance layer, Reflet is a capable and significantly more affordable alternative.
 
 ---
 
-Ready to try Reflet? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.
+Ready to try Reflet? [Start for free](/dashboard) or explore the [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.

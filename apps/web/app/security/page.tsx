@@ -21,7 +21,7 @@ import { generatePageMetadata } from "@/lib/seo-config";
 export const metadata: Metadata = generatePageMetadata({
   title: "Security",
   description:
-    "Learn how Reflet protects your feedback data with enterprise-grade security, encryption, and compliance.",
+    "Discover how Reflet protects your data with enterprise-grade security, TLS encryption, role-based access controls, GDPR compliance, and regular security audits.",
   path: "/security",
   keywords: [
     "security",

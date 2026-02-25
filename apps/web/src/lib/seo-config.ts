@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
 
-export const BASE_URL = "https://reflet.app";
+export const BASE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.reflet.app";
 export const SITE_NAME = "Reflet";
 const DEFAULT_TITLE = "Reflet - Product Feedback & Roadmap Platform";
 export const DEFAULT_DESCRIPTION =
-  "Collect user feedback, prioritize features with voting, and share transparent roadmaps. Build products your users love with Reflet's modern feedback management platform.";
+  "Collect user feedback, prioritize features with voting, and share transparent roadmaps. Build the products your users love with Reflet's feedback management platform.";
 
 const DEFAULT_KEYWORDS = [
   "product feedback",
@@ -53,6 +54,8 @@ export const viewport: Viewport = {
   ],
 };
 
+const DEFAULT_OG_IMAGE = "/api/og";
+
 export const defaultMetadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
@@ -81,7 +84,7 @@ export const defaultMetadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     images: [
       {
-        url: "/og-image.png",
+        url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
         alt: "Reflet - Product Feedback & Roadmap Platform",
@@ -93,7 +96,7 @@ export const defaultMetadata: Metadata = {
     card: "summary_large_image",
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
-    images: ["/og-image.png"],
+    images: [DEFAULT_OG_IMAGE],
     creator: "@reflet_app",
     site: "@reflet_app",
   },
@@ -109,12 +112,7 @@ export const defaultMetadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  alternates: {
-    canonical: BASE_URL,
-    types: {
-      "application/rss+xml": `${BASE_URL}/feed.xml`,
-    },
-  },
+  alternates: {},
   verification: {
     // Add your verification codes here when available
     // google: 'your-google-verification-code',
@@ -123,13 +121,34 @@ export const defaultMetadata: Metadata = {
   },
   appleWebApp: {
     title: "Reflet",
+    statusBarStyle: "default",
   },
   category: "technology",
   classification: "Business Software",
 };
 
 /**
- * Generate metadata for a specific page
+ * Build an OG image URL that generates a branded image on-the-fly.
+ */
+function buildOgImageUrl(
+  title: string,
+  description?: string,
+  type?: string
+): string {
+  const params = new URLSearchParams({ title });
+  if (description) {
+    params.set("description", description.slice(0, 160));
+  }
+  if (type) {
+    params.set("type", type);
+  }
+  return `/api/og?${params.toString()}`;
+}
+
+/**
+ * Generate metadata for a specific page.
+ * Titles longer than 51 chars, or already containing the brand name,
+ * are set as absolute to avoid the "Title | Reflet | Reflet" duplication.
  */
 export function generatePageMetadata(options: {
   title: string;
@@ -138,6 +157,7 @@ export function generatePageMetadata(options: {
   keywords?: string[];
   noIndex?: boolean;
   ogImage?: string;
+  type?: string;
 }): Metadata {
   const {
     title,
@@ -146,20 +166,31 @@ export function generatePageMetadata(options: {
     keywords = [],
     noIndex = false,
     ogImage,
+    type,
   } = options;
 
   const url = `${BASE_URL}${path}`;
   const allKeywords = [...DEFAULT_KEYWORDS, ...keywords];
-  const image = ogImage ?? "/og-image.png";
+  const image =
+    ogImage ?? buildOgImageUrl(title, description, type ?? undefined);
+
+  // Use absolute title when it's long enough to overflow the template,
+  // or when it already contains the brand name.
+  const needsAbsoluteTitle =
+    title.length > 51 || title.toLowerCase().includes("reflet");
+  const titleValue = needsAbsoluteTitle ? { absolute: title } : title;
 
   return {
-    title,
+    title: titleValue,
     description,
     keywords: allKeywords,
     openGraph: {
       title,
       description,
       url,
+      locale: "en_US",
+      type: "website",
+      siteName: SITE_NAME,
       images: [
         {
           url: image,
@@ -171,6 +202,7 @@ export function generatePageMetadata(options: {
       ],
     },
     twitter: {
+      card: "summary_large_image",
       title,
       description,
       images: [image],

@@ -4,15 +4,22 @@ import { Callout } from "@/features/blog/components/callout";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const meta = {
-  title: "Reflet vs UserVoice: Modern Open Source vs Enterprise Legacy",
-  description: "Compare Reflet and UserVoice for product feedback management. See how a modern, open-source tool compares to the original enterprise feedback platform.",
-  date: "2026-02-18",
+  title: "Reflet vs UserVoice: Open Source Alternative in 2026",
+  description: "Looking for a UserVoice alternative? Compare Reflet and UserVoice on pricing, open source access, self-hosting, and features. UserVoice starts at $699/mo — Reflet has a free tier.",
+  date: "2026-02-25",
   author: "Reflet Team",
   authorRole: "Product",
   category: "comparison",
-  tags: ["uservoice alternative", "comparison", "product feedback", "feature voting"],
-  readingTime: "7 min read",
-  seoKeywords: ["uservoice alternative", "reflet vs uservoice", "uservoice comparison", "open source uservoice alternative", "uservoice free alternative"],
+  tags: ["uservoice alternative", "open source uservoice alternative", "comparison", "product feedback", "self-hosted feedback"],
+  readingTime: "8 min read",
+  seoKeywords: [
+    "uservoice alternative",
+    "open source uservoice alternative",
+    "uservoice open source",
+    "reflet vs uservoice",
+    "uservoice free alternative",
+    "uservoice self hosted",
+  ],
 };
 
 export const metadata = generatePageMetadata({
@@ -20,25 +27,50 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-uservoice",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-uservoice">{children}</BlogPostLayout>;
 }
 
-UserVoice was one of the first dedicated product feedback tools, pioneering the category over a decade ago. It's now firmly positioned as an enterprise solution with pricing starting at $799/month.
+UserVoice pioneered the product feedback category when it launched in 2008. Nearly two decades later, it has firmly repositioned as an enterprise-only platform with pricing that starts at approximately $699–$999 per month and average contracts around $21,000 per year. There is no free plan, no self-serve signup, and no open-source access.
 
-Reflet represents the modern generation — open source, developer-friendly, and accessible to teams of all sizes.
+If you are searching for a UserVoice alternative — particularly one that is open source, self-hostable, or simply affordable for a team that is not a Fortune 500 company — this comparison will help you understand where Reflet fits.
 
-## Quick Summary
+## At a Glance
 
 | Aspect | Reflet | UserVoice |
-|--------|--------|-----------|
-| **Pricing** | Free tier + $15-49/mo | $799/mo+ (no self-serve) |
+|---|---|---|
+| **Pricing** | Free tier + paid plans | From ~$699/mo (no free plan) |
 | **Open Source** | Yes (SSPL) | No |
 | **Self-Hosting** | Available | Not available |
-| **Target** | Startups to mid-market | Enterprise / Fortune 500 |
-| **Setup** | Minutes | Weeks (sales process) |
+| **Self-Serve Signup** | Yes | No — requires sales demo |
+| **Feedback Boards** | Yes | Yes |
+| **Public Roadmap** | Yes | Yes (some plans) |
+| **Changelog** | Yes | Limited |
+| **Real-Time Sync** | Yes (Convex) | Partial |
+| **Custom Domain** | Yes | Yes |
+| **RBAC / Permissions** | Yes | Yes |
+| **NPS Surveys** | No | Yes |
+| **Revenue-Weighted Prioritization** | No | Yes |
+| **Best For** | Startups, scale-ups, developer teams | Large enterprises with dedicated PM budgets |
+
+## The UserVoice Pricing Reality
+
+UserVoice does not publish pricing publicly — you must go through a sales process to get a quote. Based on publicly available data and third-party research, their plans in 2026 fall roughly into:
+
+- **Growth**: Entry-level plan, for smaller teams needing basic feedback collection and public updates.
+- **Team**: Focused on internal-facing feedback collection.
+- **Strategic**: Combines Growth and Team capabilities for larger organizations.
+- **Premium (~$1,499/mo or $18,000/year)**: Their most popular plan, supporting up to 5,000 unique users with web portal, widget, status updates, and customer data integrations.
+- **Enterprise**: Custom contracts, security add-ons, and dedicated support.
+
+The average UserVoice customer spends approximately $21,000 per year. Contracts require quarterly billing minimums and onboarding is complex enough that many organizations require external consultants.
+
+<Callout type="tip" title="Getting Started Comparison">
+  Reflet: sign up at reflet.app, create a board, invite your team, start collecting feedback. Total time: under 10 minutes. UserVoice: schedule a demo, complete a sales process, negotiate a contract, complete onboarding. Total time: weeks.
+</Callout>
 
 ## Feature Comparison
 
@@ -46,81 +78,110 @@ Reflet represents the modern generation — open source, developer-friendly, and
   competitorName="UserVoice"
   features={[
     { name: "Feedback Collection", reflet: "yes", competitor: "yes", description: "Collect and organize user feedback" },
-    { name: "Feature Voting", reflet: "yes", competitor: "yes", description: "Let users upvote feature requests" },
+    { name: "Upvoting System", reflet: "yes", competitor: "yes", description: "Let users vote on feature requests" },
     { name: "Public Roadmap", reflet: "yes", competitor: "yes", description: "Share product direction publicly" },
-    { name: "Changelog", reflet: "yes", competitor: "partial", description: "Announce new features and updates" },
-    { name: "Real-Time Sync", reflet: "strong", competitor: "partial", description: "Instant updates across all users" },
+    { name: "Kanban Roadmap View", reflet: "strong", competitor: "partial", description: "Visual drag-and-drop kanban board" },
+    { name: "Changelog / Release Notes", reflet: "yes", competitor: "partial", description: "Announce new features and updates" },
+    { name: "Real-Time Sync", reflet: "strong", competitor: "partial", description: "Instant updates across all connected users" },
     { name: "Open Source", reflet: "yes", competitor: "no", description: "Access and modify the source code" },
     { name: "Self-Hosting", reflet: "yes", competitor: "no", description: "Host on your own infrastructure" },
+    { name: "Self-Serve Signup", reflet: "yes", competitor: "no", description: "Start immediately without a sales process" },
+    { name: "Custom Domain", reflet: "yes", competitor: "yes", description: "Use your own domain for the feedback portal" },
+    { name: "Custom Branding / CSS", reflet: "yes", competitor: "yes", description: "Customize the look and feel" },
+    { name: "RBAC / Team Permissions", reflet: "yes", competitor: "yes", description: "Role-based access control" },
+    { name: "Smart Notifications", reflet: "yes", competitor: "yes", description: "Notify users when status changes" },
+    { name: "Full-Text Search", reflet: "yes", competitor: "yes", description: "Search across all feedback" },
     { name: "NPS Surveys", reflet: "no", competitor: "yes", description: "Built-in Net Promoter Score surveys" },
-    { name: "Revenue-Based Prioritization", reflet: "no", competitor: "yes", description: "Weight feedback by customer revenue" },
-    { name: "Custom Branding", reflet: "yes", competitor: "yes", description: "White-label your feedback portal" },
-    { name: "API Access", reflet: "yes", competitor: "yes", description: "Programmatic access to your data" },
-    { name: "Self-Serve Signup", reflet: "yes", competitor: "no", description: "Start immediately without sales calls" },
+    { name: "Revenue-Weighted Prioritization", reflet: "no", competitor: "yes", description: "Weight feedback by customer ARR" },
+    { name: "Salesforce Integration", reflet: "no", competitor: "yes", description: "Native CRM data sync" },
+    { name: "Transparent Pricing", reflet: "yes", competitor: "no", description: "Public pricing without a sales call" },
+    { name: "Free Tier", reflet: "yes", competitor: "no", description: "Start without a credit card" },
   ]}
 />
 
-### Where Reflet Excels
+## Where Reflet Has an Edge
 
-**Accessibility**: Start collecting feedback in minutes with a free tier. No sales calls, no demos, no procurement process.
+### Open Source and Self-Hostable
 
-**Modern Architecture**: Built on Convex for real-time synchronization, React 19, and Next.js — Reflet feels fast and responsive compared to UserVoice's aging interface.
+UserVoice is entirely closed-source. There is no community edition, no source code access, and no self-hosting path. Reflet is open source under the SSPL license, which means you can inspect the codebase, run your own instance, and retain full ownership of your data.
 
-**Open Source Freedom**: Inspect the code, self-host, contribute improvements. UserVoice is a complete black box.
+This is relevant for teams with:
+- Data residency or sovereignty requirements
+- Security teams that need to audit tooling code
+- Organizations in regulated industries (healthcare, finance, government)
+- A general preference for not being locked into a single vendor's infrastructure
 
-**Pricing for Humans**: At $15-49/mo, Reflet is accessible to solo founders and startups. UserVoice's $799/mo minimum puts it out of reach for most teams.
+### Modern Architecture and User Experience
 
-### Where UserVoice Excels
+UserVoice has faced consistent criticism in recent years for an interface that feels dated. The tool was built in 2008 and much of the UX reflects that era. Reflet is built on Next.js, React 19, and Convex, resulting in a fast, real-time experience that feels like a modern SaaS application — not a legacy enterprise tool.
 
-**Enterprise Features**: Revenue-based prioritization, advanced segmentation, and Salesforce integration make UserVoice powerful for large B2B companies.
+### Accessible to Non-Enterprise Teams
 
-**NPS Integration**: Built-in NPS surveys help tie satisfaction scores to feedback and feature requests.
+UserVoice's minimum viable contract is out of reach for the vast majority of startups, indie developers, and growing companies. Reflet provides a usable free tier and transparent paid plans, making the core feedback workflow accessible without a procurement process.
 
-**Established Trust**: Fortune 500 companies use UserVoice, providing enterprise-grade compliance and support.
+### Self-Serve, Immediate Access
 
-## Pricing Comparison
+You can have a Reflet feedback board running in under ten minutes. With UserVoice, getting started requires scheduling a demo, going through a sales process, signing a contract, and completing a formal onboarding. This is appropriate for Fortune 500 procurement workflows but counterproductive for agile teams who need to move quickly.
+
+## Where UserVoice Has an Edge
+
+### Revenue-Based Prioritization
+
+UserVoice's most compelling differentiator is the ability to weight feedback by customer revenue. When you connect your CRM data, you can see not just which features have the most votes, but which features are most requested by your highest-value customers. For B2B SaaS companies managing complex enterprise relationships, this is genuinely powerful. Reflet does not offer this capability.
+
+### NPS Integration
+
+UserVoice includes built-in Net Promoter Score surveys, allowing you to correlate satisfaction scores with specific feature requests and product changes. If NPS tracking is a core part of your product analytics workflow, UserVoice's built-in integration removes the need for a separate tool.
+
+### Salesforce and CRM Ecosystem
+
+UserVoice has deep integrations with Salesforce and other enterprise CRM platforms, enabling account managers and sales teams to log customer feedback directly into the product feedback system. This bidirectional data flow is particularly valuable for teams that run complex enterprise sales and customer success motions.
+
+### Enterprise Compliance Infrastructure
+
+UserVoice has years of investment in enterprise security, compliance, and support SLAs. If your organization requires specific certifications or dedicated support contracts as a condition of vendor approval, UserVoice has more of this infrastructure established.
+
+## Pricing Side-by-Side
 
 <PricingComparison
   competitorName="UserVoice"
   refletPricing={{
-    free: "Included",
-    paid: "$15-49/mo",
-    enterprise: "Custom",
+    free: "Full-featured free tier, no credit card required",
+    paid: "Paid plans starting at $19/mo",
+    enterprise: "Custom pricing",
   }}
   competitorPricing={{
-    free: "Not available",
-    paid: "$799/mo minimum",
-    enterprise: "Custom (higher)",
+    free: "No free plan",
+    paid: "From ~$699/mo (requires sales demo)",
+    enterprise: "Custom — average contract ~$21,000/year",
   }}
 />
 
-<Callout type="tip" title="16x More Affordable">
-  Reflet's most expensive plan costs $49/mo — that's over 16x cheaper than UserVoice's entry point. For early-stage companies, the savings are transformative.
+<Callout type="info" title="Cost Context">
+  UserVoice's premium plan at $1,499/mo is approximately 30x the cost of Reflet's most expensive published plan. For a seed-stage startup, UserVoice's minimum contract represents a substantial portion of annual tooling budget.
 </Callout>
 
-## When to Choose Reflet
+## Who Should Consider Switching
 
-- **You're a startup or growing team**: You need feedback tools without enterprise budgets
-- **Speed matters**: You want to start collecting feedback today, not after a sales cycle
-- **Open source is valued**: Code transparency and self-hosting are important
-- **Modern UX matters**: You want a fast, responsive, real-time experience
-- **Budget is a factor**: $799/mo is not justifiable for your current stage
+If you are currently evaluating UserVoice, Reflet is a strong fit when:
 
-## When to Choose UserVoice
+- **Your team is a startup or scale-up** that cannot justify $8,000–$21,000 per year on a single feedback tool
+- **Data ownership matters** to your security or compliance team
+- **You want to start collecting feedback immediately** without a sales cycle
+- **A modern, real-time UI** matters to your internal team's daily experience
+- **You are already self-hosting** other parts of your stack and want consistency
 
-- **You're a Fortune 500 company**: You need enterprise compliance and support
-- **Revenue-weighted feedback is critical**: You need to prioritize by customer value
-- **You have budget**: $799+/mo is within your feedback tooling budget
-- **NPS integration is essential**: Built-in satisfaction surveys are a must
+Reflet may not be the right fit if:
+- Revenue-weighted prioritization is central to how your PM team makes decisions
+- You need NPS surveys natively integrated into your feedback workflow
+- Your procurement process requires specific enterprise compliance certifications that UserVoice already holds
 
-## The Verdict
+## The Bottom Line
 
-UserVoice defined the feedback category but hasn't kept pace with modern expectations. Its enterprise pricing and sales-driven approach make it inaccessible to most teams.
+UserVoice is a capable enterprise platform, but it is explicitly designed for large organizations with large budgets. It is not a realistic option for most startups, and even for mid-market companies the cost is difficult to justify when the core feedback workflow — boards, voting, roadmap, changelog — is available elsewhere for a fraction of the price.
 
-**Choose Reflet** for a modern, open-source, affordable alternative that provides the core feedback features most teams need.
-
-**Choose UserVoice** only if you're an enterprise with specific needs for revenue-based prioritization and a budget to match.
+Reflet delivers the same core feedback-to-roadmap workflow with the addition of open-source access, self-hosting, real-time collaboration, and transparent pricing. For teams that do not specifically need UserVoice's revenue-weighting or NPS features, Reflet is a practical, modern, and significantly more affordable alternative.
 
 ---
 
-Ready for a modern feedback experience? [Get started for free](/dashboard) or explore our [open-source repository](https://github.com/damien-schneider/reflet) on GitHub.
+Ready to see the difference? [Start collecting feedback for free](/dashboard) or explore the [Reflet source code on GitHub](https://github.com/damien-schneider/reflet).

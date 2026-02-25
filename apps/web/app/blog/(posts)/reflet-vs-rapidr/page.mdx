@@ -20,10 +20,11 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-rapidr",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-rapidr">{children}</BlogPostLayout>;
 }
 
 Rapidr is a roadmap-focused feedback platform with strong Jira and Intercom integrations. Reflet delivers the same core features with the advantages of open source, real-time sync, and a generous free tier.

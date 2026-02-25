@@ -24,7 +24,7 @@ const PRODUCT_LINKS = [
 ] as const;
 
 const COMPANY_LINKS = [
-  { label: "Features", href: "/#features", internal: true },
+  { label: "Features", href: "/features", internal: true },
   { label: "Pricing", href: "/pricing", internal: true },
   { label: "Integrations", href: "/integrations", internal: true },
   { label: "Security", href: "/security", internal: true },
@@ -70,9 +70,9 @@ export default function Footer() {
 
           {/* Product */}
           <div>
-            <h4 className="mb-3 font-semibold text-foreground text-sm">
+            <p className="mb-3 font-semibold text-foreground text-sm">
               Product
-            </h4>
+            </p>
             <ul className="space-y-2">
               {PRODUCT_LINKS.map((link) => (
                 <li key={link.label}>
@@ -91,9 +91,9 @@ export default function Footer() {
 
           {/* Company */}
           <div>
-            <h4 className="mb-3 font-semibold text-foreground text-sm">
+            <p className="mb-3 font-semibold text-foreground text-sm">
               Company
-            </h4>
+            </p>
             <ul className="space-y-2">
               {COMPANY_LINKS.map((link) =>
                 "internal" in link && link.internal ? (
@@ -133,9 +133,9 @@ export default function Footer() {
 
           {/* Compare */}
           <div>
-            <h4 className="mb-3 font-semibold text-foreground text-sm">
+            <p className="mb-3 font-semibold text-foreground text-sm">
               Compare
-            </h4>
+            </p>
             <ul className="space-y-2">
               {COMPARE_LINKS.map((link) => (
                 <li key={link.label}>
@@ -152,9 +152,7 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="mb-3 font-semibold text-foreground text-sm">
-              Legal
-            </h4>
+            <p className="mb-3 font-semibold text-foreground text-sm">Legal</p>
             <ul className="space-y-2">
               {LEGAL_LINKS.map((link) => (
                 <li key={link.label}>

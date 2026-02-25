@@ -31,7 +31,7 @@ export default function ChangelogWidgetPage() {
         <div className="rounded-lg border border-border bg-muted/30 p-4">
           <pre className="overflow-x-auto text-sm">
             {`<script
-  src="https://reflet.app/widget/changelog.js"
+  src="https://www.reflet.app/widget/changelog.js"
   data-key="fb_pub_xxx"
   data-trigger="changelog-button"
   async

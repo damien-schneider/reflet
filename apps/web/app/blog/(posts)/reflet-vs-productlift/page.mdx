@@ -20,10 +20,11 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-productlift",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-productlift">{children}</BlogPostLayout>;
 }
 
 ProductLift positions itself as the most affordable feedback tool on the market, with plans starting at $14/month. It offers 22 language support, white-labeling, and GDPR compliance. Reflet matches its affordability with a free tier and adds real-time sync, AI triage, and open source.

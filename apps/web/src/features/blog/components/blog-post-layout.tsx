@@ -1,19 +1,42 @@
 import Link from "next/link";
 
+import { JsonLd } from "@/components/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { H1, Lead, Muted } from "@/components/ui/typography";
 import type { BlogPostMeta } from "@/lib/blog";
 import { formatDate, getCategoryLabel } from "@/lib/blog";
+import { getBlogPostJsonLd, getComparisonJsonLd } from "@/lib/seo-json-ld";
 
 interface BlogPostLayoutProps {
   meta: BlogPostMeta;
+  slug: string;
   children: React.ReactNode;
 }
 
-export function BlogPostLayout({ meta, children }: BlogPostLayoutProps) {
+export function BlogPostLayout({ meta, slug, children }: BlogPostLayoutProps) {
+  const jsonLd =
+    meta.category === "comparison"
+      ? getComparisonJsonLd({
+          title: meta.title,
+          description: meta.description,
+          slug,
+          competitorName: slug.replace("reflet-vs-", "").replace(/-/g, " "),
+        })
+      : getBlogPostJsonLd({
+          title: meta.title,
+          description: meta.description,
+          slug,
+          datePublished: meta.date,
+          author: meta.author,
+          tags: meta.tags,
+          ogImage: meta.ogImage,
+        });
+
   return (
     <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+      <JsonLd data={jsonLd} />
+
       {/* Header */}
       <header className="mb-10">
         <div className="mb-4 flex items-center gap-3">
@@ -46,9 +69,7 @@ export function BlogPostLayout({ meta, children }: BlogPostLayoutProps) {
       </header>
 
       {/* Content */}
-      <div className="prose prose-olive dark:prose-invert max-w-none">
-        {children}
-      </div>
+      <div className="max-w-none">{children}</div>
 
       {/* Footer CTA */}
       <footer className="mt-12 rounded-xl border border-border bg-muted/50 p-8 text-center">

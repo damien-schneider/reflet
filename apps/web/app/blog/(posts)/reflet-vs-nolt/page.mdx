@@ -20,10 +20,11 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-nolt",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-nolt">{children}</BlogPostLayout>;
 }
 
 Nolt is a beautifully designed, lightweight feedback tool focused on simplicity. Reflet offers similar simplicity but adds more depth — with changelogs, real-time sync, and the freedom of open source.

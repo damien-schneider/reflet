@@ -21,7 +21,7 @@ import { generatePageMetadata } from "@/lib/seo-config";
 export const metadata: Metadata = generatePageMetadata({
   title: "Integrations",
   description:
-    "Native integrations, a public API, and an SDK so you can embed feedback anywhere. Connect Reflet to your workflow.",
+    "Connect Reflet to your workflow with native integrations, a public API, and embeddable SDK. Sync feedback with GitHub, Slack, and other tools your team uses.",
   path: "/integrations",
   keywords: [
     "integrations",

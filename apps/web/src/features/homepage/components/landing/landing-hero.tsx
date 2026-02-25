@@ -1,5 +1,3 @@
-"use client";
-
 /*
  * CREATIVE DIRECTION
  * 1. PRODUCT SOUL — The feedback loop that turns user voices into shipped features
@@ -10,15 +8,15 @@
  * 6. DARK/LIGHT — Light = warm parchment studio; Dark = deep forest midnight
  */
 
-import { ArrowRight, CaretRight, GithubLogo } from "@phosphor-icons/react";
-import { motion } from "motion/react";
 import Link from "next/link";
-
+import {
+  ArrowRight,
+  CaretRight,
+  GithubLogo,
+} from "@/components/phosphor-icons";
 import { Button } from "@/components/ui/button";
 
 import { METRICS } from "./landing-data";
-
-const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 export default function LandingHero() {
   return (
@@ -28,14 +26,11 @@ export default function LandingHero() {
 
       <div className="relative mx-auto max-w-300 px-5 pt-32 pb-20 sm:px-8 sm:pt-40 sm:pb-28">
         {/* Open source pill */}
-        <motion.a
-          animate={{ opacity: 1, y: 0 }}
-          className="group mb-8 inline-flex items-center gap-2 rounded-full border border-[#e8e6e1] bg-[#faf9f7]/80 px-3.5 py-1.5 backdrop-blur-sm transition-colors hover:border-olive-600/30 dark:border-[#ffffff0d] dark:bg-[#1e1d1a]/80 dark:hover:border-olive-400/30"
+        <a
+          className="hero-animate hero-fade-up hero-delay-0 group mb-8 inline-flex items-center gap-2 rounded-full border border-[#e8e6e1] bg-[#faf9f7]/80 px-3.5 py-1.5 backdrop-blur-sm transition-colors hover:border-olive-600/30 dark:border-[#ffffff0d] dark:bg-[#1e1d1a]/80 dark:hover:border-olive-400/30"
           href="https://github.com/damien-schneider/reflet"
-          initial={{ opacity: 0, y: 12 }}
           rel="noopener noreferrer"
           target="_blank"
-          transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
         >
           <GithubLogo className="text-foreground" size={14} weight="fill" />
           <span className="font-medium text-[13px] text-foreground">
@@ -49,15 +44,10 @@ export default function LandingHero() {
               size={12}
             />
           </span>
-        </motion.a>
+        </a>
 
         {/* Main headline — editorial serif + sans-serif mix */}
-        <motion.h1
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 max-w-205 font-display text-[clamp(2.5rem,6vw,5rem)] text-olive-950 leading-[1.05] tracking-[-0.03em] dark:text-olive-100"
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ delay: 0.1, duration: 0.7, ease: EASE_OUT_EXPO }}
-        >
+        <h1 className="hero-animate hero-fade-up hero-delay-1 mb-6 max-w-205 font-display text-[clamp(2.5rem,6vw,5rem)] text-olive-950 leading-[1.05] tracking-[-0.03em] dark:text-olive-100">
           Your users are{" "}
           <span className="relative">
             talking
@@ -78,27 +68,17 @@ export default function LandingHero() {
           </span>
           .<br />
           <span className="text-muted-foreground">Are you listening?</span>
-        </motion.h1>
+        </h1>
 
         {/* Subheadline */}
-        <motion.p
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]"
-          initial={{ opacity: 0, y: 16 }}
-          transition={{ delay: 0.2, duration: 0.6, ease: EASE_OUT_EXPO }}
-        >
+        <p className="hero-animate hero-fade-up hero-delay-2 mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
           Reflet captures every feature request, auto-triages with AI, and
           closes the loop when you ship. One board — from raw feedback to
           published changelog.
-        </motion.p>
+        </p>
 
         {/* CTAs */}
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-16 flex flex-wrap items-center gap-4"
-          initial={{ opacity: 0, y: 12 }}
-          transition={{ delay: 0.3, duration: 0.5, ease: EASE_OUT_EXPO }}
-        >
+        <div className="hero-animate hero-fade-up hero-delay-3 mb-16 flex flex-wrap items-center gap-4">
           <Link href="/dashboard">
             <Button
               className="h-11 rounded-full px-6 text-[14px]"
@@ -116,25 +96,14 @@ export default function LandingHero() {
             Read the docs
             <CaretRight size={14} />
           </a>
-        </motion.div>
+        </div>
 
         {/* Metrics bar — social proof woven into hero */}
-        <motion.div
-          animate={{ opacity: 1 }}
-          className="flex flex-wrap gap-8 sm:gap-12"
-          initial={{ opacity: 0 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-        >
+        <div className="hero-animate hero-fade-in hero-delay-5 flex flex-wrap gap-8 sm:gap-12">
           {METRICS.map((m, i) => (
-            <motion.div
-              animate={{ opacity: 1, y: 0 }}
-              initial={{ opacity: 0, y: 8 }}
+            <div
+              className={`hero-animate hero-fade-up hero-delay-${6 + i}`}
               key={m.label}
-              transition={{
-                delay: 0.6 + i * 0.1,
-                duration: 0.5,
-                ease: EASE_OUT_EXPO,
-              }}
             >
               <span className="block font-display text-[2rem] text-olive-950 tracking-[-0.02em] sm:text-[2.5rem] dark:text-olive-100">
                 {m.value}
@@ -142,9 +111,9 @@ export default function LandingHero() {
               <span className="text-[13px] text-muted-foreground">
                 {m.label}
               </span>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

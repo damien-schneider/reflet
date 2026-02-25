@@ -153,7 +153,7 @@ export default function MinimalNotchPage() {
           Installation
         </h2>
         <InstallTabs
-          cliCommand="npx shadcn add https://reflet.app/r/feedback-minimal-notch.json"
+          cliCommand="npx shadcn add https://www.reflet.app/r/feedback-minimal-notch.json"
           manualCode={SOURCE_CODE}
         />
       </section>

@@ -195,7 +195,7 @@ export default function PublicOrgLayoutClient({
             Powered by{" "}
             <Link
               className="font-display font-medium text-lg text-olive-600 underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
-              href={env.NEXT_PUBLIC_SITE_URL ?? "https://reflet.app"}
+              href={env.NEXT_PUBLIC_SITE_URL ?? "https://www.reflet.app"}
               rel="noopener"
               target="_blank"
             >

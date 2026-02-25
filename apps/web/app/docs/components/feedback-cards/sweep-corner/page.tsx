@@ -148,7 +148,7 @@ export default function SweepCornerPage() {
           Installation
         </h2>
         <InstallTabs
-          cliCommand="npx shadcn add https://reflet.app/r/feedback-sweep-corner.json"
+          cliCommand="npx shadcn add https://www.reflet.app/r/feedback-sweep-corner.json"
           manualCode={SOURCE_CODE}
         />
       </section>

@@ -20,10 +20,11 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-featurebase",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-featurebase">{children}</BlogPostLayout>;
 }
 
 Choosing between Reflet and Featurebase comes down to a fundamental question: do you want a focused, open-source feedback tool you control, or an all-in-one customer engagement platform with AI-powered features?

@@ -20,10 +20,11 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-frill",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-frill">{children}</BlogPostLayout>;
 }
 
 Frill is a developer-friendly feedback platform with clean integrations and a focus on simplicity. Reflet shares that developer-first ethos but goes further with open source, real-time architecture, and a generous free tier.

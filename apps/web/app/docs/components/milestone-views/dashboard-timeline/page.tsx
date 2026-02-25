@@ -54,7 +54,7 @@ export default function DashboardTimelinePage() {
           Installation
         </h2>
         <InstallTabs
-          cliCommand="npx shadcn add https://reflet.app/r/milestone-dashboard-timeline.json"
+          cliCommand="npx shadcn add https://www.reflet.app/r/milestone-dashboard-timeline.json"
           manualCode={SOURCE_CODE}
         />
       </section>

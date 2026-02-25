@@ -135,7 +135,7 @@ export default function NavbarDesktop() {
                     <NavigationListItem>
                       <NavigationListLink
                         className={navigationListTriggerStyle()}
-                        href="/#pricing"
+                        href="/pricing"
                       >
                         Pricing
                       </NavigationListLink>
@@ -144,7 +144,7 @@ export default function NavbarDesktop() {
                     <NavigationListItem>
                       <NavigationListLink
                         className={navigationListTriggerStyle()}
-                        href="/#features"
+                        href="/features"
                       >
                         Features
                       </NavigationListLink>

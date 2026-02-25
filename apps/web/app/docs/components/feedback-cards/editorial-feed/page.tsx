@@ -159,7 +159,7 @@ export default function EditorialFeedPage() {
           Installation
         </h2>
         <InstallTabs
-          cliCommand="npx shadcn add https://reflet.app/r/feedback-editorial-feed.json"
+          cliCommand="npx shadcn add https://www.reflet.app/r/feedback-editorial-feed.json"
           manualCode={SOURCE_CODE}
         />
       </section>

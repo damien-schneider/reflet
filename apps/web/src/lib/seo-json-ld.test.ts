@@ -75,13 +75,15 @@ describe("getHomePageJsonLd", () => {
     }
   });
 
-  it("contains SearchAction in WebSite", () => {
+  it("does not contain a fake SearchAction (no /search page exists)", () => {
     const ld = getHomePageJsonLd();
     const webSite = ld["@graph"].find(
       (item: Record<string, unknown>) => item["@type"] === "WebSite"
     );
-    expect(webSite.potentialAction).toBeInstanceOf(Array);
-    expect(webSite.potentialAction[0]["@type"]).toBe("SearchAction");
+    // potentialAction is omitted to avoid misleading structured data
+    expect(
+      (webSite as Record<string, unknown>).potentialAction
+    ).toBeUndefined();
   });
 });
 

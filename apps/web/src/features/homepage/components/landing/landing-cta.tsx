@@ -1,38 +1,21 @@
-"use client";
-
 /*
  * Final CTA — confident, calm, one strong action.
  * Full-bleed warm background with editorial typography.
  */
 
-import { ArrowRight, GithubLogo } from "@phosphor-icons/react";
-import { motion, useInView } from "motion/react";
 import Link from "next/link";
-import { useRef } from "react";
-
+import { AnimateOnView } from "@/components/animate-on-view";
+import { ArrowRight, GithubLogo } from "@/components/phosphor-icons";
 import { Button } from "@/components/ui/button";
 
-const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
-
 export default function LandingCTA() {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.3 });
-
   return (
-    <section
-      className="relative overflow-hidden bg-olive-950 py-24 sm:py-32 dark:bg-[#0f0e0b]"
-      ref={ref}
-    >
+    <section className="relative overflow-hidden bg-olive-950 py-24 sm:py-32 dark:bg-[#0f0e0b]">
       {/* Subtle radial glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(120,113,80,0.12),transparent)]" />
 
       <div className="relative mx-auto max-w-300 px-5 sm:px-8">
-        <motion.div
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="max-w-160"
-          initial={{ opacity: 0, y: 24 }}
-          transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
-        >
+        <AnimateOnView className="max-w-160">
           <h2 className="mb-6 font-display text-[clamp(2rem,5vw,3.5rem)] text-olive-100 leading-[1.1] tracking-[-0.02em]">
             Stop guessing what to build next.
           </h2>
@@ -59,7 +42,7 @@ export default function LandingCTA() {
               View on GitHub
             </a>
           </div>
-        </motion.div>
+        </AnimateOnView>
       </div>
     </section>
   );

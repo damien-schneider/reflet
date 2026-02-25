@@ -20,10 +20,11 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-productboard",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-productboard">{children}</BlogPostLayout>;
 }
 
 Productboard is one of the most established product management platforms on the market, used by companies like Microsoft and Zendesk. Reflet takes a different approach — focused, open-source, and built for teams that want simplicity over complexity.

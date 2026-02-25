@@ -1,19 +1,18 @@
-"use client";
-
-import { lazy, Suspense } from "react";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
 
 import Footer from "../footer";
 import Navbar from "../navbar";
 import LandingHero from "./landing-hero";
 
-const LandingShowcase = lazy(() => import("./landing-showcase"));
-const LandingProductTour = lazy(() => import("./landing-product-tour"));
-const LandingLoop = lazy(() => import("./landing-loop"));
-const LandingBeforeAfter = lazy(() => import("./landing-before-after"));
-const LandingFeatures = lazy(() => import("./landing-features"));
-const LandingLiveDemo = lazy(() => import("./landing-live-demo"));
-const LandingPricing = lazy(() => import("./landing-pricing"));
-const LandingCTA = lazy(() => import("./landing-cta"));
+const LandingShowcase = dynamic(() => import("./landing-showcase"));
+const LandingProductTour = dynamic(() => import("./landing-product-tour"));
+const LandingLoop = dynamic(() => import("./landing-loop"));
+const LandingBeforeAfter = dynamic(() => import("./landing-before-after"));
+const LandingFeatures = dynamic(() => import("./landing-features"));
+const LandingLiveDemo = dynamic(() => import("./landing-live-demo"));
+const LandingPricing = dynamic(() => import("./landing-pricing"));
+const LandingCTA = dynamic(() => import("./landing-cta"));
 
 export default function LandingPage() {
   return (

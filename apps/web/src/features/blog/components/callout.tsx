@@ -16,26 +16,26 @@ const styles: Record<
   { bg: string; border: string; icon: React.ReactNode; title: string }
 > = {
   info: {
-    bg: "bg-blue-50 dark:bg-blue-950/20",
-    border: "border-blue-200 dark:border-blue-800",
+    bg: "bg-blue-500/5",
+    border: "border-blue-500/15",
     icon: <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />,
     title: "Note",
   },
   tip: {
-    bg: "bg-amber-50 dark:bg-amber-950/20",
-    border: "border-amber-200 dark:border-amber-800",
+    bg: "bg-amber-500/5",
+    border: "border-amber-500/15",
     icon: <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-400" />,
     title: "Tip",
   },
   warning: {
-    bg: "bg-red-50 dark:bg-red-950/20",
-    border: "border-red-200 dark:border-red-800",
+    bg: "bg-red-500/5",
+    border: "border-red-500/15",
     icon: <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />,
     title: "Warning",
   },
   success: {
-    bg: "bg-emerald-50 dark:bg-emerald-950/20",
-    border: "border-emerald-200 dark:border-emerald-800",
+    bg: "bg-emerald-500/5",
+    border: "border-emerald-500/15",
     icon: (
       <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
     ),

@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Documentation - Reflet",
+  title: { absolute: "Documentation | Reflet" },
   description:
-    "Everything you need to integrate Reflet into your product. Explore the SDK, widgets, and component library.",
+    "Complete developer documentation for Reflet. Explore the SDK, React hooks, embeddable widgets, REST API, and component library to integrate user feedback.",
 };
 
 const sections = [

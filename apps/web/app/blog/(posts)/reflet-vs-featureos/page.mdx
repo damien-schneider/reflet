@@ -20,10 +20,11 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-featureos",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-featureos">{children}</BlogPostLayout>;
 }
 
 FeatureOS (formerly known as Hellonext) is a flexible feedback platform for SaaS product managers. Reflet offers a similar feature set but differentiates with open source, real-time architecture, and AI-powered feedback management.

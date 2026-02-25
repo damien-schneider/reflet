@@ -20,10 +20,11 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-fider",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-fider">{children}</BlogPostLayout>;
 }
 
 Both Reflet and Fider are **open source** product feedback tools that you can self-host for free. While they share this fundamental philosophy, they differ significantly in their technology stacks, feature sets, and user experience. This comparison will help you decide which open source solution best fits your team's needs.

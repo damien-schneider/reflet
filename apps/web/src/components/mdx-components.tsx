@@ -72,7 +72,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     blockquote: ({ children }) => <Blockquote>{children}</Blockquote>,
     code: ({ children }) => <InlineCode>{children}</InlineCode>,
     pre: ({ children }) => (
-      <pre className="my-4 overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm">
+      <pre className="my-4 overflow-x-auto rounded-lg bg-muted p-4 font-mono text-muted-foreground text-sm">
         {children}
       </pre>
     ),

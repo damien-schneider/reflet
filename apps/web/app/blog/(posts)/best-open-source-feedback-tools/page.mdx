@@ -1,0 +1,285 @@
+import { BlogPostLayout } from "@/features/blog/components/blog-post-layout";
+import { Callout } from "@/features/blog/components/callout";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const meta = {
+  title: "Best Open Source Product Feedback Tools in 2026",
+  description: "A practical guide to the best open source feedback tools in 2026. Compare Reflet, Fider, Astuto, Formbricks, LogChimp, ClearFlask, and Plane — with honest notes on features, self-hosting, and tradeoffs.",
+  date: "2026-02-25",
+  author: "Reflet Team",
+  authorRole: "Product",
+  category: "guide",
+  tags: ["open source feedback tool", "best feedback tools 2026", "self-hosted feedback", "product feedback", "feature voting"],
+  readingTime: "10 min read",
+  seoKeywords: [
+    "open source feedback tool",
+    "best feedback tools 2026",
+    "open source product feedback",
+    "self-hosted feedback tool",
+    "open source canny alternative",
+    "open source uservoice alternative",
+    "free feedback tool",
+  ],
+};
+
+export const metadata = generatePageMetadata({
+  title: meta.title,
+  description: meta.description,
+  path: "/blog/best-open-source-feedback-tools",
+  keywords: meta.seoKeywords,
+});
+
+export default function Layout({ children }) {
+  return <BlogPostLayout meta={meta} slug="best-open-source-feedback-tools">{children}</BlogPostLayout>;
+}
+
+Closed-source SaaS feedback tools have one thing in common: they all reserve the right to change their pricing, retire your plan, or disappear entirely. Canny has raised prices four times and retired legacy free plans. UserVoice has pivoted entirely to enterprise, putting itself out of reach for most teams. ProductBoard requires a sales call to get started.
+
+Open source feedback tools give you a different deal. You control the code, the data, and the deployment. This guide covers the best open source product feedback tools available in 2026 — with honest notes on what each one does well and where it falls short.
+
+## What to Look for in an Open Source Feedback Tool
+
+Before comparing tools, it helps to know what features actually matter for a feedback workflow:
+
+- **Feedback boards with upvoting**: The core mechanic — users submit ideas and vote on what they want built.
+- **Roadmap view**: A way to communicate the status of planned and in-progress work.
+- **Changelog / release notes**: Closing the loop by announcing what shipped.
+- **Self-hosting path**: The ability to run the tool on your own infrastructure.
+- **License**: Whether the license allows commercial use, modification, and redistribution.
+- **Maintenance status**: Is the project actively maintained, or has development stalled?
+
+<Callout type="info" title="AGPL vs SSPL vs MIT">
+  Open source licenses vary. MIT and Apache 2.0 are highly permissive. AGPL requires you to share modifications if you offer the software as a service. SSPL (used by Reflet and MongoDB) is similar but extends the copyleft requirement to the entire service stack. Always review the license for your use case.
+</Callout>
+
+---
+
+## 1. Reflet
+
+**Best for: Teams that want a full-featured, modern feedback platform they can self-host or use as a managed service.**
+
+[Reflet](https://www.reflet.app) is a product feedback and roadmap tool built with Next.js, React 19, and Convex. It covers the complete feedback-to-roadmap workflow in a single, cohesive product.
+
+### What Reflet Does Well
+
+- **Full feedback workflow**: Boards with upvoting and commenting, a visual kanban roadmap, and a built-in changelog for release notes — all in one product.
+- **Real-time collaboration**: Built on Convex, which provides true real-time synchronization. Changes appear instantly for all connected users without polling or page refreshes.
+- **Custom branding**: Custom domain, custom CSS, and white-label branding are available without requiring an enterprise plan upgrade.
+- **Team management**: Role-based access control (RBAC) for team members, with granular permissions.
+- **Smart notifications**: Users are notified when feedback they care about changes status.
+- **Full-text search**: Find feedback across all boards quickly.
+- **Modern UX**: The interface reflects current design standards, not early 2010s patterns.
+
+### License and Self-Hosting
+
+Reflet is licensed under the SSPL (Server Side Public License) and the source code is available on [GitHub](https://github.com/damien-schneider/reflet). Self-hosting requires a Convex backend, which can be self-hosted or used via Convex Cloud.
+
+### Tradeoffs
+
+Reflet is newer than tools like Fider, so its community and ecosystem are still growing. It does not currently offer AI-powered feedback categorization or NPS surveys.
+
+### Pricing
+
+Reflet offers a free tier with core functionality, paid plans for growing teams, and a self-hosted option at no software cost.
+
+---
+
+## 2. Fider
+
+**Best for: Teams that want the simplest possible self-hosted feedback tool with minimal infrastructure requirements.**
+
+[Fider](https://fider.io) is one of the oldest and most battle-tested open source feedback tools. It has been running since 2017, has over 3,500 GitHub stars, and is trusted by more than 2,000 sites worldwide.
+
+### What Fider Does Well
+
+- **Simplicity**: Fider does one thing — collect and prioritize feedback via voting. There is very little to configure.
+- **Easy self-hosting**: A single Docker container and a PostgreSQL database. No complex orchestration required.
+- **Multilingual support**: Community-contributed translations for over 10 languages.
+- **OAuth login**: Google, GitHub, Facebook, Discord, and more out of the box.
+- **AGPL license**: One of the most permissive licenses for self-hosted use.
+- **Mature and stable**: Years of production use with a reliable track record.
+
+### License and Self-Hosting
+
+Fider is licensed under AGPL-3.0. Self-hosting is straightforward:
+
+```bash
+docker run -d -p 3000:3000 \
+  -e DATABASE_URL=postgres://user:pass@host/fider \
+  getfider/fider
+```
+
+### Tradeoffs
+
+Fider has no roadmap view and no changelog. If you need to communicate product status or announce releases, you will need a separate tool. The UI is functional but dated compared to more recently built alternatives. There are also no native integrations with project management tools like Jira or Linear.
+
+### Pricing
+
+Fider is free to self-host. A managed hosted version is available from the Fider team.
+
+---
+
+## 3. Astuto
+
+**Best for: Teams that want an open source tool with a roadmap and changelog, at a flat monthly rate for managed hosting.**
+
+[Astuto](https://astuto.io) is an open source customer feedback and roadmap tool. It covers more ground than Fider — feedback boards, a public roadmap, and basic changelog functionality — while remaining genuinely open source and self-hostable.
+
+### What Astuto Does Well
+
+- **More complete than Fider**: Includes a roadmap view and changelog alongside the feedback board.
+- **Webhooks**: Connect to Jira, Trello, Slack, and other tools via webhooks.
+- **REST API**: Programmatic access to your feedback data.
+- **Moderation tools**: Anonymous feedback support, moderation queue, and invitation system.
+- **Custom branding**: Customize the portal to match your brand.
+- **Affordable hosted option**: Flat-rate pricing at €20/month for managed hosting.
+
+### License and Self-Hosting
+
+Astuto is open source and self-hostable. The managed hosted version is available with a 7-day free trial, no credit card required.
+
+### Tradeoffs
+
+Astuto's integrations are webhook-based rather than native, which means some setup is required for each connection. The roadmap and changelog are more basic than what you get in tools like Canny or Reflet. Real-time updates are limited.
+
+### Pricing
+
+Self-host for free, or €20/month for the managed hosted version with email support.
+
+---
+
+## 4. Formbricks
+
+**Best for: Teams that need survey-style feedback collection in addition to feature request management.**
+
+[Formbricks](https://formbricks.com) is an open source experience management platform. It covers more ground than a traditional feedback board — including in-app surveys, NPS, and multi-step forms — but is often listed as a strong open source alternative to UserVoice for teams with diverse feedback collection needs.
+
+### What Formbricks Does Well
+
+- **Survey-focused**: Create targeted in-app surveys, NPS forms, and multi-step questionnaires.
+- **Privacy-first**: Designed with data residency and GDPR compliance in mind.
+- **Self-hostable**: Full self-hosting support with Docker Compose.
+- **Segment targeting**: Trigger surveys based on user attributes and behavior.
+- **Open source and actively maintained**: Large GitHub community and regular releases.
+
+### Tradeoffs
+
+Formbricks is not a traditional feedback board tool — it does not have upvoting or a public roadmap. If your primary need is a community feature-request board, Formbricks is not the right fit. It is better suited for in-product research and survey workflows.
+
+### Pricing
+
+Formbricks has a generous free tier with self-hosting. Cloud plans are available for teams that want managed hosting.
+
+---
+
+## 5. LogChimp
+
+**Best for: Developer teams that want a lightweight, customizable self-hosted feedback board.**
+
+[LogChimp](https://logchimp.codecarrot.net) is an open source feedback management platform focused on collecting and organizing feature requests with community voting.
+
+### What LogChimp Does Well
+
+- **Lightweight**: Designed to be easy to deploy and maintain.
+- **Community voting**: Users vote and comment on feature requests.
+- **Tagging and organization**: Tag-based organization to group feedback by theme.
+- **Self-hosted**: Full control over your data and infrastructure.
+- **Customizable**: The open-source nature allows deep customization for teams with development resources.
+
+### Tradeoffs
+
+LogChimp is less actively maintained than some alternatives. There is no built-in roadmap or changelog. The integration ecosystem is limited compared to tools like Reflet or Fider.
+
+### Pricing
+
+Free and open source for self-hosting.
+
+---
+
+## 6. ClearFlask
+
+**Best for: Teams that want the most feature-complete open source feedback platform.**
+
+[ClearFlask](https://clearflask.com) is an open source platform for collecting, analyzing, and acting on customer feedback. It is one of the most comprehensive open source tools in this category, offering feedback collection, roadmaps, changelogs, and some analytical features.
+
+### What ClearFlask Does Well
+
+- **Feature-rich**: Feedback boards, roadmap, changelog, and basic analytics in one tool.
+- **Flexible content types**: Supports different types of feedback beyond feature requests (bug reports, questions, announcements).
+- **Self-hosting**: Full self-hosting support.
+- **Customizable workflows**: More configuration options than simpler tools like Fider.
+
+### Tradeoffs
+
+ClearFlask's complexity is both a strength and a weakness. The setup is more involved than simpler alternatives, and the UI can feel overwhelming for teams that just want a feedback board. The hosted version's pricing is less transparent.
+
+### Pricing
+
+Open source for self-hosting. Hosted plans available on the ClearFlask website.
+
+---
+
+## 7. Plane
+
+**Best for: Teams that want project management and feedback in one place, similar to GitHub Issues.**
+
+[Plane](https://plane.so) is an open source project management tool that can be used as a feedback collection and prioritization platform. It is closer to a Linear or Jira alternative than a dedicated feedback tool, but many teams use it for capturing and organizing feature requests alongside development work.
+
+### What Plane Does Well
+
+- **Project management + feedback**: Issues, cycles, modules, and roadmaps in one tool.
+- **GitHub-style UX**: Familiar interface for developer-centric teams.
+- **Self-hosting**: One of the most actively maintained open source project management tools.
+- **Large community**: Over 30,000 GitHub stars and active development.
+
+### Tradeoffs
+
+Plane is not a customer-facing feedback portal. It is an internal tool. Users cannot vote on feature requests through a public board. If you need a public-facing portal for customers to submit and vote on ideas, Plane is not the right fit.
+
+### Pricing
+
+Plane has a free self-hosted version and a free cloud tier, with paid plans for additional features.
+
+---
+
+## Comparison at a Glance
+
+| Tool | Feedback Board | Roadmap | Changelog | Self-Hostable | License | Best For |
+|---|---|---|---|---|---|---|
+| **Reflet** | Yes | Yes (Kanban) | Yes | Yes | SSPL | Full workflow, modern UX, real-time |
+| **Fider** | Yes | No | No | Yes | AGPL | Simplicity, minimal infra |
+| **Astuto** | Yes | Yes | Basic | Yes | Open source | Affordable hosted + roadmap |
+| **Formbricks** | No | No | No | Yes | AGPL | Surveys and in-app research |
+| **LogChimp** | Yes | No | No | Yes | GPL | Lightweight, developer-friendly |
+| **ClearFlask** | Yes | Yes | Yes | Yes | Apache 2.0 | Feature-complete, complex setups |
+| **Plane** | No (internal only) | Yes | No | Yes | AGPL | Dev teams, internal tracking |
+
+---
+
+## How to Choose
+
+**You want to deploy in under an hour with minimal maintenance:** Fider. A single Docker container and a Postgres database is about as simple as self-hosting gets.
+
+**You want a full feedback-to-roadmap workflow with modern UX:** Reflet. It is the only tool in this list that covers feedback boards, kanban roadmap, and changelog in a cohesive real-time experience.
+
+**You want surveys and in-product feedback research:** Formbricks. It is purpose-built for that use case.
+
+**You need the most features and are willing to accept more setup complexity:** ClearFlask.
+
+**Your team already uses a project management tool and wants to consolidate:** Plane, though note it is an internal tool without a public-facing customer portal.
+
+<Callout type="tip" title="Start with Self-Hosting in Mind">
+  Even if you plan to use a managed hosted version initially, choose a tool that supports self-hosting. It gives you an exit option if pricing changes, the vendor shuts down, or your data residency requirements evolve.
+</Callout>
+
+---
+
+## The Bigger Picture
+
+The closed-source feedback tool market — Canny, UserVoice, ProductBoard, Aha — is consolidating around enterprise buyers. This creates a gap for startups, indie developers, and mid-market teams who need solid feedback tooling without enterprise pricing or opaque sales processes.
+
+Open source fills that gap. The tools in this list represent genuine alternatives: they cover the core feedback workflow, they let you own your data, and they will not retroactively retire your plan or raise prices without notice.
+
+Reflet is one of the newer entrants in this space, but it is the one most focused on delivering the complete feedback workflow — boards, roadmap, changelog — with a modern real-time architecture and custom branding that does not require an enterprise upgrade.
+
+Explore the [Reflet source code on GitHub](https://github.com/damien-schneider/reflet), or [start a free account](https://www.reflet.app/dashboard) to see the product in action.

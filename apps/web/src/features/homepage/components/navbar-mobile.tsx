@@ -41,13 +41,6 @@ export default function NavbarMobile() {
     };
   }, [isOpen]);
 
-  const scrollToSection = (targetId: string) => {
-    close();
-    setTimeout(() => {
-      document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth" });
-    }, 150);
-  };
-
   return (
     <LazyMotion features={domAnimation}>
       {/* Floating bottom bar */}
@@ -114,20 +107,20 @@ export default function NavbarMobile() {
               <nav className="mt-10 flex flex-1 flex-col gap-8">
                 {/* Main links */}
                 <div className="flex flex-col gap-1">
-                  <button
-                    className={`${menuLinkClassName} text-left`}
-                    onClick={() => scrollToSection("pricing")}
-                    type="button"
+                  <Link
+                    className={menuLinkClassName}
+                    href="/pricing"
+                    onClick={close}
                   >
                     Pricing
-                  </button>
-                  <button
-                    className={`${menuLinkClassName} text-left`}
-                    onClick={() => scrollToSection("features")}
-                    type="button"
+                  </Link>
+                  <Link
+                    className={menuLinkClassName}
+                    href="/features"
+                    onClick={close}
                   >
                     Features
-                  </button>
+                  </Link>
                 </div>
 
                 {/* Demo section */}

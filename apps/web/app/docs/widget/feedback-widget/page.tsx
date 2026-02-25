@@ -32,7 +32,7 @@ export default function FeedbackWidgetPage() {
         <div className="rounded-lg border border-border bg-muted/30 p-4">
           <pre className="overflow-x-auto text-sm">
             {`<script
-  src="https://reflet.app/widget/feedback.js"
+  src="https://www.reflet.app/widget/feedback.js"
   data-key="fb_pub_xxx"
   data-position="bottom-right"
   async

@@ -1,8 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { getAllBlogPosts } from "@/lib/blog";
-
-const BASE_URL = "https://reflet.app";
+import { BASE_URL } from "@/lib/seo-config";
 
 /** Revalidate sitemap periodically for fresh lastModified. */
 export const revalidate = 86_400; // 24 hours
@@ -10,13 +9,19 @@ export const revalidate = 86_400; // 24 hours
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  // Static pages
+  // Static marketing pages
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: BASE_URL,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 1,
+    },
+    {
+      url: `${BASE_URL}/features`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.9,
     },
     {
       url: `${BASE_URL}/pricing`,
@@ -42,12 +47,68 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.6,
     },
+  ];
+
+  // Docs pages
+  const docsPages: MetadataRoute.Sitemap = [
     {
       url: `${BASE_URL}/docs`,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.8,
     },
+    {
+      url: `${BASE_URL}/docs/sdk`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/docs/sdk/installation`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/docs/sdk/react-hooks`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/docs/api`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/docs/widget`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/docs/widget/feedback-widget`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/docs/widget/changelog-widget`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/docs/components`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+  ];
+
+  // Legal pages (low priority)
+  const legalPages: MetadataRoute.Sitemap = [
     {
       url: `${BASE_URL}/terms`,
       lastModified: now,
@@ -68,14 +129,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Blog posts
+  // Blog posts (use actual post date for lastModified)
   const posts = await getAllBlogPosts();
   const blogPages: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${BASE_URL}/blog/${post.slug}`,
     lastModified: new Date(post.meta.date),
     changeFrequency: "monthly" as const,
-    priority: 0.8,
+    priority: post.meta.category === "comparison" ? 0.85 : 0.8,
   }));
 
-  return [...staticPages, ...blogPages];
+  return [...staticPages, ...docsPages, ...legalPages, ...blogPages];
 }

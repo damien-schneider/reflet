@@ -20,10 +20,11 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-sleekplan",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-sleekplan">{children}</BlogPostLayout>;
 }
 
 Sleekplan is a budget-friendly all-in-one feedback tool that includes NPS/CSAT surveys alongside feedback boards and changelogs. Reflet focuses on doing the feedback workflow exceptionally well, with the advantages of open source and real-time architecture.

@@ -53,7 +53,7 @@ Full-text search across all feedback items with intelligent filtering by status,
 
 ## Getting Started
 
-Visit [reflet.app](https://reflet.app) to get started for free.
+Visit [reflet.app](https://www.reflet.app) to get started for free.
 
 ### Self-Hosting
 
@@ -88,11 +88,11 @@ Reflet is an open-source alternative to the following product feedback tools:
 
 ## Links
 
-- Website: https://reflet.app
+- Website: https://www.reflet.app
 - GitHub: https://github.com/damien-schneider/reflet
-- Documentation: https://reflet.app/docs
-- Blog: https://reflet.app/blog
-- Pricing: https://reflet.app/pricing
+- Documentation: https://www.reflet.app/docs
+- Blog: https://www.reflet.app/blog
+- Pricing: https://www.reflet.app/pricing
 
 ## License
 

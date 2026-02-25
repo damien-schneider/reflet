@@ -52,15 +52,15 @@ export default function InstallationPage() {
         </p>
         <div className="space-y-3">
           <CodeBlock
-            command="npx shadcn add https://reflet.app/r/feedback-sweep-corner.json"
+            command="npx shadcn add https://www.reflet.app/r/feedback-sweep-corner.json"
             label="Sweep Corner"
           />
           <CodeBlock
-            command="npx shadcn add https://reflet.app/r/feedback-minimal-notch.json"
+            command="npx shadcn add https://www.reflet.app/r/feedback-minimal-notch.json"
             label="Minimal Notch"
           />
           <CodeBlock
-            command="npx shadcn add https://reflet.app/r/feedback-editorial-feed.json"
+            command="npx shadcn add https://www.reflet.app/r/feedback-editorial-feed.json"
             label="Editorial Feed"
           />
         </div>

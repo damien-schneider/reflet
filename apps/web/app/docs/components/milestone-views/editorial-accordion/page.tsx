@@ -56,7 +56,7 @@ export default function EditorialAccordionPage() {
           Installation
         </h2>
         <InstallTabs
-          cliCommand="npx shadcn add https://reflet.app/r/milestone-editorial-accordion.json"
+          cliCommand="npx shadcn add https://www.reflet.app/r/milestone-editorial-accordion.json"
           manualCode={SOURCE_CODE}
         />
       </section>

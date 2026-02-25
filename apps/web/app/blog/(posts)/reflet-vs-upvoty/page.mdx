@@ -20,10 +20,11 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-upvoty",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-upvoty">{children}</BlogPostLayout>;
 }
 
 Upvoty is one of the most affordable feedback tools on the market, offering feedback boards, roadmaps, and changelogs starting at $15/month. Reflet matches that affordability with a free tier and adds modern features like real-time sync and open source.

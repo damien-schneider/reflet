@@ -20,10 +20,11 @@ export const metadata = generatePageMetadata({
   description: meta.description,
   path: "/blog/reflet-vs-savio",
   keywords: meta.seoKeywords,
+  type: "comparison",
 });
 
 export default function Layout({ children }) {
-  return <BlogPostLayout meta={meta}>{children}</BlogPostLayout>;
+  return <BlogPostLayout meta={meta} slug="reflet-vs-savio">{children}</BlogPostLayout>;
 }
 
 Savio specializes in centralizing feature requests from multiple sources — Slack, HubSpot, Intercom, Zendesk, and Salesforce. It's built for B2B SaaS companies that want to tie feedback to customer revenue. Reflet takes a different approach with open-source transparency and real-time collaboration.

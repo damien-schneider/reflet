@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import { H1, H2, Lead, Text } from "@/components/ui/typography";
+import { generatePageMetadata } from "@/lib/seo-config";
 
-export const metadata: Metadata = {
+export const metadata = generatePageMetadata({
   title: "Terms of Service | Reflet",
   description:
-    "Read the terms and conditions for using the Reflet product feedback platform.",
-};
+    "Read the terms and conditions for using Reflet. Covers acceptable use, subscriptions, billing, open source licensing under SSPL, data ownership, and your rights.",
+  path: "/terms",
+});
 
 export default function TermsOfService() {
   return (
