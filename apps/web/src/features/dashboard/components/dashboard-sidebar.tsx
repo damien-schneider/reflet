@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/sidebar";
 import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
+import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 import { GoProBanner } from "./go-pro-banner";
 import { MakePublicBanner } from "./make-public-banner";
@@ -174,6 +175,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   };
 
   const handleSignOut = () => {
+    capture("sign_out");
     posthog.reset();
     authClient.signOut();
     window.location.href = "/";

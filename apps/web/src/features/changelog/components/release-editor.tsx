@@ -9,6 +9,7 @@ import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
+import { capture } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { GenerateFromCommits } from "./generate-from-commits";
 import { PublishConfirmDialog } from "./publish-confirm-dialog";
@@ -189,6 +190,9 @@ export function ReleaseEditor({
       }
 
       await publishRelease({ id: idToPublish });
+      capture("release_published", {
+        has_version: Boolean(version.trim()),
+      });
       setShowPublishConfirm(false);
       toast.success("Release published!");
       navigateToChangelog();

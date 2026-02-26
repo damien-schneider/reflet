@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
+import { capture } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 interface FeedbackCreatorProps {
@@ -45,6 +46,7 @@ export function FeedbackCreator({
         description: description.trim(),
       });
 
+      capture("feedback_created", { source: "admin" });
       toast.success("Feedback submitted successfully!");
       setTitle("");
       setDescription("");

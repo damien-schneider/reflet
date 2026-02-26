@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,7 @@ export function ChangelogSubscribe({
         toast.success("Unsubscribed from changelog updates");
       } else {
         await subscribe({ organizationId });
+        capture("changelog_subscribed", { method: "authenticated" });
         toast.success("Subscribed to changelog updates!");
       }
     } catch (error) {
@@ -71,6 +73,7 @@ export function ChangelogSubscribe({
         organizationId,
         email: email.trim(),
       });
+      capture("changelog_subscribed", { method: "email" });
       toast.success("Subscribed to changelog updates!");
       setEmail("");
     } catch (error) {

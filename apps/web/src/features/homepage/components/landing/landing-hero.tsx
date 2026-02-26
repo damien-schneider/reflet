@@ -15,6 +15,7 @@ import {
   GithubLogo,
 } from "@/components/phosphor-icons";
 import { Button } from "@/components/ui/button";
+import { H1, Lead } from "@/components/ui/typography";
 
 import { METRICS } from "./landing-data";
 
@@ -27,7 +28,7 @@ export default function LandingHero() {
       <div className="relative mx-auto max-w-300 px-5 pt-32 pb-20 sm:px-8 sm:pt-40 sm:pb-28">
         {/* Open source pill */}
         <a
-          className="hero-animate hero-fade-up hero-delay-0 group mb-8 inline-flex items-center gap-2 rounded-full border border-[#e8e6e1] bg-[#faf9f7]/80 px-3.5 py-1.5 backdrop-blur-sm transition-colors hover:border-olive-600/30 dark:border-[#ffffff0d] dark:bg-[#1e1d1a]/80 dark:hover:border-olive-400/30"
+          className="hero-animate hero-fade-up hero-delay-0 group mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3.5 py-1.5 backdrop-blur-sm transition-colors hover:border-olive-600/30 dark:hover:border-olive-400/30"
           href="https://github.com/damien-schneider/reflet"
           rel="noopener noreferrer"
           target="_blank"
@@ -47,7 +48,7 @@ export default function LandingHero() {
         </a>
 
         {/* Main headline — editorial serif + sans-serif mix */}
-        <h1 className="mb-6 max-w-205 font-display text-[clamp(2.5rem,6vw,5rem)] text-olive-950 leading-[1.05] tracking-[-0.03em] dark:text-olive-100">
+        <H1 className="mb-6 max-w-205" variant="landing">
           Your users are{" "}
           <span className="relative">
             talking
@@ -68,14 +69,14 @@ export default function LandingHero() {
           </span>
           .<br />
           <span className="text-muted-foreground">Are you listening?</span>
-        </h1>
+        </H1>
 
         {/* Subheadline */}
-        <p className="mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
+        <Lead className="mb-10 max-w-140" size="lg">
           Reflet captures every feature request, auto-triages with AI, and
           closes the loop when you ship. One board — from raw feedback to
           published changelog.
-        </p>
+        </Lead>
 
         {/* CTAs */}
         <div className="hero-animate hero-fade-up hero-delay-3 mb-16 flex flex-wrap items-center gap-4">

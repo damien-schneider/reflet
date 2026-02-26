@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { capture } from "@/lib/analytics";
 
 interface InviteMemberDialogProps {
   organizationId: Id<"organizations">;
@@ -67,6 +68,7 @@ export function InviteMemberDialog({
         email: inviteEmail.trim().toLowerCase(),
         role: inviteRole,
       });
+      capture("member_invited", { role: inviteRole });
       setInvitationToken(result.token);
       setDialogState("success");
     } catch (error) {

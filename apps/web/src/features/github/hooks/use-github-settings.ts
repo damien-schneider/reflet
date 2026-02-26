@@ -2,6 +2,7 @@
 
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useCallback, useState } from "react";
+import { capture } from "@/lib/analytics";
 
 interface ApiErrorResponse {
   success?: boolean;
@@ -168,6 +169,7 @@ export function useGitHubSettings({
     if (!(orgId && orgSlug)) {
       return;
     }
+    capture("github_connected");
     window.location.href = `/api/github/install?organizationId=${orgId}&orgSlug=${encodeURIComponent(orgSlug)}`;
   }, [orgId, orgSlug]);
 

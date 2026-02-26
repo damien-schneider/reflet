@@ -31,12 +31,12 @@ export default function ChangelogMockup() {
       {/* Main changelog card */}
       <motion.div
         animate={isInView ? { opacity: 1, y: 0 } : {}}
-        className="overflow-hidden rounded-2xl border border-[#e8e6e1] bg-[#faf9f7] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] dark:border-[#ffffff0d] dark:bg-[#1e1d1a] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.4)]"
+        className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.4)]"
         initial={{ opacity: 0, y: 32 }}
         transition={{ duration: 0.8, ease: EASE_OUT_EXPO }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-[#e8e6e1] border-b px-5 py-3 dark:border-[#ffffff0d]">
+        <div className="flex items-center justify-between border-border border-b px-5 py-3">
           <div className="flex items-center gap-2.5">
             <MegaphoneSimple
               className="text-olive-600 dark:text-olive-400"
@@ -54,7 +54,7 @@ export default function ChangelogMockup() {
         </div>
 
         {/* Entries */}
-        <div className="divide-y divide-[#e8e6e1] dark:divide-[#ffffff08]">
+        <div className="divide-y divide-border">
           {CHANGELOG_ITEMS_DATA.map((entry, idx) => (
             <motion.div
               animate={isInView ? { opacity: 1, x: 0 } : {}}
@@ -103,7 +103,7 @@ export default function ChangelogMockup() {
       {/* Floating notification toast */}
       <motion.div
         animate={isInView ? { opacity: 1, y: 0, x: 0 } : {}}
-        className="absolute -right-3 -bottom-4 z-10 flex items-center gap-2.5 rounded-xl border border-[#e8e6e1] bg-[#faf9f7] p-3 shadow-lg sm:-right-6 sm:-bottom-6 dark:border-[#ffffff0d] dark:bg-[#1e1d1a] dark:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.5)]"
+        className="absolute -right-3 -bottom-4 z-10 flex items-center gap-2.5 rounded-xl border border-border bg-card p-3 shadow-lg sm:-right-6 sm:-bottom-6 dark:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.5)]"
         initial={{ opacity: 0, y: 16, x: 8 }}
         transition={{ delay: 0.8, duration: 0.6, ease: EASE_OUT_EXPO }}
       >

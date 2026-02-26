@@ -56,13 +56,13 @@ export default function FeedbackBoardMockup() {
   return (
     <motion.div
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      className="relative w-full overflow-hidden rounded-2xl border border-[#e8e6e1] bg-[#faf9f7] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] dark:border-[#ffffff0d] dark:bg-[#1e1d1a] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.4)]"
+      className="relative w-full overflow-hidden rounded-2xl border border-border bg-card shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.4)]"
       initial={{ opacity: 0, y: 32 }}
       ref={ref}
       transition={{ duration: 0.8, ease: EASE_OUT_EXPO }}
     >
       {/* Toolbar */}
-      <div className="flex items-center justify-between border-[#e8e6e1] border-b px-5 py-3 dark:border-[#ffffff0d]">
+      <div className="flex items-center justify-between border-border border-b px-5 py-3">
         <div className="flex items-center gap-2.5">
           <ChatCircleDots
             className="text-olive-600 dark:text-olive-400"
@@ -91,10 +91,10 @@ export default function FeedbackBoardMockup() {
               <motion.div
                 animate={isInView ? { opacity: 1, x: 0 } : {}}
                 className={cn(
-                  "flex cursor-pointer items-start gap-3.5 border-[#e8e6e1] border-b px-5 py-3.5 transition-colors dark:border-[#ffffff08]",
+                  "flex cursor-pointer items-start gap-3.5 border-border border-b px-5 py-3.5 transition-colors",
                   isSelected
                     ? "bg-olive-600/4 dark:bg-olive-400/6"
-                    : "hover:bg-[#f5f4f1] dark:hover:bg-[#ffffff05]"
+                    : "hover:bg-accent dark:hover:bg-accent"
                 )}
                 initial={{ opacity: 0, x: -16 }}
                 key={item.id}
@@ -111,7 +111,7 @@ export default function FeedbackBoardMockup() {
                     "mt-0.5 flex h-12 w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border transition-all",
                     isVoted
                       ? "border-olive-600/40 bg-olive-600/10 text-olive-600 dark:border-olive-400/40 dark:bg-olive-400/10 dark:text-olive-400"
-                      : "border-[#e8e6e1] text-muted-foreground hover:border-olive-600/30 dark:border-[#ffffff12]"
+                      : "border-border text-muted-foreground hover:border-olive-600/30"
                   )}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -162,7 +162,7 @@ export default function FeedbackBoardMockup() {
         </div>
 
         {/* AI Analysis sidebar */}
-        <div className="hidden w-70 shrink-0 border-[#e8e6e1] border-l lg:block dark:border-[#ffffff0d]">
+        <div className="hidden w-70 shrink-0 border-border border-l lg:block">
           <AnimatePresence mode="wait">
             {selected && (
               <motion.div
@@ -192,7 +192,7 @@ export default function FeedbackBoardMockup() {
                       AI Analysis
                     </span>
                   </div>
-                  <div className="space-y-2.5 rounded-lg bg-[#f0efea] p-3 dark:bg-[#ffffff08]">
+                  <div className="space-y-2.5 rounded-lg bg-muted p-3 dark:bg-muted">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-muted-foreground">
                         Confidence
@@ -201,7 +201,7 @@ export default function FeedbackBoardMockup() {
                         {selected.aiConfidence}%
                       </span>
                     </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e8e6e1] dark:bg-[#ffffff12]">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-border dark:bg-border">
                       <motion.div
                         animate={{ width: `${selected.aiConfidence}%` }}
                         className="h-full rounded-full bg-olive-600 dark:bg-olive-400"

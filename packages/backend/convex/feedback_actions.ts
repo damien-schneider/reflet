@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { PLAN_LIMITS } from "./organizations";
-import { mapStatusNameToEnum } from "./status-utils";
+import { mapStatusNameToEnum } from "./status_utils";
 import { getAuthUser } from "./utils";
 
 /**

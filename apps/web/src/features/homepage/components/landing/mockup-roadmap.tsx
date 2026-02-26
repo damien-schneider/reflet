@@ -30,7 +30,7 @@ export default function RoadmapMockup() {
       transition={{ duration: 0.9, ease: EASE_OUT_EXPO }}
     >
       {/* Window chrome */}
-      <div className="flex items-center gap-2 bg-[#2a2924] px-4 py-2.5 dark:bg-[#151412]">
+      <div className="flex items-center gap-2 bg-[#2a2924] px-4 py-2.5 dark:bg-sidebar">
         <div className="flex gap-1.5">
           <div className="size-2.5 rounded-full bg-[#ff5f57]" />
           <div className="size-2.5 rounded-full bg-[#febc2e]" />
@@ -46,7 +46,7 @@ export default function RoadmapMockup() {
       </div>
 
       {/* Board */}
-      <div className="flex gap-4 overflow-x-auto bg-[#f5f4f1] p-5 dark:bg-[#1a1917]">
+      <div className="flex gap-4 overflow-x-auto bg-accent p-5 dark:bg-background">
         {ROADMAP_COLUMNS_DATA.map((col, colIdx) => (
           <motion.div
             animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -75,7 +75,7 @@ export default function RoadmapMockup() {
               {col.items.map((item, itemIdx) => (
                 <motion.div
                   animate={isInView ? { opacity: 1, scale: 1 } : {}}
-                  className="group cursor-grab rounded-lg border border-[#e8e6e1] bg-[#faf9f7] p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing dark:border-[#ffffff0d] dark:bg-[#1e1d1a]"
+                  className="group cursor-grab rounded-lg border border-border bg-card p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing"
                   initial={{ opacity: 0, scale: 0.95 }}
                   key={item.id}
                   transition={{
@@ -104,7 +104,7 @@ export default function RoadmapMockup() {
                       {item.assignees.map((initial, i) => (
                         <div
                           className={cn(
-                            "flex size-5 items-center justify-center rounded-full border-2 border-[#faf9f7] font-bold text-[7px] text-white dark:border-[#1e1d1a]",
+                            "flex size-5 items-center justify-center rounded-full border-2 border-card font-bold text-[7px] text-white",
                             item.colors[i]
                           )}
                           key={initial}
@@ -118,7 +118,7 @@ export default function RoadmapMockup() {
               ))}
 
               {/* Ghost card */}
-              <div className="flex items-center justify-center rounded-lg border border-[#e8e6e1] border-dashed py-2.5 text-muted-foreground/30 transition-colors hover:border-olive-600/20 hover:text-olive-600/40 dark:border-[#ffffff0d]">
+              <div className="flex items-center justify-center rounded-lg border border-border border-dashed py-2.5 text-muted-foreground/30 transition-colors hover:border-olive-600/20 hover:text-olive-600/40">
                 <span className="text-[11px]">+ Add item</span>
               </div>
             </div>

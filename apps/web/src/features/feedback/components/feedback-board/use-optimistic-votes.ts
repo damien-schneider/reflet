@@ -2,6 +2,7 @@
 
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useCallback, useRef, useState } from "react";
+import { capture } from "@/lib/analytics";
 import type { FeedbackItem } from "../feed-feedback-view";
 
 type VoteType = "upvote" | "downvote" | null;
@@ -99,6 +100,10 @@ export function useOptimisticVotes({
       pendingVotesRef.current.add(feedbackId);
 
       const newVoteType = currentVoteType === voteType ? null : voteType;
+
+      capture("feedback_voted", {
+        action: currentVoteType === voteType ? "remove" : "add",
+      });
 
       setOptimisticVotes((prev) => {
         const next = new Map(prev);

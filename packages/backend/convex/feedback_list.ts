@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { authComponent } from "./auth";
-import { isCompletedStatusName } from "./status-utils";
+import { isCompletedStatusName } from "./status_utils";
 
 // Helper to sort feedback
 const sortFeedback = <

@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 import {
   formatAuthError,
@@ -161,6 +162,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
         },
         {
           onSuccess: () => {
+            capture("sign_in_completed", { method: "email" });
             onSuccess?.();
             router.push("/pending-invitations");
           },
@@ -195,6 +197,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
         },
         {
           onSuccess: () => {
+            capture("sign_up_completed", { method: "email" });
             onSuccess?.();
             if (skipEmailVerification) {
               router.push("/pending-invitations");

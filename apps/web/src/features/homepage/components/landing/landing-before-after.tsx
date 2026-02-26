@@ -8,6 +8,7 @@
 import { motion, useInView } from "motion/react";
 import { useRef, useState } from "react";
 
+import { H2, Text } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
 const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
@@ -58,7 +59,7 @@ export default function LandingBeforeAfter() {
 
   return (
     <section
-      className="relative overflow-hidden bg-[#f0efea] py-24 sm:py-32 dark:bg-[#151412]"
+      className="relative overflow-hidden bg-muted py-24 sm:py-32 dark:bg-sidebar"
       ref={ref}
     >
       <div className="mx-auto max-w-300 px-5 sm:px-8">
@@ -69,10 +70,10 @@ export default function LandingBeforeAfter() {
             initial={{ opacity: 0, x: -24 }}
             transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
           >
-            <span className="mb-3 block font-semibold text-[11px] text-olive-600 uppercase tracking-[0.15em] dark:text-olive-400">
+            <Text as="span" className="mb-3 block" variant="eyebrow">
               The difference
-            </span>
-            <h2 className="mb-6 font-display text-[clamp(1.8rem,4vw,3rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
+            </Text>
+            <H2 className="mb-6" variant="landing">
               {isAfter ? (
                 <>
                   Every voice heard.{" "}
@@ -88,7 +89,7 @@ export default function LandingBeforeAfter() {
                   </span>
                 </>
               )}
-            </h2>
+            </H2>
 
             {/* Toggle switch */}
             <div className="mb-8 flex items-center gap-3">
@@ -97,7 +98,7 @@ export default function LandingBeforeAfter() {
                   "rounded-lg px-3.5 py-1.5 font-medium text-[13px] transition-all",
                   isAfter
                     ? "text-muted-foreground hover:text-foreground"
-                    : "bg-[#faf9f7] text-foreground shadow-sm dark:bg-[#1e1d1a]"
+                    : "bg-card text-foreground shadow-sm"
                 )}
                 onClick={() => setIsAfter(false)}
                 type="button"
@@ -146,7 +147,7 @@ export default function LandingBeforeAfter() {
                   "flex items-start gap-3.5 rounded-xl border p-4 transition-all",
                   isAfter
                     ? "border-olive-600/10 bg-olive-600/3 dark:border-olive-400/10 dark:bg-olive-400/4"
-                    : "border-[#e8e6e1] bg-[#faf9f7] dark:border-[#ffffff0d] dark:bg-[#1e1d1a]"
+                    : "border-border bg-card"
                 )}
                 initial={{ opacity: 0, x: 16 }}
                 key={item.label}

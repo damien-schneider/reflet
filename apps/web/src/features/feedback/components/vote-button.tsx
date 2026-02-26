@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { capture } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 interface VoteButtonProps {
@@ -37,6 +38,7 @@ export function VoteButton({
     e.stopPropagation();
     e.preventDefault();
     authGuard(async () => {
+      capture("feedback_voted", { action: hasVoted ? "remove" : "add" });
       await toggleVote({ feedbackId, voteType: "upvote" });
     });
   };

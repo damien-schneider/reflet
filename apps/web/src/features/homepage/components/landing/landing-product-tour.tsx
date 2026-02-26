@@ -17,6 +17,7 @@ import { motion, useInView } from "motion/react";
 import { useRef } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { H2, H3, Lead, Text } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
 const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
@@ -40,9 +41,9 @@ function WidgetMockup() {
   return (
     <div className="space-y-4">
       {/* Code editor */}
-      <div className="overflow-hidden rounded-2xl border border-[#e8e6e1] bg-[#faf9f7] shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)] dark:border-[#ffffff0d] dark:bg-[#1e1d1a]">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)]">
         {/* Chrome */}
-        <div className="flex items-center gap-3 border-[#e8e6e1] border-b bg-[#f0efea] px-4 py-2.5 dark:border-[#ffffff0d] dark:bg-[#151412]">
+        <div className="flex items-center gap-3 border-border border-b bg-muted px-4 py-2.5">
           <div className="flex gap-1.5">
             <div className="size-2.5 rounded-full bg-[#ff5f57]/60" />
             <div className="size-2.5 rounded-full bg-[#febc2e]/60" />
@@ -103,9 +104,9 @@ const AI_AUTO_TAGS = [
 
 function AIMockup() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#e8e6e1] bg-[#faf9f7] shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)] dark:border-[#ffffff0d] dark:bg-[#1e1d1a]">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)]">
       {/* Header */}
-      <div className="flex items-center justify-between border-[#e8e6e1] border-b px-5 py-3 dark:border-[#ffffff0d]">
+      <div className="flex items-center justify-between border-border border-b px-5 py-3">
         <div className="flex items-center gap-2">
           <Sparkle className="text-violet-500" size={15} weight="fill" />
           <span className="font-semibold text-[13px] text-foreground">
@@ -116,7 +117,7 @@ function AIMockup() {
       </div>
 
       {/* Subject */}
-      <div className="border-[#e8e6e1] border-b px-5 py-3 dark:border-[#ffffff0d]">
+      <div className="border-border border-b px-5 py-3">
         <span className="mb-1 block text-[10px] text-muted-foreground uppercase tracking-wider">
           Analyzing
         </span>
@@ -126,7 +127,7 @@ function AIMockup() {
       </div>
 
       {/* Results */}
-      <div className="divide-y divide-[#e8e6e1] dark:divide-[#ffffff0d]">
+      <div className="divide-y divide-border">
         {/* Tags */}
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2">
@@ -173,7 +174,7 @@ function AIMockup() {
               Duplicate detected
             </span>
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-[#e8e6e1] bg-[#f0efea]/50 px-3 py-2 dark:border-[#ffffff0d] dark:bg-[#151412]">
+          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-3 py-2 dark:bg-sidebar">
             <div className="flex items-center gap-2">
               <Badge color="yellow">87% match</Badge>
               <span className="text-[12px] text-foreground">
@@ -230,16 +231,16 @@ export default function LandingProductTour() {
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
         >
-          <span className="mb-3 block font-semibold text-[11px] text-olive-600 uppercase tracking-[0.15em] dark:text-olive-400">
+          <Text as="span" className="mb-3 block" variant="eyebrow">
             Product Tour
-          </span>
-          <h2 className="mb-4 font-display text-[clamp(1.8rem,4vw,3rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
+          </Text>
+          <H2 className="mb-4" variant="landing">
             See how Reflet works
-          </h2>
-          <p className="mx-auto max-w-120 text-[15px] text-muted-foreground leading-relaxed sm:text-[17px]">
+          </H2>
+          <Lead className="mx-auto max-w-120" size="sm">
             From collecting feedback to shipping features your users actually
             want.
-          </p>
+          </Lead>
         </motion.div>
 
         {/* Feature blocks */}
@@ -260,12 +261,12 @@ export default function LandingProductTour() {
                 <span className="mb-4 inline-block rounded-full bg-olive-600/10 px-3.5 py-1 font-semibold text-[11px] text-olive-600 uppercase tracking-widest dark:bg-olive-400/10 dark:text-olive-400">
                   {section.badge}
                 </span>
-                <h3 className="mb-3 font-display text-[clamp(1.4rem,3vw,2rem)] text-olive-950 leading-[1.15] tracking-[-0.01em] dark:text-olive-100">
+                <H3 className="mb-3" variant="landing">
                   {section.title}
-                </h3>
-                <p className="max-w-md text-[15px] text-muted-foreground leading-relaxed">
+                </H3>
+                <Lead className="max-w-md" size="sm">
                   {section.description}
-                </p>
+                </Lead>
               </div>
               <div className={section.reverse ? "lg:order-1" : ""}>
                 {section.mockup === "widget" ? <WidgetMockup /> : <AIMockup />}

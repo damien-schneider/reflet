@@ -11,6 +11,7 @@ import {
   DropdownListSeparator,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
+import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 
 export default function UserList() {
@@ -42,6 +43,7 @@ export default function UserList() {
         <DropdownListSeparator />
         <DropdownListItem
           onClick={() => {
+            capture("sign_out");
             posthog.reset();
             authClient.signOut();
             window.location.href = "/";

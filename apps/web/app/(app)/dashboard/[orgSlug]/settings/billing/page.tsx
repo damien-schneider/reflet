@@ -5,6 +5,7 @@ import { useAction, useQuery } from "convex/react";
 import { use, useState } from "react";
 
 import { H1, H2, Muted, Text } from "@/components/ui/typography";
+import { capture } from "@/lib/analytics";
 
 import { DEFAULT_LIMITS, PLANS } from "./billing-config";
 import { BillingToggle } from "./billing-toggle";
@@ -62,6 +63,10 @@ export default function BillingPage({
     }
 
     setIsLoading(priceKey);
+    capture("plan_upgrade_clicked", {
+      plan: "pro",
+      interval: priceKey.includes("Yearly") ? "yearly" : "monthly",
+    });
     try {
       const result = await createCheckoutSession({
         organizationId: org._id,

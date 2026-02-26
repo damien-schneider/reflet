@@ -27,7 +27,7 @@ export default function LandingCTA() {
 
           <div className="flex flex-wrap items-center gap-4">
             <Link href="/dashboard">
-              <Button className="h-12 rounded-full bg-olive-100 px-7 text-[15px] text-olive-950 hover:bg-white">
+              <Button className="h-12 rounded-full bg-olive-100 px-7 text-[15px] text-olive-950 hover:bg-olive-50">
                 See your feedback board
                 <ArrowRight className="ml-1.5" size={16} />
               </Button>

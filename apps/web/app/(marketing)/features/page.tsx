@@ -5,7 +5,6 @@ import {
   Code,
   GithubLogo,
   Lightning,
-  Sparkle,
 } from "@/components/phosphor-icons";
 import { Button } from "@/components/ui/button";
 import { FeatureMockup } from "@/features/homepage/components/feature-mockups";
@@ -109,22 +108,6 @@ const FEATURES = [
       "API key authentication with granular permissions",
       "Rate limiting with generous free-tier quotas",
       "OpenAPI specification for easy integration",
-    ],
-  },
-  {
-    id: "integrations",
-    icon: Sparkle,
-    accent: "text-rose-500",
-    accentBg: "bg-rose-500/10 dark:bg-rose-500/15",
-    title: "Integrations",
-    description:
-      "Slack, Discord, and more. Get notified, create feedback from messages, keep your team in sync.",
-    details: [
-      "Slack — get notified in channels, create feedback from messages",
-      "Discord — bot commands to submit and vote on feedback",
-      "Webhooks — connect to any tool in your stack",
-      "Zapier and Make coming soon",
-      "Custom integrations via the REST API",
     ],
   },
 ] as const;

@@ -2,6 +2,7 @@
 
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
+import { capture } from "@/lib/analytics";
 
 interface NewFeedbackState {
   title: string;
@@ -89,6 +90,9 @@ export function useSubmitFeedback({
           attachments,
         });
       }
+      capture("feedback_created", {
+        source: isMember ? "admin" : "public_board",
+      });
       if (createdFeedbackId && submitAssigneeId) {
         await assignFeedback({
           feedbackId: createdFeedbackId,

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { capture } from "@/lib/analytics";
 
 interface CommitInfo {
   sha: string;
@@ -214,6 +215,7 @@ export function GenerateFromCommits({
       const fullContent = await streamReleaseNotes(commits, files, previousTag);
 
       onComplete(fullContent);
+      capture("ai_release_notes_generated");
       toast.success(
         `Generated from ${commits.length} commit${commits.length === 1 ? "" : "s"}`
       );

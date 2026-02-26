@@ -10,6 +10,7 @@ import { ChatCircleDots, Kanban, MegaphoneSimple } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useInView } from "motion/react";
 import { lazy, Suspense, useRef, useState } from "react";
 
+import { H2, Lead, Text } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
 const FeedbackBoardMockup = lazy(() => import("./mockup-feedback"));
@@ -53,7 +54,7 @@ export default function LandingShowcase() {
 
   return (
     <section
-      className="relative overflow-hidden bg-[#f0efea] py-24 sm:py-32 dark:bg-[#151412]"
+      className="relative overflow-hidden bg-muted py-24 sm:py-32 dark:bg-sidebar"
       ref={ref}
     >
       {/* Subtle texture */}
@@ -67,17 +68,17 @@ export default function LandingShowcase() {
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
         >
-          <span className="mb-3 block font-semibold text-[11px] text-olive-600 uppercase tracking-[0.15em] dark:text-olive-400">
+          <Text as="span" className="mb-3 block" variant="eyebrow">
             The complete feedback loop
-          </span>
-          <h2 className="mb-4 font-display text-[clamp(1.8rem,4vw,3rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
+          </Text>
+          <H2 className="mb-4" variant="landing">
             Three tools.{" "}
             <span className="text-muted-foreground">One cycle.</span>
-          </h2>
-          <p className="text-[15px] text-muted-foreground leading-relaxed sm:text-[17px]">
+          </H2>
+          <Lead size="sm">
             Feedback flows in, gets triaged, lands on your roadmap, and ships as
             a changelog — every voter notified automatically.
-          </p>
+          </Lead>
         </motion.div>
 
         {/* Tab bar */}
@@ -104,7 +105,7 @@ export default function LandingShowcase() {
               >
                 {isActive && (
                   <motion.div
-                    className="absolute inset-0 rounded-xl bg-[#faf9f7] shadow-sm dark:bg-[#1e1d1a]"
+                    className="absolute inset-0 rounded-xl bg-card shadow-sm"
                     layoutId="showcase-tab-bg"
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                   />
@@ -143,7 +144,7 @@ export default function LandingShowcase() {
           >
             <Suspense
               fallback={
-                <div className="flex h-100 items-center justify-center rounded-2xl border border-[#e8e6e1] bg-[#faf9f7] dark:border-[#ffffff0d] dark:bg-[#1e1d1a]">
+                <div className="flex h-100 items-center justify-center rounded-2xl border border-border bg-card">
                   <div className="size-5 animate-spin rounded-full border-2 border-olive-600/20 border-t-olive-600" />
                 </div>
               }

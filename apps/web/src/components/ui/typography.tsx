@@ -14,6 +14,8 @@ const h1Variants = cva(
         default: "text-5xl leading-tight tracking-tight",
         hero: "text-4xl leading-[1.1] tracking-tight sm:text-6xl sm:leading-tight md:text-7xl",
         page: "text-4xl leading-tight tracking-tight sm:text-5xl",
+        landing:
+          "text-[clamp(2.5rem,6vw,5rem)] leading-[1.05] tracking-[-0.03em]",
       },
     },
     defaultVariants: {
@@ -33,6 +35,8 @@ const h2Variants = cva(
         default: "text-3xl leading-snug tracking-tight",
         section: "text-4xl tracking-tight sm:text-5xl",
         card: "text-xl font-medium text-foreground",
+        landing:
+          "text-[clamp(1.8rem,4vw,3rem)] leading-[1.1] tracking-[-0.02em]",
       },
     },
     defaultVariants: {
@@ -52,6 +56,8 @@ const h3Variants = cva(
         default: "text-2xl leading-snug tracking-tight",
         card: "text-xl font-medium text-foreground",
         cardBold: "text-xl font-semibold text-foreground",
+        landing:
+          "text-[clamp(1.4rem,3vw,2rem)] leading-[1.15] tracking-[-0.01em]",
       },
     },
     defaultVariants: {
@@ -74,6 +80,8 @@ const textVariants = cva("text-foreground", {
       labelBold: "text-sm font-semibold leading-none",
       overline:
         "text-xs font-semibold uppercase tracking-wider text-muted-foreground",
+      eyebrow:
+        "text-[11px] font-semibold uppercase tracking-[0.15em] text-olive-600 dark:text-olive-400",
       link: "text-olive-600 underline underline-offset-4 hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300 transition-colors",
     },
     align: {
@@ -162,14 +170,23 @@ const Muted = ({ as = "p", className, ref, ...props }: MutedProps) => {
 // Lead Text - For intro paragraphs
 // ============================================================================
 
-type LeadProps = ComponentPropsWithRef<"p">;
+const leadVariants = cva("text-muted-foreground leading-relaxed", {
+  variants: {
+    size: {
+      default: "text-base sm:text-xl",
+      sm: "text-[15px] sm:text-[17px]",
+      lg: "text-[17px] sm:text-[19px]",
+    },
+  },
+  defaultVariants: {
+    size: "default",
+  },
+});
 
-const Lead = ({ className, ref, ...props }: LeadProps) => (
-  <p
-    className={cn("text-muted-foreground text-base sm:text-xl", className)}
-    ref={ref}
-    {...props}
-  />
+type LeadProps = ComponentPropsWithRef<"p"> & VariantProps<typeof leadVariants>;
+
+const Lead = ({ size, className, ref, ...props }: LeadProps) => (
+  <p className={cn(leadVariants({ size }), className)} ref={ref} {...props} />
 );
 
 // ============================================================================
@@ -246,4 +263,5 @@ export {
   h2Variants,
   h3Variants,
   textVariants,
+  leadVariants,
 };

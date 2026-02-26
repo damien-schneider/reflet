@@ -12,6 +12,8 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { H2, Text } from "@/components/ui/typography";
+import { capture } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
@@ -82,7 +84,7 @@ export default function LandingPricing() {
 
   return (
     <section
-      className="bg-[#f0efea] py-24 sm:py-32 dark:bg-[#151412]"
+      className="bg-muted py-24 sm:py-32 dark:bg-sidebar"
       id="pricing"
       ref={ref}
     >
@@ -94,13 +96,13 @@ export default function LandingPricing() {
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
         >
-          <span className="mb-3 block font-semibold text-[11px] text-olive-600 uppercase tracking-[0.15em] dark:text-olive-400">
+          <Text as="span" className="mb-3 block" variant="eyebrow">
             Pricing
-          </span>
-          <h2 className="mb-4 max-w-120 font-display text-[clamp(1.8rem,4vw,3rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
+          </Text>
+          <H2 className="mb-4 max-w-120" variant="landing">
             Free to start.{" "}
             <span className="text-muted-foreground">Scale when ready.</span>
-          </h2>
+          </H2>
 
           {/* Toggle */}
           <div className="flex items-center gap-2">
@@ -109,9 +111,12 @@ export default function LandingPricing() {
                 "rounded-lg px-3.5 py-1.5 font-medium text-[13px] transition-all",
                 isYearly
                   ? "text-muted-foreground hover:text-foreground"
-                  : "bg-[#faf9f7] text-foreground shadow-sm dark:bg-[#1e1d1a]"
+                  : "bg-card text-foreground shadow-sm"
               )}
-              onClick={() => setInterval("monthly")}
+              onClick={() => {
+                setInterval("monthly");
+                capture("pricing_billing_toggled", { interval: "monthly" });
+              }}
               type="button"
             >
               Monthly
@@ -120,10 +125,13 @@ export default function LandingPricing() {
               className={cn(
                 "rounded-lg px-3.5 py-1.5 font-medium text-[13px] transition-all",
                 isYearly
-                  ? "bg-[#faf9f7] text-foreground shadow-sm dark:bg-[#1e1d1a]"
+                  ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
-              onClick={() => setInterval("yearly")}
+              onClick={() => {
+                setInterval("yearly");
+                capture("pricing_billing_toggled", { interval: "yearly" });
+              }}
               type="button"
             >
               Yearly
@@ -149,8 +157,8 @@ export default function LandingPricing() {
                 className={cn(
                   "relative flex flex-col overflow-hidden rounded-2xl border p-6 transition-all",
                   tier.highlighted
-                    ? "border-olive-600/30 bg-[#faf9f7] shadow-lg dark:border-olive-400/30 dark:bg-[#1e1d1a]"
-                    : "border-[#e8e6e1] bg-[#faf9f7] dark:border-[#ffffff0d] dark:bg-[#1e1d1a]"
+                    ? "border-olive-600/30 bg-card shadow-lg dark:border-olive-400/30"
+                    : "border-border bg-card"
                 )}
                 initial={{ opacity: 0, y: 24 }}
                 key={tier.name}
@@ -203,7 +211,15 @@ export default function LandingPricing() {
                 </ul>
 
                 {/* CTA */}
-                <Link href="/dashboard">
+                <Link
+                  href="/dashboard"
+                  onClick={() =>
+                    capture("pricing_tier_clicked", {
+                      tier: tier.name,
+                      interval,
+                    })
+                  }
+                >
                   <Button
                     className={cn(
                       "h-10 w-full rounded-xl text-[13px]",

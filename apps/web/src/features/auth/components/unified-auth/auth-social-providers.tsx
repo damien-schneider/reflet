@@ -2,6 +2,7 @@
 
 import { GithubLogo, GoogleLogo } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 
 export function AuthSocialProviders() {
@@ -10,6 +11,7 @@ export function AuthSocialProviders() {
       <Button
         className="w-full"
         onClick={() => {
+          capture("sign_in_completed", { method: "google" });
           authClient.signIn.social({
             provider: "google",
             callbackURL: "/dashboard",
@@ -24,6 +26,7 @@ export function AuthSocialProviders() {
       <Button
         className="w-full"
         onClick={() => {
+          capture("sign_in_completed", { method: "github" });
           authClient.signIn.social({
             provider: "github",
             callbackURL: "/dashboard",

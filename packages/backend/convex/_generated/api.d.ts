@@ -62,6 +62,7 @@ import type * as releases from "../releases.js";
 import type * as releases_internal from "../releases_internal.js";
 import type * as repo_analysis from "../repo_analysis.js";
 import type * as rss from "../rss.js";
+import type * as status_utils from "../status_utils.js";
 import type * as storage from "../storage.js";
 import type * as stripe from "../stripe.js";
 import type * as subscriptions from "../subscriptions.js";
@@ -142,6 +143,7 @@ declare const fullApi: ApiFromModules<{
   releases_internal: typeof releases_internal;
   repo_analysis: typeof repo_analysis;
   rss: typeof rss;
+  status_utils: typeof status_utils;
   storage: typeof storage;
   stripe: typeof stripe;
   subscriptions: typeof subscriptions;

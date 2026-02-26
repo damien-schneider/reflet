@@ -11,6 +11,7 @@ import { motion, useInView } from "motion/react";
 import type { ReactNode } from "react";
 import { useRef, useState } from "react";
 
+import { H2, Lead, Text } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
 import { LOOP_STEPS } from "./landing-data";
@@ -39,16 +40,16 @@ export default function LandingLoop() {
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
         >
-          <span className="mb-3 block font-semibold text-[11px] text-olive-600 uppercase tracking-[0.15em] dark:text-olive-400">
+          <Text as="span" className="mb-3 block" variant="eyebrow">
             How it works
-          </span>
-          <h2 className="mb-4 font-display text-[clamp(1.8rem,4vw,3rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
+          </Text>
+          <H2 className="mb-4" variant="landing">
             From noise to <span className="italic">shipped features</span>
-          </h2>
-          <p className="text-[15px] text-muted-foreground leading-relaxed sm:text-[17px]">
+          </H2>
+          <Lead size="sm">
             Four steps. Fully automated where it matters, transparent where it
             counts.
-          </p>
+          </Lead>
         </motion.div>
 
         {/* Steps grid — 4 columns on desktop, stacked on mobile */}
@@ -60,7 +61,7 @@ export default function LandingLoop() {
                 "group relative overflow-hidden rounded-2xl border p-6 transition-all duration-300",
                 hoveredIdx === idx
                   ? "border-olive-600/20 bg-olive-600/3 shadow-lg dark:border-olive-400/20 dark:bg-olive-400/4"
-                  : "border-[#e8e6e1] bg-[#faf9f7] dark:border-[#ffffff0d] dark:bg-[#1e1d1a]"
+                  : "border-border bg-card"
               )}
               initial={{ opacity: 0, y: 24 }}
               key={step.step}
@@ -83,7 +84,7 @@ export default function LandingLoop() {
                   "mb-4 flex size-11 items-center justify-center rounded-xl transition-colors duration-300",
                   hoveredIdx === idx
                     ? "bg-olive-600/10 text-olive-600 dark:bg-olive-400/10 dark:text-olive-400"
-                    : "bg-[#f0efea] text-muted-foreground dark:bg-[#ffffff08]"
+                    : "bg-muted text-muted-foreground"
                 )}
               >
                 {ICON_MAP[step.icon]}
@@ -101,7 +102,7 @@ export default function LandingLoop() {
 
               {/* Connector arrow (desktop only, not on last) */}
               {idx < LOOP_STEPS.length - 1 && (
-                <div className="pointer-events-none absolute top-1/2 -right-3 hidden -translate-y-1/2 text-[#e8e6e1] lg:block dark:text-[#ffffff12]">
+                <div className="pointer-events-none absolute top-1/2 -right-3 hidden -translate-y-1/2 text-border lg:block">
                   <svg
                     aria-hidden="true"
                     fill="none"
