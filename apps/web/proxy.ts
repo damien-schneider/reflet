@@ -17,6 +17,11 @@ export function proxy(request: NextRequest) {
   const isAuthenticated = Boolean(sessionCookie);
 
   if (isAuthenticated) {
+    // Homepage: redirect authenticated users to dashboard
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
     // Token-based pages: redirect only if no token
     if (TOKEN_BASED_AUTH_PAGES.some((page) => pathname.startsWith(page))) {
       if (!searchParams.has("token")) {

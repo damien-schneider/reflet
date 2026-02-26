@@ -10,14 +10,14 @@
  * biome-ignore lint/performance/noBarrelFile: intentional re-export for RSC client boundary
  */
 export {
-  ArrowRight,
-  Brain,
-  CaretRight,
-  ChatCircleDots,
-  Code,
-  GithubLogo,
-  GitMerge,
-  Lightning,
-  Sparkle,
-  Tag,
+  ArrowRightIcon as ArrowRight,
+  BrainIcon as Brain,
+  CaretRightIcon as CaretRight,
+  ChatCircleDotsIcon as ChatCircleDots,
+  CodeIcon as Code,
+  GithubLogoIcon as GithubLogo,
+  GitMergeIcon as GitMerge,
+  LightningIcon as Lightning,
+  SparkleIcon as Sparkle,
+  TagIcon as Tag,
 } from "@phosphor-icons/react";

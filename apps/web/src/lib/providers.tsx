@@ -4,7 +4,6 @@ import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { env } from "@reflet/env/web";
 import { ConvexReactClient } from "convex/react";
 import dynamic from "next/dynamic";
-import { ThemeProvider } from "next-themes";
 import type { PostHog } from "posthog-js";
 import { useEffect, useState } from "react";
 import { authClient } from "./auth-client";
@@ -54,21 +53,14 @@ export function Providers({
   }, []);
 
   const inner = (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      disableTransitionOnChange
-      enableSystem
+    <ConvexBetterAuthProvider
+      authClient={authClient}
+      client={convex}
+      initialToken={initialToken}
     >
-      <ConvexBetterAuthProvider
-        authClient={authClient}
-        client={convex}
-        initialToken={initialToken}
-      >
-        {isPostHogEnabled && posthogClient && <PostHogIdentifier />}
-        {children}
-      </ConvexBetterAuthProvider>
-    </ThemeProvider>
+      {isPostHogEnabled && posthogClient && <PostHogIdentifier />}
+      {children}
+    </ConvexBetterAuthProvider>
   );
 
   if (!(PostHogProviderComp && posthogClient)) {

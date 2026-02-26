@@ -47,7 +47,7 @@ export default function LandingHero() {
         </a>
 
         {/* Main headline — editorial serif + sans-serif mix */}
-        <h1 className="hero-animate hero-fade-up hero-delay-1 mb-6 max-w-205 font-display text-[clamp(2.5rem,6vw,5rem)] text-olive-950 leading-[1.05] tracking-[-0.03em] dark:text-olive-100">
+        <h1 className="mb-6 max-w-205 font-display text-[clamp(2.5rem,6vw,5rem)] text-olive-950 leading-[1.05] tracking-[-0.03em] dark:text-olive-100">
           Your users are{" "}
           <span className="relative">
             talking
@@ -71,7 +71,7 @@ export default function LandingHero() {
         </h1>
 
         {/* Subheadline */}
-        <p className="hero-animate hero-fade-up hero-delay-2 mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
+        <p className="mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
           Reflet captures every feature request, auto-triages with AI, and
           closes the loop when you ship. One board — from raw feedback to
           published changelog.
