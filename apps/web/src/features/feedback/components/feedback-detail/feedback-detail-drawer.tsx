@@ -324,10 +324,7 @@ function FeedbackDetailContent({
 
         {/* Comments */}
         <div className="border-t px-6 py-6">
-          <CommentsSection
-            currentUser={feedback.author}
-            feedbackId={feedbackId}
-          />
+          <CommentsSection feedbackId={feedbackId} />
         </div>
       </div>
     </ScrollArea>

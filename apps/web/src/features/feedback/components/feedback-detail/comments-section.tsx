@@ -6,7 +6,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 
@@ -16,16 +15,9 @@ import type { CommentData } from "./types";
 
 interface CommentsSectionProps {
   feedbackId: Id<"feedback">;
-  currentUser?: {
-    name?: string | null;
-    image?: string | null;
-  } | null;
 }
 
-export function CommentsSection({
-  feedbackId,
-  currentUser,
-}: CommentsSectionProps) {
+export function CommentsSection({ feedbackId }: CommentsSectionProps) {
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -65,7 +57,6 @@ export function CommentsSection({
 
       {/* Comment Input */}
       <CommentInput
-        currentUser={currentUser}
         isSubmitting={isSubmitting}
         onCommentChange={setNewComment}
         onSubmit={handleSubmitComment}
@@ -91,10 +82,6 @@ export function CommentsSection({
 }
 
 interface CommentInputProps {
-  currentUser?: {
-    name?: string | null;
-    image?: string | null;
-  } | null;
   value: string;
   onCommentChange: (value: string) => void;
   onSubmit: () => void;
@@ -102,7 +89,6 @@ interface CommentInputProps {
 }
 
 function CommentInput({
-  currentUser,
   value,
   onCommentChange,
   onSubmit,
@@ -117,36 +103,26 @@ function CommentInput({
   }, [canSubmit, onSubmit]);
 
   return (
-    <div className="flex gap-3">
-      <Avatar className="h-8 w-8 shrink-0">
-        <AvatarImage src={currentUser?.image ?? undefined} />
-        <AvatarFallback className="text-xs">
-          {currentUser?.name?.charAt(0) ?? "?"}
-        </AvatarFallback>
-      </Avatar>
-      <div className="flex-1">
-        <div className="overflow-hidden rounded-xl border bg-muted/30 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20">
-          <TiptapMarkdownEditor
-            className="min-h-[80px]"
-            editable
-            minimal
-            onChange={onCommentChange}
-            onSubmit={handleKeyboardSubmit}
-            placeholder="Write a comment... (Cmd+Enter to submit)"
-            value={value}
-          />
-          <div className="flex items-center justify-end border-t bg-muted/50 px-3 py-2">
-            <Button
-              className="h-8 gap-1.5"
-              disabled={!canSubmit}
-              onClick={onSubmit}
-              size="sm"
-            >
-              <PaperPlaneTilt className="h-3.5 w-3.5" />
-              {isSubmitting ? "Posting..." : "Post"}
-            </Button>
-          </div>
-        </div>
+    <div className="overflow-hidden rounded-xl border bg-muted/30 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20">
+      <TiptapMarkdownEditor
+        className="min-h-[80px]"
+        editable
+        minimal
+        onChange={onCommentChange}
+        onSubmit={handleKeyboardSubmit}
+        placeholder="Write a comment... (Cmd+Enter to submit)"
+        value={value}
+      />
+      <div className="flex items-center justify-end border-t bg-muted/50 px-3 py-2">
+        <Button
+          className="h-8 gap-1.5"
+          disabled={!canSubmit}
+          onClick={onSubmit}
+          size="sm"
+        >
+          <PaperPlaneTilt className="h-3.5 w-3.5" />
+          {isSubmitting ? "Posting..." : "Post"}
+        </Button>
       </div>
     </div>
   );
