@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { PLAN_LIMITS } from "./organizations";
+import { mapStatusNameToEnum } from "./status-utils";
 import { getAuthUser } from "./utils";
 
 /**
@@ -492,44 +493,6 @@ export const assign = mutation({
     return args.feedbackId;
   },
 });
-
-/**
- * Map custom status name to the corresponding enum value
- * This ensures the status field stays in sync with organizationStatusId
- */
-function mapStatusNameToEnum(
-  statusName: string
-):
-  | "open"
-  | "under_review"
-  | "planned"
-  | "in_progress"
-  | "completed"
-  | "closed" {
-  const normalizedName = statusName.toLowerCase().replace(/[\s_-]/g, "");
-
-  // Map common status names to enum values
-  const statusMap: Record<
-    string,
-    "open" | "under_review" | "planned" | "in_progress" | "completed" | "closed"
-  > = {
-    open: "open",
-    underreview: "under_review",
-    "under review": "under_review",
-    "under-review": "under_review",
-    planned: "planned",
-    inprogress: "in_progress",
-    "in progress": "in_progress",
-    "in-progress": "in_progress",
-    completed: "completed",
-    done: "completed",
-    closed: "closed",
-    resolved: "closed",
-    archived: "closed",
-  };
-
-  return statusMap[normalizedName] ?? "open";
-}
 
 /**
  * Update AI analysis overrides (priority, complexity, time estimate)

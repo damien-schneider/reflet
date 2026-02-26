@@ -48,6 +48,28 @@ export interface FeedbackBoardProps {
   milestoneViewStyle?: "track" | "editorial-accordion" | "dashboard-timeline";
 }
 
+/**
+ * Build query args for the feedback list, delegating "hide completed"
+ * filtering to the backend instead of relying on a fragile client-side
+ * heuristic based on status order.
+ */
+function buildFeedbackQueryArgs(
+  organizationId: Id<"organizations">,
+  searchQuery: string,
+  sortBy: "votes" | "newest" | "oldest" | "comments",
+  selectedStatusIds: Id<"organizationStatuses">[],
+  hideCompleted: boolean
+) {
+  const hasExplicitStatusFilter = selectedStatusIds.length > 0;
+  return {
+    organizationId,
+    search: searchQuery.trim() || undefined,
+    sortBy,
+    statusIds: hasExplicitStatusFilter ? selectedStatusIds : undefined,
+    hideCompleted: (hideCompleted && !hasExplicitStatusFilter) || undefined,
+  };
+}
+
 function FeedbackBoardContent({
   organizationId,
   primaryColor,
@@ -98,39 +120,15 @@ function FeedbackBoardContent({
     organizationId,
   });
 
-  // When hideCompleted=true and no explicit status filter, exclude the highest-order (Done) status.
-  // Skip the feedback query until orgStatuses loads to avoid a flash of completed items.
-  const skipFeedback =
-    hideCompleted &&
-    selectedStatusIds.length === 0 &&
-    orgStatuses === undefined;
-
-  const effectiveStatusIds = (() => {
-    if (selectedStatusIds.length > 0) {
-      return selectedStatusIds;
-    }
-    if (hideCompleted && orgStatuses && orgStatuses.length > 0) {
-      const doneStatus = orgStatuses.reduce((max, s) =>
-        s.order > max.order ? s : max
-      );
-      const filteredIds = orgStatuses
-        .filter((s) => s._id !== doneStatus._id)
-        .map((s) => s._id);
-      return filteredIds.length > 0 ? filteredIds : undefined;
-    }
-    return undefined;
-  })();
-
   const feedback = useQuery(
     api.feedback_list.listByOrganization,
-    skipFeedback
-      ? "skip"
-      : {
-          organizationId,
-          search: searchQuery.trim() || undefined,
-          sortBy,
-          statusIds: effectiveStatusIds,
-        }
+    buildFeedbackQueryArgs(
+      organizationId,
+      searchQuery,
+      sortBy,
+      selectedStatusIds,
+      hideCompleted
+    )
   );
 
   // Store previous feedback to prevent blinking during refetch

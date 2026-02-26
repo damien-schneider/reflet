@@ -38,11 +38,6 @@ export function FeedbackList({
   const selectedTagIds = useAtomValue(selectedTagIdsAtom);
   const hideCompleted = useAtomValue(hideCompletedAtom);
 
-  // Get organization statuses to identify the "Done" (highest-order) status
-  const organizationStatuses = useQuery(api.organization_statuses.list, {
-    organizationId,
-  });
-
   // Map sort option to Convex sort type
   const convexSortBy = (() => {
     switch (sortBy) {
@@ -55,28 +50,10 @@ export function FeedbackList({
     }
   })();
 
-  // Compute effective statusIds for the backend query
-  const effectiveStatusIds = (() => {
-    if (selectedStatusIds.length > 0) {
-      // Explicit user selection takes precedence
-      return selectedStatusIds;
-    }
-    if (
-      hideCompleted &&
-      organizationStatuses &&
-      organizationStatuses.length > 0
-    ) {
-      // Find the highest-order status (the "Done" status) and exclude it
-      const doneStatus = organizationStatuses.reduce((max, s) =>
-        s.order > max.order ? s : max
-      );
-      const filteredIds = organizationStatuses
-        .filter((s) => s._id !== doneStatus._id)
-        .map((s) => s._id);
-      return filteredIds.length > 0 ? filteredIds : undefined;
-    }
-    return undefined;
-  })();
+  // When explicit status IDs are selected, use them as an include-filter.
+  // Otherwise, delegate "hide completed" logic to the backend.
+  const effectiveStatusIds =
+    selectedStatusIds.length > 0 ? selectedStatusIds : undefined;
 
   // Query feedback from Convex
   const feedbackList = useQuery(api.feedback_list.listByOrganization, {
@@ -84,6 +61,8 @@ export function FeedbackList({
     search: search || undefined,
     sortBy: convexSortBy,
     statusIds: effectiveStatusIds,
+    hideCompleted:
+      hideCompleted && selectedStatusIds.length === 0 ? true : undefined,
     tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
   });
 

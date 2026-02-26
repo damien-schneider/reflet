@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { authComponent } from "./auth";
+import { isCompletedStatusName } from "./status-utils";
 
 // Helper to sort feedback
 const sortFeedback = <
@@ -51,6 +52,7 @@ export const listByOrganization = query({
   args: {
     organizationId: v.id("organizations"),
     statusIds: v.optional(v.array(v.id("organizationStatuses"))),
+    hideCompleted: v.optional(v.boolean()),
     tagIds: v.optional(v.array(v.id("tags"))),
     search: v.optional(v.string()),
     sortBy: v.optional(
@@ -112,6 +114,31 @@ export const listByOrganization = query({
       feedbackItems = feedbackItems.filter(
         (f) => f.organizationStatusId && statusIdSet.has(f.organizationStatusId)
       );
+    }
+
+    // Filter out completed items when hideCompleted is true
+    if (args.hideCompleted) {
+      const completedOrgStatusIds = new Set(
+        orgStatuses
+          .filter((s) => isCompletedStatusName(s.name))
+          .map((s) => s._id)
+      );
+
+      feedbackItems = feedbackItems.filter((f) => {
+        // Exclude if the organizationStatusId is a completed status
+        if (
+          f.organizationStatusId &&
+          completedOrgStatusIds.has(f.organizationStatusId)
+        ) {
+          return false;
+        }
+        // Exclude if the status enum is "completed" or "closed" (catches items
+        // without organizationStatusId, e.g. GitHub-synced feedback)
+        if (f.status === "completed" || f.status === "closed") {
+          return false;
+        }
+        return true;
+      });
     }
 
     // Filter non-approved for non-members
