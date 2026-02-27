@@ -466,6 +466,16 @@ export const pushToGithub = mutation({
       throw new Error("Release is already linked to GitHub");
     }
 
+    // Clear previous failed state before retrying
+    if (release.githubPushStatus === "failed") {
+      await ctx.db.patch(args.releaseId, {
+        githubPushStatus: undefined,
+        githubPushError: undefined,
+        githubPushErrorType: undefined,
+        updatedAt: Date.now(),
+      });
+    }
+
     await ctx.scheduler.runAfter(
       0,
       internal.github_node_actions.pushReleaseToGithub,

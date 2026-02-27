@@ -12,6 +12,7 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,7 @@ interface ManualSyncSectionProps {
   lastSyncAt?: number;
   lastSyncStatus?: string;
   organizationId: Id<"organizations">;
+  orgSlug: string;
 }
 
 function formatRelativeTime(timestamp: number): string {
@@ -116,6 +118,7 @@ export const ManualSyncSection = ({
   lastSyncAt,
   lastSyncStatus,
   organizationId,
+  orgSlug,
 }: ManualSyncSectionProps) => {
   const syncStatus = useQuery(api.github.getReleaseSyncStatus, {
     organizationId,
@@ -275,10 +278,21 @@ export const ManualSyncSection = ({
                           Failed
                         </TooltipTrigger>
                         <TooltipContent>
-                          {r.githubPushError ?? "Push to GitHub failed"}
+                          {r.githubPushErrorType === "permission_denied"
+                            ? "GitHub App lacks permission to create releases. Reconnect to update permissions."
+                            : (r.githubPushError ?? "Push to GitHub failed")}
                         </TooltipContent>
                       </Tooltip>
                     )}
+                    {r.githubPushStatus === "failed" &&
+                      r.githubPushErrorType === "permission_denied" && (
+                        <Link
+                          className="shrink-0 font-medium text-primary text-xs hover:underline"
+                          href={`/api/github/install?organizationId=${organizationId}&orgSlug=${orgSlug}`}
+                        >
+                          Reconnect
+                        </Link>
+                      )}
                     {r.githubPushStatus === "pending" && (
                       <span className="flex shrink-0 items-center gap-1 text-muted-foreground text-xs">
                         <Spinner className="h-3 w-3 animate-spin" />

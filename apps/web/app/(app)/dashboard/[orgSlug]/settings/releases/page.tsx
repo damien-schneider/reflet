@@ -196,6 +196,7 @@ export default function ReleaseSettingsPage({
             lastSyncAt={githubStatus?.lastSyncAt}
             lastSyncStatus={githubStatus?.lastSyncStatus}
             organizationId={orgId}
+            orgSlug={orgSlug}
           />
 
           <ReleaseSetupWizard

@@ -893,6 +893,7 @@ export const getReleaseSyncStatus = query({
         publishedAt: r.publishedAt,
         githubPushStatus: r.githubPushStatus,
         githubPushError: r.githubPushError,
+        githubPushErrorType: r.githubPushErrorType,
       }));
 
     // Synced: Reflet releases that have a githubReleaseId
@@ -941,11 +942,13 @@ export const updateGithubPushStatus = internalMutation({
       v.literal("failed")
     ),
     error: v.optional(v.string()),
+    errorType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.releaseId, {
       githubPushStatus: args.status,
       githubPushError: args.error,
+      githubPushErrorType: args.errorType,
       updatedAt: Date.now(),
     });
   },

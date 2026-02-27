@@ -7,8 +7,11 @@ import {
   Eye,
   EyeSlash,
   GitCommit,
+  GithubLogo,
   PencilSimple,
+  Spinner,
   Trash,
+  WarningCircle,
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { format } from "date-fns";
@@ -41,6 +44,10 @@ export interface ReleaseData {
   _creationTime: number;
   feedback?: (LinkedFeedback | null)[];
   commitCount?: number;
+  githubPushStatus?: "pending" | "success" | "failed";
+  githubPushErrorType?: string;
+  githubReleaseId?: string;
+  githubHtmlUrl?: string;
 }
 
 interface ReleaseItemProps {
@@ -102,6 +109,9 @@ export function ReleaseItem({
                 </time>
               </span>
             )}
+
+            {/* GitHub status indicator */}
+            {isPublished && <GitHubStatusIndicator release={release} />}
           </div>
 
           {/* Admin actions */}
@@ -228,4 +238,40 @@ function FeedbackStatusDot({ status }: { status: string }) {
       title={STATUS_LABELS[status] ?? status}
     />
   );
+}
+
+function GitHubStatusIndicator({ release }: { release: ReleaseData }) {
+  if (release.githubReleaseId && release.githubHtmlUrl) {
+    return (
+      <a
+        className="flex items-center gap-1 text-green-600 text-xs dark:text-green-400"
+        href={release.githubHtmlUrl}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        <GithubLogo className="h-3.5 w-3.5" />
+        <Check className="h-3 w-3" />
+      </a>
+    );
+  }
+
+  if (release.githubPushStatus === "pending") {
+    return (
+      <span className="flex items-center gap-1 text-muted-foreground text-xs">
+        <GithubLogo className="h-3.5 w-3.5" />
+        <Spinner className="h-3 w-3 animate-spin" />
+      </span>
+    );
+  }
+
+  if (release.githubPushStatus === "failed") {
+    return (
+      <span className="flex items-center gap-1 text-destructive text-xs">
+        <GithubLogo className="h-3.5 w-3.5" />
+        <WarningCircle className="h-3 w-3" />
+      </span>
+    );
+  }
+
+  return null;
 }

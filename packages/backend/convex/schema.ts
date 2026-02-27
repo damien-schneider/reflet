@@ -539,6 +539,7 @@ export default defineSchema({
       v.union(v.literal("pending"), v.literal("success"), v.literal("failed"))
     ),
     githubPushError: v.optional(v.string()),
+    githubPushErrorType: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

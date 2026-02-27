@@ -243,10 +243,14 @@ export const pushReleaseToGithub = internalAction({
       const errorMessage = `Failed to create GitHub release: ${response.statusText} - ${errorText}`;
       console.error(`[GitHub Push] ${errorMessage}`);
 
+      const errorType =
+        response.status === 403 ? "permission_denied" : "unknown";
+
       await ctx.runMutation(internal.github.updateGithubPushStatus, {
         releaseId: args.releaseId,
         status: "failed",
         error: errorMessage,
+        errorType,
       });
       return;
     }

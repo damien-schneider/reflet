@@ -1,7 +1,13 @@
-import { Check, Spinner } from "@phosphor-icons/react";
+import {
+  Check,
+  CloudArrowUp,
+  Spinner,
+  WarningCircle,
+} from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -70,7 +76,19 @@ export function ReleaseEditor({
     );
   });
 
+  const pushToGithub = useMutation(api.changelog_actions.pushToGithub);
+  const githubConnection = useQuery(api.github.getConnection, {
+    organizationId,
+  });
+
   const isPublished = release?.publishedAt !== undefined;
+  const hasGithubConnection = !!githubConnection;
+  const isLinkedToGithub = !!release?.githubReleaseId;
+  const canPushToGithub =
+    isPublished && hasGithubConnection && !isLinkedToGithub;
+  const isPermissionError =
+    release?.githubPushStatus === "failed" &&
+    release?.githubPushErrorType === "permission_denied";
 
   const [title, setTitle] = useState(release?.title ?? "");
   const [version, setVersion] = useState(release?.version ?? "");
@@ -193,6 +211,20 @@ export function ReleaseEditor({
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePushToGithub = async () => {
+    if (!releaseId) {
+      return;
+    }
+    try {
+      await pushToGithub({ releaseId });
+      toast.success("Push to GitHub scheduled");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to push to GitHub"
+      );
     }
   };
 
@@ -320,34 +352,22 @@ export function ReleaseEditor({
         </div>
 
         {/* Footer */}
-        <div
-          className={cn(
-            "border-t bg-muted/30 px-6 py-4",
-            "flex items-center justify-between gap-2"
-          )}
-        >
-          <Button
-            disabled={isSubmitting || isStreaming || !title.trim()}
-            onClick={
-              isPublished ? handleUnpublish : () => setShowPublishConfirm(true)
-            }
-            size="sm"
-            type="button"
-            variant={isPublished ? "outline" : "default"}
-          >
-            {isPublished ? "Unpublish" : "Publish"}
-          </Button>
-
-          <Button
-            disabled={isSubmitting || isStreaming}
-            onClick={handleCancel}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            Cancel
-          </Button>
-        </div>
+        <ReleaseEditorFooter
+          canPushToGithub={canPushToGithub}
+          isLinkedToGithub={isLinkedToGithub}
+          isPermissionError={isPermissionError}
+          isPublished={isPublished}
+          isStreaming={isStreaming}
+          isSubmitting={isSubmitting}
+          onCancel={handleCancel}
+          onPublish={() => setShowPublishConfirm(true)}
+          onPushToGithub={handlePushToGithub}
+          onUnpublish={handleUnpublish}
+          organizationId={organizationId}
+          orgSlug={orgSlug}
+          release={release}
+          titleEmpty={!title.trim()}
+        />
       </div>
 
       <PublishConfirmDialog
@@ -362,6 +382,129 @@ export function ReleaseEditor({
         title={title}
         version={version}
       />
+    </div>
+  );
+}
+
+function pushButtonLabel(status?: string): string {
+  if (status === "pending") {
+    return "Pushing…";
+  }
+  if (status === "failed") {
+    return "Retry Push to GitHub";
+  }
+  return "Push to GitHub";
+}
+
+interface ReleaseEditorFooterProps {
+  isPublished: boolean;
+  isSubmitting: boolean;
+  isStreaming: boolean;
+  titleEmpty: boolean;
+  canPushToGithub: boolean;
+  isLinkedToGithub: boolean;
+  isPermissionError: boolean;
+  release?: Doc<"releases">;
+  organizationId: Id<"organizations">;
+  orgSlug: string;
+  onPublish: () => void;
+  onUnpublish: () => void;
+  onPushToGithub: () => void;
+  onCancel: () => void;
+}
+
+function ReleaseEditorFooter({
+  isPublished,
+  isSubmitting,
+  isStreaming,
+  titleEmpty,
+  canPushToGithub,
+  isLinkedToGithub,
+  isPermissionError,
+  release,
+  organizationId,
+  orgSlug,
+  onPublish,
+  onUnpublish,
+  onPushToGithub,
+  onCancel,
+}: ReleaseEditorFooterProps) {
+  return (
+    <div
+      className={cn("border-t bg-muted/30 px-6 py-4", "flex flex-col gap-3")}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Button
+            disabled={isSubmitting || isStreaming || titleEmpty}
+            onClick={isPublished ? onUnpublish : onPublish}
+            size="sm"
+            type="button"
+            variant={isPublished ? "outline" : "default"}
+          >
+            {isPublished ? "Unpublish" : "Publish"}
+          </Button>
+
+          {canPushToGithub && (
+            <Button
+              disabled={isSubmitting || release?.githubPushStatus === "pending"}
+              onClick={onPushToGithub}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              {release?.githubPushStatus === "pending" ? (
+                <Spinner className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CloudArrowUp className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              {pushButtonLabel(release?.githubPushStatus)}
+            </Button>
+          )}
+
+          {isLinkedToGithub && release?.githubHtmlUrl && (
+            <a
+              className="flex items-center gap-1.5 text-green-600 text-sm dark:text-green-400"
+              href={release.githubHtmlUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <Check className="h-3.5 w-3.5" />
+              Linked to GitHub
+            </a>
+          )}
+        </div>
+
+        <Button
+          disabled={isSubmitting || isStreaming}
+          onClick={onCancel}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          Cancel
+        </Button>
+      </div>
+
+      {isPermissionError && (
+        <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5">
+          <WarningCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <div className="text-sm">
+            <p className="font-medium text-destructive">
+              GitHub permissions insufficient
+            </p>
+            <p className="mt-0.5 text-muted-foreground">
+              Reconnect your GitHub App to grant the required permissions.
+            </p>
+            <Link
+              className="mt-1 inline-block font-medium text-primary text-xs hover:underline"
+              href={`/api/github/install?organizationId=${organizationId}&orgSlug=${orgSlug}`}
+            >
+              Reconnect GitHub
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
