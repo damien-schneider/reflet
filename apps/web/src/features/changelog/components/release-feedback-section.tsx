@@ -3,18 +3,17 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { FeedbackMatch } from "../hooks/use-feedback-matching";
 import { useFeedbackMatching } from "../hooks/use-feedback-matching";
+import { getMatchesToAutoLink } from "../lib/get-matches-to-auto-link";
 import {
   FeedbackSearchInput,
   LinkedFeedbackList,
 } from "./feedback-list-controls";
 import type { FeedbackLinkStatus } from "./feedback-section-header";
 import { FeedbackSectionHeader } from "./feedback-section-header";
-import { FeedbackSuggestionList } from "./feedback-suggestion-list";
 import type { CommitInfo } from "./generate-from-commits";
 
 interface ReleaseFeedbackSectionProps {
@@ -86,11 +85,12 @@ export function ReleaseFeedbackSection({
   const { matches, isMatching, matchFeedback, clearMatches } =
     useFeedbackMatching();
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLinking, setIsLinking] = useState(false);
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
   const [linkStatus, setLinkStatus] = useState<FeedbackLinkStatus>("completed");
+  const autoLinkInProgress = useRef(false);
+  const linkStatusRef = useRef(linkStatus);
+  linkStatusRef.current = linkStatus;
 
   const handleLinkStatusChange = useCallback(
     (status: FeedbackLinkStatus) => {
@@ -118,6 +118,73 @@ export function ReleaseFeedbackSection({
     matchFeedback,
   });
 
+  // Auto-link matched feedback when AI returns results
+  useEffect(() => {
+    if (
+      matches.length === 0 ||
+      !releaseId ||
+      isMatching ||
+      autoLinkInProgress.current
+    ) {
+      return;
+    }
+
+    const linkedIds = new Set(
+      (releaseData?.feedbackItems ?? [])
+        .filter((f): f is NonNullable<typeof f> => f !== null)
+        .map((f) => f._id)
+    );
+
+    const toLink = getMatchesToAutoLink(matches, linkedIds);
+    if (toLink.length === 0) {
+      clearMatches();
+      return;
+    }
+
+    let cancelled = false;
+    autoLinkInProgress.current = true;
+    const statusToSet =
+      linkStatusRef.current !== "keep" ? linkStatusRef.current : undefined;
+
+    (async () => {
+      const results = await Promise.allSettled(
+        toLink.map((feedbackId) =>
+          linkFeedback({
+            releaseId,
+            feedbackId: feedbackId as Id<"feedback">,
+            newStatus: statusToSet,
+          })
+        )
+      );
+
+      if (cancelled) {
+        autoLinkInProgress.current = false;
+        return;
+      }
+
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.filter((r) => r.status === "rejected").length;
+
+      if (succeeded > 0) {
+        toast.success(
+          `Auto-linked ${succeeded} related feedback item${succeeded === 1 ? "" : "s"}`
+        );
+      }
+      if (failed > 0) {
+        toast.error(
+          `Failed to auto-link ${failed} feedback item${failed === 1 ? "" : "s"}`
+        );
+      }
+
+      clearMatches();
+      autoLinkInProgress.current = false;
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [matches, releaseId, isMatching, releaseData, linkFeedback, clearMatches]);
+
   const handleTriggerMatching = useCallback(() => {
     if (!availableFeedback || availableFeedback.length === 0) {
       toast.info("No feedback items available to match");
@@ -129,57 +196,6 @@ export function ReleaseFeedbackSection({
     }
     matchFeedback(description, commits, availableFeedback);
   }, [availableFeedback, description, commits, matchFeedback]);
-
-  const handleToggleSelection = useCallback(
-    (feedbackId: string, checked: boolean) => {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (checked) {
-          next.add(feedbackId);
-        } else {
-          next.delete(feedbackId);
-        }
-        return next;
-      });
-    },
-    []
-  );
-
-  const handleSelectAll = useCallback(() => {
-    setSelectedIds(new Set(matches.map((m) => m.feedbackId)));
-  }, [matches]);
-
-  const handleDeselectAll = useCallback(() => {
-    setSelectedIds(new Set());
-  }, []);
-
-  const handleLinkSelected = useCallback(async () => {
-    if (!releaseId || selectedIds.size === 0) {
-      return;
-    }
-    setIsLinking(true);
-    try {
-      const statusToSet = linkStatus !== "keep" ? linkStatus : undefined;
-      for (const feedbackId of selectedIds) {
-        await linkFeedback({
-          releaseId,
-          feedbackId: feedbackId as Id<"feedback">,
-          newStatus: statusToSet,
-        });
-      }
-      toast.success(
-        `Linked ${selectedIds.size} feedback item${selectedIds.size === 1 ? "" : "s"}`
-      );
-      setSelectedIds(new Set());
-      clearMatches();
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to link feedback"
-      );
-    } finally {
-      setIsLinking(false);
-    }
-  }, [releaseId, selectedIds, linkFeedback, clearMatches, linkStatus]);
 
   const handleUnlink = useCallback(
     async (feedbackId: Id<"feedback">) => {
@@ -217,17 +233,6 @@ export function ReleaseFeedbackSection({
     [releaseId, linkFeedback, linkStatus]
   );
 
-  const linkedIds = new Set(linkedFeedback.map((f) => f._id));
-  const suggestedFeedback = buildSuggestedFeedback(
-    matches,
-    linkedIds,
-    availableFeedback
-  );
-
-  const allSelected =
-    suggestedFeedback.length > 0 &&
-    suggestedFeedback.every((f) => selectedIds.has(f._id));
-
   const searchResults = searchQuery.trim()
     ? (availableFeedback ?? []).filter((f) =>
         f.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -255,18 +260,6 @@ export function ReleaseFeedbackSection({
         />
       )}
 
-      <FeedbackSuggestionList
-        allSelected={allSelected}
-        hasReleaseId={releaseId !== null}
-        isLinking={isLinking}
-        items={suggestedFeedback}
-        onDeselectAll={handleDeselectAll}
-        onLinkSelected={handleLinkSelected}
-        onSelectAll={handleSelectAll}
-        onToggleSelection={handleToggleSelection}
-        selectedIds={selectedIds}
-      />
-
       {releaseId && (
         <FeedbackSearchInput
           onLink={handleManualLink}
@@ -276,15 +269,13 @@ export function ReleaseFeedbackSection({
         />
       )}
 
-      {linkedFeedback.length === 0 &&
-        suggestedFeedback.length === 0 &&
-        !isMatching && (
-          <p className="text-muted-foreground text-xs">
-            {releaseId
-              ? "No feedback linked yet. Use AI to find related items, or search manually."
-              : "Save as draft first to link feedback items."}
-          </p>
-        )}
+      {linkedFeedback.length === 0 && !isMatching && (
+        <p className="text-muted-foreground text-xs">
+          {releaseId
+            ? "No feedback linked yet. Use AI to find related items, or search manually."
+            : "Save as draft first to link feedback items."}
+        </p>
+      )}
     </div>
   );
 }
@@ -352,38 +343,4 @@ function useAutoTriggerMatching({
     setHasAutoTriggered,
     matchFeedback,
   ]);
-}
-
-function buildSuggestedFeedback(
-  matches: FeedbackMatch[],
-  linkedIds: Set<Id<"feedback">>,
-  availableFeedback:
-    | Array<{
-        _id: Id<"feedback">;
-        title: string;
-        status: string;
-      }>
-    | undefined
-): Array<{
-  _id: Id<"feedback">;
-  title: string;
-  status: string;
-  match: FeedbackMatch;
-}> {
-  const results: Array<{
-    _id: Id<"feedback">;
-    title: string;
-    status: string;
-    match: FeedbackMatch;
-  }> = [];
-  for (const m of matches) {
-    if (linkedIds.has(m.feedbackId as Id<"feedback">)) {
-      continue;
-    }
-    const feedback = availableFeedback?.find((f) => f._id === m.feedbackId);
-    if (feedback) {
-      results.push({ ...feedback, match: m });
-    }
-  }
-  return results;
 }

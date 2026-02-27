@@ -49,6 +49,7 @@ export function useFeedbackMatching(): UseFeedbackMatchingResult {
 
       setIsMatching(true);
       setMatchError(null);
+      setMatches([]);
 
       try {
         const response = await fetch("/api/ai/match-release-feedback", {
