@@ -7,7 +7,6 @@ import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 
-import type { TimeHorizon } from "@/lib/milestone-constants";
 import { isTimeHorizon, TIME_HORIZON_CONFIG } from "@/lib/milestone-constants";
 import { getTagColorValues } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
@@ -202,8 +201,7 @@ export function DashboardTimelineView({
           const colorValues = getTagColorValues(milestone.color);
           const colorHex = colorValues.text;
           const horizonLabel = isTimeHorizon(milestone.timeHorizon)
-            ? TIME_HORIZON_CONFIG[milestone.timeHorizon as TimeHorizon]
-                .shortLabel
+            ? TIME_HORIZON_CONFIG[milestone.timeHorizon].shortLabel
             : milestone.timeHorizon;
           const isActive = activeMilestoneId === milestone._id;
           const isSweeping = sweepId === milestone._id;

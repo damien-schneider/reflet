@@ -11,6 +11,16 @@ export const linkFeedback = mutation({
   args: {
     releaseId: v.id("releases"),
     feedbackId: v.id("feedback"),
+    newStatus: v.optional(
+      v.union(
+        v.literal("open"),
+        v.literal("under_review"),
+        v.literal("planned"),
+        v.literal("in_progress"),
+        v.literal("completed"),
+        v.literal("closed")
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -51,6 +61,10 @@ export const linkFeedback = mutation({
       .unique();
 
     if (existing) {
+      // Still update status if requested
+      if (args.newStatus && feedback.status !== args.newStatus) {
+        await ctx.db.patch(args.feedbackId, { status: args.newStatus });
+      }
       return existing._id;
     }
 
@@ -59,6 +73,11 @@ export const linkFeedback = mutation({
       feedbackId: args.feedbackId,
       createdAt: Date.now(),
     });
+
+    // Update feedback status if requested
+    if (args.newStatus && feedback.status !== args.newStatus) {
+      await ctx.db.patch(args.feedbackId, { status: args.newStatus });
+    }
 
     return linkId;
   },
@@ -164,10 +183,109 @@ export const getCompletedFeedback = query({
 });
 
 /**
+ * Get all feedback available for linking to releases (any status, not already linked)
+ */
+export const getAvailableFeedback = query({
+  args: {
+    organizationId: v.id("organizations"),
+    excludeReleaseId: v.optional(v.id("releases")),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("feedback"),
+      title: v.string(),
+      description: v.optional(v.string()),
+      status: v.string(),
+      voteCount: v.number(),
+      tags: v.array(v.object({ _id: v.id("tags"), name: v.string() })),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const user = await authComponent.safeGetAuthUser(ctx);
+    if (!user) {
+      return [];
+    }
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role === "member") {
+      return [];
+    }
+
+    const allFeedback = await ctx.db
+      .query("feedback")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .collect();
+
+    // Build set of feedback IDs linked to any release (except the excluded one)
+    const linkedFeedbackIds = new Set<string>();
+    const allLinks = await ctx.db.query("releaseFeedback").collect();
+
+    for (const link of allLinks) {
+      if (args.excludeReleaseId && link.releaseId === args.excludeReleaseId) {
+        continue;
+      }
+      linkedFeedbackIds.add(link.feedbackId);
+    }
+
+    const availableFeedback = allFeedback.filter(
+      (f) => !linkedFeedbackIds.has(f._id)
+    );
+
+    const result = await Promise.all(
+      availableFeedback.map(async (f) => {
+        const feedbackTags = await ctx.db
+          .query("feedbackTags")
+          .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
+          .collect();
+        const tags = (
+          await Promise.all(feedbackTags.map((ft) => ctx.db.get(ft.tagId)))
+        )
+          .filter(
+            (t): t is NonNullable<typeof t> => t !== null && t !== undefined
+          )
+          .map((t) => ({ _id: t._id, name: t.name }));
+
+        return {
+          _id: f._id,
+          title: f.title,
+          description: f.description,
+          status: f.status,
+          voteCount: f.voteCount ?? 0,
+          tags,
+        };
+      })
+    );
+
+    return result;
+  },
+});
+
+/**
  * Publish a release
  */
 export const publish = mutation({
-  args: { id: v.id("releases") },
+  args: {
+    id: v.id("releases"),
+    feedbackStatus: v.optional(
+      v.union(
+        v.literal("open"),
+        v.literal("under_review"),
+        v.literal("planned"),
+        v.literal("in_progress"),
+        v.literal("completed"),
+        v.literal("closed")
+      )
+    ),
+  },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -196,6 +314,22 @@ export const publish = mutation({
       publishedAt: Date.now(),
       updatedAt: Date.now(),
     });
+
+    // Update linked feedback status on publish
+    if (args.feedbackStatus) {
+      const links = await ctx.db
+        .query("releaseFeedback")
+        .withIndex("by_release", (q) => q.eq("releaseId", args.id))
+        .collect();
+      for (const link of links) {
+        const feedback = await ctx.db.get(link.feedbackId);
+        if (feedback && feedback.status !== args.feedbackStatus) {
+          await ctx.db.patch(link.feedbackId, {
+            status: args.feedbackStatus,
+          });
+        }
+      }
+    }
 
     // Schedule email notifications to subscribers
     await ctx.scheduler.runAfter(
@@ -278,7 +412,7 @@ export const remove = mutation({
       throw new Error("Only admins can delete releases");
     }
 
-    // Delete all links
+    // Delete all feedback links
     const links = await ctx.db
       .query("releaseFeedback")
       .withIndex("by_release", (q) => q.eq("releaseId", args.id))
@@ -286,6 +420,16 @@ export const remove = mutation({
 
     for (const link of links) {
       await ctx.db.delete(link._id);
+    }
+
+    // Delete associated commits
+    const commitDocs = await ctx.db
+      .query("releaseCommits")
+      .withIndex("by_release", (q) => q.eq("releaseId", args.id))
+      .collect();
+
+    for (const doc of commitDocs) {
+      await ctx.db.delete(doc._id);
     }
 
     await ctx.db.delete(args.id);
@@ -367,5 +511,108 @@ export const triggerGithubSync = mutation({
     });
 
     return { scheduled: true };
+  },
+});
+
+// ============================================
+// RELEASE COMMITS
+// ============================================
+
+const commitValidator = v.object({
+  sha: v.string(),
+  message: v.string(),
+  fullMessage: v.string(),
+  author: v.string(),
+  date: v.string(),
+});
+
+const fileValidator = v.object({
+  filename: v.string(),
+  status: v.string(),
+  additions: v.number(),
+  deletions: v.number(),
+});
+
+/**
+ * Save commits used for a release (upsert: replaces existing)
+ */
+export const saveReleaseCommits = mutation({
+  args: {
+    releaseId: v.id("releases"),
+    commits: v.array(commitValidator),
+    files: v.optional(v.array(fileValidator)),
+    previousTag: v.optional(v.string()),
+  },
+  returns: v.id("releaseCommits"),
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    const release = await ctx.db.get(args.releaseId);
+    if (!release) {
+      throw new Error("Release not found");
+    }
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", release.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role === "member") {
+      throw new Error("Only admins can save release commits");
+    }
+
+    // Delete existing commits for this release
+    const existing = await ctx.db
+      .query("releaseCommits")
+      .withIndex("by_release", (q) => q.eq("releaseId", args.releaseId))
+      .collect();
+
+    for (const doc of existing) {
+      await ctx.db.delete(doc._id);
+    }
+
+    return ctx.db.insert("releaseCommits", {
+      releaseId: args.releaseId,
+      commits: args.commits,
+      files: args.files,
+      previousTag: args.previousTag,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Get commits associated with a release
+ */
+export const getReleaseCommits = query({
+  args: { releaseId: v.id("releases") },
+  handler: async (ctx, args) => {
+    const user = await authComponent.safeGetAuthUser(ctx);
+    if (!user) {
+      return null;
+    }
+
+    const release = await ctx.db.get(args.releaseId);
+    if (!release) {
+      return null;
+    }
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", release.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership) {
+      return null;
+    }
+
+    return ctx.db
+      .query("releaseCommits")
+      .withIndex("by_release", (q) => q.eq("releaseId", args.releaseId))
+      .first();
   },
 });

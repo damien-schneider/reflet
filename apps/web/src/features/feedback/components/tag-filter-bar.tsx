@@ -2,7 +2,7 @@
 
 import { Pencil, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { memo, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +41,7 @@ interface TagButtonProps {
   onDelete: () => void;
 }
 
-const TagButton = memo(function TagButton({
+function TagButton({
   tag,
   isSelected,
   isAdmin,
@@ -94,9 +94,9 @@ const TagButton = memo(function TagButton({
       </ContextListContent>
     </ContextList>
   );
-});
+}
 
-export const TagFilterBar = memo(function TagFilterBar({
+export function TagFilterBar({
   organizationId,
   tags,
   selectedTagId,
@@ -173,4 +173,4 @@ export const TagFilterBar = memo(function TagFilterBar({
       />
     </>
   );
-});
+}

@@ -10,7 +10,7 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ interface TagEditButtonProps {
   tag: Tag;
 }
 
-const TagEditButton = memo(function TagEditButton({ tag }: TagEditButtonProps) {
+function TagEditButton({ tag }: TagEditButtonProps) {
   const [open, setOpen] = useState(false);
   const [editedName, setEditedName] = useState(tag.name);
   const [editedColor, setEditedColor] = useState<TagColor>(
@@ -69,13 +69,6 @@ const TagEditButton = memo(function TagEditButton({ tag }: TagEditButtonProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const updateTag = useMutation(api.tag_manager_actions.update);
-
-  // Sync color state when tag color changes
-  useEffect(() => {
-    setEditedColor(
-      isValidTagColor(tag.color) ? tag.color : migrateHexToNamedColor(tag.color)
-    );
-  }, [tag.color]);
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
@@ -187,9 +180,9 @@ const TagEditButton = memo(function TagEditButton({ tag }: TagEditButtonProps) {
       />
     </>
   );
-});
+}
 
-export const TagFilterDropdown = memo(function TagFilterDropdown({
+export function TagFilterDropdown({
   organizationId,
   tags,
   selectedTagIds,
@@ -332,4 +325,4 @@ export const TagFilterDropdown = memo(function TagFilterDropdown({
       </PopoverContent>
     </Popover>
   );
-});
+}

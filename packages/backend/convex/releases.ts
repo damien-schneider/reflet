@@ -63,7 +63,40 @@ export const list = query({
       return b.createdAt - a.createdAt;
     });
 
-    return releases;
+    // Add feedback items and commits for each release
+    const releasesWithData = await Promise.all(
+      releases.map(async (release) => {
+        const links = await ctx.db
+          .query("releaseFeedback")
+          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+          .collect();
+
+        const feedback = await Promise.all(
+          links.map(async (link) => {
+            const f = await ctx.db.get(link.feedbackId);
+            return f ? { _id: f._id, title: f.title, status: f.status } : null;
+          })
+        );
+
+        // Get commits (admin only)
+        let commitCount = 0;
+        if (isMember) {
+          const commitsDoc = await ctx.db
+            .query("releaseCommits")
+            .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+            .first();
+          commitCount = commitsDoc?.commits?.length ?? 0;
+        }
+
+        return {
+          ...release,
+          feedback: feedback.filter(Boolean),
+          commitCount,
+        };
+      })
+    );
+
+    return releasesWithData;
   },
 });
 
@@ -258,7 +291,7 @@ export const listPublished = query({
         const feedback = await Promise.all(
           links.map(async (link) => {
             const f = await ctx.db.get(link.feedbackId);
-            return f ? { _id: f._id, title: f.title } : null;
+            return f ? { _id: f._id, title: f.title, status: f.status } : null;
           })
         );
 

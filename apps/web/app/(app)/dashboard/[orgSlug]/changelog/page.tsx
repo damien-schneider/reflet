@@ -38,9 +38,66 @@ export default function ChangelogPage({
     api.feedback_api_admin.getApiKeys,
     org?._id ? { organizationId: org._id } : "skip"
   );
-  const deleteRelease = useMutation(api.changelog_actions.remove);
-  const publishRelease = useMutation(api.changelog_actions.publish);
-  const unpublishRelease = useMutation(api.changelog_actions.unpublish);
+  const deleteRelease = useMutation(
+    api.changelog_actions.remove
+  ).withOptimisticUpdate((localStore, args) => {
+    if (!org) {
+      return;
+    }
+    const current = localStore.getQuery(api.releases.list, {
+      organizationId: org._id,
+    });
+    if (!current) {
+      return;
+    }
+    localStore.setQuery(
+      api.releases.list,
+      { organizationId: org._id },
+      current.filter((r) => r._id !== args.id)
+    );
+  });
+
+  const publishRelease = useMutation(
+    api.changelog_actions.publish
+  ).withOptimisticUpdate((localStore, args) => {
+    if (!org) {
+      return;
+    }
+    const current = localStore.getQuery(api.releases.list, {
+      organizationId: org._id,
+    });
+    if (!current) {
+      return;
+    }
+    localStore.setQuery(
+      api.releases.list,
+      { organizationId: org._id },
+      current.map((r) =>
+        r._id === args.id ? { ...r, publishedAt: Date.now() } : r
+      )
+    );
+  });
+
+  const unpublishRelease = useMutation(
+    api.changelog_actions.unpublish
+  ).withOptimisticUpdate((localStore, args) => {
+    if (!org) {
+      return;
+    }
+    const current = localStore.getQuery(api.releases.list, {
+      organizationId: org._id,
+    });
+    if (!current) {
+      return;
+    }
+    localStore.setQuery(
+      api.releases.list,
+      { organizationId: org._id },
+      current.map((r) =>
+        r._id === args.id ? { ...r, publishedAt: undefined } : r
+      )
+    );
+  });
 
   const [deletingRelease, setDeletingRelease] = useState<
     NonNullable<typeof releases>[number] | null

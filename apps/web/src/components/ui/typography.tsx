@@ -124,9 +124,9 @@ const H3 = ({ variant, className, ref, ...props }: H3Props) => (
 
 type TextElement = "p" | "span" | "div" | "label" | "a";
 
-type TextProps<T extends TextElement = "p"> = ComponentPropsWithRef<T> &
+type TextProps = ComponentPropsWithRef<"p"> &
   VariantProps<typeof textVariants> & {
-    as?: T;
+    as?: TextElement;
   };
 
 const Text = ({
@@ -142,7 +142,7 @@ const Text = ({
     <Component
       className={cn(textVariants({ variant, align }), className)}
       ref={ref as Ref<never>}
-      {...props}
+      {...(props as Record<string, unknown>)}
     />
   );
 };

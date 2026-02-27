@@ -1,8 +1,15 @@
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type { ComponentType } from "react";
-
 import { EditorialFeedFeedCard } from "../components/card-designs/editorial-feed-card";
 import { MinimalNotchFeedCard } from "../components/card-designs/minimal-notch-card";
 import { SweepCornerFeedCard } from "../components/card-designs/sweep-corner-card";
+import type { FeedbackItem } from "../components/feed-feedback-view";
+
+export interface FeedCardProps {
+  feedback: FeedbackItem;
+  onClick?: (feedbackId: Id<"feedback">) => void;
+  className?: string;
+}
 
 export type CardStyle = "sweep-corner" | "minimal-notch" | "editorial-feed";
 
@@ -26,14 +33,14 @@ export const CARD_STYLE_OPTIONS = [
   },
 ] as const;
 
-// biome-ignore lint/suspicious/noExplicitAny: card components have varied but compatible prop interfaces
-const CARD_COMPONENTS: Record<CardStyle, ComponentType<any>> = {
+const CARD_COMPONENTS: Record<CardStyle, ComponentType<FeedCardProps>> = {
   "sweep-corner": SweepCornerFeedCard,
   "minimal-notch": MinimalNotchFeedCard,
   "editorial-feed": EditorialFeedFeedCard,
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: returns polymorphic card component
-export function getCardComponent(style: CardStyle): ComponentType<any> {
+export function getCardComponent(
+  style: CardStyle
+): ComponentType<FeedCardProps> {
   return CARD_COMPONENTS[style];
 }

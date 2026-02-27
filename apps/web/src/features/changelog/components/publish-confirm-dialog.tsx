@@ -1,6 +1,6 @@
 "use client";
 
-import { GithubLogo, PaperPlaneTilt } from "@phosphor-icons/react";
+import { CheckCircle, GithubLogo, PaperPlaneTilt } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
@@ -16,6 +16,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import type { FeedbackLinkStatus } from "./feedback-section-header";
+
+const STATUS_DISPLAY_LABELS: Record<FeedbackLinkStatus, string> = {
+  keep: "Keep current status",
+  open: "Open",
+  under_review: "Under Review",
+  planned: "Planned",
+  in_progress: "In Progress",
+  completed: "Completed",
+  closed: "Closed",
+} as const;
+
 interface PublishConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -25,6 +37,8 @@ interface PublishConfirmDialogProps {
   version: string;
   organizationId: Id<"organizations">;
   orgSlug: string;
+  linkedFeedbackCount?: number;
+  feedbackLinkStatus?: FeedbackLinkStatus;
 }
 
 export function PublishConfirmDialog({
@@ -36,6 +50,8 @@ export function PublishConfirmDialog({
   version,
   organizationId,
   orgSlug,
+  linkedFeedbackCount = 0,
+  feedbackLinkStatus = "completed",
 }: PublishConfirmDialogProps) {
   const orgData = useQuery(api.organizations.get, {
     id: organizationId,
@@ -56,7 +72,7 @@ export function PublishConfirmDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent className="sm:max-w-105">
         <DialogHeader>
           <DialogTitle>Publish Release</DialogTitle>
           <DialogDescription>
@@ -95,6 +111,17 @@ export function PublishConfirmDialog({
                 <GithubLogo className="h-4 w-4 text-muted-foreground" />
                 <span>
                   Create GitHub Release on {githubStatus?.repositoryFullName}
+                </span>
+              </div>
+            )}
+
+            {linkedFeedbackCount > 0 && feedbackLinkStatus !== "keep" && (
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                <span>
+                  Set {linkedFeedbackCount} linked feedback
+                  {linkedFeedbackCount === 1 ? "" : "s"} to{" "}
+                  <strong>{STATUS_DISPLAY_LABELS[feedbackLinkStatus]}</strong>
                 </span>
               </div>
             )}

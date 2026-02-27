@@ -1,9 +1,9 @@
 import { Check, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,14 @@ import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { capture } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { useAutoSaveRelease } from "../hooks/use-auto-save-release";
+import { useReleaseCommits } from "../hooks/use-release-commits";
+import type { FeedbackLinkStatus } from "./feedback-section-header";
 import { GenerateFromCommits } from "./generate-from-commits";
 import { PublishConfirmDialog } from "./publish-confirm-dialog";
+import { ReleaseCommitsList } from "./release-commits-list";
+import { ReleaseFeedbackSection } from "./release-feedback-section";
 import { VersionPicker } from "./version-picker";
-
-type SaveStatus = "idle" | "saving" | "saved";
-
-const AUTO_SAVE_DEBOUNCE_MS = 500;
 
 interface ReleaseEditorProps {
   organizationId: Id<"organizations">;
@@ -33,10 +34,41 @@ export function ReleaseEditor({
   className,
 }: ReleaseEditorProps) {
   const router = useRouter();
-  const createRelease = useMutation(api.changelog.create);
   const updateRelease = useMutation(api.changelog.update);
-  const publishRelease = useMutation(api.changelog_actions.publish);
-  const unpublishRelease = useMutation(api.changelog_actions.unpublish);
+  const createRelease = useMutation(api.changelog.create);
+  const publishRelease = useMutation(
+    api.changelog_actions.publish
+  ).withOptimisticUpdate((localStore, args) => {
+    const current = localStore.getQuery(api.changelog.get, { id: args.id });
+    if (!current) {
+      return;
+    }
+    localStore.setQuery(
+      api.changelog.get,
+      { id: args.id },
+      {
+        ...current,
+        publishedAt: Date.now(),
+      }
+    );
+  });
+
+  const unpublishRelease = useMutation(
+    api.changelog_actions.unpublish
+  ).withOptimisticUpdate((localStore, args) => {
+    const current = localStore.getQuery(api.changelog.get, { id: args.id });
+    if (!current) {
+      return;
+    }
+    localStore.setQuery(
+      api.changelog.get,
+      { id: args.id },
+      {
+        ...current,
+        publishedAt: undefined,
+      }
+    );
+  });
 
   const isPublished = release?.publishedAt !== undefined;
 
@@ -50,90 +82,30 @@ export function ReleaseEditor({
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamedContent, setStreamedContent] = useState("");
 
-  // Auto-save state - initialize with release._id if editing
-  const [releaseId, setReleaseId] = useState<Id<"releases"> | null>(
-    release?._id ?? null
-  );
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const isFirstEditRef = useRef(true);
+  // Feedback matching auto-trigger
+  const [shouldAutoMatchFeedback, setShouldAutoMatchFeedback] = useState(false);
+  const [feedbackLinkStatus, setFeedbackLinkStatus] =
+    useState<FeedbackLinkStatus>("completed");
 
-  // Track if content has changed for auto-save
-  const hasContent = title.trim() || version.trim() || description.trim();
-
-  // Auto-save function
-  const autoSave = useCallback(async () => {
-    if (!hasContent) {
-      return;
-    }
-
-    setSaveStatus("saving");
-
-    try {
-      if (releaseId) {
-        // Update existing release
-        await updateRelease({
-          id: releaseId,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
-          description: description.trim() || undefined,
-        });
-      } else {
-        // Create new draft on first edit
-        const newId = await createRelease({
-          organizationId,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
-          description: description.trim() || undefined,
-        });
-        setReleaseId(newId);
-      }
-      setSaveStatus("saved");
-      // Reset to idle after showing "Saved" briefly
-      setTimeout(() => setSaveStatus("idle"), 2000);
-    } catch (error) {
-      setSaveStatus("idle");
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save draft"
-      );
-    }
-  }, [
-    hasContent,
-    releaseId,
+  // Auto-save with debounce
+  const { releaseId, saveStatus } = useAutoSaveRelease({
+    organizationId,
+    initialReleaseId: release?._id ?? null,
     title,
     version,
     description,
-    organizationId,
-    createRelease,
-    updateRelease,
-  ]);
+  });
 
-  // Debounced auto-save effect
-  useEffect(() => {
-    // Skip auto-save on initial mount
-    if (isFirstEditRef.current) {
-      isFirstEditRef.current = false;
-      return;
-    }
+  // Commits management
+  const { commits, files, previousTag, handleCommitsFetched } =
+    useReleaseCommits(releaseId);
 
-    // Clear existing timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // Only auto-save if there's content
-    if (hasContent) {
-      debounceTimerRef.current = setTimeout(() => {
-        autoSave();
-      }, AUTO_SAVE_DEBOUNCE_MS);
-    }
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [hasContent, autoSave]);
+  // Get linked feedback count for the publish dialog
+  const releaseData = useQuery(
+    api.changelog.get,
+    releaseId ? { id: releaseId } : "skip"
+  );
+  const linkedFeedbackCount = releaseData?.feedbackItems?.length ?? 0;
 
   const navigateToChangelog = () => {
     router.push(`/dashboard/${orgSlug}/changelog`);
@@ -153,6 +125,8 @@ export function ReleaseEditor({
     setStreamedContent("");
     if (content) {
       setDescription(content);
+      // Auto-trigger feedback matching after AI generation completes
+      setShouldAutoMatchFeedback(true);
     }
   }, []);
 
@@ -170,9 +144,7 @@ export function ReleaseEditor({
     try {
       let idToPublish = releaseId;
 
-      // If no release exists yet, create one first
       if (idToPublish) {
-        // Save latest changes before publishing
         await updateRelease({
           id: idToPublish,
           title: title.trim() || "Untitled Release",
@@ -186,10 +158,13 @@ export function ReleaseEditor({
           version: version.trim() || undefined,
           description: description.trim() || undefined,
         });
-        setReleaseId(idToPublish);
       }
 
-      await publishRelease({ id: idToPublish });
+      await publishRelease({
+        id: idToPublish,
+        feedbackStatus:
+          feedbackLinkStatus !== "keep" ? feedbackLinkStatus : undefined,
+      });
       capture("release_published", {
         has_version: Boolean(version.trim()),
       });
@@ -259,7 +234,7 @@ export function ReleaseEditor({
       )}
     >
       {/* Document-like content area */}
-      <div className="flex min-h-[500px] flex-col">
+      <div className="flex min-h-125 flex-col">
         {/* Version badge and status */}
         <div className="flex items-center gap-2 px-6 pt-4">
           <VersionPicker
@@ -272,6 +247,7 @@ export function ReleaseEditor({
           <GenerateFromCommits
             disabled={isSubmitting}
             isStreaming={isStreaming}
+            onCommitsFetched={handleCommitsFetched}
             onComplete={handleStreamComplete}
             onStreamChunk={handleStreamChunk}
             onStreamStart={handleStreamStart}
@@ -321,6 +297,27 @@ export function ReleaseEditor({
           )}
         </div>
 
+        {/* Commits collapsible */}
+        {commits.length > 0 && (
+          <ReleaseCommitsList
+            commits={commits}
+            files={files}
+            previousTag={previousTag}
+          />
+        )}
+
+        {/* Feedback linking section */}
+        <div className="border-t px-6 py-4">
+          <ReleaseFeedbackSection
+            autoTriggerMatching={shouldAutoMatchFeedback}
+            commits={commits}
+            description={description}
+            onLinkStatusChange={setFeedbackLinkStatus}
+            organizationId={organizationId}
+            releaseId={releaseId}
+          />
+        </div>
+
         {/* Footer */}
         <div
           className={cn(
@@ -353,7 +350,9 @@ export function ReleaseEditor({
       </div>
 
       <PublishConfirmDialog
+        feedbackLinkStatus={feedbackLinkStatus}
         isSubmitting={isSubmitting}
+        linkedFeedbackCount={linkedFeedbackCount}
         onConfirm={handlePublish}
         onOpenChange={setShowPublishConfirm}
         open={showPublishConfirm}

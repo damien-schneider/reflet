@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { capture } from "@/lib/analytics";
 
-interface CommitInfo {
+export interface CommitInfo {
   sha: string;
   message: string;
   fullMessage: string;
@@ -18,7 +18,7 @@ interface CommitInfo {
   date: string;
 }
 
-interface FileInfo {
+export interface FileInfo {
   filename: string;
   status: string;
   additions: number;
@@ -33,6 +33,11 @@ interface GenerateFromCommitsProps {
   onStreamChunk: (content: string) => void;
   onComplete: (content: string) => void;
   onTitleGenerated: (title: string) => void;
+  onCommitsFetched?: (
+    commits: CommitInfo[],
+    files: FileInfo[] | undefined,
+    previousTag: string | null
+  ) => void;
   disabled?: boolean;
   isStreaming?: boolean;
 }
@@ -45,6 +50,7 @@ export function GenerateFromCommits({
   onStreamChunk,
   onComplete,
   onTitleGenerated,
+  onCommitsFetched,
   disabled,
   isStreaming,
 }: GenerateFromCommitsProps) {
@@ -208,6 +214,8 @@ export function GenerateFromCommits({
         toast.info("No commits found to generate from.");
         return;
       }
+
+      onCommitsFetched?.(commits, files, previousTag);
 
       setIsFetchingCommits(false);
       onStreamStart();

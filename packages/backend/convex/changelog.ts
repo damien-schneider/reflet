@@ -189,7 +189,7 @@ export const listPublished = query({
         const feedback = await Promise.all(
           links.map(async (link) => {
             const f = await ctx.db.get(link.feedbackId);
-            return f ? { _id: f._id, title: f.title } : null;
+            return f ? { _id: f._id, title: f.title, status: f.status } : null;
           })
         );
 

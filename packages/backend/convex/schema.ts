@@ -555,6 +555,34 @@ export default defineSchema({
     .index("by_release_feedback", ["releaseId", "feedbackId"]),
 
   // ============================================
+  // RELEASE COMMITS (persisted after AI generation)
+  // ============================================
+  releaseCommits: defineTable({
+    releaseId: v.id("releases"),
+    commits: v.array(
+      v.object({
+        sha: v.string(),
+        message: v.string(),
+        fullMessage: v.string(),
+        author: v.string(),
+        date: v.string(),
+      })
+    ),
+    files: v.optional(
+      v.array(
+        v.object({
+          filename: v.string(),
+          status: v.string(),
+          additions: v.number(),
+          deletions: v.number(),
+        })
+      )
+    ),
+    previousTag: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_release", ["releaseId"]),
+
+  // ============================================
   // CHANGELOG SUBSCRIBERS
   // ============================================
   changelogSubscribers: defineTable({
