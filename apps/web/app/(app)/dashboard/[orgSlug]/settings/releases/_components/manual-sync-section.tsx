@@ -267,11 +267,12 @@ export const ManualSyncSection = ({
                     <span className="truncate text-sm">{r.title}</span>
                     {r.githubPushStatus === "failed" && (
                       <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex shrink-0 items-center gap-1 text-destructive text-xs">
-                            <WarningCircle className="h-3 w-3" />
-                            Failed
-                          </span>
+                        <TooltipTrigger
+                          className="flex shrink-0 items-center gap-1 text-destructive text-xs"
+                          render={<span />}
+                        >
+                          <WarningCircle className="h-3 w-3" />
+                          Failed
                         </TooltipTrigger>
                         <TooltipContent>
                           {r.githubPushError ?? "Push to GitHub failed"}
