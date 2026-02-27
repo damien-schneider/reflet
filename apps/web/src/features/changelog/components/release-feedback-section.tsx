@@ -82,13 +82,14 @@ export function ReleaseFeedbackSection({
     { organizationId, excludeReleaseId: releaseId ?? undefined }
   );
 
-  const { matches, isMatching, matchFeedback, clearMatches } =
+  const { matches, isMatching, matchError, matchFeedback, clearMatches } =
     useFeedbackMatching();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
   const [linkStatus, setLinkStatus] = useState<FeedbackLinkStatus>("completed");
   const autoLinkInProgress = useRef(false);
+  const wasMatchingRef = useRef(false);
   const linkStatusRef = useRef(linkStatus);
   linkStatusRef.current = linkStatus;
 
@@ -184,6 +185,26 @@ export function ReleaseFeedbackSection({
       cancelled = true;
     };
   }, [matches, releaseId, isMatching, releaseData, linkFeedback, clearMatches]);
+
+  // Show toast for matching errors and zero-match results
+  useEffect(() => {
+    if (matchError) {
+      toast.error(`Failed to find related feedback: ${matchError}`);
+      wasMatchingRef.current = false;
+      return;
+    }
+
+    if (isMatching) {
+      wasMatchingRef.current = true;
+      return;
+    }
+
+    // Matching just completed (was matching, now isn't)
+    if (wasMatchingRef.current && !isMatching && matches.length === 0) {
+      toast.info("No related feedback found for this release");
+    }
+    wasMatchingRef.current = false;
+  }, [matchError, isMatching, matches.length]);
 
   const handleTriggerMatching = useCallback(() => {
     if (!availableFeedback || availableFeedback.length === 0) {

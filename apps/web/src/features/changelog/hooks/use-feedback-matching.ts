@@ -73,11 +73,19 @@ export function useFeedbackMatching(): UseFeedbackMatchingResult {
           }),
         });
 
+        const data: unknown = await response.json();
+
         if (!response.ok) {
-          throw new Error("Failed to match feedback");
+          const errorMsg =
+            data &&
+            typeof data === "object" &&
+            "error" in data &&
+            typeof data.error === "string"
+              ? data.error
+              : "Failed to match feedback";
+          throw new Error(errorMsg);
         }
 
-        const data: unknown = await response.json();
         if (
           data &&
           typeof data === "object" &&
