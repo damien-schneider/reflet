@@ -28,6 +28,7 @@ export interface FileInfo {
 interface GenerateFromCommitsProps {
   organizationId: Id<"organizations">;
   orgSlug: string;
+  releaseId: Id<"releases"> | null;
   version: string;
   onStreamStart: () => void;
   onStreamChunk: (content: string) => void;
@@ -45,6 +46,7 @@ interface GenerateFromCommitsProps {
 export function GenerateFromCommits({
   organizationId,
   orgSlug,
+  releaseId,
   version,
   onStreamStart,
   onStreamChunk,
@@ -68,6 +70,11 @@ export function GenerateFromCommits({
     api.github_release_actions.fetchCommitsBetweenRefs
   );
   const fetchRecent = useAction(api.github_release_actions.fetchRecentCommits);
+
+  const previousReleaseCommit = useQuery(
+    api.changelog_actions.getLatestCommitFromPreviousRelease,
+    { organizationId, excludeReleaseId: releaseId ?? undefined }
+  );
 
   const hasInstallation = Boolean(githubConnection?.installationId);
   const hasRepository = Boolean(githubConnection?.repositoryFullName);
@@ -102,6 +109,17 @@ export function GenerateFromCommits({
         repositoryFullName: repoFullName,
         base: previousTag,
         head,
+      });
+      return { commits: result.commits, files: result.files, previousTag };
+    }
+
+    // No tags found — try using the latest commit from the previous release as base
+    if (previousReleaseCommit?.sha) {
+      const result = await fetchCommits({
+        installationToken: token,
+        repositoryFullName: repoFullName,
+        base: previousReleaseCommit.sha,
+        head: targetBranch,
       });
       return { commits: result.commits, files: result.files, previousTag };
     }

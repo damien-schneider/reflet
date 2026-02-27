@@ -535,6 +535,10 @@ export default defineSchema({
     githubReleaseId: v.optional(v.string()), // Original GitHub release ID if synced
     githubHtmlUrl: v.optional(v.string()), // Link to GitHub release
     syncedFromGithub: v.optional(v.boolean()), // Whether this was created from GitHub sync
+    githubPushStatus: v.optional(
+      v.union(v.literal("pending"), v.literal("success"), v.literal("failed"))
+    ),
+    githubPushError: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

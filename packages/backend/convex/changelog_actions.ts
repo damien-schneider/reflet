@@ -616,3 +616,62 @@ export const getReleaseCommits = query({
       .first();
   },
 });
+
+/**
+ * Get the latest commit SHA from the most recent published release that has stored commits.
+ * Used as a fallback when the repo has no tags to determine the commit range.
+ */
+export const getLatestCommitFromPreviousRelease = query({
+  args: {
+    organizationId: v.id("organizations"),
+    excludeReleaseId: v.optional(v.id("releases")),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.safeGetAuthUser(ctx);
+    if (!user) {
+      return null;
+    }
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership) {
+      return null;
+    }
+
+    // Get published releases ordered by publishedAt descending
+    const releases = await ctx.db
+      .query("releases")
+      .withIndex("by_published", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .collect();
+
+    // Find the most recent published release (with commits) that isn't the current one
+    for (const release of releases) {
+      if (!release.publishedAt) {
+        continue;
+      }
+      if (args.excludeReleaseId && release._id === args.excludeReleaseId) {
+        continue;
+      }
+
+      const commitDoc = await ctx.db
+        .query("releaseCommits")
+        .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+        .first();
+
+      if (commitDoc && commitDoc.commits.length > 0) {
+        // Return the latest commit SHA (first commit is the most recent)
+        return { sha: commitDoc.commits[0].sha };
+      }
+    }
+
+    return null;
+  },
+});

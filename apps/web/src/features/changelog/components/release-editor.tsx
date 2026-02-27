@@ -254,6 +254,7 @@ export function ReleaseEditor({
             onTitleGenerated={handleTitleGenerated}
             organizationId={organizationId}
             orgSlug={orgSlug}
+            releaseId={releaseId}
             version={version}
           />
           {isPublished && (

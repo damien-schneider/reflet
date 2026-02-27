@@ -6,6 +6,7 @@ import {
   CheckCircle,
   CloudArrowDown,
   CloudArrowUp,
+  Spinner,
   WarningCircle,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -17,6 +18,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ManualSyncSectionProps {
   isAdmin: boolean;
@@ -40,6 +46,13 @@ function formatRelativeTime(timestamp: number): string {
   }
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+function pushButtonLabel(status?: string): string {
+  if (status === "failed") {
+    return "Retry";
+  }
+  return "Push";
 }
 
 function SyncStatusIndicator({
@@ -252,6 +265,25 @@ export const ManualSyncSection = ({
                       </Badge>
                     )}
                     <span className="truncate text-sm">{r.title}</span>
+                    {r.githubPushStatus === "failed" && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex shrink-0 items-center gap-1 text-destructive text-xs">
+                            <WarningCircle className="h-3 w-3" />
+                            Failed
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {r.githubPushError ?? "Push to GitHub failed"}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {r.githubPushStatus === "pending" && (
+                      <span className="flex shrink-0 items-center gap-1 text-muted-foreground text-xs">
+                        <Spinner className="h-3 w-3 animate-spin" />
+                        Pending
+                      </span>
+                    )}
                   </div>
                   <Button
                     className="ml-2 shrink-0"
@@ -265,7 +297,9 @@ export const ManualSyncSection = ({
                     ) : (
                       <CloudArrowUp className="mr-1 h-3 w-3" />
                     )}
-                    {pushingId === r._id ? "Pushing…" : "Push"}
+                    {pushingId === r._id
+                      ? "Pushing…"
+                      : pushButtonLabel(r.githubPushStatus)}
                   </Button>
                 </div>
               ))}

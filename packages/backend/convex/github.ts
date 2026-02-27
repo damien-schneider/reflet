@@ -891,6 +891,8 @@ export const getReleaseSyncStatus = query({
         title: r.title,
         version: r.version,
         publishedAt: r.publishedAt,
+        githubPushStatus: r.githubPushStatus,
+        githubPushError: r.githubPushError,
       }));
 
     // Synced: Reflet releases that have a githubReleaseId
@@ -922,6 +924,28 @@ export const linkGithubRelease = internalMutation({
     await ctx.db.patch(args.releaseId, {
       githubReleaseId: args.githubReleaseId,
       githubHtmlUrl: args.githubHtmlUrl,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Update GitHub push status on a release (used by pushReleaseToGithub action)
+ */
+export const updateGithubPushStatus = internalMutation({
+  args: {
+    releaseId: v.id("releases"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("success"),
+      v.literal("failed")
+    ),
+    error: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.releaseId, {
+      githubPushStatus: args.status,
+      githubPushError: args.error,
       updatedAt: Date.now(),
     });
   },

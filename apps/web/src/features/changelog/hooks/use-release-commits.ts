@@ -1,7 +1,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CommitInfo, FileInfo } from "../components/generate-from-commits";
 
 export function useReleaseCommits(releaseId: Id<"releases"> | null) {
@@ -12,6 +12,7 @@ export function useReleaseCommits(releaseId: Id<"releases"> | null) {
   const [commits, setCommits] = useState<CommitInfo[]>([]);
   const [files, setFiles] = useState<FileInfo[] | undefined>(undefined);
   const [previousTag, setPreviousTag] = useState<string | undefined>(undefined);
+  const hasSavedRef = useRef(false);
 
   const persistedCommits = useQuery(
     api.changelog_actions.getReleaseCommits,
@@ -27,24 +28,42 @@ export function useReleaseCommits(releaseId: Id<"releases"> | null) {
     }
   }, [persistedCommits, commits.length]);
 
+  // Save unsaved commits when releaseId becomes available (handles race condition
+  // where commits are fetched before auto-save creates the release)
+  useEffect(() => {
+    if (releaseId && commits.length > 0 && !hasSavedRef.current) {
+      hasSavedRef.current = true;
+      saveReleaseCommits({
+        releaseId,
+        commits,
+        files,
+        previousTag,
+      }).catch(() => {
+        hasSavedRef.current = false;
+      });
+    }
+  }, [releaseId, commits, files, previousTag, saveReleaseCommits]);
+
   const handleCommitsFetched = useCallback(
     (
       fetchedCommits: CommitInfo[],
       fetchedFiles: FileInfo[] | undefined,
       fetchedPreviousTag: string | null
     ) => {
+      hasSavedRef.current = false;
       setCommits(fetchedCommits);
       setFiles(fetchedFiles);
       setPreviousTag(fetchedPreviousTag ?? undefined);
 
       if (releaseId) {
+        hasSavedRef.current = true;
         saveReleaseCommits({
           releaseId,
           commits: fetchedCommits,
           files: fetchedFiles,
           previousTag: fetchedPreviousTag ?? undefined,
         }).catch(() => {
-          // Non-critical — don't block the flow
+          hasSavedRef.current = false;
         });
       }
     },

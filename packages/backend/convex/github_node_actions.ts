@@ -200,12 +200,22 @@ export const pushReleaseToGithub = internalAction({
       return;
     }
 
+    // Set status to pending before making the API call
+    await ctx.runMutation(internal.github.updateGithubPushStatus, {
+      releaseId: args.releaseId,
+      status: "pending",
+    });
+
     const { token } = await ctx.runAction(
       internal.github_node_actions.getInstallationTokenInternal,
       { installationId: connection.installationId }
     );
 
     const tagName = release.version || `v${Date.now()}`;
+    const targetBranch =
+      org.changelogSettings?.targetBranch ??
+      connection.repositoryDefaultBranch ??
+      "main";
 
     const response = await fetch(
       `${GITHUB_API_URL}/repos/${connection.repositoryFullName}/releases`,
@@ -219,6 +229,7 @@ export const pushReleaseToGithub = internalAction({
         },
         body: JSON.stringify({
           tag_name: tagName,
+          target_commitish: targetBranch,
           name: release.title,
           body: release.description ?? "",
           draft: false,
@@ -229,9 +240,14 @@ export const pushReleaseToGithub = internalAction({
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(
-        `[GitHub Push] Failed to create GitHub release: ${response.statusText} - ${errorText}`
-      );
+      const errorMessage = `Failed to create GitHub release: ${response.statusText} - ${errorText}`;
+      console.error(`[GitHub Push] ${errorMessage}`);
+
+      await ctx.runMutation(internal.github.updateGithubPushStatus, {
+        releaseId: args.releaseId,
+        status: "failed",
+        error: errorMessage,
+      });
       return;
     }
 
@@ -245,6 +261,11 @@ export const pushReleaseToGithub = internalAction({
       releaseId: args.releaseId,
       githubReleaseId: String(githubRelease.id),
       githubHtmlUrl: githubRelease.html_url,
+    });
+
+    await ctx.runMutation(internal.github.updateGithubPushStatus, {
+      releaseId: args.releaseId,
+      status: "success",
     });
   },
 });
