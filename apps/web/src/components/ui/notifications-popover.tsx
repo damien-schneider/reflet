@@ -1,6 +1,13 @@
 "use client";
 
-import { Bell, Chat, Envelope, TrendUp, UserPlus } from "@phosphor-icons/react";
+import {
+  Bell,
+  Chat,
+  Envelope,
+  Package,
+  TrendUp,
+  UserPlus,
+} from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
@@ -19,7 +26,8 @@ type NotificationType =
   | "new_comment"
   | "vote_milestone"
   | "new_support_message"
-  | "invitation";
+  | "invitation"
+  | "feedback_shipped";
 
 const notificationIcons: Record<
   NotificationType,
@@ -30,6 +38,7 @@ const notificationIcons: Record<
   vote_milestone: TrendUp,
   new_support_message: Envelope,
   invitation: UserPlus,
+  feedback_shipped: Package,
 };
 
 const notificationColors: Record<NotificationType, string> = {
@@ -38,6 +47,7 @@ const notificationColors: Record<NotificationType, string> = {
   vote_milestone: "text-amber-500",
   new_support_message: "text-purple-500",
   invitation: "text-olive-500",
+  feedback_shipped: "text-sky-500",
 };
 
 interface NotificationItemProps {
