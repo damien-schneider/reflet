@@ -22,7 +22,17 @@ export const suggestLinkedFeedback = action({
   args: {
     releaseId: v.id("releases"),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{
+    suggestions: {
+      feedbackId: string;
+      title: string;
+      status: string;
+      voteCount: number;
+    }[];
+  }> => {
     const data = await ctx.runQuery(
       internal.release_ai_matching_helpers.getReleaseAndFeedback,
       { releaseId: args.releaseId }
@@ -32,7 +42,16 @@ export const suggestLinkedFeedback = action({
       return { suggestions: [] };
     }
 
-    const { release, feedbackItems } = data;
+    const { release, feedbackItems } = data as {
+      release: { title: string; description?: string | null };
+      feedbackItems: {
+        _id: string;
+        title: string;
+        description?: string | null;
+        status: string;
+        voteCount: number;
+      }[];
+    };
 
     if (feedbackItems.length === 0) {
       return { suggestions: [] };
@@ -40,7 +59,7 @@ export const suggestLinkedFeedback = action({
 
     const feedbackList = feedbackItems
       .map(
-        (f, i) =>
+        (f: { title: string; description?: string | null }, i: number) =>
           `[${i}] "${f.title}"${f.description ? `: ${f.description.slice(0, 100)}` : ""}`
       )
       .join("\n");
@@ -62,7 +81,7 @@ Response format: [0, 3, 7]`;
       const result = await generateText({
         model: openrouter("google/gemini-2.0-flash-001"),
         prompt,
-        maxTokens: 200,
+        maxOutputTokens: 200,
       });
 
       const match = result.text.match(ARRAY_PATTERN);

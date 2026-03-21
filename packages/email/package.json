@@ -16,6 +16,8 @@
     "./templates/welcome-email": "./src/templates/welcome-email.tsx",
     "./templates/invitation-email": "./src/templates/invitation-email.tsx",
     "./templates/changelog-notification-email": "./src/templates/changelog-notification-email.tsx",
+    "./templates/weekly-digest-email": "./src/templates/weekly-digest-email.tsx",
+    "./templates/feedback-shipped-email": "./src/templates/feedback-shipped-email.tsx",
     "./templates/styles": "./src/templates/styles.ts"
   },
   "dependencies": {

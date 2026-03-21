@@ -492,7 +492,7 @@ Project Context:
 
     if (websiteRefs.length > 0) {
       const websiteContext = websiteRefs
-        .map((ref) => {
+        .map((ref: { url: string; title?: string; description?: string }) => {
           let text = `- ${ref.url}`;
           if (ref.title) {
             text += `: ${ref.title}`;

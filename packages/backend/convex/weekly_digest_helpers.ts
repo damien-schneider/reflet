@@ -11,7 +11,7 @@ export const getAllOrganizationIds = internalQuery({
   args: {},
   handler: async (ctx) => {
     const orgs = await ctx.db.query("organizations").collect();
-    return orgs.filter((org) => !org.deletedAt).map((org) => org._id);
+    return orgs.map((org) => org._id);
   },
 });
 
@@ -26,7 +26,7 @@ export const getDigestData = internalQuery({
       .filter((q) => q.eq(q.field("_id"), args.organizationId as never))
       .unique();
 
-    if (!org || org.deletedAt) {
+    if (!org) {
       return null;
     }
 

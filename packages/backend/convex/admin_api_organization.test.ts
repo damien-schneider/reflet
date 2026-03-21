@@ -141,7 +141,7 @@ describe("admin_api_organization", () => {
     expect(roadmap.milestones).toHaveLength(1);
     expect(roadmap.milestones[0].name).toBe("Sprint 1");
     expect(roadmap.milestones[0].feedback).toHaveLength(1);
-    expect(roadmap.milestones[0].feedback[0].title).toBe("Feature Request");
+    expect(roadmap.milestones[0]?.feedback[0]?.title).toBe("Feature Request");
     expect(roadmap.statuses).toHaveLength(1);
     expect(roadmap.statuses[0].name).toBe("In Progress");
   });

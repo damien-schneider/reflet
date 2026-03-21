@@ -1,165 +1,97 @@
-import {
-  Button,
-  Heading,
-  Hr,
-  Link,
-  Section,
-  Text,
-} from "@react-email/components";
+import { Button, Heading, Link, Section, Text } from "@react-email/components";
 import { BaseLayout } from "./base-layout";
-import { baseStyles, colors } from "./styles";
+import { baseStyles } from "./styles";
 
-interface FeedbackSummary {
+interface TopFeedbackItem {
   title: string;
   voteCount: number;
   status: string;
   url: string;
 }
 
+interface StatusChange {
+  title: string;
+  from: string;
+  to: string;
+}
+
 interface WeeklyDigestEmailProps {
   organizationName?: string;
   newFeedbackCount?: number;
   totalVotes?: number;
-  topFeedback?: FeedbackSummary[];
-  statusChanges?: { title: string; from: string; to: string }[];
+  topFeedback?: TopFeedbackItem[];
+  statusChanges?: StatusChange[];
   dashboardUrl?: string;
   unsubscribeUrl?: string;
 }
 
 export function WeeklyDigestEmail({
-  organizationName = "My Organization",
-  newFeedbackCount = 5,
-  totalVotes = 23,
-  topFeedback = [
-    {
-      title: "Dark mode support",
-      voteCount: 12,
-      status: "planned",
-      url: "#",
-    },
-    {
-      title: "Export to CSV",
-      voteCount: 8,
-      status: "open",
-      url: "#",
-    },
-  ],
-  statusChanges = [
-    { title: "API rate limiting", from: "planned", to: "in_progress" },
-  ],
-  dashboardUrl = "https://reflet.app/dashboard",
-  unsubscribeUrl = "https://reflet.app/unsubscribe",
+  organizationName = "Mon Organisation",
+  newFeedbackCount = 0,
+  totalVotes = 0,
+  topFeedback = [],
+  statusChanges = [],
+  dashboardUrl = "https://example.com/dashboard",
+  unsubscribeUrl = "https://example.com/unsubscribe",
 }: WeeklyDigestEmailProps) {
   return (
     <BaseLayout
-      preview={`${organizationName} weekly digest: ${newFeedbackCount} new requests, ${totalVotes} votes`}
+      preview={`${organizationName} - Digest hebdomadaire : ${newFeedbackCount} nouveaux retours`}
     >
-      <Heading style={baseStyles.heading}>Weekly Digest</Heading>
+      <Heading style={baseStyles.heading}>Digest hebdomadaire</Heading>
       <Text style={baseStyles.paragraph}>
-        Here&apos;s what happened with <strong>{organizationName}</strong> this
-        week.
+        Voici le résumé de la semaine pour <strong>{organizationName}</strong>.
       </Text>
 
-      <Section
-        style={{
-          backgroundColor: colors.muted,
-          borderRadius: "8px",
-          padding: "16px 20px",
-          marginBottom: "24px",
-        }}
-      >
-        <Text
-          style={{
-            ...baseStyles.paragraph,
-            margin: "0 0 4px",
-            fontSize: "14px",
-          }}
-        >
-          <strong>{newFeedbackCount}</strong> new feedback items
-        </Text>
-        <Text style={{ ...baseStyles.paragraph, margin: 0, fontSize: "14px" }}>
-          <strong>{totalVotes}</strong> total votes this week
+      <Section style={{ marginBottom: "24px" }}>
+        <Text style={baseStyles.paragraph}>
+          <strong>{newFeedbackCount}</strong> nouveaux retours &middot;{" "}
+          <strong>{totalVotes}</strong> votes
         </Text>
       </Section>
 
       {topFeedback.length > 0 && (
-        <>
-          <Text
-            style={{
-              ...baseStyles.paragraph,
-              fontWeight: "600",
-              marginBottom: "8px",
-            }}
-          >
-            Top Requests
+        <Section style={{ marginBottom: "24px" }}>
+          <Text style={{ ...baseStyles.paragraph, fontWeight: "bold" }}>
+            Top retours
           </Text>
           {topFeedback.map((item) => (
-            <Section
-              key={item.title}
-              style={{
-                borderBottom: `1px solid ${colors.border}`,
-                paddingBottom: "12px",
-                marginBottom: "12px",
-              }}
-            >
-              <Text style={{ ...baseStyles.paragraph, margin: "0 0 4px" }}>
-                <Link href={item.url} style={{ color: colors.olive[600] }}>
-                  {item.title}
-                </Link>
-              </Text>
-              <Text
-                style={{
-                  ...baseStyles.disclaimer,
-                  margin: 0,
-                }}
-              >
-                {item.voteCount} votes · {item.status.replace("_", " ")}
-              </Text>
-            </Section>
+            <Text key={item.title} style={baseStyles.paragraph}>
+              {item.title} &middot; {item.voteCount} votes
+            </Text>
           ))}
-        </>
+        </Section>
       )}
 
       {statusChanges.length > 0 && (
-        <>
-          <Hr style={baseStyles.hr} />
-          <Text
-            style={{
-              ...baseStyles.paragraph,
-              fontWeight: "600",
-              marginBottom: "8px",
-            }}
-          >
-            Status Updates
+        <Section style={{ marginBottom: "24px" }}>
+          <Text style={{ ...baseStyles.paragraph, fontWeight: "bold" }}>
+            Changements de statut
           </Text>
           {statusChanges.map((change) => (
-            <Text
-              key={change.title}
-              style={{ ...baseStyles.paragraph, fontSize: "14px" }}
-            >
-              <strong>{change.title}</strong>: {change.from.replace("_", " ")} →{" "}
-              {change.to.replace("_", " ")}
+            <Text key={change.title} style={baseStyles.paragraph}>
+              {change.title} &rarr; {change.to}
             </Text>
           ))}
-        </>
+        </Section>
       )}
 
       <Section style={baseStyles.buttonWrapper}>
         <Button href={dashboardUrl} style={baseStyles.button}>
-          View Dashboard
+          Voir le tableau de bord
         </Button>
       </Section>
 
       <Section style={{ marginTop: "32px", textAlign: "center" as const }}>
         <Text style={baseStyles.disclaimer}>
-          You&apos;re receiving this because you&apos;re a member of{" "}
-          {organizationName}.
+          Vous recevez cet email car vous êtes membre de {organizationName}.
         </Text>
         <Text style={baseStyles.disclaimer}>
           <Link href={unsubscribeUrl} style={baseStyles.footerLink}>
-            Unsubscribe from weekly digests
+            Se désabonner
           </Link>
         </Text>
+        <Text style={baseStyles.disclaimer}>Reflet · Paris, France</Text>
       </Section>
     </BaseLayout>
   );

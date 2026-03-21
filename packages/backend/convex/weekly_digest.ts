@@ -84,10 +84,18 @@ async function sendDigestForOrg(ctx: ActionCtx, orgId: string): Promise<void> {
           organizationName: digest.orgName,
           newFeedbackCount: digest.newFeedbackCount,
           totalVotes: digest.totalVotes,
-          topFeedback: digest.topFeedback.map((f) => ({
-            ...f,
-            url: `${siteUrl}/${digest.orgSlug}/feedback/${f.feedbackId}`,
-          })),
+          topFeedback: digest.topFeedback.map(
+            (f: {
+              title: string;
+              voteCount: number;
+              status: string;
+              feedbackId: string;
+              url: string;
+            }) => ({
+              ...f,
+              url: `${siteUrl}/${digest.orgSlug}/feedback/${f.feedbackId}`,
+            })
+          ),
           statusChanges: digest.statusChanges,
           dashboardUrl: `${siteUrl}/dashboard/${digest.orgSlug}`,
           unsubscribeUrl: `${siteUrl}/settings/notifications`,

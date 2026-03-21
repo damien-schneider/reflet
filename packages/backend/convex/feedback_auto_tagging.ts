@@ -657,7 +657,7 @@ export const processBulkAutoTagging = internalAction({
 
     // Process all items in parallel
     const results = await Promise.allSettled(
-      untaggedIds.map((feedbackId) =>
+      untaggedIds.map((feedbackId: Id<"feedback">) =>
         ctx
           .runAction(internal.feedback_auto_tagging.processAutoTagging, {
             feedbackId,

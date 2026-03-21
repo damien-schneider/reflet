@@ -2,6 +2,7 @@
 
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { internalAction } from "./_generated/server";
 
 const BATCH_SIZE = 10;
@@ -44,7 +45,7 @@ export const sendShippedNotifications = internalAction({
     for (const item of data.feedbackItems) {
       const recipients = await ctx.runQuery(
         internal.shipped_notifications_helpers.getFeedbackRecipients,
-        { feedbackId: item.feedbackId }
+        { feedbackId: item.feedbackId as Id<"feedback"> }
       );
 
       const uniqueEmails = new Map<string, string>();

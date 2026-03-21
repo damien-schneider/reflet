@@ -8,10 +8,10 @@ export const getPublicOrgSlugs = query({
   handler: async (ctx) => {
     const orgs = await ctx.db.query("organizations").collect();
     return orgs
-      .filter((org) => org.isPublic && !org.deletedAt)
+      .filter((org) => org.isPublic)
       .map((org) => ({
         slug: org.slug,
-        updatedAt: org.updatedAt ?? org.createdAt,
+        updatedAt: org.createdAt,
       }));
   },
 });
@@ -23,7 +23,7 @@ export const getPublicFeedbackForSitemap = query({
   args: {},
   handler: async (ctx) => {
     const orgs = await ctx.db.query("organizations").collect();
-    const publicOrgs = orgs.filter((org) => org.isPublic && !org.deletedAt);
+    const publicOrgs = orgs.filter((org) => org.isPublic);
 
     const entries: {
       orgSlug: string;

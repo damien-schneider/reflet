@@ -314,7 +314,9 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
     let tags = await t.run(async (ctx) =>
       ctx.db
         .query("feedbackTags")
-        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
+        .withIndex("by_feedback" as never, (q: any) =>
+          q.eq("feedbackId", feedbackId)
+        )
         .collect()
     );
     expect(tags).toHaveLength(2);
@@ -329,7 +331,9 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
     tags = await t.run(async (ctx) =>
       ctx.db
         .query("feedbackTags")
-        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
+        .withIndex("by_feedback" as never, (q: any) =>
+          q.eq("feedbackId", feedbackId)
+        )
         .collect()
     );
     expect(tags).toHaveLength(1);

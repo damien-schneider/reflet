@@ -133,7 +133,7 @@ describe("admin_api_releases", () => {
 
     expect(release).not.toBeNull();
     expect(release?.linkedFeedback).toHaveLength(1);
-    expect(release?.linkedFeedback[0].title).toBe("Test Feedback");
+    expect(release?.linkedFeedback?.[0]?.title).toBe("Test Feedback");
   });
 
   test("getRelease should return null for wrong org", async () => {

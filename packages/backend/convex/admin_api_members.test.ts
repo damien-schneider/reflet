@@ -44,7 +44,10 @@ describe("admin_api_members", () => {
     });
 
     expect(members).toHaveLength(2);
-    expect(members.map((m) => m.userId).sort()).toEqual(["user-1", "user-2"]);
+    expect(members.map((m: { userId: string }) => m.userId).sort()).toEqual([
+      "user-1",
+      "user-2",
+    ]);
   });
 
   test("createInvitation should create a pending invitation", async () => {
