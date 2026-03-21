@@ -6,7 +6,6 @@ import { internalAction } from "./_generated/server";
 
 const BATCH_SIZE = 10;
 const BATCH_DELAY_MS = 100;
-const _ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
