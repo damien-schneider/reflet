@@ -13,9 +13,9 @@ import Navbar from "@/features/homepage/components/navbar";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata = generatePageMetadata({
-  title: "Features | Reflet - Product Feedback & Roadmap Platform",
+  title: "Features | Reflet - Built for Developer-Led SaaS Teams",
   description:
-    "AI-powered triage, embeddable widget, GitHub sync, real-time collaboration, REST API, and integrations. Everything you need to collect feedback and ship what matters.",
+    "AI-powered triage, embeddable widget, two-way GitHub sync, real-time collaboration, and REST API. Everything developer-led SaaS teams need to close the feedback loop.",
   path: "/features",
   keywords: [
     "feedback widget",
@@ -23,8 +23,8 @@ export const metadata = generatePageMetadata({
     "GitHub sync",
     "real-time collaboration",
     "REST API",
-    "Slack integration",
-    "Discord integration",
+    "developer feedback tool",
+    "SaaS feedback platform",
     "product roadmap features",
   ],
 });
@@ -123,7 +123,7 @@ export default function FeaturesPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(120,113,80,0.08),transparent)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(120,113,80,0.15),transparent)]" />
           <div className="relative mx-auto max-w-300 px-5 text-center sm:px-8">
             <span className="mb-3 block font-semibold text-[11px] text-olive-600 uppercase tracking-[0.15em] dark:text-olive-400">
-              Built for product teams
+              Built for developer-led SaaS teams
             </span>
             <h1 className="mx-auto mb-6 max-w-180 font-display text-[clamp(2rem,5vw,3.5rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
               Everything you need to ship what users actually want.
@@ -131,7 +131,7 @@ export default function FeaturesPage() {
             <p className="mx-auto mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
               From collecting raw feedback to publishing changelogs — Reflet
               handles the full loop with AI triage, real-time sync, and
-              developer-friendly tools.
+              developer-friendly tools. Built for teams that ship fast.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">

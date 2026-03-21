@@ -31,8 +31,188 @@ TypeScript error TS2589 ("Type instantiation is excessively deep and possibly in
 
 ### Diagnosing TS2589
 
+## No `v.any()` in Convex Validators
+
+`v.any()` bypasses Convex's runtime type validation and TypeScript inference. It is banned — use precise validators instead.
+
+### Common replacements
+
+| Instead of | Use |
+|---|---|
+| `v.any()` for flexible JSON | `v.record(v.string(), v.union(...))` with explicit value types |
+| `v.any()` for recursive types | Comment explaining the Convex limitation, keep `v.any()` as the **only** allowed exception |
+| `v.any()` in `returns` | Write the actual return validator (use `v.union` if shape varies) |
+| `v.any()` for tool call args/results | `v.record(v.string(), v.union(v.string(), v.number(), v.boolean(), v.null()))` or a JSON-like recursive validator |
+
+### Allowed exception
+
+Convex validators cannot express recursive types. For tree structures (e.g., `children` in page trees), `v.any()` is permitted **only** with a comment: `// Recursive type — Convex validators cannot express this`.
+
+---
+
 If TS2589 reappears:
 1. Check for new file/directory naming conflicts in `convex/`.
 2. Run `npx convex codegen` to regenerate types.
 3. Run `npx tsc --noEmit` to verify the fix.
 4. As a last resort for a specific call site, add an explicit `returns` validator to the function — this short-circuits type inference at that point.
+
+---
+
+## Optimistic Updates
+
+Add optimistic updates to every mutation where the client can predict the server outcome. Convex real-time is fast (~100-200ms), but 0ms feedback is always better UX. The rules below exist to make this sustainable — the maintenance cost must be near zero.
+
+### When to use
+
+- **Always** on high-frequency interactions (toggling, logging, counting, checking off)
+- **Recommended** on all CRUD mutations (create, update, delete/archive)
+- **Skip only** when server logic is unpredictable (multi-table cascades, external API calls, complex authorization that changes the outcome)
+
+### Type safety
+
+1. **Rely on `setQuery` inference as the primary type check.** `setQuery` is generically typed — its `value` parameter is `FunctionReturnType<Query>`, which is derived from what the query actually returns. This is strictly more powerful than `satisfies Doc<T>` because:
+   - `satisfies Doc<T>` checks against the table schema
+   - `setQuery` inference checks against what the **query actually returns** (which may include computed fields, joins, or filtered shapes)
+
+   **Prefer constructing objects inline inside `setQuery`** so inference catches errors at the construction site:
+
+   ```typescript
+   // BEST — inference from setQuery enforces the exact return type of getRecentProgress
+   localStore.setQuery(api.habits.queries.getRecentProgress, {}, [
+     ...currentProgress,
+     {
+       _id: crypto.randomUUID() as Id<"habitEntries">,
+       _creationTime: Date.now(),
+       habitId: args.habitId,
+       userId: "",
+       date: args.date,
+       count: args.count,
+       note: args.note,
+       createdAt: Date.now(),
+     },
+   ]);
+   ```
+
+   **Use `satisfies` only as a fallback** — when a factory function or variable is constructed far from the `setQuery` call and inference can't reach it. In that case, type the factory return against the query's return type, not `Doc<T>`:
+
+   ```typescript
+   import type { FunctionReturnType } from "convex/server";
+
+   // Return type matches what getRecentProgress actually returns — not just the table shape
+   type ProgressEntry = FunctionReturnType<typeof api.habits.queries.getRecentProgress>[number];
+   ```
+
+2. **`as Id<T>` is the only allowed `as` cast** in optimistic update code — for placeholder IDs via `crypto.randomUUID()`. No other `as` casts. (Convex IDs are branded types with no public constructor — this is the standard Convex pattern.)
+
+3. **Never use type-erasing patterns.** `Object.fromEntries()`, `Object.keys()`, and `Record<string, unknown>` destroy compile-time safety. For partial updates, destructure and spread explicitly so types flow through:
+
+   ```typescript
+   // BAD — returns { [k: string]: unknown }, TypeScript can't verify the spread
+   const definedFields = Object.fromEntries(
+     Object.entries(fields).filter(([, v]) => v !== undefined)
+   );
+   localStore.setQuery(query, args, items.map(h => ({ ...h, ...definedFields })));
+
+   // GOOD — types flow through, setQuery inference catches mismatches
+   const { habitId, ...updates } = args;
+   localStore.setQuery(query, queryArgs,
+     items.map(h => h._id === habitId ? { ...h, ...updates, updatedAt: Date.now() } : h)
+   );
+   ```
+
+### DRY — single source of truth
+
+4. **Extract typed factory functions** when you construct the same shape in more than one optimistic update. Type the return against the query's return type so inference stays connected to the actual query contract:
+
+   ```typescript
+   import type { FunctionReturnType } from "convex/server";
+
+   type HabitEntry = FunctionReturnType<typeof api.habits.queries.getRecentProgress>[number];
+
+   function makeOptimisticEntry(args: {
+     habitId: Id<"habits">;
+     date: string;
+     count: number;
+     note?: string;
+   }): HabitEntry {
+     return {
+       _id: crypto.randomUUID() as Id<"habitEntries">,
+       _creationTime: Date.now(),
+       habitId: args.habitId,
+       userId: "",
+       date: args.date,
+       count: args.count,
+       note: args.note,
+       createdAt: Date.now(),
+     };
+   }
+   ```
+
+   The return type annotation connects the factory to the query — if the query shape changes, the factory breaks at compile time. No `satisfies` needed.
+
+5. **Extract common patterns into reusable helpers.** Upsert (find-and-update or append), filter-by-id, and map-by-id appear in almost every optimistic update. Write them once:
+
+   ```typescript
+   /** Update an existing item or append a new one to a query result list. */
+   function upsertInList<T extends { _id: string }>(
+     list: T[],
+     match: (item: T) => boolean,
+     update: (item: T) => T,
+     create: () => T,
+   ): T[] {
+     const index = list.findIndex(match);
+     if (index >= 0) {
+       return list.map((item, i) => (i === index ? update(item) : item));
+     }
+     return [...list, create()];
+   }
+   ```
+
+6. **Colocate helpers with the hook that uses them** — in the same file. Don't create a generic `optimistic-utils.ts` until the same helper is needed in 3+ files.
+
+### Correctness
+
+7. **Mirror ALL server-side field changes.** Before writing an optimistic update, read the mutation handler. If it updates `count` and `note`, the optimistic update MUST update both. A mismatch means the UI flickers on rollback.
+
+8. **Always guard with `!== undefined`.** `localStore.getQuery()` returns `undefined` if the query isn't subscribed or hasn't loaded yet. Always check before updating. Never assume a query is active.
+
+9. **Always create new objects — never mutate.** Use spread (`{ ...existing, count: newCount }`), `.map()`, `.filter()`. Never `.push()`, `.splice()`, or direct property assignment. Mutating objects inside optimistic updates corrupts the Convex client's internal state.
+
+10. **Include all fields including optionals.** Set missing optional fields explicitly (e.g., `note: args.note` even if it might be `undefined`). Combined with `setQuery` inference or a typed factory return, the compiler catches any missing required field.
+
+### Multi-subscription awareness
+
+11. **Use `getAllQueries()` when the same query may be active with different args.** For example, `getAll` may be subscribed with different `teamId` values. Instead of guessing the exact args, iterate all active subscriptions:
+
+    ```typescript
+    // Updates ALL active getAll subscriptions regardless of teamId
+    for (const { args: queryArgs, value } of localStore.getAllQueries(api.habits.queries.getAll)) {
+      if (value !== undefined) {
+        localStore.setQuery(api.habits.queries.getAll, queryArgs,
+          value.filter(h => h._id !== args.habitId)
+        );
+      }
+    }
+    ```
+
+    Use `getQuery()` (with exact args) only when you're certain of the subscription args — typically when the query args are derived from the same hook scope.
+
+### Paginated queries
+
+12. **Use Convex's built-in pagination helpers** (from `convex/react`) instead of hand-rolling optimistic updates for paginated data:
+    - `optimisticallyUpdateValueInPaginatedQuery(localStore, query, args, updateFn)` — update items across all loaded pages
+    - `insertAtTop({ paginatedQuery, localQueryStore, item })` — prepend to first page
+    - `insertAtBottomIfLoaded({ paginatedQuery, localQueryStore, item })` — append to last page (only if fully loaded)
+    - `insertAtPosition({ paginatedQuery, localQueryStore, item, sortOrder, sortKeyFromItem })` — insert at correct sorted position
+
+### Review checklist
+
+Before merging any optimistic update:
+- [ ] Objects constructed inline in `setQuery` (inference enforces type) — or in a factory typed against `FunctionReturnType<Query>`
+- [ ] No `as` casts except `as Id<T>` for placeholder IDs
+- [ ] All fields from the mutation handler are mirrored (read the server code)
+- [ ] No type-erasing patterns (`Object.fromEntries`, `Object.keys` on args)
+- [ ] Duplicated shapes extracted into a factory function
+- [ ] Duplicated patterns (upsert, filter) extracted into helpers
+- [ ] `getQuery` results checked for `undefined` before use
+- [ ] `getAllQueries` used when query may have multiple active subscriptions

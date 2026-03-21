@@ -3,9 +3,10 @@ import type { Metadata, Viewport } from "next";
 export const BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.reflet.app";
 export const SITE_NAME = "Reflet";
-const DEFAULT_TITLE = "Reflet - Product Feedback & Roadmap Platform";
+const DEFAULT_TITLE =
+  "Reflet - The Feedback Platform for Developer-Led SaaS Teams";
 export const DEFAULT_DESCRIPTION =
-  "Collect user feedback, prioritize features with voting, and share transparent roadmaps. Build the products your users love with Reflet's feedback management platform.";
+  "Ship what users actually want. Reflet helps developer-led SaaS teams collect feedback, prioritize with voting, auto-triage with AI, and close the loop with changelogs — from first request to shipped feature.";
 
 const DEFAULT_KEYWORDS = [
   "product feedback",
@@ -226,27 +227,37 @@ export function generatePageMetadata(options: {
 export function generateOrgMetadata(options: {
   orgName: string;
   orgSlug: string;
-  page: "feedback" | "roadmap" | "changelog";
+  page: "feedback" | "roadmap" | "changelog" | "feedback-item";
   description?: string;
+  feedbackId?: string;
 }): Metadata {
-  const { orgName, orgSlug, page, description } = options;
+  const { orgName, orgSlug, page, description, feedbackId } = options;
 
   const titles = {
     feedback: `${orgName} - Feature Requests & Feedback`,
     roadmap: `${orgName} - Product Roadmap`,
     changelog: `${orgName} - Changelog & Updates`,
+    "feedback-item": `Feedback | ${orgName}`,
   } as const;
 
   const descriptions = {
     feedback: `Submit feature requests and feedback for ${orgName}. Vote on ideas and help shape the product.`,
     roadmap: `See what ${orgName} is working on and what's coming next. Transparent product roadmap.`,
     changelog: `Stay up to date with the latest updates and improvements from ${orgName}.`,
+    "feedback-item": `View feature requests and feedback for ${orgName}.`,
+  } as const;
+
+  const paths = {
+    feedback: `/${orgSlug}`,
+    roadmap: `/${orgSlug}/roadmap`,
+    changelog: `/${orgSlug}/changelog`,
+    "feedback-item": `/${orgSlug}/feedback/${feedbackId ?? ""}`,
   } as const;
 
   return generatePageMetadata({
     title: titles[page],
     description: description ?? descriptions[page],
-    path: page === "feedback" ? `/${orgSlug}` : `/${orgSlug}/${page}`,
+    path: paths[page],
     keywords: [orgName, page, "product updates"],
   });
 }

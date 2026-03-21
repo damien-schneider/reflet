@@ -852,3 +852,101 @@ export const processIssueWebhook = internalMutation({
     });
   },
 });
+
+// Regex to match feedback references in PR title/body
+const FEEDBACK_REF_REGEX = /(?:fixes|closes|resolves)\s+reflet:([a-z0-9]+)/gi;
+
+/**
+ * Process a merged pull request webhook.
+ * Looks for feedback references like "fixes reflet:{feedbackId}" in PR title/body
+ * and updates the referenced feedback status to "completed".
+ */
+export const processPullRequestWebhook = internalMutation({
+  args: {
+    connectionId: v.id("githubConnections"),
+    organizationId: v.id("organizations"),
+    pullRequest: v.object({
+      id: v.string(),
+      number: v.number(),
+      title: v.string(),
+      body: v.optional(v.string()),
+      htmlUrl: v.string(),
+      mergedAt: v.optional(v.number()),
+      headRef: v.string(),
+      baseRef: v.string(),
+      authorLogin: v.optional(v.string()),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const { pullRequest } = args;
+    const now = Date.now();
+
+    // Combine title and body to search for references
+    const searchText = [pullRequest.title, pullRequest.body ?? ""].join("\n");
+
+    // Find all feedback references
+    const feedbackIds: string[] = [];
+    let match: RegExpExecArray | null = null;
+
+    // Reset regex state
+    FEEDBACK_REF_REGEX.lastIndex = 0;
+    match = FEEDBACK_REF_REGEX.exec(searchText);
+    while (match !== null) {
+      feedbackIds.push(match[1]);
+      match = FEEDBACK_REF_REGEX.exec(searchText);
+    }
+
+    if (feedbackIds.length === 0) {
+      return { processed: 0 };
+    }
+
+    let processed = 0;
+
+    for (const feedbackId of feedbackIds) {
+      try {
+        const feedback = await ctx.db.get(feedbackId as Id<"feedback">);
+
+        if (!feedback) {
+          continue;
+        }
+
+        // Verify feedback belongs to the same organization
+        if (feedback.organizationId !== args.organizationId) {
+          continue;
+        }
+
+        // Only update if not already completed
+        if (feedback.status === "completed") {
+          continue;
+        }
+
+        await ctx.db.patch(feedback._id, {
+          status: "completed",
+          updatedAt: now,
+        });
+
+        // Create activity log
+        await ctx.db.insert("activityLogs", {
+          feedbackId: feedback._id,
+          organizationId: args.organizationId,
+          authorId: "system",
+          action: "status_changed",
+          details: JSON.stringify({
+            oldStatus: feedback.status,
+            newStatus: "completed",
+            source: "github_pr",
+            prNumber: pullRequest.number,
+            prUrl: pullRequest.htmlUrl,
+          }),
+          createdAt: now,
+        });
+
+        processed++;
+      } catch {
+        // Skip individual processing failures
+      }
+    }
+
+    return { processed };
+  },
+});

@@ -23,6 +23,18 @@ interface AnalyticsEvents {
   // Feature adoption
   ai_release_notes_generated: Record<string, never>;
   github_connected: Record<string, never>;
+
+  // Activation milestones
+  org_created: Record<string, never>;
+  first_feedback_created: Record<string, never>;
+  first_github_connected: Record<string, never>;
+  first_release_published: Record<string, never>;
+  widget_installed: Record<string, never>;
+  first_member_invited: Record<string, never>;
+
+  // Onboarding
+  onboarding_step_completed: { step: string; stepNumber: number };
+  onboarding_completed: Record<string, never>;
 }
 
 const isPostHogEnabled =

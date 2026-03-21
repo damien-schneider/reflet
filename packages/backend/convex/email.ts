@@ -15,17 +15,34 @@ export const resend: Resend = new Resend(components.resend, {
 // Handle email status events from Resend webhooks
 export const handleEmailEvent = internalMutation({
   args: vOnEmailEventArgs,
-  handler: (_ctx, args) => {
-    // Log email events for debugging
-    console.log(`[Email Event] ${args.event.type}:`, {
-      emailId: args.id,
-      event: args.event,
-    });
+  handler: async (ctx, args) => {
+    const { type } = args.event;
 
-    // You can add custom logic here, such as:
-    // - Updating user notification preferences on bounce
-    // - Tracking email open/click rates
-    // - Alerting on delivery failures
+    const isBounce = type === "email.bounced";
+    const isComplaint = type === "email.complained";
+
+    if (isBounce || isComplaint) {
+      const { to } = args.event.data;
+      const recipientEmail = typeof to === "string" ? to : to[0];
+
+      if (recipientEmail) {
+        const existing = await ctx.db
+          .query("emailSuppressions")
+          .withIndex("by_email", (q) => q.eq("email", recipientEmail))
+          .first();
+
+        if (!existing) {
+          await ctx.db.insert("emailSuppressions", {
+            email: recipientEmail,
+            reason: isBounce ? "hard_bounce" : "complaint",
+            originalEventType: type,
+            suppressedAt: Date.now(),
+          });
+        }
+      }
+
+      console.error(`[Email Event] ${type} for email ${args.id}`);
+    }
   },
 });
 
@@ -36,35 +53,30 @@ export const sendEmail = internalMutation({
     to: v.union(v.string(), v.array(v.string())),
     subject: v.string(),
     html: v.string(),
+    text: v.optional(v.string()),
     replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
+    headers: v.optional(
+      v.array(v.object({ name: v.string(), value: v.string() }))
+    ),
   },
   handler: async (ctx, args) => {
-    console.log("=== RESEND: sendEmail mutation called ===");
-    console.log("[Resend] From:", args.from);
-    console.log("[Resend] To:", args.to);
-    console.log("[Resend] Subject:", args.subject);
-
-    try {
-      let replyToArray: string[] | undefined;
-      if (args.replyTo) {
-        replyToArray =
-          typeof args.replyTo === "string" ? [args.replyTo] : args.replyTo;
-      }
-
-      const emailId = await resend.sendEmail(ctx, {
-        from: args.from,
-        to: args.to,
-        subject: args.subject,
-        html: args.html,
-        replyTo: replyToArray,
-      });
-
-      console.log("[Resend] Email sent successfully, ID:", emailId);
-      return emailId;
-    } catch (error) {
-      console.error("[Resend] Error sending email:", error);
-      throw error;
+    let replyToArray: string[] | undefined;
+    if (args.replyTo) {
+      replyToArray =
+        typeof args.replyTo === "string" ? [args.replyTo] : args.replyTo;
     }
+
+    const emailId = await resend.sendEmail(ctx, {
+      from: args.from,
+      to: args.to,
+      subject: args.subject,
+      html: args.html,
+      text: args.text,
+      replyTo: replyToArray,
+      headers: args.headers,
+    });
+
+    return emailId;
   },
 });
 
@@ -77,7 +89,11 @@ export const sendBatchEmails = internalMutation({
         to: v.union(v.string(), v.array(v.string())),
         subject: v.string(),
         html: v.string(),
+        text: v.optional(v.string()),
         replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
+        headers: v.optional(
+          v.array(v.object({ name: v.string(), value: v.string() }))
+        ),
       })
     ),
   },
@@ -96,7 +112,9 @@ export const sendBatchEmails = internalMutation({
         to: email.to,
         subject: email.subject,
         html: email.html,
+        text: email.text,
         replyTo: replyToArray,
+        headers: email.headers,
       });
       emailIds.push(emailId);
     }

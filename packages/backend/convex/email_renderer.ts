@@ -8,9 +8,11 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
 
-const fromEmail = process.env.RESEND_FROM_EMAIL ?? "noreply@example.com";
+const fromEmail =
+  process.env.RESEND_FROM_EMAIL ?? "notifications@mail.reflet.app";
 const fromName = "Reflet";
 const defaultFrom = `${fromName} <${fromEmail}>`;
+const SUPPORT_EMAIL = "support@reflet.app";
 
 // Send verification email using react-email template
 export const sendVerificationEmail = internalAction({
@@ -20,34 +22,21 @@ export const sendVerificationEmail = internalAction({
     verificationUrl: v.string(),
   },
   handler: async (ctx, args) => {
-    console.log("=== EMAIL RENDERER: sendVerificationEmail called ===");
-    console.log("[Email] To:", args.to);
-    console.log("[Email] From:", defaultFrom);
-    console.log(
-      "[Email] RESEND_FROM_EMAIL env:",
-      process.env.RESEND_FROM_EMAIL
-    );
+    const component = VerificationEmail({
+      userName: args.userName,
+      verificationUrl: args.verificationUrl,
+    });
+    const html = await render(component);
+    const text = await render(component, { plainText: true });
 
-    const html = await render(
-      VerificationEmail({
-        userName: args.userName,
-        verificationUrl: args.verificationUrl,
-      })
-    );
-    console.log("[Email] HTML rendered, length:", html.length);
-
-    try {
-      await ctx.runMutation(internal.email.sendEmail, {
-        from: defaultFrom,
-        to: args.to,
-        subject: "Vérifiez votre adresse email",
-        html,
-      });
-      console.log("[Email] sendEmail mutation called successfully");
-    } catch (error) {
-      console.error("[Email] Error calling sendEmail:", error);
-      throw error;
-    }
+    await ctx.runMutation(internal.email.sendEmail, {
+      from: defaultFrom,
+      to: args.to,
+      subject: "Vérifiez votre adresse email",
+      html,
+      text,
+      replyTo: SUPPORT_EMAIL,
+    });
   },
 });
 
@@ -63,18 +52,20 @@ export const sendPasswordResetEmail = internalAction({
       "@reflet/email/templates/password-reset-email"
     );
 
-    const html = await render(
-      PasswordResetEmail({
-        userName: args.userName,
-        resetUrl: args.resetUrl,
-      })
-    );
+    const component = PasswordResetEmail({
+      userName: args.userName,
+      resetUrl: args.resetUrl,
+    });
+    const html = await render(component);
+    const text = await render(component, { plainText: true });
 
     await ctx.runMutation(internal.email.sendEmail, {
       from: defaultFrom,
       to: args.to,
       subject: "Réinitialisez votre mot de passe",
       html,
+      text,
+      replyTo: SUPPORT_EMAIL,
     });
   },
 });
@@ -92,18 +83,20 @@ export const sendWelcomeEmail = internalAction({
       ? `${siteUrl}${args.dashboardUrl}`
       : `${siteUrl}/dashboard`;
 
-    const html = await render(
-      WelcomeEmail({
-        userName: args.userName,
-        dashboardUrl,
-      })
-    );
+    const component = WelcomeEmail({
+      userName: args.userName,
+      dashboardUrl,
+    });
+    const html = await render(component);
+    const text = await render(component, { plainText: true });
 
     await ctx.runMutation(internal.email.sendEmail, {
       from: defaultFrom,
       to: args.to,
       subject: "Bienvenue sur Reflet",
       html,
+      text,
+      replyTo: SUPPORT_EMAIL,
     });
   },
 });
@@ -118,20 +111,22 @@ export const sendInvitationEmail = internalAction({
     acceptUrl: v.string(),
   },
   handler: async (ctx, args) => {
-    const html = await render(
-      InvitationEmail({
-        organizationName: args.organizationName,
-        inviterName: args.inviterName,
-        role: args.role,
-        acceptUrl: args.acceptUrl,
-      })
-    );
+    const component = InvitationEmail({
+      organizationName: args.organizationName,
+      inviterName: args.inviterName,
+      role: args.role,
+      acceptUrl: args.acceptUrl,
+    });
+    const html = await render(component);
+    const text = await render(component, { plainText: true });
 
     await ctx.runMutation(internal.email.sendEmail, {
       from: defaultFrom,
       to: args.to,
       subject: `Invitation à rejoindre ${args.organizationName}`,
       html,
+      text,
+      replyTo: SUPPORT_EMAIL,
     });
   },
 });
@@ -150,19 +145,17 @@ export const sendTemplatedEmail = internalAction({
     replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
   },
   handler: async (ctx, args) => {
-    let html: string;
+    let component: React.JSX.Element;
 
     switch (args.template) {
       case "verification": {
         if (!args.templateProps.verificationUrl) {
           throw new Error("verificationUrl is required for verification email");
         }
-        html = await render(
-          VerificationEmail({
-            userName: args.templateProps.userName,
-            verificationUrl: args.templateProps.verificationUrl,
-          })
-        );
+        component = VerificationEmail({
+          userName: args.templateProps.userName,
+          verificationUrl: args.templateProps.verificationUrl,
+        });
         break;
       }
       case "welcome": {
@@ -171,24 +164,26 @@ export const sendTemplatedEmail = internalAction({
           ? `${siteUrl}${args.templateProps.dashboardUrl}`
           : `${siteUrl}/dashboard`;
 
-        html = await render(
-          WelcomeEmail({
-            userName: args.templateProps.userName,
-            dashboardUrl,
-          })
-        );
+        component = WelcomeEmail({
+          userName: args.templateProps.userName,
+          dashboardUrl,
+        });
         break;
       }
       default:
         throw new Error(`Unknown template: ${args.template}`);
     }
 
+    const html = await render(component);
+    const text = await render(component, { plainText: true });
+
     await ctx.runMutation(internal.email.sendEmail, {
       from: defaultFrom,
       to: args.to,
       subject: args.subject,
       html,
-      replyTo: args.replyTo,
+      text,
+      replyTo: args.replyTo ?? SUPPORT_EMAIL,
     });
   },
 });
@@ -209,22 +204,123 @@ export const sendChangelogNotificationEmail = internalAction({
       "@reflet/email/templates/changelog-notification-email"
     );
 
-    const html = await render(
-      ChangelogNotificationEmail({
-        organizationName: args.organizationName,
-        releaseTitle: args.releaseTitle,
-        releaseVersion: args.releaseVersion,
-        releaseDescription: args.releaseDescription,
-        releaseUrl: args.releaseUrl,
-        unsubscribeUrl: args.unsubscribeUrl,
-      })
-    );
+    const component = ChangelogNotificationEmail({
+      organizationName: args.organizationName,
+      releaseTitle: args.releaseTitle,
+      releaseVersion: args.releaseVersion,
+      releaseDescription: args.releaseDescription,
+      releaseUrl: args.releaseUrl,
+      unsubscribeUrl: args.unsubscribeUrl,
+    });
+    const html = await render(component);
+    const text = await render(component, { plainText: true });
 
     await ctx.runMutation(internal.email.sendEmail, {
       from: defaultFrom,
       to: args.to,
       subject: `${args.organizationName} - ${args.releaseTitle}`,
       html,
+      text,
+      replyTo: SUPPORT_EMAIL,
+      headers: [
+        { name: "List-Unsubscribe", value: `<${args.unsubscribeUrl}>` },
+        { name: "List-Unsubscribe-Post", value: "List-Unsubscribe=One-Click" },
+      ],
+    });
+  },
+});
+
+// Send weekly digest email using react-email template
+export const sendWeeklyDigestEmail = internalAction({
+  args: {
+    to: v.string(),
+    organizationName: v.string(),
+    newFeedbackCount: v.number(),
+    totalVotes: v.number(),
+    topFeedback: v.array(
+      v.object({
+        title: v.string(),
+        voteCount: v.number(),
+        status: v.string(),
+        url: v.string(),
+      })
+    ),
+    statusChanges: v.array(
+      v.object({
+        title: v.string(),
+        from: v.string(),
+        to: v.string(),
+      })
+    ),
+    dashboardUrl: v.string(),
+    unsubscribeUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { WeeklyDigestEmail } = await import(
+      "@reflet/email/templates/weekly-digest-email"
+    );
+
+    const component = WeeklyDigestEmail({
+      organizationName: args.organizationName,
+      newFeedbackCount: args.newFeedbackCount,
+      totalVotes: args.totalVotes,
+      topFeedback: args.topFeedback,
+      statusChanges: args.statusChanges,
+      dashboardUrl: args.dashboardUrl,
+      unsubscribeUrl: args.unsubscribeUrl,
+    });
+    const html = await render(component);
+    const text = await render(component, { plainText: true });
+
+    await ctx.runMutation(internal.email.sendEmail, {
+      from: defaultFrom,
+      to: args.to,
+      subject: `${args.organizationName} - Weekly Digest`,
+      html,
+      text,
+      replyTo: SUPPORT_EMAIL,
+    });
+  },
+});
+
+// Send feedback shipped notification email
+export const sendFeedbackShippedEmail = internalAction({
+  args: {
+    to: v.string(),
+    organizationName: v.string(),
+    feedbackTitle: v.string(),
+    releaseTitle: v.string(),
+    feedbackUrl: v.string(),
+    releaseUrl: v.string(),
+    unsubscribeUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { FeedbackShippedEmail } = await import(
+      "@reflet/email/templates/feedback-shipped-email"
+    );
+
+    const component = FeedbackShippedEmail({
+      organizationName: args.organizationName,
+      feedbackTitle: args.feedbackTitle,
+      releaseTitle: args.releaseTitle,
+      feedbackUrl: args.feedbackUrl,
+      releaseUrl: args.releaseUrl,
+      unsubscribeUrl: args.unsubscribeUrl,
+    });
+    const html = await render(component);
+    const text = await render(component, { plainText: true });
+
+    await ctx.runMutation(internal.email.sendEmail, {
+      from: defaultFrom,
+      to: args.to,
+      subject: `${args.organizationName} - Your feedback has shipped!`,
+      html,
+      text,
+      replyTo: SUPPORT_EMAIL,
+      headers: [
+        { name: "List-Unsubscribe", value: `<${args.unsubscribeUrl}>` },
+        { name: "List-Unsubscribe-Post", value: "List-Unsubscribe=One-Click" },
+      ],
     });
   },
 });

@@ -200,6 +200,80 @@ const getDefaultOrganizationStatusId = async (
 // ============================================
 
 /**
+ * Get minimal public metadata for a feedback item (no auth required).
+ * Used for server-side SEO metadata generation.
+ */
+export const getPublicMeta = query({
+  args: { id: v.id("feedback") },
+  handler: async (ctx, args) => {
+    const feedback = await ctx.db.get(args.id);
+    if (!feedback || feedback.deletedAt) {
+      return null;
+    }
+
+    const org = await ctx.db.get(feedback.organizationId);
+    if (!org?.isPublic) {
+      return null;
+    }
+
+    if (!feedback.isApproved) {
+      return null;
+    }
+
+    return {
+      title: feedback.title,
+      description: feedback.description,
+      status: feedback.status,
+      voteCount: feedback.voteCount ?? 0,
+      orgName: org.name,
+      orgSlug: org.slug,
+    };
+  },
+});
+
+export const getShippedMeta = query({
+  args: { id: v.id("feedback") },
+  handler: async (ctx, args) => {
+    const feedback = await ctx.db.get(args.id);
+    if (!feedback || feedback.deletedAt) {
+      return null;
+    }
+
+    const org = await ctx.db.get(feedback.organizationId);
+    if (!org?.isPublic) {
+      return null;
+    }
+
+    if (!feedback.isApproved) {
+      return null;
+    }
+
+    const releaseLink = await ctx.db
+      .query("releaseFeedback")
+      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.id))
+      .first();
+
+    let releaseTitle: string | null = null;
+    if (releaseLink) {
+      const release = await ctx.db.get(releaseLink.releaseId);
+      if (release) {
+        releaseTitle = release.title;
+      }
+    }
+
+    return {
+      title: feedback.title,
+      description: feedback.description,
+      status: feedback.status,
+      voteCount: feedback.voteCount ?? 0,
+      orgName: org.name,
+      orgSlug: org.slug,
+      releaseTitle,
+    };
+  },
+});
+
+/**
  * Get a single feedback item by ID
  */
 export const get = query({

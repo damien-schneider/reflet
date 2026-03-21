@@ -58,6 +58,7 @@ export function ChangelogNotificationEmail({
             Se désabonner
           </Link>
         </Text>
+        <Text style={baseStyles.disclaimer}>Reflet · Paris, France</Text>
       </Section>
     </BaseLayout>
   );

@@ -6,6 +6,9 @@ import type { Id, TableNames } from "./_generated/dataModel";
 import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { decodeUserToken } from "./feedback_api_auth";
+import { registerAdminContentRoutes } from "./http_admin_content";
+import { registerAdminFeedbackRoutes } from "./http_admin_feedback";
+import { registerAdminManagementRoutes } from "./http_admin_management";
 import { generateRssFeed } from "./rss";
 
 // ============================================
@@ -45,6 +48,24 @@ const issuePayloadSchema = z.object({
     created_at: z.string(),
     updated_at: z.string(),
     closed_at: z.string().nullable(),
+  }),
+  action: z.string(),
+  installation: webhookInstallationSchema,
+});
+
+const pullRequestPayloadSchema = z.object({
+  pull_request: z.object({
+    id: z.number(),
+    number: z.number(),
+    title: z.string(),
+    body: z.string().nullable(),
+    html_url: z.string(),
+    state: z.enum(["open", "closed"]),
+    merged: z.boolean(),
+    merged_at: z.string().nullable(),
+    user: z.object({ login: z.string(), avatar_url: z.string() }).nullable(),
+    head: z.object({ ref: z.string(), sha: z.string() }),
+    base: z.object({ ref: z.string() }),
   }),
   action: z.string(),
   installation: webhookInstallationSchema,
@@ -389,6 +410,48 @@ async function handleIssueWebhook(
   return webhookJson({ success: true, action: "issue_processed" });
 }
 
+async function handlePullRequestWebhook(
+  ctx: WebhookCtx,
+  payload: Record<string, unknown>
+): Promise<Response> {
+  const { pull_request, action, installation } =
+    pullRequestPayloadSchema.parse(payload);
+
+  // Only process merged PRs
+  if (action !== "closed" || !pull_request.merged) {
+    return webhookJson({ success: true, action: "pr_ignored" });
+  }
+
+  const installationId = String(installation.id);
+
+  const connection = await ctx.runQuery(
+    internal.github.getConnectionByInstallation,
+    { installationId }
+  );
+
+  if (connection) {
+    await ctx.runMutation(internal.github_actions.processPullRequestWebhook, {
+      connectionId: connection._id,
+      organizationId: connection.organizationId,
+      pullRequest: {
+        id: String(pull_request.id),
+        number: pull_request.number,
+        title: pull_request.title,
+        body: pull_request.body ?? undefined,
+        htmlUrl: pull_request.html_url,
+        mergedAt: pull_request.merged_at
+          ? new Date(pull_request.merged_at).getTime()
+          : undefined,
+        headRef: pull_request.head.ref,
+        baseRef: pull_request.base.ref,
+        authorLogin: pull_request.user?.login,
+      },
+    });
+  }
+
+  return webhookJson({ success: true, action: "pr_processed" });
+}
+
 http.route({
   path: "/github-webhook",
   method: "POST",
@@ -423,6 +486,10 @@ http.route({
 
       if (eventType === "issues") {
         return await handleIssueWebhook(ctx, payload);
+      }
+
+      if (eventType === "pull_request") {
+        return await handlePullRequestWebhook(ctx, payload);
       }
 
       return webhookJson({ success: true, event: eventType });
@@ -1077,5 +1144,13 @@ http.route({
     });
   }),
 });
+
+// ============================================
+// ADMIN API (v1) - Secret key required
+// ============================================
+
+registerAdminFeedbackRoutes(http);
+registerAdminContentRoutes(http);
+registerAdminManagementRoutes(http);
 
 export default http;

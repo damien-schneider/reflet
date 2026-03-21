@@ -1,0 +1,38 @@
+{
+  "name": "@reflet/mcp-server",
+  "version": "0.1.0",
+  "description": "Reflet MCP Server - AI agents can manage feedback, releases, milestones, and more",
+  "type": "module",
+  "sideEffects": false,
+  "bin": {
+    "reflet-mcp-server": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "cd ../.. && bun x ultracite check packages/mcp-server",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "catalog:",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

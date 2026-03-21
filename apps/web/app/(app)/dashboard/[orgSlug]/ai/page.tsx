@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowsClockwise, Brain, Sparkle } from "@phosphor-icons/react";
+import {
+  ArrowsClockwise,
+  Brain,
+  Lightning,
+  Robot,
+  Sparkle,
+} from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -9,8 +15,11 @@ import { use, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { H1, H2, Muted, Text } from "@/components/ui/typography";
+import { McpSetupGuide } from "@/features/ai-context/components/mcp-setup-guide";
+import { SuggestedPrompts } from "@/features/ai-context/components/suggested-prompts";
 import { WebsiteReferenceList } from "@/features/ai-context/components/website-reference-list";
 import { GitHubConnectionPrompt } from "@/features/github/components/github-connection-prompt";
 
@@ -83,88 +92,127 @@ export default function AIPage({
 
   return (
     <div className="admin-container">
-      <H1 className="mb-8">AI Context</H1>
+      <div className="mb-8">
+        <H1>AI & Integrations</H1>
+        <Text className="mt-1" variant="bodySmall">
+          Connect AI assistants, manage context, and automate workflows with
+          your feedback data.
+        </Text>
+      </div>
 
-      <div className="space-y-8">
-        {/* Repository Analysis Section */}
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <H2 variant="card">Repository Analysis</H2>
-              {hasRepository && (
-                <Text className="mt-1" variant="bodySmall">
-                  {githubStatus.repositoryFullName}
-                </Text>
-              )}
-            </div>
-            {isAdmin && hasRepository && (
-              <Button
-                disabled={isAnalyzing || isStarting}
-                onClick={handleStartAnalysis}
-                variant="outline"
-              >
-                {isAnalyzing || isStarting ? (
-                  <ArrowsClockwise className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkle className="mr-2 h-4 w-4" />
+      <Tabs defaultValue="mcp">
+        <TabsList className="mb-6">
+          <TabsTrigger value="mcp">
+            <Robot className="mr-1.5 h-4 w-4" />
+            MCP Server
+          </TabsTrigger>
+          <TabsTrigger value="prompts">
+            <Lightning className="mr-1.5 h-4 w-4" />
+            Prompts
+          </TabsTrigger>
+          <TabsTrigger value="context">
+            <Brain className="mr-1.5 h-4 w-4" />
+            Context
+          </TabsTrigger>
+        </TabsList>
+
+        {/* MCP Server Setup */}
+        <TabsContent value="mcp">
+          <McpSetupGuide />
+        </TabsContent>
+
+        {/* Suggested Prompts */}
+        <TabsContent value="prompts">
+          <SuggestedPrompts />
+        </TabsContent>
+
+        {/* AI Context (existing repo analysis + website refs) */}
+        <TabsContent value="context">
+          <div className="space-y-8">
+            {/* Repository Analysis Section */}
+            <section>
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <H2 variant="card">Repository Analysis</H2>
+                  {hasRepository && (
+                    <Text className="mt-1" variant="bodySmall">
+                      {githubStatus.repositoryFullName}
+                    </Text>
+                  )}
+                </div>
+                {isAdmin && hasRepository && (
+                  <Button
+                    disabled={isAnalyzing || isStarting}
+                    onClick={handleStartAnalysis}
+                    variant="outline"
+                  >
+                    {isAnalyzing || isStarting ? (
+                      <ArrowsClockwise className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkle className="mr-2 h-4 w-4" />
+                    )}
+                    {latestAnalysis ? "Re-analyse" : "Analyse Repo"}
+                  </Button>
                 )}
-                {latestAnalysis ? "Re-analyse" : "Analyse Repo"}
-              </Button>
+              </div>
+
+              {!hasRepository && (
+                <GitHubConnectionPrompt
+                  isAdmin={isAdmin}
+                  onConnect={handleConnectGitHub}
+                />
+              )}
+
+              {hasRepository && isAnalyzing && <AnalysisLoadingState />}
+
+              {hasRepository && latestAnalysis?.status === "error" && (
+                <Card className="border-destructive/50 bg-destructive/5">
+                  <CardContent className="pt-4">
+                    <p className="text-destructive text-sm">
+                      Analysis failed: {latestAnalysis.error || "Unknown error"}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {hasRepository &&
+                latestAnalysis?.status === "completed" &&
+                org._id && (
+                  <AnalysisResults
+                    analysis={latestAnalysis}
+                    isAdmin={isAdmin}
+                    organizationId={org._id}
+                  />
+                )}
+
+              {hasRepository && !(latestAnalysis || isAnalyzing) && (
+                <Card>
+                  <CardContent className="flex flex-col items-center py-8 text-center">
+                    <Brain className="mb-4 h-12 w-12 text-muted-foreground" />
+                    <p className="text-muted-foreground">
+                      Click &quot;Analyse Repo&quot; to generate an AI-powered
+                      analysis of your repository.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </section>
+
+            {/* Website References Section */}
+            {org._id && (
+              <section>
+                <div className="mb-4">
+                  <H2 variant="card">Website References</H2>
+                </div>
+                <WebsiteReferenceList
+                  isAdmin={isAdmin}
+                  organizationId={org._id}
+                />
+              </section>
             )}
           </div>
-
-          {!hasRepository && (
-            <GitHubConnectionPrompt
-              isAdmin={isAdmin}
-              onConnect={handleConnectGitHub}
-            />
-          )}
-
-          {hasRepository && isAnalyzing && <AnalysisLoadingState />}
-
-          {hasRepository && latestAnalysis?.status === "error" && (
-            <Card className="border-destructive/50 bg-destructive/5">
-              <CardContent className="pt-4">
-                <p className="text-destructive text-sm">
-                  Analysis failed: {latestAnalysis.error || "Unknown error"}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {hasRepository &&
-            latestAnalysis?.status === "completed" &&
-            org._id && (
-              <AnalysisResults
-                analysis={latestAnalysis}
-                isAdmin={isAdmin}
-                organizationId={org._id}
-              />
-            )}
-
-          {hasRepository && !(latestAnalysis || isAnalyzing) && (
-            <Card>
-              <CardContent className="flex flex-col items-center py-8 text-center">
-                <Brain className="mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  Click &quot;Analyse Repo&quot; to generate an AI-powered
-                  analysis of your repository.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </section>
-
-        {/* Website References Section */}
-        {org._id && (
-          <section>
-            <div className="mb-4">
-              <H2 variant="card">Website References</H2>
-            </div>
-            <WebsiteReferenceList isAdmin={isAdmin} organizationId={org._id} />
-          </section>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

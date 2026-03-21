@@ -1,4 +1,11 @@
-import { Button, Heading, Section, Text } from "@react-email/components";
+import {
+  Button,
+  Heading,
+  Hr,
+  Link,
+  Section,
+  Text,
+} from "@react-email/components";
 import { BaseLayout } from "./base-layout";
 import { baseStyles } from "./styles";
 
@@ -37,6 +44,14 @@ export function InvitationEmail({
           Accepter l'invitation
         </Button>
       </Section>
+      <Hr style={baseStyles.hr} />
+      <Text style={baseStyles.linkText}>
+        Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre
+        navigateur :
+      </Text>
+      <Link href={acceptUrl} style={baseStyles.link}>
+        {acceptUrl}
+      </Link>
       <Text style={baseStyles.expiryText}>
         Cette invitation expire dans 7 jours.
       </Text>

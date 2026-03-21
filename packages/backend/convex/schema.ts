@@ -41,7 +41,8 @@ const notificationType = v.union(
   v.literal("new_comment"),
   v.literal("vote_milestone"),
   v.literal("new_support_message"),
-  v.literal("invitation")
+  v.literal("invitation"),
+  v.literal("feedback_shipped")
 );
 
 // Support conversation status
@@ -126,6 +127,17 @@ export default defineSchema({
     customDomain: v.optional(v.string()),
     // Support settings
     supportEnabled: v.optional(v.boolean()),
+    // Stale feedback settings
+    staleFeedbackSettings: v.optional(
+      v.object({
+        enabled: v.boolean(),
+        daysInactive: v.number(),
+        action: v.union(v.literal("archive"), v.literal("close")),
+        excludeStatuses: v.optional(v.array(feedbackStatus)),
+      })
+    ),
+    // Widget branding
+    hideBranding: v.optional(v.boolean()),
     // Feedback settings (org-level defaults)
     feedbackSettings: v.optional(
       v.object({
@@ -645,6 +657,7 @@ export default defineSchema({
     notifyOnNewSupportMessage: v.boolean(),
     notifyOnInvitation: v.boolean(),
     pushPromptDismissed: v.boolean(),
+    weeklyDigestEnabled: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
@@ -1008,4 +1021,36 @@ export default defineSchema({
   })
     .index("by_organization_time", ["organizationId", "timestamp"])
     .index("by_org_key_time", ["organizationApiKeyId", "timestamp"]),
+
+  emailSuppressions: defineTable({
+    email: v.string(),
+    reason: v.union(
+      v.literal("hard_bounce"),
+      v.literal("complaint"),
+      v.literal("manual")
+    ),
+    originalEventType: v.string(),
+    suppressedAt: v.number(),
+  }).index("by_email", ["email"]),
+
+  // ============================================
+  // ONBOARDING PROGRESS
+  // ============================================
+  onboardingProgress: defineTable({
+    organizationId: v.id("organizations"),
+    userId: v.string(),
+    steps: v.object({
+      boardCreated: v.boolean(),
+      brandingCustomized: v.boolean(),
+      githubConnected: v.boolean(),
+      widgetInstalled: v.boolean(),
+      teamInvited: v.boolean(),
+      firstFeedbackCreated: v.boolean(),
+    }),
+    dismissedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_user", ["organizationId", "userId"]),
 });

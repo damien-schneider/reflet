@@ -90,6 +90,14 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     description:
       "Browser push notifications to keep your team and users informed in real-time.",
   },
+  {
+    id: "mcp",
+    icon: Robot,
+    title: "MCP Server",
+    description:
+      "Let AI coding assistants like Cursor, Claude Code and VS Code Copilot read and manage your feedback directly via the Model Context Protocol.",
+    href: "/docs/mcp",
+  },
 ] as const;
 
 const COMING_SOON_INTEGRATIONS: Integration[] = [
@@ -125,13 +133,6 @@ const COMING_SOON_INTEGRATIONS: Integration[] = [
     icon: ArrowsClockwise,
     title: "Zapier",
     description: "Connect Reflet to 5,000+ apps with triggers and actions.",
-  },
-  {
-    id: "mcp",
-    icon: Robot,
-    title: "MCP Server",
-    description:
-      "Let AI tools like Claude and Cursor read and manage your feedback directly.",
   },
 ] as const;
 

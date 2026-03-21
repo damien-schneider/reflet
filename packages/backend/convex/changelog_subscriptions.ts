@@ -8,6 +8,8 @@ import {
 import { authComponent } from "./auth";
 import { getAuthUser } from "./utils";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function generateUnsubscribeToken(): string {
   return crypto.randomUUID();
 }
@@ -135,6 +137,12 @@ export const subscribeByEmail = mutation({
     email: v.string(),
   },
   handler: async (ctx, args) => {
+    const normalizedEmail = args.email.toLowerCase();
+
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      throw new Error("Invalid email format");
+    }
+
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
       throw new Error("Organization not found");
@@ -144,9 +152,7 @@ export const subscribeByEmail = mutation({
     const existing = await ctx.db
       .query("changelogSubscribers")
       .withIndex("by_email_org", (q) =>
-        q
-          .eq("email", args.email.toLowerCase())
-          .eq("organizationId", args.organizationId)
+        q.eq("email", normalizedEmail).eq("organizationId", args.organizationId)
       )
       .first();
 
@@ -155,7 +161,7 @@ export const subscribeByEmail = mutation({
     }
 
     const subscriberId = await ctx.db.insert("changelogSubscribers", {
-      email: args.email.toLowerCase(),
+      email: normalizedEmail,
       organizationId: args.organizationId,
       subscribedAt: Date.now(),
       unsubscribeToken: generateUnsubscribeToken(),

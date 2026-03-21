@@ -8,6 +8,13 @@
  * @module
  */
 
+import type * as admin_api_feedback from "../admin_api_feedback.js";
+import type * as admin_api_members from "../admin_api_members.js";
+import type * as admin_api_milestones from "../admin_api_milestones.js";
+import type * as admin_api_organization from "../admin_api_organization.js";
+import type * as admin_api_releases from "../admin_api_releases.js";
+import type * as admin_api_statuses from "../admin_api_statuses.js";
+import type * as admin_api_tags from "../admin_api_tags.js";
 import type * as agent from "../agent.js";
 import type * as ai_context from "../ai_context.js";
 import type * as auth from "../auth.js";
@@ -45,6 +52,10 @@ import type * as github_release_actions from "../github_release_actions.js";
 import type * as github_sync from "../github_sync.js";
 import type * as healthCheck from "../healthCheck.js";
 import type * as http from "../http.js";
+import type * as http_admin_content from "../http_admin_content.js";
+import type * as http_admin_feedback from "../http_admin_feedback.js";
+import type * as http_admin_helpers from "../http_admin_helpers.js";
+import type * as http_admin_management from "../http_admin_management.js";
 import type * as invitations from "../invitations.js";
 import type * as members from "../members.js";
 import type * as migrations_cleanup_board_fields from "../migrations/cleanup_board_fields.js";
@@ -89,6 +100,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin_api_feedback: typeof admin_api_feedback;
+  admin_api_members: typeof admin_api_members;
+  admin_api_milestones: typeof admin_api_milestones;
+  admin_api_organization: typeof admin_api_organization;
+  admin_api_releases: typeof admin_api_releases;
+  admin_api_statuses: typeof admin_api_statuses;
+  admin_api_tags: typeof admin_api_tags;
   agent: typeof agent;
   ai_context: typeof ai_context;
   auth: typeof auth;
@@ -126,6 +144,10 @@ declare const fullApi: ApiFromModules<{
   github_sync: typeof github_sync;
   healthCheck: typeof healthCheck;
   http: typeof http;
+  http_admin_content: typeof http_admin_content;
+  http_admin_feedback: typeof http_admin_feedback;
+  http_admin_helpers: typeof http_admin_helpers;
+  http_admin_management: typeof http_admin_management;
   invitations: typeof invitations;
   members: typeof members;
   "migrations/cleanup_board_fields": typeof migrations_cleanup_board_fields;

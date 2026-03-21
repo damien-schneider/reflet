@@ -301,3 +301,51 @@ export function getHowToJsonLd(options: {
     })),
   };
 }
+
+/**
+ * JSON-LD structured data for individual feedback items.
+ * Uses QAPage schema to represent user questions/requests.
+ */
+export function getFeedbackItemJsonLd(options: {
+  title: string;
+  description?: string;
+  orgName: string;
+  orgSlug: string;
+  feedbackId: string;
+  status: string;
+  voteCount: number;
+}) {
+  const {
+    title,
+    description,
+    orgName,
+    orgSlug,
+    feedbackId,
+    status,
+    voteCount,
+  } = options;
+  const url = `${BASE_URL}/${orgSlug}/feedback/${feedbackId}`;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "QAPage",
+    name: title,
+    description: description ?? `Feature request for ${orgName}: ${title}`,
+    url,
+    mainEntity: {
+      "@type": "Question",
+      name: title,
+      text: description ?? title,
+      answerCount: status === "completed" ? 1 : 0,
+      upvoteCount: voteCount,
+      author: {
+        "@type": "Organization",
+        name: orgName,
+      },
+    },
+    isPartOf: {
+      "@type": "WebSite",
+      "@id": `${BASE_URL}/#website`,
+    },
+  };
+}

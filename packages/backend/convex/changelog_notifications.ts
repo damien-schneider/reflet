@@ -65,6 +65,15 @@ async function sendEmailToSubscriber(
     return false;
   }
 
+  const isSuppressed = await ctx.runQuery(
+    internal.email_suppression.isEmailSuppressed,
+    { email }
+  );
+
+  if (isSuppressed) {
+    return false;
+  }
+
   const unsubscribeUrl = `${params.siteUrl}/changelog/unsubscribe?token=${subscriber.unsubscribeToken}`;
 
   await ctx.runAction(internal.email_renderer.sendChangelogNotificationEmail, {

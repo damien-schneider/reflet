@@ -349,6 +349,15 @@ export const publish = mutation({
       }
     );
 
+    // Schedule shipped notifications for linked feedback voters
+    await ctx.scheduler.runAfter(
+      0,
+      internal.shipped_notifications.sendShippedNotifications,
+      {
+        releaseId: args.id,
+      }
+    );
+
     return args.id;
   },
 });
