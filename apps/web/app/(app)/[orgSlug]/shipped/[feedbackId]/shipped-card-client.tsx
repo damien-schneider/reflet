@@ -7,7 +7,7 @@ import { useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useCallback, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -93,18 +93,24 @@ export default function ShippedCardClient({
           <div className="flex flex-col items-center gap-3">
             <p className="text-muted-foreground text-sm">Share this update</p>
             <div className="flex gap-2">
-              <Button asChild size="sm" variant="outline">
-                <a href={twitterUrl} rel="noopener noreferrer" target="_blank">
-                  <XLogo size={16} />
-                  <span>Twitter</span>
-                </a>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <a href={linkedinUrl} rel="noopener noreferrer" target="_blank">
-                  <LinkedinLogo size={16} />
-                  <span>LinkedIn</span>
-                </a>
-              </Button>
+              <a
+                className={buttonVariants({ size: "sm", variant: "outline" })}
+                href={twitterUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <XLogo size={16} />
+                <span>Twitter</span>
+              </a>
+              <a
+                className={buttonVariants({ size: "sm", variant: "outline" })}
+                href={linkedinUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <LinkedinLogo size={16} />
+                <span>LinkedIn</span>
+              </a>
               <Button onClick={handleCopy} size="sm" variant="outline">
                 <Copy size={16} />
                 <span>{copied ? "Copied!" : "Copy link"}</span>
@@ -113,11 +119,12 @@ export default function ShippedCardClient({
           </div>
 
           <div className="text-center">
-            <Button asChild variant="link">
-              <Link href={`/${orgSlug}/feedback/${feedbackId}`}>
-                View full feedback
-              </Link>
-            </Button>
+            <Link
+              className={buttonVariants({ variant: "link" })}
+              href={`/${orgSlug}/feedback/${feedbackId}`}
+            >
+              View full feedback
+            </Link>
           </div>
         </CardContent>
       </Card>
