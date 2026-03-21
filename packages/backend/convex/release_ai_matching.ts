@@ -12,8 +12,6 @@ const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-const _MAX_FEEDBACK_ITEMS = 50;
-
 /**
  * Suggest feedback items that are related to a release based on its content.
  * Uses AI to match release notes against open feedback.
