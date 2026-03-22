@@ -15,7 +15,7 @@ import { ProfileSection } from "@/features/account/profile-section";
 import { authClient } from "@/lib/auth-client";
 
 export default function AccountPage() {
-  const user = useQuery(api.auth.getCurrentUser);
+  const user = useQuery(api.auth.queries.getCurrentUser);
   const [activeTab, setActiveTab] = useState<AccountTab>("profile");
   const [isLoading, setIsLoading] = useState(false);
 

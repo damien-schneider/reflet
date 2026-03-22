@@ -23,7 +23,9 @@ export function WebsiteReferenceList({
 }: WebsiteReferenceListProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const references = useQuery(api.website_references.list, { organizationId });
+  const references = useQuery(api.integrations.website_references.list, {
+    organizationId,
+  });
 
   if (references === undefined) {
     return (

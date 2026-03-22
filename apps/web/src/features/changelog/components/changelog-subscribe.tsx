@@ -22,14 +22,14 @@ export function ChangelogSubscribe({
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
 
-  const isSubscribed = useQuery(api.changelog_subscriptions.isSubscribed, {
+  const isSubscribed = useQuery(api.changelog.subscriptions.isSubscribed, {
     organizationId,
   });
 
-  const subscribe = useMutation(api.changelog_subscriptions.subscribe);
-  const unsubscribe = useMutation(api.changelog_subscriptions.unsubscribe);
+  const subscribe = useMutation(api.changelog.subscriptions.subscribe);
+  const unsubscribe = useMutation(api.changelog.subscriptions.unsubscribe);
   const subscribeByEmail = useMutation(
-    api.changelog_subscriptions.subscribeByEmail
+    api.changelog.subscriptions.subscribeByEmail
   );
 
   const [email, setEmail] = useState("");

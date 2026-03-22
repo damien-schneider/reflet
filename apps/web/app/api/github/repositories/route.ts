@@ -21,7 +21,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   try {
     // Get the GitHub connection using action (no auth required)
     const connection = await fetchAction(
-      api.github_actions.getConnectionFromApiRoute,
+      api.integrations.github.actions.getConnectionFromApiRoute,
       { organizationId }
     );
 
@@ -34,7 +34,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     // Get installation access token
     const tokenResult = await fetchAction(
-      api.github_node_actions.getInstallationToken,
+      api.integrations.github.node_actions.getInstallationToken,
       {
         installationId: connection.installationId,
       }
@@ -42,7 +42,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     // Fetch repositories
     const repositories = await fetchAction(
-      api.github_actions.fetchRepositories,
+      api.integrations.github.actions.fetchRepositories,
       {
         installationToken: tokenResult.token,
       }

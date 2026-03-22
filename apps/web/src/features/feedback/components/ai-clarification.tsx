@@ -30,17 +30,17 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
   const [showPromptDialog, setShowPromptDialog] = useState(false);
 
   const clarificationStatus = useQuery(
-    api.feedback_clarification.getClarificationStatus,
+    api.feedback.clarification.getClarificationStatus,
     { feedbackId }
   );
 
   const codingPrompt = useQuery(
-    api.feedback_clarification.generateCodingPrompt,
+    api.feedback.clarification.generateCodingPrompt,
     isAdmin ? { feedbackId } : "skip"
   );
 
   const initiateClarification = useMutation(
-    api.feedback_clarification.initiateClarification
+    api.feedback.clarification.initiateClarification
   );
 
   const handleGenerate = async () => {

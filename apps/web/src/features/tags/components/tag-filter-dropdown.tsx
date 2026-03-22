@@ -68,7 +68,7 @@ function TagEditButton({ tag }: TagEditButtonProps) {
   );
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const updateTag = useMutation(api.tag_manager_actions.update);
+  const updateTag = useMutation(api.organizations.tag_manager_actions.update);
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
@@ -193,7 +193,7 @@ export function TagFilterDropdown({
   const [searchValue, setSearchValue] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  const createTag = useMutation(api.tag_manager_actions.create);
+  const createTag = useMutation(api.organizations.tag_manager_actions.create);
 
   const filteredTags = useMemo(() => {
     if (!searchValue.trim()) {

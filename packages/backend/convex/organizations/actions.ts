@@ -1,0 +1,247 @@
+import { v } from "convex/values";
+import { mutation, query } from "../_generated/server";
+import { getAuthUser } from "../shared/utils";
+
+/**
+ * Update organization settings (admin/owner only)
+ */
+export const update = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    name: v.string(),
+    slug: v.optional(v.string()),
+    isPublic: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    // Check admin/owner permission
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role === "member") {
+      throw new Error("Only admins can update organization settings");
+    }
+
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
+    }
+
+    // Validate slug uniqueness if changing
+    const newSlug = args.slug;
+    if (newSlug && newSlug !== org.slug) {
+      const existingOrg = await ctx.db
+        .query("organizations")
+        .withIndex("by_slug", (q) => q.eq("slug", newSlug))
+        .unique();
+
+      if (existingOrg) {
+        throw new Error("This slug is already taken");
+      }
+    }
+
+    await ctx.db.patch(args.organizationId, {
+      name: args.name,
+      slug: newSlug ?? org.slug,
+      isPublic: args.isPublic ?? false,
+    });
+
+    return args.organizationId;
+  },
+});
+
+/**
+ * Get organization stats (tags count, members count, feedback count)
+ */
+export const getStats = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    if (!user) {
+      return null;
+    }
+
+    // Verify membership
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership) {
+      return null;
+    }
+
+    // Count members
+    const members = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    // Count feedback
+    const feedback = await ctx.db
+      .query("feedback")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    // Count tags
+    const tags = await ctx.db
+      .query("tags")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    return {
+      tagsCount: tags.length,
+      membersCount: members.length,
+      feedbackCount: feedback.length,
+    };
+  },
+});
+
+/**
+ * Delete an organization (owner only)
+ */
+export const remove = mutation({
+  args: { id: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    // Check user is owner
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.id).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role !== "owner") {
+      throw new Error("Only the owner can delete an organization");
+    }
+
+    // Delete all related data
+    // 1. Delete all feedback for this organization
+    const feedbackItems = await ctx.db
+      .query("feedback")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.id))
+      .collect();
+
+    for (const feedback of feedbackItems) {
+      // Delete votes
+      const votes = await ctx.db
+        .query("feedbackVotes")
+        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
+        .collect();
+      for (const vote of votes) {
+        await ctx.db.delete(vote._id);
+      }
+
+      // Delete comments
+      const comments = await ctx.db
+        .query("comments")
+        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
+        .collect();
+      for (const comment of comments) {
+        await ctx.db.delete(comment._id);
+      }
+
+      // Delete feedback tags
+      const feedbackTags = await ctx.db
+        .query("feedbackTags")
+        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
+        .collect();
+      for (const feedbackTag of feedbackTags) {
+        await ctx.db.delete(feedbackTag._id);
+      }
+
+      await ctx.db.delete(feedback._id);
+    }
+
+    // 2. Delete tags
+    const tags = await ctx.db
+      .query("tags")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.id))
+      .collect();
+    for (const tag of tags) {
+      await ctx.db.delete(tag._id);
+    }
+
+    // 3. Delete releases
+    const releases = await ctx.db
+      .query("releases")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.id))
+      .collect();
+    for (const release of releases) {
+      // Delete release feedback links
+      const links = await ctx.db
+        .query("releaseFeedback")
+        .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+        .collect();
+      for (const link of links) {
+        await ctx.db.delete(link._id);
+      }
+      await ctx.db.delete(release._id);
+    }
+
+    // 4. Delete members
+    const members = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.id))
+      .collect();
+    for (const member of members) {
+      await ctx.db.delete(member._id);
+    }
+
+    // 5. Delete invitations
+    const invitations = await ctx.db
+      .query("invitations")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.id))
+      .collect();
+    for (const invitation of invitations) {
+      await ctx.db.delete(invitation._id);
+    }
+
+    // 6. Delete subscriptions
+    const subscriptions = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.id))
+      .collect();
+    for (const subscription of subscriptions) {
+      await ctx.db.delete(subscription._id);
+    }
+
+    // 7. Delete changelog subscribers
+    const subscribers = await ctx.db
+      .query("changelogSubscribers")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.id))
+      .collect();
+    for (const subscriber of subscribers) {
+      await ctx.db.delete(subscriber._id);
+    }
+
+    // 8. Delete activity logs
+    const logs = await ctx.db
+      .query("activityLogs")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.id))
+      .collect();
+    for (const log of logs) {
+      await ctx.db.delete(log._id);
+    }
+
+    // Finally, delete the organization
+    await ctx.db.delete(args.id);
+
+    return true;
+  },
+});

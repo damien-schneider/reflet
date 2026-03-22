@@ -53,14 +53,17 @@ export function PublishConfirmDialog({
   linkedFeedbackCount = 0,
   feedbackLinkStatus = "completed",
 }: PublishConfirmDialogProps) {
-  const orgData = useQuery(api.organizations.get, {
+  const orgData = useQuery(api.organizations.queries.get, {
     id: organizationId,
   });
-  const githubStatus = useQuery(api.github.getConnectionStatus, {
-    organizationId,
-  });
+  const githubStatus = useQuery(
+    api.integrations.github.queries.getConnectionStatus,
+    {
+      organizationId,
+    }
+  );
   const subscriberCount = useQuery(
-    api.changelog_subscriptions.getSubscriberCount,
+    api.changelog.subscriptions.getSubscriberCount,
     { organizationId }
   );
 

@@ -115,8 +115,8 @@ export function NotificationsPopover({
   className?: string;
   render?: React.ComponentProps<typeof PopoverTrigger>["render"];
 }) {
-  const notifications = useQuery(api.notifications.list, { limit: 10 });
-  const unreadCount = useQuery(api.notifications.getUnreadCount);
+  const notifications = useQuery(api.notifications.queries.list, { limit: 10 });
+  const unreadCount = useQuery(api.notifications.queries.getUnreadCount);
 
   return (
     <Popover>

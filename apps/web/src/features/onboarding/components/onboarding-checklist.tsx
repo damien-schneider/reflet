@@ -97,9 +97,13 @@ export function OnboardingChecklist({
   organizationId: Id<"organizations">;
   orgSlug: string;
 }) {
-  const progress = useQuery(api.onboarding.getProgress, { organizationId });
-  const dismissMutation = useMutation(api.onboarding.dismiss);
-  const syncMutation = useMutation(api.onboarding.syncAutoDetectedProgress);
+  const progress = useQuery(api.organizations.onboarding.getProgress, {
+    organizationId,
+  });
+  const dismissMutation = useMutation(api.organizations.onboarding.dismiss);
+  const syncMutation = useMutation(
+    api.organizations.onboarding.syncAutoDetectedProgress
+  );
 
   const [isMinimized, setIsMinimized] = useState(true);
   const [hasSynced, setHasSynced] = useState(false);

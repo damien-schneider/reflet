@@ -33,17 +33,21 @@ export function MilestoneExpandedPanel({
 }: MilestoneExpandedPanelProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const milestone = useQuery(api.milestones.get, { id: milestoneId });
+  const milestone = useQuery(api.organizations.milestones.get, {
+    id: milestoneId,
+  });
 
-  const allFeedback = useQuery(api.feedback_list.listByOrganization, {
+  const allFeedback = useQuery(api.feedback.list.listByOrganization, {
     organizationId,
     search: searchQuery.trim() || undefined,
     sortBy: "votes",
     limit: 20,
   });
 
-  const addFeedback = useMutation(api.milestones.addFeedback);
-  const removeFeedbackMutation = useMutation(api.milestones.removeFeedback);
+  const addFeedback = useMutation(api.organizations.milestones.addFeedback);
+  const removeFeedbackMutation = useMutation(
+    api.organizations.milestones.removeFeedback
+  );
 
   const handleAddFeedback = useCallback(
     async (feedbackId: Id<"feedback">) => {

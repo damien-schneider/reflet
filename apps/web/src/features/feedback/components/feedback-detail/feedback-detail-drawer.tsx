@@ -58,7 +58,7 @@ export function FeedbackDetailDrawer({
 }: FeedbackDetailDrawerProps) {
   // Fetch full details (includes author, assignee)
   const feedbackDetails = useQuery(
-    api.feedback.get,
+    api.feedback.queries.get,
     feedbackId ? { id: feedbackId } : "skip"
   );
 

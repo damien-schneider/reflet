@@ -56,7 +56,7 @@ export function FeedbackList({
     selectedStatusIds.length > 0 ? selectedStatusIds : undefined;
 
   // Query feedback from Convex
-  const feedbackList = useQuery(api.feedback_list.listByOrganization, {
+  const feedbackList = useQuery(api.feedback.list.listByOrganization, {
     organizationId,
     search: search || undefined,
     sortBy: convexSortBy,
@@ -67,7 +67,7 @@ export function FeedbackList({
   });
 
   // Get tags for the board's organization
-  const tags = useQuery(api.tag_manager.list, { organizationId });
+  const tags = useQuery(api.organizations.tag_manager.list, { organizationId });
 
   const isLoading = feedbackList === undefined;
 

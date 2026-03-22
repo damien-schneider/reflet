@@ -17,11 +17,11 @@ export function useAIDraftReply({
   setNewComment,
 }: UseAIDraftReplyParams) {
   const draftReplyStatus = useQuery(
-    api.feedback_clarification.getDraftReplyStatus,
+    api.feedback.clarification.getDraftReplyStatus,
     feedbackId && effectiveIsAdmin ? { feedbackId } : "skip"
   );
   const initiateDraftReply = useMutation(
-    api.feedback_clarification.initiateDraftReply
+    api.feedback.clarification.initiateDraftReply
   );
   const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
 

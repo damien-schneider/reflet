@@ -6,7 +6,7 @@ import type { CommitInfo, FileInfo } from "../components/generate-from-commits";
 
 export function useReleaseCommits(releaseId: Id<"releases"> | null) {
   const saveReleaseCommits = useMutation(
-    api.changelog_actions.saveReleaseCommits
+    api.changelog.actions.saveReleaseCommits
   );
 
   const [commits, setCommits] = useState<CommitInfo[]>([]);
@@ -15,7 +15,7 @@ export function useReleaseCommits(releaseId: Id<"releases"> | null) {
   const hasSavedRef = useRef(false);
 
   const persistedCommits = useQuery(
-    api.changelog_actions.getReleaseCommits,
+    api.changelog.actions.getReleaseCommits,
     releaseId ? { releaseId } : "skip"
   );
 

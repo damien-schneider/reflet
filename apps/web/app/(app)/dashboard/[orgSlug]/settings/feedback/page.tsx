@@ -54,33 +54,33 @@ export default function FeedbackSettingsPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
-    api.members.getCurrentMember,
+    api.organizations.members.getCurrentMember,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
-  const updateOrg = useMutation(api.organizations.update).withOptimisticUpdate(
-    (localStore, args) => {
-      const current = localStore.getQuery(api.organizations.getBySlug, {
-        slug: orgSlug,
-      });
-      if (!current) {
-        return;
-      }
-      localStore.setQuery(
-        api.organizations.getBySlug,
-        { slug: orgSlug },
-        {
-          ...current,
-          feedbackSettings: {
-            ...current.feedbackSettings,
-            ...args.feedbackSettings,
-          },
-        }
-      );
+  const updateOrg = useMutation(
+    api.organizations.mutations.update
+  ).withOptimisticUpdate((localStore, args) => {
+    const current = localStore.getQuery(api.organizations.queries.getBySlug, {
+      slug: orgSlug,
+    });
+    if (!current) {
+      return;
     }
-  );
+    localStore.setQuery(
+      api.organizations.queries.getBySlug,
+      { slug: orgSlug },
+      {
+        ...current,
+        feedbackSettings: {
+          ...current.feedbackSettings,
+          ...args.feedbackSettings,
+        },
+      }
+    );
+  });
 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle"

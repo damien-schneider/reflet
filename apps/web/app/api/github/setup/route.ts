@@ -112,7 +112,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // Get the GitHub connection using action (no auth required)
     const connection = await fetchAction(
-      api.github_actions.getConnectionFromApiRoute,
+      api.integrations.github.actions.getConnectionFromApiRoute,
       { organizationId }
     );
 
@@ -132,7 +132,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // Get installation access token
     const tokenResult = await fetchAction(
-      api.github_node_actions.getInstallationToken,
+      api.integrations.github.node_actions.getInstallationToken,
       {
         installationId: connection.installationId,
       }
@@ -164,7 +164,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       const webhookUrl = `${siteUrl}/api/github/webhook`;
 
       const webhookResult = await fetchAction(
-        api.github_actions.createWebhook,
+        api.integrations.github.actions.createWebhook,
         {
           installationToken: tokenResult.token,
           repositoryFullName: connection.repositoryFullName,
@@ -174,7 +174,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
 
       // Save webhook info
-      await fetchMutation(api.github.updateWebhook, {
+      await fetchMutation(api.integrations.github.mutations.updateWebhook, {
         organizationId,
         webhookId: webhookResult.webhookId,
         webhookSecret,
@@ -188,7 +188,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       const branch = ciBranch || connection.repositoryDefaultBranch || "main";
 
       // Get the organization for the webhook URL
-      const org = await fetchQuery(api.organizations.get, {
+      const org = await fetchQuery(api.organizations.queries.get, {
         id: organizationId,
       });
 
@@ -197,7 +197,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
         // Generate workflow content
         const workflowContent = await fetchAction(
-          api.github_actions.generateWorkflowContent,
+          api.integrations.github.actions.generateWorkflowContent,
           {
             organizationSlug: org.slug,
             webhookUrl,
@@ -206,22 +206,28 @@ export async function POST(request: Request): Promise<NextResponse> {
         );
 
         // Create or update the workflow file
-        await fetchAction(api.github_node_actions.createOrUpdateFile, {
-          installationToken: tokenResult.token,
-          repositoryFullName: connection.repositoryFullName,
-          path: ".github/workflows/reflet-release-sync.yml",
-          content: workflowContent,
-          message: "Add Reflet release sync workflow",
-          branch,
-        });
+        await fetchAction(
+          api.integrations.github.node_actions.createOrUpdateFile,
+          {
+            installationToken: tokenResult.token,
+            repositoryFullName: connection.repositoryFullName,
+            path: ".github/workflows/reflet-release-sync.yml",
+            content: workflowContent,
+            message: "Add Reflet release sync workflow",
+            branch,
+          }
+        );
 
         // Update CI settings
-        await fetchMutation(api.github.updateCiSettings, {
-          organizationId,
-          ciEnabled: true,
-          ciBranch: branch,
-          ciWorkflowCreated: true,
-        });
+        await fetchMutation(
+          api.integrations.github.mutations.updateCiSettings,
+          {
+            organizationId,
+            ciEnabled: true,
+            ciBranch: branch,
+            ciWorkflowCreated: true,
+          }
+        );
 
         results.ci = { created: true };
       }

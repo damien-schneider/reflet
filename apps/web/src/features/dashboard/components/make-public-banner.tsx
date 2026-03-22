@@ -12,7 +12,7 @@ interface MakePublicBannerProps {
 }
 
 export function MakePublicBanner({ orgId }: MakePublicBannerProps) {
-  const updateOrg = useMutation(api.organizations.update);
+  const updateOrg = useMutation(api.organizations.mutations.update);
   const [isMakingPublic, setIsMakingPublic] = useState(false);
 
   const handleMakePublic = async () => {

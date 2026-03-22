@@ -22,8 +22,10 @@ export default function PendingInvitationsPage() {
   const router = useRouter();
   const { data: session, isPending: isSessionLoading } =
     authClient.useSession();
-  const invitations = useQuery(api.invitations.listMyPendingInvitations);
-  const acceptInvitation = useMutation(api.invitations.accept);
+  const invitations = useQuery(
+    api.organizations.invitations.listMyPendingInvitations
+  );
+  const acceptInvitation = useMutation(api.organizations.invitations.accept);
   const [acceptingToken, setAcceptingToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 

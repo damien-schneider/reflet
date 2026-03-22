@@ -89,13 +89,16 @@ function formatChartDate(dateStr: string): string {
 export function SuperAdminOverview() {
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
 
-  const stats = useQuery(api.super_admin.getDashboardStats);
-  const recentActivity = useQuery(api.super_admin.getRecentActivity, {
-    limit: 15,
-  });
+  const stats = useQuery(api.organizations.super_admin.getDashboardStats);
+  const recentActivity = useQuery(
+    api.organizations.super_admin.getRecentActivity,
+    {
+      limit: 15,
+    }
+  );
 
   const days = timeRange === "7d" ? 7 : 30;
-  const trends = useQuery(api.super_admin.getTrends, { days });
+  const trends = useQuery(api.organizations.super_admin.getTrends, { days });
 
   const chartData = useMemo(() => {
     if (!trends) {

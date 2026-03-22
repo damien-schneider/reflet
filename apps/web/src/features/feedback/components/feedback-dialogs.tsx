@@ -26,7 +26,7 @@ export function CreateFeedbackDialog({
   onOpenChange,
   organizationId,
 }: CreateFeedbackDialogProps) {
-  const createFeedback = useMutation(api.feedback.create);
+  const createFeedback = useMutation(api.feedback.mutations.create);
   const [newFeedback, setNewFeedback] = useState({
     title: "",
     description: "",
@@ -109,7 +109,7 @@ export function DeleteFeedbackDialog({
   feedbackId,
   onClose,
 }: DeleteFeedbackDialogProps) {
-  const deleteFeedback = useMutation(api.feedback_actions.remove);
+  const deleteFeedback = useMutation(api.feedback.actions.remove);
 
   const handleDelete = async () => {
     if (!feedbackId) {

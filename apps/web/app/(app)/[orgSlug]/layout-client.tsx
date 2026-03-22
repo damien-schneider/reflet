@@ -32,12 +32,12 @@ export default function PublicOrgLayoutClient({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const pathname = usePathname();
   const router = useRouter();
 
   const supportSettings = useQuery(
-    api.support_conversations.getSupportSettings,
+    api.support.conversations.getSupportSettings,
     org?._id ? { organizationId: org._id } : "skip"
   );
 

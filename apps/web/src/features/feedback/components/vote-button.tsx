@@ -32,7 +32,7 @@ export function VoteButton({
     message: "Connectez-vous pour voter sur ce feedback",
   });
 
-  const toggleVote = useMutation(api.votes.toggle);
+  const toggleVote = useMutation(api.feedback.votes.toggle);
 
   const handleVote = (e: MouseEvent) => {
     e.stopPropagation();

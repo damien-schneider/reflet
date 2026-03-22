@@ -35,12 +35,12 @@ export default function BrandingSettingsPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
-    api.members.getCurrentMember,
+    api.organizations.members.getCurrentMember,
     org?._id ? { organizationId: org._id } : "skip"
   );
-  const updateOrg = useMutation(api.organizations.update);
+  const updateOrg = useMutation(api.organizations.mutations.update);
 
   const [logo, setLogo] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState(DEFAULT_PRIMARY_COLOR);

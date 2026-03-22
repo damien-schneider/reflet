@@ -51,7 +51,7 @@ export function MilestoneFormPopover({
   onCreated,
   triggerClassName,
 }: MilestoneFormPopoverProps) {
-  const createMilestone = useMutation(api.milestones.create);
+  const createMilestone = useMutation(api.organizations.milestones.create);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState("");

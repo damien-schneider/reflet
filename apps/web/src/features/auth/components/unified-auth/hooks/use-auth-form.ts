@@ -55,7 +55,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
   >(null);
 
   const emailExistsData = useQuery(
-    api.auth_helpers.checkEmailExists,
+    api.auth.helpers.checkEmailExists,
     emailChecked && email ? { email } : "skip"
   );
 

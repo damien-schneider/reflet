@@ -146,7 +146,7 @@ function DashboardBreadcrumb({
   pathname: string;
 }) {
   const org = useQuery(
-    api.organizations.getBySlug,
+    api.organizations.queries.getBySlug,
     orgSlug ? { slug: orgSlug } : "skip"
   );
 
@@ -194,9 +194,9 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   const orgSlug = typeof rawOrgSlug === "string" ? rawOrgSlug : undefined;
   const router = useRouter();
   const pathname = usePathname();
-  const organizations = useQuery(api.organizations.list);
+  const organizations = useQuery(api.organizations.queries.list);
   const org = useQuery(
-    api.organizations.getBySlug,
+    api.organizations.queries.getBySlug,
     orgSlug ? { slug: orgSlug } : "skip"
   );
   const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom);

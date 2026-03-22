@@ -15,7 +15,7 @@ export async function generateMetadata({
   const { orgSlug, feedbackId } = await params;
 
   try {
-    const meta = await fetchQuery(api.feedback.getPublicMeta, {
+    const meta = await fetchQuery(api.feedback.queries.getPublicMeta, {
       id: feedbackId as Id<"feedback">,
     });
 

@@ -47,7 +47,7 @@ export function RoadmapColumnHeader({
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
-  const updateStatus = useMutation(api.organization_statuses.update);
+  const updateStatus = useMutation(api.organizations.statuses.update);
 
   // Get the display color - migrate hex colors to named colors for display
   const displayColor: TagColor = isValidTagColor(color)

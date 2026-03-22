@@ -48,28 +48,28 @@ interface DashboardSidebarProps {
 }
 
 export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const currentUser = useQuery(api.auth.queries.getCurrentUser);
   const org = useQuery(
-    api.organizations.getBySlug,
+    api.organizations.queries.getBySlug,
     orgSlug ? { slug: orgSlug } : "skip"
   );
 
   const adminUnreadCount = useQuery(
-    api.support_conversations.getUnreadCountForAdmin,
+    api.support.conversations.getUnreadCountForAdmin,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
   const deletedCount = useQuery(
-    api.feedback_trash.getDeletedCount,
+    api.feedback.trash.getDeletedCount,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
-  const isSuperAdmin = useQuery(api.super_admin.isSuperAdmin);
+  const isSuperAdmin = useQuery(api.organizations.super_admin.isSuperAdmin);
 
   const subscription = useQuery(
-    api.subscriptions.getStatus,
+    api.billing.queries.getStatus,
     org?._id ? { organizationId: org._id } : "skip"
   );
 

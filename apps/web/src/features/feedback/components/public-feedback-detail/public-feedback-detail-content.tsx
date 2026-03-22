@@ -28,18 +28,18 @@ export function PublicFeedbackDetailContent({
   isMember: _isMember = false,
   isAdmin = false,
 }: PublicFeedbackDetailContentProps) {
-  const feedback = useQuery(api.feedback.get, { id: feedbackId });
-  const comments = useQuery(api.comments.list, { feedbackId });
-  const organizationStatuses = useQuery(api.organization_statuses.list, {
+  const feedback = useQuery(api.feedback.queries.get, { id: feedbackId });
+  const comments = useQuery(api.feedback.comments.list, { feedbackId });
+  const organizationStatuses = useQuery(api.organizations.statuses.list, {
     organizationId,
   });
 
-  const toggleVote = useMutation(api.votes.toggle);
-  const createComment = useMutation(api.comments.create);
+  const toggleVote = useMutation(api.feedback.votes.toggle);
+  const createComment = useMutation(api.feedback.comments.create);
   const updateFeedbackStatus = useMutation(
-    api.feedback_actions.updateOrganizationStatus
+    api.feedback.actions.updateOrganizationStatus
   );
-  const togglePin = useMutation(api.feedback_actions.togglePin);
+  const togglePin = useMutation(api.feedback.actions.togglePin);
 
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);

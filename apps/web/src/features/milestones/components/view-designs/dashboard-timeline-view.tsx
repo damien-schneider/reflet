@@ -104,7 +104,9 @@ export function DashboardTimelineView({
   isAdmin,
   onFeedbackClick,
 }: MilestonesViewProps) {
-  const milestones = useQuery(api.milestones.list, { organizationId });
+  const milestones = useQuery(api.organizations.milestones.list, {
+    organizationId,
+  });
   const [activeMilestoneId, setActiveMilestoneId] =
     useState<Id<"milestones"> | null>(null);
   const [sweepId, setSweepId] = useState<Id<"milestones"> | null>(null);

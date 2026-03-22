@@ -4,17 +4,23 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation } from "convex/react";
 
 export function useGitHubSettingsMutations() {
-  const selectRepositoryMutation = useMutation(api.github.selectRepository);
-  const toggleAutoSyncMutation = useMutation(api.github.toggleAutoSync);
-  const disconnectMutation = useMutation(api.github.disconnect);
+  const selectRepositoryMutation = useMutation(
+    api.integrations.github.mutations.selectRepository
+  );
+  const toggleAutoSyncMutation = useMutation(
+    api.integrations.github.mutations.toggleAutoSync
+  );
+  const disconnectMutation = useMutation(
+    api.integrations.github.mutations.disconnect
+  );
   const toggleIssuesSyncMutation = useMutation(
-    api.github_issues.toggleIssuesSync
+    api.integrations.github.issues.toggleIssuesSync
   );
   const upsertLabelMappingMutation = useMutation(
-    api.github_issues.upsertLabelMapping
+    api.integrations.github.issues.upsertLabelMapping
   );
   const deleteLabelMappingMutation = useMutation(
-    api.github_issues.deleteLabelMapping
+    api.integrations.github.issues.deleteLabelMapping
   );
 
   return {

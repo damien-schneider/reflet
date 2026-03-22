@@ -25,7 +25,7 @@ export default function ShippedCardClient({
   const { orgSlug, feedbackId } = use(params);
   const [copied, setCopied] = useState(false);
 
-  const meta = useQuery(api.feedback.getShippedMeta, {
+  const meta = useQuery(api.feedback.queries.getShippedMeta, {
     id: feedbackId as Id<"feedback">,
   });
 

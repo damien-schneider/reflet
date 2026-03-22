@@ -40,17 +40,19 @@ export function ReleaseEditor({
   className,
 }: ReleaseEditorProps) {
   const router = useRouter();
-  const updateRelease = useMutation(api.changelog.update);
-  const createRelease = useMutation(api.changelog.create);
+  const updateRelease = useMutation(api.changelog.mutations.update);
+  const createRelease = useMutation(api.changelog.mutations.create);
   const publishRelease = useMutation(
-    api.changelog_actions.publish
+    api.changelog.actions.publish
   ).withOptimisticUpdate((localStore, args) => {
-    const current = localStore.getQuery(api.changelog.get, { id: args.id });
+    const current = localStore.getQuery(api.changelog.queries.get, {
+      id: args.id,
+    });
     if (!current) {
       return;
     }
     localStore.setQuery(
-      api.changelog.get,
+      api.changelog.queries.get,
       { id: args.id },
       {
         ...current,
@@ -60,14 +62,16 @@ export function ReleaseEditor({
   });
 
   const unpublishRelease = useMutation(
-    api.changelog_actions.unpublish
+    api.changelog.actions.unpublish
   ).withOptimisticUpdate((localStore, args) => {
-    const current = localStore.getQuery(api.changelog.get, { id: args.id });
+    const current = localStore.getQuery(api.changelog.queries.get, {
+      id: args.id,
+    });
     if (!current) {
       return;
     }
     localStore.setQuery(
-      api.changelog.get,
+      api.changelog.queries.get,
       { id: args.id },
       {
         ...current,
@@ -76,10 +80,13 @@ export function ReleaseEditor({
     );
   });
 
-  const pushToGithub = useMutation(api.changelog_actions.pushToGithub);
-  const githubConnection = useQuery(api.github.getConnection, {
-    organizationId,
-  });
+  const pushToGithub = useMutation(api.changelog.actions.pushToGithub);
+  const githubConnection = useQuery(
+    api.integrations.github.queries.getConnection,
+    {
+      organizationId,
+    }
+  );
 
   const isPublished = release?.publishedAt !== undefined;
   const hasGithubConnection = !!githubConnection;
@@ -120,7 +127,7 @@ export function ReleaseEditor({
 
   // Get linked feedback count for the publish dialog
   const releaseData = useQuery(
-    api.changelog.get,
+    api.changelog.queries.get,
     releaseId ? { id: releaseId } : "skip"
   );
   const linkedFeedbackCount = releaseData?.feedbackItems?.length ?? 0;

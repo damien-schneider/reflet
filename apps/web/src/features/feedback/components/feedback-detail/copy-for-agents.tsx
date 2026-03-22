@@ -119,14 +119,20 @@ export function CopyForAgents({
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Get repo analysis for project context (lightweight query)
-  const repoAnalysis = useQuery(api.repo_analysis.getLatestAnalysis, {
-    organizationId,
-  });
+  const repoAnalysis = useQuery(
+    api.integrations.github.repo_analysis.getLatestAnalysis,
+    {
+      organizationId,
+    }
+  );
 
   // Get GitHub connection for cloud agents
-  const githubConnection = useQuery(api.github.getConnectionStatus, {
-    organizationId,
-  });
+  const githubConnection = useQuery(
+    api.integrations.github.queries.getConnectionStatus,
+    {
+      organizationId,
+    }
+  );
 
   const validTags = (tags ?? []).filter((t): t is FeedbackTag => t !== null);
 

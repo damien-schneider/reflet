@@ -15,7 +15,7 @@ export function PostHogIdentifier() {
   const orgSlug = typeof rawOrgSlug === "string" ? rawOrgSlug : undefined;
 
   const org = useQuery(
-    api.organizations.getBySlug,
+    api.organizations.queries.getBySlug,
     orgSlug ? { slug: orgSlug } : "skip"
   );
 

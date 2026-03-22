@@ -50,20 +50,20 @@ export function RoadmapKanban({
   const [isCreatingColumn, setIsCreatingColumn] = useState(false);
 
   // Fetch organization statuses (the single source of truth for columns)
-  const organizationStatuses = useQuery(api.organization_statuses.list, {
+  const organizationStatuses = useQuery(api.organizations.statuses.list, {
     organizationId,
   });
 
   // Fetch roadmap data (feedback items)
-  const roadmapData = useQuery(api.feedback_list.listForRoadmapByOrganization, {
+  const roadmapData = useQuery(api.feedback.list.listForRoadmapByOrganization, {
     organizationId,
   });
 
   // Mutations
   const updateFeedbackStatus = useMutation(
-    api.feedback_actions.updateOrganizationStatus
+    api.feedback.actions.updateOrganizationStatus
   );
-  const createStatus = useMutation(api.organization_statuses.create);
+  const createStatus = useMutation(api.organizations.statuses.create);
 
   // Build lane configuration from organization statuses
   const laneConfigs = useMemo((): LaneConfig[] => {

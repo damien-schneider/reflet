@@ -62,7 +62,7 @@ export function FeedbackListItem({
   isAdmin = false,
   isAuthor = false,
 }: FeedbackListItemProps) {
-  const deleteFeedback = useMutation(api.feedback_actions.remove);
+  const deleteFeedback = useMutation(api.feedback.actions.remove);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const tags = feedback.tags ?? [];
   const canDelete = isAuthor || isAdmin;

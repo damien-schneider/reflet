@@ -39,12 +39,12 @@ export default function GeneralSettingsPage({
 }) {
   const router = useRouter();
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
-    api.members.getCurrentMember,
+    api.organizations.members.getCurrentMember,
     org?._id ? { organizationId: org._id } : "skip"
   );
-  const updateOrg = useMutation(api.organizations_actions.update);
+  const updateOrg = useMutation(api.organizations.actions.update);
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");

@@ -16,12 +16,12 @@ export default function TrashPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const deletedFeedback = useQuery(
-    api.feedback_trash.listDeleted,
+    api.feedback.trash.listDeleted,
     org?._id ? { organizationId: org._id } : "skip"
   );
-  const restoreFeedback = useMutation(api.feedback_actions.restore);
+  const restoreFeedback = useMutation(api.feedback.actions.restore);
   const [restoringId, setRestoringId] = useState<string | null>(null);
 
   const handleRestore = async (feedbackId: Id<"feedback">) => {

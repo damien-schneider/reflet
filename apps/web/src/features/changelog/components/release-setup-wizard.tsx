@@ -80,11 +80,16 @@ export function ReleaseSetupWizard({
   const [config, setConfig] = useState<WizardConfig>(DEFAULT_CONFIG);
   const [isSaving, setIsSaving] = useState(false);
 
-  const updateOrg = useMutation(api.organizations.update);
-  const toggleAutoSync = useMutation(api.github.toggleAutoSync);
-  const githubConnection = useQuery(api.github.getConnection, {
-    organizationId,
-  });
+  const updateOrg = useMutation(api.organizations.mutations.update);
+  const toggleAutoSync = useMutation(
+    api.integrations.github.mutations.toggleAutoSync
+  );
+  const githubConnection = useQuery(
+    api.integrations.github.queries.getConnection,
+    {
+      organizationId,
+    }
+  );
 
   // Initialize targetBranch from the GitHub connection's default branch
   useEffect(() => {

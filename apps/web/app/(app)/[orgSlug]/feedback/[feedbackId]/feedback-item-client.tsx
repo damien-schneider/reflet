@@ -14,10 +14,10 @@ export default function FeedbackItemClient({
   params: Promise<{ orgSlug: string; feedbackId: string }>;
 }) {
   const { orgSlug, feedbackId } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
   const membership = useQuery(
-    api.members.getMembership,
+    api.organizations.members.getMembership,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const isMember = !!membership;

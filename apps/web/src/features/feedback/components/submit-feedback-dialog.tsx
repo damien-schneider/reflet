@@ -83,7 +83,7 @@ export function SubmitFeedbackDialog({
   onAssigneeChange,
 }: SubmitFeedbackDialogProps) {
   const members = useQuery(
-    api.members.list,
+    api.organizations.members.list,
     isAdmin && organizationId ? { organizationId } : "skip"
   );
 

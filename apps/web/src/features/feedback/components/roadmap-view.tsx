@@ -52,7 +52,7 @@ export function RoadmapView({
   >(new Map());
 
   const updateFeedbackStatus = useMutation(
-    api.feedback_actions.updateOrganizationStatus
+    api.feedback.actions.updateOrganizationStatus
   );
 
   // Apply optimistic updates to feedback

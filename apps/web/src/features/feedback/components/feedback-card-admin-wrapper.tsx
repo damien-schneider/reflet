@@ -35,7 +35,7 @@ export function FeedbackCardAdminWrapper({
   children,
 }: FeedbackCardAdminWrapperProps) {
   const { isAdmin } = useFeedbackBoard();
-  const deleteFeedback = useMutation(api.feedback_actions.remove);
+  const deleteFeedback = useMutation(api.feedback.actions.remove);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDelete = useCallback(async () => {

@@ -31,23 +31,25 @@ export default function AIPage({
   const { orgSlug } = use(params);
   const [isStarting, setIsStarting] = useState(false);
 
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
-    api.members.getCurrentMember,
+    api.organizations.members.getCurrentMember,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
   const githubStatus = useQuery(
-    api.github.getConnectionStatus,
+    api.integrations.github.queries.getConnectionStatus,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
   const latestAnalysis = useQuery(
-    api.repo_analysis.getLatestAnalysis,
+    api.integrations.github.repo_analysis.getLatestAnalysis,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
-  const startAnalysis = useMutation(api.repo_analysis.startAnalysis);
+  const startAnalysis = useMutation(
+    api.integrations.github.repo_analysis.startAnalysis
+  );
 
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
@@ -265,7 +267,9 @@ function AnalysisResults({
   organizationId,
   isAdmin,
 }: AnalysisResultsProps) {
-  const updateSection = useMutation(api.repo_analysis.updateAnalysisSection);
+  const updateSection = useMutation(
+    api.integrations.github.repo_analysis.updateAnalysisSection
+  );
 
   const allSections: {
     title: string;

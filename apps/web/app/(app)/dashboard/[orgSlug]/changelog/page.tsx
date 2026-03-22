@@ -21,56 +21,56 @@ export default function ChangelogPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const releases = useQuery(
-    api.releases.list,
+    api.changelog.releases.list,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const currentMember = useQuery(
-    api.members.getCurrentMember,
+    api.organizations.members.getCurrentMember,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const githubStatus = useQuery(
-    api.github.getConnectionStatus,
+    api.integrations.github.queries.getConnectionStatus,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const apiKeys = useQuery(
-    api.feedback_api_admin.getApiKeys,
+    api.feedback.api_admin.getApiKeys,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const deleteRelease = useMutation(
-    api.changelog_actions.remove
+    api.changelog.actions.remove
   ).withOptimisticUpdate((localStore, args) => {
     if (!org) {
       return;
     }
-    const current = localStore.getQuery(api.releases.list, {
+    const current = localStore.getQuery(api.changelog.releases.list, {
       organizationId: org._id,
     });
     if (!current) {
       return;
     }
     localStore.setQuery(
-      api.releases.list,
+      api.changelog.releases.list,
       { organizationId: org._id },
       current.filter((r) => r._id !== args.id)
     );
   });
 
   const publishRelease = useMutation(
-    api.changelog_actions.publish
+    api.changelog.actions.publish
   ).withOptimisticUpdate((localStore, args) => {
     if (!org) {
       return;
     }
-    const current = localStore.getQuery(api.releases.list, {
+    const current = localStore.getQuery(api.changelog.releases.list, {
       organizationId: org._id,
     });
     if (!current) {
       return;
     }
     localStore.setQuery(
-      api.releases.list,
+      api.changelog.releases.list,
       { organizationId: org._id },
       current.map((r) =>
         r._id === args.id ? { ...r, publishedAt: Date.now() } : r
@@ -79,19 +79,19 @@ export default function ChangelogPage({
   });
 
   const unpublishRelease = useMutation(
-    api.changelog_actions.unpublish
+    api.changelog.actions.unpublish
   ).withOptimisticUpdate((localStore, args) => {
     if (!org) {
       return;
     }
-    const current = localStore.getQuery(api.releases.list, {
+    const current = localStore.getQuery(api.changelog.releases.list, {
       organizationId: org._id,
     });
     if (!current) {
       return;
     }
     localStore.setQuery(
-      api.releases.list,
+      api.changelog.releases.list,
       { organizationId: org._id },
       current.map((r) =>
         r._id === args.id ? { ...r, publishedAt: undefined } : r

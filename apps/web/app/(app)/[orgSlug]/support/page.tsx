@@ -22,14 +22,14 @@ export default function PublicSupportPage({
   const { data: session } = authClient.useSession();
   const isLoggedIn = Boolean(session?.user);
 
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const supportSettings = useQuery(
-    api.support_conversations.getSupportSettings,
+    api.support.conversations.getSupportSettings,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
   const conversations = useQuery(
-    api.support_conversations.listForUser,
+    api.support.conversations.listForUser,
     org?._id && isLoggedIn ? { organizationId: org._id } : "skip"
   );
 
@@ -41,18 +41,18 @@ export default function PublicSupportPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedConversation = useQuery(
-    api.support_conversations.get,
+    api.support.conversations.get,
     selectedConversationId ? { id: selectedConversationId } : "skip"
   );
 
   const messages = useQuery(
-    api.support_messages.list,
+    api.support.messages.list,
     selectedConversationId ? { conversationId: selectedConversationId } : "skip"
   );
 
-  const createConversation = useMutation(api.support_conversations.create);
-  const sendMessage = useMutation(api.support_messages.send);
-  const markAsRead = useMutation(api.support_messages.markAsRead);
+  const createConversation = useMutation(api.support.conversations.create);
+  const sendMessage = useMutation(api.support.messages.send);
+  const markAsRead = useMutation(api.support.messages.markAsRead);
 
   useEffect(() => {
     if (selectedConversationId && messages && messages.length > 0) {

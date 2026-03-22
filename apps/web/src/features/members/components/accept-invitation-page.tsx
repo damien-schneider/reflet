@@ -18,8 +18,10 @@ export function AcceptInvitationContent({
   token,
 }: AcceptInvitationContentProps) {
   const router = useRouter();
-  const invitation = useQuery(api.invitations.getByToken, { token });
-  const acceptInvitation = useMutation(api.invitations.accept);
+  const invitation = useQuery(api.organizations.invitations.getByToken, {
+    token,
+  });
+  const acceptInvitation = useMutation(api.organizations.invitations.accept);
   const [isAccepting, setIsAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { data: session } = authClient.useSession();

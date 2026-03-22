@@ -51,7 +51,7 @@ export function ComplexityBadge({
   isAdmin: boolean;
   hasHumanOverride: boolean;
 }) {
-  const updateAnalysis = useMutation(api.feedback_actions.updateAnalysis);
+  const updateAnalysis = useMutation(api.feedback.actions.updateAnalysis);
   const config = COMPLEXITY_CONFIG[effectiveComplexity];
 
   const handleChange = useCallback(

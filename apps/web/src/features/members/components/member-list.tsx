@@ -52,7 +52,7 @@ export function MemberList({
   isOwner,
   onRemoveMember,
 }: MemberListProps) {
-  const updateRole = useMutation(api.members.updateRole);
+  const updateRole = useMutation(api.organizations.members.updateRole);
 
   const handleUpdateRole = async (
     memberId: Id<"organizationMembers">,

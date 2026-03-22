@@ -18,7 +18,7 @@ function UnsubscribeContent() {
 
   const token = searchParams.get("token");
   const unsubscribeMutation = useMutation(
-    api.changelog_subscriptions.unsubscribeByToken
+    api.changelog.subscriptions.unsubscribeByToken
   );
 
   useEffect(() => {
