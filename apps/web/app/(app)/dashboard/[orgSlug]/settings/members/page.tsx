@@ -99,7 +99,7 @@ export default function MembersGearPage({
               Team Members
             </CardTitle>
             <CardDescription>
-              {members?.length ?? 0} member{members?.length !== 1 ? "s" : ""} in
+              {members?.length ?? 0} member{members?.length === 1 ? "" : "s"} in
               this organization
             </CardDescription>
           </CardHeader>
@@ -118,7 +118,7 @@ export default function MembersGearPage({
               <CardTitle>Pending Invitations</CardTitle>
               <CardDescription>
                 {invitations.length} pending invitation
-                {invitations.length !== 1 ? "s" : ""}
+                {invitations.length === 1 ? "" : "s"}
               </CardDescription>
             </CardHeader>
             <CardContent>

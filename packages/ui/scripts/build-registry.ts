@@ -15,24 +15,24 @@ const REGISTRY_DIR = resolve(import.meta.dirname, "../registry");
 const OUTPUT_DIR = resolve(ROOT, "apps/web/public/r");
 
 interface RegistryFile {
-  path: string;
   content: string;
-  type: "registry:ui";
+  path: string;
   target?: string;
+  type: "registry:ui";
 }
 
 interface RegistryItem {
   $schema: string;
-  name: string;
-  type: "registry:ui";
-  title: string;
-  description: string;
   dependencies: string[];
-  registryDependencies: string[];
+  description: string;
   files: RegistryFile[];
   meta: {
     importSpecifier: string;
   };
+  name: string;
+  registryDependencies: string[];
+  title: string;
+  type: "registry:ui";
 }
 
 const COMPONENTS: Array<{

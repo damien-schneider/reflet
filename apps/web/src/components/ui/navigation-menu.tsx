@@ -162,7 +162,7 @@ export {
   NavigationListItem,
   NavigationListLink,
   NavigationListList,
+  NavigationListPositioner,
   NavigationListTrigger,
   navigationListTriggerStyle,
-  NavigationListPositioner,
 };

@@ -42,8 +42,8 @@ interface MemberInfo {
 }
 
 interface MemberListProps {
-  members: MemberInfo[] | undefined;
   isOwner: boolean;
+  members: MemberInfo[] | undefined;
   onRemoveMember: (id: Id<"organizationMembers">, name: string) => void;
 }
 

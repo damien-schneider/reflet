@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const ROOT = resolve(__dirname, "../../../../..");
+const ROOT = resolve(import.meta.dirname, "../../../../..");
 const REGISTRY_SRC = resolve(ROOT, "packages/ui/registry");
 const REGISTRY_JSON = resolve(ROOT, "apps/web/public/r");
 

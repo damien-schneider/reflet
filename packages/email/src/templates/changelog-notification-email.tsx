@@ -4,10 +4,10 @@ import { baseStyles } from "./styles";
 
 interface ChangelogNotificationEmailProps {
   organizationName?: string;
-  releaseTitle?: string;
-  releaseVersion?: string;
   releaseDescription?: string;
+  releaseTitle?: string;
   releaseUrl?: string;
+  releaseVersion?: string;
   unsubscribeUrl?: string;
 }
 

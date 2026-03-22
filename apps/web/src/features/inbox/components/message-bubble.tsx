@@ -5,31 +5,31 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 interface MessageSender {
-  id?: string;
-  name?: string;
   email?: string;
+  id?: string;
   image?: string;
+  name?: string;
 }
 
 interface MessageReaction {
-  emoji: string;
   count: number;
+  emoji: string;
   userIds: string[];
 }
 
 interface MessageBubbleProps {
   body: string;
-  sender?: MessageSender;
+  currentUserId?: string;
   isOwnMessage: boolean;
-  senderType: "user" | "admin";
-  timestamp?: number;
-  showAvatar?: boolean;
-  showTimestamp?: boolean;
   messageId?: Id<"supportMessages">;
-  reactions?: MessageReaction[];
   onAddReaction?: (messageId: Id<"supportMessages">, emoji: string) => void;
   onRemoveReaction?: (messageId: Id<"supportMessages">, emoji: string) => void;
-  currentUserId?: string;
+  reactions?: MessageReaction[];
+  sender?: MessageSender;
+  senderType: "user" | "admin";
+  showAvatar?: boolean;
+  showTimestamp?: boolean;
+  timestamp?: number;
 }
 
 const INITIALS_SPLIT_PATTERN = /[\s@]/;

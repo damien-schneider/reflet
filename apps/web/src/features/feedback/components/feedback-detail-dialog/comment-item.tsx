@@ -17,32 +17,32 @@ import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 
 export interface CommentData {
   _id: Id<"comments">;
+  authorImage?: string;
+  authorName?: string;
   body: string;
   createdAt: number;
-  authorName?: string;
-  authorImage?: string;
   isAuthor?: boolean;
   isOfficial?: boolean;
 }
 
 export interface CommentItemProps {
   comment: CommentData;
-  replies: CommentData[];
-  isAdmin: boolean;
-  replyingTo: Id<"comments"> | null;
-  replyContent: string;
-  editingCommentId: Id<"comments"> | null;
   editCommentContent: string;
+  editingCommentId: Id<"comments"> | null;
+  isAdmin: boolean;
   isSubmittingComment: boolean;
+  onDelete: (id: Id<"comments">) => void;
+  onEdit: (id: Id<"comments">, content: string) => void;
+  onEditCancel: () => void;
+  onEditContentChange: (content: string) => void;
   onReply: (id: Id<"comments">) => void;
   onReplyCancel: () => void;
   onReplyContentChange: (content: string) => void;
   onSubmitReply: (parentId: Id<"comments">) => Promise<void>;
-  onEdit: (id: Id<"comments">, content: string) => void;
-  onEditCancel: () => void;
-  onEditContentChange: (content: string) => void;
   onUpdate: (id: Id<"comments">) => Promise<void>;
-  onDelete: (id: Id<"comments">) => void;
+  replies: CommentData[];
+  replyContent: string;
+  replyingTo: Id<"comments"> | null;
 }
 
 export function CommentItem({
@@ -210,15 +210,15 @@ export function CommentItem({
 }
 
 interface ReplyItemProps {
-  reply: CommentData;
-  isAdmin: boolean;
-  editingCommentId: Id<"comments"> | null;
   editCommentContent: string;
+  editingCommentId: Id<"comments"> | null;
+  isAdmin: boolean;
+  onDelete: (id: Id<"comments">) => void;
   onEdit: (id: Id<"comments">, content: string) => void;
   onEditCancel: () => void;
   onEditContentChange: (content: string) => void;
   onUpdate: (id: Id<"comments">) => Promise<void>;
-  onDelete: (id: Id<"comments">) => void;
+  reply: CommentData;
 }
 
 function ReplyItem({

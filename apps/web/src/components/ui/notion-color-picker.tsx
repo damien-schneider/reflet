@@ -10,8 +10,8 @@ import {
 import { cn } from "@/lib/utils";
 
 interface NotionColorPickerProps {
-  value: TagColor;
   onChange: (color: TagColor) => void;
+  value: TagColor;
 }
 
 export function NotionColorPicker({ value, onChange }: NotionColorPickerProps) {

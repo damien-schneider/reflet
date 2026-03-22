@@ -6,24 +6,24 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export interface Milestone {
-  id: string;
-  name: string;
-  emoji: string;
   colorHex: string;
+  emoji: string;
   horizonLabel: string;
   horizonShort: string;
-  targetDate: string | null;
+  id: string;
+  name: string;
   progress: {
     total: number;
     completed: number;
     inProgress: number;
     percentage: number;
   };
+  targetDate: string | null;
 }
 
 export interface MilestoneEditorialAccordionProps {
-  milestones: Milestone[];
   className?: string;
+  milestones: Milestone[];
 }
 
 function ProgressBar({

@@ -198,19 +198,17 @@ export default function FeedbackDetailPage({
 }
 
 interface FeedbackHeaderProps {
-  orgSlug: string;
-  title: string;
-  voteCount: number;
-  hasVoted?: boolean;
-  isPinned?: boolean;
-  primaryColor: string;
+  assignee?: {
+    id: string;
+    name?: string | null;
+    email?: string;
+    image?: string | null;
+  } | null;
   commentCount: number;
   createdAt: number;
+  hasVoted?: boolean;
   isAdmin: boolean;
-  onVote: () => void;
-  onAssigneeChange: (assigneeId: string) => void;
-  status?: { name: string; color: string } | undefined;
-  tags?: Array<{ _id: string; name: string; color: string } | null> | null;
+  isPinned?: boolean;
   members:
     | Array<{
         userId: string;
@@ -221,12 +219,14 @@ interface FeedbackHeaderProps {
         } | null;
       }>
     | undefined;
-  assignee?: {
-    id: string;
-    name?: string | null;
-    email?: string;
-    image?: string | null;
-  } | null;
+  onAssigneeChange: (assigneeId: string) => void;
+  onVote: () => void;
+  orgSlug: string;
+  primaryColor: string;
+  status?: { name: string; color: string } | undefined;
+  tags?: Array<{ _id: string; name: string; color: string } | null> | null;
+  title: string;
+  voteCount: number;
 }
 
 function FeedbackHeader({
@@ -344,6 +344,12 @@ function FeedbackHeader({
 }
 
 interface FeedbackAssigneeSelectorProps {
+  assignee?: {
+    id: string;
+    name?: string | null;
+    email?: string;
+    image?: string | null;
+  } | null;
   isAdmin: boolean;
   members:
     | Array<{
@@ -355,12 +361,6 @@ interface FeedbackAssigneeSelectorProps {
         } | null;
       }>
     | undefined;
-  assignee?: {
-    id: string;
-    name?: string | null;
-    email?: string;
-    image?: string | null;
-  } | null;
   onAssigneeChange: (assigneeId: string) => void;
 }
 

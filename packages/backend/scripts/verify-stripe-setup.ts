@@ -38,9 +38,9 @@ const EXPECTED_PRICES = {
 } as const;
 
 interface VerificationResult {
-  success: boolean;
-  message: string;
   details?: string;
+  message: string;
+  success: boolean;
 }
 
 async function verifyStripeKey(stripe: Stripe): Promise<VerificationResult> {
@@ -187,9 +187,9 @@ async function verifyWebhook(
 interface EnvConfig {
   isProduction: boolean;
   modeLabel: string;
-  stripeSecretKey: string | undefined;
   priceMonthly: string | undefined;
   priceYearly: string | undefined;
+  stripeSecretKey: string | undefined;
   webhookSecret: string | undefined;
 }
 

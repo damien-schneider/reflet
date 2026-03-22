@@ -24,11 +24,11 @@ import {
 import { authClient } from "@/lib/auth-client";
 
 interface ProfileSectionProps {
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
   user:
     | { name?: string | null; email?: string | null; image?: string | null }
     | undefined;
-  isLoading: boolean;
-  setIsLoading: (loading: boolean) => void;
 }
 
 export function ProfileSection({

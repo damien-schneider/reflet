@@ -22,9 +22,9 @@ import { cn } from "@/lib/utils";
 import type { FeedbackItem } from "../feed-feedback-view";
 
 interface SweepCornerFeedCardProps {
+  className?: string;
   feedback: FeedbackItem;
   onClick?: (feedbackId: Id<"feedback">) => void;
-  className?: string;
 }
 
 export function SweepCornerFeedCard({

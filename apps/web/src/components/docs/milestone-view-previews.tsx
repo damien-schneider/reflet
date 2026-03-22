@@ -94,8 +94,8 @@ function AllMilestoneViewsPreview() {
 }
 
 export {
-  TrackViewPreview,
-  EditorialAccordionPreview,
-  DashboardTimelinePreview,
   AllMilestoneViewsPreview,
+  DashboardTimelinePreview,
+  EditorialAccordionPreview,
+  TrackViewPreview,
 };

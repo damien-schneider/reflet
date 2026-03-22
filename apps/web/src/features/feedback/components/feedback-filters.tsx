@@ -48,11 +48,11 @@ import {
 } from "@/store/feedback";
 
 interface FeedbackFunnelsProps {
-  organizationId: Id<"organizations">;
   className?: string;
+  onSubmitClick?: () => void;
+  organizationId: Id<"organizations">;
   showSubmitButton?: boolean;
   tags?: Doc<"tags">[];
-  onSubmitClick?: () => void;
 }
 
 /**

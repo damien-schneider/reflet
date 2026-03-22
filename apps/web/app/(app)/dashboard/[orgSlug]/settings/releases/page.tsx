@@ -16,8 +16,8 @@ import { SyncDirectionSection } from "./_components/sync-direction-section";
 import { VersioningSection } from "./_components/versioning-section";
 
 interface BranchInfo {
-  name: string;
   isProtected: boolean;
+  name: string;
 }
 
 export default function ReleaseSettingsPage({

@@ -2,9 +2,9 @@ import type { Icon } from "@phosphor-icons/react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface StatCardProps {
+  icon: Icon;
   label: string;
   value: number | string;
-  icon: Icon;
 }
 
 export function StatCard({ label, value, icon: IconComponent }: StatCardProps) {

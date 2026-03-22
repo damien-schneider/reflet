@@ -10,8 +10,8 @@ interface CommentContextValue {
 const CommentContext = createContext<CommentContextValue | null>(null);
 
 interface CommentProviderProps {
-  feedbackId: Id<"feedback">;
   children: ReactNode;
+  feedbackId: Id<"feedback">;
 }
 
 export function CommentProvider({

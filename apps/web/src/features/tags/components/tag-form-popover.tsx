@@ -24,19 +24,19 @@ import {
 } from "@/lib/tag-colors";
 
 interface TagFormPopoverProps {
-  organizationId: Id<"organizations">;
+  /** When true, the trigger won't open the popover on click (use for context menu controlled popovers) */
+  disableTriggerClick?: boolean;
   editingTag?: {
     _id: Id<"tags">;
     name: string;
     color: string;
     icon?: string;
   } | null;
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  open: boolean;
+  organizationId: Id<"organizations">;
   trigger?: ReactNode;
-  /** When true, the trigger won't open the popover on click (use for context menu controlled popovers) */
-  disableTriggerClick?: boolean;
 }
 
 export function TagFormPopover({

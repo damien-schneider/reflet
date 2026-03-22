@@ -15,10 +15,10 @@ import { PublicFeedbackVoting } from "./public-feedback-voting";
 
 interface PublicFeedbackDetailContentProps {
   feedbackId: Id<"feedback">;
+  isAdmin?: boolean;
+  isMember?: boolean;
   organizationId: Id<"organizations">;
   primaryColor: string;
-  isMember?: boolean;
-  isAdmin?: boolean;
 }
 
 export function PublicFeedbackDetailContent({

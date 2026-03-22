@@ -6,29 +6,29 @@ import { cn } from "@/lib/utils";
 
 export interface RoadmapItemData {
   _id: Id<"feedback">;
-  title: string;
-  description: string;
-  status: Doc<"feedback">["status"];
-  voteCount: number;
   commentCount: number;
+  description: string;
+  hasVoted?: boolean;
   organizationStatusId: Id<"organizationStatuses"> | null;
   roadmapOrder: number | null;
-  hasVoted?: boolean;
+  status: Doc<"feedback">["status"];
   tags?: Array<{
     _id: Id<"tags">;
     name: string;
     color: string;
     icon?: string;
   }>;
+  title: string;
+  voteCount: number;
 }
 
 interface RoadmapItemCardProps {
-  item: RoadmapItemData;
-  isDragging?: boolean;
   isAdmin?: boolean;
+  isDragging?: boolean;
+  item: RoadmapItemData;
   onClick?: (feedbackId: string) => void;
-  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: () => void;
+  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
 }
 
 export function RoadmapItemCard({

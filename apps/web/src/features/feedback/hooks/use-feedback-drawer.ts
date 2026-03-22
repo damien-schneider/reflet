@@ -8,23 +8,23 @@ import { toId } from "@/lib/convex-helpers";
 const FEEDBACK_PARAM_KEY = "f";
 
 export interface FeedbackDrawerState {
-  selectedFeedbackId: Id<"feedback"> | null;
   isOpen: boolean;
+  selectedFeedbackId: Id<"feedback"> | null;
 }
 
 export interface FeedbackDrawerActions {
-  openFeedback: (id: string) => void;
   closeFeedback: () => void;
   navigateToFeedback: (id: Id<"feedback">) => void;
+  openFeedback: (id: string) => void;
 }
 
 export interface FeedbackDrawerNavigation {
-  feedbackIds: Id<"feedback">[];
   currentIndex: number;
-  hasPrevious: boolean;
-  hasNext: boolean;
-  goToPrevious: () => void;
+  feedbackIds: Id<"feedback">[];
   goToNext: () => void;
+  goToPrevious: () => void;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }
 
 export function useFeedbackDrawer(

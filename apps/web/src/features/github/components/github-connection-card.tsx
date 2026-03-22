@@ -15,10 +15,10 @@ import {
 import { Text } from "@/components/ui/typography";
 
 interface GitHubConnectionCardProps {
-  isConnected: boolean;
-  accountLogin?: string;
   accountAvatarUrl?: string;
+  accountLogin?: string;
   isAdmin: boolean;
+  isConnected: boolean;
   isDisconnecting: boolean;
   onConnect: () => void;
   onDisconnect: () => void;

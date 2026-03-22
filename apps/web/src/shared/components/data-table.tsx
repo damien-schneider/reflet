@@ -12,8 +12,8 @@ import {
 
 interface DataTableItem {
   invoice: string;
-  paymentStatus: string;
   paymentMethod: string;
+  paymentStatus: string;
   totalAmount: string;
 }
 

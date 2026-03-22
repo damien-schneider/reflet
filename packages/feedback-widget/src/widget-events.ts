@@ -13,13 +13,13 @@ function isValidView(value: string): value is WidgetState["view"] {
 }
 
 export interface WidgetEventCallbacks {
-  open: () => void;
   close: () => void;
-  setView: (view: WidgetState["view"]) => void;
-  openDetail: (id: string) => void;
-  vote: (id: string) => Promise<void>;
   onAction: (action: string | null) => void;
   onCreateSubmit: () => Promise<void>;
+  open: () => void;
+  openDetail: (id: string) => void;
+  setView: (view: WidgetState["view"]) => void;
+  vote: (id: string) => Promise<void>;
 }
 
 export function attachWidgetEventListeners(

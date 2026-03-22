@@ -18,10 +18,10 @@ import { cn } from "@/lib/utils";
 type VoteType = "upvote" | "downvote" | null;
 
 interface VoteState {
-  voteType: VoteType;
-  upvotes: number;
   downvotes: number;
+  upvotes: number;
   vote: (type: "upvote" | "downvote") => void;
+  voteType: VoteType;
 }
 
 interface SweepCornerContextValue extends VoteState {}
@@ -127,15 +127,15 @@ function AnimatedCount({
 // ─── SweepCorner (Root Provider) ────────────────────────────────────────────
 
 interface SweepCornerProps {
-  defaultUpvotes?: number;
-  defaultDownvotes?: number;
-  onVoteChange?: (voteType: VoteType) => void;
-  upvotes?: number;
-  downvotes?: number;
-  voteType?: VoteType;
-  onVote?: (direction: "upvote" | "downvote") => void;
   children: ReactNode;
   className?: string;
+  defaultDownvotes?: number;
+  defaultUpvotes?: number;
+  downvotes?: number;
+  onVote?: (direction: "upvote" | "downvote") => void;
+  onVoteChange?: (voteType: VoteType) => void;
+  upvotes?: number;
+  voteType?: VoteType;
 }
 
 function SweepCorner({
@@ -241,8 +241,8 @@ function SweepCornerTags({ children, className }: SweepCornerTagsProps) {
 
 interface SweepCornerTagProps {
   children: ReactNode;
-  color: string;
   className?: string;
+  color: string;
 }
 
 function SweepCornerTag({ children, color, className }: SweepCornerTagProps) {
@@ -344,9 +344,9 @@ function SweepCornerBadge() {
 // ─── SweepCornerFooter ──────────────────────────────────────────────────────
 
 interface SweepCornerFooterProps {
+  className?: string;
   comments: number;
   time: string;
-  className?: string;
 }
 
 function SweepCornerFooter({
@@ -406,11 +406,11 @@ function SweepCornerFooter({
 
 export {
   SweepCorner,
+  SweepCornerBadge,
   SweepCornerCard,
   SweepCornerContent,
-  SweepCornerTitle,
-  SweepCornerTags,
-  SweepCornerTag,
-  SweepCornerBadge,
   SweepCornerFooter,
+  SweepCornerTag,
+  SweepCornerTags,
+  SweepCornerTitle,
 };

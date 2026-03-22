@@ -16,7 +16,8 @@ const http = httpRouter();
 authComponent.registerRoutes(http, createAuth);
 
 // Stripe webhook
-registerStripeRoutes(http, components.stripe, {
+// biome-ignore lint/suspicious/noExplicitAny: @convex-dev/stripe compiled against older convex version
+registerStripeRoutes(http, components.stripe as any, {
   webhookPath: "/stripe/webhook",
 });
 

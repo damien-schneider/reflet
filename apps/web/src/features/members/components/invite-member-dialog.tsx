@@ -24,9 +24,9 @@ import {
 import { capture } from "@/lib/analytics";
 
 interface InviteMemberDialogProps {
-  organizationId: Id<"organizations">;
-  open: boolean;
   onOpenChange: (open: boolean) => void;
+  open: boolean;
+  organizationId: Id<"organizations">;
 }
 
 type DialogState = "form" | "success";
@@ -98,7 +98,7 @@ export function InviteMemberDialog({
   };
 
   if (dialogState === "success") {
-    const inviteUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/invite/${invitationToken}`;
+    const inviteUrl = `${typeof window === "undefined" ? "" : window.location.origin}/invite/${invitationToken}`;
 
     return (
       <Dialog onOpenChange={onOpenChange} open={open}>

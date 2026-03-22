@@ -8,17 +8,17 @@ import { ImageBubbleMenu } from "./image-bubble-menu";
 import "./styles.css";
 
 interface TiptapMarkdownEditorProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  className?: string;
-  maxLength?: number;
   autoFocus?: boolean;
-  editable?: boolean;
-  minimal?: boolean;
+  className?: string;
   debounceMs?: number;
+  disabled?: boolean;
+  editable?: boolean;
+  maxLength?: number;
+  minimal?: boolean;
+  onChange: (value: string) => void;
   onSubmit?: () => void;
+  placeholder?: string;
+  value: string;
 }
 
 export function TiptapMarkdownEditor({

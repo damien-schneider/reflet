@@ -8,10 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
-  onSend: (message: string) => void | Promise<void>;
-  disabled?: boolean;
-  placeholder?: string;
   className?: string;
+  disabled?: boolean;
+  onSend: (message: string) => void | Promise<void>;
+  placeholder?: string;
 }
 
 export function MessageInput({

@@ -2,21 +2,21 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 /** Safari-specific gesture event with scale/rotation properties. */
 interface GestureEvent extends Event {
-  readonly scale: number;
   readonly rotation: number;
+  readonly scale: number;
 }
 
 interface UseTrackpadZoomOptions {
-  /** Minimum zoom value */
-  min: number;
-  /** Maximum zoom value */
-  max: number;
   /** Initial zoom value */
   defaultValue: number;
-  /** Sensitivity for wheel-based zoom (ctrlKey + wheel). Default: 0.5 */
-  sensitivity?: number;
   /** Whether zoom is enabled */
   enabled?: boolean;
+  /** Maximum zoom value */
+  max: number;
+  /** Minimum zoom value */
+  min: number;
+  /** Sensitivity for wheel-based zoom (ctrlKey + wheel). Default: 0.5 */
+  sensitivity?: number;
 }
 
 /**

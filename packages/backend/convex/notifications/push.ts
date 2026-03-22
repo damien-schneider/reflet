@@ -51,9 +51,9 @@ function getVapidConfig(): {
 
 interface PushSubscription {
   _id: Id<"pushSubscriptions">;
+  auth: string;
   endpoint: string;
   p256dh: string;
-  auth: string;
 }
 
 /**

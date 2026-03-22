@@ -7,10 +7,10 @@
 // ============================================
 
 export interface RefletConfig {
-  /** Your organization's public API key (fb_pub_xxx) */
-  publicKey: string;
   /** API base URL (optional, defaults to Reflet production API) */
   baseUrl?: string;
+  /** Your organization's public API key (fb_pub_xxx) */
+  publicKey: string;
   /** User identification for SSO */
   user?: RefletUser;
   /** Pre-signed user token (alternative to user object) */
@@ -18,16 +18,16 @@ export interface RefletConfig {
 }
 
 export interface RefletUser {
-  /** Unique identifier for the user in your system */
-  id: string;
-  /** User's email address */
-  email?: string;
-  /** User's display name */
-  name?: string;
   /** URL to user's avatar image */
   avatar?: string;
+  /** User's email address */
+  email?: string;
+  /** Unique identifier for the user in your system */
+  id: string;
   /** Additional metadata */
   metadata?: Record<string, unknown>;
+  /** User's display name */
+  name?: string;
 }
 
 // ============================================
@@ -35,28 +35,28 @@ export interface RefletUser {
 // ============================================
 
 export interface OrganizationConfig {
-  id: string;
-  name: string;
-  slug: string;
   description?: string;
+  id: string;
   isPublic: boolean;
-  settings?: OrganizationSettings;
   logo?: string;
+  name: string;
   primaryColor?: string;
+  settings?: OrganizationSettings;
+  slug: string;
   statuses: OrganizationStatus[];
 }
 
 export interface OrganizationSettings {
   allowAnonymousVoting?: boolean;
-  requireApproval?: boolean;
   defaultStatus?: FeedbackStatus;
+  requireApproval?: boolean;
 }
 
 export interface OrganizationStatus {
-  id: string;
-  name: string;
   color: string;
   icon?: string;
+  id: string;
+  name: string;
   order: number;
 }
 
@@ -73,24 +73,24 @@ export type FeedbackStatus =
 // ============================================
 
 export interface FeedbackItem {
-  id: string;
-  title: string;
-  description: string;
-  status: FeedbackStatus;
-  voteCount: number;
+  author: FeedbackAuthor | null;
   commentCount: number;
-  isPinned: boolean;
-  hasVoted: boolean;
-  createdAt: number;
-  updatedAt: number;
   completedAt?: number;
-  tags: FeedbackTag[];
+  createdAt: number;
+  description: string;
+  hasVoted: boolean;
+  id: string;
+  isPinned: boolean;
   organizationStatus: {
     id: string;
     name: string;
     color: string;
   } | null;
-  author: FeedbackAuthor | null;
+  status: FeedbackStatus;
+  tags: FeedbackTag[];
+  title: string;
+  updatedAt: number;
+  voteCount: number;
 }
 
 export interface FeedbackDetail extends FeedbackItem {
@@ -98,42 +98,42 @@ export interface FeedbackDetail extends FeedbackItem {
 }
 
 export interface FeedbackTag {
+  color: string;
   id: string;
   name: string;
-  color: string;
 }
 
 export interface FeedbackAuthor {
-  name?: string;
-  email?: string;
   avatar?: string;
+  email?: string;
   isExternal: boolean;
+  name?: string;
 }
 
 export interface FeedbackListResponse {
+  hasMore: boolean;
   items: FeedbackItem[];
   total: number;
-  hasMore: boolean;
 }
 
 export interface FeedbackListParams {
-  /** Filter by custom status ID */
-  statusId?: string;
-  /** Filter by status name */
-  status?: FeedbackStatus;
-  /** Search in title and description */
-  search?: string;
-  /** Sort order */
-  sortBy?: "votes" | "newest" | "oldest" | "comments";
   /** Number of items to return (max 100) */
   limit?: number;
   /** Offset for pagination */
   offset?: number;
+  /** Search in title and description */
+  search?: string;
+  /** Sort order */
+  sortBy?: "votes" | "newest" | "oldest" | "comments";
+  /** Filter by status name */
+  status?: FeedbackStatus;
+  /** Filter by custom status ID */
+  statusId?: string;
 }
 
 export interface CreateFeedbackParams {
-  title: string;
   description: string;
+  title: string;
 }
 
 export interface CreateFeedbackResponse {
@@ -142,8 +142,8 @@ export interface CreateFeedbackResponse {
 }
 
 export interface VoteResponse {
-  voted: boolean;
   voteCount: number;
+  voted: boolean;
 }
 
 // ============================================
@@ -151,27 +151,27 @@ export interface VoteResponse {
 // ============================================
 
 export interface Comment {
-  id: string;
-  body: string;
-  isOfficial: boolean;
   author: FeedbackAuthor | null;
-  replies: CommentReply[];
+  body: string;
   createdAt: number;
+  id: string;
+  isOfficial: boolean;
+  replies: CommentReply[];
   updatedAt: number;
 }
 
 export interface CommentReply {
-  id: string;
-  body: string;
-  isOfficial: boolean;
   author: FeedbackAuthor | null;
+  body: string;
   createdAt: number;
+  id: string;
+  isOfficial: boolean;
   updatedAt: number;
 }
 
 export interface AddCommentParams {
-  feedbackId: string;
   body: string;
+  feedbackId: string;
   parentId?: string;
 }
 
@@ -184,8 +184,8 @@ export interface AddCommentResponse {
 // ============================================
 
 export interface SubscribeResponse {
-  subscribed: boolean;
   alreadySubscribed?: boolean;
+  subscribed: boolean;
 }
 
 export interface UnsubscribeResponse {
@@ -202,16 +202,16 @@ export interface Roadmap {
 }
 
 export interface RoadmapLane {
-  id: string;
-  name: string;
   color: string;
+  id: string;
   items: RoadmapItem[];
+  name: string;
 }
 
 export interface RoadmapItem {
   id: string;
-  title: string;
   status: FeedbackStatus;
+  title: string;
   voteCount: number;
 }
 
@@ -220,12 +220,12 @@ export interface RoadmapItem {
 // ============================================
 
 export interface ChangelogEntry {
-  id: string;
-  title: string;
   description?: string;
-  version?: string;
-  publishedAt?: number;
   feedback: { id: string; title: string }[];
+  id: string;
+  publishedAt?: number;
+  title: string;
+  version?: string;
 }
 
 // ============================================

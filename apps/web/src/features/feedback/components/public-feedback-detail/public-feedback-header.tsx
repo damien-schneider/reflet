@@ -28,25 +28,25 @@ import { getTagDotColor } from "@/lib/tag-colors";
 
 interface OrganizationStatus {
   _id: Id<"organizationStatuses">;
-  name: string;
   color: string;
+  name: string;
 }
 
 interface PublicFeedbackHeaderProps {
-  title: string;
-  isPinned: boolean;
-  createdAt: number;
   commentCount: number;
-  voteCount: number;
-  hasVoted: boolean;
-  primaryColor: string;
-  organizationStatusId: Id<"organizationStatuses"> | null;
-  organizationStatuses: OrganizationStatus[] | undefined;
+  createdAt: number;
   currentStatus: OrganizationStatus | undefined;
+  hasVoted: boolean;
   isAdmin: boolean;
-  onVote: () => void;
+  isPinned: boolean;
   onStatusChange: (statusId: Id<"organizationStatuses"> | null) => void;
   onTogglePin: () => void;
+  onVote: () => void;
+  organizationStatuses: OrganizationStatus[] | undefined;
+  organizationStatusId: Id<"organizationStatuses"> | null;
+  primaryColor: string;
+  title: string;
+  voteCount: number;
 }
 
 export function PublicFeedbackHeader({

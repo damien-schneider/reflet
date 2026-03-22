@@ -19,26 +19,26 @@ import { AutoTagButton } from "./auto-tag-button";
 
 export interface Tag {
   _id: Id<"tags">;
-  name: string;
   color: string;
   icon?: string;
+  name: string;
 }
 
 interface TagFilterBarProps {
-  organizationId: Id<"organizations">;
-  tags: Tag[];
-  selectedTagId: string | null;
-  onTagSelect: (tagId: string | null) => void;
   isAdmin: boolean;
+  onTagSelect: (tagId: string | null) => void;
+  organizationId: Id<"organizations">;
+  selectedTagId: string | null;
+  tags: Tag[];
 }
 
 interface TagButtonProps {
-  tag: Tag;
-  isSelected: boolean;
   isAdmin: boolean;
-  organizationId: Id<"organizations">;
+  isSelected: boolean;
   onClick: () => void;
   onDelete: () => void;
+  organizationId: Id<"organizations">;
+  tag: Tag;
 }
 
 function TagButton({

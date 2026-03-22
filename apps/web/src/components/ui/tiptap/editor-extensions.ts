@@ -12,11 +12,11 @@ import { createSlashCommandExtension } from "./slash-command";
 import type { useMediaUpload } from "./use-media-upload";
 
 export interface CreateExtensionsOptions {
-  placeholder: string;
   maxLength?: number;
   onImageUpload: () => void;
-  onVideoUpload: () => void;
   onSubmit?: () => void;
+  onVideoUpload: () => void;
+  placeholder: string;
 }
 
 function createSubmitExtension(onSubmit: () => void) {
@@ -36,10 +36,10 @@ function createSubmitExtension(onSubmit: () => void) {
 // --- Image NodeView types ---
 
 interface ImageNodeAttrs {
-  src: string;
-  alt: string;
-  title: string;
   align: string;
+  alt: string;
+  src: string;
+  title: string;
   width: number | null;
 }
 
@@ -49,7 +49,6 @@ interface ResizeDirection {
 }
 
 interface ImageNodeViewEditor {
-  isEditable: boolean;
   chain: () => {
     focus: () => {
       updateAttributes: (
@@ -58,21 +57,22 @@ interface ImageNodeViewEditor {
       ) => { run: () => void };
     };
   };
+  isEditable: boolean;
 }
 
 export interface ImageNodeViewOptions {
-  node: { attrs: ImageNodeAttrs | Record<string, unknown> };
   editor: ImageNodeViewEditor;
   getPos: () => number | undefined;
+  node: { attrs: ImageNodeAttrs | Record<string, unknown> };
 }
 
 export interface ImageNodeViewResult {
+  destroy: () => void;
   dom: HTMLDivElement;
   update: (updatedNode: {
     type: { name: string };
     attrs: Record<string, unknown>;
   }) => boolean;
-  destroy: () => void;
 }
 
 function getImageAttrs(attrs: Record<string, unknown>): ImageNodeAttrs {

@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { H3, Muted, Text } from "@/components/ui/typography";
 
 interface LeadMagnetProps {
-  title: string;
   description: string;
+  downloadUrl: string;
   fileName: string;
   fileType: "pdf" | "xlsx" | "zip";
-  downloadUrl: string;
+  title: string;
   variant?: "inline" | "card";
 }
 

@@ -9,27 +9,27 @@ import { getColorBadgeStyles, getTagDotColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 export interface LaneConfig {
-  id: string;
-  label: string;
-  color: string;
   bgColor: string;
+  color: string;
+  id: string;
   isDoneStatus: boolean;
+  label: string;
   laneOrder: number;
 }
 
 interface RoadmapLaneProps {
+  draggingItemId?: string | null;
+  isAdmin?: boolean;
+  items: RoadmapItemData[];
   lane: string;
   laneConfig: LaneConfig;
-  items: RoadmapItemData[];
-  isAdmin?: boolean;
-  draggingItemId?: string | null;
-  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  onAddItem?: (laneId: string) => void;
+  onDragEnd: () => void;
   onDragStart: (
     e: React.DragEvent<HTMLDivElement>,
     item: RoadmapItemData
   ) => void;
-  onDragEnd: () => void;
-  onAddItem?: (laneId: string) => void;
+  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   onItemClick?: (feedbackId: string) => void;
 }
 

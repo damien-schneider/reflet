@@ -19,10 +19,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
-  title: string;
   description: string;
-  icon: Icon;
   href: string;
+  icon: Icon;
+  title: string;
 }
 
 export default function SettingsLayout({

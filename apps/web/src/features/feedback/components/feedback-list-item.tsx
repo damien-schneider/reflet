@@ -27,18 +27,19 @@ import { AiMiniIndicator } from "./ai-mini-indicator";
 
 interface FeedbackTag {
   _id: Id<"tags">;
-  name: string;
+  appliedByAi?: boolean;
   color: string;
   icon?: string;
-  appliedByAi?: boolean;
+  name: string;
 }
 
 interface BoardStatusInfo {
-  name: string;
   color: string;
+  name: string;
 }
 
 interface FeedbackListItemProps {
+  className?: string;
   feedback: Doc<"feedback"> & {
     hasVoted?: boolean;
     tags?: FeedbackTag[];
@@ -49,10 +50,9 @@ interface FeedbackListItemProps {
       image: string | null;
     } | null;
   };
-  onClick?: (feedbackId: Id<"feedback">) => void;
-  className?: string;
   isAdmin?: boolean;
   isAuthor?: boolean;
+  onClick?: (feedbackId: Id<"feedback">) => void;
 }
 
 export function FeedbackListItem({

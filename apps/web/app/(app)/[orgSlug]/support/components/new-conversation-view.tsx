@@ -14,11 +14,11 @@ import { Textarea } from "@/components/ui/textarea";
 interface NewConversationViewProps {
   hasExistingConversations: boolean;
   isSubmitting: boolean;
-  newSubject: string;
   newMessage: string;
+  newSubject: string;
   onBack: () => void;
-  onSubjectChange: (value: string) => void;
   onMessageChange: (value: string) => void;
+  onSubjectChange: (value: string) => void;
   onSubmit: () => void;
 }
 

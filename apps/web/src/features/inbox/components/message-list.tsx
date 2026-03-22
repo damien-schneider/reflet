@@ -15,33 +15,33 @@ import { cn } from "@/lib/utils";
 import { MessageBubble } from "./message-bubble";
 
 interface MessageSender {
-  id?: string;
-  name?: string;
   email?: string;
+  id?: string;
   image?: string;
+  name?: string;
 }
 
 interface MessageReaction {
-  emoji: string;
   count: number;
+  emoji: string;
   userIds: string[];
 }
 
 interface Message {
   _id: Id<"supportMessages">;
+  body: string;
+  createdAt: number;
+  isOwnMessage: boolean;
+  isRead: boolean;
+  sender?: MessageSender;
   senderId: string;
   senderType: "user" | "admin";
-  body: string;
-  isRead: boolean;
-  createdAt: number;
-  sender?: MessageSender;
-  isOwnMessage: boolean;
 }
 
 interface MessageListProps {
-  messages: Message[] | undefined;
-  isLoading?: boolean;
   className?: string;
+  isLoading?: boolean;
+  messages: Message[] | undefined;
 }
 
 function formatDateHeader(timestamp: number): string {

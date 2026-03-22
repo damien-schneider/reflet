@@ -110,10 +110,10 @@ function parseOptionalId<T extends TableNames>(
 }
 
 interface ApiAuthContext {
-  organizationId: Id<"organizations">;
-  organizationApiKeyId: Id<"organizationApiKeys">;
-  isSecretKey: boolean;
   externalUserId?: Id<"externalUsers">;
+  isSecretKey: boolean;
+  organizationApiKeyId: Id<"organizationApiKeys">;
+  organizationId: Id<"organizations">;
 }
 
 async function checkOrganizationAccess(

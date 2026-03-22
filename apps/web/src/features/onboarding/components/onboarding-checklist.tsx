@@ -30,11 +30,11 @@ type StepName =
   | "firstFeedbackCreated";
 
 interface Step {
-  key: StepName;
-  label: string;
   description: string;
   href: string;
   icon: ReactNode;
+  key: StepName;
+  label: string;
 }
 
 const ICON_SIZE = 18;

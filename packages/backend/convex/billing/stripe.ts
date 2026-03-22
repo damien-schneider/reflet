@@ -12,7 +12,11 @@ import { components } from "../_generated/api";
  * - STRIPE_PRICE_PRO_MONTHLY: Stripe price ID for monthly Pro subscription
  * - STRIPE_PRICE_PRO_YEARLY: Stripe price ID for yearly Pro subscription
  */
-export const stripeClient = new StripeSubscriptions(components.stripe, {});
+export const stripeClient = new StripeSubscriptions(
+  // biome-ignore lint/suspicious/noExplicitAny: @convex-dev/stripe compiled against older convex version
+  components.stripe as any,
+  {}
+);
 
 export const STRIPE_PRICES = {
   proMonthly: process.env.STRIPE_PRICE_PRO_MONTHLY ?? "",

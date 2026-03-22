@@ -13,8 +13,8 @@ import { AddWebsiteDialog } from "./add-website-dialog";
 import { WebsiteReferenceCard } from "./website-reference-card";
 
 interface WebsiteReferenceListProps {
-  organizationId: Id<"organizations">;
   isAdmin: boolean;
+  organizationId: Id<"organizations">;
 }
 
 export function WebsiteReferenceList({

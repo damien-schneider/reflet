@@ -13,15 +13,15 @@ import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 interface StatusDisplayProps {
-  isAdmin: boolean;
-  organizationStatuses:
-    | Array<{ _id: Id<"organizationStatuses">; name: string; color: string }>
-    | undefined;
   currentStatus:
     | { _id: Id<"organizationStatuses">; name: string; color: string }
     | undefined;
-  statusId?: Id<"organizationStatuses"> | null;
+  isAdmin: boolean;
   onStatusChange: (statusId: Id<"organizationStatuses"> | null) => void;
+  organizationStatuses:
+    | Array<{ _id: Id<"organizationStatuses">; name: string; color: string }>
+    | undefined;
+  statusId?: Id<"organizationStatuses"> | null;
 }
 
 export function StatusDisplay({

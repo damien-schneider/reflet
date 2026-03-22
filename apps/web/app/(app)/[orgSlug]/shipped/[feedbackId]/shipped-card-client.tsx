@@ -30,9 +30,9 @@ export default function ShippedCardClient({
   });
 
   const shareUrl =
-    typeof window !== "undefined"
-      ? window.location.href
-      : `/${orgSlug}/shipped/${feedbackId}`;
+    typeof window === "undefined"
+      ? `/${orgSlug}/shipped/${feedbackId}`
+      : window.location.href;
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(shareUrl);

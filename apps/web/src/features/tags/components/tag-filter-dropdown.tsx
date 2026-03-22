@@ -43,17 +43,17 @@ import { DeleteTagDialog } from "./delete-tag-dialog";
 
 interface Tag {
   _id: Id<"tags">;
-  name: string;
   color: string;
   icon?: string;
+  name: string;
 }
 
 interface TagFilterDropdownProps {
-  organizationId: Id<"organizations">;
-  tags: Tag[];
-  selectedTagIds: string[];
-  onTagChange: (tagId: string, checked: boolean) => void;
   isAdmin: boolean;
+  onTagChange: (tagId: string, checked: boolean) => void;
+  organizationId: Id<"organizations">;
+  selectedTagIds: string[];
+  tags: Tag[];
 }
 
 interface TagEditButtonProps {

@@ -111,7 +111,7 @@ export const fetchCommitsBetweenRefs = action({
       aheadBy: data.ahead_by,
       totalCommits: data.total_commits,
       commits: data.commits.map((commit) => ({
-        sha: commit.sha.substring(0, 7),
+        sha: commit.sha.slice(0, 7),
         message: commit.commit.message.split("\n")[0] ?? "",
         fullMessage: commit.commit.message,
         author: commit.author?.login ?? commit.commit.author.name,
@@ -158,7 +158,7 @@ export const fetchTags = action({
 
     return tags.map((tag) => ({
       name: tag.name,
-      sha: tag.commit.sha.substring(0, 7),
+      sha: tag.commit.sha.slice(0, 7),
     }));
   },
 });
@@ -205,7 +205,7 @@ export const fetchRecentCommits = action({
     }>;
 
     return commits.map((commit) => ({
-      sha: commit.sha.substring(0, 7),
+      sha: commit.sha.slice(0, 7),
       message: commit.commit.message.split("\n")[0] ?? "",
       fullMessage: commit.commit.message,
       author: commit.author?.login ?? commit.commit.author.name,

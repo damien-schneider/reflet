@@ -1,11 +1,11 @@
 export interface MockFeedback {
-  title: string;
+  commentCount: number;
+  downvotes: number;
   status: { name: string; color: string };
   tags: Array<{ id: string; name: string; color: string }>;
-  commentCount: number;
   timeAgo: string;
+  title: string;
   upvotes: number;
-  downvotes: number;
 }
 
 export const MOCK: MockFeedback = {

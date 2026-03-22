@@ -2,8 +2,8 @@ import { RefletWidget } from "./widget";
 
 declare global {
   interface Window {
-    RefletWidget?: typeof RefletWidget;
     __refletWidgetInstance?: RefletWidget;
+    RefletWidget?: typeof RefletWidget;
   }
 }
 

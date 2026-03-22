@@ -9,37 +9,37 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
 interface ApiKey {
+  allowedDomains?: string[];
   apiKeyId: Id<"organizationApiKeys">;
+  createdAt: number;
+  isActive: boolean;
+  lastUsedAt?: number;
   name: string;
   publicKey: string;
-  isActive: boolean;
-  createdAt: number;
-  lastUsedAt?: number;
-  allowedDomains?: string[];
 }
 
 interface ApiKeyCardProps {
   apiKey: ApiKey;
-  showSecretKey: boolean;
-  setShowSecretKey: (value: boolean) => void;
-  onToggleActive: (
-    apiKeyId: Id<"organizationApiKeys">,
-    isActive: boolean
-  ) => void;
-  onDelete: (apiKeyId: Id<"organizationApiKeys">) => void;
-  onRegenerate: (apiKeyId: Id<"organizationApiKeys">) => void;
+  domainInput: string;
   onAddDomain: (
     apiKeyId: Id<"organizationApiKeys">,
     currentDomains: string[]
   ) => void;
+  onCopyToClipboard: (text: string, label: string) => void;
+  onDelete: (apiKeyId: Id<"organizationApiKeys">) => void;
+  onRegenerate: (apiKeyId: Id<"organizationApiKeys">) => void;
   onRemoveDomain: (
     apiKeyId: Id<"organizationApiKeys">,
     currentDomains: string[],
     domain: string
   ) => void;
-  domainInput: string;
+  onToggleActive: (
+    apiKeyId: Id<"organizationApiKeys">,
+    isActive: boolean
+  ) => void;
   setDomainInput: (value: string) => void;
-  onCopyToClipboard: (text: string, label: string) => void;
+  setShowSecretKey: (value: boolean) => void;
+  showSecretKey: boolean;
 }
 
 export function ApiKeyCard({

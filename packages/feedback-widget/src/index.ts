@@ -8,10 +8,10 @@ export { RefletFeedbackWidget } from "./widget";
 
 declare global {
   interface Window {
-    RefletFeedbackWidget?: typeof RefletFeedbackWidget;
+    __refletFeedbackWidgetInstance?: RefletFeedbackWidget;
     Reflet?: Partial<WidgetConfig>;
     RefletFeedbackConfig?: Partial<WidgetConfig>;
-    __refletFeedbackWidgetInstance?: RefletFeedbackWidget;
+    RefletFeedbackWidget?: typeof RefletFeedbackWidget;
   }
 }
 

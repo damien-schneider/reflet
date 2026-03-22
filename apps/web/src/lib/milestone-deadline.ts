@@ -15,10 +15,10 @@ export type DeadlineStatus =
   | "none";
 
 export interface DeadlineInfo {
-  status: DeadlineStatus;
+  daysRemaining: number;
   label: string;
   relativeLabel: string;
-  daysRemaining: number;
+  status: DeadlineStatus;
 }
 
 const DUE_SOON_THRESHOLD_DAYS = 7;

@@ -85,11 +85,11 @@ function generateWindsurfConfig(secretKey: string): string {
 }
 
 interface IdeConfig {
+  description: string;
+  filePath: string;
+  generate: (key: string) => string;
   id: string;
   name: string;
-  filePath: string;
-  description: string;
-  generate: (key: string) => string;
 }
 
 const IDE_CONFIGS: IdeConfig[] = [

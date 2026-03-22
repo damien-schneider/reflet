@@ -9,14 +9,14 @@ import type { Tag } from "../tag-filter-bar";
 import { TagFilterBar } from "../tag-filter-bar";
 
 interface FeedbackToolbarProps {
-  searchQuery: string;
+  isAdmin: boolean;
   onSearchChange: (value: string) => void;
   onSubmitClick: () => void;
-  tags: Tag[];
-  isAdmin: boolean;
-  organizationId: Id<"organizations">;
-  selectedTagId: string | null;
   onTagSelect: (tagId: string | null) => void;
+  organizationId: Id<"organizations">;
+  searchQuery: string;
+  selectedTagId: string | null;
+  tags: Tag[];
 }
 
 export const FeedbackToolbar = ({

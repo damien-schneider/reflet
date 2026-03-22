@@ -9,7 +9,7 @@ const CONVEX_URL =
 export default defineConfig({
   build: {
     lib: {
-      entry: resolve(__dirname, "src/index.ts"),
+      entry: resolve(import.meta.dirname, "src/index.ts"),
       name: "RefletWidget",
       fileName: () => "widget.js",
       formats: ["iife"],
@@ -30,9 +30,9 @@ export default defineConfig({
     {
       name: "copy-to-web-public",
       closeBundle() {
-        const src = resolve(__dirname, "dist/widget.js");
+        const src = resolve(import.meta.dirname, "dist/widget.js");
         const dest = resolve(
-          __dirname,
+          import.meta.dirname,
           "../../apps/web/public/widget/reflet-widget.v1.js"
         );
         try {

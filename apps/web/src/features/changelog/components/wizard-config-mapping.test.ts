@@ -6,13 +6,13 @@ type Workflow = "ai_powered" | "automated" | "manual";
 type SyncDirection = "github_first" | "reflet_first" | "bidirectional" | "none";
 
 interface WizardConfig {
-  workflow: Workflow;
-  syncDirection: SyncDirection;
-  autoSyncReleases: boolean;
-  pushToGithubOnPublish: boolean;
   autoPublishImported: boolean;
-  manualSyncEnabled: boolean;
+  autoSyncReleases: boolean;
   manualSyncDirection: SyncDirection;
+  manualSyncEnabled: boolean;
+  pushToGithubOnPublish: boolean;
+  syncDirection: SyncDirection;
+  workflow: Workflow;
 }
 
 // Extracted pure logic from handleWorkflowChange in release-setup-wizard.tsx

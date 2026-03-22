@@ -10,10 +10,10 @@ import { BaseLayout } from "./base-layout";
 import { baseStyles } from "./styles";
 
 interface InvitationEmailProps {
-  organizationName?: string;
-  inviterName?: string;
-  role?: "admin" | "member";
   acceptUrl?: string;
+  inviterName?: string;
+  organizationName?: string;
+  role?: "admin" | "member";
 }
 
 export function InvitationEmail({

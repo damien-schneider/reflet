@@ -7,41 +7,41 @@ import { Input } from "@/components/ui/input";
 import { ApiKeyCard } from "./api-key-card";
 
 interface ApiKey {
+  allowedDomains?: string[];
   apiKeyId: Id<"organizationApiKeys">;
+  createdAt: number;
+  isActive: boolean;
+  lastUsedAt?: number;
   name: string;
   publicKey: string;
-  isActive: boolean;
-  createdAt: number;
-  lastUsedAt?: number;
-  allowedDomains?: string[];
 }
 
 interface ApiKeysListProps {
   apiKeys: ApiKey[];
-  showSecretKey: boolean;
-  setShowSecretKey: (value: boolean) => void;
-  newKeyName: string;
-  setNewKeyName: (value: string) => void;
-  isGenerating: boolean;
   domainInput: string;
-  setDomainInput: (value: string) => void;
-  onGenerateKeys: () => void;
-  onToggleActive: (
-    apiKeyId: Id<"organizationApiKeys">,
-    isActive: boolean
-  ) => void;
-  onDelete: (apiKeyId: Id<"organizationApiKeys">) => void;
-  onRegenerate: (apiKeyId: Id<"organizationApiKeys">) => void;
+  isGenerating: boolean;
+  newKeyName: string;
   onAddDomain: (
     apiKeyId: Id<"organizationApiKeys">,
     currentDomains: string[]
   ) => void;
+  onCopyToClipboard: (text: string, label: string) => void;
+  onDelete: (apiKeyId: Id<"organizationApiKeys">) => void;
+  onGenerateKeys: () => void;
+  onRegenerate: (apiKeyId: Id<"organizationApiKeys">) => void;
   onRemoveDomain: (
     apiKeyId: Id<"organizationApiKeys">,
     currentDomains: string[],
     domain: string
   ) => void;
-  onCopyToClipboard: (text: string, label: string) => void;
+  onToggleActive: (
+    apiKeyId: Id<"organizationApiKeys">,
+    isActive: boolean
+  ) => void;
+  setDomainInput: (value: string) => void;
+  setNewKeyName: (value: string) => void;
+  setShowSecretKey: (value: boolean) => void;
+  showSecretKey: boolean;
 }
 
 export function ApiKeysList({

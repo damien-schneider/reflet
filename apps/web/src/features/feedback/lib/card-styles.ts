@@ -6,9 +6,9 @@ import { SweepCornerFeedCard } from "../components/card-designs/sweep-corner-car
 import type { FeedbackItem } from "../components/feed-feedback-view";
 
 export interface FeedCardProps {
+  className?: string;
   feedback: FeedbackItem;
   onClick?: (feedbackId: Id<"feedback">) => void;
-  className?: string;
 }
 
 export type CardStyle = "sweep-corner" | "minimal-notch" | "editorial-feed";

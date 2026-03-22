@@ -19,10 +19,10 @@ import { cn } from "@/lib/utils";
 import { MilestoneProgressRing } from "./milestone-progress-ring";
 
 interface MilestoneExpandedPanelProps {
-  milestoneId: Id<"milestones">;
-  organizationId: Id<"organizations">;
   isAdmin: boolean;
+  milestoneId: Id<"milestones">;
   onFeedbackClick?: (feedbackId: string) => void;
+  organizationId: Id<"organizations">;
 }
 
 export function MilestoneExpandedPanel({

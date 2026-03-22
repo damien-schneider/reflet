@@ -24,15 +24,15 @@ import { GitHubPermissionErrorAlert } from "./github-permission-error-alert";
 
 interface SyncSettingsCardProps {
   autoSyncEnabled: boolean;
-  lastSyncAt?: number;
-  isSyncing: boolean;
-  isSettingUp?: boolean;
-  isAdmin: boolean;
   error?: { code: string; message: string } | null;
-  onToggleAutoSync: (enabled: boolean) => void;
-  onSyncNow: () => void;
+  isAdmin: boolean;
+  isSettingUp?: boolean;
+  isSyncing: boolean;
+  lastSyncAt?: number;
   onClearError?: () => void;
   onResyncGitHub?: () => void;
+  onSyncNow: () => void;
+  onToggleAutoSync: (enabled: boolean) => void;
 }
 
 export function SyncSettingsCard({

@@ -249,19 +249,19 @@ const Blockquote = ({ className, ref, ...props }: BlockquoteProps) => (
 // ============================================================================
 
 export {
+  Blockquote,
   H1,
   H2,
   H3,
-  Text,
-  Muted,
-  Lead,
-  Large,
-  Small,
-  InlineCode,
-  Blockquote,
   h1Variants,
   h2Variants,
   h3Variants,
-  textVariants,
+  InlineCode,
+  Large,
+  Lead,
   leadVariants,
+  Muted,
+  Small,
+  Text,
+  textVariants,
 };

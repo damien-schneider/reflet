@@ -30,26 +30,26 @@ const STATUS_OPTIONS: { value: ConversationStatus; label: string }[] = [
 ];
 
 interface TeamMember {
-  id: string;
-  name?: string;
   email: string;
+  id: string;
   image?: string;
+  name?: string;
 }
 
 interface Message {
   _id: Id<"supportMessages">;
-  senderId: string;
-  senderType: "user" | "admin";
   body: string;
-  isRead: boolean;
   createdAt: number;
   isOwnMessage: boolean;
+  isRead: boolean;
+  senderId: string;
+  senderType: "user" | "admin";
 }
 
 interface Conversation {
-  subject?: string;
-  status: string;
   assignedTo?: string;
+  status: string;
+  subject?: string;
   user?: { name?: string };
 }
 
@@ -57,10 +57,10 @@ interface AdminConversationViewProps {
   conversation: Conversation;
   messages: Message[];
   messagesLoading: boolean;
-  teamMembers: TeamMember[];
+  onAssign: (memberId: string | undefined) => Promise<void>;
   onSendMessage: (body: string) => Promise<void>;
   onStatusChange: (status: ConversationStatus) => Promise<void>;
-  onAssign: (memberId: string | undefined) => Promise<void>;
+  teamMembers: TeamMember[];
 }
 
 export function AdminConversationView({

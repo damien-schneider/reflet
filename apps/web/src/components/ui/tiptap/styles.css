@@ -3,11 +3,11 @@
 /* Placeholder styling */
 .tiptap-inline-editor .is-editor-empty:first-child::before,
 .tiptap-markdown-editor .is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
   float: left;
-  pointer-events: none;
   height: 0;
   color: var(--muted-foreground);
+  pointer-events: none;
+  content: attr(data-placeholder);
 }
 
 /* Link styling */
@@ -27,28 +27,28 @@
   max-width: 100%;
   height: auto;
   margin: 1rem 0;
-  border-radius: var(--radius);
   cursor: pointer;
+  border-radius: var(--radius);
   transition: outline 0.15s ease;
 }
 
 /* Image alignment */
 .tiptap-image[data-align="left"] {
-  margin-left: 0;
-  margin-right: auto;
   display: block;
+  margin-right: auto;
+  margin-left: 0;
 }
 
 .tiptap-image[data-align="center"] {
-  margin-left: auto;
-  margin-right: auto;
   display: block;
+  margin-right: auto;
+  margin-left: auto;
 }
 
 .tiptap-image[data-align="right"] {
-  margin-left: auto;
-  margin-right: 0;
   display: block;
+  margin-right: 0;
+  margin-left: auto;
 }
 
 /* Selected image state */
@@ -59,55 +59,55 @@
 
 /* Image wrapper container */
 .tiptap-image-wrapper {
-  display: block;
   position: relative;
-  margin: 1rem 0;
+  display: block;
   width: fit-content;
   max-width: 100%;
+  margin: 1rem 0;
 }
 
 .tiptap-image-wrapper[data-align="left"] {
-  margin-left: 0;
   margin-right: auto;
+  margin-left: 0;
 }
 
 .tiptap-image-wrapper[data-align="center"] {
-  margin-left: auto;
   margin-right: auto;
+  margin-left: auto;
 }
 
 .tiptap-image-wrapper[data-align="right"] {
-  margin-left: auto;
   margin-right: 0;
+  margin-left: auto;
 }
 
 .tiptap-image-wrapper .tiptap-image {
-  margin: 0;
   display: block;
-  max-width: 100%;
   min-width: 50px;
+  max-width: 100%;
   min-height: 50px;
+  margin: 0;
 }
 
 /* Image error placeholder */
 .tiptap-image-error {
   display: none;
+  gap: 0.5rem;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  min-height: 80px;
   min-width: 120px;
+  min-height: 80px;
   padding: 1rem;
-  border-radius: var(--radius);
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
   background-color: var(--muted);
   border: 1px dashed var(--border);
-  color: var(--muted-foreground);
-  font-size: 0.8125rem;
+  border-radius: var(--radius);
 }
 
 .tiptap-image-error-icon::before {
-  content: "\26A0";
   font-size: 1rem;
+  content: "\26A0";
 }
 
 .tiptap-image-wrapper[data-error="true"] .tiptap-resize-handles {
@@ -134,10 +134,10 @@
   position: absolute;
   width: 8px;
   height: 8px;
+  pointer-events: auto;
   background: var(--background);
   border: 1.5px solid var(--color-olive-600);
   border-radius: 2px;
-  pointer-events: auto;
   transition:
     transform 0.1s ease,
     background-color 0.1s ease;
@@ -167,8 +167,8 @@
 }
 
 .tiptap-resize-handle.bottom-right {
-  bottom: -4px;
   right: -4px;
+  bottom: -4px;
   cursor: nwse-resize;
 }
 
@@ -196,8 +196,8 @@
   }
 
   .tiptap-resize-handle.bottom-right {
-    bottom: -10px;
     right: -10px;
+    bottom: -10px;
   }
 
   /* Always show handles on touch devices (no hover) */
@@ -253,30 +253,30 @@
 
 .tiptap-markdown-editor h1,
 .tiptap-renderer h1 {
-  font-size: 1.25rem;
-  font-weight: 500;
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 500;
   line-height: 1.25;
   letter-spacing: -0.025em;
 }
 
 .tiptap-markdown-editor h2,
 .tiptap-renderer h2 {
-  font-size: 1.125rem;
-  font-weight: 500;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 500;
   line-height: 1.375;
   letter-spacing: -0.025em;
 }
 
 .tiptap-markdown-editor h3,
 .tiptap-renderer h3 {
-  font-size: 1rem;
-  font-weight: 500;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
   line-height: 1.5;
   letter-spacing: -0.025em;
 }
@@ -323,18 +323,18 @@
 /* Lists */
 .tiptap-markdown-editor ul,
 .tiptap-renderer ul {
-  list-style-type: disc;
   padding-left: 1.5rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  list-style-type: disc;
 }
 
 .tiptap-markdown-editor ol,
 .tiptap-renderer ol {
-  list-style-type: decimal;
   padding-left: 1.5rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  list-style-type: decimal;
 }
 
 .tiptap-markdown-editor li,
@@ -360,52 +360,52 @@
 /* Blockquote */
 .tiptap-markdown-editor blockquote,
 .tiptap-renderer blockquote {
-  border-left: 2px solid var(--border);
   padding-left: 1rem;
   margin-top: 1rem;
   margin-bottom: 1rem;
   font-style: italic;
   color: var(--muted-foreground);
+  border-left: 2px solid var(--border);
 }
 
 /* Inline code */
 .tiptap-markdown-editor code,
 .tiptap-renderer code {
-  background-color: var(--muted);
-  border-radius: 0.25rem;
   padding: 0.125rem 0.25rem;
   font-family:
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.875em;
+  background-color: var(--muted);
+  border-radius: 0.25rem;
 }
 
 /* Code blocks */
 .tiptap-markdown-editor pre,
 .tiptap-renderer pre {
-  background-color: var(--muted);
-  border-radius: var(--radius);
   padding: 0.75rem;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
   overflow-x: auto;
+  background-color: var(--muted);
+  border-radius: var(--radius);
 }
 
 .tiptap-markdown-editor pre code,
 .tiptap-renderer pre code {
-  background-color: transparent;
   padding: 0;
-  border-radius: 0;
   font-size: 0.875rem;
   line-height: 1.625;
+  background-color: transparent;
+  border-radius: 0;
 }
 
 /* Horizontal rule */
 .tiptap-markdown-editor hr,
 .tiptap-renderer hr {
-  border: none;
-  border-top: 1px solid var(--border);
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
+  border: none;
+  border-top: 1px solid var(--border);
 }
 
 /* Focus styling */
@@ -438,8 +438,8 @@
   font-size: inherit;
   font-weight: inherit;
   line-height: inherit;
-  letter-spacing: inherit;
   color: inherit;
+  letter-spacing: inherit;
 }
 
 .tiptap-title-editor p {
@@ -447,11 +447,11 @@
 }
 
 .tiptap-title-editor .is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
   float: left;
-  pointer-events: none;
   height: 0;
   color: var(--muted-foreground);
+  pointer-events: none;
+  content: attr(data-placeholder);
   opacity: 0.6;
 }
 
@@ -465,18 +465,18 @@
 
 /* Minimal editor variant - no border, document-like */
 .tiptap-minimal-editor {
+  padding: 0.75rem;
   font-size: 0.9375rem;
   line-height: 1.625;
   color: var(--foreground);
-  padding: 0.75rem;
 }
 
 .tiptap-minimal-editor .is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
   float: left;
-  pointer-events: none;
   height: 0;
   color: var(--muted-foreground);
+  pointer-events: none;
+  content: attr(data-placeholder);
   opacity: 0.5;
 }
 
@@ -490,28 +490,28 @@
 }
 
 .tiptap-minimal-editor h1 {
-  font-size: 1.25rem;
-  font-weight: 500;
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 500;
   line-height: 1.25;
   letter-spacing: -0.025em;
 }
 
 .tiptap-minimal-editor h2 {
-  font-size: 1.125rem;
-  font-weight: 500;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 500;
   line-height: 1.375;
   letter-spacing: -0.025em;
 }
 
 .tiptap-minimal-editor h3 {
-  font-size: 1rem;
-  font-weight: 500;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
   line-height: 1.5;
   letter-spacing: -0.025em;
 }
@@ -548,17 +548,17 @@
 
 /* Minimal editor lists */
 .tiptap-minimal-editor ul {
-  list-style-type: disc;
   padding-left: 1.5rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  list-style-type: disc;
 }
 
 .tiptap-minimal-editor ol {
-  list-style-type: decimal;
   padding-left: 1.5rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  list-style-type: decimal;
 }
 
 .tiptap-minimal-editor li {
@@ -578,47 +578,47 @@
 
 /* Minimal editor blockquote */
 .tiptap-minimal-editor blockquote {
-  border-left: 2px solid var(--border);
   padding-left: 1rem;
   margin-top: 1rem;
   margin-bottom: 1rem;
   font-style: italic;
   color: var(--muted-foreground);
+  border-left: 2px solid var(--border);
 }
 
 /* Minimal editor code */
 .tiptap-minimal-editor code {
-  background-color: var(--muted);
-  border-radius: 0.25rem;
   padding: 0.125rem 0.25rem;
   font-family:
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.875em;
+  background-color: var(--muted);
+  border-radius: 0.25rem;
 }
 
 .tiptap-minimal-editor pre {
-  background-color: var(--muted);
-  border-radius: var(--radius);
   padding: 0.75rem;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
   overflow-x: auto;
+  background-color: var(--muted);
+  border-radius: var(--radius);
 }
 
 .tiptap-minimal-editor pre code {
-  background-color: transparent;
   padding: 0;
-  border-radius: 0;
   font-size: 0.875rem;
   line-height: 1.625;
+  background-color: transparent;
+  border-radius: 0;
 }
 
 /* Minimal editor horizontal rule */
 .tiptap-minimal-editor hr {
-  border: none;
-  border-top: 1px solid var(--border);
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
+  border: none;
+  border-top: 1px solid var(--border);
 }
 
 /* Minimal editor selection */

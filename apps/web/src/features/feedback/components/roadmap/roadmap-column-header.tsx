@@ -24,12 +24,12 @@ import {
 } from "@/lib/tag-colors";
 
 interface RoadmapColumnHeaderProps {
-  statusId: Id<"organizationStatuses">;
-  name: string;
   color: string;
   count: number;
   isAdmin: boolean;
+  name: string;
   onDelete: () => void;
+  statusId: Id<"organizationStatuses">;
 }
 
 export function RoadmapColumnHeader({

@@ -52,7 +52,7 @@ export const create = mutation({
       .unique();
 
     if (existingTag) {
-      slug = `${slug}-${Math.random().toString(36).substring(2, 8)}`;
+      slug = `${slug}-${Math.random().toString(36).slice(2, 8)}`;
     }
 
     const now = Date.now();

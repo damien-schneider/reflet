@@ -10,13 +10,13 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface VersionPickerProps {
-  organizationId: Id<"organizations">;
+  className?: string;
+  disabled?: boolean;
   /** The release being edited — excluded from "latest" computation */
   excludeReleaseId?: Id<"releases">;
-  value: string;
   onChange: (version: string) => void;
-  disabled?: boolean;
-  className?: string;
+  organizationId: Id<"organizations">;
+  value: string;
 }
 
 export function VersionPicker({

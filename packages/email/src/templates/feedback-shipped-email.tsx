@@ -3,10 +3,10 @@ import { BaseLayout } from "./base-layout";
 import { baseStyles } from "./styles";
 
 interface FeedbackShippedEmailProps {
-  organizationName?: string;
   feedbackTitle?: string;
-  releaseTitle?: string;
   feedbackUrl?: string;
+  organizationName?: string;
+  releaseTitle?: string;
   releaseUrl?: string;
   unsubscribeUrl?: string;
 }

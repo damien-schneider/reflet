@@ -11,8 +11,8 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 interface ChangelogSubscribeProps {
-  organizationId: Id<"organizations">;
   className?: string;
+  organizationId: Id<"organizations">;
 }
 
 export function ChangelogSubscribe({

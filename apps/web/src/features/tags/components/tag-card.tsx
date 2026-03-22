@@ -14,14 +14,14 @@ import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 interface TagCardProps {
+  isAdmin: boolean;
+  onDelete: () => void;
+  onEdit: () => void;
   tag: {
     _id: Id<"tags">;
     name: string;
     color: string;
   };
-  isAdmin: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
 }
 
 export function TagCard({ tag, isAdmin, onEdit, onDelete }: TagCardProps) {

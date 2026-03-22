@@ -15,39 +15,39 @@ export interface PlanPrice {
 }
 
 export interface PlanFeature {
-  label: string;
-  included: boolean;
   highlight?: boolean;
+  included: boolean;
+  label: string;
 }
 
 export interface Plan {
+  badge?: string;
+  description: string;
+  features: PlanFeature[];
+  highlighted?: boolean;
   id: PlanTier;
   name: string;
-  description: string;
   prices: PlanPrice[];
-  features: PlanFeature[];
-  badge?: string;
-  highlighted?: boolean;
 }
 
 export interface SubscriptionData {
+  cancelAt?: number;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: number;
   priceId: string;
   status: string;
-  currentPeriodEnd: number;
-  cancelAtPeriodEnd: boolean;
-  cancelAt?: number;
 }
 
 export interface UsageData {
-  members: number;
   feedback: number;
+  members: number;
 }
 
 export interface LimitsData {
-  maxMembers: number;
-  maxFeedback: number;
+  apiAccess: boolean;
   customBranding: boolean;
   customDomain: boolean;
-  apiAccess: boolean;
+  maxFeedback: number;
+  maxMembers: number;
   prioritySupport: boolean;
 }

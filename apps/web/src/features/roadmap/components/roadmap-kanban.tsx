@@ -26,10 +26,10 @@ import type { TagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 interface RoadmapKanbanProps {
-  organizationId: Id<"organizations">;
   isAdmin?: boolean;
   onAddItem?: (laneId: string) => void;
   onItemClick?: (feedbackId: string) => void;
+  organizationId: Id<"organizations">;
 }
 
 export function RoadmapKanban({

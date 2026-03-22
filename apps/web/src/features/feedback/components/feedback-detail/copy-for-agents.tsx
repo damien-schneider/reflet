@@ -32,11 +32,11 @@ import { AGENTS, openCloudAgent, openDeepLink } from "./agent-config";
 import type { FeedbackTag } from "./feedback-metadata-types";
 
 interface CopyForAgentsProps {
-  organizationId: Id<"organizations">;
-  title: string;
-  description: string | null;
-  tags?: Array<FeedbackTag | null>;
   attachments?: string[];
+  description: string | null;
+  organizationId: Id<"organizations">;
+  tags?: Array<FeedbackTag | null>;
+  title: string;
 }
 
 // ============================================

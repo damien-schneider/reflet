@@ -32,13 +32,13 @@ import type { TagColor } from "@/lib/tag-colors";
 import { MilestoneDatePicker } from "./milestone-date-picker";
 
 interface MilestoneFormPopoverProps {
-  organizationId: Id<"organizations">;
   defaultTimeHorizon: TimeHorizon;
+  onCreated?: () => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  organizationId: Id<"organizations">;
   /** When true, show a time horizon selector in the form */
   showHorizonPicker?: boolean;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated?: () => void;
   triggerClassName?: string;
 }
 

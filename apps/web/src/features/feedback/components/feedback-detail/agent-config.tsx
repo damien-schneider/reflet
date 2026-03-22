@@ -4,11 +4,11 @@ import { toast } from "sonner";
 import { COPILOT_ICON, CURSOR_ICON, WINDSURF_ICON } from "./agent-icons";
 
 export interface AgentTarget {
+  description: string;
+  icon: React.ReactNode;
   id: string;
   label: string;
-  icon: React.ReactNode;
   type: "copy" | "deeplink" | "cloud";
-  description: string;
 }
 
 export const AGENTS: AgentTarget[] = [

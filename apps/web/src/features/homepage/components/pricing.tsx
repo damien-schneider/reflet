@@ -139,8 +139,8 @@ export default function Pricing() {
 }
 
 interface PricingCardProps {
-  tier: (typeof PRICING_TIERS)[number];
   billingInterval: BillingInterval;
+  tier: (typeof PRICING_TIERS)[number];
 }
 
 function PricingCard({ tier, billingInterval }: PricingCardProps) {

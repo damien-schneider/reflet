@@ -32,21 +32,21 @@ const TOTAL_STEPS = 3;
 export type Workflow = "ai_powered" | "automated" | "manual";
 
 export interface WizardConfig {
-  workflow: Workflow;
-  syncDirection: "github_first" | "reflet_first" | "bidirectional" | "none";
-  autoSyncReleases: boolean;
-  pushToGithubOnPublish: boolean;
   autoPublishImported: boolean;
+  autoSyncReleases: boolean;
   autoVersioning: boolean;
-  versionPrefix: string;
-  versionIncrement: "patch" | "minor" | "major";
-  targetBranch: string;
-  manualSyncEnabled: boolean;
   manualSyncDirection:
     | "github_first"
     | "reflet_first"
     | "bidirectional"
     | "none";
+  manualSyncEnabled: boolean;
+  pushToGithubOnPublish: boolean;
+  syncDirection: "github_first" | "reflet_first" | "bidirectional" | "none";
+  targetBranch: string;
+  versionIncrement: "patch" | "minor" | "major";
+  versionPrefix: string;
+  workflow: Workflow;
 }
 
 const DEFAULT_CONFIG: WizardConfig = {
@@ -64,8 +64,8 @@ const DEFAULT_CONFIG: WizardConfig = {
 };
 
 interface ReleaseSetupWizardProps {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
+  open: boolean;
   organizationId: Id<"organizations">;
   orgSlug: string;
 }
@@ -226,13 +226,13 @@ export function ReleaseSetupWizard({
 
         {/* Progress bar */}
         <div className="flex gap-1 px-4 pt-3">
-          {Array.from({ length: TOTAL_STEPS }, (_, i) => (
+          {[1, 2, 3].map((s) => (
             <div
               className={cn(
                 "h-1 flex-1 rounded-full transition-colors",
-                i < step ? "bg-primary" : "bg-muted"
+                s <= step ? "bg-primary" : "bg-muted"
               )}
-              key={`step-${i + 1}`}
+              key={`step-${s}`}
             />
           ))}
         </div>

@@ -17,15 +17,15 @@ import {
 import { getTagDotColor } from "@/lib/tag-colors";
 
 interface FilterDropdownProps {
-  statuses: Array<{ _id: string; name: string; color?: string }>;
-  selectedStatusIds: string[];
-  onStatusChange: (id: string, checked: boolean) => void;
-  tags: Array<{ _id: string; name: string; color: string }>;
-  selectedTagIds: string[];
-  onTagChange: (id: string, checked: boolean) => void;
   hideCompleted: boolean;
-  onHideCompletedToggle: () => void;
   onClearFilters: () => void;
+  onHideCompletedToggle: () => void;
+  onStatusChange: (id: string, checked: boolean) => void;
+  onTagChange: (id: string, checked: boolean) => void;
+  selectedStatusIds: string[];
+  selectedTagIds: string[];
+  statuses: Array<{ _id: string; name: string; color?: string }>;
+  tags: Array<{ _id: string; name: string; color: string }>;
 }
 
 export function FilterDropdown({

@@ -25,19 +25,19 @@ import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
 
 interface ColumnDeleteDialogProps {
-  open: boolean;
+  feedbackCount: number;
   onOpenChange: (open: boolean) => void;
-  statusToDelete: {
-    id: Id<"organizationStatuses">;
-    name: string;
-    color: string;
-  } | null;
+  open: boolean;
   otherStatuses: Array<{
     _id: Id<"organizationStatuses">;
     name: string;
     color: string;
   }>;
-  feedbackCount: number;
+  statusToDelete: {
+    id: Id<"organizationStatuses">;
+    name: string;
+    color: string;
+  } | null;
 }
 
 export function ColumnDeleteDialog({
@@ -95,7 +95,7 @@ export function ColumnDeleteDialog({
             &quot; column?
             {feedbackCount > 0 && (
               <span className="mt-2 block font-medium text-foreground">
-                {feedbackCount} feedback item{feedbackCount !== 1 ? "s" : ""}{" "}
+                {feedbackCount} feedback item{feedbackCount === 1 ? "" : "s"}{" "}
                 will be moved to the selected column.
               </span>
             )}

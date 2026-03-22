@@ -14,29 +14,29 @@ import type { CommentData } from "./comment-item";
 import { CommentItem } from "./comment-item";
 
 interface CommentsSectionProps {
-  comments: CommentData[] | undefined;
-  topLevelComments: CommentData[];
   commentReplies: (parentId: Id<"comments">) => CommentData[];
-  effectiveIsAdmin: boolean;
-  isGeneratingDraft: boolean;
-  onGenerateDraftReply: () => void;
-  newComment: string;
-  onNewCommentChange: (content: string) => void;
-  isSubmittingComment: boolean;
-  onSubmitComment: () => void;
+  comments: CommentData[] | undefined;
   editCommentContent: string;
   editingCommentId: Id<"comments"> | null;
-  replyingTo: Id<"comments"> | null;
-  replyContent: string;
+  effectiveIsAdmin: boolean;
+  isGeneratingDraft: boolean;
+  isSubmittingComment: boolean;
+  newComment: string;
   onDelete: (id: Id<"comments">) => void;
   onEdit: (id: Id<"comments">, content: string) => void;
   onEditCancel: () => void;
   onEditContentChange: (content: string) => void;
+  onGenerateDraftReply: () => void;
+  onNewCommentChange: (content: string) => void;
   onReply: (id: Id<"comments">) => void;
   onReplyCancel: () => void;
   onReplyContentChange: (content: string) => void;
+  onSubmitComment: () => void;
   onSubmitReply: (parentId: Id<"comments">) => Promise<void>;
   onUpdateComment: (id: Id<"comments">) => Promise<void>;
+  replyContent: string;
+  replyingTo: Id<"comments"> | null;
+  topLevelComments: CommentData[];
 }
 
 const renderLoadingSkeleton = () => (

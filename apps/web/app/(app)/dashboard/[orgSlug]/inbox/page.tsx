@@ -20,12 +20,12 @@ type ConversationStatus = "open" | "awaiting_reply" | "resolved" | "closed";
 
 interface Member {
   role: string;
-  userId: string;
   user: {
     name: string | null;
     email: string | null;
     image: string | null;
   } | null;
+  userId: string;
 }
 
 function formatTeamMembers(members: Member[] | undefined) {

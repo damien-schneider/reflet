@@ -19,39 +19,39 @@ import type { CreateFeedbackResponse, RefletUser } from "./types";
 // ============================================
 
 export interface FeedbackButtonProps {
-  /** Public API key (falls back to RefletProvider context) */
-  publicKey?: string;
-  /** API base URL override */
-  baseUrl?: string;
-  /** User identification (falls back to RefletProvider context) */
-  user?: RefletUser;
-  /** Pre-signed user token */
-  userToken?: string;
-  /** Color theme */
-  theme?: "light" | "dark" | "auto";
-  /** Primary brand color (CSS value) */
-  primaryColor?: string;
-  /** Default selected category */
-  defaultCategory?: FeedbackCategory;
-  /** Categories to show */
-  categories?: FeedbackCategory[];
-  /** Custom labels / i18n */
-  labels?: FeedbackDialogLabels & { trigger?: string };
-  /** Called after successful submission */
-  onSubmit?: (result: CreateFeedbackResponse) => void;
-  /** Called when dialog opens */
-  onOpen?: () => void;
-  /** Called when dialog closes */
-  onClose?: () => void;
-  /** Custom CSS class for the default trigger button */
-  className?: string;
   /**
    * Render as child element instead of the default button.
    * When true, the first child element receives the onClick handler.
    */
   asChild?: boolean;
+  /** API base URL override */
+  baseUrl?: string;
+  /** Categories to show */
+  categories?: FeedbackCategory[];
   /** Custom trigger content or element (used with asChild) */
   children?: ReactNode;
+  /** Custom CSS class for the default trigger button */
+  className?: string;
+  /** Default selected category */
+  defaultCategory?: FeedbackCategory;
+  /** Custom labels / i18n */
+  labels?: FeedbackDialogLabels & { trigger?: string };
+  /** Called when dialog closes */
+  onClose?: () => void;
+  /** Called when dialog opens */
+  onOpen?: () => void;
+  /** Called after successful submission */
+  onSubmit?: (result: CreateFeedbackResponse) => void;
+  /** Primary brand color (CSS value) */
+  primaryColor?: string;
+  /** Public API key (falls back to RefletProvider context) */
+  publicKey?: string;
+  /** Color theme */
+  theme?: "light" | "dark" | "auto";
+  /** User identification (falls back to RefletProvider context) */
+  user?: RefletUser;
+  /** Pre-signed user token */
+  userToken?: string;
 }
 
 // ============================================

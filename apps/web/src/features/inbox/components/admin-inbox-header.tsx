@@ -24,9 +24,9 @@ const STATUS_OPTIONS: { value: ConversationStatus; label: string }[] = [
 ];
 
 interface AdminInboxHeaderProps {
-  statusFilter: ConversationStatus[];
-  onToggleStatusFilter: (status: ConversationStatus) => void;
   children?: React.ReactNode;
+  onToggleStatusFilter: (status: ConversationStatus) => void;
+  statusFilter: ConversationStatus[];
 }
 
 export function AdminInboxHeader({

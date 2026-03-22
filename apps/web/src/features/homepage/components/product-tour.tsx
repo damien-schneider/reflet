@@ -22,12 +22,12 @@ import { cn } from "@/lib/utils";
 // =============================================================================
 
 interface FeatureSection {
-  id: string;
   badge: string;
-  title: string;
   description: string;
-  reverse: boolean;
+  id: string;
   mockup: React.ReactNode;
+  reverse: boolean;
+  title: string;
 }
 
 // =============================================================================
@@ -527,10 +527,10 @@ function AIFeaturesMockup() {
 
 interface FeatureBlockProps {
   badge: string;
-  title: string;
   description: string;
   mockup: React.ReactNode;
   reverse: boolean;
+  title: string;
 }
 
 function FeatureBlock({

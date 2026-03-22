@@ -47,10 +47,10 @@ export const selectedTagIdsAtom = atom<Id<"tags">[]>([]);
  * Feedback filter state (combined - legacy)
  */
 export interface FeedbackFilters {
-  status: string | null;
-  tagIds: string[];
   search: string;
   sortBy: "votes" | "newest" | "oldest" | "comments";
+  status: string | null;
+  tagIds: string[];
 }
 
 export const feedbackFiltersAtom = atom<FeedbackFilters>({

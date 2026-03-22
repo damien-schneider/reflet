@@ -38,21 +38,21 @@ const CONFIDENCE_STYLES: Record<string, { dot: string; label: string }> = {
 
 interface SuggestedFeedbackItem {
   _id: Id<"feedback">;
-  title: string;
-  status: string;
   match: { confidence: "high" | "medium" | "low"; reason: string };
+  status: string;
+  title: string;
 }
 
 interface FeedbackSuggestionListProps {
-  items: SuggestedFeedbackItem[];
-  selectedIds: Set<string>;
   allSelected: boolean;
-  isLinking: boolean;
   hasReleaseId: boolean;
-  onToggleSelection: (feedbackId: string, checked: boolean) => void;
-  onSelectAll: () => void;
+  isLinking: boolean;
+  items: SuggestedFeedbackItem[];
   onDeselectAll: () => void;
   onLinkSelected: () => void;
+  onSelectAll: () => void;
+  onToggleSelection: (feedbackId: string, checked: boolean) => void;
+  selectedIds: Set<string>;
 }
 
 export function FeedbackSuggestionList({

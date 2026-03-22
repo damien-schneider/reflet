@@ -14,35 +14,35 @@ const getMarkdown = (storage: unknown): string => {
 };
 
 interface UseTiptapMarkdownEditorOptions {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  maxLength?: number;
   autoFocus?: boolean;
-  editable?: boolean;
-  minimal?: boolean;
   debounceMs?: number;
+  disabled?: boolean;
+  editable?: boolean;
+  maxLength?: number;
+  minimal?: boolean;
+  onChange: (value: string) => void;
   onSubmit?: () => void;
+  placeholder?: string;
+  value: string;
 }
 
 interface UseTiptapMarkdownEditorReturn {
+  characterCount: number;
   editor: Editor | null;
-  imageInputRef: React.RefObject<HTMLInputElement | null>;
-  videoInputRef: React.RefObject<HTMLInputElement | null>;
-  handleImageUpload: () => void;
-  handleVideoUpload: () => void;
   handleImageChange: (
     event: React.ChangeEvent<HTMLInputElement>
   ) => Promise<void>;
+  handleImageUpload: () => void;
   handleVideoChange: (
     event: React.ChangeEvent<HTMLInputElement>
   ) => Promise<void>;
+  handleVideoUpload: () => void;
+  imageInputRef: React.RefObject<HTMLInputElement | null>;
+  isAtLimit: boolean;
+  isNearLimit: boolean;
   isUploading: boolean;
   uploadProgress: string | null;
-  characterCount: number;
-  isNearLimit: boolean;
-  isAtLimit: boolean;
+  videoInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 export function useTiptapMarkdownEditor(

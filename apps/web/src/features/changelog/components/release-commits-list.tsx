@@ -18,25 +18,25 @@ import {
 import { cn } from "@/lib/utils";
 
 interface CommitInfo {
-  sha: string;
-  message: string;
-  fullMessage: string;
   author: string;
   date: string;
+  fullMessage: string;
+  message: string;
+  sha: string;
 }
 
 interface FileInfo {
-  filename: string;
-  status: string;
   additions: number;
   deletions: number;
+  filename: string;
+  status: string;
 }
 
 interface ReleaseCommitsListProps {
+  className?: string;
   commits: CommitInfo[];
   files?: FileInfo[];
   previousTag?: string;
-  className?: string;
 }
 
 export function ReleaseCommitsList({

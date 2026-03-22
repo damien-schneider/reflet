@@ -2,27 +2,27 @@ import { useCallback, useEffect, useRef } from "react";
 import type { ChangelogEntry } from "./types";
 
 interface ChangelogWidgetProps {
-  publicKey: string;
-  mode?: "card" | "popup" | "trigger";
-  position?: "bottom-right" | "bottom-left";
-  theme?: "light" | "dark" | "auto";
-  primaryColor?: string;
-  maxEntries?: number;
-  triggerSelector?: string;
   autoOpenForNew?: boolean;
   locale?: string;
-  onOpen?: () => void;
+  maxEntries?: number;
+  mode?: "card" | "popup" | "trigger";
   onClose?: () => void;
   onEntryClick?: (entry: ChangelogEntry) => void;
+  onOpen?: () => void;
+  position?: "bottom-right" | "bottom-left";
+  primaryColor?: string;
+  publicKey: string;
+  theme?: "light" | "dark" | "auto";
+  triggerSelector?: string;
 }
 
 interface WidgetInstance {
-  init: () => Promise<void>;
-  open: () => void;
   close: () => void;
   destroy: () => void;
   getUnreadCount: () => number;
+  init: () => Promise<void>;
   markAsRead: () => void;
+  open: () => void;
 }
 
 declare global {

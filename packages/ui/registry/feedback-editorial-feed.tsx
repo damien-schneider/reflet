@@ -18,10 +18,10 @@ import { cn } from "@/lib/utils";
 type VoteDirection = "upvote" | "downvote" | null;
 
 interface VoteContextValue {
-  voteType: VoteDirection;
-  upvotes: number;
   downvotes: number;
+  upvotes: number;
   vote: (direction: "upvote" | "downvote") => void;
+  voteType: VoteDirection;
 }
 
 const VoteContext = createContext<VoteContextValue | null>(null);
@@ -69,15 +69,15 @@ function EditorialFeed({ children, className }: EditorialFeedProps) {
 // ─── EditorialFeedItem ───────────────────────────────────────────────────────
 
 interface EditorialFeedItemProps {
-  defaultUpvotes?: number;
-  defaultDownvotes?: number;
-  onVoteChange?: (upvotes: number, downvotes: number) => void;
-  upvotes?: number;
-  downvotes?: number;
-  voteType?: VoteDirection;
-  onVote?: (direction: "upvote" | "downvote") => void;
   children: ReactNode;
   className?: string;
+  defaultDownvotes?: number;
+  defaultUpvotes?: number;
+  downvotes?: number;
+  onVote?: (direction: "upvote" | "downvote") => void;
+  onVoteChange?: (upvotes: number, downvotes: number) => void;
+  upvotes?: number;
+  voteType?: VoteDirection;
 }
 
 function EditorialFeedItem({
@@ -303,8 +303,8 @@ function EditorialFeedMeta({ children, className }: EditorialFeedMetaProps) {
 
 interface EditorialFeedStatusProps {
   children: ReactNode;
-  color?: StatusColor;
   className?: string;
+  color?: StatusColor;
 }
 
 function EditorialFeedStatus({
@@ -339,8 +339,8 @@ function EditorialFeedTag({ children, className }: EditorialFeedTagProps) {
 // ─── EditorialFeedComments ───────────────────────────────────────────────────
 
 interface EditorialFeedCommentsProps {
-  count: number;
   className?: string;
+  count: number;
 }
 
 function EditorialFeedComments({
@@ -372,14 +372,14 @@ function EditorialFeedTime({ children, className }: EditorialFeedTimeProps) {
 
 export {
   EditorialFeed,
-  EditorialFeedItem,
-  EditorialFeedVote,
-  EditorialFeedRule,
+  EditorialFeedComments,
   EditorialFeedContent,
-  EditorialFeedTitle,
+  EditorialFeedItem,
   EditorialFeedMeta,
+  EditorialFeedRule,
   EditorialFeedStatus,
   EditorialFeedTag,
-  EditorialFeedComments,
   EditorialFeedTime,
+  EditorialFeedTitle,
+  EditorialFeedVote,
 };

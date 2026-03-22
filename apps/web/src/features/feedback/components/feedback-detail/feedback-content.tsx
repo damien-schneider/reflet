@@ -11,11 +11,11 @@ import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 
 interface FeedbackContentProps {
-  feedbackId: Id<"feedback">;
-  title: string;
-  description: string;
-  isAdmin: boolean;
   attachments?: string[];
+  description: string;
+  feedbackId: Id<"feedback">;
+  isAdmin: boolean;
+  title: string;
 }
 
 function AttachmentThumbnail({ src, alt }: { src: string; alt: string }) {

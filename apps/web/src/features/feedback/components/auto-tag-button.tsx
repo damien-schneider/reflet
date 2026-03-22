@@ -44,12 +44,12 @@ interface AutoTagButtonProps {
 
 interface AutoTagJob {
   _id: Id<"autoTaggingJobs">;
-  status: "pending" | "processing" | "completed" | "failed";
-  processedItems: number;
-  totalItems: number;
-  successfulItems: number;
-  failedItems: number;
   errors: Array<{ feedbackId: string; error: string }>;
+  failedItems: number;
+  processedItems: number;
+  status: "pending" | "processing" | "completed" | "failed";
+  successfulItems: number;
+  totalItems: number;
 }
 
 function ProcessingJobButton({

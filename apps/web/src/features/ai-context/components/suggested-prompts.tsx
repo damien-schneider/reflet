@@ -10,10 +10,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { H2, Text } from "@/components/ui/typography";
 
 interface Prompt {
-  title: string;
+  category: "explore" | "manage" | "automate" | "analyze";
   description: string;
   prompt: string;
-  category: "explore" | "manage" | "automate" | "analyze";
+  title: string;
 }
 
 const PROMPT_CATEGORIES = [

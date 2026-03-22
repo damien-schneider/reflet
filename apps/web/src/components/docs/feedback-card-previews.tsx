@@ -203,8 +203,8 @@ function AllCardsPreview() {
 }
 
 export {
-  SweepCornerPreview,
-  MinimalNotchPreview,
-  EditorialFeedPreview,
   AllCardsPreview,
+  EditorialFeedPreview,
+  MinimalNotchPreview,
+  SweepCornerPreview,
 };

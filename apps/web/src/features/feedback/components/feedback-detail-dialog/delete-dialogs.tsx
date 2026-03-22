@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/dialog";
 
 interface DeleteFeedbackDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   onDelete: () => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
 }
 
 export function DeleteFeedbackDialog({
@@ -45,9 +45,9 @@ export function DeleteFeedbackDialog({
 }
 
 interface DeleteCommentDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   onDelete: () => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
 }
 
 export function DeleteCommentDialog({

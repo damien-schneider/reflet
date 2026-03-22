@@ -12,11 +12,11 @@ import {
 import { H2, H3, Lead } from "@/components/ui/typography";
 
 interface Step {
+  description: string;
+  icon: Icon;
   id: string;
   number: number;
-  icon: Icon;
   title: string;
-  description: string;
 }
 
 const STEPS: Step[] = [

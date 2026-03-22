@@ -16,8 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 interface CreateFeedbackDialogProps {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
+  open: boolean;
   organizationId: Id<"organizations">;
 }
 

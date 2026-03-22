@@ -33,9 +33,9 @@ type WidgetWithSettings = Doc<"widgets"> & {
 };
 
 interface WidgetSettingsDialogProps {
-  widget: WidgetWithSettings;
-  open: boolean;
   onOpenChange: (open: boolean) => void;
+  open: boolean;
+  widget: WidgetWithSettings;
 }
 
 type WidgetPosition = "bottom-right" | "bottom-left";

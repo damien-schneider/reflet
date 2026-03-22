@@ -31,32 +31,32 @@ import { cn } from "@/lib/utils";
 
 interface LinkedFeedback {
   _id: Id<"feedback">;
-  title: string;
   status?: string;
+  title: string;
 }
 
 export interface ReleaseData {
-  _id: Id<"releases">;
-  version?: string;
-  title: string;
-  description?: string;
-  publishedAt?: number;
   _creationTime: number;
-  feedback?: (LinkedFeedback | null)[];
+  _id: Id<"releases">;
   commitCount?: number;
-  githubPushStatus?: "pending" | "success" | "failed";
-  githubPushErrorType?: string;
-  githubReleaseId?: string;
+  description?: string;
+  feedback?: (LinkedFeedback | null)[];
   githubHtmlUrl?: string;
+  githubPushErrorType?: string;
+  githubPushStatus?: "pending" | "success" | "failed";
+  githubReleaseId?: string;
+  publishedAt?: number;
+  title: string;
+  version?: string;
 }
 
 interface ReleaseItemProps {
-  release: ReleaseData;
-  orgSlug: string;
   isAdmin?: boolean;
+  onDelete?: () => void;
   onPublish?: () => void;
   onUnpublish?: () => void;
-  onDelete?: () => void;
+  orgSlug: string;
+  release: ReleaseData;
 }
 
 export function ReleaseItem({

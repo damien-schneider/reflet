@@ -37,15 +37,15 @@ export function AuthForgotPasswordLink({ mode }: AuthForgotPasswordLinkProps) {
 }
 
 interface AuthConfirmPasswordProps {
-  mode: AuthMode;
-  register: UseFormRegister<SignUpFormData>;
-  isSubmitting: boolean;
   confirmPasswordErrors?: Array<{ message?: string }>;
+  isSubmitting: boolean;
+  mode: AuthMode;
   onConfirmPasswordChange: (
     e: React.ChangeEvent<HTMLInputElement>,
     setValue: (name: keyof SignUpFormData, value: string) => void,
     trigger: (name: keyof SignUpFormData) => Promise<boolean>
   ) => void;
+  register: UseFormRegister<SignUpFormData>;
   setValue: (name: keyof SignUpFormData, value: string) => void;
   trigger: (name: keyof SignUpFormData) => Promise<boolean>;
 }

@@ -14,8 +14,6 @@ import { cn } from "@/lib/utils";
 import type { FeedbackTag } from "./feedback-metadata-types";
 
 interface TagDisplayProps {
-  isAdmin: boolean;
-  validTags: FeedbackTag[];
   availableTags:
     | Array<{
         _id: Id<"tags">;
@@ -25,7 +23,9 @@ interface TagDisplayProps {
       }>
     | undefined;
   feedbackTagIds: Set<Id<"tags">>;
+  isAdmin: boolean;
   onToggleTag: (tagId: Id<"tags">, isCurrentlyApplied: boolean) => void;
+  validTags: FeedbackTag[];
 }
 
 export function TagDisplay({

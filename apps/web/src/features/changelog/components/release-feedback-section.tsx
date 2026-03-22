@@ -17,13 +17,13 @@ import { FeedbackSectionHeader } from "./feedback-section-header";
 import type { CommitInfo } from "./generate-from-commits";
 
 interface ReleaseFeedbackSectionProps {
+  autoTriggerMatching?: boolean;
+  className?: string;
+  commits: CommitInfo[];
+  description: string;
+  onLinkStatusChange?: (status: FeedbackLinkStatus) => void;
   organizationId: Id<"organizations">;
   releaseId: Id<"releases"> | null;
-  description: string;
-  commits: CommitInfo[];
-  autoTriggerMatching?: boolean;
-  onLinkStatusChange?: (status: FeedbackLinkStatus) => void;
-  className?: string;
 }
 
 export function ReleaseFeedbackSection({
@@ -145,7 +145,7 @@ export function ReleaseFeedbackSection({
     let cancelled = false;
     autoLinkInProgress.current = true;
     const statusToSet =
-      linkStatusRef.current !== "keep" ? linkStatusRef.current : undefined;
+      linkStatusRef.current === "keep" ? undefined : linkStatusRef.current;
 
     (async () => {
       const results = await Promise.allSettled(
@@ -241,7 +241,7 @@ export function ReleaseFeedbackSection({
         return;
       }
       try {
-        const statusToSet = linkStatus !== "keep" ? linkStatus : undefined;
+        const statusToSet = linkStatus === "keep" ? undefined : linkStatus;
         await linkFeedback({ releaseId, feedbackId, newStatus: statusToSet });
         toast.success("Feedback linked");
         setSearchQuery("");
@@ -305,9 +305,6 @@ export function ReleaseFeedbackSection({
 
 interface AutoTriggerParams {
   autoTriggerMatching: boolean | undefined;
-  hasAutoTriggered: boolean;
-  description: string;
-  commits: CommitInfo[];
   availableFeedback:
     | Array<{
         _id: Id<"feedback">;
@@ -318,7 +315,9 @@ interface AutoTriggerParams {
         tags: Array<{ _id: Id<"tags">; name: string }>;
       }>
     | undefined;
-  setHasAutoTriggered: (v: boolean) => void;
+  commits: CommitInfo[];
+  description: string;
+  hasAutoTriggered: boolean;
   matchFeedback: (
     desc: string,
     commits: CommitInfo[],
@@ -331,6 +330,7 @@ interface AutoTriggerParams {
       tags: Array<{ _id: Id<"tags">; name: string }>;
     }>
   ) => Promise<void>;
+  setHasAutoTriggered: (v: boolean) => void;
 }
 
 function useAutoTriggerMatching({

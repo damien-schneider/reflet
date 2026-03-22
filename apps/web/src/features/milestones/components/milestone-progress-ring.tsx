@@ -6,10 +6,10 @@ import { useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 interface MilestoneProgress {
-  total: number;
   completed: number;
   inProgress: number;
   percentage: number;
+  total: number;
 }
 
 interface MilestoneProgressRingProps {

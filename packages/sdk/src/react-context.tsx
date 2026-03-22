@@ -14,13 +14,13 @@ import type { RefletConfig, RefletUser } from "./types";
 // ============================================
 
 export interface RefletContextValue {
-  client: Reflet;
-  publicKey: string;
   baseUrl?: string;
+  client: Reflet;
   isReady: boolean;
+  publicKey: string;
+  setUser: (user: RefletUser | undefined) => void;
   user: RefletUser | undefined;
   userToken: string | undefined;
-  setUser: (user: RefletUser | undefined) => void;
 }
 
 // ============================================
@@ -34,16 +34,16 @@ export const RefletContext = createContext<RefletContextValue | null>(null);
 // ============================================
 
 export interface RefletProviderProps {
-  /** Your organization's public API key */
-  publicKey: string;
   /** API base URL (optional, defaults to Reflet production API) */
   baseUrl?: string;
+  /** Children */
+  children: ReactNode;
+  /** Your organization's public API key */
+  publicKey: string;
   /** Initial user identification */
   user?: RefletUser;
   /** Pre-signed user token (alternative to user) */
   userToken?: string;
-  /** Children */
-  children: ReactNode;
 }
 
 /**

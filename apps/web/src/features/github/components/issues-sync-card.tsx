@@ -16,17 +16,17 @@ import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/typography";
 
 interface IssuesSyncCardProps {
-  isEnabled: boolean;
   autoSync: boolean;
+  importedCount: number;
+  isAdmin: boolean;
+  isEnabled: boolean;
+  isSyncing: boolean;
   lastSyncAt?: number;
   lastSyncStatus?: string;
-  syncedIssuesCount: number;
-  importedCount: number;
   mappingsCount: number;
-  isSyncing: boolean;
-  isAdmin: boolean;
-  onToggleSync: (enabled: boolean, autoSync: boolean) => void;
   onSyncNow: () => void;
+  onToggleSync: (enabled: boolean, autoSync: boolean) => void;
+  syncedIssuesCount: number;
 }
 
 export function IssuesSyncCard({

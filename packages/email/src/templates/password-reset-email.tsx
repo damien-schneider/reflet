@@ -10,8 +10,8 @@ import { BaseLayout } from "./base-layout";
 import { baseStyles } from "./styles";
 
 interface PasswordResetEmailProps {
-  userName?: string;
   resetUrl?: string;
+  userName?: string;
 }
 
 export function PasswordResetEmail({

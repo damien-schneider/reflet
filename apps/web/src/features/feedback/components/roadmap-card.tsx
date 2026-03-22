@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface RoadmapCardProps {
+  boardSlug: string;
   feedback: {
     _id: string;
     title: string;
@@ -17,7 +18,6 @@ interface RoadmapCardProps {
     }[];
   };
   orgSlug: string;
-  boardSlug: string;
 }
 
 export function RoadmapCard({

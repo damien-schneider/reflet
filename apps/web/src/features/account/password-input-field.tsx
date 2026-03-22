@@ -6,13 +6,13 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 interface PasswordInputProps {
+  error?: { message?: string };
   id: string;
   label: string;
-  showPassword: boolean;
   onTogglePassword: () => void;
-  register: UseFormRegisterReturn;
   placeholder?: string;
-  error?: { message?: string };
+  register: UseFormRegisterReturn;
+  showPassword: boolean;
 }
 
 export function PasswordInputField({

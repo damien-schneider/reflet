@@ -7,28 +7,28 @@ import { internalMutation, internalQuery } from "../_generated/server";
 // ============================================
 
 export interface ApiKeyValidation {
-  success: boolean;
-  organizationId?: Id<"organizations">;
-  organizationApiKeyId?: Id<"organizationApiKeys">;
-  isSecretKey?: boolean;
   error?: string;
+  isSecretKey?: boolean;
+  organizationApiKeyId?: Id<"organizationApiKeys">;
+  organizationId?: Id<"organizations">;
+  success: boolean;
 }
 
 export interface ExternalUserContext {
-  externalUserId: Id<"externalUsers">;
-  externalId: string;
   email?: string;
+  externalId: string;
+  externalUserId: Id<"externalUsers">;
   name?: string;
 }
 
 export interface ApiAuthResult {
-  success: boolean;
-  organizationId?: Id<"organizations">;
-  organizationApiKeyId?: Id<"organizationApiKeys">;
-  isSecretKey?: boolean;
-  externalUser?: ExternalUserContext;
   error?: string;
+  externalUser?: ExternalUserContext;
+  isSecretKey?: boolean;
+  organizationApiKeyId?: Id<"organizationApiKeys">;
+  organizationId?: Id<"organizations">;
   statusCode?: number;
+  success: boolean;
 }
 
 // ============================================

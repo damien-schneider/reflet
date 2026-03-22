@@ -3,9 +3,9 @@ import type { WidgetConfig, WidgetMessage } from "./types";
 declare const __CONVEX_URL__: string;
 
 const CONVEX_URL =
-  typeof __CONVEX_URL__ !== "undefined"
-    ? __CONVEX_URL__
-    : "https://grateful-butterfly-1.convex.cloud";
+  typeof __CONVEX_URL__ === "undefined"
+    ? "https://grateful-butterfly-1.convex.cloud"
+    : __CONVEX_URL__;
 
 async function convexQuery<T>(
   fnName: string,

@@ -25,16 +25,16 @@ import {
 } from "@/lib/tag-colors";
 
 interface TagFormDialogProps {
-  organizationId: Id<"organizations">;
   editingTag: {
     _id: Id<"tags">;
     name: string;
     color: string;
     icon?: string;
   } | null;
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  open: boolean;
+  organizationId: Id<"organizations">;
 }
 
 export function TagFormDialog({

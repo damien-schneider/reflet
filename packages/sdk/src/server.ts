@@ -21,23 +21,23 @@ const DASH_REGEX = /-/g;
 const UNDERSCORE_REGEX = /_/g;
 
 export interface SignUserOptions {
-  /** User's unique ID in your system */
-  id: string;
-  /** User's email address */
-  email?: string;
-  /** User's display name */
-  name?: string;
   /** URL to user's avatar image */
   avatar?: string;
+  /** User's email address */
+  email?: string;
+  /** User's unique ID in your system */
+  id: string;
   /** Additional metadata */
   metadata?: Record<string, unknown>;
+  /** User's display name */
+  name?: string;
 }
 
 export interface SignedUserToken {
-  /** The signed JWT token */
-  token: string;
   /** Token expiration timestamp (ms) */
   expiresAt: number;
+  /** The signed JWT token */
+  token: string;
 }
 
 /**

@@ -3,21 +3,21 @@ import type { FeedbackItem } from "../feed-feedback-view";
 
 export interface RoadmapViewProps {
   feedback: FeedbackItem[];
+  isAdmin: boolean;
+  onFeedbackClick: (feedbackId: string) => void;
+  organizationId: Id<"organizations">;
   statuses: Array<{
     _id: Id<"organizationStatuses">;
     name: string;
     color: string;
   }>;
-  onFeedbackClick: (feedbackId: string) => void;
-  organizationId: Id<"organizations">;
-  isAdmin: boolean;
 }
 
 export interface DraggableFeedbackCardProps {
-  item: FeedbackItem;
   isAdmin: boolean;
   isDragging?: boolean;
   isOverlay?: boolean;
+  item: FeedbackItem;
   onFeedbackClick: (feedbackId: string) => void;
 }
 
@@ -25,12 +25,12 @@ export type DragHandleListeners =
   import("@dnd-kit/core").DraggableSyntheticListeners;
 
 export interface DroppableColumnProps {
-  status: { _id: Id<"organizationStatuses">; name: string; color: string };
-  items: FeedbackItem[];
   isAdmin: boolean;
   isDragging: boolean;
-  onFeedbackClick: (feedbackId: string) => void;
+  items: FeedbackItem[];
   onDeleteClick: () => void;
+  onFeedbackClick: (feedbackId: string) => void;
+  status: { _id: Id<"organizationStatuses">; name: string; color: string };
 }
 
 export interface OptimisticUpdate {

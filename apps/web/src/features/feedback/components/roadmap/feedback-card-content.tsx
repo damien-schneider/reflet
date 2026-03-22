@@ -12,12 +12,12 @@ import type { FeedbackItem } from "../feed-feedback-view";
 import type { DragHandleListeners } from "./roadmap-types";
 
 interface FeedbackCardContentProps {
-  item: FeedbackItem;
+  dragHandleAttributes?: React.HTMLAttributes<HTMLButtonElement>;
+  dragHandleListeners?: DragHandleListeners;
+  isAdmin?: boolean;
   isDragging?: boolean;
   isOverlay?: boolean;
-  isAdmin?: boolean;
-  dragHandleListeners?: DragHandleListeners;
-  dragHandleAttributes?: React.HTMLAttributes<HTMLButtonElement>;
+  item: FeedbackItem;
 }
 
 export function FeedbackCardContent({

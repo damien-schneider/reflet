@@ -258,8 +258,8 @@ interface AnalysisResultsProps {
     repoStructure?: string;
     completedAt?: number;
   };
-  organizationId: Id<"organizations">;
   isAdmin: boolean;
+  organizationId: Id<"organizations">;
 }
 
 function AnalysisResults({

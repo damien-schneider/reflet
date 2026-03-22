@@ -14,9 +14,9 @@ import {
 } from "@/components/ui/dialog";
 
 interface DeleteTagDialogProps {
-  tagId: Id<"tags"> | null;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  tagId: Id<"tags"> | null;
 }
 
 export function DeleteTagDialog({

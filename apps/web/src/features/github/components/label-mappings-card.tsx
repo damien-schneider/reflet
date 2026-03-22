@@ -33,16 +33,16 @@ import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/typography";
 
 interface GitHubLabel {
-  id: string;
-  name: string;
   color: string;
   description: string | null;
+  id: string;
+  name: string;
 }
 
 interface RefletTag {
   _id: Id<"tags">;
-  name: string;
   color: string;
+  name: string;
 }
 
 type IssueStatus =
@@ -55,22 +55,21 @@ type IssueStatus =
 
 interface LabelMapping {
   _id: Id<"githubLabelMappings">;
-  githubLabelName: string;
-  githubLabelColor?: string;
-  targetTagId?: Id<"tags">;
   autoSync: boolean;
-  syncClosedIssues?: boolean;
   defaultStatus?: IssueStatus;
-  tagName?: string;
+  githubLabelColor?: string;
+  githubLabelName: string;
+  syncClosedIssues?: boolean;
   tagColor?: string;
+  tagName?: string;
+  targetTagId?: Id<"tags">;
 }
 
 interface LabelMappingsCardProps {
-  mappings: LabelMapping[];
   githubLabels: GitHubLabel[];
-  tags: RefletTag[];
   isAdmin: boolean;
   isLoadingLabels: boolean;
+  mappings: LabelMapping[];
   onAddMapping: (mapping: {
     githubLabelName: string;
     githubLabelColor?: string;
@@ -81,6 +80,7 @@ interface LabelMappingsCardProps {
   }) => void;
   onDeleteMapping: (mappingId: Id<"githubLabelMappings">) => void;
   onFetchLabels: () => void;
+  tags: RefletTag[];
 }
 
 export function LabelMappingsCard({

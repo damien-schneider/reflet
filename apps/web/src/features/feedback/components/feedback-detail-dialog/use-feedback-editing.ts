@@ -4,19 +4,19 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useCallback, useEffect, useState } from "react";
 
 interface FeedbackData {
-  title: string;
   description?: string | null;
+  title: string;
 }
 
 interface UpdateFeedbackArgs {
+  description?: string;
   id: Id<"feedback">;
   title?: string;
-  description?: string;
 }
 
 interface UseFeedbackEditingParams {
-  feedbackId: Id<"feedback"> | null;
   feedback: FeedbackData | null | undefined;
+  feedbackId: Id<"feedback"> | null;
   updateFeedback: (args: UpdateFeedbackArgs) => Promise<unknown>;
 }
 

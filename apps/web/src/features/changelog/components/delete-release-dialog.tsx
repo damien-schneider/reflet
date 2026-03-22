@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/dialog";
 
 interface DeleteReleaseDialogProps {
-  open: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
+  open: boolean;
 }
 
 export function DeleteReleaseDialog({

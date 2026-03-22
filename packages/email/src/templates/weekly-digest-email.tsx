@@ -3,25 +3,25 @@ import { BaseLayout } from "./base-layout";
 import { baseStyles } from "./styles";
 
 interface TopFeedbackItem {
-  title: string;
-  voteCount: number;
   status: string;
+  title: string;
   url: string;
+  voteCount: number;
 }
 
 interface StatusChange {
-  title: string;
   from: string;
+  title: string;
   to: string;
 }
 
 interface WeeklyDigestEmailProps {
-  organizationName?: string;
-  newFeedbackCount?: number;
-  totalVotes?: number;
-  topFeedback?: TopFeedbackItem[];
-  statusChanges?: StatusChange[];
   dashboardUrl?: string;
+  newFeedbackCount?: number;
+  organizationName?: string;
+  statusChanges?: StatusChange[];
+  topFeedback?: TopFeedbackItem[];
+  totalVotes?: number;
   unsubscribeUrl?: string;
 }
 

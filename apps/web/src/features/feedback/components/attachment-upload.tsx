@@ -14,9 +14,9 @@ import { cn } from "@/lib/utils";
 
 interface AttachmentUploadProps {
   attachments: string[];
-  onAttachmentsChange: (attachments: string[]) => void;
-  maxAttachments?: number;
   disabled?: boolean;
+  maxAttachments?: number;
+  onAttachmentsChange: (attachments: string[]) => void;
 }
 
 const MAX_ATTACHMENTS_DEFAULT = 5;

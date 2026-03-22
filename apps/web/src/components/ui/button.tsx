@@ -105,10 +105,10 @@ const pillColorStyles: Record<string, { base: string; active: string }> = {
 interface ButtonProps
   extends ButtonPrimitive.Props,
     VariantProps<typeof buttonVariants> {
-  /** Color for pill variant */
-  color?: TagColor | string;
   /** Active state for pill variant - shows check icon and active styling */
   active?: boolean;
+  /** Color for pill variant */
+  color?: TagColor | string;
 }
 
 function Button({

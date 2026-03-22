@@ -11,29 +11,29 @@ import { cn } from "@/lib/utils";
 import { ConversationStatusBadge } from "./conversation-status-badge";
 
 interface ConversationUser {
-  name?: string;
   email: string;
   image?: string;
+  name?: string;
 }
 
 interface Conversation {
   _id: string;
-  subject?: string;
-  status: string;
-  lastMessageAt?: number;
-  userUnreadCount: number;
   adminUnreadCount: number;
-  user?: ConversationUser;
+  lastMessageAt?: number;
   lastMessagePreview?: string;
+  status: string;
+  subject?: string;
+  user?: ConversationUser;
+  userUnreadCount: number;
 }
 
 interface ConversationListProps {
-  conversations: Conversation[] | undefined;
-  selectedId?: string;
-  onSelect: (conversation: Conversation) => void;
-  isLoading?: boolean;
-  isAdmin?: boolean;
   className?: string;
+  conversations: Conversation[] | undefined;
+  isAdmin?: boolean;
+  isLoading?: boolean;
+  onSelect: (conversation: Conversation) => void;
+  selectedId?: string;
 }
 
 const INITIALS_SPLIT_PATTERN = /[\s@]/;

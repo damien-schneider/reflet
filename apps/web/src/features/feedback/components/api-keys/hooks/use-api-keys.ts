@@ -15,47 +15,47 @@ interface UseApiKeysReturn {
   apiKeys: ReturnType<
     typeof useQuery<typeof api.feedback.api_admin.getApiKeys>
   >;
-
-  // State
-  showSecretKey: boolean;
-  setShowSecretKey: (value: boolean) => void;
-  newSecretKey: string | null;
-  setNewSecretKey: (value: string | null) => void;
-  isRegenerating: boolean;
-  setIsRegenerating: (value: boolean) => void;
-  showRegenerateDialog: boolean;
-  setShowRegenerateDialog: (value: boolean) => void;
-  selectedKeyId: Id<"organizationApiKeys"> | null;
-  setSelectedKeyId: (value: Id<"organizationApiKeys"> | null) => void;
-  showDeleteDialog: boolean;
-  setShowDeleteDialog: (value: boolean) => void;
-  keyToDelete: Id<"organizationApiKeys"> | null;
-  setKeyToDelete: (value: Id<"organizationApiKeys"> | null) => void;
+  copyToClipboard: (text: string, label: string) => void;
   domainInput: string;
-  setDomainInput: (value: string) => void;
-  newKeyName: string;
-  setNewKeyName: (value: string) => void;
-  isGenerating: boolean;
-  setIsGenerating: (value: boolean) => void;
-
-  // Handlers
-  handleGenerateKeys: () => Promise<void>;
-  handleRegenerateSecretKey: () => Promise<void>;
-  handleToggleActive: (
-    apiKeyId: Id<"organizationApiKeys">,
-    isActive: boolean
-  ) => Promise<void>;
-  handleDeleteKey: () => Promise<void>;
   handleAddDomain: (
     apiKeyId: Id<"organizationApiKeys">,
     currentDomains: string[]
   ) => Promise<void>;
+  handleDeleteKey: () => Promise<void>;
+
+  // Handlers
+  handleGenerateKeys: () => Promise<void>;
+  handleRegenerateSecretKey: () => Promise<void>;
   handleRemoveDomain: (
     apiKeyId: Id<"organizationApiKeys">,
     currentDomains: string[],
     domain: string
   ) => Promise<void>;
-  copyToClipboard: (text: string, label: string) => void;
+  handleToggleActive: (
+    apiKeyId: Id<"organizationApiKeys">,
+    isActive: boolean
+  ) => Promise<void>;
+  isGenerating: boolean;
+  isRegenerating: boolean;
+  keyToDelete: Id<"organizationApiKeys"> | null;
+  newKeyName: string;
+  newSecretKey: string | null;
+  selectedKeyId: Id<"organizationApiKeys"> | null;
+  setDomainInput: (value: string) => void;
+  setIsGenerating: (value: boolean) => void;
+  setIsRegenerating: (value: boolean) => void;
+  setKeyToDelete: (value: Id<"organizationApiKeys"> | null) => void;
+  setNewKeyName: (value: string) => void;
+  setNewSecretKey: (value: string | null) => void;
+  setSelectedKeyId: (value: Id<"organizationApiKeys"> | null) => void;
+  setShowDeleteDialog: (value: boolean) => void;
+  setShowRegenerateDialog: (value: boolean) => void;
+  setShowSecretKey: (value: boolean) => void;
+  showDeleteDialog: boolean;
+  showRegenerateDialog: boolean;
+
+  // State
+  showSecretKey: boolean;
 }
 
 export function useApiKeys({

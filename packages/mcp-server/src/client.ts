@@ -1,8 +1,8 @@
 const DEFAULT_BASE_URL = "https://harmless-clam-802.convex.site";
 
 interface ClientConfig {
-  readonly secretKey: string;
   readonly baseUrl?: string;
+  readonly secretKey: string;
 }
 
 export class RefletAdminClient {

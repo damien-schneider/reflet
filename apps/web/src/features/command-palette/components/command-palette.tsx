@@ -14,8 +14,8 @@ import { groupLabels } from "../lib/command-items";
 import type { CommandItem as CommandItemType } from "../lib/types";
 
 interface CommandPaletteProps {
-  orgSlug?: string;
   isAdmin?: boolean;
+  orgSlug?: string;
 }
 
 function filterCommandItems(

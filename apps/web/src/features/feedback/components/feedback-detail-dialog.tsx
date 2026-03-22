@@ -24,8 +24,8 @@ import { useFeedbackEditing } from "./feedback-detail-dialog/use-feedback-editin
 
 interface FeedbackDetailDialogProps {
   feedbackId: Id<"feedback"> | null;
-  onClose: () => void;
   isAdmin?: boolean;
+  onClose: () => void;
 }
 
 export function FeedbackDetailDialog({

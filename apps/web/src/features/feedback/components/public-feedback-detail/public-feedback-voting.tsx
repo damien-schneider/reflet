@@ -4,10 +4,10 @@ import { CaretUp } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface PublicFeedbackVotingProps {
-  voteCount: number;
   hasVoted: boolean;
-  primaryColor: string;
   onVote: () => void;
+  primaryColor: string;
+  voteCount: number;
 }
 
 export function PublicFeedbackVoting({

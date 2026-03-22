@@ -36,11 +36,11 @@ export const metadata: Metadata = generatePageMetadata({
 });
 
 interface Integration {
-  id: string;
-  icon: typeof GithubLogo;
-  title: string;
   description: string;
   href?: string;
+  icon: typeof GithubLogo;
+  id: string;
+  title: string;
 }
 
 const AVAILABLE_INTEGRATIONS: Integration[] = [

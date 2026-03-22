@@ -43,8 +43,8 @@ type WidgetWithSettings = Doc<"widgets"> & {
 };
 
 interface WidgetCardProps {
-  widget: WidgetWithSettings;
   orgSlug: string;
+  widget: WidgetWithSettings;
 }
 
 export function WidgetCard({ widget }: WidgetCardProps) {
@@ -129,7 +129,7 @@ export function WidgetCard({ widget }: WidgetCardProps) {
           </div>
           <CardDescription>
             {widget.conversationCount} conversation
-            {widget.conversationCount !== 1 ? "s" : ""}
+            {widget.conversationCount === 1 ? "" : "s"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

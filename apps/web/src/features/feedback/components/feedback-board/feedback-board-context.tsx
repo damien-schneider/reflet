@@ -5,18 +5,18 @@ import { createContext, type ReactNode, useContext } from "react";
 
 interface FeedbackBoardContextValue {
   isAdmin: boolean;
+  onFeedbackClick: (feedbackId: string) => void;
+  onVote: (
+    e: React.MouseEvent,
+    feedbackId: Id<"feedback">,
+    voteType: "upvote" | "downvote"
+  ) => void;
   primaryColor?: string;
   statuses: Array<{
     _id: Id<"organizationStatuses">;
     name: string;
     color: string;
   }>;
-  onVote: (
-    e: React.MouseEvent,
-    feedbackId: Id<"feedback">,
-    voteType: "upvote" | "downvote"
-  ) => void;
-  onFeedbackClick: (feedbackId: string) => void;
 }
 
 const FeedbackBoardContext = createContext<FeedbackBoardContextValue | null>(

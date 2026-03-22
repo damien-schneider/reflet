@@ -12,8 +12,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 
 interface BranchInfo {
-  name: string;
   isProtected: boolean;
+  name: string;
 }
 
 interface AutomationSectionProps {

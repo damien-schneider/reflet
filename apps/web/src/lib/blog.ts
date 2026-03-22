@@ -2,9 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 export interface BlogPostMeta {
-  title: string;
-  description: string;
-  date: string;
   author: string;
   authorRole?: string;
   category:
@@ -13,16 +10,19 @@ export interface BlogPostMeta {
     | "case-study"
     | "comparison"
     | "best-practices";
-  tags: string[];
-  readingTime: string;
+  date: string;
+  description: string;
   featured?: boolean;
-  seoKeywords?: string[];
   ogImage?: string;
+  readingTime: string;
+  seoKeywords?: string[];
+  tags: string[];
+  title: string;
 }
 
 export interface BlogPost {
-  slug: string;
   meta: BlogPostMeta;
+  slug: string;
 }
 
 const BLOG_DIR = path.join(process.cwd(), "app/blog/(posts)");

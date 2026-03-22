@@ -30,12 +30,12 @@ import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/typography";
 
 interface Repository {
-  id: string;
-  fullName: string;
-  name: string;
   defaultBranch: string;
-  isPrivate: boolean;
   description: string | null;
+  fullName: string;
+  id: string;
+  isPrivate: boolean;
+  name: string;
 }
 
 function formatRepositoryName(slug: string): string {
@@ -66,14 +66,14 @@ function getRepositorySearchText(repo: Repository): string {
 
 interface RepositorySelectorCardProps {
   hasRepository: boolean;
-  repositoryFullName?: string;
-  repositories: Repository[];
-  selectedRepo: string;
-  loadingRepos: boolean;
   isAdmin: boolean;
-  onSelectRepo: (value: string) => void;
-  onConnectRepository: () => void;
+  loadingRepos: boolean;
   onChangeRepository: () => void;
+  onConnectRepository: () => void;
+  onSelectRepo: (value: string) => void;
+  repositories: Repository[];
+  repositoryFullName?: string;
+  selectedRepo: string;
 }
 
 export function RepositorySelectorCard({

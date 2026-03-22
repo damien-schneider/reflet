@@ -12,11 +12,11 @@ import { Text } from "@/components/ui/typography";
 
 interface GitHubRelease {
   _id: string;
-  tagName: string;
-  name?: string;
   isDraft: boolean;
   isPrerelease: boolean;
+  name?: string;
   refletReleaseId?: string;
+  tagName: string;
 }
 
 interface SyncedReleasesCardProps {

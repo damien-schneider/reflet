@@ -27,10 +27,10 @@ import { ReleaseFeedbackSection } from "./release-feedback-section";
 import { VersionPicker } from "./version-picker";
 
 interface ReleaseEditorProps {
+  className?: string;
   organizationId: Id<"organizations">;
   orgSlug: string;
   release?: Doc<"releases">; // If provided, edit mode
-  className?: string;
 }
 
 export function ReleaseEditor({
@@ -188,7 +188,7 @@ export function ReleaseEditor({
       await publishRelease({
         id: idToPublish,
         feedbackStatus:
-          feedbackLinkStatus !== "keep" ? feedbackLinkStatus : undefined,
+          feedbackLinkStatus === "keep" ? undefined : feedbackLinkStatus,
       });
       capture("release_published", {
         has_version: Boolean(version.trim()),
@@ -404,20 +404,20 @@ function pushButtonLabel(status?: string): string {
 }
 
 interface ReleaseEditorFooterProps {
-  isPublished: boolean;
-  isSubmitting: boolean;
-  isStreaming: boolean;
-  titleEmpty: boolean;
   canPushToGithub: boolean;
   isLinkedToGithub: boolean;
   isPermissionError: boolean;
-  release?: Doc<"releases">;
+  isPublished: boolean;
+  isStreaming: boolean;
+  isSubmitting: boolean;
+  onCancel: () => void;
+  onPublish: () => void;
+  onPushToGithub: () => void;
+  onUnpublish: () => void;
   organizationId: Id<"organizations">;
   orgSlug: string;
-  onPublish: () => void;
-  onUnpublish: () => void;
-  onPushToGithub: () => void;
-  onCancel: () => void;
+  release?: Doc<"releases">;
+  titleEmpty: boolean;
 }
 
 function ReleaseEditorFooter({

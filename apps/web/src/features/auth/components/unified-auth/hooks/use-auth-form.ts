@@ -7,6 +7,7 @@ import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { capture } from "@/lib/analytics";
@@ -21,25 +22,25 @@ import {
 export type AuthMode = "signIn" | "signUp" | null;
 
 export interface UseAuthFormReturn {
-  email: string;
-  setEmail: (email: string) => void;
-  emailChecked: boolean;
-  isCheckingEmail: boolean;
-  mode: AuthMode;
   apiError: string | null;
-  setApiError: (error: string | null) => void;
-  passwordMismatchError: string | null;
-  setPasswordMismatchError: (error: string | null) => void;
-  register: ReturnType<typeof useForm<SignUpFormData>>["register"];
-  handleSubmit: ReturnType<typeof useForm<SignUpFormData>>["handleSubmit"];
+  email: string;
+  emailChecked: boolean;
   errors: ReturnType<typeof useForm<SignUpFormData>>["formState"]["errors"];
+  handleEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSubmit: ReturnType<typeof useForm<SignUpFormData>>["handleSubmit"];
+  isCheckingEmail: boolean;
   isSubmitting: boolean;
-  watch: ReturnType<typeof useForm<SignUpFormData>>["watch"];
+  mode: AuthMode;
+  onSubmit: (data: SignUpFormData) => Promise<void>;
+  passwordMismatchError: string | null;
+  register: ReturnType<typeof useForm<SignUpFormData>>["register"];
+  resetMode: () => void;
+  setApiError: (error: string | null) => void;
+  setEmail: (email: string) => void;
+  setPasswordMismatchError: (error: string | null) => void;
   setValue: ReturnType<typeof useForm<SignUpFormData>>["setValue"];
   trigger: ReturnType<typeof useForm<SignUpFormData>>["trigger"];
-  onSubmit: (data: SignUpFormData) => Promise<void>;
-  handleEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  resetMode: () => void;
+  watch: ReturnType<typeof useForm<SignUpFormData>>["watch"];
 }
 
 export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
@@ -69,7 +70,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
   } = useForm<SignUpFormData>({
     // Pass mode via context so resolver always gets current value
     context: { mode },
-    resolver: async (data, resolverContext, options) => {
+    resolver: (async (data, resolverContext, options) => {
       try {
         // Read mode from context (which updates on re-render) instead of closure
         const contextWithMode = resolverContext as
@@ -77,16 +78,14 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
           | undefined;
         const currentMode = contextWithMode?.mode;
         const schema = currentMode === "signUp" ? signUpSchema : signInSchema;
-        const result = await zodResolver(schema)(
-          data,
-          resolverContext,
-          options
-        );
-        return result;
+        const resolve = zodResolver(
+          schema
+        ) as unknown as Resolver<SignUpFormData>;
+        return await resolve(data, resolverContext, options);
       } catch {
         return { errors: {}, values: data };
       }
-    },
+    }) as Resolver<SignUpFormData>,
     mode: "onChange",
     defaultValues: {
       email: "",

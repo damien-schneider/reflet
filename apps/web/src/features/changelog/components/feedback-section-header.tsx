@@ -31,14 +31,14 @@ const LINK_STATUS_OPTIONS = [
 ] as const;
 
 interface FeedbackSectionHeaderProps {
-  linkedCount: number;
-  releaseId: Id<"releases"> | null;
-  isMatching: boolean;
-  description: string;
   availableFeedback: Array<{ _id: Id<"feedback"> }> | undefined;
+  description: string;
+  isMatching: boolean;
+  linkedCount: number;
   linkStatus: FeedbackLinkStatus;
   onLinkStatusChange: (status: FeedbackLinkStatus) => void;
   onTriggerMatching: () => void;
+  releaseId: Id<"releases"> | null;
 }
 
 export function FeedbackSectionHeader({

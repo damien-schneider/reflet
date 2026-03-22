@@ -7,13 +7,13 @@ export { RefletChangelogWidget } from "./widget";
 
 declare global {
   interface Window {
-    RefletChangelogWidget?: typeof RefletChangelogWidget;
-    RefletChangelog?: Partial<ChangelogWidgetConfig>;
     __refletChangelogWidgetInstance?: RefletChangelogWidget;
     Reflet?: ((...args: unknown[]) => unknown) &
       Partial<ChangelogWidgetConfig> & {
         _changelogWidget?: RefletChangelogWidget;
       };
+    RefletChangelog?: Partial<ChangelogWidgetConfig>;
+    RefletChangelogWidget?: typeof RefletChangelogWidget;
   }
 }
 

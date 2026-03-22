@@ -20,17 +20,17 @@ import { cn } from "@/lib/utils";
 
 interface WebsiteReference {
   _id: Id<"websiteReferences">;
-  url: string;
-  title?: string;
   description?: string;
-  status: "pending" | "fetching" | "success" | "error";
   errorMessage?: string;
   lastFetchedAt?: number;
+  status: "pending" | "fetching" | "success" | "error";
+  title?: string;
+  url: string;
 }
 
 interface WebsiteReferenceCardProps {
-  reference: WebsiteReference;
   isAdmin: boolean;
+  reference: WebsiteReference;
 }
 
 export function WebsiteReferenceCard({

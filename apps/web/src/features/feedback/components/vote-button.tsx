@@ -14,11 +14,11 @@ import { capture } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 interface VoteButtonProps {
+  className?: string;
   feedbackId: Id<"feedback">;
-  voteCount: number;
   hasVoted?: boolean;
   size?: "sm" | "md" | "lg";
-  className?: string;
+  voteCount: number;
 }
 
 export function VoteButton({

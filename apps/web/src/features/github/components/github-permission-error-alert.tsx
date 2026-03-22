@@ -11,10 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface GitHubPermissionErrorAlertProps {
-  title?: string;
   message?: string;
-  onResync: () => void;
   onDismiss?: () => void;
+  onResync: () => void;
+  title?: string;
 }
 
 export function GitHubPermissionErrorAlert({

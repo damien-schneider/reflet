@@ -29,9 +29,9 @@ export const TAG_COLOR_LABELS: Record<TagColor, string> = {
 // Color values matching Notion's tag palette (used by badge variants)
 interface ColorValue {
   bg: string;
-  text: string;
   darkBg: string;
   darkText: string;
+  text: string;
 }
 
 const COLOR_VALUES: Record<TagColor, ColorValue> = {

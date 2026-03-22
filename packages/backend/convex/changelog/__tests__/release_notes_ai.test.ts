@@ -8,17 +8,17 @@ const BREAKING_CHANGES_RE =
   /breaking changes.*highlight|highlight.*breaking changes/i;
 
 interface Commit {
-  sha: string;
-  message: string;
-  fullMessage?: string;
   author: string;
+  fullMessage?: string;
+  message: string;
+  sha: string;
 }
 
 interface FileChange {
-  filename: string;
-  status: string;
   additions: number;
   deletions: number;
+  filename: string;
+  status: string;
 }
 
 // Replicate exact prompt construction logic from release_notes_ai.ts handler

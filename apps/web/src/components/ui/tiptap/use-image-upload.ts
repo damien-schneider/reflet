@@ -6,8 +6,8 @@ import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
 
 interface UseImageUploadOptions {
-  onSuccess?: (url: string) => void;
   onError?: (error: Error) => void;
+  onSuccess?: (url: string) => void;
 }
 
 export function useImageUpload({

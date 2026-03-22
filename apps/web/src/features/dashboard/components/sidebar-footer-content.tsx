@@ -26,8 +26,8 @@ import {
 } from "@/components/ui/theme-toggle";
 
 interface SidebarFooterContentProps {
-  orgSlug?: string;
   isPublic?: boolean;
+  orgSlug?: string;
 }
 
 export function SidebarFooterContent({

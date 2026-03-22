@@ -19,8 +19,8 @@ const getMarkdown = (storage: unknown): string => {
 };
 
 interface MarkdownRendererProps {
-  content: string;
   className?: string;
+  content: string;
 }
 
 export function MarkdownRenderer({

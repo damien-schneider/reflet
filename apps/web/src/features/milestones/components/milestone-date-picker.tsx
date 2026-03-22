@@ -15,9 +15,9 @@ import { getDeadlineColor, getDeadlineInfo } from "@/lib/milestone-deadline";
 import { cn } from "@/lib/utils";
 
 interface MilestoneDatePickerProps {
-  value: number | undefined;
-  onChange: (date: number | undefined) => void;
   milestoneStatus?: string;
+  onChange: (date: number | undefined) => void;
+  value: number | undefined;
 }
 
 export function MilestoneDatePicker({

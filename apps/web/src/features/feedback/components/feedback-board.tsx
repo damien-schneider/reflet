@@ -31,21 +31,21 @@ import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
 
 // Props for the FeedbackBoard component
 export interface FeedbackBoardProps {
+  /** Card design style for the feed view */
+  cardStyle?: CardStyle;
+  /** Default view mode */
+  defaultView?: BoardViewType;
+  /** Whether the current user is an admin */
+  isAdmin: boolean;
+  /** Whether the current user is a member */
+  isMember: boolean;
+  /** Whether the org is public (for permission checks) */
+  isPublic: boolean;
+  /** Milestone view style */
+  milestoneViewStyle?: "track" | "editorial-accordion" | "dashboard-timeline";
   organizationId: Id<"organizations">;
   orgSlug: string;
   primaryColor?: string;
-  /** Whether the current user is a member */
-  isMember: boolean;
-  /** Whether the current user is an admin */
-  isAdmin: boolean;
-  /** Whether the org is public (for permission checks) */
-  isPublic: boolean;
-  /** Default view mode */
-  defaultView?: BoardViewType;
-  /** Card design style for the feed view */
-  cardStyle?: CardStyle;
-  /** Milestone view style */
-  milestoneViewStyle?: "track" | "editorial-accordion" | "dashboard-timeline";
 }
 
 /**

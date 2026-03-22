@@ -147,8 +147,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
+    @apply bg-background text-foreground antialiased;
   }
   /* Display font utility for headings */
   .font-display {
@@ -262,8 +262,8 @@
 
 .hero-animate {
   opacity: 0;
-  animation-fill-mode: forwards;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: forwards;
 }
 
 .hero-fade-up {
@@ -275,33 +275,33 @@
 }
 
 .hero-delay-0 {
-  animation-delay: 0s;
   animation-duration: 0.6s;
+  animation-delay: 0s;
 }
 
 .hero-delay-1 {
-  animation-delay: 0.1s;
   animation-duration: 0.7s;
+  animation-delay: 0.1s;
 }
 
 .hero-delay-2 {
-  animation-delay: 0.2s;
   animation-duration: 0.6s;
+  animation-delay: 0.2s;
 }
 
 .hero-delay-3 {
-  animation-delay: 0.3s;
   animation-duration: 0.5s;
+  animation-delay: 0.3s;
 }
 
 .hero-delay-5 {
-  animation-delay: 0.5s;
   animation-duration: 0.8s;
+  animation-delay: 0.5s;
 }
 
 .hero-delay-6 {
-  animation-delay: 0.6s;
   animation-duration: 0.5s;
+  animation-delay: 0.6s;
 }
 
 @keyframes dialog-in {
@@ -318,13 +318,13 @@
 }
 
 .hero-delay-7 {
-  animation-delay: 0.7s;
   animation-duration: 0.5s;
+  animation-delay: 0.7s;
 }
 
 .hero-delay-8 {
-  animation-delay: 0.8s;
   animation-duration: 0.5s;
+  animation-delay: 0.8s;
 }
 
 @layer components {

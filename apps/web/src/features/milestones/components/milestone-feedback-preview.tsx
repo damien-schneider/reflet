@@ -6,16 +6,16 @@ import { cn } from "@/lib/utils";
 
 interface FeedbackPreviewItem {
   _id: string;
+  status: string;
   title: string;
   voteCount: number;
-  status: string;
 }
 
 interface MilestoneFeedbackPreviewProps {
-  items: (FeedbackPreviewItem | null)[];
-  totalCount: number;
-  onFeedbackClick?: (feedbackId: string) => void;
   className?: string;
+  items: (FeedbackPreviewItem | null)[];
+  onFeedbackClick?: (feedbackId: string) => void;
+  totalCount: number;
 }
 
 export function MilestoneFeedbackPreview({

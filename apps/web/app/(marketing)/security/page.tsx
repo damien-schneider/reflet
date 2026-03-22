@@ -136,11 +136,11 @@ const API_SECURITY = [
 ] as const;
 
 interface SecurityCard {
-  id: string;
-  icon: React.ComponentType<{ size?: number }>;
-  title: string;
   description: string;
+  icon: React.ComponentType<{ size?: number }>;
+  id: string;
   link?: { href: string; label: string; external?: boolean };
+  title: string;
 }
 
 const linkClassName =

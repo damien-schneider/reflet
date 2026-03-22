@@ -46,6 +46,9 @@ import { cn } from "@/lib/utils";
 import { MilestoneDatePicker } from "./milestone-date-picker";
 
 interface MilestoneSegmentProps {
+  className?: string;
+  isActive: boolean;
+  isAdmin?: boolean;
   milestone: {
     _id: Id<"milestones">;
     name: string;
@@ -61,11 +64,8 @@ interface MilestoneSegmentProps {
       percentage: number;
     };
   };
-  isActive: boolean;
-  isAdmin?: boolean;
   onClick: () => void;
   style?: React.CSSProperties;
-  className?: string;
 }
 
 const HATCH_PATTERN_ID = "milestone-hatch";

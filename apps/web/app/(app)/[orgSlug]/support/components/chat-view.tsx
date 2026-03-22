@@ -12,21 +12,21 @@ import { MessageInput } from "@/features/inbox/components/message-input";
 import { MessageList } from "@/features/inbox/components/message-list";
 
 interface MessageSender {
-  id?: string;
-  name?: string;
   email?: string;
+  id?: string;
   image?: string;
+  name?: string;
 }
 
 interface Message {
   _id: Id<"supportMessages">;
+  body: string;
+  createdAt: number;
+  isOwnMessage: boolean;
+  isRead: boolean;
+  sender?: MessageSender;
   senderId: string;
   senderType: "user" | "admin";
-  body: string;
-  isRead: boolean;
-  createdAt: number;
-  sender?: MessageSender;
-  isOwnMessage: boolean;
 }
 
 interface ChatViewProps {

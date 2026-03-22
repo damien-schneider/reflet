@@ -4,14 +4,14 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useCallback, useState } from "react";
 
 interface CreateCommentArgs {
-  feedbackId: Id<"feedback">;
   body: string;
+  feedbackId: Id<"feedback">;
   parentId?: Id<"comments">;
 }
 
 interface UpdateCommentArgs {
-  id: Id<"comments">;
   body: string;
+  id: Id<"comments">;
 }
 
 interface DeleteCommentArgs {
@@ -19,10 +19,10 @@ interface DeleteCommentArgs {
 }
 
 interface UseCommentEditingParams {
-  feedbackId: Id<"feedback"> | null;
   createComment: (args: CreateCommentArgs) => Promise<unknown>;
-  updateComment: (args: UpdateCommentArgs) => Promise<unknown>;
   deleteComment: (args: DeleteCommentArgs) => Promise<unknown>;
+  feedbackId: Id<"feedback"> | null;
+  updateComment: (args: UpdateCommentArgs) => Promise<unknown>;
 }
 
 export function useCommentEditing({

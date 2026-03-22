@@ -8,16 +8,16 @@ import { PriorityBadge } from "./priority-badge";
 import { TimeEstimateBadge } from "./time-estimate-badge";
 
 export interface AiAnalysisDisplayProps {
-  feedbackId: Id<"feedback">;
-  aiPriority?: Priority | null;
-  aiPriorityReasoning?: string | null;
   aiComplexity?: Complexity | null;
   aiComplexityReasoning?: string | null;
+  aiPriority?: Priority | null;
+  aiPriorityReasoning?: string | null;
   aiTimeEstimate?: string | null;
-  priority?: Priority | null;
   complexity?: Complexity | null;
-  timeEstimate?: string | null;
+  feedbackId: Id<"feedback">;
   isAdmin: boolean;
+  priority?: Priority | null;
+  timeEstimate?: string | null;
 }
 
 export function AiAnalysisDisplay({

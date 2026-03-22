@@ -9,13 +9,13 @@ import type { ReleaseData } from "./release-item";
 import { ReleaseItem } from "./release-item";
 
 interface ReleaseTimelineProps<T extends ReleaseData> {
-  releases: T[];
-  orgSlug: string;
+  emptyAction?: React.ReactNode;
   isAdmin?: boolean;
+  onDelete?: (release: T) => void;
   onPublish?: (id: Id<"releases">) => void;
   onUnpublish?: (id: Id<"releases">) => void;
-  onDelete?: (release: T) => void;
-  emptyAction?: React.ReactNode;
+  orgSlug: string;
+  releases: T[];
 }
 
 export function ReleaseTimeline<T extends ReleaseData>({

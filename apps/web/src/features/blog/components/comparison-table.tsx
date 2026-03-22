@@ -5,15 +5,15 @@ import { H3 } from "@/components/ui/typography";
 type FeatureValue = "yes" | "no" | "partial" | "strong" | string;
 
 interface Feature {
-  name: string;
-  reflet: FeatureValue;
   competitor: FeatureValue;
   description?: string;
+  name: string;
+  reflet: FeatureValue;
 }
 
 interface ComparisonTableProps {
-  competitorName: string;
   competitorLogo?: string;
+  competitorName: string;
   features: Feature[];
 }
 
@@ -105,12 +105,12 @@ export function ComparisonTable({
 
 interface PricingComparisonProps {
   competitorName: string;
-  refletPricing: {
+  competitorPricing: {
     free: string;
     paid: string;
     enterprise?: string;
   };
-  competitorPricing: {
+  refletPricing: {
     free: string;
     paid: string;
     enterprise?: string;

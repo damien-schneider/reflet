@@ -30,16 +30,16 @@ import { cn } from "@/lib/utils";
 import type { Workflow } from "../release-setup-wizard";
 
 interface BranchInfo {
-  name: string;
   isProtected: boolean;
+  name: string;
 }
 
 interface WorkflowStepProps {
-  value: Workflow;
-  onChange: (workflow: Workflow) => void;
-  targetBranch: string;
   onBranchChange: (branch: string) => void;
+  onChange: (workflow: Workflow) => void;
   organizationId: Id<"organizations">;
+  targetBranch: string;
+  value: Workflow;
 }
 
 const WORKFLOW_OPTIONS = [

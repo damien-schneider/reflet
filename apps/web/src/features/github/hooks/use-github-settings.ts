@@ -5,10 +5,10 @@ import { useCallback, useState } from "react";
 import { capture } from "@/lib/analytics";
 
 interface ApiErrorResponse {
-  success?: boolean;
-  error?: string;
   code?: string;
+  error?: string;
   message?: string;
+  success?: boolean;
 }
 
 const parseApiError = (json: unknown): ApiErrorResponse => {
@@ -33,27 +33,31 @@ type IssueStatus =
   | "closed";
 
 interface Repository {
-  id: string;
-  fullName: string;
-  name: string;
   defaultBranch: string;
-  isPrivate: boolean;
   description: string | null;
+  fullName: string;
+  id: string;
+  isPrivate: boolean;
+  name: string;
 }
 
 interface GitHubLabel {
-  id: string;
-  name: string;
   color: string;
   description: string | null;
+  id: string;
+  name: string;
 }
 
 interface UseGitHubSettingsProps {
-  orgId: Id<"organizations"> | undefined;
-  orgSlug: string | undefined;
-  isConnected: boolean;
+  deleteLabelMapping: (args: {
+    mappingId: Id<"githubLabelMappings">;
+  }) => Promise<void>;
+  disconnect: (args: { organizationId: Id<"organizations"> }) => Promise<void>;
   hasRepository: boolean;
   hasWebhook?: boolean;
+  isConnected: boolean;
+  orgId: Id<"organizations"> | undefined;
+  orgSlug: string | undefined;
   selectRepository: (args: {
     organizationId: Id<"organizations">;
     repositoryId: string;
@@ -64,7 +68,6 @@ interface UseGitHubSettingsProps {
     organizationId: Id<"organizations">;
     enabled: boolean;
   }) => Promise<void>;
-  disconnect: (args: { organizationId: Id<"organizations"> }) => Promise<void>;
   toggleIssuesSync: (args: {
     organizationId: Id<"organizations">;
     enabled: boolean;
@@ -78,9 +81,6 @@ interface UseGitHubSettingsProps {
     autoSync: boolean;
     syncClosedIssues?: boolean;
     defaultStatus?: IssueStatus;
-  }) => Promise<void>;
-  deleteLabelMapping: (args: {
-    mappingId: Id<"githubLabelMappings">;
   }) => Promise<void>;
 }
 

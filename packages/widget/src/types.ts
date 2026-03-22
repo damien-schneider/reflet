@@ -1,32 +1,32 @@
 export interface WidgetConfig {
-  widgetId: string;
-  organizationName: string;
-  primaryColor: string;
-  position: "bottom-right" | "bottom-left";
-  welcomeMessage: string;
-  greetingMessage?: string;
-  showLauncher: boolean;
   autoOpen: boolean;
-  zIndex: number;
+  greetingMessage?: string;
   hideBranding?: boolean;
+  organizationName: string;
+  position: "bottom-right" | "bottom-left";
+  primaryColor: string;
+  showLauncher: boolean;
+  welcomeMessage: string;
+  widgetId: string;
+  zIndex: number;
 }
 
 export interface WidgetMessage {
-  id: string;
   body: string;
-  senderType: "user" | "admin";
-  isOwnMessage: boolean;
   createdAt: number;
+  id: string;
+  isOwnMessage: boolean;
+  senderType: "user" | "admin";
 }
 
 export interface WidgetState {
-  isOpen: boolean;
-  isLoading: boolean;
   config: WidgetConfig | null;
   conversationId: string | null;
-  visitorId: string | null;
+  isLoading: boolean;
+  isOpen: boolean;
   messages: WidgetMessage[];
   unreadCount: number;
+  visitorId: string | null;
 }
 
 export interface ConvexClientConfig {

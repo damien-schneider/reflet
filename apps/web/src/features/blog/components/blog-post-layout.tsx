@@ -13,9 +13,9 @@ import {
 } from "@/lib/seo-json-ld";
 
 interface BlogPostLayoutProps {
+  children: React.ReactNode;
   meta: BlogPostMeta;
   slug: string;
-  children: React.ReactNode;
 }
 
 export function BlogPostLayout({ meta, slug, children }: BlogPostLayoutProps) {

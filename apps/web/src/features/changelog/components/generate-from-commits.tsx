@@ -11,36 +11,36 @@ import { Button } from "@/components/ui/button";
 import { capture } from "@/lib/analytics";
 
 export interface CommitInfo {
-  sha: string;
-  message: string;
-  fullMessage: string;
   author: string;
   date: string;
+  fullMessage: string;
+  message: string;
+  sha: string;
 }
 
 export interface FileInfo {
-  filename: string;
-  status: string;
   additions: number;
   deletions: number;
+  filename: string;
+  status: string;
 }
 
 interface GenerateFromCommitsProps {
-  organizationId: Id<"organizations">;
-  orgSlug: string;
-  releaseId: Id<"releases"> | null;
-  version: string;
-  onStreamStart: () => void;
-  onStreamChunk: (content: string) => void;
-  onComplete: (content: string) => void;
-  onTitleGenerated: (title: string) => void;
+  disabled?: boolean;
+  isStreaming?: boolean;
   onCommitsFetched?: (
     commits: CommitInfo[],
     files: FileInfo[] | undefined,
     previousTag: string | null
   ) => void;
-  disabled?: boolean;
-  isStreaming?: boolean;
+  onComplete: (content: string) => void;
+  onStreamChunk: (content: string) => void;
+  onStreamStart: () => void;
+  onTitleGenerated: (title: string) => void;
+  organizationId: Id<"organizations">;
+  orgSlug: string;
+  releaseId: Id<"releases"> | null;
+  version: string;
 }
 
 export function GenerateFromCommits({

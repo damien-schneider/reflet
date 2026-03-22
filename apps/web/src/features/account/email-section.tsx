@@ -22,9 +22,9 @@ import {
 import { authClient } from "@/lib/auth-client";
 
 interface EmailSectionProps {
-  user: { email?: string | null } | undefined;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  user: { email?: string | null } | undefined;
 }
 
 export function EmailSection({

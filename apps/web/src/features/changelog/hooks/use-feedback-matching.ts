@@ -6,29 +6,29 @@ import type { CommitInfo } from "../components/generate-from-commits";
 
 interface FeedbackCandidate {
   _id: Id<"feedback">;
-  title: string;
   description?: string;
   status: string;
-  voteCount: number;
   tags: Array<{ _id: Id<"tags">; name: string }>;
+  title: string;
+  voteCount: number;
 }
 
 export interface FeedbackMatch {
-  feedbackId: string;
   confidence: "high" | "medium" | "low";
+  feedbackId: string;
   reason: string;
 }
 
 interface UseFeedbackMatchingResult {
-  matches: FeedbackMatch[];
+  clearMatches: () => void;
   isMatching: boolean;
   matchError: string | null;
+  matches: FeedbackMatch[];
   matchFeedback: (
     releaseNotes: string,
     commits: CommitInfo[],
     feedbackItems: FeedbackCandidate[]
   ) => Promise<void>;
-  clearMatches: () => void;
 }
 
 export function useFeedbackMatching(): UseFeedbackMatchingResult {

@@ -8,8 +8,8 @@ import type { FeedbackItem } from "../feed-feedback-view";
 type VoteType = "upvote" | "downvote" | null;
 
 interface OptimisticVoteState {
-  voteType: VoteType;
   pending: boolean;
+  voteType: VoteType;
 }
 
 export function getVoteValue(
@@ -56,13 +56,13 @@ export function applyOptimisticVote(
 }
 
 interface UseOptimisticVotesOptions {
+  authGuard: (callback: () => void) => void;
   feedback: FeedbackItem[] | undefined;
+  isAuthenticated: boolean;
   toggleVoteMutation: (args: {
     feedbackId: Id<"feedback">;
     voteType: "upvote" | "downvote";
   }) => Promise<unknown>;
-  isAuthenticated: boolean;
-  authGuard: (callback: () => void) => void;
 }
 
 export function useOptimisticVotes({

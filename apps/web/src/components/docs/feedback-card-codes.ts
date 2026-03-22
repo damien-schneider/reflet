@@ -80,4 +80,4 @@ const EDITORIAL_FEED_CODE = `<EditorialFeed>
   </EditorialFeedItem>
 </EditorialFeed>`;
 
-export { SWEEP_CORNER_CODE, MINIMAL_NOTCH_CODE, EDITORIAL_FEED_CODE };
+export { EDITORIAL_FEED_CODE, MINIMAL_NOTCH_CODE, SWEEP_CORNER_CODE };

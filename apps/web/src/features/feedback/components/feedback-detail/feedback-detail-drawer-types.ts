@@ -2,35 +2,35 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 
 export interface FeedbackListItem {
   _id: Id<"feedback">;
-  title: string;
-  description?: string;
-  voteCount: number;
   commentCount: number;
   createdAt: number;
-  organizationStatusId?: Id<"organizationStatuses">;
+  description?: string;
   hasVoted?: boolean;
-  userVoteType?: "upvote" | "downvote" | null;
   organizationId: Id<"organizations">;
+  organizationStatusId?: Id<"organizationStatuses">;
   tags?: Array<{
     _id: Id<"tags">;
     name: string;
     color: string;
     icon?: string;
   } | null>;
+  title: string;
+  userVoteType?: "upvote" | "downvote" | null;
+  voteCount: number;
 }
 
 export interface FeedbackDetailDrawerProps {
+  currentIndex?: number;
   feedbackId: Id<"feedback"> | null;
+  feedbackIds?: Id<"feedback">[];
+  feedbackList?: FeedbackListItem[];
+  hasNext?: boolean;
+  hasPrevious?: boolean;
+  isAdmin?: boolean;
   isOpen: boolean;
   onClose: () => void;
-  isAdmin?: boolean;
-  feedbackList?: FeedbackListItem[];
-  feedbackIds?: Id<"feedback">[];
-  currentIndex?: number;
-  hasPrevious?: boolean;
-  hasNext?: boolean;
-  onPrevious?: () => void;
   onNext?: () => void;
+  onPrevious?: () => void;
 }
 
 export type PriorityLevel = "critical" | "high" | "medium" | "low" | "none";
@@ -42,7 +42,6 @@ export type ComplexityLevel =
   | "very_complex";
 
 export interface FeedbackDetailContentProps {
-  isLoading: boolean | null;
   feedback:
     | {
         _id: Id<"feedback">;
@@ -87,4 +86,5 @@ export interface FeedbackDetailContentProps {
     | undefined;
   feedbackId: Id<"feedback"> | null;
   isAdmin: boolean;
+  isLoading: boolean | null;
 }

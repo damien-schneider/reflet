@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 type CalloutType = "info" | "tip" | "warning" | "success";
 
 interface CalloutProps {
-  type?: CalloutType;
-  title?: string;
   children: React.ReactNode;
+  title?: string;
+  type?: CalloutType;
 }
 
 const styles: Record<

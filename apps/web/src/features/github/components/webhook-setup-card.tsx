@@ -28,13 +28,13 @@ import { Text } from "@/components/ui/typography";
 import { GitHubPermissionErrorAlert } from "./github-permission-error-alert";
 
 interface WebhookSetupCardProps {
-  hasWebhook: boolean;
-  isSettingUp: boolean;
-  isAdmin: boolean;
-  onSetup: () => void;
-  onResync?: () => void;
   error?: { code: string; message: string } | null;
+  hasWebhook: boolean;
+  isAdmin: boolean;
+  isSettingUp: boolean;
   onClearError?: () => void;
+  onResync?: () => void;
+  onSetup: () => void;
 }
 
 export function WebhookSetupCard({

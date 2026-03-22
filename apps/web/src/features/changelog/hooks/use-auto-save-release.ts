@@ -10,11 +10,11 @@ const AUTO_SAVE_DEBOUNCE_MS = 500;
 const SAVED_DISPLAY_MS = 2000;
 
 interface UseAutoSaveReleaseOptions {
-  organizationId: Id<"organizations">;
+  description: string;
   initialReleaseId: Id<"releases"> | null;
+  organizationId: Id<"organizations">;
   title: string;
   version: string;
-  description: string;
 }
 
 interface UseAutoSaveReleaseResult {

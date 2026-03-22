@@ -24,30 +24,6 @@ import { TagDisplay } from "./tag-display";
 import { VoteButtons } from "./vote-buttons";
 
 interface FeedbackMetadataBarProps {
-  feedbackId: Id<"feedback">;
-  organizationId: Id<"organizations">;
-  voteCount: number;
-  userVoteType: "upvote" | "downvote" | null;
-  createdAt: number;
-  organizationStatusId?: Id<"organizationStatuses"> | null;
-  author?: {
-    name?: string | null;
-    email?: string;
-    image?: string | null;
-  } | null;
-  assignee?: {
-    id: string;
-    name?: string | null;
-    email?: string;
-    image?: string | null;
-  } | null;
-  isAdmin: boolean;
-  tags?: Array<FeedbackTag | null>;
-  title: string;
-  description: string | null;
-  attachments?: string[];
-  aiPriority?: "critical" | "high" | "medium" | "low" | "none" | null;
-  aiPriorityReasoning?: string | null;
   aiComplexity?:
     | "trivial"
     | "simple"
@@ -56,8 +32,21 @@ interface FeedbackMetadataBarProps {
     | "very_complex"
     | null;
   aiComplexityReasoning?: string | null;
+  aiPriority?: "critical" | "high" | "medium" | "low" | "none" | null;
+  aiPriorityReasoning?: string | null;
   aiTimeEstimate?: string | null;
-  priority?: "critical" | "high" | "medium" | "low" | "none" | null;
+  assignee?: {
+    id: string;
+    name?: string | null;
+    email?: string;
+    image?: string | null;
+  } | null;
+  attachments?: string[];
+  author?: {
+    name?: string | null;
+    email?: string;
+    image?: string | null;
+  } | null;
   complexity?:
     | "trivial"
     | "simple"
@@ -65,8 +54,19 @@ interface FeedbackMetadataBarProps {
     | "complex"
     | "very_complex"
     | null;
-  timeEstimate?: string | null;
+  createdAt: number;
   deadline?: number | null;
+  description: string | null;
+  feedbackId: Id<"feedback">;
+  isAdmin: boolean;
+  organizationId: Id<"organizations">;
+  organizationStatusId?: Id<"organizationStatuses"> | null;
+  priority?: "critical" | "high" | "medium" | "low" | "none" | null;
+  tags?: Array<FeedbackTag | null>;
+  timeEstimate?: string | null;
+  title: string;
+  userVoteType: "upvote" | "downvote" | null;
+  voteCount: number;
 }
 
 export function FeedbackMetadataBar({

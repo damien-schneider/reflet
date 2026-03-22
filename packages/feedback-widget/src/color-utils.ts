@@ -1,13 +1,13 @@
 export interface WidgetColors {
   bg: string;
   bgSecondary: string;
-  text: string;
-  textMuted: string;
   border: string;
+  error: string;
   primary: string;
   primaryHover: string;
   success: string;
-  error: string;
+  text: string;
+  textMuted: string;
 }
 
 export function createWidgetColors(

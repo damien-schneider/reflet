@@ -17,9 +17,9 @@ const isBoardView = (value: string): value is BoardView =>
   BOARD_VIEWS.some((o) => o === value);
 
 interface BoardViewToggleProps {
-  view: BoardView;
-  onChange: (view: BoardView) => void;
   className?: string;
+  onChange: (view: BoardView) => void;
+  view: BoardView;
 }
 
 export function BoardViewToggle({

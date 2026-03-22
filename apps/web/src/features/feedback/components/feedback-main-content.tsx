@@ -20,6 +20,8 @@ import { H3 } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
 interface FeedbackMainContentProps {
+  children?: React.ReactNode;
+  editedDescription: string;
   feedback: {
     title: string;
     description: string;
@@ -32,17 +34,15 @@ interface FeedbackMainContentProps {
       email?: string | null;
     } | null;
   };
-  isAdmin: boolean;
-  isEditingDescription: boolean;
-  editedDescription: string;
-  isSubmitting: boolean;
-  handleToggleVote: () => Promise<void>;
-  handleTogglePin: () => Promise<void>;
   handleDeleteFeedback: () => void;
   handleSaveDescription: () => Promise<void>;
+  handleTogglePin: () => Promise<void>;
+  handleToggleVote: () => Promise<void>;
+  isAdmin: boolean;
+  isEditingDescription: boolean;
+  isSubmitting: boolean;
   setEditedDescription: (value: string) => void;
   setIsEditingDescription: (value: boolean) => void;
-  children?: React.ReactNode;
 }
 
 export function FeedbackMainContent({

@@ -5,10 +5,10 @@ import { useState } from "react";
 import { capture } from "@/lib/analytics";
 
 interface NewFeedbackState {
-  title: string;
+  attachments: string[];
   description: string;
   email: string;
-  attachments: string[];
+  title: string;
 }
 
 const INITIAL_FEEDBACK: NewFeedbackState = {
@@ -21,15 +21,11 @@ const INITIAL_FEEDBACK: NewFeedbackState = {
 const MAX_TITLE_LENGTH = 100;
 
 interface UseSubmitFeedbackParams {
-  organizationId: Id<"organizations">;
-  isMember: boolean;
-  createFeedbackPublic: (args: {
-    organizationId: Id<"organizations">;
-    title: string;
-    description?: string;
-    email?: string;
-    attachments?: string[];
+  assignFeedback: (args: {
+    feedbackId: Id<"feedback">;
+    assigneeId: string;
   }) => Promise<unknown>;
+  closeSubmitDrawer: () => void;
   createFeedbackMember: (args: {
     organizationId: Id<"organizations">;
     title: string;
@@ -37,11 +33,15 @@ interface UseSubmitFeedbackParams {
     attachments?: string[];
     tagId?: Id<"tags">;
   }) => Promise<Id<"feedback">>;
-  assignFeedback: (args: {
-    feedbackId: Id<"feedback">;
-    assigneeId: string;
+  createFeedbackPublic: (args: {
+    organizationId: Id<"organizations">;
+    title: string;
+    description?: string;
+    email?: string;
+    attachments?: string[];
   }) => Promise<unknown>;
-  closeSubmitDrawer: () => void;
+  isMember: boolean;
+  organizationId: Id<"organizations">;
 }
 
 export function useSubmitFeedback({

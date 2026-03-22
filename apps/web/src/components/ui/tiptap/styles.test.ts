@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 // Read the CSS file content for testing
-const cssPath = join(__dirname, "styles.css");
+const cssPath = join(import.meta.dirname, "styles.css");
 const cssContent = readFileSync(cssPath, "utf-8");
 
 describe("Tiptap Styles", () => {

@@ -17,24 +17,24 @@ import { cn } from "@/lib/utils";
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface MockMilestone {
-  id: string;
-  name: string;
-  emoji: string;
   color: string;
   colorHex: string;
-  timeHorizon: string;
+  daysUntil: number | null;
+  emoji: string;
+  feedbackItems: { title: string; votes: number; status: string }[];
   horizonLabel: string;
   horizonShort: string;
-  targetDate: string | null;
-  daysUntil: number | null;
-  status: "active" | "completed";
+  id: string;
+  name: string;
   progress: {
     total: number;
     completed: number;
     inProgress: number;
     percentage: number;
   };
-  feedbackItems: { title: string; votes: number; status: string }[];
+  status: "active" | "completed";
+  targetDate: string | null;
+  timeHorizon: string;
 }
 
 const MOCK_MILESTONES: MockMilestone[] = [
@@ -2168,13 +2168,13 @@ function DesignCompactRail() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface DesignEntry {
-  id: string;
-  name: string;
-  description: string;
-  question: string;
-  traits: string[];
   category: "favorite" | "hybrid";
   component: () => ReactNode;
+  description: string;
+  id: string;
+  name: string;
+  question: string;
+  traits: string[];
 }
 
 const DESIGNS: DesignEntry[] = [

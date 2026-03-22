@@ -23,10 +23,10 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 interface PushNotificationState {
+  isLoading: boolean;
+  isSubscribed: boolean;
   isSupported: boolean;
   permissionState: NotificationPermission | "unsupported";
-  isSubscribed: boolean;
-  isLoading: boolean;
   registration: ServiceWorkerRegistration | null;
 }
 

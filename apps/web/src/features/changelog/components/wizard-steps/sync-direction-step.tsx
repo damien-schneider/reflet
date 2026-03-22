@@ -26,16 +26,16 @@ import { cn } from "@/lib/utils";
 type SyncDirection = "github_first" | "reflet_first" | "bidirectional" | "none";
 
 interface BranchInfo {
-  name: string;
   isProtected: boolean;
+  name: string;
 }
 
 interface SyncDirectionStepProps {
-  value: SyncDirection;
-  onChange: (direction: SyncDirection) => void;
-  targetBranch: string;
   onBranchChange: (branch: string) => void;
+  onChange: (direction: SyncDirection) => void;
   organizationId: Id<"organizations">;
+  targetBranch: string;
+  value: SyncDirection;
 }
 
 const SYNC_OPTIONS = [

@@ -110,9 +110,9 @@ function isLightColor(hex: string): boolean {
 
 export interface ColorPalette {
   primary: string;
+  primaryForeground: string;
   primaryHover: string;
   primaryLight: string;
-  primaryForeground: string;
 }
 
 /**

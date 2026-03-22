@@ -9,15 +9,15 @@ import { cn } from "@/lib/utils";
 import "./styles.css";
 
 interface TiptapTitleEditorProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  className?: string;
-  style?: React.CSSProperties;
   autoFocus?: boolean;
+  className?: string;
+  disabled?: boolean;
+  onChange: (value: string) => void;
   onEnter?: () => void;
   onSubmit?: () => void;
+  placeholder?: string;
+  style?: React.CSSProperties;
+  value: string;
 }
 
 export function TiptapTitleEditor({

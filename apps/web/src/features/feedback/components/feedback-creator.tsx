@@ -11,10 +11,10 @@ import { capture } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 interface FeedbackCreatorProps {
-  organizationId: Id<"organizations">;
   className?: string;
-  onSuccess?: () => void;
   onCancel?: () => void;
+  onSuccess?: () => void;
+  organizationId: Id<"organizations">;
 }
 
 export function FeedbackCreator({

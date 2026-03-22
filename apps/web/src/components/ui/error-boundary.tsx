@@ -6,18 +6,18 @@ import { ErrorDisplay } from "./error-display";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
+  className?: string;
+  description?: string;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
-  title?: string;
-  description?: string;
-  size?: "sm" | "md" | "lg";
   showError?: boolean;
-  className?: string;
+  size?: "sm" | "md" | "lg";
+  title?: string;
 }
 
 interface ErrorBoundaryState {
-  hasError: boolean;
   error: Error | null;
+  hasError: boolean;
 }
 
 export class ErrorBoundary extends Component<

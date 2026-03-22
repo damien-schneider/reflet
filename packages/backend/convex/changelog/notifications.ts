@@ -19,8 +19,8 @@ function stripHtmlTags(html: string): string {
 interface Subscriber {
   _id: string;
   email?: string;
-  userId?: string;
   unsubscribeToken: string;
+  userId?: string;
 }
 
 async function resolveSubscriberEmail(

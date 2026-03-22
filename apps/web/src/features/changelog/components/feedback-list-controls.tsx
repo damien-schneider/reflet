@@ -49,8 +49,8 @@ function StatusBadge({ status }: { status: string }) {
 
 interface LinkedFeedbackListProps {
   items: Array<{ _id: Id<"feedback">; title: string; status: string }>;
-  releaseId: Id<"releases"> | null;
   onUnlink: (feedbackId: Id<"feedback">) => void;
+  releaseId: Id<"releases"> | null;
 }
 
 export function LinkedFeedbackList({
@@ -88,14 +88,14 @@ export function LinkedFeedbackList({
 // --- Manual Feedback Search ---
 
 interface FeedbackSearchInputProps {
+  onLink: (feedbackId: Id<"feedback">) => void;
   searchQuery: string;
-  setSearchQuery: (query: string) => void;
   searchResults: Array<{
     _id: Id<"feedback">;
     title: string;
     status: string;
   }>;
-  onLink: (feedbackId: Id<"feedback">) => void;
+  setSearchQuery: (query: string) => void;
 }
 
 export function FeedbackSearchInput({

@@ -8,15 +8,15 @@ import { useCallback, useState } from "react";
 type MediaType = "image" | "video";
 
 export interface MediaUploadResult {
-  url: string;
   type: MediaType;
+  url: string;
 }
 
 interface UseMediaUploadOptions {
-  onSuccess?: (result: MediaUploadResult) => void;
-  onError?: (error: Error) => void;
   maxImageSizeMB?: number;
   maxVideoSizeMB?: number;
+  onError?: (error: Error) => void;
+  onSuccess?: (result: MediaUploadResult) => void;
 }
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];

@@ -2,22 +2,6 @@
  * Widget configuration options
  */
 export interface WidgetConfig {
-  /** Board's public API key */
-  publicKey: string;
-  /** Widget display mode */
-  mode?: "floating" | "inline" | "portal";
-  /** Position for floating widget */
-  position?: "bottom-right" | "bottom-left";
-  /** Color theme */
-  theme?: "light" | "dark" | "auto";
-  /** Primary brand color */
-  primaryColor?: string;
-  /** Widget locale */
-  locale?: string;
-  /** URL to redirect unauthenticated users for login */
-  loginUrl?: string;
-  /** Target element ID for inline/portal mode */
-  targetId?: string;
   /** Feature toggles */
   features?: {
     voting?: boolean;
@@ -26,6 +10,27 @@ export interface WidgetConfig {
     changelog?: boolean;
     createFeedback?: boolean;
   };
+  /** Widget locale */
+  locale?: string;
+  /** URL to redirect unauthenticated users for login */
+  loginUrl?: string;
+  /** Widget display mode */
+  mode?: "floating" | "inline" | "portal";
+  onClose?: () => void;
+  /** Callbacks */
+  onFeedbackCreated?: (feedback: { id: string; title: string }) => void;
+  onOpen?: () => void;
+  onVote?: (feedbackId: string, voted: boolean) => void;
+  /** Position for floating widget */
+  position?: "bottom-right" | "bottom-left";
+  /** Primary brand color */
+  primaryColor?: string;
+  /** Board's public API key */
+  publicKey: string;
+  /** Target element ID for inline/portal mode */
+  targetId?: string;
+  /** Color theme */
+  theme?: "light" | "dark" | "auto";
   /** User identification */
   user?: {
     id: string;
@@ -35,41 +40,36 @@ export interface WidgetConfig {
   };
   /** Pre-signed user token (alternative to user object) */
   userToken?: string;
-  /** Callbacks */
-  onFeedbackCreated?: (feedback: { id: string; title: string }) => void;
-  onVote?: (feedbackId: string, voted: boolean) => void;
-  onOpen?: () => void;
-  onClose?: () => void;
 }
 
 /**
  * Internal widget state
  */
 export interface WidgetState {
-  isOpen: boolean;
-  isLoading: boolean;
-  view: "list" | "detail" | "create" | "roadmap" | "changelog";
   boardConfig: BoardConfig | null;
+  error: string | null;
   feedbackItems: FeedbackItem[];
+  isLoading: boolean;
+  isOpen: boolean;
   selectedFeedback: FeedbackItem | null;
   selectedFeedbackComments: Comment[];
-  error: string | null;
+  view: "list" | "detail" | "create" | "roadmap" | "changelog";
 }
 
 /**
  * Board configuration from API
  */
 export interface BoardConfig {
+  description?: string;
   id: string;
   name: string;
-  slug: string;
-  description?: string;
   organization: {
     id: string;
     name: string;
     logo?: string;
     primaryColor?: string;
   };
+  slug: string;
   statuses: Array<{
     id: string;
     name: string;
@@ -82,33 +82,33 @@ export interface BoardConfig {
  * Feedback item from API
  */
 export interface FeedbackItem {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  voteCount: number;
-  commentCount: number;
-  isPinned: boolean;
-  hasVoted: boolean;
-  createdAt: number;
-  tags: Array<{ id: string; name: string; color: string }>;
-  boardStatus: { id: string; name: string; color: string } | null;
   author: { name?: string; avatar?: string } | null;
+  boardStatus: { id: string; name: string; color: string } | null;
+  commentCount: number;
+  createdAt: number;
+  description: string;
+  hasVoted: boolean;
+  id: string;
+  isPinned: boolean;
+  status: string;
+  tags: Array<{ id: string; name: string; color: string }>;
+  title: string;
+  voteCount: number;
 }
 
 /**
  * Comment from API
  */
 export interface Comment {
-  id: string;
-  body: string;
-  isOfficial: boolean;
   author: { name?: string; avatar?: string } | null;
+  body: string;
+  createdAt: number;
+  id: string;
+  isOfficial: boolean;
   replies: Array<{
     id: string;
     body: string;
     author: { name?: string; avatar?: string } | null;
     createdAt: number;
   }>;
-  createdAt: number;
 }

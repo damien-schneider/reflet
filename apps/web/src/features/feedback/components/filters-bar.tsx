@@ -32,17 +32,17 @@ const sortLabels: Record<SortOption, string> = {
 };
 
 export interface FiltersBarProps {
-  sortBy: SortOption;
-  onSortChange: (sort: SortOption) => void;
   hideCompleted: boolean;
-  onHideCompletedToggle: () => void;
-  statuses: Array<{ _id: string; name: string; color?: string }>;
-  selectedStatusIds: string[];
-  onStatusChange: (id: string, checked: boolean) => void;
-  tags: Array<{ _id: string; name: string; color: string }>;
-  selectedTagIds: string[];
-  onTagChange: (id: string, checked: boolean) => void;
   onClearFilters: () => void;
+  onHideCompletedToggle: () => void;
+  onSortChange: (sort: SortOption) => void;
+  onStatusChange: (id: string, checked: boolean) => void;
+  onTagChange: (id: string, checked: boolean) => void;
+  selectedStatusIds: string[];
+  selectedTagIds: string[];
+  sortBy: SortOption;
+  statuses: Array<{ _id: string; name: string; color?: string }>;
+  tags: Array<{ _id: string; name: string; color: string }>;
 }
 
 export function FiltersBar({

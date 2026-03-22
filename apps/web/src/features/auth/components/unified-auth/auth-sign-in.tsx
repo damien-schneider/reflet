@@ -7,11 +7,11 @@ import type { AuthMode } from "./hooks/use-auth-form";
 import { animationVariants } from "./lib/auth-validation";
 
 interface AuthSubmitButtonProps {
-  mode: AuthMode;
-  isSubmitting: boolean;
+  apiError: string | null;
   isCheckingEmail: boolean;
   isFormValid: boolean;
-  apiError: string | null;
+  isSubmitting: boolean;
+  mode: AuthMode;
 }
 
 function getButtonText(mode: AuthMode, isSubmitting: boolean): string {

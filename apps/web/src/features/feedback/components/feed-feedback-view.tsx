@@ -22,18 +22,24 @@ export type { SortOption } from "./filters-bar";
 
 export interface FeedbackItem {
   _id: Id<"feedback">;
-  title: string;
-  description?: string;
-  voteCount: number;
+  aiComplexity?: string | null;
+  aiPriority?: string | null;
   commentCount: number;
+  complexity?: string | null;
   createdAt: number;
-  organizationStatusId?: Id<"organizationStatuses">;
-  isPinned?: boolean;
-  hasVoted?: boolean;
-  userVoteType?: "upvote" | "downvote" | null;
-  upvoteCount?: number;
+  description?: string;
   downvoteCount?: number;
+  hasVoted?: boolean;
+  isPinned?: boolean;
+  milestones?: Array<{
+    _id: Id<"milestones">;
+    name: string;
+    emoji?: string;
+  }>;
   organizationId: Id<"organizations">;
+  organizationStatus?: { name: string; color: string; icon?: string } | null;
+  organizationStatusId?: Id<"organizationStatuses">;
+  priority?: string | null;
   tags?: Array<{
     _id: Id<"tags">;
     name: string;
@@ -41,36 +47,30 @@ export interface FeedbackItem {
     icon?: string;
     appliedByAi?: boolean;
   } | null>;
-  organizationStatus?: { name: string; color: string; icon?: string } | null;
-  milestones?: Array<{
-    _id: Id<"milestones">;
-    name: string;
-    emoji?: string;
-  }>;
-  aiPriority?: string | null;
-  aiComplexity?: string | null;
-  priority?: string | null;
-  complexity?: string | null;
+  title: string;
+  upvoteCount?: number;
+  userVoteType?: "upvote" | "downvote" | null;
+  voteCount: number;
 }
 
 export interface FeedFeedbackViewProps {
-  feedback: FeedbackItem[];
-  isLoading: boolean;
-  hasActiveFilters: boolean;
-  hideCompleted: boolean;
-  sortBy: SortOption;
-  onSortChange: (sort: SortOption) => void;
-  onHideCompletedToggle: () => void;
-  onSubmitClick: () => void;
-  statuses: Array<{ _id: string; name: string; color?: string }>;
-  selectedStatusIds: string[];
-  onStatusChange: (id: string, checked: boolean) => void;
-  tags: Array<{ _id: string; name: string; color: string }>;
-  selectedTagIds: string[];
-  onTagChange: (id: string, checked: boolean) => void;
-  onClearFilters: () => void;
   /** Card design style */
   cardStyle?: CardStyle;
+  feedback: FeedbackItem[];
+  hasActiveFilters: boolean;
+  hideCompleted: boolean;
+  isLoading: boolean;
+  onClearFilters: () => void;
+  onHideCompletedToggle: () => void;
+  onSortChange: (sort: SortOption) => void;
+  onStatusChange: (id: string, checked: boolean) => void;
+  onSubmitClick: () => void;
+  onTagChange: (id: string, checked: boolean) => void;
+  selectedStatusIds: string[];
+  selectedTagIds: string[];
+  sortBy: SortOption;
+  statuses: Array<{ _id: string; name: string; color?: string }>;
+  tags: Array<{ _id: string; name: string; color: string }>;
 }
 
 function getEmptyContent({

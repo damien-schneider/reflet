@@ -20,14 +20,14 @@ const getMarkdown = (storage: unknown): string => {
 };
 
 interface TiptapInlineEditorProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  className?: string;
-  maxLength?: number;
-  onSubmit?: () => void;
   autoFocus?: boolean;
+  className?: string;
+  disabled?: boolean;
+  maxLength?: number;
+  onChange: (value: string) => void;
+  onSubmit?: () => void;
+  placeholder?: string;
+  value: string;
 }
 
 export function TiptapInlineEditor({

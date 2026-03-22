@@ -9,12 +9,12 @@ import {
 } from "@/components/ui/dialog";
 
 interface FeedbackDetailDialogsProps {
-  showDeleteDialog: boolean;
-  setShowDeleteDialog: (show: boolean) => void;
-  handleDeleteFeedback: () => void;
   commentToDelete: string | null;
-  setCommentToDelete: (id: string | null) => void;
   handleDeleteComment: () => void;
+  handleDeleteFeedback: () => void;
+  setCommentToDelete: (id: string | null) => void;
+  setShowDeleteDialog: (show: boolean) => void;
+  showDeleteDialog: boolean;
 }
 
 export function FeedbackDetailDialogs({

@@ -3,8 +3,8 @@ import { BaseLayout } from "./base-layout";
 import { baseStyles } from "./styles";
 
 interface WelcomeEmailProps {
-  userName?: string;
   dashboardUrl?: string;
+  userName?: string;
 }
 
 export function WelcomeEmail({

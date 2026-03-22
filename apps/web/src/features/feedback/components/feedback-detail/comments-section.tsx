@@ -82,10 +82,10 @@ export function CommentsSection({ feedbackId }: CommentsSectionProps) {
 }
 
 interface CommentInputProps {
-  value: string;
+  isSubmitting: boolean;
   onCommentChange: (value: string) => void;
   onSubmit: () => void;
-  isSubmitting: boolean;
+  value: string;
 }
 
 function CommentInput({
@@ -131,14 +131,14 @@ function CommentInput({
 // Build recursive comment tree from flat list
 interface RawComment {
   _id: Id<"comments">;
-  body: string;
-  createdAt: number;
-  parentId?: Id<"comments">;
   author?: {
     name?: string;
     email: string;
     image?: string;
   };
+  body: string;
+  createdAt: number;
+  parentId?: Id<"comments">;
 }
 
 function buildCommentTree(rawComments: RawComment[]): CommentData[] {

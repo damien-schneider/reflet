@@ -16,18 +16,18 @@ import {
 import { cn } from "@/lib/utils";
 
 interface TeamMember {
-  id: string;
-  name?: string;
   email: string;
+  id: string;
   image?: string;
+  name?: string;
 }
 
 interface AssignMemberDropdownProps {
-  members: TeamMember[];
   assignedTo?: string;
-  onAssign: (memberId: string | undefined) => void;
-  disabled?: boolean;
   className?: string;
+  disabled?: boolean;
+  members: TeamMember[];
+  onAssign: (memberId: string | undefined) => void;
 }
 
 const INITIALS_SPLIT_PATTERN = /[\s@]/;

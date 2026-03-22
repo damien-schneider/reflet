@@ -13,31 +13,31 @@ export type FeedbackStatus =
   | "closed";
 
 export interface FeedbackTag {
+  color: string;
   id: string;
   name: string;
-  color: string;
 }
 
 export interface FeedbackAuthor {
-  name?: string;
   avatar?: string;
   isExternal: boolean;
+  name?: string;
 }
 
 export interface FeedbackItem {
-  id: string;
-  title: string;
-  description: string;
-  status: FeedbackStatus;
-  voteCount: number;
+  author: FeedbackAuthor | null;
   commentCount: number;
-  hasVoted: boolean;
   createdAt: number;
-  tags: FeedbackTag[];
+  description: string;
+  hasVoted: boolean;
+  id: string;
   organizationStatus: {
     id: string;
     name: string;
     color: string;
   } | null;
-  author: FeedbackAuthor | null;
+  status: FeedbackStatus;
+  tags: FeedbackTag[];
+  title: string;
+  voteCount: number;
 }

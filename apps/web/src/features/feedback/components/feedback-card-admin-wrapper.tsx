@@ -26,8 +26,8 @@ import {
 import { useFeedbackBoard } from "./feedback-board/feedback-board-context";
 
 interface FeedbackCardAdminWrapperProps {
-  feedbackId: Id<"feedback">;
   children: ReactNode;
+  feedbackId: Id<"feedback">;
 }
 
 export function FeedbackCardAdminWrapper({

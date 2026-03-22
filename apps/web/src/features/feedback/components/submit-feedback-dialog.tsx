@@ -34,36 +34,36 @@ const TITLE_COUNTER_THRESHOLD = 90;
 
 interface Tag {
   _id: string;
-  name: string;
   color: string;
   icon?: string;
+  name: string;
 }
 
 interface SubmitFeedbackDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: () => Promise<void>;
   feedback: {
     title: string;
     description: string;
     email: string;
     attachments: string[];
   };
+  isAdmin?: boolean;
+  isMember: boolean;
+  isOpen: boolean;
+  isSubmitting: boolean;
+  onAssigneeChange?: (assigneeId: string | undefined) => void;
   onFeedbackChange: (feedback: {
     title: string;
     description: string;
     email: string;
     attachments: string[];
   }) => void;
-  isSubmitting: boolean;
-  isMember: boolean;
-  isAdmin?: boolean;
-  organizationId?: Id<"organizations">;
-  tags?: Tag[];
-  selectedTagId?: Id<"tags">;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: () => Promise<void>;
   onTagChange?: (tagId: Id<"tags"> | undefined) => void;
+  organizationId?: Id<"organizations">;
   selectedAssigneeId?: string;
-  onAssigneeChange?: (assigneeId: string | undefined) => void;
+  selectedTagId?: Id<"tags">;
+  tags?: Tag[];
 }
 
 export function SubmitFeedbackDialog({

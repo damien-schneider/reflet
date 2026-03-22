@@ -41,9 +41,9 @@ const STATUS_CONFIG: Record<
 };
 
 interface ConversationStatusBadgeProps {
-  status: ConversationStatus | string;
   className?: string;
   showIcon?: boolean;
+  status: ConversationStatus | string;
 }
 
 const isConversationStatus = (value: string): value is ConversationStatus =>

@@ -24,9 +24,9 @@ import { cn } from "@/lib/utils";
 import type { FeedbackItem } from "../feed-feedback-view";
 
 interface EditorialFeedFeedCardProps {
+  className?: string;
   feedback: FeedbackItem;
   onClick?: (feedbackId: Id<"feedback">) => void;
-  className?: string;
 }
 
 export function EditorialFeedFeedCard({

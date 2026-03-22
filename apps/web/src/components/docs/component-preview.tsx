@@ -62,8 +62,8 @@ function CopyButton({ text, className }: { text: string; className?: string }) {
 
 interface ComponentPreviewProps {
   children: ReactNode;
-  code: string;
   className?: string;
+  code: string;
 }
 
 type PreviewTab = "preview" | "code";
@@ -115,8 +115,8 @@ function ComponentPreview({
 // ─── Code Block with Copy ─────────────────────────────────────────────────────
 
 interface CodeBlockProps {
-  code: string;
   className?: string;
+  code: string;
 }
 
 function CodeBlock({ code, className }: CodeBlockProps) {
@@ -142,9 +142,9 @@ function CodeBlock({ code, className }: CodeBlockProps) {
 // ─── Install Tabs (CLI + Manual) ──────────────────────────────────────────────
 
 interface InstallTabsProps {
+  className?: string;
   cliCommand: string;
   manualCode: string;
-  className?: string;
 }
 
 type InstallTab = "cli" | "manual";
@@ -221,4 +221,4 @@ function TabButton({
   );
 }
 
-export { ComponentPreview, CodeBlock, InstallTabs, CopyButton };
+export { CodeBlock, ComponentPreview, CopyButton, InstallTabs };

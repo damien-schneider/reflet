@@ -62,13 +62,13 @@ const descriptionVariants = cva("text-muted-foreground", {
 });
 
 interface ErrorDisplayProps extends VariantProps<typeof errorDisplayVariants> {
-  title?: string;
+  className?: string;
   description?: string;
   error?: Error | null;
   onRetry?: () => void;
   retryLabel?: string;
   showError?: boolean;
-  className?: string;
+  title?: string;
 }
 
 export function ErrorDisplay({

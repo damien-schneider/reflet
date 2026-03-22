@@ -1,14 +1,14 @@
 export interface ChangelogColors {
   bg: string;
   bgSecondary: string;
-  text: string;
-  textMuted: string;
   border: string;
+  error: string;
+  newBadge: string;
   primary: string;
   primaryHover: string;
   primaryLight: string;
-  error: string;
-  newBadge: string;
+  text: string;
+  textMuted: string;
 }
 
 export function createChangelogColors(

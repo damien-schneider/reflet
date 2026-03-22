@@ -32,11 +32,16 @@ import { cn } from "@/lib/utils";
 
 interface StatusData {
   _id: Id<"organizationStatuses">;
-  name: string;
   color: string;
+  name: string;
 }
 
 interface FeedbackHeaderProps {
+  canEdit: boolean;
+  currentStatus: StatusData | undefined;
+  editedTitle: string;
+  effectiveIsAdmin: boolean;
+  effectiveStatuses: StatusData[];
   feedback: {
     hasVoted?: boolean;
     voteCount?: number;
@@ -45,19 +50,14 @@ interface FeedbackHeaderProps {
     commentCount?: number;
     createdAt: number;
   };
-  canEdit: boolean;
-  effectiveIsAdmin: boolean;
   hasUnsavedChanges: boolean;
-  editedTitle: string;
-  effectiveStatuses: StatusData[];
-  currentStatus: StatusData | undefined;
-  onTitleChange: (title: string) => void;
-  onSaveChanges: () => void;
   onCancelChanges: () => void;
-  onVote: () => void;
-  onStatusChange: (statusId: Id<"organizationStatuses"> | null) => void;
-  onTogglePin: () => void;
   onDeleteClick: () => void;
+  onSaveChanges: () => void;
+  onStatusChange: (statusId: Id<"organizationStatuses"> | null) => void;
+  onTitleChange: (title: string) => void;
+  onTogglePin: () => void;
+  onVote: () => void;
 }
 
 export function FeedbackHeader({

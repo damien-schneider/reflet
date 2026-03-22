@@ -39,10 +39,10 @@ const COLOR_MAP: Record<BadgeColor, string> = {
 type VoteType = "upvote" | "downvote" | null;
 
 interface VoteState {
-  voteType: VoteType;
-  upvotes: number;
   downvotes: number;
+  upvotes: number;
   vote: (type: "upvote" | "downvote") => void;
+  voteType: VoteType;
 }
 
 function useVoteState(
@@ -114,19 +114,19 @@ function useMinimalNotchContext(): VoteState {
 // ─── Root Provider ──────────────────────────────────────────────────────────
 
 interface MinimalNotchProps {
-  defaultUpvotes?: number;
+  children: ReactNode;
+  className?: string;
   defaultDownvotes?: number;
+  defaultUpvotes?: number;
+  downvotes?: number;
+  onVote?: (direction: "upvote" | "downvote") => void;
   onVoteChange?: (
     voteType: VoteType,
     upvotes: number,
     downvotes: number
   ) => void;
   upvotes?: number;
-  downvotes?: number;
   voteType?: VoteType;
-  onVote?: (direction: "upvote" | "downvote") => void;
-  children: ReactNode;
-  className?: string;
 }
 
 function MinimalNotch({
@@ -203,8 +203,8 @@ function MinimalNotchTitle({ children, className }: MinimalNotchTitleProps) {
 
 interface MinimalNotchStatusProps {
   children: ReactNode;
-  color?: BadgeColor;
   className?: string;
+  color?: BadgeColor;
 }
 
 function MinimalNotchStatus({
@@ -242,8 +242,8 @@ function MinimalNotchTags({ children, className }: MinimalNotchTagsProps) {
 
 interface MinimalNotchTagProps {
   children: ReactNode;
-  color?: BadgeColor;
   className?: string;
+  color?: BadgeColor;
 }
 
 function MinimalNotchTag({
@@ -267,9 +267,9 @@ function MinimalNotchTag({
 // ─── Meta ───────────────────────────────────────────────────────────────────
 
 interface MinimalNotchMetaProps {
+  className?: string;
   comments: number;
   time: string;
-  className?: string;
 }
 
 function MinimalNotchMeta({
@@ -390,10 +390,10 @@ function MinimalNotchVote() {
 export {
   MinimalNotch,
   MinimalNotchCard,
-  MinimalNotchTitle,
-  MinimalNotchStatus,
-  MinimalNotchTags,
-  MinimalNotchTag,
   MinimalNotchMeta,
+  MinimalNotchStatus,
+  MinimalNotchTag,
+  MinimalNotchTags,
+  MinimalNotchTitle,
   MinimalNotchVote,
 };

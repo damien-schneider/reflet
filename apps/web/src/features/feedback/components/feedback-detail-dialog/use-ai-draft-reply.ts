@@ -6,8 +6,8 @@ import { useMutation, useQuery } from "convex/react";
 import { useCallback, useEffect, useState } from "react";
 
 interface UseAIDraftReplyParams {
-  feedbackId: Id<"feedback"> | null;
   effectiveIsAdmin: boolean;
+  feedbackId: Id<"feedback"> | null;
   setNewComment: (comment: string) => void;
 }
 

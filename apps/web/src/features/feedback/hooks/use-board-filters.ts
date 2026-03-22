@@ -43,30 +43,30 @@ function serializeArrayParam(values: string[]): string | null {
 }
 
 export interface BoardFiltersState {
-  view: BoardView;
-  sortBy: SortOption;
-  selectedStatusIds: Id<"organizationStatuses">[];
-  selectedTagIds: Id<"tags">[];
-  selectedTagId: Id<"tags"> | null; // Single tag filter (from tag filter bar)
-  searchQuery: string;
-  showSubmitDrawer: boolean; // Submit feedback drawer state
   hideCompleted: boolean; // Hide the highest-order (Done) status by default
+  searchQuery: string;
+  selectedStatusIds: Id<"organizationStatuses">[];
+  selectedTagId: Id<"tags"> | null; // Single tag filter (from tag filter bar)
+  selectedTagIds: Id<"tags">[];
+  showSubmitDrawer: boolean; // Submit feedback drawer state
+  sortBy: SortOption;
+  view: BoardView;
 }
 
 export interface BoardFiltersActions {
-  setView: (view: BoardView) => void;
-  setSortBy: (sort: SortOption) => void;
-  setSelectedStatusIds: (ids: string[]) => void;
-  setSelectedTagIds: (ids: string[]) => void;
-  setSelectedTagId: (id: string | null) => void; // Single tag filter (from tag filter bar)
-  setSearchQuery: (query: string) => void;
-  openSubmitDrawer: () => void;
+  clearFilters: () => void;
   closeSubmitDrawer: () => void;
   handleStatusChange: (statusId: string, checked: boolean) => void;
   handleTagChange: (tagId: string, checked: boolean) => void;
-  clearFilters: () => void;
-  setHideCompleted: (hide: boolean) => void;
   hasActiveFilters: boolean;
+  openSubmitDrawer: () => void;
+  setHideCompleted: (hide: boolean) => void;
+  setSearchQuery: (query: string) => void;
+  setSelectedStatusIds: (ids: string[]) => void;
+  setSelectedTagId: (id: string | null) => void; // Single tag filter (from tag filter bar)
+  setSelectedTagIds: (ids: string[]) => void;
+  setSortBy: (sort: SortOption) => void;
+  setView: (view: BoardView) => void;
 }
 
 export function useBoardFilters(

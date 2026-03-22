@@ -30,11 +30,11 @@ import { Muted } from "@/components/ui/typography";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 interface NotificationTypeToggleProps {
-  label: string;
-  description: string;
-  icon: React.ReactNode;
   checked: boolean;
+  description: string;
   disabled: boolean;
+  icon: React.ReactNode;
+  label: string;
   onToggle: (checked: boolean) => void;
 }
 
@@ -68,9 +68,9 @@ function NotificationTypeToggle({
 
 interface PushSubscriptionInfo {
   _id: string;
+  createdAt: number;
   endpoint: string;
   userAgent?: string;
-  createdAt: number;
 }
 
 export function NotificationSettings() {

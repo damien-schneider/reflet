@@ -16,10 +16,10 @@ import {
 } from "@/store/feedback";
 
 interface FeedbackListProps {
-  organizationId: Id<"organizations">;
-  onFeedbackClick?: (feedbackId: Id<"feedback">) => void;
   className?: string;
   isAdmin?: boolean;
+  onFeedbackClick?: (feedbackId: Id<"feedback">) => void;
+  organizationId: Id<"organizations">;
 }
 
 export function FeedbackList({

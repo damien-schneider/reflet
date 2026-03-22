@@ -9,9 +9,9 @@ import {
 } from "../lib/view-styles";
 
 export interface MilestonesViewProps {
-  organizationId: Id<"organizations">;
   isAdmin: boolean;
   onFeedbackClick: (feedbackId: string) => void;
+  organizationId: Id<"organizations">;
 }
 
 interface MilestonesViewDispatcherProps extends MilestonesViewProps {

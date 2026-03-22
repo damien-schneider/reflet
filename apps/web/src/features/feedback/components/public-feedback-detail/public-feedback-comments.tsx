@@ -11,24 +11,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 
 interface CommentAuthor {
-  name?: string;
   email?: string;
   image?: string;
+  name?: string;
 }
 
 interface Comment {
   _id: string;
+  author?: CommentAuthor;
   body: string;
   createdAt: number;
-  author?: CommentAuthor;
   isOfficial?: boolean;
   parentId?: string;
 }
 
 interface PublicFeedbackCommentsProps {
   comments: Comment[] | undefined;
-  newComment: string;
   isSubmittingComment: boolean;
+  newComment: string;
   onNewCommentChange: (value: string) => void;
   onSubmitComment: () => void;
 }

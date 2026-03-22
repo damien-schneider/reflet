@@ -6,8 +6,8 @@ const isFeedbackStatus = (value: string): value is FeedbackStatus =>
   value in STATUS_CONFIG;
 
 interface StatusBadgeProps {
-  status: FeedbackStatus | string;
   className?: string;
+  status: FeedbackStatus | string;
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {

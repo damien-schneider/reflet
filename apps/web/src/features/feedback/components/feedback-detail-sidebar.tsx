@@ -12,18 +12,6 @@ import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 interface FeedbackDetailSidebarProps {
-  feedback: {
-    voteCount: number;
-    _creationTime: number;
-  };
-  commentsCount: number;
-  feedbackTags: Array<{
-    _id: string;
-    name: string;
-    color: string;
-    icon?: string;
-  } | null>;
-  isAdmin: boolean;
   availableTags:
     | Array<{
         _id: string;
@@ -31,8 +19,20 @@ interface FeedbackDetailSidebarProps {
         color: string;
       }>
     | undefined;
+  commentsCount: number;
+  feedback: {
+    voteCount: number;
+    _creationTime: number;
+  };
+  feedbackTags: Array<{
+    _id: string;
+    name: string;
+    color: string;
+    icon?: string;
+  } | null>;
   handleAddTag: (tagId: string | null) => void;
   handleRemoveTag: (tagId: string) => void;
+  isAdmin: boolean;
 }
 
 export function FeedbackDetailSidebar({

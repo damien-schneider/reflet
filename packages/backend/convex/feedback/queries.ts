@@ -9,9 +9,9 @@ import { authComponent } from "../auth/auth";
 // ============================================
 
 interface UserProfile {
-  name?: string;
   email?: string;
   image?: string | null;
+  name?: string;
 }
 
 export const getMembershipInfo = async (

@@ -12,9 +12,9 @@ function isErrorResponse(data: unknown): data is { error: string } {
 }
 
 const CONVEX_URL =
-  typeof __CONVEX_URL__ !== "undefined"
-    ? __CONVEX_URL__
-    : "https://grateful-butterfly-1.convex.cloud";
+  typeof __CONVEX_URL__ === "undefined"
+    ? "https://grateful-butterfly-1.convex.cloud"
+    : __CONVEX_URL__;
 
 class FeedbackApi {
   private readonly publicKey: string;

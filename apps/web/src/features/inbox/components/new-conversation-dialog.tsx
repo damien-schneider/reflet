@@ -18,8 +18,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 interface NewConversationDialogProps {
-  organizationId: Id<"organizations">;
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: {
     organizationId: Id<"organizations">;
@@ -27,6 +25,8 @@ interface NewConversationDialogProps {
     initialMessage: string;
   }) => Promise<string | undefined>;
   onSuccess?: (conversationId: string) => void;
+  open: boolean;
+  organizationId: Id<"organizations">;
 }
 
 export function NewConversationDialog({

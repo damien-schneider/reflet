@@ -10,20 +10,20 @@ interface CommentItemProps {
     author?: { name?: string; email: string; image?: string };
     _creationTime: number;
   };
+  isAdmin: boolean;
+  isSubmitting: boolean;
+  onDeleteComment: (id: string) => void;
+  onSubmitReply: (parentId: string) => void;
   replies: Array<{
     _id: string;
     body: string;
     author?: { name?: string; email: string; image?: string };
     _creationTime: number;
   }>;
-  isAdmin: boolean;
-  replyingTo: string | null;
-  setReplyingTo: (id: string | null) => void;
   replyContent: string;
+  replyingTo: string | null;
   setReplyContent: (content: string) => void;
-  onSubmitReply: (parentId: string) => void;
-  onDeleteComment: (id: string) => void;
-  isSubmitting: boolean;
+  setReplyingTo: (id: string | null) => void;
 }
 
 export function CommentItem({

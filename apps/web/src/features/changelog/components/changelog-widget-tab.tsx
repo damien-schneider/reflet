@@ -15,11 +15,11 @@ import { generateChangelogWidgetPrompt } from "../lib/generate-changelog-widget-
 const DEFAULT_PRIMARY_COLOR = "#5c6d4f";
 
 interface ChangelogWidgetTabProps {
-  publicKey: string;
   hasApiKeys: boolean;
   organizationId: Id<"organizations">;
   orgSlug: string;
   primaryColor?: string;
+  publicKey: string;
 }
 
 type WidgetMode = "card" | "popup" | "trigger";

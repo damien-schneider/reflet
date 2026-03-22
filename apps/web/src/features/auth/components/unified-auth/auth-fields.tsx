@@ -7,11 +7,11 @@ import { Spinner } from "@/components/ui/spinner";
 import type { SignUpFormData } from "./lib/auth-validation";
 
 interface AuthEmailFieldProps {
-  register: UseFormRegister<SignUpFormData>;
   errors: FieldErrors<SignUpFormData>;
-  isSubmitting: boolean;
   isCheckingEmail: boolean;
+  isSubmitting: boolean;
   onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  register: UseFormRegister<SignUpFormData>;
 }
 
 export function AuthEmailField({
@@ -49,18 +49,18 @@ export function AuthEmailField({
 }
 
 interface AuthPasswordFieldProps {
-  register: UseFormRegister<SignUpFormData>;
   errors: FieldErrors<SignUpFormData>;
+  isSignUp: boolean;
   isSubmitting: boolean;
   onPasswordChange: (
     e: React.ChangeEvent<HTMLInputElement>,
     setValue: (name: keyof SignUpFormData, value: string) => void,
     trigger: (name: keyof SignUpFormData) => Promise<boolean>
   ) => void;
+  passwordLength: number;
+  register: UseFormRegister<SignUpFormData>;
   setValue: (name: keyof SignUpFormData, value: string) => void;
   trigger: (name: keyof SignUpFormData) => Promise<boolean>;
-  passwordLength: number;
-  isSignUp: boolean;
 }
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -86,7 +86,7 @@ export function AuthPasswordField({
         Password
         {showHint && (
           <span className="text-muted-foreground text-xs">
-            {remainingChars} more character{remainingChars !== 1 ? "s" : ""}{" "}
+            {remainingChars} more character{remainingChars === 1 ? "" : "s"}{" "}
             needed
           </span>
         )}

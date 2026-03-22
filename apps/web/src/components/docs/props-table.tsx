@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
 
 interface PropDefinition {
-  name: string;
-  type: string;
   default?: string;
   description: string;
+  name: string;
+  type: string;
 }
 
 interface PropsTableProps {
@@ -70,5 +70,5 @@ function PropsTable({ props }: PropsTableProps) {
   );
 }
 
-export { PropsTable };
 export type { PropDefinition };
+export { PropsTable };

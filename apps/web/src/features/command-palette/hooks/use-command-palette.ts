@@ -8,8 +8,8 @@ import { commandItems } from "../lib/command-items";
 import type { CommandItem } from "../lib/types";
 
 interface UseCommandPaletteProps {
-  orgSlug?: string;
   isAdmin?: boolean;
+  orgSlug?: string;
 }
 
 export function useCommandPalette({

@@ -12,8 +12,8 @@ import {
 import { baseStyles } from "./styles";
 
 interface BaseLayoutProps {
-  preview: string;
   children: React.ReactNode;
+  preview: string;
 }
 
 export function BaseLayout({ preview, children }: BaseLayoutProps) {

@@ -12,13 +12,13 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface ApiKeyDialogsProps {
-  showRegenerateDialog: boolean;
-  setShowRegenerateDialog: (value: boolean) => void;
   isRegenerating: boolean;
-  onRegenerate: () => void;
-  showDeleteDialog: boolean;
-  setShowDeleteDialog: (value: boolean) => void;
   onDelete: () => void;
+  onRegenerate: () => void;
+  setShowDeleteDialog: (value: boolean) => void;
+  setShowRegenerateDialog: (value: boolean) => void;
+  showDeleteDialog: boolean;
+  showRegenerateDialog: boolean;
 }
 
 export function ApiKeyDialogs({

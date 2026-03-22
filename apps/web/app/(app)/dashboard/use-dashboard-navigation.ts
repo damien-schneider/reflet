@@ -9,18 +9,18 @@ type OrgFromQuery = {
 } | null;
 
 export interface DashboardNavigationState {
-  orgSlug: string | undefined;
   org: OrgFromQuery | undefined;
   organizations: (OrgFromList | null)[] | undefined;
+  orgSlug: string | undefined;
 }
 
 export interface DashboardNavigationResult {
-  /** If set, the user should be redirected to this path */
-  redirectTo: string | null;
-  /** Whether the current org is not accessible to the user */
-  orgNotAccessible: boolean;
   /** Whether the user has any organizations */
   hasOrganizations: boolean;
+  /** Whether the current org is not accessible to the user */
+  orgNotAccessible: boolean;
+  /** If set, the user should be redirected to this path */
+  redirectTo: string | null;
 }
 
 /**

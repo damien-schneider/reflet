@@ -7,9 +7,9 @@ import { type ReactNode, useId } from "react";
 import { cn } from "@/lib/utils";
 
 interface MobileNavProps {
+  children: ReactNode;
   className?: string;
   style?: React.CSSProperties;
-  children: ReactNode;
 }
 
 function MobileNav({ className, style, children }: MobileNavProps) {
@@ -30,10 +30,10 @@ function MobileNav({ className, style, children }: MobileNavProps) {
 }
 
 interface MobileNavLinkProps {
-  href: string;
-  isActive: boolean;
   children: ReactNode;
   className?: string;
+  href: string;
+  isActive: boolean;
   prefetch?: boolean;
 }
 

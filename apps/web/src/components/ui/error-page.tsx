@@ -7,14 +7,14 @@ import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "./button";
 
 interface ErrorPageProps {
-  title?: string;
+  className?: string;
   description?: string;
   error?: Error | null;
   onRetry?: () => void;
   retryLabel?: string;
-  showHomeLink?: boolean;
   showError?: boolean;
-  className?: string;
+  showHomeLink?: boolean;
+  title?: string;
 }
 
 export function ErrorPage({

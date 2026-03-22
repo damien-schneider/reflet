@@ -13,16 +13,16 @@ import { ConversationStatusBadge } from "@/features/inbox/components/conversatio
 
 interface Conversation {
   _id: Id<"supportConversations">;
-  subject?: string | null;
-  status: string;
   lastMessageAt: number;
+  status: string;
+  subject?: string | null;
   userUnreadCount: number;
 }
 
 interface ConversationListViewProps {
   conversations: Conversation[];
-  onSelectConversation: (id: Id<"supportConversations">) => void;
   onNewConversation: () => void;
+  onSelectConversation: (id: Id<"supportConversations">) => void;
 }
 
 export function ConversationListView({

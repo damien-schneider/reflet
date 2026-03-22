@@ -29,16 +29,16 @@ const STATUS_DISPLAY_LABELS: Record<FeedbackLinkStatus, string> = {
 } as const;
 
 interface PublishConfirmDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
+  feedbackLinkStatus?: FeedbackLinkStatus;
   isSubmitting: boolean;
-  title: string;
-  version: string;
+  linkedFeedbackCount?: number;
+  onConfirm: () => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
   organizationId: Id<"organizations">;
   orgSlug: string;
-  linkedFeedbackCount?: number;
-  feedbackLinkStatus?: FeedbackLinkStatus;
+  title: string;
+  version: string;
 }
 
 export function PublishConfirmDialog({

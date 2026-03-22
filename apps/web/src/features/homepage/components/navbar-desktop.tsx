@@ -19,9 +19,9 @@ import { cn } from "@/lib/utils";
 const REFLET_BASE_URL = "https://www.reflet.app/reflet";
 
 interface DemoItem {
-  label: string;
   description: string;
   href: string;
+  label: string;
 }
 
 const DEMO_ITEMS: DemoItem[] = [
@@ -53,10 +53,10 @@ const DEMO_ITEMS: DemoItem[] = [
 ];
 
 interface ResourceItem {
-  label: string;
   description: string;
-  href: string;
   external?: boolean;
+  href: string;
+  label: string;
 }
 
 const RESOURCE_ITEMS: ResourceItem[] = [

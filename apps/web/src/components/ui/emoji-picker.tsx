@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/popover";
 
 interface EmojiPickerProps {
-  value?: string;
   onChange: (emoji: string | undefined) => void;
+  value?: string;
 }
 
 export function EmojiPicker({ value, onChange }: EmojiPickerProps) {

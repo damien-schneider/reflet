@@ -15,18 +15,18 @@ import {
 import type { Editor } from "@tiptap/core";
 
 export interface CommandItem {
-  title: string;
-  description: string;
-  icon: React.ElementType;
   command: (props: {
     editor: Editor;
     range: { from: number; to: number };
   }) => void;
+  description: string;
+  icon: React.ElementType;
+  title: string;
 }
 
 export interface CommandListProps {
-  items: CommandItem[];
   command: (item: CommandItem) => void;
+  items: CommandItem[];
   /**
    * Callback to register the keyboard handler.
    * This is called on mount with the handler function, allowing the parent

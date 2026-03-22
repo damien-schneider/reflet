@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds - must match backend
 
 interface InvitationInfo {
-  _id: Id<"invitations">;
   _creationTime: number;
+  _id: Id<"invitations">;
   email: string;
-  role: "owner" | "admin" | "member";
   lastSentAt?: number;
+  role: "owner" | "admin" | "member";
 }
 
 interface InvitationListProps {

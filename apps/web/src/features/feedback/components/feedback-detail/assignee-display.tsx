@@ -10,6 +10,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface AssigneeDisplayProps {
+  assignee?: {
+    id: string;
+    name?: string | null;
+    email?: string;
+    image?: string | null;
+  } | null;
   isAdmin: boolean;
   members:
     | Array<{
@@ -21,12 +27,6 @@ interface AssigneeDisplayProps {
         } | null;
       }>
     | undefined;
-  assignee?: {
-    id: string;
-    name?: string | null;
-    email?: string;
-    image?: string | null;
-  } | null;
   onAssigneeChange: (assigneeId: string) => void;
 }
 

@@ -30,9 +30,9 @@ export function SetupMethodStep({
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
 
   const webhookUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/api/github/webhook`
-      : "";
+    typeof window === "undefined"
+      ? ""
+      : `${window.location.origin}/api/github/webhook`;
 
   const defaultBranch =
     config.targetBranch || githubConnection?.repositoryDefaultBranch || "main";

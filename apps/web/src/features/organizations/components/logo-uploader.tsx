@@ -16,8 +16,8 @@ import { cn } from "@/lib/utils";
 
 interface LogoUploaderProps {
   currentLogo?: string | null;
-  onLogoChange: (url: string | null) => void;
   disabled?: boolean;
+  onLogoChange: (url: string | null) => void;
 }
 
 const MAX_SIZE_MB = 2;

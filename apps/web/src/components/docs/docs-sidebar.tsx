@@ -7,8 +7,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface NavLink {
-  label: string;
   href: string;
+  label: string;
 }
 
 interface NavSubGroup {
@@ -17,9 +17,9 @@ interface NavSubGroup {
 }
 
 interface NavSection {
-  title: string;
   links: NavLink[];
   subGroups?: NavSubGroup[];
+  title: string;
 }
 
 const NAV_SECTIONS: NavSection[] = [

@@ -167,7 +167,7 @@ function DropdownListCheckboxItem({
       {...props}
     >
       <span
-        className="pointer-events-none absolute right-2 flex items-center justify-center pointer-events-none"
+        className="pointer-events-none absolute right-2 flex items-center justify-center"
         data-slot="dropdown-menu-checkbox-item-indicator"
       >
         <ListPrimitive.CheckboxItemIndicator>
@@ -203,7 +203,7 @@ function DropdownListRadioItem({
       {...props}
     >
       <span
-        className="pointer-events-none absolute right-2 flex items-center justify-center pointer-events-none"
+        className="pointer-events-none absolute right-2 flex items-center justify-center"
         data-slot="dropdown-menu-radio-item-indicator"
       >
         <ListPrimitive.RadioItemIndicator>
@@ -244,39 +244,36 @@ function DropdownListShortcut({
   );
 }
 
-export {
-  DropdownList,
-  DropdownListPortal,
-  DropdownListTrigger,
-  DropdownListContent,
-  DropdownListGroup,
-  DropdownListLabel,
-  DropdownListItem,
-  DropdownListCheckboxItem,
-  DropdownListRadioGroup,
-  DropdownListRadioItem,
-  DropdownListSeparator,
-  DropdownListShortcut,
-  DropdownListSub,
-  DropdownListSubTrigger,
-  DropdownListSubContent,
-};
-
 // Backward compatibility aliases
 export {
+  DropdownList,
   DropdownList as DropdownMenu,
-  DropdownListPortal as DropdownMenuPortal,
-  DropdownListTrigger as DropdownMenuTrigger,
-  DropdownListContent as DropdownMenuContent,
-  DropdownListGroup as DropdownMenuGroup,
-  DropdownListLabel as DropdownMenuLabel,
-  DropdownListItem as DropdownMenuItem,
+  DropdownListCheckboxItem,
   DropdownListCheckboxItem as DropdownMenuCheckboxItem,
+  DropdownListContent,
+  DropdownListContent as DropdownMenuContent,
+  DropdownListGroup,
+  DropdownListGroup as DropdownMenuGroup,
+  DropdownListItem,
+  DropdownListItem as DropdownMenuItem,
+  DropdownListLabel,
+  DropdownListLabel as DropdownMenuLabel,
+  DropdownListPortal,
+  DropdownListPortal as DropdownMenuPortal,
+  DropdownListRadioGroup,
   DropdownListRadioGroup as DropdownMenuRadioGroup,
+  DropdownListRadioItem,
   DropdownListRadioItem as DropdownMenuRadioItem,
+  DropdownListSeparator,
   DropdownListSeparator as DropdownMenuSeparator,
+  DropdownListShortcut,
   DropdownListShortcut as DropdownMenuShortcut,
+  DropdownListSub,
   DropdownListSub as DropdownMenuSub,
-  DropdownListSubTrigger as DropdownMenuSubTrigger,
+  DropdownListSubContent,
   DropdownListSubContent as DropdownMenuSubContent,
+  DropdownListSubTrigger,
+  DropdownListSubTrigger as DropdownMenuSubTrigger,
+  DropdownListTrigger,
+  DropdownListTrigger as DropdownMenuTrigger,
 };
