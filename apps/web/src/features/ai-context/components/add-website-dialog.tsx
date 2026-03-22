@@ -32,7 +32,9 @@ export function AddWebsiteDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createReference = useMutation(api.website_references.create);
+  const createReference = useMutation(
+    api.integrations.website_references.create
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -97,8 +97,8 @@ export function MilestoneSegment({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const updateMilestone = useMutation(api.milestones.update);
-  const removeMilestone = useMutation(api.milestones.remove);
+  const updateMilestone = useMutation(api.organizations.milestones.update);
+  const removeMilestone = useMutation(api.organizations.milestones.remove);
 
   const handleEditOpen = useCallback(() => {
     setEditName(milestone.name);

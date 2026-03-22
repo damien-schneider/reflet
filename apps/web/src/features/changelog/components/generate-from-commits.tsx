@@ -59,20 +59,29 @@ export function GenerateFromCommits({
   const [isFetchingCommits, setIsFetchingCommits] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const org = useQuery(api.organizations.get, { id: organizationId });
-  const githubConnection = useQuery(api.github.getConnection, {
-    organizationId,
-  });
-
-  const getToken = useAction(api.github_node_actions.getInstallationToken);
-  const fetchTags = useAction(api.github_release_actions.fetchTags);
-  const fetchCommits = useAction(
-    api.github_release_actions.fetchCommitsBetweenRefs
+  const org = useQuery(api.organizations.queries.get, { id: organizationId });
+  const githubConnection = useQuery(
+    api.integrations.github.queries.getConnection,
+    {
+      organizationId,
+    }
   );
-  const fetchRecent = useAction(api.github_release_actions.fetchRecentCommits);
+
+  const getToken = useAction(
+    api.integrations.github.node_actions.getInstallationToken
+  );
+  const fetchTags = useAction(
+    api.integrations.github.release_actions.fetchTags
+  );
+  const fetchCommits = useAction(
+    api.integrations.github.release_actions.fetchCommitsBetweenRefs
+  );
+  const fetchRecent = useAction(
+    api.integrations.github.release_actions.fetchRecentCommits
+  );
 
   const previousReleaseCommit = useQuery(
-    api.changelog_actions.getLatestCommitFromPreviousRelease,
+    api.changelog.actions.getLatestCommitFromPreviousRelease,
     { organizationId, excludeReleaseId: releaseId ?? undefined }
   );
 

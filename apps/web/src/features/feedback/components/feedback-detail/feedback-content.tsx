@@ -31,7 +31,7 @@ export function FeedbackContent({
   isAdmin,
   attachments = [],
 }: FeedbackContentProps) {
-  const updateFeedback = useMutation(api.feedback.update);
+  const updateFeedback = useMutation(api.feedback.mutations.update);
 
   // Local state for unsaved changes
   const [editedTitle, setEditedTitle] = useState(title);

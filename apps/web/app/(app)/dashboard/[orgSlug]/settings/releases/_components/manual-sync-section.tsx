@@ -120,12 +120,17 @@ export const ManualSyncSection = ({
   organizationId,
   orgSlug,
 }: ManualSyncSectionProps) => {
-  const syncStatus = useQuery(api.github.getReleaseSyncStatus, {
-    organizationId,
-  });
-  const triggerSync = useMutation(api.changelog_actions.triggerGithubSync);
-  const importRelease = useMutation(api.github.importGithubRelease);
-  const pushToGithub = useMutation(api.changelog_actions.pushToGithub);
+  const syncStatus = useQuery(
+    api.integrations.github.queries.getReleaseSyncStatus,
+    {
+      organizationId,
+    }
+  );
+  const triggerSync = useMutation(api.changelog.actions.triggerGithubSync);
+  const importRelease = useMutation(
+    api.integrations.github.mutations.importGithubRelease
+  );
+  const pushToGithub = useMutation(api.changelog.actions.pushToGithub);
 
   const [importingId, setImportingId] = useState<string | null>(null);
   const [pushingId, setPushingId] = useState<string | null>(null);

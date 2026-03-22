@@ -32,12 +32,12 @@ export default function PublicOrgLayoutClient({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const pathname = usePathname();
   const router = useRouter();
 
   const supportSettings = useQuery(
-    api.support_conversations.getSupportSettings,
+    api.support.conversations.getSupportSettings,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
@@ -189,21 +189,23 @@ export default function PublicOrgLayoutClient({
         </div>
       </nav>
 
-      <footer className="py-8">
-        <div className="container mx-auto flex items-center justify-center px-4 text-muted-foreground text-sm">
-          <TypographyText variant="bodySmall">
-            Powered by{" "}
-            <Link
-              className="font-display font-medium text-lg text-olive-600 underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
-              href={env.NEXT_PUBLIC_SITE_URL ?? "https://www.reflet.app"}
-              rel="noopener"
-              target="_blank"
-            >
-              Reflet
-            </Link>
-          </TypographyText>
-        </div>
-      </footer>
+      {!(org.hideBranding && org.subscriptionTier === "pro") && (
+        <footer className="py-8">
+          <div className="container mx-auto flex items-center justify-center px-4 text-muted-foreground text-sm">
+            <TypographyText variant="bodySmall">
+              Powered by{" "}
+              <Link
+                className="font-display font-medium text-lg text-olive-600 underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
+                href={env.NEXT_PUBLIC_SITE_URL ?? "https://www.reflet.app"}
+                rel="noopener"
+                target="_blank"
+              >
+                Reflet
+              </Link>
+            </TypographyText>
+          </div>
+        </footer>
+      )}
 
       <PublicViewToolbar orgSlug={orgSlug} />
     </div>

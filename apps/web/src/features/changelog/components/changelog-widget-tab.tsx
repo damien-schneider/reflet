@@ -49,7 +49,7 @@ export function ChangelogWidgetTab({
 
   // API key generation
   const generateApiKeysMutation = useMutation(
-    api.feedback_api_admin.generateApiKeys
+    api.feedback.api_admin.generateApiKeys
   );
   const [keyName, setKeyName] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);

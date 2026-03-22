@@ -34,9 +34,12 @@ function formatDate(timestamp: number): string {
 }
 
 export function SuperAdminFeedback() {
-  const topFeedback = useQuery(api.super_admin.getTopVotedFeedback, {
-    limit: 20,
-  });
+  const topFeedback = useQuery(
+    api.organizations.super_admin.getTopVotedFeedback,
+    {
+      limit: 20,
+    }
+  );
 
   if (topFeedback === undefined) {
     return (

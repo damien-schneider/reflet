@@ -14,11 +14,11 @@ export default function PublicOrgPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
   // Check if user is a member
   const membership = useQuery(
-    api.members.getMembership,
+    api.organizations.members.getMembership,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const isMember = !!membership;

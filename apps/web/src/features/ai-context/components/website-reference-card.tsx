@@ -40,8 +40,12 @@ export function WebsiteReferenceCard({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const refreshReference = useMutation(api.website_references.refresh);
-  const removeReference = useMutation(api.website_references.remove);
+  const refreshReference = useMutation(
+    api.integrations.website_references.refresh
+  );
+  const removeReference = useMutation(
+    api.integrations.website_references.remove
+  );
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

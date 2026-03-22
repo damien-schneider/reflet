@@ -24,7 +24,7 @@ export function DeleteTagDialog({
   onOpenChange,
   onSuccess,
 }: DeleteTagDialogProps) {
-  const deleteTag = useMutation(api.tag_manager_actions.remove);
+  const deleteTag = useMutation(api.organizations.tag_manager_actions.remove);
 
   const handleDeleteTag = async () => {
     if (!tagId) {

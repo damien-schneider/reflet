@@ -15,7 +15,7 @@ import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 
 export default function UserList() {
-  const user = useQuery(api.auth.getCurrentUser);
+  const user = useQuery(api.auth.queries.getCurrentUser);
 
   return (
     <DropdownList>

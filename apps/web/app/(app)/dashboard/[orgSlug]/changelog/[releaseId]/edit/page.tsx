@@ -17,10 +17,10 @@ export default function EditReleasePage({
   params: Promise<{ orgSlug: string; releaseId: Id<"releases"> }>;
 }) {
   const { orgSlug, releaseId } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
-  const release = useQuery(api.releases.get, { id: releaseId });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
+  const release = useQuery(api.changelog.releases.get, { id: releaseId });
   const currentMember = useQuery(
-    api.members.getCurrentMember,
+    api.organizations.members.getCurrentMember,
     org?._id ? { organizationId: org._id } : "skip"
   );
 

@@ -14,13 +14,13 @@ export default function PublicRoadmapPageClient({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const roadmapConfig = useQuery(
-    api.tag_manager.getRoadmapConfig,
+    api.organizations.tag_manager.getRoadmapConfig,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const roadmapFeedback = useQuery(
-    api.feedback_roadmap.list,
+    api.feedback.roadmap.list,
     org?._id ? { organizationId: org._id } : "skip"
   );
 

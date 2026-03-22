@@ -35,31 +35,31 @@ export default function FeedbackDetailPage({
 }) {
   const { orgSlug, feedbackId } = use(params);
 
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const feedback = useQuery(
-    api.feedback.get,
+    api.feedback.queries.get,
     feedbackId ? { id: feedbackId } : "skip"
   );
   const statuses = useQuery(
-    api.organization_statuses.list,
+    api.organizations.statuses.list,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const comments = useQuery(
-    api.comments.list,
+    api.feedback.comments.list,
     feedbackId ? { feedbackId } : "skip"
   );
   const membership = useQuery(
-    api.members.getMembership,
+    api.organizations.members.getMembership,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const isAdmin = membership?.role === "admin" || membership?.role === "owner";
   const members = useQuery(
-    api.members.list,
+    api.organizations.members.list,
     isAdmin && org?._id ? { organizationId: org._id } : "skip"
   );
 
-  const toggleVote = useMutation(api.votes.toggle);
-  const assignFeedback = useMutation(api.feedback_actions.assign);
+  const toggleVote = useMutation(api.feedback.votes.toggle);
+  const assignFeedback = useMutation(api.feedback.actions.assign);
 
   const handleVote = useCallback(async () => {
     if (feedbackId) {

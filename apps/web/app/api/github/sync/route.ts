@@ -22,7 +22,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // Get the GitHub connection using action (no auth required)
     const connection = await fetchAction(
-      api.github_actions.getConnectionFromApiRoute,
+      api.integrations.github.actions.getConnectionFromApiRoute,
       { organizationId }
     );
 
@@ -41,7 +41,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     // Update sync status to syncing
-    await fetchMutation(api.github.updateSyncStatus, {
+    await fetchMutation(api.integrations.github.mutations.updateSyncStatus, {
       connectionId: connection._id,
       status: "syncing",
     });
@@ -49,23 +49,29 @@ export async function POST(request: Request): Promise<NextResponse> {
     try {
       // Get installation access token
       const tokenResult = await fetchAction(
-        api.github_node_actions.getInstallationToken,
+        api.integrations.github.node_actions.getInstallationToken,
         {
           installationId: connection.installationId,
         }
       );
 
       // Fetch releases from GitHub
-      const releases = await fetchAction(api.github_actions.fetchReleases, {
-        installationToken: tokenResult.token,
-        repositoryFullName: connection.repositoryFullName,
-      });
+      const releases = await fetchAction(
+        api.integrations.github.actions.fetchReleases,
+        {
+          installationToken: tokenResult.token,
+          repositoryFullName: connection.repositoryFullName,
+        }
+      );
 
       // Save synced releases
-      await fetchMutation(api.github.saveSyncedReleases, {
-        organizationId,
-        releases,
-      });
+      await fetchMutation(
+        api.integrations.github.mutations.saveSyncedReleases,
+        {
+          organizationId,
+          releases,
+        }
+      );
 
       return NextResponse.json({
         success: true,
@@ -73,7 +79,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       });
     } catch (error) {
       // Update sync status to error
-      await fetchMutation(api.github.updateSyncStatus, {
+      await fetchMutation(api.integrations.github.mutations.updateSyncStatus, {
         connectionId: connection._id,
         status: "error",
         error: error instanceof Error ? error.message : "Unknown error",

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getAuthUser } from "./utils";
+import { getAuthUser } from "./shared/utils";
 
 /**
  * Generate a URL for uploading a file to Convex storage.

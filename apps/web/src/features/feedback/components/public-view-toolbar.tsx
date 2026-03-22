@@ -10,7 +10,7 @@ interface PublicViewToolbarProps {
 }
 
 export function PublicViewToolbar({ orgSlug }: PublicViewToolbarProps) {
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
   // Only show if user is authenticated and is a team member/owner
   const isTeamMember =

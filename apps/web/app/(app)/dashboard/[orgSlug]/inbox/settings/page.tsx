@@ -15,17 +15,17 @@ export default function InboxSettingsPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const membership = useQuery(
-    api.members.getMembership,
+    api.organizations.members.getMembership,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const supportSettings = useQuery(
-    api.support_conversations.getSupportSettings,
+    api.support.conversations.getSupportSettings,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const updateSupportSettings = useMutation(
-    api.support_conversations.updateSupportSettings
+    api.support.conversations.updateSupportSettings
   );
 
   const [supportEnabled, setSupportEnabled] = useState(false);

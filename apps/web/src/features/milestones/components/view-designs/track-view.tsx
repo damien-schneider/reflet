@@ -43,7 +43,9 @@ export function TrackView({
   isAdmin,
   onFeedbackClick,
 }: MilestonesViewProps) {
-  const milestones = useQuery(api.milestones.list, { organizationId });
+  const milestones = useQuery(api.organizations.milestones.list, {
+    organizationId,
+  });
   const isMobile = useIsMobile();
   const [activeMilestoneId, setActiveMilestoneId] =
     useState<Id<"milestones"> | null>(null);

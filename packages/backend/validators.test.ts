@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { validateInputLength } from "./convex/validators";
+import { validateInputLength } from "./convex/shared/validators";
 
 describe("Input Validation", () => {
   test("validateInputLength should pass for valid input", () => {

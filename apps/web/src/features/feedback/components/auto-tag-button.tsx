@@ -197,19 +197,19 @@ export function AutoTagButton({ organizationId }: AutoTagButtonProps) {
   const prevJobStatusRef = useRef<string | null>(null);
 
   const untaggedCount = useQuery(
-    api.feedback_auto_tagging.getUntaggedFeedbackCount,
+    api.feedback.auto_tagging.getUntaggedFeedbackCount,
     { organizationId }
   );
 
-  const job = useQuery(api.feedback_auto_tagging.getActiveJob, {
+  const job = useQuery(api.feedback.auto_tagging.getActiveJob, {
     organizationId,
   });
 
   const startBulkAutoTagging = useMutation(
-    api.feedback_auto_tagging.startBulkAutoTagging
+    api.feedback.auto_tagging.startBulkAutoTagging
   );
 
-  const dismissJob = useMutation(api.feedback_auto_tagging.dismissJob);
+  const dismissJob = useMutation(api.feedback.auto_tagging.dismissJob);
 
   // Fire toast notifications on status transitions
   const jobStatus = job?.status ?? null;

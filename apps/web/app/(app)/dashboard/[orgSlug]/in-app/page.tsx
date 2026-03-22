@@ -27,12 +27,12 @@ export default function WidgetsPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const widgets = useQuery(
-    api.widget_admin.list,
+    api.widget.admin.list,
     org?._id ? { organizationId: org._id } : "skip"
   );
-  const createWidget = useMutation(api.widget_admin.create);
+  const createWidget = useMutation(api.widget.admin.create);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [widgetName, setWidgetName] = useState("");

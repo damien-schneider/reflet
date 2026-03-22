@@ -1,6 +1,7 @@
 import {
   Body,
   Container,
+  Font,
   Head,
   Html,
   Link,
@@ -19,9 +20,25 @@ export function BaseLayout({ preview, children }: BaseLayoutProps) {
   return (
     <Html lang="fr">
       <Head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif&display=swap"
-          rel="stylesheet"
+        <Font
+          fallbackFontFamily={["Helvetica", "Arial", "sans-serif"]}
+          fontFamily="Instrument Sans"
+          fontStyle="normal"
+          fontWeight={400}
+          webFont={{
+            url: "https://fonts.gstatic.com/s/instrumentsans/v1/pximypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8.woff2",
+            format: "woff2",
+          }}
+        />
+        <Font
+          fallbackFontFamily={["Helvetica", "Arial", "sans-serif"]}
+          fontFamily="Instrument Sans"
+          fontStyle="normal"
+          fontWeight={600}
+          webFont={{
+            url: "https://fonts.gstatic.com/s/instrumentsans/v1/pximypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8.woff2",
+            format: "woff2",
+          }}
         />
       </Head>
       <Preview>{preview}</Preview>

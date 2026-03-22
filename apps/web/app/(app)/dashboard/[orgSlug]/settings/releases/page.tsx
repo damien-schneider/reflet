@@ -26,24 +26,26 @@ export default function ReleaseSettingsPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
-    api.members.getCurrentMember,
+    api.organizations.members.getCurrentMember,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const githubStatus = useQuery(
-    api.github.getConnectionStatus,
+    api.integrations.github.queries.getConnectionStatus,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const githubConnection = useQuery(
-    api.github.getConnection,
+    api.integrations.github.queries.getConnection,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
-  const updateOrg = useMutation(api.organizations.update);
-  const getToken = useAction(api.github_node_actions.getInstallationToken);
+  const updateOrg = useMutation(api.organizations.mutations.update);
+  const getToken = useAction(
+    api.integrations.github.node_actions.getInstallationToken
+  );
   const fetchBranchesAction = useAction(
-    api.github_release_actions.fetchBranches
+    api.integrations.github.release_actions.fetchBranches
   );
 
   const [showWizard, setShowWizard] = useState(false);

@@ -13,7 +13,7 @@ interface UseApiKeysProps {
 interface UseApiKeysReturn {
   // Data
   apiKeys: ReturnType<
-    typeof useQuery<typeof api.feedback_api_admin.getApiKeys>
+    typeof useQuery<typeof api.feedback.api_admin.getApiKeys>
   >;
 
   // State
@@ -61,19 +61,19 @@ interface UseApiKeysReturn {
 export function useApiKeys({
   organizationId,
 }: UseApiKeysProps): UseApiKeysReturn {
-  const apiKeys = useQuery(api.feedback_api_admin.getApiKeys, {
+  const apiKeys = useQuery(api.feedback.api_admin.getApiKeys, {
     organizationId,
   });
   const generateApiKeysMutation = useMutation(
-    api.feedback_api_admin.generateApiKeys
+    api.feedback.api_admin.generateApiKeys
   );
   const regenerateSecretKeyMutation = useMutation(
-    api.feedback_api_admin.regenerateSecretKey
+    api.feedback.api_admin.regenerateSecretKey
   );
   const updateApiKeySettingsMutation = useMutation(
-    api.feedback_api_admin.updateApiKeySettings
+    api.feedback.api_admin.updateApiKeySettings
   );
-  const deleteApiKeyMutation = useMutation(api.feedback_api_admin.deleteApiKey);
+  const deleteApiKeyMutation = useMutation(api.feedback.api_admin.deleteApiKey);
 
   const [showSecretKey, setShowSecretKey] = useState(false);
   const [newSecretKey, setNewSecretKey] = useState<string | null>(null);

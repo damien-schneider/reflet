@@ -29,6 +29,11 @@ const sections = [
     description: "Pre-made UI components via shadcn registry",
     href: "/docs/components",
   },
+  {
+    title: "MCP Server",
+    description: "Connect AI assistants like Cursor, Claude Code and Copilot",
+    href: "/docs/mcp",
+  },
 ] as const;
 
 export default function DocsPage() {

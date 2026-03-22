@@ -34,17 +34,17 @@ export function FeedbackDetailDialog({
   isAdmin = false,
 }: FeedbackDetailDialogProps) {
   const feedback = useQuery(
-    api.feedback.get,
+    api.feedback.queries.get,
     feedbackId ? { id: feedbackId } : "skip"
   );
   const comments = useQuery(
-    api.comments.list,
+    api.feedback.comments.list,
     feedbackId ? { feedbackId } : "skip"
   );
 
   // Query organization statuses
   const organizationStatuses = useQuery(
-    api.organization_statuses.list,
+    api.organizations.statuses.list,
     feedback?.organizationId
       ? { organizationId: feedback.organizationId }
       : "skip"
@@ -52,16 +52,16 @@ export function FeedbackDetailDialog({
 
   const effectiveStatuses = organizationStatuses ?? [];
 
-  const updateFeedback = useMutation(api.feedback.update);
+  const updateFeedback = useMutation(api.feedback.mutations.update);
   const updateFeedbackStatus = useMutation(
-    api.feedback_actions.updateOrganizationStatus
+    api.feedback.actions.updateOrganizationStatus
   );
-  const deleteFeedback = useMutation(api.feedback_actions.remove);
-  const toggleVote = useMutation(api.votes.toggle);
-  const togglePin = useMutation(api.feedback_actions.togglePin);
-  const createComment = useMutation(api.comments.create);
-  const updateComment = useMutation(api.comments.update);
-  const deleteComment = useMutation(api.comments.remove);
+  const deleteFeedback = useMutation(api.feedback.actions.remove);
+  const toggleVote = useMutation(api.feedback.votes.toggle);
+  const togglePin = useMutation(api.feedback.actions.togglePin);
+  const createComment = useMutation(api.feedback.comments.create);
+  const updateComment = useMutation(api.feedback.comments.update);
+  const deleteComment = useMutation(api.feedback.comments.remove);
 
   // Feedback editing hook
   const {

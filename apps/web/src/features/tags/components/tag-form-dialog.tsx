@@ -44,8 +44,8 @@ export function TagFormDialog({
   onOpenChange,
   onSuccess,
 }: TagFormDialogProps) {
-  const createTag = useMutation(api.tag_manager_actions.create);
-  const updateTag = useMutation(api.tag_manager_actions.update);
+  const createTag = useMutation(api.organizations.tag_manager_actions.create);
+  const updateTag = useMutation(api.organizations.tag_manager_actions.update);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<{

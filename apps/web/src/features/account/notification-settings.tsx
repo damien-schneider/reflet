@@ -74,15 +74,15 @@ interface PushSubscriptionInfo {
 }
 
 export function NotificationSettings() {
-  const preferences = useQuery(api.notification_preferences.getPreferences);
+  const preferences = useQuery(api.notifications.preferences.getPreferences);
   const updatePreferences = useMutation(
-    api.notification_preferences.updatePreferences
+    api.notifications.preferences.updatePreferences
   );
   const subscriptions = useQuery(
-    api.push_notifications_queries.getUserSubscriptions
+    api.notifications.push_queries.getUserSubscriptions
   );
   const unsubscribeMutation = useMutation(
-    api.push_notifications_queries.unsubscribe
+    api.notifications.push_queries.unsubscribe
   );
   const {
     isSupported,

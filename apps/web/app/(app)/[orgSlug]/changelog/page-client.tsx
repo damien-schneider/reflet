@@ -18,9 +18,9 @@ export default function PublicChangelogPageClient({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const releases = useQuery(
-    api.changelog.listPublished,
+    api.changelog.queries.listPublished,
     org?._id ? { organizationId: org._id } : "skip"
   );
 

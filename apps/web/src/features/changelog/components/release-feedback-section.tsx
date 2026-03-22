@@ -36,15 +36,15 @@ export function ReleaseFeedbackSection({
   className,
 }: ReleaseFeedbackSectionProps) {
   const linkFeedback = useMutation(
-    api.changelog_actions.linkFeedback
+    api.changelog.actions.linkFeedback
   ).withOptimisticUpdate((localStore, args) => {
     const available = localStore.getQuery(
-      api.changelog_actions.getAvailableFeedback,
+      api.changelog.actions.getAvailableFeedback,
       { organizationId, excludeReleaseId: args.releaseId }
     );
     if (available) {
       localStore.setQuery(
-        api.changelog_actions.getAvailableFeedback,
+        api.changelog.actions.getAvailableFeedback,
         { organizationId, excludeReleaseId: args.releaseId },
         available.filter((f) => f._id !== args.feedbackId)
       );
@@ -52,16 +52,16 @@ export function ReleaseFeedbackSection({
   });
 
   const unlinkFeedback = useMutation(
-    api.changelog_actions.unlinkFeedback
+    api.changelog.actions.unlinkFeedback
   ).withOptimisticUpdate((localStore, args) => {
-    const current = localStore.getQuery(api.changelog.get, {
+    const current = localStore.getQuery(api.changelog.queries.get, {
       id: args.releaseId,
     });
     if (!current) {
       return;
     }
     localStore.setQuery(
-      api.changelog.get,
+      api.changelog.queries.get,
       { id: args.releaseId },
       {
         ...current,
@@ -73,12 +73,12 @@ export function ReleaseFeedbackSection({
   });
 
   const releaseData = useQuery(
-    api.changelog.get,
+    api.changelog.queries.get,
     releaseId ? { id: releaseId } : "skip"
   );
 
   const availableFeedback = useQuery(
-    api.changelog_actions.getAvailableFeedback,
+    api.changelog.actions.getAvailableFeedback,
     { organizationId, excludeReleaseId: releaseId ?? undefined }
   );
 

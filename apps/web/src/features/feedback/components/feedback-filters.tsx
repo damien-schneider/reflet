@@ -77,7 +77,7 @@ export function FeedbackFunnels({
   const [hideCompleted, setHideCompleted] = useAtom(hideCompletedAtom);
 
   // Get organization statuses for the filter options
-  const organizationStatuses = useQuery(api.organization_statuses.list, {
+  const organizationStatuses = useQuery(api.organizations.statuses.list, {
     organizationId,
   });
 

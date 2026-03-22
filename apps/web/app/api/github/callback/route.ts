@@ -112,14 +112,19 @@ export async function GET(request: Request): Promise<NextResponse> {
     // Save the installation to the database using fetchAction
     // (actions don't require user auth, and we've already verified the installation via GitHub's API)
     const { fetchAction } = await import("convex/nextjs");
-    await fetchAction(api.github_actions.saveInstallationFromCallback, {
-      organizationId: toOrgId(organizationId),
-      installationId,
-      accountType:
-        installation.account.type === "Organization" ? "organization" : "user",
-      accountLogin: installation.account.login,
-      accountAvatarUrl: installation.account.avatar_url,
-    });
+    await fetchAction(
+      api.integrations.github.actions.saveInstallationFromCallback,
+      {
+        organizationId: toOrgId(organizationId),
+        installationId,
+        accountType:
+          installation.account.type === "Organization"
+            ? "organization"
+            : "user",
+        accountLogin: installation.account.login,
+        accountAvatarUrl: installation.account.avatar_url,
+      }
+    );
 
     // Build redirect URL using the org slug from state
     const redirectPath = orgSlug

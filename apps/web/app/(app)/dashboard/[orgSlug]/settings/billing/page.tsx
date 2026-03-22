@@ -19,17 +19,17 @@ export default function BillingPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const subscriptionStatus = useQuery(
-    api.subscriptions.getStatus,
+    api.billing.queries.getStatus,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
   const createCheckoutSession = useAction(
-    api.subscriptions_actions.createCheckoutSession
+    api.billing.actions.createCheckoutSession
   );
   const createPortalSession = useAction(
-    api.subscriptions_actions.createCustomerPortalSession
+    api.billing.actions.createCustomerPortalSession
   );
 
   const [isLoading, setIsLoading] = useState<string | null>(null);

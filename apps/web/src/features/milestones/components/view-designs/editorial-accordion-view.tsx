@@ -44,7 +44,9 @@ export function EditorialAccordionView({
   isAdmin,
   onFeedbackClick,
 }: MilestonesViewProps) {
-  const milestones = useQuery(api.milestones.list, { organizationId });
+  const milestones = useQuery(api.organizations.milestones.list, {
+    organizationId,
+  });
   const [expandedId, setExpandedId] = useState<Id<"milestones"> | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
 

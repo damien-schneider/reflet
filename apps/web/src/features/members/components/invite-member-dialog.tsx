@@ -36,7 +36,7 @@ export function InviteMemberDialog({
   open,
   onOpenChange,
 }: InviteMemberDialogProps) {
-  const inviteMember = useMutation(api.invitations.create);
+  const inviteMember = useMutation(api.organizations.invitations.create);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
   const [isSubmitting, setIsSubmitting] = useState(false);

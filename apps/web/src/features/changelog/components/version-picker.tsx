@@ -27,7 +27,7 @@ export function VersionPicker({
   disabled,
   className,
 }: VersionPickerProps) {
-  const versionSuggestions = useQuery(api.releases.getNextVersion, {
+  const versionSuggestions = useQuery(api.changelog.releases.getNextVersion, {
     organizationId,
     excludeReleaseId,
   });

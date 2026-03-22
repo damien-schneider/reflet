@@ -78,12 +78,19 @@ export function SyncDirectionStep({
   const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
 
-  const githubConnection = useQuery(api.github.getConnection, {
-    organizationId,
-  });
+  const githubConnection = useQuery(
+    api.integrations.github.queries.getConnection,
+    {
+      organizationId,
+    }
+  );
 
-  const getToken = useAction(api.github_node_actions.getInstallationToken);
-  const fetchBranches = useAction(api.github_release_actions.fetchBranches);
+  const getToken = useAction(
+    api.integrations.github.node_actions.getInstallationToken
+  );
+  const fetchBranches = useAction(
+    api.integrations.github.release_actions.fetchBranches
+  );
 
   const isConnected = Boolean(
     githubConnection?.repositoryFullName && githubConnection?.installationId

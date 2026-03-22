@@ -74,8 +74,8 @@ export default function LandingHero() {
         {/* Subheadline */}
         <Lead className="mb-10 max-w-140" size="lg">
           Reflet captures every feature request, auto-triages with AI, and
-          closes the loop when you ship. One board — from raw feedback to
-          published changelog.
+          closes the loop when you ship. The feedback platform built for
+          developer-led SaaS teams.
         </Lead>
 
         {/* CTAs */}

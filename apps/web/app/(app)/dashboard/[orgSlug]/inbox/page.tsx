@@ -48,13 +48,13 @@ export default function InboxPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const membership = useQuery(
-    api.members.getMembership,
+    api.organizations.members.getMembership,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const supportSettings = useQuery(
-    api.support_conversations.getSupportSettings,
+    api.support.conversations.getSupportSettings,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
@@ -66,7 +66,7 @@ export default function InboxPage({
   ]);
 
   const conversations = useQuery(
-    api.support_conversations.listForAdmin,
+    api.support.conversations.listForAdmin,
     org?._id
       ? {
           organizationId: org._id,
@@ -76,24 +76,24 @@ export default function InboxPage({
   );
 
   const selectedConversation = useQuery(
-    api.support_conversations.get,
+    api.support.conversations.get,
     selectedConversationId ? { id: selectedConversationId } : "skip"
   );
 
   const messages = useQuery(
-    api.support_messages.list,
+    api.support.messages.list,
     selectedConversationId ? { conversationId: selectedConversationId } : "skip"
   );
 
   const members = useQuery(
-    api.members.list,
+    api.organizations.members.list,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
-  const sendMessage = useMutation(api.support_messages.send);
-  const markAsRead = useMutation(api.support_messages.markAsRead);
-  const updateStatus = useMutation(api.support_conversations.updateStatus);
-  const assignConversation = useMutation(api.support_conversations.assign);
+  const sendMessage = useMutation(api.support.messages.send);
+  const markAsRead = useMutation(api.support.messages.markAsRead);
+  const updateStatus = useMutation(api.support.conversations.updateStatus);
+  const assignConversation = useMutation(api.support.conversations.assign);
 
   useEffect(() => {
     if (selectedConversationId && messages && messages.length > 0) {

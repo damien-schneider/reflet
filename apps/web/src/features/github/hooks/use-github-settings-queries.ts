@@ -12,23 +12,23 @@ export function useGitHubSettingsQueries({
   orgId,
 }: UseGitHubSettingsQueriesProps) {
   const connectionStatus = useQuery(
-    api.github.getConnectionStatus,
+    api.integrations.github.queries.getConnectionStatus,
     orgId ? { organizationId: orgId } : "skip"
   );
   const githubReleases = useQuery(
-    api.github.listGithubReleases,
+    api.integrations.github.queries.listGithubReleases,
     orgId ? { organizationId: orgId } : "skip"
   );
   const issueSyncStatus = useQuery(
-    api.github_issues.getIssueSyncStatus,
+    api.integrations.github.issues.getIssueSyncStatus,
     orgId ? { organizationId: orgId } : "skip"
   );
   const labelMappings = useQuery(
-    api.github_issues.getLabelMappings,
+    api.integrations.github.issues.getLabelMappings,
     orgId ? { organizationId: orgId } : "skip"
   );
   const tags = useQuery(
-    api.tags.list,
+    api.feedback.tags.list,
     orgId ? { organizationId: orgId } : "skip"
   );
 

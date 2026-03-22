@@ -26,7 +26,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // Get the GitHub connection using action (no auth required)
     const connection = await fetchAction(
-      api.github_actions.getConnectionFromApiRoute,
+      api.integrations.github.actions.getConnectionFromApiRoute,
       { organizationId }
     );
 
@@ -45,7 +45,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     // Update sync status to syncing
-    await fetchMutation(api.github_issues.updateIssuesSyncStatus, {
+    await fetchMutation(api.integrations.github.issues.updateIssuesSyncStatus, {
       connectionId: connection._id,
       status: "syncing",
     });
@@ -53,29 +53,32 @@ export async function POST(request: Request): Promise<NextResponse> {
     try {
       // Get installation access token
       const tokenResult = await fetchAction(
-        api.github_node_actions.getInstallationToken,
+        api.integrations.github.node_actions.getInstallationToken,
         {
           installationId: connection.installationId,
         }
       );
 
       // Fetch issues from GitHub
-      const issues = await fetchAction(api.github_actions.fetchIssues, {
-        installationToken: tokenResult.token,
-        repositoryFullName: connection.repositoryFullName,
-        state: body.state ?? "all",
-        labels: body.labels,
-      });
+      const issues = await fetchAction(
+        api.integrations.github.actions.fetchIssues,
+        {
+          installationToken: tokenResult.token,
+          repositoryFullName: connection.repositoryFullName,
+          state: body.state ?? "all",
+          labels: body.labels,
+        }
+      );
 
       // Save synced issues
-      await fetchMutation(api.github_issues.saveSyncedIssues, {
+      await fetchMutation(api.integrations.github.issues.saveSyncedIssues, {
         organizationId,
         issues,
       });
 
       // Auto-import based on label mappings
       const importResult = await fetchMutation(
-        api.github_issues.autoImportIssuesByLabel,
+        api.integrations.github.issues.autoImportIssuesByLabel,
         { organizationId }
       );
 
@@ -86,11 +89,14 @@ export async function POST(request: Request): Promise<NextResponse> {
       });
     } catch (error) {
       // Update sync status to error
-      await fetchMutation(api.github_issues.updateIssuesSyncStatus, {
-        connectionId: connection._id,
-        status: "error",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+      await fetchMutation(
+        api.integrations.github.issues.updateIssuesSyncStatus,
+        {
+          connectionId: connection._id,
+          status: "error",
+          error: error instanceof Error ? error.message : "Unknown error",
+        }
+      );
 
       throw error;
     }

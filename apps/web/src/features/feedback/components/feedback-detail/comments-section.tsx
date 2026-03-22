@@ -21,8 +21,8 @@ export function CommentsSection({ feedbackId }: CommentsSectionProps) {
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const commentsData = useQuery(api.comments.list, { feedbackId });
-  const addComment = useMutation(api.comments.create);
+  const commentsData = useQuery(api.feedback.comments.list, { feedbackId });
+  const addComment = useMutation(api.feedback.comments.create);
 
   const handleSubmitComment = useCallback(async () => {
     if (!newComment.trim() || isSubmitting) {

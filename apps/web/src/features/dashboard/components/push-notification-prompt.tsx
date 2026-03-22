@@ -20,12 +20,12 @@ import { usePushNotifications } from "@/hooks/use-push-notifications";
  * - Push is not already enabled
  */
 export function PushNotificationPrompt() {
-  const preferences = useQuery(api.notification_preferences.getPreferences);
+  const preferences = useQuery(api.notifications.preferences.getPreferences);
   const updatePreferences = useMutation(
-    api.notification_preferences.updatePreferences
+    api.notifications.preferences.updatePreferences
   );
   const dismissPrompt = useMutation(
-    api.notification_preferences.dismissPushPrompt
+    api.notifications.preferences.dismissPushPrompt
   );
   const { isSupported, permissionState, isSubscribed, subscribe } =
     usePushNotifications();

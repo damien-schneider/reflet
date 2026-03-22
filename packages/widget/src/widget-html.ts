@@ -53,9 +53,13 @@ export function renderWidgetHTML(
           </button>
         </div>
         
-        <div class="reflet-powered-by">
+        ${
+          config.hideBranding
+            ? ""
+            : `<div class="reflet-powered-by">
           Powered by <a href="https://reflet.app" target="_blank" rel="noopener">Reflet</a>
-        </div>
+        </div>`
+        }
       </div>
     `;
   }

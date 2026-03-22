@@ -29,8 +29,8 @@ export function useAutoSaveRelease({
   version,
   description,
 }: UseAutoSaveReleaseOptions): UseAutoSaveReleaseResult {
-  const createRelease = useMutation(api.changelog.create);
-  const updateRelease = useMutation(api.changelog.update);
+  const createRelease = useMutation(api.changelog.mutations.create);
+  const updateRelease = useMutation(api.changelog.mutations.update);
 
   const [releaseId, setReleaseId] = useState<Id<"releases"> | null>(
     initialReleaseId

@@ -63,8 +63,8 @@ export function OrganizationSwitcher({
   currentOrgSlug,
 }: OrganizationSwitcherProps) {
   const router = useRouter();
-  const organizations = useQuery(api.organizations.list);
-  const createOrg = useMutation(api.organizations.create);
+  const organizations = useQuery(api.organizations.queries.list);
+  const createOrg = useMutation(api.organizations.mutations.create);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newOrgName, setNewOrgName] = useState("");
   const [isCreating, setIsCreating] = useState(false);

@@ -23,7 +23,7 @@ export function FeedbackCreator({
   onSuccess,
   onCancel,
 }: FeedbackCreatorProps) {
-  const createFeedback = useMutation(api.feedback.create);
+  const createFeedback = useMutation(api.feedback.mutations.create);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

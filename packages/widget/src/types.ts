@@ -8,6 +8,7 @@ export interface WidgetConfig {
   showLauncher: boolean;
   autoOpen: boolean;
   zIndex: number;
+  hideBranding?: boolean;
 }
 
 export interface WidgetMessage {

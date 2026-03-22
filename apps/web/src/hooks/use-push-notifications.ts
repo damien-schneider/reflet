@@ -46,10 +46,10 @@ export function usePushNotifications() {
   });
 
   const subscribeMutation = useMutation(
-    api.push_notifications_queries.subscribe
+    api.notifications.push_queries.subscribe
   );
   const unsubscribeMutation = useMutation(
-    api.push_notifications_queries.unsubscribe
+    api.notifications.push_queries.unsubscribe
   );
 
   // Register service worker and check initial state

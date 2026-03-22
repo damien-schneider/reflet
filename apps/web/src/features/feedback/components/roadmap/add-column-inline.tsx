@@ -27,7 +27,7 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const createStatus = useMutation(api.organization_statuses.create);
+  const createStatus = useMutation(api.organizations.statuses.create);
 
   const handleStartAdding = useCallback(() => {
     setIsAdding(true);

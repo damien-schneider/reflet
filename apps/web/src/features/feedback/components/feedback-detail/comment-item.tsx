@@ -38,9 +38,9 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
   const [replyContent, setReplyContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const updateComment = useMutation(api.comments.update);
-  const deleteComment = useMutation(api.comments.remove);
-  const addReply = useMutation(api.comments.create);
+  const updateComment = useMutation(api.feedback.comments.update);
+  const deleteComment = useMutation(api.feedback.comments.remove);
+  const addReply = useMutation(api.feedback.comments.create);
 
   const handleEdit = useCallback(async () => {
     if (!editContent.trim()) {

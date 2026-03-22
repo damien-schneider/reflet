@@ -26,20 +26,20 @@ export default function MembersGearPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.getBySlug, { slug: orgSlug });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const members = useQuery(
-    api.members.list,
+    api.organizations.members.list,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const invitations = useQuery(
-    api.invitations.listPending,
+    api.organizations.invitations.listPending,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const currentMember = useQuery(
-    api.members.getCurrentMember,
+    api.organizations.members.getCurrentMember,
     org?._id ? { organizationId: org._id } : "skip"
   );
-  const removeMember = useMutation(api.members.remove);
+  const removeMember = useMutation(api.organizations.members.remove);
 
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [removingMember, setRemovingMember] = useState<{

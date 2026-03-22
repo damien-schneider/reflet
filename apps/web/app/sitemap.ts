@@ -1,3 +1,5 @@
+import { api } from "@reflet/backend/convex/_generated/api";
+import { fetchQuery } from "convex/nextjs";
 import type { MetadataRoute } from "next";
 
 import { getAllBlogPosts } from "@/lib/blog";
@@ -138,5 +140,47 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: post.meta.category === "comparison" ? 0.85 : 0.8,
   }));
 
-  return [...staticPages, ...docsPages, ...legalPages, ...blogPages];
+  // Public organization pages
+  let orgPages: MetadataRoute.Sitemap = [];
+  let feedbackPages: MetadataRoute.Sitemap = [];
+
+  try {
+    const [publicOrgs, publicFeedback] = await Promise.all([
+      fetchQuery(api.sitemap_public.getPublicOrgSlugs, {}),
+      fetchQuery(api.sitemap_public.getPublicFeedbackForSitemap, {}),
+    ]);
+
+    orgPages = publicOrgs.flatMap((org) => [
+      {
+        url: `${BASE_URL}/${org.slug}`,
+        lastModified: new Date(org.updatedAt),
+        changeFrequency: "daily" as const,
+        priority: 0.7,
+      },
+      {
+        url: `${BASE_URL}/${org.slug}/changelog`,
+        lastModified: new Date(org.updatedAt),
+        changeFrequency: "weekly" as const,
+        priority: 0.6,
+      },
+    ]);
+
+    feedbackPages = publicFeedback.map((entry) => ({
+      url: `${BASE_URL}/${entry.orgSlug}/feedback/${entry.feedbackId}`,
+      lastModified: new Date(entry.updatedAt),
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
+    }));
+  } catch {
+    // Silently continue if Convex is unreachable during build
+  }
+
+  return [
+    ...staticPages,
+    ...docsPages,
+    ...legalPages,
+    ...blogPages,
+    ...orgPages,
+    ...feedbackPages,
+  ];
 }
