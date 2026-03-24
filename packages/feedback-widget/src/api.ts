@@ -212,9 +212,22 @@ class FeedbackApi {
   // SURVEYS
   // ============================================
 
-  async getActiveSurvey(triggerType?: string): Promise<SurveyData | null> {
-    const params = triggerType ? `?triggerType=${triggerType}` : "";
-    return await this.request("GET", `/api/v1/surveys/active${params}`);
+  async getActiveSurvey(
+    triggerType?: string,
+    surveyId?: string
+  ): Promise<SurveyData | null> {
+    const searchParams = new URLSearchParams();
+    if (triggerType) {
+      searchParams.set("triggerType", triggerType);
+    }
+    if (surveyId) {
+      searchParams.set("surveyId", surveyId);
+    }
+    const query = searchParams.toString();
+    return await this.request(
+      "GET",
+      `/api/v1/surveys/active${query ? `?${query}` : ""}`
+    );
   }
 
   async startSurveyResponse(params: {

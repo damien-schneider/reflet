@@ -652,4 +652,47 @@ export class RefletAdminClient {
       `/api/v1/admin/survey/analytics?id=${encodeURIComponent(surveyId)}`
     );
   }
+
+  duplicateSurvey(surveyId: string, title?: string): Promise<unknown> {
+    return this.request("POST", "/api/v1/admin/survey/duplicate", {
+      surveyId,
+      title,
+    });
+  }
+
+  updateSurvey(params: {
+    surveyId: string;
+    title?: string;
+    description?: string;
+    triggerType?: string;
+    triggerConfig?: {
+      pageUrl?: string;
+      delayMs?: number;
+      sampleRate?: number;
+    };
+    maxResponses?: number;
+  }): Promise<unknown> {
+    return this.request("POST", "/api/v1/admin/survey/update", params);
+  }
+
+  listSurveyResponses(
+    surveyId: string,
+    params?: {
+      status?: "started" | "completed" | "abandoned";
+      limit?: number;
+    }
+  ): Promise<unknown> {
+    const searchParams = new URLSearchParams();
+    searchParams.set("id", surveyId);
+    if (params?.status) {
+      searchParams.set("status", params.status);
+    }
+    if (params?.limit) {
+      searchParams.set("limit", String(params.limit));
+    }
+    return this.request(
+      "GET",
+      `/api/v1/admin/survey/responses?${searchParams}`
+    );
+  }
 }

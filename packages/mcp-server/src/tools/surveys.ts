@@ -122,4 +122,76 @@ export function registerSurveyTools(
     async (params) =>
       textResult(await client.getSurveyAnalytics(params.surveyId))
   );
+
+  server.tool(
+    "survey_duplicate",
+    "Create a copy of an existing survey with all its questions. The copy starts in draft status.",
+    {
+      surveyId: z.string().describe("The survey ID to duplicate"),
+      title: z
+        .string()
+        .optional()
+        .describe(
+          "Optional title for the copy. Defaults to 'Copy of <original title>'"
+        ),
+    },
+    async (params) =>
+      textResult(await client.duplicateSurvey(params.surveyId, params.title))
+  );
+
+  server.tool(
+    "survey_update",
+    "Update a survey's settings (title, description, trigger, max responses). Does not change status — use survey_update_status for that.",
+    {
+      surveyId: z.string().describe("The survey ID to update"),
+      title: z.string().optional().describe("New title"),
+      description: z.string().optional().describe("New description"),
+      triggerType: z
+        .enum([
+          "manual",
+          "page_visit",
+          "time_delay",
+          "exit_intent",
+          "feedback_submitted",
+        ])
+        .optional()
+        .describe("New trigger type"),
+      triggerConfig: z
+        .object({
+          pageUrl: z.string().optional(),
+          delayMs: z.number().optional(),
+          sampleRate: z.number().optional(),
+        })
+        .optional()
+        .describe("New trigger-specific configuration"),
+      maxResponses: z
+        .number()
+        .optional()
+        .describe("Maximum number of responses to collect"),
+    },
+    async (params) => textResult(await client.updateSurvey(params))
+  );
+
+  server.tool(
+    "survey_responses",
+    "List responses for a survey. Optionally filter by status (started, completed, abandoned).",
+    {
+      surveyId: z.string().describe("The survey ID to list responses for"),
+      status: z
+        .enum(["started", "completed", "abandoned"])
+        .optional()
+        .describe("Filter responses by status"),
+      limit: z
+        .number()
+        .optional()
+        .describe("Maximum number of responses to return"),
+    },
+    async (params) =>
+      textResult(
+        await client.listSurveyResponses(params.surveyId, {
+          status: params.status,
+          limit: params.limit,
+        })
+      )
+  );
 }

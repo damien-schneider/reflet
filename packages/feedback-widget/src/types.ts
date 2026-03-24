@@ -27,6 +27,8 @@ export interface WidgetConfig {
   primaryColor?: string;
   /** Board's public API key */
   publicKey: string;
+  /** Survey callbacks */
+  survey?: SurveyCallbacks;
   /** Target element ID for inline/portal mode */
   targetId?: string;
   /** Color theme */
@@ -134,6 +136,20 @@ export interface SurveyData {
  */
 export interface SurveyQuestion {
   _id: string;
+  conditionalLogic?: {
+    conditions: Array<{
+      questionId: string;
+      operator:
+        | "equals"
+        | "not_equals"
+        | "contains"
+        | "greater_than"
+        | "less_than";
+      value: string | number | boolean;
+    }>;
+    action: "show" | "skip";
+    logicType: "and" | "or";
+  };
   config?: {
     minValue?: number;
     maxValue?: number;
@@ -154,4 +170,28 @@ export interface SurveyQuestion {
     | "single_choice"
     | "multiple_choice"
     | "boolean";
+}
+
+/**
+ * Callbacks for survey lifecycle events
+ */
+export interface SurveyCallbacks {
+  onQuestionAnswer?: (data: {
+    surveyId: string;
+    questionId: string;
+    questionIndex: number;
+    value: string | number | boolean | string[];
+  }) => void;
+  onSurveyComplete?: (data: {
+    surveyId: string;
+    responseId: string;
+    totalQuestions: number;
+    answeredQuestions: number;
+  }) => void;
+  onSurveyDismiss?: (data: {
+    surveyId: string;
+    questionIndex: number;
+    answeredCount: number;
+  }) => void;
+  onSurveyStart?: (data: { surveyId: string; title: string }) => void;
 }

@@ -37,6 +37,45 @@ export const questionConfigValidator = v.optional(
   })
 );
 
+export const triggerConfigValidator = v.optional(
+  v.object({
+    pageUrl: v.optional(v.string()),
+    delayMs: v.optional(v.number()),
+    sampleRate: v.optional(v.number()),
+  })
+);
+
+export const responseStatusValidator = v.union(
+  v.literal("in_progress"),
+  v.literal("completed"),
+  v.literal("abandoned")
+);
+
+export const answerValueValidator = v.union(
+  v.string(),
+  v.number(),
+  v.boolean(),
+  v.array(v.string())
+);
+
+export const conditionalLogicConditionValidator = v.union(
+  v.literal("equals"),
+  v.literal("not_equals"),
+  v.literal("greater_than"),
+  v.literal("less_than"),
+  v.literal("contains"),
+  v.literal("answered"),
+  v.literal("not_answered")
+);
+
+export const conditionalLogicValidator = v.optional(
+  v.object({
+    dependsOn: v.optional(v.id("surveyQuestions")),
+    condition: v.optional(conditionalLogicConditionValidator),
+    value: v.optional(v.union(v.string(), v.number(), v.boolean())),
+  })
+);
+
 export const surveyTables = {
   surveys: defineTable({
     organizationId: v.id("organizations"),
@@ -45,13 +84,7 @@ export const surveyTables = {
     status: surveyStatusValidator,
     createdBy: v.string(),
     triggerType: triggerTypeValidator,
-    triggerConfig: v.optional(
-      v.object({
-        pageUrl: v.optional(v.string()),
-        delayMs: v.optional(v.number()),
-        sampleRate: v.optional(v.number()),
-      })
-    ),
+    triggerConfig: triggerConfigValidator,
     startsAt: v.optional(v.number()),
     endsAt: v.optional(v.number()),
     maxResponses: v.optional(v.number()),
@@ -71,17 +104,8 @@ export const surveyTables = {
     description: v.optional(v.string()),
     required: v.boolean(),
     order: v.number(),
-    config: v.optional(
-      v.object({
-        minValue: v.optional(v.number()),
-        maxValue: v.optional(v.number()),
-        minLabel: v.optional(v.string()),
-        maxLabel: v.optional(v.string()),
-        choices: v.optional(v.array(v.string())),
-        placeholder: v.optional(v.string()),
-        maxLength: v.optional(v.number()),
-      })
-    ),
+    config: questionConfigValidator,
+    conditionalLogic: conditionalLogicValidator,
   })
     .index("by_survey", ["surveyId"])
     .index("by_survey_order", ["surveyId", "order"]),
@@ -91,11 +115,7 @@ export const surveyTables = {
     organizationId: v.id("organizations"),
     externalUserId: v.optional(v.id("externalUsers")),
     respondentId: v.optional(v.string()),
-    status: v.union(
-      v.literal("in_progress"),
-      v.literal("completed"),
-      v.literal("abandoned")
-    ),
+    status: responseStatusValidator,
     startedAt: v.number(),
     completedAt: v.optional(v.number()),
     metadata: v.optional(
@@ -114,10 +134,11 @@ export const surveyTables = {
     questionId: v.id("surveyQuestions"),
     surveyId: v.id("surveys"),
     organizationId: v.id("organizations"),
-    value: v.union(v.string(), v.number(), v.boolean(), v.array(v.string())),
+    value: answerValueValidator,
     answeredAt: v.number(),
   })
     .index("by_response", ["responseId"])
     .index("by_question", ["questionId"])
-    .index("by_survey", ["surveyId"]),
+    .index("by_survey", ["surveyId"])
+    .index("by_survey_date", ["surveyId", "answeredAt"]),
 };

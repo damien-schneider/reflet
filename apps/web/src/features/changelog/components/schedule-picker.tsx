@@ -3,7 +3,6 @@
 import { CalendarBlank, Clock, Globe } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,19 +84,19 @@ export function SchedulePicker({
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !selectedDate && "text-muted-foreground"
-              )}
-              disabled={disabled}
-              size="sm"
-              variant="outline"
-            >
-              <CalendarBlank className="mr-2 h-4 w-4" />
-              {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Pick date"}
-            </Button>
+          <PopoverTrigger
+            className={cn(
+              "inline-flex h-8 items-center justify-start rounded-md border border-input bg-background px-3 text-left font-normal text-sm shadow-sm ring-offset-background",
+              "hover:bg-accent hover:text-accent-foreground",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              "disabled:pointer-events-none disabled:opacity-50",
+              "w-full",
+              !selectedDate && "text-muted-foreground"
+            )}
+            disabled={disabled}
+          >
+            <CalendarBlank className="mr-2 h-4 w-4" />
+            {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Pick date"}
           </PopoverTrigger>
           <PopoverContent align="start" className="w-auto p-0">
             <Calendar

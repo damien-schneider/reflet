@@ -626,5 +626,98 @@ export function getWidgetStyles(
       color: ${colors.textMuted};
       margin-bottom: 20px;
     }
+
+    /* Survey animations */
+    @keyframes reflet-slide-right {
+      from { opacity: 0; transform: translateX(16px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes reflet-slide-left {
+      from { opacity: 0; transform: translateX(-16px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes reflet-fade-in {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes reflet-btn-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .reflet-slide-in-right {
+      animation: reflet-slide-right 0.2s ease-out;
+    }
+
+    .reflet-slide-in-left {
+      animation: reflet-slide-left 0.2s ease-out;
+    }
+
+    .reflet-fade-in {
+      animation: reflet-fade-in 0.3s ease-out;
+    }
+
+    .reflet-btn-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: reflet-btn-spin 0.6s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    /* Survey validation */
+    .reflet-survey-validation {
+      font-size: 12px;
+      color: ${colors.error};
+      margin-top: 8px;
+    }
+
+    /* Character count */
+    .reflet-char-count {
+      font-size: 11px;
+      color: ${colors.textMuted};
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    /* Keyboard hint */
+    .reflet-survey-kbd-hint {
+      font-size: 11px;
+      color: ${colors.textMuted};
+      opacity: 0.6;
+    }
+
+    .reflet-survey-progress-text {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: ${colors.textMuted};
+      margin-bottom: 16px;
+    }
+
+    /* Selected choice highlight */
+    .reflet-choice-item.selected {
+      border-color: ${colors.primary};
+      background: ${adjustBrightness(colors.primary, 95)};
+    }
+
+    /* Survey overlay animation */
+    .reflet-survey-overlay {
+      animation: reflet-fade-in 0.2s ease-out;
+    }
+
+    /* Fieldset reset */
+    fieldset.reflet-choice-list {
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
   `;
 }

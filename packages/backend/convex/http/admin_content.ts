@@ -43,6 +43,9 @@ const ADMIN_CONTENT_PATHS = [
   "/api/v1/admin/survey/update-status",
   "/api/v1/admin/survey/delete",
   "/api/v1/admin/survey/analytics",
+  "/api/v1/admin/survey/duplicate",
+  "/api/v1/admin/survey/update",
+  "/api/v1/admin/survey/responses",
 ] as const;
 
 export function registerAdminContentRoutes(http: Router): void {
@@ -492,6 +495,65 @@ export function registerAdminContentRoutes(http: Router): void {
         surveyId: parseId<"surveys">(url.searchParams.get("id"), "id"),
       })
     ),
+  });
+
+  http.route({
+    path: "/api/v1/admin/survey/duplicate",
+    method: "POST",
+    handler: adminPost((ctx, _auth, body) =>
+      ctx.runMutation(internal.admin_api.survey.duplicateSurvey, {
+        surveyId: parseId<"surveys">(str(body.surveyId), "surveyId"),
+        title: str(body.title),
+      })
+    ),
+  });
+
+  http.route({
+    path: "/api/v1/admin/survey/update",
+    method: "POST",
+    handler: adminPost((ctx, _auth, body) =>
+      ctx.runMutation(internal.admin_api.survey.updateSurvey, {
+        surveyId: parseId<"surveys">(str(body.surveyId), "surveyId"),
+        title: str(body.title),
+        description: str(body.description),
+        triggerType: str(body.triggerType) as
+          | "manual"
+          | "page_visit"
+          | "time_delay"
+          | "exit_intent"
+          | "feedback_submitted"
+          | undefined,
+        triggerConfig: body.triggerConfig as
+          | {
+              pageUrl?: string;
+              delayMs?: number;
+              sampleRate?: number;
+            }
+          | undefined,
+        maxResponses: num(body.maxResponses),
+      })
+    ),
+  });
+
+  http.route({
+    path: "/api/v1/admin/survey/responses",
+    method: "GET",
+    handler: adminGet((ctx, _auth, url) => {
+      const statusParam = url.searchParams.get("status");
+      const limitParam = url.searchParams.get("limit");
+      return ctx.runQuery(internal.admin_api.survey.listResponses, {
+        surveyId: parseId<"surveys">(
+          requireStr(url.searchParams.get("id"), "id"),
+          "id"
+        ),
+        status: (statusParam ?? undefined) as
+          | "in_progress"
+          | "completed"
+          | "abandoned"
+          | undefined,
+        limit: limitParam ? Number.parseInt(limitParam, 10) : undefined,
+      });
+    }),
   });
 
   // --- CORS preflight for all admin content routes ---

@@ -7,6 +7,10 @@
     "stripe-prod": {
       "type": "http",
       "url": "https://mcp.stripe.com/"
+    },
+    "posthog": {
+      "type": "http",
+      "url": "https://mcp-eu.posthog.com/mcp"
     }
   }
 }

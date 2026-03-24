@@ -426,10 +426,43 @@ export class RefletFeedbackWidget {
     }
   }
 
+  async showSurveyById(surveyId: string): Promise<void> {
+    try {
+      const survey = await this.api.getActiveSurvey(undefined, surveyId);
+      if (survey && this.shadowRoot) {
+        this.activeSurvey = survey;
+        this.showSurvey(survey);
+      }
+    } catch {
+      // Silent fail
+    }
+  }
+
+  dismissSurvey(): void {
+    if (this.surveyRenderer) {
+      this.surveyRenderer.destroy();
+      this.surveyRenderer = null;
+    }
+    if (this.shadowRoot) {
+      const overlay = this.shadowRoot.querySelector(".reflet-survey-overlay");
+      if (overlay) {
+        overlay.remove();
+      }
+    }
+    this.activeSurvey = null;
+  }
+
+  get isSurveyActive(): boolean {
+    return this.activeSurvey !== null && this.surveyRenderer !== null;
+  }
+
   private showSurvey(survey: SurveyData): void {
     if (!this.shadowRoot) {
       return;
     }
+
+    // Dismiss any existing survey first
+    this.dismissSurvey();
 
     const surveyContainer = document.createElement("div");
     surveyContainer.className = "reflet-survey-overlay";
@@ -439,12 +472,15 @@ export class RefletFeedbackWidget {
       container: surveyContainer,
       api: this.api,
       survey,
+      callbacks: this.config.survey,
       onComplete: () => {
+        this.surveyRenderer?.destroy();
         surveyContainer.remove();
         this.surveyRenderer = null;
         this.activeSurvey = null;
       },
       onDismiss: () => {
+        this.surveyRenderer?.destroy();
         surveyContainer.remove();
         this.surveyRenderer = null;
         this.activeSurvey = null;

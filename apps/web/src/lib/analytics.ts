@@ -29,6 +29,7 @@ interface AnalyticsEvents {
   pricing_billing_toggled: { interval: "monthly" | "yearly" };
   pricing_tier_clicked: { tier: string; interval: "monthly" | "yearly" };
   release_published: { has_version: boolean };
+  release_scheduled: { has_version: boolean };
   sign_in_completed: { method: "email" | "google" | "github" };
   sign_out: Record<string, never>;
   // Acquisition
