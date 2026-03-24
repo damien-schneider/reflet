@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { mutation } from "../_generated/server";
@@ -199,6 +200,13 @@ export const create = mutation({
         });
       }
     }
+
+    // Schedule duplicate detection
+    await ctx.scheduler.runAfter(
+      0,
+      internal.duplicates.detection.findSimilarFeedback,
+      { feedbackId }
+    );
 
     return feedbackId;
   },

@@ -4,6 +4,7 @@ import { internal } from "../_generated/api";
 import type { Id, TableNames } from "../_generated/dataModel";
 import { httpAction } from "../_generated/server";
 import { decodeUserToken } from "../feedback/api_auth";
+import { parseId } from "./helpers";
 
 type Router = ReturnType<typeof httpRouter>;
 
@@ -79,6 +80,48 @@ function errorResponse(error: string, status = 400): Response {
   return jsonResponse({ error }, status);
 }
 
+function stringFieldOr(
+  body: Record<string, unknown>,
+  key: string,
+  defaultVal: string
+): string {
+  const val = body[key];
+  return typeof val === "string" ? val : defaultVal;
+}
+
+function optionalNumberField(
+  body: Record<string, unknown>,
+  key: string
+): number | undefined {
+  const val = body[key];
+  return typeof val === "number" ? val : undefined;
+}
+
+function optionalStringField(
+  body: Record<string, unknown>,
+  key: string
+): string | undefined {
+  const val = body[key];
+  return typeof val === "string" ? val : undefined;
+}
+
+async function parseRequestBody(
+  request: Request
+): Promise<
+  | { success: true; body: Record<string, unknown> }
+  | { success: false; response: Response }
+> {
+  try {
+    const raw: unknown = await request.json();
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+      return { success: false, response: errorResponse("Invalid JSON body") };
+    }
+    return { success: true, body: raw as Record<string, unknown> };
+  } catch {
+    return { success: false, response: errorResponse("Invalid JSON body") };
+  }
+}
+
 function corsPreflightResponse(): Response {
   return new Response(null, { status: 204, headers: CORS_HEADERS });
 }
@@ -91,16 +134,6 @@ function parseEnumParam<T extends string>(
     return value as T;
   }
   return undefined;
-}
-
-function parseId<T extends TableNames>(
-  value: string | null | undefined,
-  fieldName: string
-): Id<T> {
-  if (!value) {
-    throw new Error(`Missing required ID: ${fieldName}`);
-  }
-  return value as Id<T>;
 }
 
 function parseOptionalId<T extends TableNames>(
@@ -240,6 +273,13 @@ export function registerPublicApiRoutes(http: Router): void {
     "/api/v1/feedback/unsubscribe",
     "/api/v1/feedback/roadmap",
     "/api/v1/feedback/changelog",
+    "/api/v1/feedback/similar",
+    "/api/v1/feedback/screenshot/upload-url",
+    "/api/v1/feedback/screenshot/save",
+    "/api/v1/surveys/active",
+    "/api/v1/surveys/respond/start",
+    "/api/v1/surveys/respond/answer",
+    "/api/v1/surveys/respond/complete",
   ] as const) {
     http.route({
       path,
@@ -279,7 +319,6 @@ export function registerPublicApiRoutes(http: Router): void {
 
         return jsonResponse(config);
       } catch (error) {
-        console.error("API error (GET /api/v1/feedback):", error);
         return errorResponse(
           error instanceof Error ? error.message : "Internal server error",
           500
@@ -342,7 +381,6 @@ export function registerPublicApiRoutes(http: Router): void {
 
         return jsonResponse(result);
       } catch (error) {
-        console.error("API error (GET /api/v1/feedback/list):", error);
         return errorResponse(
           error instanceof Error ? error.message : "Internal server error",
           500
@@ -397,7 +435,40 @@ export function registerPublicApiRoutes(http: Router): void {
 
         return jsonResponse(result);
       } catch (error) {
-        console.error("API error (GET /api/v1/feedback/item):", error);
+        return errorResponse(
+          error instanceof Error ? error.message : "Internal server error",
+          500
+        );
+      }
+    }),
+  });
+
+  // GET /api/v1/feedback/similar - Search for similar feedback ("Did you mean?")
+  http.route({
+    path: "/api/v1/feedback/similar",
+    method: "GET",
+    handler: httpAction(async (ctx, request) => {
+      try {
+        const authResult = await authenticateApiRequest(ctx, request);
+        if (!authResult.success) {
+          return authResult.response;
+        }
+
+        const { organizationId } = authResult.auth;
+        const url = new URL(request.url);
+        const title = url.searchParams.get("title");
+
+        if (!title || title.length < 3) {
+          return jsonResponse([]);
+        }
+
+        const results = await ctx.runQuery(
+          internal.feedback.api_public.searchSimilarFeedback,
+          { organizationId, title }
+        );
+
+        return jsonResponse(results);
+      } catch (error) {
         return errorResponse(
           error instanceof Error ? error.message : "Internal server error",
           500
@@ -453,7 +524,6 @@ export function registerPublicApiRoutes(http: Router): void {
 
         return jsonResponse(result, 201);
       } catch (error) {
-        console.error("API error (POST /api/v1/feedback/create):", error);
         return errorResponse(
           error instanceof Error ? error.message : "Failed to create feedback",
           500
@@ -515,7 +585,6 @@ export function registerPublicApiRoutes(http: Router): void {
 
         return jsonResponse(result);
       } catch (error) {
-        console.error("API error (POST /api/v1/feedback/vote):", error);
         return errorResponse(
           error instanceof Error ? error.message : "Failed to vote",
           500
@@ -529,35 +598,42 @@ export function registerPublicApiRoutes(http: Router): void {
     path: "/api/v1/feedback/comments",
     method: "GET",
     handler: httpAction(async (ctx, request) => {
-      const authResult = await authenticateApiRequest(ctx, request);
-      if (!authResult.success) {
-        return authResult.response;
-      }
-
-      const { organizationId } = authResult.auth;
-      const url = new URL(request.url);
-      const feedbackIdParam = url.searchParams.get("feedbackId");
-      const sortBy = parseEnumParam(
-        url.searchParams.get("sortBy"),
-        COMMENTS_SORT_OPTIONS
-      );
-
-      if (!feedbackIdParam) {
-        return errorResponse("Feedback ID is required", 400);
-      }
-
-      const feedbackId = parseId<"feedback">(feedbackIdParam, "feedbackId");
-
-      const result = await ctx.runQuery(
-        internal.feedback.api_public.listCommentsByOrganization,
-        {
-          organizationId,
-          feedbackId,
-          sortBy: sortBy ?? undefined,
+      try {
+        const authResult = await authenticateApiRequest(ctx, request);
+        if (!authResult.success) {
+          return authResult.response;
         }
-      );
 
-      return jsonResponse(result);
+        const { organizationId } = authResult.auth;
+        const url = new URL(request.url);
+        const feedbackIdParam = url.searchParams.get("feedbackId");
+        const sortBy = parseEnumParam(
+          url.searchParams.get("sortBy"),
+          COMMENTS_SORT_OPTIONS
+        );
+
+        if (!feedbackIdParam) {
+          return errorResponse("Feedback ID is required", 400);
+        }
+
+        const feedbackId = parseId<"feedback">(feedbackIdParam, "feedbackId");
+
+        const result = await ctx.runQuery(
+          internal.feedback.api_public.listCommentsByOrganization,
+          {
+            organizationId,
+            feedbackId,
+            sortBy: sortBy ?? undefined,
+          }
+        );
+
+        return jsonResponse(result);
+      } catch (error) {
+        return errorResponse(
+          error instanceof Error ? error.message : "Internal server error",
+          500
+        );
+      }
     }),
   });
 
@@ -566,27 +642,35 @@ export function registerPublicApiRoutes(http: Router): void {
     path: "/api/v1/feedback/comment",
     method: "POST",
     handler: httpAction(async (ctx, request) => {
-      const authResult = await authenticateApiRequest(ctx, request);
-      if (!authResult.success) {
-        return authResult.response;
-      }
-
-      const { organizationId, externalUserId } = authResult.auth;
-
-      if (!externalUserId) {
-        return errorResponse(
-          "User identification required. Provide X-User-Token header.",
-          401
-        );
-      }
-
-      const body = commentBodySchema.parse(await request.json());
-
-      if (!(body.feedbackId && body.body)) {
-        return errorResponse("Feedback ID and comment body are required", 400);
-      }
-
       try {
+        const authResult = await authenticateApiRequest(ctx, request);
+        if (!authResult.success) {
+          return authResult.response;
+        }
+
+        const { organizationId, externalUserId } = authResult.auth;
+
+        if (!externalUserId) {
+          return errorResponse(
+            "User identification required. Provide X-User-Token header.",
+            401
+          );
+        }
+
+        let body: z.infer<typeof commentBodySchema>;
+        try {
+          body = commentBodySchema.parse(await request.json());
+        } catch {
+          return errorResponse("Invalid JSON body", 400);
+        }
+
+        if (!(body.feedbackId && body.body)) {
+          return errorResponse(
+            "Feedback ID and comment body are required",
+            400
+          );
+        }
+
         const result = await ctx.runMutation(
           internal.feedback.api_public.addCommentByOrganization,
           {
@@ -602,7 +686,7 @@ export function registerPublicApiRoutes(http: Router): void {
       } catch (error) {
         return errorResponse(
           error instanceof Error ? error.message : "Failed to add comment",
-          400
+          500
         );
       }
     }),
@@ -703,23 +787,30 @@ export function registerPublicApiRoutes(http: Router): void {
     path: "/api/v1/feedback/roadmap",
     method: "GET",
     handler: httpAction(async (ctx, request) => {
-      const authResult = await authenticateApiRequest(ctx, request);
-      if (!authResult.success) {
-        return authResult.response;
+      try {
+        const authResult = await authenticateApiRequest(ctx, request);
+        if (!authResult.success) {
+          return authResult.response;
+        }
+
+        const { organizationId } = authResult.auth;
+
+        const result = await ctx.runQuery(
+          internal.feedback.api_public.getRoadmapByOrganization,
+          { organizationId }
+        );
+
+        if (!result) {
+          return errorResponse("Roadmap not found", 404);
+        }
+
+        return jsonResponse(result);
+      } catch (error) {
+        return errorResponse(
+          error instanceof Error ? error.message : "Internal server error",
+          500
+        );
       }
-
-      const { organizationId } = authResult.auth;
-
-      const result = await ctx.runQuery(
-        internal.feedback.api_public.getRoadmapByOrganization,
-        { organizationId }
-      );
-
-      if (!result) {
-        return errorResponse("Roadmap not found", 404);
-      }
-
-      return jsonResponse(result);
     }),
   });
 
@@ -728,24 +819,302 @@ export function registerPublicApiRoutes(http: Router): void {
     path: "/api/v1/feedback/changelog",
     method: "GET",
     handler: httpAction(async (ctx, request) => {
-      const authResult = await authenticateApiRequest(ctx, request);
-      if (!authResult.success) {
-        return authResult.response;
-      }
-
-      const { organizationId } = authResult.auth;
-      const url = new URL(request.url);
-      const limit = url.searchParams.get("limit");
-
-      const result = await ctx.runQuery(
-        internal.feedback.api_public.getChangelogByOrganization,
-        {
-          organizationId,
-          limit: limit ? Number.parseInt(limit, 10) : undefined,
+      try {
+        const authResult = await authenticateApiRequest(ctx, request);
+        if (!authResult.success) {
+          return authResult.response;
         }
-      );
 
-      return jsonResponse(result);
+        const { organizationId } = authResult.auth;
+        const url = new URL(request.url);
+        const limit = url.searchParams.get("limit");
+
+        const result = await ctx.runQuery(
+          internal.feedback.api_public.getChangelogByOrganization,
+          {
+            organizationId,
+            limit: limit ? Number.parseInt(limit, 10) : undefined,
+          }
+        );
+
+        return jsonResponse(result);
+      } catch (error) {
+        return errorResponse(
+          error instanceof Error ? error.message : "Internal server error",
+          500
+        );
+      }
+    }),
+  });
+
+  // POST /api/v1/feedback/screenshot/upload-url - Generate upload URL for screenshot
+  http.route({
+    path: "/api/v1/feedback/screenshot/upload-url",
+    method: "POST",
+    handler: httpAction(async (ctx, request) => {
+      try {
+        const authResult = await authenticateApiRequest(ctx, request);
+        if (!authResult.success) {
+          return authResult.response;
+        }
+
+        const uploadUrl = await ctx.runMutation(
+          internal.feedback.screenshots.generatePublicUploadUrl,
+          {}
+        );
+
+        return jsonResponse({ uploadUrl });
+      } catch (error) {
+        return errorResponse(
+          error instanceof Error ? error.message : "Internal server error",
+          500
+        );
+      }
+    }),
+  });
+
+  // POST /api/v1/feedback/screenshot/save - Save screenshot metadata after upload
+  http.route({
+    path: "/api/v1/feedback/screenshot/save",
+    method: "POST",
+    handler: httpAction(async (ctx, request) => {
+      try {
+        const authResult = await authenticateApiRequest(ctx, request);
+        if (!authResult.success) {
+          return authResult.response;
+        }
+
+        const { externalUserId } = authResult.auth;
+
+        const bodyResult = await parseRequestBody(request);
+        if (!bodyResult.success) {
+          return bodyResult.response;
+        }
+        const { body } = bodyResult;
+
+        const feedbackId = body.feedbackId as string | undefined;
+        const storageId = body.storageId as string | undefined;
+
+        if (!(feedbackId && storageId)) {
+          return errorResponse("feedbackId and storageId are required", 400);
+        }
+
+        const screenshotId = await ctx.runMutation(
+          internal.feedback.screenshots.saveScreenshotPublic,
+          {
+            feedbackId: feedbackId as Id<"feedback">,
+            storageId: storageId as Id<"_storage">,
+            filename: stringFieldOr(body, "filename", "screenshot.png"),
+            mimeType: stringFieldOr(body, "mimeType", "image/png"),
+            size: optionalNumberField(body, "size") ?? 0,
+            width: optionalNumberField(body, "width"),
+            height: optionalNumberField(body, "height"),
+            captureSource: "widget",
+            pageUrl: optionalStringField(body, "pageUrl"),
+            externalUserId,
+          }
+        );
+
+        return jsonResponse({ screenshotId });
+      } catch (error) {
+        return errorResponse(
+          error instanceof Error ? error.message : "Internal server error",
+          500
+        );
+      }
+    }),
+  });
+
+  // ============================================
+  // SURVEY ROUTES
+  // ============================================
+
+  // GET /api/v1/surveys/active - Get active survey for widget
+  http.route({
+    path: "/api/v1/surveys/active",
+    method: "GET",
+    handler: httpAction(async (ctx, request) => {
+      try {
+        const authResult = await authenticateApiRequest(ctx, request);
+        if (!authResult.success) {
+          return authResult.response;
+        }
+
+        const { organizationId } = authResult.auth;
+
+        const url = new URL(request.url);
+        const triggerType = url.searchParams.get("triggerType") || undefined;
+
+        const survey = await ctx.runQuery(
+          internal.surveys.mutations.getActiveSurvey,
+          {
+            organizationId,
+            triggerType: triggerType as
+              | "manual"
+              | "page_visit"
+              | "time_delay"
+              | "exit_intent"
+              | "feedback_submitted"
+              | undefined,
+          }
+        );
+
+        return jsonResponse(survey);
+      } catch (error) {
+        return errorResponse(
+          error instanceof Error ? error.message : "Internal server error",
+          500
+        );
+      }
+    }),
+  });
+
+  // POST /api/v1/surveys/respond/start - Start a survey response
+  http.route({
+    path: "/api/v1/surveys/respond/start",
+    method: "POST",
+    handler: httpAction(async (ctx, request) => {
+      try {
+        const authResult = await authenticateApiRequest(ctx, request);
+        if (!authResult.success) {
+          return authResult.response;
+        }
+
+        const { organizationId, externalUserId } = authResult.auth;
+
+        let body: Record<string, unknown>;
+        try {
+          const raw: unknown = await request.json();
+          if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+            return errorResponse("Invalid JSON body", 400);
+          }
+          body = raw as Record<string, unknown>;
+        } catch {
+          return errorResponse("Invalid JSON body", 400);
+        }
+
+        const surveyId = body.surveyId as string | undefined;
+        if (!surveyId) {
+          return errorResponse("surveyId is required", 400);
+        }
+
+        const responseId = await ctx.runMutation(
+          internal.surveys.mutations.startResponse,
+          {
+            surveyId: surveyId as Id<"surveys">,
+            organizationId,
+            externalUserId,
+            respondentId:
+              typeof body.respondentId === "string"
+                ? body.respondentId
+                : undefined,
+            pageUrl:
+              typeof body.pageUrl === "string" ? body.pageUrl : undefined,
+            userAgent:
+              typeof body.userAgent === "string" ? body.userAgent : undefined,
+          }
+        );
+
+        return jsonResponse({ responseId });
+      } catch (error) {
+        return errorResponse(
+          error instanceof Error ? error.message : "Internal server error",
+          500
+        );
+      }
+    }),
+  });
+
+  // POST /api/v1/surveys/respond/answer - Submit an answer
+  http.route({
+    path: "/api/v1/surveys/respond/answer",
+    method: "POST",
+    handler: httpAction(async (ctx, request) => {
+      try {
+        const authResult = await authenticateApiRequest(ctx, request);
+        if (!authResult.success) {
+          return authResult.response;
+        }
+
+        let body: Record<string, unknown>;
+        try {
+          const raw: unknown = await request.json();
+          if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+            return errorResponse("Invalid JSON body", 400);
+          }
+          body = raw as Record<string, unknown>;
+        } catch {
+          return errorResponse("Invalid JSON body", 400);
+        }
+
+        const responseId = body.responseId as string | undefined;
+        const questionId = body.questionId as string | undefined;
+        const value = body.value;
+
+        if (!(responseId && questionId) || value === undefined) {
+          return errorResponse(
+            "responseId, questionId, and value are required",
+            400
+          );
+        }
+
+        const answerId = await ctx.runMutation(
+          internal.surveys.mutations.submitAnswer,
+          {
+            responseId: responseId as Id<"surveyResponses">,
+            questionId: questionId as Id<"surveyQuestions">,
+            value: value as string | number | boolean | string[],
+          }
+        );
+
+        return jsonResponse({ answerId });
+      } catch (error) {
+        return errorResponse(
+          error instanceof Error ? error.message : "Internal server error",
+          500
+        );
+      }
+    }),
+  });
+
+  // POST /api/v1/surveys/respond/complete - Complete a survey response
+  http.route({
+    path: "/api/v1/surveys/respond/complete",
+    method: "POST",
+    handler: httpAction(async (ctx, request) => {
+      try {
+        const authResult = await authenticateApiRequest(ctx, request);
+        if (!authResult.success) {
+          return authResult.response;
+        }
+
+        let body: Record<string, unknown>;
+        try {
+          const raw: unknown = await request.json();
+          if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+            return errorResponse("Invalid JSON body", 400);
+          }
+          body = raw as Record<string, unknown>;
+        } catch {
+          return errorResponse("Invalid JSON body", 400);
+        }
+
+        const responseId = body.responseId as string | undefined;
+        if (!responseId) {
+          return errorResponse("responseId is required", 400);
+        }
+
+        await ctx.runMutation(internal.surveys.mutations.completeResponse, {
+          responseId: responseId as Id<"surveyResponses">,
+        });
+
+        return jsonResponse({ success: true });
+      } catch (error) {
+        return errorResponse(
+          error instanceof Error ? error.message : "Internal server error",
+          500
+        );
+      }
     }),
   });
 }

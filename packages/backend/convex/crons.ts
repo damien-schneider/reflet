@@ -21,4 +21,22 @@ crons.weekly(
   internal.notifications.weekly_digest.sendAllDigests
 );
 
+crons.interval(
+  "check scheduled releases",
+  { minutes: 5 },
+  internal.changelog.scheduling.checkMissedScheduledReleases
+);
+
+crons.daily(
+  "cleanup old email events",
+  { hourUTC: 2, minuteUTC: 30 },
+  internal.email.health.cleanupOldEvents
+);
+
+crons.daily(
+  "abandon stale survey responses",
+  { hourUTC: 5, minuteUTC: 0 },
+  internal.surveys.mutations.abandonStaleResponses
+);
+
 export default crons;

@@ -1,12 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { RefletAdminClient } from "../client.js";
-
-function textResult(data: unknown): {
-  content: { type: "text"; text: string }[];
-} {
-  return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
-}
+import { textResult } from "./utils.js";
 
 export function registerOrganizationTools(
   server: McpServer,
@@ -21,15 +16,18 @@ export function registerOrganizationTools(
 
   server.tool(
     "org_update",
-    "Update organization settings like name, slug, visibility, or branding.",
+    "Update organization settings like name, visibility, branding, or support.",
     {
       name: z.string().optional().describe("Organization name"),
-      slug: z.string().optional().describe("URL slug for the organization"),
       isPublic: z
         .boolean()
         .optional()
         .describe("Whether the feedback board is publicly accessible"),
       primaryColor: z.string().optional().describe("Brand color (hex)"),
+      supportEnabled: z
+        .boolean()
+        .optional()
+        .describe("Whether the support/help desk feature is enabled"),
     },
     async (params) => textResult(await client.updateOrganization(params))
   );

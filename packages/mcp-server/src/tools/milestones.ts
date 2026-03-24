@@ -1,12 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { RefletAdminClient } from "../client.js";
-
-function textResult(data: unknown): {
-  content: { type: "text"; text: string }[];
-} {
-  return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
-}
+import { textResult } from "./utils.js";
 
 export function registerMilestoneTools(
   server: McpServer,

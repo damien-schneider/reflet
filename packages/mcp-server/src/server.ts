@@ -1,12 +1,15 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { RefletAdminClient } from "./client.js";
 import { registerCommentTools } from "./tools/comments.js";
+import { registerDuplicateTools } from "./tools/duplicates.js";
 import { registerFeedbackTools } from "./tools/feedback.js";
 import { registerMemberTools } from "./tools/members.js";
 import { registerMilestoneTools } from "./tools/milestones.js";
 import { registerOrganizationTools } from "./tools/organization.js";
 import { registerReleaseTools } from "./tools/releases.js";
+import { registerScreenshotTools } from "./tools/screenshots.js";
 import { registerStatusTools } from "./tools/statuses.js";
+import { registerSurveyTools } from "./tools/surveys.js";
 import { registerTagTools } from "./tools/tags.js";
 
 export function createServer(client: RefletAdminClient): McpServer {
@@ -23,6 +26,9 @@ export function createServer(client: RefletAdminClient): McpServer {
   registerStatusTools(server, client);
   registerMemberTools(server, client);
   registerOrganizationTools(server, client);
+  registerDuplicateTools(server, client);
+  registerScreenshotTools(server, client);
+  registerSurveyTools(server, client);
 
   return server;
 }

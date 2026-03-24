@@ -52,38 +52,43 @@ export function useFeedbackMatching(): UseFeedbackMatchingResult {
       setMatches([]);
 
       try {
-        const response = await fetch("/api/ai/match-release-feedback", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            releaseNotes,
-            commits: commits.map((c) => ({
-              sha: c.sha,
-              message: c.message,
-              fullMessage: c.fullMessage,
-              author: c.author,
-            })),
-            feedbackItems: feedbackItems.map((f) => ({
-              id: f._id,
-              title: f.title,
-              description: f.description,
-              status: f.status,
-              tags: f.tags.map((t) => t.name),
-            })),
-          }),
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/match-release-feedback`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              releaseNotes,
+              commits: commits.map((c) => ({
+                sha: c.sha,
+                message: c.message,
+                fullMessage: c.fullMessage,
+                author: c.author,
+              })),
+              feedbackItems: feedbackItems.map((f) => ({
+                id: f._id,
+                title: f.title,
+                description: f.description,
+                status: f.status,
+                tags: f.tags.map((t) => t.name),
+              })),
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to match feedback");
+        }
 
         const data: unknown = await response.json();
 
-        if (!response.ok) {
-          const errorMsg =
-            data &&
-            typeof data === "object" &&
-            "error" in data &&
-            typeof data.error === "string"
-              ? data.error
-              : "Failed to match feedback";
-          throw new Error(errorMsg);
+        if (
+          !data ||
+          typeof data !== "object" ||
+          !("matches" in data) ||
+          !Array.isArray(data.matches)
+        ) {
+          throw new Error("Failed to match feedback");
         }
 
         if (

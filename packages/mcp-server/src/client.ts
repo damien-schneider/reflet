@@ -377,6 +377,20 @@ export class RefletAdminClient {
     });
   }
 
+  scheduleRelease(params: {
+    releaseId: string;
+    scheduledPublishAt: number;
+    feedbackStatus?: string;
+  }): Promise<unknown> {
+    return this.request("POST", "/api/v1/admin/release/schedule", params);
+  }
+
+  cancelScheduledRelease(releaseId: string): Promise<unknown> {
+    return this.request("POST", "/api/v1/admin/release/cancel-schedule", {
+      releaseId,
+    });
+  }
+
   // ============================================
   // MILESTONES
   // ============================================
@@ -515,10 +529,127 @@ export class RefletAdminClient {
 
   updateOrganization(params: {
     name?: string;
-    slug?: string;
     isPublic?: boolean;
     primaryColor?: string;
+    supportEnabled?: boolean;
   }): Promise<unknown> {
     return this.request("POST", "/api/v1/admin/organization/update", params);
+  }
+
+  // ============================================
+  // DUPLICATES
+  // ============================================
+
+  listPendingDuplicates(): Promise<unknown> {
+    return this.request("GET", "/api/v1/admin/duplicates");
+  }
+
+  resolveDuplicate(params: {
+    pairId: string;
+    action: "confirm" | "reject";
+  }): Promise<unknown> {
+    return this.request("POST", "/api/v1/admin/duplicate/resolve", params);
+  }
+
+  mergeFeedback(params: {
+    sourceFeedbackId: string;
+    targetFeedbackId: string;
+    pairId?: string;
+  }): Promise<unknown> {
+    return this.request("POST", "/api/v1/admin/duplicate/merge", params);
+  }
+
+  // ============================================
+  // SCREENSHOTS
+  // ============================================
+
+  listScreenshots(feedbackId: string): Promise<unknown> {
+    return this.request(
+      "GET",
+      `/api/v1/admin/screenshots?feedbackId=${encodeURIComponent(feedbackId)}`
+    );
+  }
+
+  deleteScreenshot(screenshotId: string): Promise<unknown> {
+    return this.request("POST", "/api/v1/admin/screenshot/delete", {
+      screenshotId,
+    });
+  }
+
+  // ============================================
+  // SURVEYS
+  // ============================================
+
+  listSurveys(params?: {
+    status?: "draft" | "active" | "paused" | "closed";
+  }): Promise<unknown> {
+    const searchParams = new URLSearchParams();
+    if (params?.status) {
+      searchParams.set("status", params.status);
+    }
+    const query = searchParams.toString();
+    return this.request(
+      "GET",
+      `/api/v1/admin/surveys${query ? `?${query}` : ""}`
+    );
+  }
+
+  getSurvey(surveyId: string): Promise<unknown> {
+    return this.request(
+      "GET",
+      `/api/v1/admin/survey?id=${encodeURIComponent(surveyId)}`
+    );
+  }
+
+  createSurvey(params: {
+    title: string;
+    description?: string;
+    triggerType: string;
+    triggerConfig?: {
+      pageUrl?: string;
+      delayMs?: number;
+      sampleRate?: number;
+    };
+    questions: Array<{
+      type: string;
+      title: string;
+      description?: string;
+      required?: boolean;
+      order?: number;
+      config?: {
+        minValue?: number;
+        maxValue?: number;
+        minLabel?: string;
+        maxLabel?: string;
+        choices?: string[];
+        placeholder?: string;
+        maxLength?: number;
+      };
+    }>;
+  }): Promise<unknown> {
+    return this.request("POST", "/api/v1/admin/survey/create", params);
+  }
+
+  updateSurveyStatus(
+    surveyId: string,
+    status: "draft" | "active" | "paused" | "closed"
+  ): Promise<unknown> {
+    return this.request("POST", "/api/v1/admin/survey/update-status", {
+      surveyId,
+      status,
+    });
+  }
+
+  deleteSurvey(surveyId: string): Promise<unknown> {
+    return this.request("POST", "/api/v1/admin/survey/delete", {
+      surveyId,
+    });
+  }
+
+  getSurveyAnalytics(surveyId: string): Promise<unknown> {
+    return this.request(
+      "GET",
+      `/api/v1/admin/survey/analytics?id=${encodeURIComponent(surveyId)}`
+    );
   }
 }

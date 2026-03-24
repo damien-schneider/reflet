@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { PLAN_LIMITS } from "../organizations/queries";
@@ -37,7 +38,9 @@ export const listPublic = query({
       )
       .collect();
 
-    feedbackItems = feedbackItems.filter((f) => f.isApproved && !f.deletedAt);
+    feedbackItems = feedbackItems.filter(
+      (f) => f.isApproved && !f.deletedAt && !f.isMerged
+    );
 
     // Sort
     const sortBy = args.sortBy || "votes";
@@ -170,6 +173,13 @@ export const createPublicOrg = mutation({
       createdAt: now,
       updatedAt: now,
     });
+
+    // Schedule duplicate detection
+    await ctx.scheduler.runAfter(
+      0,
+      internal.duplicates.detection.findSimilarFeedback,
+      { feedbackId }
+    );
 
     return feedbackId;
   },

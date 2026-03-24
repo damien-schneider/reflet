@@ -48,18 +48,14 @@ export function generateApiKey(prefix: "fb_pub" | "fb_sec"): string {
 }
 
 /**
- * Simple hash function for secret keys (in production, use a proper hashing library)
+ * SHA-256 hash for secret keys using Web Crypto API
  */
-export function hashSecretKey(key: string): string {
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) {
-    const char = key.charCodeAt(i);
-    // biome-ignore lint/suspicious/noBitwiseOperators: intentional for hash algorithm
-    hash = (hash << 5) - hash + char;
-    // biome-ignore lint/suspicious/noBitwiseOperators: intentional to convert to 32-bit integer
-    hash &= hash;
-  }
-  return `hash_${Math.abs(hash).toString(16)}`;
+export async function hashSecretKey(key: string): Promise<string> {
+  const encoded = new TextEncoder().encode(key);
+  const digest = await crypto.subtle.digest("SHA-256", encoded);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 /**
@@ -113,11 +109,11 @@ export function decodeUserToken(
  * Create a simple JWT token for user identification
  * For use by SDK clients to sign user info
  */
-export function createUserToken(
+export async function createUserToken(
   user: { id: string; email?: string; name?: string },
   secretKey: string,
   expiresInSeconds = 86_400 // 24 hours default
-): string {
+): Promise<string> {
   const header = { alg: "HS256", typ: "JWT" };
   const payload = {
     id: user.id,
@@ -131,7 +127,9 @@ export function createUserToken(
   const payloadB64 = btoa(JSON.stringify(payload));
 
   // Simple signature using secret key (in production, use proper HMAC)
-  const signature = hashSecretKey(`${headerB64}.${payloadB64}.${secretKey}`);
+  const signature = await hashSecretKey(
+    `${headerB64}.${payloadB64}.${secretKey}`
+  );
 
   return `${headerB64}.${payloadB64}.${signature}`;
 }
@@ -181,16 +179,15 @@ export const validateApiKey = internalQuery({
       };
     }
 
-    // For secret keys, we need to hash and compare
-    const hashedKey = hashSecretKey(apiKey);
+    // For secret keys, hash and look up by index
+    const hashedKey = await hashSecretKey(apiKey);
 
-    // Look up organization API key by secret key hash
-    const allOrgKeys = await ctx.db.query("organizationApiKeys").collect();
-    const orgApiKeyRecord = allOrgKeys.find(
-      (key) => key.secretKeyHash === hashedKey && key.isActive
-    );
+    const orgApiKeyRecord = await ctx.db
+      .query("organizationApiKeys")
+      .withIndex("by_secret_key_hash", (q) => q.eq("secretKeyHash", hashedKey))
+      .unique();
 
-    if (!orgApiKeyRecord) {
+    if (!orgApiKeyRecord?.isActive) {
       return { success: false, error: "Invalid API key" };
     }
 
@@ -345,7 +342,7 @@ export const generateOrganizationApiKeys = internalMutation({
 
     const publicKey = generateApiKey("fb_pub");
     const secretKey = generateApiKey("fb_sec");
-    const secretKeyHash = hashSecretKey(secretKey);
+    const secretKeyHash = await hashSecretKey(secretKey);
 
     const apiKeyId = await ctx.db.insert("organizationApiKeys", {
       organizationId,
@@ -380,7 +377,7 @@ export const regenerateOrganizationSecretKey = internalMutation({
     }
 
     const newSecretKey = generateApiKey("fb_sec");
-    const secretKeyHash = hashSecretKey(newSecretKey);
+    const secretKeyHash = await hashSecretKey(newSecretKey);
 
     await ctx.db.patch(args.apiKeyId, {
       secretKeyHash,

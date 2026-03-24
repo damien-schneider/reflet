@@ -112,3 +112,46 @@ export interface Comment {
     createdAt: number;
   }>;
 }
+
+/**
+ * Survey data from API
+ */
+export interface SurveyData {
+  _id: string;
+  description?: string;
+  questions: SurveyQuestion[];
+  title: string;
+  triggerConfig?: {
+    pageUrl?: string;
+    delayMs?: number;
+    sampleRate?: number;
+  };
+  triggerType: string;
+}
+
+/**
+ * Survey question
+ */
+export interface SurveyQuestion {
+  _id: string;
+  config?: {
+    minValue?: number;
+    maxValue?: number;
+    minLabel?: string;
+    maxLabel?: string;
+    choices?: string[];
+    placeholder?: string;
+    maxLength?: number;
+  };
+  description?: string;
+  order: number;
+  required: boolean;
+  title: string;
+  type:
+    | "rating"
+    | "nps"
+    | "text"
+    | "single_choice"
+    | "multiple_choice"
+    | "boolean";
+}

@@ -20,6 +20,7 @@ export const adminApiTables = {
   })
     .index("by_organization", ["organizationId"])
     .index("by_public_key", ["publicKey"])
+    .index("by_secret_key_hash", ["secretKeyHash"])
     .index("by_org_tag", ["organizationId", "tagId"]),
 
   externalUsers: defineTable({

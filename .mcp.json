@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "stripe-sandbox": {
+      "type": "http",
+      "url": "https://mcp.stripe.com/"
+    },
+    "stripe-prod": {
+      "type": "http",
+      "url": "https://mcp.stripe.com/"
+    }
+  }
+}

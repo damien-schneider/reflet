@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
 import {
@@ -120,8 +121,10 @@ export const listFeedbackByOrganization = internalQuery({
       )
       .collect();
 
-    // Filter to approved only and exclude soft-deleted (public API always shows approved)
-    feedbackItems = feedbackItems.filter((f) => f.isApproved && !f.deletedAt);
+    // Filter to approved only and exclude soft-deleted and merged (public API always shows approved)
+    feedbackItems = feedbackItems.filter(
+      (f) => f.isApproved && !f.deletedAt && !f.isMerged
+    );
 
     // Filter by organization status
     if (args.statusId) {
@@ -550,7 +553,7 @@ export const getRoadmapByOrganization = internalQuery({
       .collect();
 
     const approvedFeedback = feedbackItems.filter(
-      (f) => f.isApproved && !f.deletedAt
+      (f) => f.isApproved && !f.deletedAt && !f.isMerged
     );
 
     // Group by organization status
@@ -637,6 +640,45 @@ export const getChangelogByOrganization = internalQuery({
     );
 
     return result;
+  },
+});
+
+/**
+ * Search for similar feedback by title (used for "Did you mean?" in widget)
+ */
+export const searchSimilarFeedback = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    title: v.string(),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("feedback"),
+      title: v.string(),
+      voteCount: v.number(),
+      status: v.string(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    if (args.title.length < 3) {
+      return [];
+    }
+
+    const results = await ctx.db
+      .query("feedback")
+      .withSearchIndex("search_title", (q) =>
+        q.search("title", args.title).eq("organizationId", args.organizationId)
+      )
+      .take(5);
+
+    return results
+      .filter((f) => f.isApproved && !f.deletedAt && !f.isMerged)
+      .map((f) => ({
+        _id: f._id,
+        title: f.title,
+        voteCount: f.voteCount,
+        status: f.status,
+      }));
   },
 });
 
@@ -738,6 +780,13 @@ export const createFeedbackByOrganization = internalMutation({
         tagId: args.tagId,
       });
     }
+
+    // Schedule duplicate detection
+    await ctx.scheduler.runAfter(
+      0,
+      internal.duplicates.detection.findSimilarFeedback,
+      { feedbackId }
+    );
 
     return { feedbackId, isApproved: !requireApproval };
   },

@@ -5,6 +5,7 @@ import {
   adminPost,
   bool,
   corsOptionsHandler,
+  num,
   parseId,
   requireStr,
   str,
@@ -25,10 +26,23 @@ const ADMIN_CONTENT_PATHS = [
   "/api/v1/admin/release/unpublish",
   "/api/v1/admin/release/delete",
   "/api/v1/admin/release/link-feedback",
+  "/api/v1/admin/release/schedule",
+  "/api/v1/admin/release/cancel-schedule",
   "/api/v1/admin/statuses",
   "/api/v1/admin/status/create",
   "/api/v1/admin/status/update",
   "/api/v1/admin/status/delete",
+  "/api/v1/admin/duplicates",
+  "/api/v1/admin/duplicate/resolve",
+  "/api/v1/admin/duplicate/merge",
+  "/api/v1/admin/screenshots",
+  "/api/v1/admin/screenshot/delete",
+  "/api/v1/admin/surveys",
+  "/api/v1/admin/survey",
+  "/api/v1/admin/survey/create",
+  "/api/v1/admin/survey/update-status",
+  "/api/v1/admin/survey/delete",
+  "/api/v1/admin/survey/analytics",
 ] as const;
 
 export function registerAdminContentRoutes(http: Router): void {
@@ -195,6 +209,37 @@ export function registerAdminContentRoutes(http: Router): void {
     ),
   });
 
+  http.route({
+    path: "/api/v1/admin/release/schedule",
+    method: "POST",
+    handler: adminPost(async (ctx, { organizationId }, body) =>
+      ctx.runMutation(internal.admin_api.releases.scheduleRelease, {
+        organizationId,
+        releaseId: parseId<"releases">(str(body.releaseId), "releaseId"),
+        scheduledPublishAt: num(body.scheduledPublishAt) ?? 0,
+        feedbackStatus: str(body.feedbackStatus) as
+          | "open"
+          | "under_review"
+          | "planned"
+          | "in_progress"
+          | "completed"
+          | "closed"
+          | undefined,
+      })
+    ),
+  });
+
+  http.route({
+    path: "/api/v1/admin/release/cancel-schedule",
+    method: "POST",
+    handler: adminPost(async (ctx, { organizationId }, body) =>
+      ctx.runMutation(internal.admin_api.releases.cancelScheduledRelease, {
+        organizationId,
+        releaseId: parseId<"releases">(str(body.releaseId), "releaseId"),
+      })
+    ),
+  });
+
   // ============================================
   // STATUSES
   // ============================================
@@ -249,6 +294,202 @@ export function registerAdminContentRoutes(http: Router): void {
           str(body.statusId),
           "statusId"
         ),
+      })
+    ),
+  });
+
+  // ============================================
+  // DUPLICATES
+  // ============================================
+
+  http.route({
+    path: "/api/v1/admin/duplicates",
+    method: "GET",
+    handler: adminGet(async (ctx, { organizationId }) =>
+      ctx.runQuery(internal.admin_api.duplicates.listPendingDuplicates, {
+        organizationId,
+      })
+    ),
+  });
+
+  http.route({
+    path: "/api/v1/admin/duplicate/resolve",
+    method: "POST",
+    handler: adminPost(async (ctx, _auth, body) =>
+      ctx.runMutation(internal.admin_api.duplicates.resolveDuplicate, {
+        pairId: parseId<"duplicatePairs">(str(body.pairId), "pairId"),
+        action: requireStr(body.action, "action") as "confirm" | "reject",
+        resolvedBy: "api-admin",
+      })
+    ),
+  });
+
+  http.route({
+    path: "/api/v1/admin/duplicate/merge",
+    method: "POST",
+    handler: adminPost(async (ctx, _auth, body) =>
+      ctx.runMutation(internal.admin_api.duplicates.mergeFeedback, {
+        sourceFeedbackId: parseId<"feedback">(
+          str(body.sourceFeedbackId),
+          "sourceFeedbackId"
+        ),
+        targetFeedbackId: parseId<"feedback">(
+          str(body.targetFeedbackId),
+          "targetFeedbackId"
+        ),
+        pairId: body.pairId
+          ? parseId<"duplicatePairs">(str(body.pairId), "pairId")
+          : undefined,
+        mergedBy: "api-admin",
+      })
+    ),
+  });
+
+  // ============================================
+  // SCREENSHOTS
+  // ============================================
+
+  http.route({
+    path: "/api/v1/admin/screenshots",
+    method: "GET",
+    handler: adminGet((ctx, _auth, url) => {
+      const feedbackId = parseId<"feedback">(
+        requireStr(url.searchParams.get("feedbackId"), "feedbackId"),
+        "feedbackId"
+      );
+      return ctx.runQuery(internal.admin_api.screenshots.listScreenshots, {
+        feedbackId,
+      });
+    }),
+  });
+
+  http.route({
+    path: "/api/v1/admin/screenshot/delete",
+    method: "POST",
+    handler: adminPost(async (ctx, _auth, body) =>
+      ctx.runMutation(internal.admin_api.screenshots.deleteScreenshot, {
+        screenshotId: parseId<"feedbackScreenshots">(
+          requireStr(body.screenshotId, "screenshotId"),
+          "screenshotId"
+        ),
+      })
+    ),
+  });
+
+  // ============================================
+  // SURVEYS
+  // ============================================
+
+  http.route({
+    path: "/api/v1/admin/surveys",
+    method: "GET",
+    handler: adminGet((ctx, { organizationId }, url) => {
+      const statusParam = url.searchParams.get("status");
+      return ctx.runQuery(internal.admin_api.survey.listSurveys, {
+        organizationId,
+        status: (statusParam ?? undefined) as
+          | "draft"
+          | "active"
+          | "paused"
+          | "closed"
+          | undefined,
+      });
+    }),
+  });
+
+  http.route({
+    path: "/api/v1/admin/survey",
+    method: "GET",
+    handler: adminGet((ctx, _auth, url) =>
+      ctx.runQuery(internal.admin_api.survey.getSurvey, {
+        surveyId: parseId<"surveys">(url.searchParams.get("id"), "id"),
+      })
+    ),
+  });
+
+  http.route({
+    path: "/api/v1/admin/survey/create",
+    method: "POST",
+    handler: adminPost((ctx, { organizationId }, body) => {
+      const questions = Array.isArray(body.questions) ? body.questions : [];
+      return ctx.runMutation(internal.admin_api.survey.createSurvey, {
+        organizationId,
+        title: requireStr(body.title, "title"),
+        description: str(body.description),
+        triggerType: requireStr(body.triggerType, "triggerType") as
+          | "manual"
+          | "page_visit"
+          | "time_delay"
+          | "exit_intent"
+          | "feedback_submitted",
+        triggerConfig: body.triggerConfig as
+          | {
+              pageUrl?: string;
+              delayMs?: number;
+              sampleRate?: number;
+            }
+          | undefined,
+        questions: questions.map(
+          (q: Record<string, unknown>, index: number) => ({
+            type: requireStr(q.type, "type") as
+              | "rating"
+              | "nps"
+              | "text"
+              | "single_choice"
+              | "multiple_choice"
+              | "boolean",
+            title: requireStr(q.title, "title"),
+            description: str(q.description),
+            required: bool(q.required) ?? true,
+            order: (num(q.order) ?? index) as number,
+            config: q.config as
+              | {
+                  minValue?: number;
+                  maxValue?: number;
+                  minLabel?: string;
+                  maxLabel?: string;
+                  choices?: string[];
+                  placeholder?: string;
+                  maxLength?: number;
+                }
+              | undefined,
+          })
+        ),
+      });
+    }),
+  });
+
+  http.route({
+    path: "/api/v1/admin/survey/update-status",
+    method: "POST",
+    handler: adminPost((ctx, _auth, body) =>
+      ctx.runMutation(internal.admin_api.survey.updateSurveyStatus, {
+        surveyId: parseId<"surveys">(str(body.surveyId), "surveyId"),
+        status: requireStr(body.status, "status") as
+          | "draft"
+          | "active"
+          | "paused"
+          | "closed",
+      })
+    ),
+  });
+
+  http.route({
+    path: "/api/v1/admin/survey/delete",
+    method: "POST",
+    handler: adminPost((ctx, _auth, body) =>
+      ctx.runMutation(internal.admin_api.survey.deleteSurvey, {
+        surveyId: parseId<"surveys">(str(body.surveyId), "surveyId"),
+      })
+    ),
+  });
+
+  http.route({
+    path: "/api/v1/admin/survey/analytics",
+    method: "GET",
+    handler: adminGet((ctx, _auth, url) =>
+      ctx.runQuery(internal.admin_api.survey.getAnalytics, {
+        surveyId: parseId<"surveys">(url.searchParams.get("id"), "id"),
       })
     ),
   });

@@ -7,8 +7,11 @@ import { generateRssFeed } from "./changelog/rss";
 import { registerAdminContentRoutes } from "./http/admin_content";
 import { registerAdminFeedbackRoutes } from "./http/admin_feedback";
 import { registerAdminManagementRoutes } from "./http/admin_management";
+import { registerAiApiRoutes } from "./http/ai_api";
+import { registerGithubApiRoutes } from "./http/github_api";
 import { registerGithubWebhookRoutes } from "./http/github_webhook";
 import { registerPublicApiRoutes } from "./http/public_api";
+import { mcpCorsHandler, mcpHandler } from "./mcp/handler";
 
 const http = httpRouter();
 
@@ -23,6 +26,12 @@ registerStripeRoutes(http, components.stripe as any, {
 
 // GitHub webhook
 registerGithubWebhookRoutes(http);
+
+// GitHub API (repositories, labels, issues, sync, setup)
+registerGithubApiRoutes(http);
+
+// AI API (release title, feedback matching)
+registerAiApiRoutes(http);
 
 // Public feedback API (v1)
 registerPublicApiRoutes(http);
@@ -77,5 +86,9 @@ http.route({
 registerAdminFeedbackRoutes(http);
 registerAdminContentRoutes(http);
 registerAdminManagementRoutes(http);
+
+// MCP server (JSON-RPC 2.0 over HTTP)
+http.route({ path: "/mcp", method: "POST", handler: mcpHandler });
+http.route({ path: "/mcp", method: "OPTIONS", handler: mcpCorsHandler });
 
 export default http;

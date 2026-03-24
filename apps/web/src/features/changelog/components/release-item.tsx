@@ -3,6 +3,7 @@
 import {
   Calendar,
   Check,
+  Clock,
   DotsThreeVertical,
   Eye,
   EyeSlash,
@@ -46,6 +47,7 @@ export interface ReleaseData {
   githubPushStatus?: "pending" | "success" | "failed";
   githubReleaseId?: string;
   publishedAt?: number;
+  scheduledPublishAt?: number;
   title: string;
   version?: string;
 }
@@ -68,6 +70,7 @@ export function ReleaseItem({
   onDelete,
 }: ReleaseItemProps) {
   const isPublished = release.publishedAt !== undefined;
+  const isScheduled = !isPublished && release.scheduledPublishAt !== undefined;
   const publishDate = release.publishedAt
     ? format(release.publishedAt, "MMMM d, yyyy")
     : null;
@@ -89,7 +92,17 @@ export function ReleaseItem({
                 {release.version}
               </Badge>
             )}
-            {!isPublished && (
+            {isScheduled && (
+              <Badge
+                className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                variant="outline"
+              >
+                <Clock className="mr-1 h-3 w-3" />
+                Scheduled{" "}
+                {format(release.scheduledPublishAt as number, "MMM d, h:mm a")}
+              </Badge>
+            )}
+            {!(isPublished || isScheduled) && (
               <Badge variant="secondary">
                 <EyeSlash className="mr-1 h-3 w-3" />
                 Draft

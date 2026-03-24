@@ -88,6 +88,8 @@ export const feedbackTables = {
     createdAt: v.number(),
     updatedAt: v.number(),
     deletedAt: v.optional(v.number()),
+    mergedIntoId: v.optional(v.id("feedback")),
+    isMerged: v.optional(v.boolean()),
   })
     .index("by_organization", ["organizationId"])
     .index("by_author", ["authorId"])
@@ -96,6 +98,7 @@ export const feedbackTables = {
     .index("by_github_issue", ["organizationId", "githubIssueId"])
     .index("by_external_user", ["externalUserId"])
     .index("by_assignee", ["organizationId", "assigneeId"])
+    .index("by_merged_into", ["mergedIntoId"])
     .searchIndex("search_title", {
       searchField: "title",
       filterFields: ["organizationId"],
@@ -180,4 +183,47 @@ export const feedbackTables = {
     .index("by_author", ["authorId"])
     .index("by_parent", ["parentId"])
     .index("by_external_user", ["externalUserId"]),
+
+  feedbackScreenshots: defineTable({
+    feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
+    storageId: v.id("_storage"),
+    annotatedStorageId: v.optional(v.id("_storage")),
+    filename: v.string(),
+    mimeType: v.string(),
+    size: v.number(),
+    width: v.optional(v.number()),
+    height: v.optional(v.number()),
+    annotations: v.optional(
+      v.array(
+        v.object({
+          type: v.union(
+            v.literal("rectangle"),
+            v.literal("arrow"),
+            v.literal("text"),
+            v.literal("blur")
+          ),
+          x: v.number(),
+          y: v.number(),
+          width: v.optional(v.number()),
+          height: v.optional(v.number()),
+          endX: v.optional(v.number()),
+          endY: v.optional(v.number()),
+          color: v.optional(v.string()),
+          text: v.optional(v.string()),
+        })
+      )
+    ),
+    captureSource: v.union(
+      v.literal("widget"),
+      v.literal("upload"),
+      v.literal("paste")
+    ),
+    pageUrl: v.optional(v.string()),
+    uploadedBy: v.optional(v.string()),
+    externalUserId: v.optional(v.id("externalUsers")),
+    createdAt: v.number(),
+  })
+    .index("by_feedback", ["feedbackId"])
+    .index("by_organization", ["organizationId"]),
 };
