@@ -27,6 +27,7 @@ interface Comment {
 
 interface PublicFeedbackCommentsProps {
   comments: Comment[] | undefined;
+  isAuthenticated: boolean;
   isSubmittingComment: boolean;
   newComment: string;
   onNewCommentChange: (value: string) => void;
@@ -35,6 +36,7 @@ interface PublicFeedbackCommentsProps {
 
 export function PublicFeedbackComments({
   comments,
+  isAuthenticated,
   newComment,
   isSubmittingComment,
   onNewCommentChange,
@@ -67,23 +69,33 @@ export function PublicFeedbackComments({
     <div>
       <h3 className="mb-4 font-medium">Comments ({comments?.length || 0})</h3>
 
-      <div className="mb-6 flex gap-2">
-        <Textarea
-          className="flex-1"
-          onChange={(e) => onNewCommentChange(e.target.value)}
-          placeholder="Write a comment..."
-          rows={2}
-          value={newComment}
-        />
-        <Button
-          className="self-end"
-          disabled={!newComment.trim() || isSubmittingComment}
+      {isAuthenticated ? (
+        <div className="mb-6 flex gap-2">
+          <Textarea
+            className="flex-1"
+            onChange={(e) => onNewCommentChange(e.target.value)}
+            placeholder="Write a comment..."
+            rows={2}
+            value={newComment}
+          />
+          <Button
+            className="self-end"
+            disabled={!newComment.trim() || isSubmittingComment}
+            onClick={onSubmitComment}
+            size="icon"
+          >
+            <PaperPlaneRight className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <button
+          className="mb-6 w-full cursor-pointer rounded-md border border-dashed p-4 text-center text-muted-foreground text-sm transition-colors hover:border-primary/50 hover:text-foreground"
           onClick={onSubmitComment}
-          size="icon"
+          type="button"
         >
-          <PaperPlaneRight className="h-4 w-4" />
-        </Button>
-      </div>
+          Sign in to leave a comment
+        </button>
+      )}
 
       {comments === undefined && (
         <div className="space-y-4">
