@@ -32,35 +32,43 @@ const requestBodySchema = z.object({
 });
 
 export async function POST(request: Request): Promise<Response> {
-  const body = requestBodySchema.parse(await request.json());
-  const { commits, files, version, previousVersion, repositoryName } = body;
+  try {
+    if (!process.env.OPENROUTER_API_KEY) {
+      return Response.json(
+        { error: "AI service not configured" },
+        { status: 503 }
+      );
+    }
 
-  if (!commits || commits.length === 0) {
-    return Response.json({ error: "No commits provided" }, { status: 400 });
-  }
+    const body = requestBodySchema.parse(await request.json());
+    const { commits, files, version, previousVersion, repositoryName } = body;
 
-  const commitSummary = commits
-    .slice(0, MAX_COMMITS_FOR_CONTEXT)
-    .map((c) => `- ${c.message} (${c.sha} by @${c.author})`)
-    .join("\n");
+    if (!commits || commits.length === 0) {
+      return Response.json({ error: "No commits provided" }, { status: 400 });
+    }
 
-  const fileSummary = files
-    ? files
-        .slice(0, MAX_FILES_FOR_CONTEXT)
-        .map(
-          (f) =>
-            `- ${f.filename} (${f.status}: +${f.additions}/-${f.deletions})`
-        )
-        .join("\n")
-    : "No file change data available";
+    const commitSummary = commits
+      .slice(0, MAX_COMMITS_FOR_CONTEXT)
+      .map((c) => `- ${c.message} (${c.sha} by @${c.author})`)
+      .join("\n");
 
-  const versionInfo = version
-    ? `Version: ${version}${previousVersion ? ` (from ${previousVersion})` : ""}`
-    : "";
+    const fileSummary = files
+      ? files
+          .slice(0, MAX_FILES_FOR_CONTEXT)
+          .map(
+            (f) =>
+              `- ${f.filename} (${f.status}: +${f.additions}/-${f.deletions})`
+          )
+          .join("\n")
+      : "No file change data available";
 
-  const repoInfo = repositoryName ? `Repository: ${repositoryName}` : "";
+    const versionInfo = version
+      ? `Version: ${version}${previousVersion ? ` (from ${previousVersion})` : ""}`
+      : "";
 
-  const prompt = `Generate professional, user-facing release notes in Markdown from the following git changes.
+    const repoInfo = repositoryName ? `Repository: ${repositoryName}` : "";
+
+    const prompt = `Generate professional, user-facing release notes in Markdown from the following git changes.
 
 ${versionInfo}
 ${repoInfo}
@@ -82,10 +90,24 @@ ${fileSummary}
 - Keep a professional but approachable tone
 - Output only the markdown content, nothing else`;
 
-  const result = streamText({
-    model: openrouter("anthropic/claude-sonnet-4"),
-    prompt,
-  });
+    const result = streamText({
+      model: openrouter("anthropic/claude-sonnet-4"),
+      prompt,
+    });
 
-  return result.toTextStreamResponse();
+    return result.toTextStreamResponse();
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return Response.json(
+        { error: "Invalid request body", details: error.issues },
+        { status: 400 }
+      );
+    }
+    return Response.json(
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 }
+    );
+  }
 }

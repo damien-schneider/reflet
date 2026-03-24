@@ -3,6 +3,7 @@ import {
   CaretUpDown,
   Chat,
   ChatCircle,
+  ClipboardText,
   Code,
   FileText,
   Gear,
@@ -115,6 +116,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           href: "/dashboard/$orgSlug/in-app",
           icon: Code,
           label: "In-App",
+          badge: undefined,
+        },
+        {
+          href: "/dashboard/$orgSlug/surveys",
+          icon: ClipboardText,
+          label: "Surveys",
           badge: undefined,
         },
         {

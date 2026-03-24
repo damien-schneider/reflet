@@ -1,6 +1,8 @@
 import { createApi, type FeedbackApi } from "./api";
+import { capturePageScreenshot, getPageUrl } from "./screenshot";
 import { getWidgetStyles } from "./styles";
-import type { WidgetConfig, WidgetState } from "./types";
+import { SurveyRenderer } from "./survey-renderer";
+import type { SurveyData, WidgetConfig, WidgetState } from "./types";
 import { attachWidgetEventListeners } from "./widget-events";
 import { renderWidgetHTML } from "./widget-html";
 import { generateSimpleToken } from "./widget-utils";
@@ -10,6 +12,9 @@ export class RefletFeedbackWidget {
   private readonly api: FeedbackApi;
   private container: HTMLElement | null = null;
   private shadowRoot: ShadowRoot | null = null;
+  private pendingScreenshot: Blob | null = null;
+  private activeSurvey: SurveyData | null = null;
+  private surveyRenderer: SurveyRenderer | null = null;
   private readonly state: WidgetState = {
     isOpen: false,
     isLoading: true,
@@ -182,6 +187,9 @@ export class RefletFeedbackWidget {
       case "comment":
         this.handleCommentSubmit();
         break;
+      case "screenshot":
+        this.handleScreenshotCapture();
+        break;
       default:
         // Unknown action - ignore
         break;
@@ -283,6 +291,26 @@ export class RefletFeedbackWidget {
     try {
       const result = await this.api.createFeedback({ title, description });
 
+      // Upload screenshot if one was captured
+      if (this.pendingScreenshot) {
+        try {
+          const storageId = await this.api.uploadScreenshot(
+            this.pendingScreenshot
+          );
+          await this.api.saveScreenshot({
+            feedbackId: result.feedbackId,
+            storageId,
+            filename: "screenshot.png",
+            mimeType: "image/png",
+            size: this.pendingScreenshot.size,
+            pageUrl: getPageUrl(),
+          });
+        } catch {
+          // Screenshot upload failed, but feedback was created
+        }
+        this.pendingScreenshot = null;
+      }
+
       this.config.onFeedbackCreated?.({ id: result.feedbackId, title });
 
       // Refresh list and go back
@@ -356,5 +384,109 @@ export class RefletFeedbackWidget {
       this.container = null;
       this.shadowRoot = null;
     }
+  }
+
+  private async handleScreenshotCapture(): Promise<void> {
+    // Temporarily hide widget to capture clean page
+    if (this.container) {
+      this.container.style.display = "none";
+    }
+
+    const screenshot = await capturePageScreenshot();
+
+    if (this.container) {
+      this.container.style.display = "";
+    }
+
+    if (screenshot) {
+      this.pendingScreenshot = screenshot;
+
+      // Show visual feedback that screenshot was captured
+      if (this.shadowRoot) {
+        const screenshotBtn = this.shadowRoot.querySelector(
+          '[data-action="screenshot"]'
+        );
+        if (screenshotBtn) {
+          screenshotBtn.textContent = "✓ Screenshot captured";
+          screenshotBtn.classList.add("reflet-screenshot-captured");
+        }
+      }
+    }
+  }
+
+  async checkForSurvey(triggerType?: string): Promise<void> {
+    try {
+      this.activeSurvey = await this.api.getActiveSurvey(triggerType);
+
+      if (this.activeSurvey && this.shadowRoot) {
+        this.showSurvey(this.activeSurvey);
+      }
+    } catch {
+      // Silent fail — surveys are non-critical
+    }
+  }
+
+  async showSurveyById(surveyId: string): Promise<void> {
+    try {
+      const survey = await this.api.getActiveSurvey(undefined, surveyId);
+      if (survey && this.shadowRoot) {
+        this.activeSurvey = survey;
+        this.showSurvey(survey);
+      }
+    } catch {
+      // Silent fail
+    }
+  }
+
+  dismissSurvey(): void {
+    if (this.surveyRenderer) {
+      this.surveyRenderer.destroy();
+      this.surveyRenderer = null;
+    }
+    if (this.shadowRoot) {
+      const overlay = this.shadowRoot.querySelector(".reflet-survey-overlay");
+      if (overlay) {
+        overlay.remove();
+      }
+    }
+    this.activeSurvey = null;
+  }
+
+  get isSurveyActive(): boolean {
+    return this.activeSurvey !== null && this.surveyRenderer !== null;
+  }
+
+  private showSurvey(survey: SurveyData): void {
+    if (!this.shadowRoot) {
+      return;
+    }
+
+    // Dismiss any existing survey first
+    this.dismissSurvey();
+
+    const surveyContainer = document.createElement("div");
+    surveyContainer.className = "reflet-survey-overlay";
+    this.shadowRoot.appendChild(surveyContainer);
+
+    this.surveyRenderer = new SurveyRenderer({
+      container: surveyContainer,
+      api: this.api,
+      survey,
+      callbacks: this.config.survey,
+      onComplete: () => {
+        this.surveyRenderer?.destroy();
+        surveyContainer.remove();
+        this.surveyRenderer = null;
+        this.activeSurvey = null;
+      },
+      onDismiss: () => {
+        this.surveyRenderer?.destroy();
+        surveyContainer.remove();
+        this.surveyRenderer = null;
+        this.activeSurvey = null;
+      },
+    });
+
+    this.surveyRenderer.start();
   }
 }

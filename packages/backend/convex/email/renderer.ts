@@ -223,7 +223,7 @@ export const sendChangelogNotificationEmail = internalAction({
       text,
       replyTo: SUPPORT_EMAIL,
       headers: [
-        { name: "List-Unsubscribe", value: `<${args.unsubscribeUrl}>` },
+        { name: "List-Unsubscribe", value: args.unsubscribeUrl },
         { name: "List-Unsubscribe-Post", value: "List-Unsubscribe=One-Click" },
       ],
     });
@@ -318,7 +318,7 @@ export const sendFeedbackShippedEmail = internalAction({
       text,
       replyTo: SUPPORT_EMAIL,
       headers: [
-        { name: "List-Unsubscribe", value: `<${args.unsubscribeUrl}>` },
+        { name: "List-Unsubscribe", value: args.unsubscribeUrl },
         { name: "List-Unsubscribe-Post", value: "List-Unsubscribe=One-Click" },
       ],
     });

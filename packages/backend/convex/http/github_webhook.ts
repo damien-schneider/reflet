@@ -82,6 +82,44 @@ function webhookJson(data: unknown, status = 200): Response {
   });
 }
 
+async function verifyWebhookSignature(
+  body: string,
+  signature: string,
+  secret: string
+): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signed = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
+  const hexDigest = Array.from(new Uint8Array(signed))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  const expected = `sha256=${hexDigest}`;
+
+  // Constant-time comparison via double-HMAC: avoids bitwise operators
+  // while preventing timing attacks on the string comparison
+  const verifyKey = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode("verify"),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const [hmacExpected, hmacActual] = await Promise.all([
+    crypto.subtle.sign("HMAC", verifyKey, encoder.encode(expected)),
+    crypto.subtle.sign("HMAC", verifyKey, encoder.encode(signature)),
+  ]);
+
+  const a = new Uint8Array(hmacExpected);
+  const b = new Uint8Array(hmacActual);
+  return a.length === b.length && a.every((val, i) => val === b[i]);
+}
+
 // ============================================
 // WEBHOOK HANDLERS
 // ============================================
@@ -231,6 +269,78 @@ async function handlePullRequestWebhook(
 }
 
 // ============================================
+// SIGNATURE VERIFICATION
+// ============================================
+
+async function verifySignatureIfPresent(
+  ctx: WebhookCtx,
+  body: string,
+  signature: string | null,
+  payload: Record<string, unknown>
+): Promise<Response | null> {
+  if (!signature) {
+    return null;
+  }
+
+  const installation = webhookInstallationSchema.safeParse(
+    payload.installation
+  );
+  if (!installation.success) {
+    return null;
+  }
+
+  const connection = await ctx.runQuery(
+    internal.integrations.github.queries.getConnectionByInstallation,
+    { installationId: String(installation.data.id) }
+  );
+
+  if (!connection?.webhookSecret) {
+    return null;
+  }
+
+  const valid = await verifyWebhookSignature(
+    body,
+    signature,
+    connection.webhookSecret
+  );
+  if (!valid) {
+    return webhookJson({ error: "Invalid webhook signature" }, 401);
+  }
+  return null;
+}
+
+// ============================================
+// EVENT ROUTING
+// ============================================
+
+async function routeWebhookEvent(
+  ctx: WebhookCtx,
+  eventType: string,
+  payload: Record<string, unknown>
+): Promise<Response> {
+  if (eventType === "installation") {
+    const result = await handleInstallationWebhook(ctx, payload);
+    if (result) {
+      return result;
+    }
+  }
+
+  if (eventType === "release") {
+    return await handleReleaseWebhook(ctx, payload);
+  }
+
+  if (eventType === "issues") {
+    return await handleIssueWebhook(ctx, payload);
+  }
+
+  if (eventType === "pull_request") {
+    return await handlePullRequestWebhook(ctx, payload);
+  }
+
+  return webhookJson({ success: true, event: eventType });
+}
+
+// ============================================
 // ROUTE REGISTRATION
 // ============================================
 
@@ -245,6 +355,7 @@ export function registerGithubWebhookRoutes(http: Router): void {
         return new Response("Missing X-GitHub-Event header", { status: 400 });
       }
 
+      const signature = request.headers.get("X-Hub-Signature-256");
       const body = await request.text();
 
       try {
@@ -252,30 +363,19 @@ export function registerGithubWebhookRoutes(http: Router): void {
         if (!isRecord(parsed)) {
           return webhookJson({ error: "Invalid webhook payload" }, 400);
         }
-        const payload = parsed;
 
-        if (eventType === "installation") {
-          const result = await handleInstallationWebhook(ctx, payload);
-          if (result) {
-            return result;
-          }
+        const signatureError = await verifySignatureIfPresent(
+          ctx,
+          body,
+          signature,
+          parsed
+        );
+        if (signatureError) {
+          return signatureError;
         }
 
-        if (eventType === "release") {
-          return await handleReleaseWebhook(ctx, payload);
-        }
-
-        if (eventType === "issues") {
-          return await handleIssueWebhook(ctx, payload);
-        }
-
-        if (eventType === "pull_request") {
-          return await handlePullRequestWebhook(ctx, payload);
-        }
-
-        return webhookJson({ success: true, event: eventType });
+        return await routeWebhookEvent(ctx, eventType, parsed);
       } catch (error) {
-        console.error("GitHub webhook error:", error);
         return webhookJson(
           {
             error: "Failed to process webhook",

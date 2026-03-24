@@ -8,6 +8,7 @@ import { useCallback, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 
 import { PublicFeedbackComments } from "./public-feedback-comments";
 import { PublicFeedbackHeader } from "./public-feedback-header";
@@ -43,6 +44,9 @@ export function PublicFeedbackDetailContent({
 
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const { isAuthenticated, guard } = useAuthGuard({
+    message: "Sign in to comment on this feedback",
+  });
 
   const handleVote = useCallback(async () => {
     await toggleVote({ feedbackId, voteType: "upvote" });
@@ -65,19 +69,21 @@ export function PublicFeedbackDetailContent({
     await togglePin({ id: feedbackId });
   }, [feedbackId, togglePin]);
 
-  const handleSubmitComment = useCallback(async () => {
+  const handleSubmitComment = useCallback(() => {
     const trimmedComment = newComment.trim();
     if (!trimmedComment) {
       return;
     }
-    setIsSubmittingComment(true);
-    try {
-      await createComment({ feedbackId, body: trimmedComment });
-      setNewComment("");
-    } finally {
-      setIsSubmittingComment(false);
-    }
-  }, [feedbackId, newComment, createComment]);
+    guard(async () => {
+      setIsSubmittingComment(true);
+      try {
+        await createComment({ feedbackId, body: trimmedComment });
+        setNewComment("");
+      } finally {
+        setIsSubmittingComment(false);
+      }
+    });
+  }, [feedbackId, newComment, createComment, guard]);
 
   const isLoading = feedback === undefined;
   const currentStatus = organizationStatuses?.find(
@@ -168,6 +174,7 @@ export function PublicFeedbackDetailContent({
 
         <PublicFeedbackComments
           comments={comments}
+          isAuthenticated={isAuthenticated}
           isSubmittingComment={isSubmittingComment}
           newComment={newComment}
           onNewCommentChange={setNewComment}

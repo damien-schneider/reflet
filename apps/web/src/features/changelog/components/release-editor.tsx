@@ -1,12 +1,15 @@
 import {
   Check,
+  Clock,
   CloudArrowUp,
   Spinner,
   WarningCircle,
+  X,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -24,6 +27,7 @@ import { GenerateFromCommits } from "./generate-from-commits";
 import { PublishConfirmDialog } from "./publish-confirm-dialog";
 import { ReleaseCommitsList } from "./release-commits-list";
 import { ReleaseFeedbackSection } from "./release-feedback-section";
+import { ScheduleCountdown } from "./schedule-countdown";
 import { VersionPicker } from "./version-picker";
 
 interface ReleaseEditorProps {
@@ -80,6 +84,10 @@ export function ReleaseEditor({
     );
   });
 
+  const schedulePublish = useMutation(api.changelog.scheduling.schedulePublish);
+  const cancelSchedule = useMutation(
+    api.changelog.scheduling.cancelScheduledPublish
+  );
   const pushToGithub = useMutation(api.changelog.actions.pushToGithub);
   const githubConnection = useQuery(
     api.integrations.github.queries.getConnection,
@@ -89,6 +97,7 @@ export function ReleaseEditor({
   );
 
   const isPublished = release?.publishedAt !== undefined;
+  const isScheduled = !!release?.scheduledPublishAt;
   const hasGithubConnection = !!githubConnection;
   const isLinkedToGithub = !!release?.githubReleaseId;
   const canPushToGithub =
@@ -203,6 +212,73 @@ export function ReleaseEditor({
     }
   };
 
+  const handleSchedule = async (scheduledAt: number) => {
+    if (!title.trim()) {
+      toast.error("Title is required to schedule");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let idToSchedule = releaseId;
+
+      if (idToSchedule) {
+        await updateRelease({
+          id: idToSchedule,
+          title: title.trim() || "Untitled Release",
+          version: version.trim() || undefined,
+          description: description.trim() || undefined,
+        });
+      } else {
+        idToSchedule = await createRelease({
+          organizationId,
+          title: title.trim() || "Untitled Release",
+          version: version.trim() || undefined,
+          description: description.trim() || undefined,
+        });
+      }
+
+      await schedulePublish({
+        id: idToSchedule,
+        scheduledPublishAt: scheduledAt,
+        feedbackStatus:
+          feedbackLinkStatus === "keep" ? undefined : feedbackLinkStatus,
+      });
+      capture("release_scheduled", {
+        has_version: Boolean(version.trim()),
+      });
+      setShowPublishConfirm(false);
+      toast.success(
+        `Release scheduled for ${format(scheduledAt, "MMM d, yyyy 'at' h:mm a")}`
+      );
+      navigateToChangelog();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to schedule"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelSchedule = async () => {
+    if (!releaseId) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await cancelSchedule({ id: releaseId });
+      toast.success("Schedule cancelled");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to cancel schedule"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleUnpublish = async () => {
     if (!releaseId) {
       return;
@@ -301,6 +377,24 @@ export function ReleaseEditor({
               Published
             </span>
           )}
+          {isScheduled && !isPublished && release.scheduledPublishAt && (
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 text-xs dark:bg-amber-900/30 dark:text-amber-400">
+                <Clock className="h-3 w-3" />
+                Scheduled
+              </span>
+              <ScheduleCountdown scheduledAt={release.scheduledPublishAt} />
+              <Button
+                disabled={isSubmitting}
+                onClick={handleCancelSchedule}
+                size="icon"
+                title="Cancel schedule"
+                variant="ghost"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
           <div className="ml-auto">{renderSaveStatus()}</div>
         </div>
 
@@ -364,9 +458,11 @@ export function ReleaseEditor({
           isLinkedToGithub={isLinkedToGithub}
           isPermissionError={isPermissionError}
           isPublished={isPublished}
+          isScheduled={isScheduled}
           isStreaming={isStreaming}
           isSubmitting={isSubmitting}
           onCancel={handleCancel}
+          onCancelSchedule={handleCancelSchedule}
           onPublish={() => setShowPublishConfirm(true)}
           onPushToGithub={handlePushToGithub}
           onUnpublish={handleUnpublish}
@@ -383,6 +479,7 @@ export function ReleaseEditor({
         linkedFeedbackCount={linkedFeedbackCount}
         onConfirm={handlePublish}
         onOpenChange={setShowPublishConfirm}
+        onSchedule={handleSchedule}
         open={showPublishConfirm}
         organizationId={organizationId}
         orgSlug={orgSlug}
@@ -408,9 +505,11 @@ interface ReleaseEditorFooterProps {
   isLinkedToGithub: boolean;
   isPermissionError: boolean;
   isPublished: boolean;
+  isScheduled: boolean;
   isStreaming: boolean;
   isSubmitting: boolean;
   onCancel: () => void;
+  onCancelSchedule: () => void;
   onPublish: () => void;
   onPushToGithub: () => void;
   onUnpublish: () => void;
@@ -422,6 +521,7 @@ interface ReleaseEditorFooterProps {
 
 function ReleaseEditorFooter({
   isPublished,
+  isScheduled,
   isSubmitting,
   isStreaming,
   titleEmpty,
@@ -433,9 +533,33 @@ function ReleaseEditorFooter({
   orgSlug,
   onPublish,
   onUnpublish,
+  onCancelSchedule,
   onPushToGithub,
   onCancel,
 }: ReleaseEditorFooterProps) {
+  const getPublishLabel = (): string => {
+    if (isPublished) {
+      return "Unpublish";
+    }
+    if (isScheduled) {
+      return "Cancel Schedule";
+    }
+    return "Publish";
+  };
+
+  const getPrimaryAction = () => {
+    if (isPublished) {
+      return onUnpublish;
+    }
+    if (isScheduled) {
+      return onCancelSchedule;
+    }
+    return onPublish;
+  };
+
+  const publishButtonLabel = getPublishLabel();
+
+  const handlePrimaryAction = getPrimaryAction();
   return (
     <div
       className={cn("border-t bg-muted/30 px-6 py-4", "flex flex-col gap-3")}
@@ -444,12 +568,12 @@ function ReleaseEditorFooter({
         <div className="flex items-center gap-2">
           <Button
             disabled={isSubmitting || isStreaming || titleEmpty}
-            onClick={isPublished ? onUnpublish : onPublish}
+            onClick={handlePrimaryAction}
             size="sm"
             type="button"
-            variant={isPublished ? "outline" : "default"}
+            variant={isPublished || isScheduled ? "outline" : "default"}
           >
-            {isPublished ? "Unpublish" : "Publish"}
+            {publishButtonLabel}
           </Button>
 
           {canPushToGithub && (

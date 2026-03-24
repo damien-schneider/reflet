@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { MAX_CHANGELOG_VERSION_LENGTH } from "../shared/constants";
 import { validateInputLength } from "../shared/validators";
@@ -288,6 +289,100 @@ export const linkReleaseFeedback = internalMutation({
     } else if (existing) {
       await ctx.db.delete(existing._id);
     }
+
+    return { success: true };
+  },
+});
+
+// ============================================
+// SCHEDULING
+// ============================================
+
+export const scheduleRelease = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    releaseId: v.id("releases"),
+    scheduledPublishAt: v.number(),
+    feedbackStatus: v.optional(
+      v.union(
+        v.literal("open"),
+        v.literal("under_review"),
+        v.literal("planned"),
+        v.literal("in_progress"),
+        v.literal("completed"),
+        v.literal("closed")
+      )
+    ),
+  },
+  returns: v.object({ success: v.boolean() }),
+  handler: async (ctx, args) => {
+    const release = await ctx.db.get(args.releaseId);
+    if (!release || release.organizationId !== args.organizationId) {
+      throw new Error("Release not found");
+    }
+    if (release.publishedAt) {
+      throw new Error("Release is already published");
+    }
+    if (args.scheduledPublishAt <= Date.now()) {
+      throw new Error("Scheduled time must be in the future");
+    }
+
+    // Cancel existing schedule if any
+    if (release.scheduledJobId) {
+      try {
+        await ctx.scheduler.cancel(release.scheduledJobId);
+      } catch {
+        // Job may have already completed
+      }
+    }
+
+    const jobId = await ctx.scheduler.runAt(
+      args.scheduledPublishAt,
+      internal.changelog.scheduling.executeScheduledPublish,
+      { releaseId: args.releaseId }
+    );
+
+    await ctx.db.patch(args.releaseId, {
+      scheduledPublishAt: args.scheduledPublishAt,
+      scheduledFeedbackStatus: args.feedbackStatus,
+      scheduledJobId: jobId,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+export const cancelScheduledRelease = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    releaseId: v.id("releases"),
+  },
+  returns: v.object({ success: v.boolean() }),
+  handler: async (ctx, args) => {
+    const release = await ctx.db.get(args.releaseId);
+    if (!release || release.organizationId !== args.organizationId) {
+      throw new Error("Release not found");
+    }
+    if (!release.scheduledPublishAt) {
+      throw new Error("Release is not scheduled");
+    }
+
+    if (release.scheduledJobId) {
+      try {
+        await ctx.scheduler.cancel(release.scheduledJobId);
+      } catch {
+        // Job may have already completed
+      }
+    }
+
+    await ctx.db.patch(args.releaseId, {
+      scheduledPublishAt: undefined,
+      scheduledBy: undefined,
+      scheduledFeedbackStatus: undefined,
+      scheduledJobId: undefined,
+      updatedAt: Date.now(),
+    });
 
     return { success: true };
   },

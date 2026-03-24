@@ -24,7 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
+import { ScreenshotGallery } from "../screenshot-gallery";
 import { CommentsSection } from "./comments-section";
 import { FeedbackContent } from "./feedback-content";
 import type {
@@ -320,6 +320,11 @@ function FeedbackDetailContent({
             isAdmin={isAdmin}
             title={feedback.title}
           />
+        </div>
+
+        {/* Screenshots */}
+        <div className="border-t px-6 py-4">
+          <ScreenshotGallery feedbackId={feedbackId} />
         </div>
 
         {/* Comments */}

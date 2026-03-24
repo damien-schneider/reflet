@@ -197,14 +197,17 @@ export function GenerateFromCommits({
 
   const generateTitle = async (description: string): Promise<void> => {
     try {
-      const response = await fetch("/api/ai/generate-release-title", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          description,
-          version: version.trim() || undefined,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/generate-release-title`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            description,
+            version: version.trim() || undefined,
+          }),
+        }
+      );
 
       if (!response.ok) {
         return;

@@ -1,12 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { RefletAdminClient } from "../client.js";
-
-function textResult(data: unknown): {
-  content: { type: "text"; text: string }[];
-} {
-  return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
-}
+import { textResult } from "./utils.js";
 
 export function registerReleaseTools(
   server: McpServer,
@@ -104,5 +99,40 @@ export function registerReleaseTools(
       textResult(
         await client.linkReleaseFeedback(releaseId, feedbackId, action)
       )
+  );
+
+  server.tool(
+    "release_schedule",
+    "Schedule a draft release for future publication. Provide a Unix timestamp (milliseconds) for the publish time.",
+    {
+      releaseId: z.string().describe("The release ID to schedule"),
+      scheduledPublishAt: z
+        .number()
+        .describe("Unix timestamp in milliseconds for when to publish"),
+      feedbackStatus: z
+        .enum([
+          "open",
+          "under_review",
+          "planned",
+          "in_progress",
+          "completed",
+          "closed",
+        ])
+        .optional()
+        .describe(
+          "Status to set on linked feedback items when the release publishes"
+        ),
+    },
+    async (params) => textResult(await client.scheduleRelease(params))
+  );
+
+  server.tool(
+    "release_cancel_schedule",
+    "Cancel a scheduled release, returning it to draft status.",
+    {
+      releaseId: z.string().describe("The release ID to cancel scheduling for"),
+    },
+    async ({ releaseId }) =>
+      textResult(await client.cancelScheduledRelease(releaseId))
   );
 }

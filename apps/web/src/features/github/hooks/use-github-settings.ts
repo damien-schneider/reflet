@@ -4,6 +4,8 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useCallback, useState } from "react";
 import { capture } from "@/lib/analytics";
 
+const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? "";
+
 interface ApiErrorResponse {
   code?: string;
   error?: string;
@@ -119,7 +121,7 @@ export function useGitHubSettings({
     setLoadingRepos(true);
     try {
       const response = await fetch(
-        `/api/github/repositories?organizationId=${orgId}`,
+        `${CONVEX_SITE_URL}/api/github/repositories?organizationId=${orgId}`,
         {
           cache: "no-store",
         }
@@ -147,7 +149,7 @@ export function useGitHubSettings({
     setIsLoadingLabels(true);
     try {
       const response = await fetch(
-        `/api/github/labels?organizationId=${orgId}`
+        `${CONVEX_SITE_URL}/api/github/labels?organizationId=${orgId}`
       );
       const data: unknown = await response.json();
       if (
@@ -202,7 +204,7 @@ export function useGitHubSettings({
     }
     setIsSyncing(true);
     try {
-      await fetch("/api/github/sync", {
+      await fetch(`${CONVEX_SITE_URL}/api/github/sync`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ organizationId: orgId }),
@@ -220,7 +222,7 @@ export function useGitHubSettings({
     }
     setIsSyncingIssues(true);
     try {
-      await fetch("/api/github/issues", {
+      await fetch(`${CONVEX_SITE_URL}/api/github/issues`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ organizationId: orgId, state: "all" }),
@@ -239,7 +241,7 @@ export function useGitHubSettings({
     setIsSettingUp(true);
     setWebhookSetupError(null);
     try {
-      const response = await fetch("/api/github/setup", {
+      const response = await fetch(`${CONVEX_SITE_URL}/api/github/setup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -297,7 +299,7 @@ export function useGitHubSettings({
         setIsSettingUp(true);
         setWebhookSetupError(null);
         try {
-          const response = await fetch("/api/github/setup", {
+          const response = await fetch(`${CONVEX_SITE_URL}/api/github/setup`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

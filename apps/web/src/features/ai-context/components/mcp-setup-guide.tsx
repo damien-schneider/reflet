@@ -11,11 +11,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H2, Muted, Text } from "@/components/ui/typography";
 
 const MCP_NPM_PACKAGE = "@reflet/mcp-server";
+const CONVEX_SITE_URL =
+  process.env.NEXT_PUBLIC_CONVEX_SITE_URL ??
+  "https://your-deployment.convex.site";
 
-function generateCursorConfig(secretKey: string): string {
+function generateStdioConfig(
+  wrapper: "mcpServers" | "servers",
+  secretKey: string
+): string {
   return JSON.stringify(
     {
-      mcpServers: {
+      [wrapper]: {
         reflet: {
           command: "npx",
           args: ["-y", MCP_NPM_PACKAGE],
@@ -30,15 +36,18 @@ function generateCursorConfig(secretKey: string): string {
   );
 }
 
-function generateVSCodeConfig(secretKey: string): string {
+function generateHttpConfig(
+  wrapper: "mcpServers" | "servers",
+  secretKey: string
+): string {
   return JSON.stringify(
     {
-      servers: {
+      [wrapper]: {
         reflet: {
-          command: "npx",
-          args: ["-y", MCP_NPM_PACKAGE],
-          env: {
-            REFLET_SECRET_KEY: secretKey,
+          type: "http",
+          url: `${CONVEX_SITE_URL}/mcp`,
+          headers: {
+            Authorization: `Bearer ${secretKey}`,
           },
         },
       },
@@ -48,48 +57,14 @@ function generateVSCodeConfig(secretKey: string): string {
   );
 }
 
-function generateClaudeCodeConfig(secretKey: string): string {
-  return JSON.stringify(
-    {
-      mcpServers: {
-        reflet: {
-          command: "npx",
-          args: ["-y", MCP_NPM_PACKAGE],
-          env: {
-            REFLET_SECRET_KEY: secretKey,
-          },
-        },
-      },
-    },
-    null,
-    2
-  );
-}
-
-function generateWindsurfConfig(secretKey: string): string {
-  return JSON.stringify(
-    {
-      mcpServers: {
-        reflet: {
-          command: "npx",
-          args: ["-y", MCP_NPM_PACKAGE],
-          env: {
-            REFLET_SECRET_KEY: secretKey,
-          },
-        },
-      },
-    },
-    null,
-    2
-  );
-}
+type TransportMode = "http" | "stdio";
 
 interface IdeConfig {
   description: string;
-  filePath: string;
-  generate: (key: string) => string;
+  filePath: string | null;
   id: string;
   name: string;
+  wrapper: "mcpServers" | "servers";
 }
 
 const IDE_CONFIGS: IdeConfig[] = [
@@ -98,30 +73,64 @@ const IDE_CONFIGS: IdeConfig[] = [
     name: "Cursor",
     filePath: ".cursor/mcp.json",
     description: "Add to your project root",
-    generate: generateCursorConfig,
+    wrapper: "mcpServers",
   },
   {
     id: "vscode",
     name: "VS Code",
     filePath: ".vscode/mcp.json",
     description: "Copilot agent mode",
-    generate: generateVSCodeConfig,
+    wrapper: "servers",
+  },
+  {
+    id: "claude-desktop",
+    name: "Claude Desktop",
+    filePath: null,
+    description:
+      "Go to Settings > Developer > Edit Config, then paste the configuration below.",
+    wrapper: "mcpServers",
   },
   {
     id: "claude-code",
     name: "Claude Code",
     filePath: ".mcp.json",
     description: "Add to your project root",
-    generate: generateClaudeCodeConfig,
+    wrapper: "mcpServers",
   },
   {
     id: "windsurf",
     name: "Windsurf",
     filePath: "~/.codeium/windsurf/mcp_config.json",
     description: "Global configuration",
-    generate: generateWindsurfConfig,
+    wrapper: "mcpServers",
+  },
+  {
+    id: "chatgpt",
+    name: "ChatGPT",
+    filePath: null,
+    description:
+      "In ChatGPT, go to Settings > Connected MCP Servers > Add. Paste the URL and API key.",
+    wrapper: "mcpServers",
   },
 ] as const;
+
+function generateChatGptConfig(secretKey: string): string {
+  return `URL: ${CONVEX_SITE_URL}/mcp\nHeader: Authorization: Bearer ${secretKey}`;
+}
+
+function generateConfig(
+  ide: IdeConfig,
+  secretKey: string,
+  transport: TransportMode
+): string {
+  if (ide.id === "chatgpt") {
+    return generateChatGptConfig(secretKey);
+  }
+  if (transport === "http") {
+    return generateHttpConfig(ide.wrapper, secretKey);
+  }
+  return generateStdioConfig(ide.wrapper, secretKey);
+}
 
 const AVAILABLE_TOOLS = [
   {
@@ -192,13 +201,17 @@ function CodeBlock({
   label,
 }: {
   code: string;
-  fileName: string;
+  fileName: string | null;
   label: string;
 }) {
   return (
     <div className="overflow-hidden rounded-lg border">
       <div className="flex items-center justify-between border-b bg-muted/50 px-4 py-2">
-        <code className="text-muted-foreground text-xs">{fileName}</code>
+        {fileName ? (
+          <code className="text-muted-foreground text-xs">{fileName}</code>
+        ) : (
+          <span />
+        )}
         <CopyButton label={label} text={code} />
       </div>
       <pre className="overflow-x-auto p-4 text-sm">
@@ -214,6 +227,7 @@ interface McpSetupGuideProps {
 
 export function McpSetupGuide({ secretKey }: McpSetupGuideProps) {
   const displayKey = secretKey ?? "your-secret-key";
+  const [transport, setTransport] = useState<TransportMode>("http");
 
   return (
     <div className="space-y-8">
@@ -234,7 +248,9 @@ export function McpSetupGuide({ secretKey }: McpSetupGuideProps) {
         </div>
         <Muted>
           Go to{" "}
-          <span className="font-medium text-foreground">Settings → In-App</span>{" "}
+          <span className="font-medium text-foreground">
+            Settings &rarr; In-App
+          </span>{" "}
           and generate an API key. Copy the <strong>secret key</strong> — you
           will need it for the MCP configuration.
         </Muted>
@@ -246,9 +262,39 @@ export function McpSetupGuide({ secretKey }: McpSetupGuideProps) {
           <Badge variant="secondary">Step 2</Badge>
           <h3 className="font-semibold text-sm">Add MCP config to your IDE</h3>
         </div>
-        <Muted>
-          Create the configuration file for your editor. Replace the secret key
-          with the one from step 1.
+
+        {/* Transport mode selector */}
+        <div className="flex items-center gap-3">
+          <Muted className="shrink-0 text-xs">Transport:</Muted>
+          <div className="flex gap-1 rounded-md border p-0.5">
+            <button
+              className={`rounded px-3 py-1 text-xs transition-colors ${
+                transport === "http"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setTransport("http")}
+              type="button"
+            >
+              HTTP (Recommended)
+            </button>
+            <button
+              className={`rounded px-3 py-1 text-xs transition-colors ${
+                transport === "stdio"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setTransport("stdio")}
+              type="button"
+            >
+              Stdio
+            </button>
+          </div>
+        </div>
+        <Muted className="text-xs">
+          {transport === "http"
+            ? "HTTP connects directly to Reflet's server — no local install needed."
+            : "Stdio runs a local process via npx. Requires Node.js installed."}
         </Muted>
 
         <Tabs defaultValue="cursor">
@@ -264,7 +310,7 @@ export function McpSetupGuide({ secretKey }: McpSetupGuideProps) {
               <div className="space-y-2">
                 <Muted>{ide.description}</Muted>
                 <CodeBlock
-                  code={ide.generate(displayKey)}
+                  code={generateConfig(ide, displayKey, transport)}
                   fileName={ide.filePath}
                   label={`${ide.name} config`}
                 />

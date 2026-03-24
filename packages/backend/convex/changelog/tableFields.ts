@@ -1,5 +1,6 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
+import { feedbackStatus } from "../shared/validators";
 
 export const changelogTables = {
   releases: defineTable({
@@ -8,6 +9,10 @@ export const changelogTables = {
     description: v.optional(v.string()),
     version: v.optional(v.string()),
     publishedAt: v.optional(v.number()),
+    scheduledPublishAt: v.optional(v.number()),
+    scheduledBy: v.optional(v.string()),
+    scheduledFeedbackStatus: v.optional(feedbackStatus),
+    scheduledJobId: v.optional(v.id("_scheduled_functions")),
     githubReleaseId: v.optional(v.string()),
     githubHtmlUrl: v.optional(v.string()),
     syncedFromGithub: v.optional(v.boolean()),
@@ -21,7 +26,8 @@ export const changelogTables = {
   })
     .index("by_organization", ["organizationId"])
     .index("by_published", ["organizationId", "publishedAt"])
-    .index("by_github_release", ["organizationId", "githubReleaseId"]),
+    .index("by_github_release", ["organizationId", "githubReleaseId"])
+    .index("by_scheduled", ["scheduledPublishAt"]),
 
   releaseFeedback: defineTable({
     releaseId: v.id("releases"),

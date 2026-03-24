@@ -8,12 +8,15 @@
  * @module
  */
 
+import type * as admin_api_duplicates from "../admin_api/duplicates.js";
 import type * as admin_api_feedback from "../admin_api/feedback.js";
 import type * as admin_api_members from "../admin_api/members.js";
 import type * as admin_api_milestones from "../admin_api/milestones.js";
 import type * as admin_api_organization from "../admin_api/organization.js";
 import type * as admin_api_releases from "../admin_api/releases.js";
+import type * as admin_api_screenshots from "../admin_api/screenshots.js";
 import type * as admin_api_statuses from "../admin_api/statuses.js";
+import type * as admin_api_survey from "../admin_api/survey.js";
 import type * as admin_api_tableFields from "../admin_api/tableFields.js";
 import type * as admin_api_tags from "../admin_api/tags.js";
 import type * as ai_agent from "../ai/agent.js";
@@ -28,6 +31,7 @@ import type * as billing_queries from "../billing/queries.js";
 import type * as billing_stripe from "../billing/stripe.js";
 import type * as billing_tableFields from "../billing/tableFields.js";
 import type * as changelog_actions from "../changelog/actions.js";
+import type * as changelog_ai_actions from "../changelog/ai_actions.js";
 import type * as changelog_ai_matching from "../changelog/ai_matching.js";
 import type * as changelog_ai_matching_helpers from "../changelog/ai_matching_helpers.js";
 import type * as changelog_mutations from "../changelog/mutations.js";
@@ -38,9 +42,16 @@ import type * as changelog_release_notes_ai from "../changelog/release_notes_ai.
 import type * as changelog_releases from "../changelog/releases.js";
 import type * as changelog_releases_internal from "../changelog/releases_internal.js";
 import type * as changelog_rss from "../changelog/rss.js";
+import type * as changelog_scheduling from "../changelog/scheduling.js";
 import type * as changelog_subscriptions from "../changelog/subscriptions.js";
 import type * as changelog_tableFields from "../changelog/tableFields.js";
 import type * as crons from "../crons.js";
+import type * as duplicates_detection from "../duplicates/detection.js";
+import type * as duplicates_merge from "../duplicates/merge.js";
+import type * as duplicates_queries from "../duplicates/queries.js";
+import type * as duplicates_tableFields from "../duplicates/tableFields.js";
+import type * as email_analytics from "../email/analytics.js";
+import type * as email_health from "../email/health.js";
 import type * as email_renderer from "../email/renderer.js";
 import type * as email_send from "../email/send.js";
 import type * as email_suppression from "../email/suppression.js";
@@ -58,6 +69,7 @@ import type * as feedback_list from "../feedback/list.js";
 import type * as feedback_mutations from "../feedback/mutations.js";
 import type * as feedback_queries from "../feedback/queries.js";
 import type * as feedback_roadmap from "../feedback/roadmap.js";
+import type * as feedback_screenshots from "../feedback/screenshots.js";
 import type * as feedback_stale from "../feedback/stale.js";
 import type * as feedback_status_utils from "../feedback/status_utils.js";
 import type * as feedback_subscriptions from "../feedback/subscriptions.js";
@@ -70,6 +82,8 @@ import type * as http from "../http.js";
 import type * as http_admin_content from "../http/admin_content.js";
 import type * as http_admin_feedback from "../http/admin_feedback.js";
 import type * as http_admin_management from "../http/admin_management.js";
+import type * as http_ai_api from "../http/ai_api.js";
+import type * as http_github_api from "../http/github_api.js";
 import type * as http_github_webhook from "../http/github_webhook.js";
 import type * as http_helpers from "../http/helpers.js";
 import type * as http_public_api from "../http/public_api.js";
@@ -84,6 +98,9 @@ import type * as integrations_github_repo_analysis from "../integrations/github/
 import type * as integrations_github_sync from "../integrations/github/sync.js";
 import type * as integrations_github_tableFields from "../integrations/github/tableFields.js";
 import type * as integrations_website_references from "../integrations/website_references.js";
+import type * as mcp_handler from "../mcp/handler.js";
+import type * as mcp_protocol from "../mcp/protocol.js";
+import type * as mcp_tools from "../mcp/tools.js";
 import type * as migrations_cleanup_board_fields from "../migrations/cleanup_board_fields.js";
 import type * as notifications_preferences from "../notifications/preferences.js";
 import type * as notifications_push from "../notifications/push.js";
@@ -115,6 +132,8 @@ import type * as storage from "../storage.js";
 import type * as support_conversations from "../support/conversations.js";
 import type * as support_messages from "../support/messages.js";
 import type * as support_tableFields from "../support/tableFields.js";
+import type * as surveys_mutations from "../surveys/mutations.js";
+import type * as surveys_tableFields from "../surveys/tableFields.js";
 import type * as todos from "../todos.js";
 import type * as widget_admin from "../widget/admin.js";
 import type * as widget_public from "../widget/public.js";
@@ -127,12 +146,15 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "admin_api/duplicates": typeof admin_api_duplicates;
   "admin_api/feedback": typeof admin_api_feedback;
   "admin_api/members": typeof admin_api_members;
   "admin_api/milestones": typeof admin_api_milestones;
   "admin_api/organization": typeof admin_api_organization;
   "admin_api/releases": typeof admin_api_releases;
+  "admin_api/screenshots": typeof admin_api_screenshots;
   "admin_api/statuses": typeof admin_api_statuses;
+  "admin_api/survey": typeof admin_api_survey;
   "admin_api/tableFields": typeof admin_api_tableFields;
   "admin_api/tags": typeof admin_api_tags;
   "ai/agent": typeof ai_agent;
@@ -147,6 +169,7 @@ declare const fullApi: ApiFromModules<{
   "billing/stripe": typeof billing_stripe;
   "billing/tableFields": typeof billing_tableFields;
   "changelog/actions": typeof changelog_actions;
+  "changelog/ai_actions": typeof changelog_ai_actions;
   "changelog/ai_matching": typeof changelog_ai_matching;
   "changelog/ai_matching_helpers": typeof changelog_ai_matching_helpers;
   "changelog/mutations": typeof changelog_mutations;
@@ -157,9 +180,16 @@ declare const fullApi: ApiFromModules<{
   "changelog/releases": typeof changelog_releases;
   "changelog/releases_internal": typeof changelog_releases_internal;
   "changelog/rss": typeof changelog_rss;
+  "changelog/scheduling": typeof changelog_scheduling;
   "changelog/subscriptions": typeof changelog_subscriptions;
   "changelog/tableFields": typeof changelog_tableFields;
   crons: typeof crons;
+  "duplicates/detection": typeof duplicates_detection;
+  "duplicates/merge": typeof duplicates_merge;
+  "duplicates/queries": typeof duplicates_queries;
+  "duplicates/tableFields": typeof duplicates_tableFields;
+  "email/analytics": typeof email_analytics;
+  "email/health": typeof email_health;
   "email/renderer": typeof email_renderer;
   "email/send": typeof email_send;
   "email/suppression": typeof email_suppression;
@@ -177,6 +207,7 @@ declare const fullApi: ApiFromModules<{
   "feedback/mutations": typeof feedback_mutations;
   "feedback/queries": typeof feedback_queries;
   "feedback/roadmap": typeof feedback_roadmap;
+  "feedback/screenshots": typeof feedback_screenshots;
   "feedback/stale": typeof feedback_stale;
   "feedback/status_utils": typeof feedback_status_utils;
   "feedback/subscriptions": typeof feedback_subscriptions;
@@ -189,6 +220,8 @@ declare const fullApi: ApiFromModules<{
   "http/admin_content": typeof http_admin_content;
   "http/admin_feedback": typeof http_admin_feedback;
   "http/admin_management": typeof http_admin_management;
+  "http/ai_api": typeof http_ai_api;
+  "http/github_api": typeof http_github_api;
   "http/github_webhook": typeof http_github_webhook;
   "http/helpers": typeof http_helpers;
   "http/public_api": typeof http_public_api;
@@ -203,6 +236,9 @@ declare const fullApi: ApiFromModules<{
   "integrations/github/sync": typeof integrations_github_sync;
   "integrations/github/tableFields": typeof integrations_github_tableFields;
   "integrations/website_references": typeof integrations_website_references;
+  "mcp/handler": typeof mcp_handler;
+  "mcp/protocol": typeof mcp_protocol;
+  "mcp/tools": typeof mcp_tools;
   "migrations/cleanup_board_fields": typeof migrations_cleanup_board_fields;
   "notifications/preferences": typeof notifications_preferences;
   "notifications/push": typeof notifications_push;
@@ -234,6 +270,8 @@ declare const fullApi: ApiFromModules<{
   "support/conversations": typeof support_conversations;
   "support/messages": typeof support_messages;
   "support/tableFields": typeof support_tableFields;
+  "surveys/mutations": typeof surveys_mutations;
+  "surveys/tableFields": typeof surveys_tableFields;
   todos: typeof todos;
   "widget/admin": typeof widget_admin;
   "widget/public": typeof widget_public;

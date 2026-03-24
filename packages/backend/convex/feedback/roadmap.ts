@@ -20,7 +20,7 @@ export const list = query({
         )
         .filter((q) => q.eq(q.field("isApproved"), true))
         .collect()
-    ).filter((f) => !f.deletedAt);
+    ).filter((f) => !(f.deletedAt || f.isMerged));
 
     // Add tags
     const feedbackItems = await Promise.all(

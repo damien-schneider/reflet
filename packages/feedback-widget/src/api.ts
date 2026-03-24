@@ -1,4 +1,4 @@
-import type { BoardConfig, Comment, FeedbackItem } from "./types";
+import type { BoardConfig, Comment, FeedbackItem, SurveyData } from "./types";
 
 declare const __CONVEX_URL__: string;
 
@@ -149,6 +149,110 @@ class FeedbackApi {
     }>
   > {
     return await this.request("GET", "/api/v1/feedback/changelog");
+  }
+
+  async getSimilarFeedback(
+    title: string
+  ): Promise<
+    Array<{ _id: string; title: string; voteCount: number; status: string }>
+  > {
+    if (title.length < 3) {
+      return [];
+    }
+    return await this.request(
+      "GET",
+      `/api/v1/feedback/similar?title=${encodeURIComponent(title)}`
+    );
+  }
+
+  async getScreenshotUploadUrl(): Promise<{ uploadUrl: string }> {
+    return await this.request("POST", "/api/v1/feedback/screenshot/upload-url");
+  }
+
+  async uploadScreenshot(file: Blob): Promise<string> {
+    const { uploadUrl } = await this.getScreenshotUploadUrl();
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error("Failed to upload screenshot");
+    }
+
+    const result: unknown = await uploadResponse.json();
+    return (result as { storageId: string }).storageId;
+  }
+
+  async saveScreenshot(params: {
+    feedbackId: string;
+    storageId: string;
+    filename?: string;
+    mimeType?: string;
+    size?: number;
+    width?: number;
+    height?: number;
+    pageUrl?: string;
+  }): Promise<{ screenshotId: string }> {
+    return await this.request("POST", "/api/v1/feedback/screenshot/save", {
+      feedbackId: params.feedbackId,
+      storageId: params.storageId,
+      filename: params.filename ?? "screenshot.png",
+      mimeType: params.mimeType ?? "image/png",
+      size: params.size ?? 0,
+      width: params.width,
+      height: params.height,
+      pageUrl: params.pageUrl,
+    });
+  }
+
+  // ============================================
+  // SURVEYS
+  // ============================================
+
+  async getActiveSurvey(
+    triggerType?: string,
+    surveyId?: string
+  ): Promise<SurveyData | null> {
+    const searchParams = new URLSearchParams();
+    if (triggerType) {
+      searchParams.set("triggerType", triggerType);
+    }
+    if (surveyId) {
+      searchParams.set("surveyId", surveyId);
+    }
+    const query = searchParams.toString();
+    return await this.request(
+      "GET",
+      `/api/v1/surveys/active${query ? `?${query}` : ""}`
+    );
+  }
+
+  async startSurveyResponse(params: {
+    surveyId: string;
+    respondentId?: string;
+    pageUrl?: string;
+    userAgent?: string;
+  }): Promise<{ responseId: string }> {
+    return await this.request("POST", "/api/v1/surveys/respond/start", params);
+  }
+
+  async submitSurveyAnswer(params: {
+    responseId: string;
+    questionId: string;
+    value: string | number | boolean | string[];
+  }): Promise<{ answerId: string }> {
+    return await this.request("POST", "/api/v1/surveys/respond/answer", params);
+  }
+
+  async completeSurveyResponse(
+    responseId: string
+  ): Promise<{ success: boolean }> {
+    return await this.request("POST", "/api/v1/surveys/respond/complete", {
+      responseId,
+    });
   }
 }
 

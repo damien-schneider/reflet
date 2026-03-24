@@ -98,7 +98,7 @@ export const listByOrganization = query({
       .collect();
     const statusMap = new Map(orgStatuses.map((s) => [s._id, s]));
 
-    // Get all feedback for the organization (excluding soft-deleted)
+    // Get all feedback for the organization (excluding soft-deleted and merged)
     let feedbackItems = (
       await ctx.db
         .query("feedback")
@@ -106,7 +106,7 @@ export const listByOrganization = query({
           q.eq("organizationId", args.organizationId)
         )
         .collect()
-    ).filter((f) => !f.deletedAt);
+    ).filter((f) => !(f.deletedAt || f.isMerged));
 
     // Filter by statusIds (any of the selected statuses)
     if (args.statusIds && args.statusIds.length > 0) {
@@ -279,7 +279,7 @@ export const listForRoadmapByOrganization = query({
       return [];
     }
 
-    // Get all feedback for the organization (excluding soft-deleted)
+    // Get all feedback for the organization (excluding soft-deleted and merged)
     let feedbackItems = (
       await ctx.db
         .query("feedback")
@@ -287,7 +287,7 @@ export const listForRoadmapByOrganization = query({
           q.eq("organizationId", args.organizationId)
         )
         .collect()
-    ).filter((f) => !f.deletedAt);
+    ).filter((f) => !(f.deletedAt || f.isMerged));
 
     // Filter to only approved items for non-members
     feedbackItems = isMember

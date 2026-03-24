@@ -316,7 +316,10 @@ function renderCreateFormHTML(config: WidgetConfig): string {
         <textarea class="reflet-form-textarea" id="feedback-description" placeholder="Provide more details about your feedback..." required></textarea>
       </div>
 
-      <button type="submit" class="reflet-submit-btn">Submit Feedback</button>
+      <div class="reflet-form-actions">
+        <button type="button" class="reflet-screenshot-btn" data-action="screenshot">📷 Capture Screenshot</button>
+        <button type="submit" class="reflet-submit-btn">Submit Feedback</button>
+      </div>
     </form>
   `;
 }

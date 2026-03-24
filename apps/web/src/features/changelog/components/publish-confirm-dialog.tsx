@@ -1,10 +1,17 @@
 "use client";
 
-import { CheckCircle, GithubLogo, PaperPlaneTilt } from "@phosphor-icons/react";
+import {
+  CalendarBlank,
+  CheckCircle,
+  GithubLogo,
+  PaperPlaneTilt,
+} from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
+import { format } from "date-fns";
 import Link from "next/link";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +22,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import type { FeedbackLinkStatus } from "./feedback-section-header";
+import { SchedulePicker } from "./schedule-picker";
 
 const STATUS_DISPLAY_LABELS: Record<FeedbackLinkStatus, string> = {
   keep: "Keep current status",
@@ -34,6 +43,7 @@ interface PublishConfirmDialogProps {
   linkedFeedbackCount?: number;
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
+  onSchedule?: (scheduledAt: number) => void;
   open: boolean;
   organizationId: Id<"organizations">;
   orgSlug: string;
@@ -45,6 +55,7 @@ export function PublishConfirmDialog({
   open,
   onOpenChange,
   onConfirm,
+  onSchedule,
   isSubmitting,
   title,
   version,
@@ -53,6 +64,9 @@ export function PublishConfirmDialog({
   linkedFeedbackCount = 0,
   feedbackLinkStatus = "completed",
 }: PublishConfirmDialogProps) {
+  const [mode, setMode] = useState<"now" | "schedule">("now");
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
+
   const orgData = useQuery(api.organizations.queries.get, {
     id: organizationId,
   });
@@ -72,6 +86,16 @@ export function PublishConfirmDialog({
   const hasGithub = githubStatus?.isConnected && githubStatus?.hasRepository;
   const willPushToGithub = pushToGithub && hasGithub;
   const subCount = subscriberCount ?? 0;
+
+  const isScheduleValid = scheduledDate && scheduledDate.getTime() > Date.now();
+
+  const handleConfirm = () => {
+    if (mode === "schedule" && isScheduleValid && onSchedule) {
+      onSchedule(scheduledDate.getTime());
+    } else {
+      onConfirm();
+    }
+  };
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -94,10 +118,38 @@ export function PublishConfirmDialog({
             )}
           </div>
 
+          {/* Publish mode selector */}
+          <Tabs
+            onValueChange={(v) => setMode(v as "now" | "schedule")}
+            value={mode}
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="now">Publish Now</TabsTrigger>
+              <TabsTrigger value="schedule">
+                <CalendarBlank className="mr-1.5 h-3.5 w-3.5" />
+                Schedule
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent className="mt-3" value="schedule">
+              <SchedulePicker
+                disabled={isSubmitting}
+                onChange={setScheduledDate}
+                value={scheduledDate}
+              />
+              {isScheduleValid && (
+                <p className="mt-2 text-muted-foreground text-xs">
+                  Will publish on{" "}
+                  {format(scheduledDate, "MMM d, yyyy 'at' h:mm a")}
+                </p>
+              )}
+            </TabsContent>
+          </Tabs>
+
           {/* What will happen */}
           <div className="space-y-2">
             <p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-              On publish
+              {mode === "schedule" ? "On scheduled publish" : "On publish"}
             </p>
 
             <div className="flex items-center gap-2 text-sm">
@@ -156,12 +208,12 @@ export function PublishConfirmDialog({
             Cancel
           </Button>
           <Button
-            disabled={isSubmitting}
-            onClick={onConfirm}
+            disabled={isSubmitting || (mode === "schedule" && !isScheduleValid)}
+            onClick={handleConfirm}
             size="sm"
             type="button"
           >
-            Publish
+            {mode === "schedule" ? "Schedule Publish" : "Publish"}
           </Button>
         </DialogFooter>
       </DialogContent>
