@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun run check-pre-commit"
+            "command": "bun x ultracite fix && bun run check-types"
           }
         ]
       }
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun run check-pre-commit"
+            "command": "bun x ultracite fix && bun run check-types"
           }
         ]
       }
