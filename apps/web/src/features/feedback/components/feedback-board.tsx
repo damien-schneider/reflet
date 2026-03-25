@@ -3,10 +3,18 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { H1, Lead } from "@/components/ui/typography";
 import { MilestonesView } from "@/features/milestones/components/milestones-view";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { capture } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { useBoardFilters } from "../hooks/use-board-filters";
 import { useFeedbackDrawer } from "../hooks/use-feedback-drawer";
@@ -26,6 +34,10 @@ import {
 } from "./feedback-board/use-optimistic-votes";
 import { useSubmitFeedback } from "./feedback-board/use-submit-feedback";
 import { FeedbackDetailDrawer } from "./feedback-detail/feedback-detail-drawer";
+import type {
+  InlineFeedbackInputHandle,
+  InlineSubmitData,
+} from "./inline-feedback-input";
 import { RoadmapView } from "./roadmap-view";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
 
@@ -226,6 +238,38 @@ function FeedbackBoardContent({
     [filteredFeedback]
   );
 
+  // Inline feedback input ref (for FAB scroll-to-focus)
+  const inlineInputRef = useRef<InlineFeedbackInputHandle>(null);
+
+  // Inline submit handler
+  const handleInlineSubmit = useCallback(
+    async (data: InlineSubmitData) => {
+      const attachments =
+        data.attachments.length > 0 ? data.attachments : undefined;
+      if (isMember) {
+        await createFeedbackMember({
+          organizationId,
+          title: data.title,
+          description: data.description || "",
+          attachments,
+          tagId: data.tagId,
+        });
+      } else {
+        await createFeedbackPublic({
+          organizationId,
+          title: data.title,
+          description: data.description || undefined,
+          email: data.email || undefined,
+          attachments,
+        });
+      }
+      capture("feedback_created", {
+        source: isMember ? "admin" : "public_board",
+      });
+    },
+    [isMember, organizationId, createFeedbackMember, createFeedbackPublic]
+  );
+
   // URL-based drawer state with navigation
   const {
     selectedFeedbackId,
@@ -287,6 +331,7 @@ function FeedbackBoardContent({
         </div>
 
         <FeedbackToolbar
+          inlineInputRef={view === "feed" ? inlineInputRef : undefined}
           isAdmin={isAdmin}
           onSearchChange={setSearchQuery}
           onSubmitClick={openSubmitDrawer}
@@ -322,12 +367,15 @@ function FeedbackBoardContent({
               feedback={filteredFeedback}
               hasActiveFilters={hasActiveFilters}
               hideCompleted={hideCompleted}
+              inlineInputRef={inlineInputRef}
+              isAdmin={isAdmin}
               isLoading={feedback === undefined && !hasLoadedOnce}
+              isMember={isMember}
               onClearFilters={clearFilters}
               onHideCompletedToggle={() => setHideCompleted(!hideCompleted)}
+              onInlineSubmit={handleInlineSubmit}
               onSortChange={setSortBy}
               onStatusChange={handleStatusFilterChange}
-              onSubmitClick={openSubmitDrawer}
               onTagChange={handleTagChange}
               selectedStatusIds={selectedStatusIds}
               selectedTagIds={selectedTagIds}

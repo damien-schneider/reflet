@@ -3,12 +3,16 @@ import {
   Plus,
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { InlineFeedbackInputHandle } from "../inline-feedback-input";
 import type { Tag } from "../tag-filter-bar";
 import { TagFilterBar } from "../tag-filter-bar";
 
 interface FeedbackToolbarProps {
+  /** When provided, the FAB is hidden (inline input replaces it) */
+  inlineInputRef?: RefObject<InlineFeedbackInputHandle | null>;
   isAdmin: boolean;
   onSearchChange: (value: string) => void;
   onSubmitClick: () => void;
@@ -28,6 +32,7 @@ export const FeedbackToolbar = ({
   organizationId,
   selectedTagId,
   onTagSelect,
+  inlineInputRef,
 }: FeedbackToolbarProps) => (
   <>
     {/* Toolbar area */}
@@ -46,17 +51,19 @@ export const FeedbackToolbar = ({
       </div>
     </div>
 
-    {/* Submit Feedback - fixed bottom right */}
-    <div className="fixed right-4 bottom-4 z-50 md:right-8 md:bottom-8">
-      <Button
-        className="h-12 rounded-full shadow-lg"
-        onClick={onSubmitClick}
-        size="lg"
-      >
-        <Plus className="h-4 w-4" />
-        Submit Feedback
-      </Button>
-    </div>
+    {/* Submit Feedback FAB — only shown when inline input is not available (roadmap/milestones) */}
+    {!inlineInputRef && (
+      <div className="fixed right-4 bottom-4 z-50 md:right-8 md:bottom-8">
+        <Button
+          className="h-12 rounded-full shadow-lg"
+          onClick={onSubmitClick}
+          size="lg"
+        >
+          <Plus className="h-4 w-4" />
+          Submit Feedback
+        </Button>
+      </div>
+    )}
 
     {/* Tag filter bar */}
     {(tags.length > 0 || isAdmin) && (

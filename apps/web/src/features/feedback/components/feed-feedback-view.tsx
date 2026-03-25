@@ -1,13 +1,9 @@
 "use client";
 
-import {
-  MagnifyingGlass as MagnifyingGlassIcon,
-  Plus,
-} from "@phosphor-icons/react";
+import { MagnifyingGlass as MagnifyingGlassIcon } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
-import type { ReactNode } from "react";
-import { Button } from "@/components/ui/button";
+import type React from "react";
 
 import {
   type CardStyle,
@@ -17,6 +13,11 @@ import {
 import { useFeedbackBoard } from "./feedback-board/feedback-board-context";
 import { FeedbackCardAdminWrapper } from "./feedback-card-admin-wrapper";
 import { FiltersBar, type SortOption } from "./filters-bar";
+import type {
+  InlineFeedbackInputHandle,
+  InlineSubmitData,
+} from "./inline-feedback-input";
+import { InlineFeedbackInput } from "./inline-feedback-input";
 
 export type { SortOption } from "./filters-bar";
 
@@ -59,68 +60,22 @@ export interface FeedFeedbackViewProps {
   feedback: FeedbackItem[];
   hasActiveFilters: boolean;
   hideCompleted: boolean;
+  /** Ref to the inline input for scroll-to-focus from FAB */
+  inlineInputRef?: React.Ref<InlineFeedbackInputHandle>;
+  isAdmin: boolean;
   isLoading: boolean;
+  isMember: boolean;
   onClearFilters: () => void;
   onHideCompletedToggle: () => void;
+  onInlineSubmit: (data: InlineSubmitData) => Promise<void>;
   onSortChange: (sort: SortOption) => void;
   onStatusChange: (id: string, checked: boolean) => void;
-  onSubmitClick: () => void;
   onTagChange: (id: string, checked: boolean) => void;
   selectedStatusIds: string[];
   selectedTagIds: string[];
   sortBy: SortOption;
   statuses: Array<{ _id: string; name: string; color?: string }>;
   tags: Array<{ _id: string; name: string; color: string }>;
-}
-
-function getEmptyContent({
-  hasActiveFilters,
-  hideCompleted,
-  onSubmitClick,
-}: {
-  hasActiveFilters: boolean;
-  hideCompleted: boolean;
-  onSubmitClick: () => void;
-}): ReactNode {
-  if (hasActiveFilters) {
-    return (
-      <>
-        <MagnifyingGlassIcon className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h3 className="font-semibold text-lg">No matching feedback</h3>
-        <p className="text-muted-foreground">
-          Try adjusting your filters or search query.
-        </p>
-        {hideCompleted && (
-          <p className="mt-2 text-muted-foreground text-sm">
-            Completed items are hidden — use the filter to show them.
-          </p>
-        )}
-      </>
-    );
-  }
-
-  if (hideCompleted) {
-    return (
-      <>
-        <p className="mb-2 text-muted-foreground">No open feedback yet.</p>
-        <p className="text-muted-foreground text-sm">
-          Completed items are hidden — use the filter to show them.
-        </p>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <p className="mb-4 text-muted-foreground">
-        Be the first to share your ideas!
-      </p>
-      <Button onClick={onSubmitClick}>
-        <Plus className="mr-2 h-4 w-4" />
-        Submit Feedback
-      </Button>
-    </>
-  );
 }
 
 export function FeedFeedbackView({
@@ -131,7 +86,6 @@ export function FeedFeedbackView({
   sortBy,
   onSortChange,
   onHideCompletedToggle,
-  onSubmitClick,
   statuses,
   selectedStatusIds,
   onStatusChange,
@@ -140,6 +94,10 @@ export function FeedFeedbackView({
   onTagChange,
   onClearFilters,
   cardStyle,
+  isAdmin,
+  isMember,
+  onInlineSubmit,
+  inlineInputRef,
 }: FeedFeedbackViewProps) {
   const style = cardStyle ?? DEFAULT_CARD_STYLE;
   const { onFeedbackClick } = useFeedbackBoard();
@@ -172,8 +130,43 @@ export function FeedFeedbackView({
     return (
       <>
         <FiltersBar {...filtersBarProps} />
-        <div className="flex flex-col items-center justify-center py-12">
-          {getEmptyContent({ hasActiveFilters, hideCompleted, onSubmitClick })}
+        <div className="space-y-4 px-4">
+          <InlineFeedbackInput
+            isAdmin={isAdmin}
+            isMember={isMember}
+            onSubmit={onInlineSubmit}
+            ref={inlineInputRef}
+            tags={tags}
+          />
+          {hasActiveFilters && (
+            <div className="flex flex-col items-center justify-center py-8">
+              <MagnifyingGlassIcon className="mb-4 h-12 w-12 text-muted-foreground" />
+              <h3 className="font-semibold text-lg">No matching feedback</h3>
+              <p className="text-muted-foreground">
+                Try adjusting your filters or search query.
+              </p>
+              {hideCompleted && (
+                <p className="mt-2 text-muted-foreground text-sm">
+                  Completed items are hidden — use the filter to show them.
+                </p>
+              )}
+            </div>
+          )}
+          {!(hasActiveFilters || hideCompleted) && (
+            <p className="py-8 text-center text-muted-foreground">
+              Be the first to share your ideas!
+            </p>
+          )}
+          {!hasActiveFilters && hideCompleted && (
+            <div className="flex flex-col items-center py-8">
+              <p className="mb-2 text-muted-foreground">
+                No open feedback yet.
+              </p>
+              <p className="text-muted-foreground text-sm">
+                Completed items are hidden — use the filter to show them.
+              </p>
+            </div>
+          )}
         </div>
       </>
     );
@@ -183,6 +176,11 @@ export function FeedFeedbackView({
     <>
       <FiltersBar {...filtersBarProps} />
       <div className="space-y-4 px-4">
+        <InlineFeedbackInput
+          isMember={isMember}
+          onSubmit={onInlineSubmit}
+          ref={inlineInputRef}
+        />
         <LazyMotion features={domAnimation}>
           <AnimatePresence mode="popLayout">
             {feedback.map((item) => (
