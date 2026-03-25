@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   CaretDown,
   Check,
+  Code,
   Terminal,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -34,6 +35,7 @@ import type { FeedbackTag } from "./feedback-metadata-types";
 interface CopyForAgentsProps {
   attachments?: string[];
   description: string | null;
+  feedbackId: Id<"feedback">;
   organizationId: Id<"organizations">;
   tags?: Array<FeedbackTag | null>;
   title: string;
@@ -115,8 +117,17 @@ export function CopyForAgents({
   description,
   tags,
   attachments,
+  feedbackId,
 }: CopyForAgentsProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Get coding prompt (includes AI clarification)
+  const codingPrompt = useQuery(
+    api.feedback.clarification.generateCodingPrompt,
+    {
+      feedbackId,
+    }
+  );
 
   // Get repo analysis for project context (lightweight query)
   const repoAnalysis = useQuery(
@@ -205,6 +216,16 @@ export function CopyForAgents({
     [getPrompt, repository]
   );
 
+  const handleCopyCodingPrompt = useCallback(async () => {
+    if (!codingPrompt?.prompt) {
+      return;
+    }
+    await navigator.clipboard.writeText(codingPrompt.prompt);
+    setCopiedId("coding-prompt");
+    toast.success("Coding prompt copied");
+    setTimeout(() => setCopiedId(null), 2000);
+  }, [codingPrompt]);
+
   // Filter cloud agents that need GitHub
   const availableAgents = AGENTS.filter((agent) => {
     if (agent.id === "copilot-workspace" && !repository) {
@@ -262,6 +283,29 @@ export function CopyForAgents({
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>
+
+        {codingPrompt?.prompt && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={handleCopyCodingPrompt}>
+                <span className="mr-2 flex h-4 w-4 items-center justify-center">
+                  {copiedId === "coding-prompt" ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Code className="h-4 w-4" />
+                  )}
+                </span>
+                <div className="flex flex-col">
+                  <span>Coding prompt</span>
+                  <span className="text-muted-foreground text-xs">
+                    Includes AI clarification
+                  </span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </>
+        )}
 
         {deeplinkAgents.length > 0 && (
           <>

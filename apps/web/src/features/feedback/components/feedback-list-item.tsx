@@ -67,6 +67,20 @@ export function FeedbackListItem({
   const tags = feedback.tags ?? [];
   const canDelete = isAuthor || isAdmin;
 
+  const effectivePriorityForBorder = feedback.priority ?? feedback.aiPriority;
+  const priorityBorderMap = {
+    critical: "border-l-4 border-l-red-500",
+    high: "border-l-4 border-l-orange-500",
+    medium: "border-l-4 border-l-yellow-500",
+    low: "border-l-4 border-l-blue-300",
+  } as const;
+  const priorityBorderClass =
+    (effectivePriorityForBorder &&
+      priorityBorderMap[
+        effectivePriorityForBorder as keyof typeof priorityBorderMap
+      ]) ||
+    "";
+
   const handleDelete = useCallback(async () => {
     if (!canDelete) {
       return;
@@ -87,6 +101,7 @@ export function FeedbackListItem({
             className={cn(
               "flex w-full gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-accent/50",
               feedback.isPinned && "border-primary/50 bg-primary/5",
+              priorityBorderClass,
               className
             )}
             onClick={handleClick}

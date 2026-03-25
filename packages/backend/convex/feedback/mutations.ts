@@ -208,6 +208,25 @@ export const create = mutation({
       { feedbackId }
     );
 
+    // Schedule AI auto-triage (only if no tag was manually assigned)
+    if (!args.tagId) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.feedback.auto_tagging.processAutoTagging,
+        { feedbackId }
+      );
+    }
+    await ctx.scheduler.runAfter(
+      0,
+      internal.feedback.clarification.generateClarification,
+      { feedbackId }
+    );
+    await ctx.scheduler.runAfter(
+      0,
+      internal.feedback.clarification.generateDraftReplyAction,
+      { feedbackId }
+    );
+
     return feedbackId;
   },
 });

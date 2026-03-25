@@ -77,7 +77,7 @@ const AUTO_TAGGING_MODELS = [
 // ============================================
 
 /**
- * Get count of feedbacks without any tags for an organization
+ * Get count of feedbacks that haven't been triaged (no tags AND no AI analysis)
  */
 export const getUntaggedFeedbackCount = query({
   args: { organizationId: v.id("organizations") },
@@ -91,6 +91,11 @@ export const getUntaggedFeedbackCount = query({
 
     let untaggedCount = 0;
     for (const feedback of feedbackItems) {
+      // Skip items that have already been AI-analyzed
+      if (feedback.aiPriorityGeneratedAt) {
+        continue;
+      }
+
       const tags = await ctx.db
         .query("feedbackTags")
         .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
@@ -102,6 +107,62 @@ export const getUntaggedFeedbackCount = query({
     }
 
     return untaggedCount;
+  },
+});
+
+/**
+ * Get recently AI-tagged feedback items for a job's time window
+ * Returns items with their tags, priority, complexity for the results view
+ */
+export const getRecentlyTaggedItems = query({
+  args: {
+    organizationId: v.id("organizations"),
+    since: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const feedbackItems = await ctx.db
+      .query("feedback")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    // Filter to items that were AI-analyzed after the given timestamp
+    const recentlyTagged = feedbackItems.filter(
+      (f) => f.aiPriorityGeneratedAt && f.aiPriorityGeneratedAt >= args.since
+    );
+
+    // Get tags for each item
+    const itemsWithTags = await Promise.all(
+      recentlyTagged.map(async (f) => {
+        const feedbackTags = await ctx.db
+          .query("feedbackTags")
+          .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
+          .collect();
+
+        const tags = await Promise.all(
+          feedbackTags
+            .filter((ft) => ft.appliedByAi)
+            .map(async (ft) => {
+              const tag = await ctx.db.get(ft.tagId);
+              return tag
+                ? { _id: tag._id, name: tag.name, color: tag.color }
+                : null;
+            })
+        );
+
+        return {
+          _id: f._id,
+          title: f.title,
+          aiPriority: f.aiPriority,
+          aiComplexity: f.aiComplexity,
+          aiTimeEstimate: f.aiTimeEstimate,
+          tags: tags.filter(Boolean),
+        };
+      })
+    );
+
+    return itemsWithTags;
   },
 });
 
@@ -180,7 +241,7 @@ export const getFeedbackForAutoTagging = internalQuery({
 });
 
 /**
- * Internal query to get IDs of feedbacks without tags
+ * Internal query to get IDs of feedbacks that haven't been triaged
  */
 export const getUntaggedFeedbackIds = internalQuery({
   args: {
@@ -198,6 +259,11 @@ export const getUntaggedFeedbackIds = internalQuery({
     const untaggedIds: Id<"feedback">[] = [];
 
     for (const feedback of feedbackItems) {
+      // Skip items that have already been AI-analyzed
+      if (feedback.aiPriorityGeneratedAt) {
+        continue;
+      }
+
       const tag = await ctx.db
         .query("feedbackTags")
         .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
@@ -527,7 +593,8 @@ IMPORTANT:
 - Be realistic about priority, complexity, and time estimates
 - Priority levels: critical (blocking/urgent issue), high (important/impactful), medium (standard priority), low (nice-to-have), none (informational only)
 - Complexity levels: trivial (quick config change, <1 hour), simple (straightforward, 1-4 hours), moderate (some investigation needed, 1-2 days), complex (significant changes, 3-5 days), very_complex (major feature/architecture, 1+ weeks)
-- Time estimate should be a human-readable range like "2-4 hours" or "1-2 days"`;
+- Time estimate should be a human-readable range like "2-4 hours" or "1-2 days"
+- If the feedback is unclear, nonsensical, a test entry, spam, or too vague to categorize meaningfully, set priority to "none", complexity to "trivial", timeEstimate to "N/A", return an empty selectedTagIds array, and explain in reasoning that the feedback could not be categorized`;
 
     const userPrompt = `Analyze this feedback and provide tags, priority, complexity, and time estimate:
 

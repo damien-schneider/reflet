@@ -33,6 +33,7 @@ import type {
   FeedbackListItem,
 } from "./feedback-detail-drawer-types";
 import { FeedbackMetadataBar } from "./feedback-metadata-bar";
+import { InlineClarification } from "./inline-clarification";
 
 const EMPTY_FEEDBACK_LIST: FeedbackListItem[] = [];
 const EMPTY_FEEDBACK_IDS: Id<"feedback">[] = [];
@@ -322,6 +323,13 @@ function FeedbackDetailContent({
           />
         </div>
 
+        {/* AI Clarification (admin only) */}
+        {isAdmin && (
+          <div className="px-6 pb-4">
+            <InlineClarification feedbackId={feedbackId} />
+          </div>
+        )}
+
         {/* Screenshots */}
         <div className="border-t px-6 py-4">
           <ScreenshotGallery feedbackId={feedbackId} />
@@ -329,7 +337,7 @@ function FeedbackDetailContent({
 
         {/* Comments */}
         <div className="border-t px-6 py-6">
-          <CommentsSection feedbackId={feedbackId} />
+          <CommentsSection feedbackId={feedbackId} isAdmin={isAdmin} />
         </div>
       </div>
     </ScrollArea>

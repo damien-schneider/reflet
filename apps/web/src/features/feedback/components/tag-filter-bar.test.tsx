@@ -35,8 +35,8 @@ vi.mock("@/components/ui/context-menu", () => ({
   ),
 }));
 
-vi.mock("./auto-tag-button", () => ({
-  AutoTagButton: () => <div data-testid="auto-tag-button" />,
+vi.mock("./triage-pulse", () => ({
+  TriagePulse: () => <div data-testid="triage-pulse" />,
 }));
 
 vi.mock("@/features/tags/components/delete-tag-dialog", () => ({
@@ -178,7 +178,7 @@ describe("TagFilterBar", () => {
     expect(onTagSelect).toHaveBeenCalledWith(null);
   });
 
-  it("shows AutoTagButton for admin", () => {
+  it("shows TriagePulse for admin", () => {
     render(
       <TagFilterBar
         isAdmin
@@ -188,10 +188,10 @@ describe("TagFilterBar", () => {
         tags={tags}
       />
     );
-    expect(screen.getByTestId("auto-tag-button")).toBeInTheDocument();
+    expect(screen.getByTestId("triage-pulse")).toBeInTheDocument();
   });
 
-  it("hides AutoTagButton for non-admin", () => {
+  it("hides TriagePulse for non-admin", () => {
     render(
       <TagFilterBar
         isAdmin={false}
@@ -201,7 +201,7 @@ describe("TagFilterBar", () => {
         tags={tags}
       />
     );
-    expect(screen.queryByTestId("auto-tag-button")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("triage-pulse")).not.toBeInTheDocument();
   });
 
   it("shows add tag popover for admin", () => {

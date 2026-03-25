@@ -1,17 +1,9 @@
 "use client";
 
-import { CaretDown, CaretUp } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { AiAnalysisDisplay } from "./ai-analysis-display";
 import { AssigneeDisplay } from "./assignee-display";
@@ -174,7 +166,6 @@ export function FeedbackMetadataBar({
   );
 
   const [deadlineOpen, setDeadlineOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const handleDeadlineChange = useCallback(
     async (date: Date) => {
@@ -197,116 +188,84 @@ export function FeedbackMetadataBar({
     await toggleSubscription({ feedbackId });
   }, [feedbackId, toggleSubscription, isAuthenticated, authGuard]);
 
-  const hasDetailsContent =
-    isAdmin ||
-    aiPriority ||
-    aiComplexity ||
-    aiTimeEstimate ||
-    priority ||
-    complexity ||
-    timeEstimate;
-
   return (
-    <Collapsible onOpenChange={setDetailsOpen} open={detailsOpen}>
-      {/* Primary row */}
-      <div className="flex flex-wrap items-center gap-3 border-b bg-muted/30 px-6 py-3">
-        <VoteButtons
-          onVote={handleVote}
-          userVoteType={userVoteType}
-          voteCount={voteCount}
+    <div className="flex flex-wrap items-center gap-3 border-b bg-muted/30 px-6 py-3">
+      <VoteButtons
+        onVote={handleVote}
+        userVoteType={userVoteType}
+        voteCount={voteCount}
+      />
+
+      {/* Status */}
+      <StatusDisplay
+        currentStatus={currentStatus}
+        isAdmin={isAdmin}
+        onStatusChange={handleStatusChange}
+        organizationStatuses={organizationStatuses}
+        statusId={organizationStatusId}
+      />
+
+      {/* Tags */}
+      <TagDisplay
+        availableTags={availableTags}
+        feedbackTagIds={feedbackTagIds}
+        isAdmin={isAdmin}
+        onToggleTag={handleToggleTag}
+        validTags={validTags}
+      />
+
+      {/* AI Analysis (priority, complexity, time estimate) */}
+      <AiAnalysisDisplay
+        aiComplexity={aiComplexity}
+        aiComplexityReasoning={aiComplexityReasoning}
+        aiPriority={aiPriority}
+        aiPriorityReasoning={aiPriorityReasoning}
+        aiTimeEstimate={aiTimeEstimate}
+        complexity={complexity}
+        feedbackId={feedbackId}
+        isAdmin={isAdmin}
+        priority={priority}
+        timeEstimate={timeEstimate}
+      />
+
+      {/* Deadline */}
+      {isAdmin && (
+        <DeadlineDisplay
+          deadline={deadline}
+          isOpen={deadlineOpen}
+          onChange={handleDeadlineChange}
+          onClear={handleDeadlineClear}
+          onOpenChange={setDeadlineOpen}
         />
+      )}
 
-        {/* Status */}
-        <StatusDisplay
-          currentStatus={currentStatus}
-          isAdmin={isAdmin}
-          onStatusChange={handleStatusChange}
-          organizationStatuses={organizationStatuses}
-          statusId={organizationStatusId}
+      {/* Assignee */}
+      <AssigneeDisplay
+        assignee={assignee}
+        isAdmin={isAdmin}
+        members={members}
+        onAssigneeChange={handleAssigneeChange}
+      />
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Copy for agents (admin only) */}
+      {isAdmin && (
+        <CopyForAgents
+          attachments={attachments}
+          description={description}
+          feedbackId={feedbackId}
+          organizationId={organizationId}
+          tags={feedbackTags}
+          title={title}
         />
+      )}
 
-        {/* Tags */}
-        <TagDisplay
-          availableTags={availableTags}
-          feedbackTagIds={feedbackTagIds}
-          isAdmin={isAdmin}
-          onToggleTag={handleToggleTag}
-          validTags={validTags}
-        />
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Copy for agents (admin only) */}
-        {isAdmin && (
-          <CopyForAgents
-            attachments={attachments}
-            description={description}
-            organizationId={organizationId}
-            tags={feedbackTags}
-            title={title}
-          />
-        )}
-
-        <SubscribeButton
-          isSubscribed={isSubscribed}
-          onToggle={handleToggleSubscription}
-        />
-
-        {/* Details toggle */}
-        {hasDetailsContent && (
-          <CollapsibleTrigger
-            render={
-              <Button size="sm" variant="ghost">
-                <span className="text-xs">Details</span>
-                {detailsOpen ? (
-                  <CaretUp className="h-3.5 w-3.5" />
-                ) : (
-                  <CaretDown className="h-3.5 w-3.5" />
-                )}
-              </Button>
-            }
-          />
-        )}
-      </div>
-
-      {/* Collapsible details row */}
-      <CollapsibleContent>
-        <div className="flex flex-wrap items-center gap-3 border-b bg-muted/30 px-6 py-3">
-          {/* AI Analysis (priority, complexity, time estimate) */}
-          <AiAnalysisDisplay
-            aiComplexity={aiComplexity}
-            aiComplexityReasoning={aiComplexityReasoning}
-            aiPriority={aiPriority}
-            aiPriorityReasoning={aiPriorityReasoning}
-            aiTimeEstimate={aiTimeEstimate}
-            complexity={complexity}
-            feedbackId={feedbackId}
-            isAdmin={isAdmin}
-            priority={priority}
-            timeEstimate={timeEstimate}
-          />
-
-          {/* Deadline */}
-          {isAdmin && (
-            <DeadlineDisplay
-              deadline={deadline}
-              isOpen={deadlineOpen}
-              onChange={handleDeadlineChange}
-              onClear={handleDeadlineClear}
-              onOpenChange={setDeadlineOpen}
-            />
-          )}
-
-          {/* Assignee */}
-          <AssigneeDisplay
-            assignee={assignee}
-            isAdmin={isAdmin}
-            members={members}
-            onAssigneeChange={handleAssigneeChange}
-          />
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+      <SubscribeButton
+        isSubscribed={isSubscribed}
+        onToggle={handleToggleSubscription}
+      />
+    </div>
   );
 }

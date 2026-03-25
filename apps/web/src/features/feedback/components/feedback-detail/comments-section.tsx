@@ -1,6 +1,6 @@
 "use client";
 
-import { PaperPlaneTilt } from "@phosphor-icons/react";
+import { PaperPlaneTilt, Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -8,6 +8,8 @@ import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
+import { cn } from "@/lib/utils";
+import { useAIDraftReply } from "../feedback-detail-dialog/use-ai-draft-reply";
 
 import { CommentProvider } from "./comment-context";
 import { CommentItem } from "./comment-item";
@@ -15,14 +17,24 @@ import type { CommentData } from "./types";
 
 interface CommentsSectionProps {
   feedbackId: Id<"feedback">;
+  isAdmin?: boolean;
 }
 
-export function CommentsSection({ feedbackId }: CommentsSectionProps) {
+export function CommentsSection({
+  feedbackId,
+  isAdmin = false,
+}: CommentsSectionProps) {
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const commentsData = useQuery(api.feedback.comments.list, { feedbackId });
   const addComment = useMutation(api.feedback.comments.create);
+
+  const { isGeneratingDraft, handleGenerateDraftReply } = useAIDraftReply({
+    feedbackId,
+    effectiveIsAdmin: isAdmin,
+    setNewComment,
+  });
 
   const handleSubmitComment = useCallback(async () => {
     if (!newComment.trim() || isSubmitting) {
@@ -57,8 +69,11 @@ export function CommentsSection({ feedbackId }: CommentsSectionProps) {
 
       {/* Comment Input */}
       <CommentInput
+        isAdmin={isAdmin}
+        isGeneratingDraft={isGeneratingDraft}
         isSubmitting={isSubmitting}
         onCommentChange={setNewComment}
+        onGenerateDraft={handleGenerateDraftReply}
         onSubmit={handleSubmitComment}
         value={newComment}
       />
@@ -82,8 +97,11 @@ export function CommentsSection({ feedbackId }: CommentsSectionProps) {
 }
 
 interface CommentInputProps {
+  isAdmin: boolean;
+  isGeneratingDraft: boolean;
   isSubmitting: boolean;
   onCommentChange: (value: string) => void;
+  onGenerateDraft: () => void;
   onSubmit: () => void;
   value: string;
 }
@@ -93,6 +111,9 @@ function CommentInput({
   onCommentChange,
   onSubmit,
   isSubmitting,
+  isAdmin,
+  isGeneratingDraft,
+  onGenerateDraft,
 }: CommentInputProps) {
   const canSubmit = Boolean(value.trim()) && !isSubmitting;
 
@@ -113,7 +134,22 @@ function CommentInput({
         placeholder="Write a comment... (Cmd+Enter to submit)"
         value={value}
       />
-      <div className="flex items-center justify-end border-t bg-muted/50 px-3 py-2">
+      <div className="flex items-center justify-end gap-2 border-t bg-muted/50 px-3 py-2">
+        {isAdmin && (
+          <Button
+            className="h-8 gap-1.5"
+            disabled={isGeneratingDraft}
+            onClick={onGenerateDraft}
+            size="sm"
+            title="Generate AI draft reply"
+            variant="ghost"
+          >
+            <Sparkle
+              className={cn("h-3.5 w-3.5", isGeneratingDraft && "animate-spin")}
+            />
+            {isGeneratingDraft ? "Drafting..." : "AI Draft"}
+          </Button>
+        )}
         <Button
           className="h-8 gap-1.5"
           disabled={!canSubmit}

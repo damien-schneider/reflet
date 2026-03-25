@@ -12,8 +12,21 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    repo_analysis: { getLatestAnalysis: "repo_analysis.getLatestAnalysis" },
-    github: { getConnectionStatus: "github.getConnectionStatus" },
+    feedback: {
+      clarification: {
+        generateCodingPrompt: "feedback.clarification.generateCodingPrompt",
+      },
+    },
+    integrations: {
+      github: {
+        repo_analysis: {
+          getLatestAnalysis: "repo_analysis.getLatestAnalysis",
+        },
+        queries: {
+          getConnectionStatus: "github.getConnectionStatus",
+        },
+      },
+    },
   },
 }));
 
@@ -250,6 +263,7 @@ describe("buildAgentPrompt", () => {
   });
 });
 
+const feedbackId = "f1" as Id<"feedback">;
 const organizationId = "org1" as Id<"organizations">;
 
 // Import component after mocks
@@ -266,6 +280,7 @@ describe("CopyForAgents Component", () => {
     render(
       <CopyForAgents
         description="desc"
+        feedbackId={feedbackId}
         organizationId={organizationId}
         title="Test"
       />
@@ -278,6 +293,7 @@ describe("CopyForAgents Component", () => {
     render(
       <CopyForAgents
         description={null}
+        feedbackId={feedbackId}
         organizationId={organizationId}
         title="Test"
       />
@@ -290,6 +306,7 @@ describe("CopyForAgents Component", () => {
     render(
       <CopyForAgents
         description="desc"
+        feedbackId={feedbackId}
         organizationId={organizationId}
         title="Test"
       />
@@ -305,6 +322,7 @@ describe("CopyForAgents Component", () => {
     render(
       <CopyForAgents
         description="desc"
+        feedbackId={feedbackId}
         organizationId={organizationId}
         title="Test"
       />
@@ -324,6 +342,7 @@ describe("CopyForAgents Component", () => {
     render(
       <CopyForAgents
         description="desc"
+        feedbackId={feedbackId}
         organizationId={organizationId}
         title="Test"
       />
@@ -342,6 +361,7 @@ describe("CopyForAgents Component", () => {
     render(
       <CopyForAgents
         description="desc"
+        feedbackId={feedbackId}
         organizationId={organizationId}
         title="Test"
       />
@@ -361,6 +381,7 @@ describe("CopyForAgents Component", () => {
     render(
       <CopyForAgents
         description="Test desc"
+        feedbackId={feedbackId}
         organizationId={organizationId}
         title="Test title"
       />
@@ -392,6 +413,7 @@ describe("CopyForAgents Component", () => {
     render(
       <CopyForAgents
         description="desc"
+        feedbackId={feedbackId}
         organizationId={organizationId}
         title="Test"
       />
@@ -409,6 +431,7 @@ describe("CopyForAgents Component", () => {
     render(
       <CopyForAgents
         description="desc"
+        feedbackId={feedbackId}
         organizationId={organizationId}
         tags={[null, { _id: "t1" as never, name: "bug", color: "red" }]}
         title="Test"
