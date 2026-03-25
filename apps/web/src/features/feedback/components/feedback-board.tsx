@@ -20,6 +20,7 @@ import { useBoardFilters } from "../hooks/use-board-filters";
 import { useFeedbackDrawer } from "../hooks/use-feedback-drawer";
 import type { CardStyle } from "../lib/card-styles";
 import { sortFeedback } from "../lib/sort-feedback";
+import { BoardCustomizePopover } from "./board-customize-popover";
 import {
   BoardViewToggle,
   type BoardView as BoardViewType,
@@ -84,6 +85,7 @@ function buildFeedbackQueryArgs(
 
 function FeedbackBoardContent({
   organizationId,
+  orgSlug,
   primaryColor,
   isMember,
   isAdmin,
@@ -91,7 +93,7 @@ function FeedbackBoardContent({
   defaultView = "feed",
   cardStyle,
   milestoneViewStyle,
-}: Omit<FeedbackBoardProps, "orgSlug">) {
+}: FeedbackBoardProps) {
   // URL-based filter state
   const {
     view,
@@ -317,17 +319,19 @@ function FeedbackBoardContent({
         </div>
 
         {/* View toggle - sticky on desktop, fixed at bottom on mobile */}
-        <div className="sticky top-12 z-10 mb-4 hidden justify-center md:flex">
+        <div className="sticky top-12 z-10 mb-4 hidden items-center justify-center gap-2 md:flex">
           <BoardViewToggle onChange={setView} view={view} />
+          {isAdmin && <BoardCustomizePopover orgSlug={orgSlug} />}
         </div>
         <div
-          className="fixed inset-x-0 z-50 flex justify-center md:hidden"
+          className="fixed inset-x-0 z-50 flex items-center justify-center gap-2 md:hidden"
           style={{
             bottom:
               "calc(var(--mobile-nav-bottom, 0.75rem) + var(--mobile-nav-height, 3rem) + 0.5rem)",
           }}
         >
           <BoardViewToggle onChange={setView} view={view} />
+          {isAdmin && <BoardCustomizePopover orgSlug={orgSlug} />}
         </div>
 
         <FeedbackToolbar
@@ -431,7 +435,7 @@ function FeedbackBoardContent({
 
 export function FeedbackBoard({
   organizationId,
-  orgSlug: _orgSlug,
+  orgSlug,
   primaryColor,
   isMember,
   isAdmin,
@@ -450,6 +454,7 @@ export function FeedbackBoard({
         isPublic={isPublic}
         milestoneViewStyle={milestoneViewStyle}
         organizationId={organizationId}
+        orgSlug={orgSlug}
         primaryColor={primaryColor}
       />
     </Suspense>

@@ -5,7 +5,6 @@ import {
   ArrowUpRight,
   BookOpen,
   Buildings,
-  ChatText,
   CreditCard,
   GithubLogo,
   Megaphone,
@@ -49,12 +48,6 @@ export default function SettingsLayout({
       description: "Logo and colors",
       icon: PaintBrush,
       href: `${basePath}/branding`,
-    },
-    {
-      title: "Feedback",
-      description: "Card style and display",
-      icon: ChatText,
-      href: `${basePath}/feedback`,
     },
     {
       title: "Members",
