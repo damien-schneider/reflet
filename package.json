@@ -37,11 +37,11 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.8",
+    "@biomejs/biome": "2.4.9",
     "@playwright/test": "^1.58.2",
     "@reflet/config": "workspace:*",
     "@types/node": "^25.5.0",
-    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.1",
     "husky": "^9.1.7",
     "turbo": "^2.8.20",
     "typescript": "catalog:",
