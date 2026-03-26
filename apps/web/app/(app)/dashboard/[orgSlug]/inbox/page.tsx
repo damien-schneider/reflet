@@ -1,11 +1,10 @@
 "use client";
 
-import { EyeSlash, Gear } from "@phosphor-icons/react";
+import { EyeSlash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import Link from "next/link";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { Alert, AlertAction, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { H2, Muted } from "@/components/ui/typography";
@@ -13,10 +12,15 @@ import {
   AdminConversationView,
   EmptyConversationState,
 } from "@/features/inbox/components/admin-conversation-view";
-import { AdminInboxHeader } from "@/features/inbox/components/admin-inbox-header";
 import { ConversationList } from "@/features/inbox/components/conversation-list";
-
-type ConversationStatus = "open" | "awaiting_reply" | "resolved" | "closed";
+import { InboxCommandPalette } from "@/features/inbox/components/inbox-command-palette";
+import {
+  type ConversationStatus,
+  InboxFilterBar,
+} from "@/features/inbox/components/inbox-filter-bar";
+import { SettingsPopover } from "@/features/inbox/components/settings-popover";
+import { ShortcutHintBar } from "@/features/inbox/components/shortcut-hint-bar";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 interface Member {
   role: string;
@@ -64,6 +68,13 @@ export default function InboxPage({
     "open",
     "awaiting_reply",
   ]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [showHints, setShowHints] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const conversations = useQuery(
     api.support.conversations.listForAdmin,
@@ -94,6 +105,9 @@ export default function InboxPage({
   const markAsRead = useMutation(api.support.messages.markAsRead);
   const updateStatus = useMutation(api.support.conversations.updateStatus);
   const assignConversation = useMutation(api.support.conversations.assign);
+  const updateSupportSettings = useMutation(
+    api.support.conversations.updateSupportSettings
+  );
 
   useEffect(() => {
     if (selectedConversationId && messages && messages.length > 0) {
@@ -114,6 +128,104 @@ export default function InboxPage({
   }, [conversations, selectedConversationId]);
 
   const isAdmin = membership?.role === "admin" || membership?.role === "owner";
+
+  const handleSendMessage = async (body: string) => {
+    if (!selectedConversationId) {
+      return;
+    }
+    await sendMessage({ conversationId: selectedConversationId, body });
+  };
+
+  const handleStatusChange = async (status: ConversationStatus) => {
+    if (!selectedConversationId) {
+      return;
+    }
+    await updateStatus({ id: selectedConversationId, status });
+  };
+
+  const handleAssign = async (memberId: string | undefined) => {
+    if (!selectedConversationId) {
+      return;
+    }
+    await assignConversation({
+      id: selectedConversationId,
+      assignedTo: memberId,
+    });
+  };
+
+  const handleQuickResolve = async (conversationId: string) => {
+    await updateStatus({
+      id: conversationId as Id<"supportConversations">,
+      status: "resolved",
+    });
+  };
+
+  const handleQuickClose = async (conversationId: string) => {
+    await updateStatus({
+      id: conversationId as Id<"supportConversations">,
+      status: "closed",
+    });
+  };
+
+  const handleQuickAssign = async (conversationId: string) => {
+    const currentUserId = membership?.userId;
+    if (!currentUserId) {
+      return;
+    }
+    await assignConversation({
+      id: conversationId as Id<"supportConversations">,
+      assignedTo: currentUserId,
+    });
+  };
+
+  const toggleStatusFilter = (status: ConversationStatus) => {
+    setStatusFilter((prev) =>
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status]
+    );
+  };
+
+  const handleToggleSupport = async (enabled: boolean) => {
+    if (!org?._id) {
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await updateSupportSettings({
+        organizationId: org._id,
+        supportEnabled: enabled,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const conversationCount = conversations?.length ?? 0;
+
+  const selectConversationByIndex = (index: number) => {
+    if (!conversations || conversations.length === 0) {
+      return;
+    }
+    const clamped = Math.max(0, Math.min(index, conversations.length - 1));
+    setActiveIndex(clamped);
+    setSelectedConversationId(conversations[clamped]._id);
+  };
+
+  useKeyboardShortcuts(
+    {
+      j: () => selectConversationByIndex(activeIndex + 1),
+      k: () => selectConversationByIndex(activeIndex - 1),
+      e: () => handleStatusChange("resolved"),
+      c: () => handleStatusChange("closed"),
+      "/": () => searchInputRef.current?.focus(),
+      "shift+/": () => setShowHints((prev) => !prev),
+      "meta+k": () => setCommandPaletteOpen(true),
+    },
+    { enabled: isAdmin === true }
+  );
+
+  const teamMembers = formatTeamMembers(members);
 
   if (!org) {
     return (
@@ -141,53 +253,20 @@ export default function InboxPage({
     );
   }
 
-  const handleSendMessage = async (body: string) => {
-    if (!selectedConversationId) {
-      return;
-    }
-    await sendMessage({ conversationId: selectedConversationId, body });
-  };
-
-  const handleStatusChange = async (status: ConversationStatus) => {
-    if (!selectedConversationId) {
-      return;
-    }
-    await updateStatus({ id: selectedConversationId, status });
-  };
-
-  const handleAssign = async (memberId: string | undefined) => {
-    if (!selectedConversationId) {
-      return;
-    }
-    await assignConversation({
-      id: selectedConversationId,
-      assignedTo: memberId,
-    });
-  };
-
-  const toggleStatusFilter = (status: ConversationStatus) => {
-    setStatusFilter((prev) =>
-      prev.includes(status)
-        ? prev.filter((s) => s !== status)
-        : [...prev, status]
-    );
-  };
-
-  const teamMembers = formatTeamMembers(members);
-
   return (
     <div className="flex h-full flex-col">
-      <AdminInboxHeader
+      <InboxFilterBar
+        onSearchChange={setSearchQuery}
         onToggleStatusFilter={toggleStatusFilter}
+        searchQuery={searchQuery}
         statusFilter={statusFilter}
       >
-        <Link href={`/dashboard/${orgSlug}/inbox/settings`}>
-          <Button size="sm" variant="outline">
-            <Gear className="h-4 w-4" />
-            Settings
-          </Button>
-        </Link>
-      </AdminInboxHeader>
+        <SettingsPopover
+          isSaving={isSaving}
+          onToggle={handleToggleSupport}
+          supportEnabled={supportSettings?.supportEnabled ?? false}
+        />
+      </InboxFilterBar>
 
       {supportSettings?.supportEnabled === false && (
         <Alert className="mx-4 mt-3 w-auto">
@@ -196,11 +275,13 @@ export default function InboxPage({
             Your inbox is private &mdash; users can&apos;t see it yet.
           </AlertTitle>
           <AlertAction>
-            <Link href={`/dashboard/${orgSlug}/inbox/settings`}>
-              <Button size="sm" variant="outline">
-                Make it public
-              </Button>
-            </Link>
+            <Button
+              onClick={() => handleToggleSupport(true)}
+              size="sm"
+              variant="outline"
+            >
+              Make it public
+            </Button>
           </AlertAction>
         </Alert>
       )}
@@ -208,14 +289,25 @@ export default function InboxPage({
       <div className="flex flex-1 overflow-hidden">
         <div className="w-80 shrink-0 border-r">
           <ConversationList
+            activeIndex={activeIndex}
             conversations={conversations ?? []}
             isAdmin={true}
             isLoading={conversations === undefined}
-            onSelect={(conversation) =>
+            onQuickAssign={handleQuickAssign}
+            onQuickClose={handleQuickClose}
+            onQuickResolve={handleQuickResolve}
+            onSelect={(conversation) => {
               setSelectedConversationId(
                 conversation._id as Id<"supportConversations">
-              )
-            }
+              );
+              const index = conversations?.findIndex(
+                (c) => c._id === conversation._id
+              );
+              if (index !== undefined && index >= 0) {
+                setActiveIndex(index);
+              }
+            }}
+            searchQuery={searchQuery}
             selectedId={selectedConversationId ?? undefined}
           />
         </div>
@@ -232,12 +324,27 @@ export default function InboxPage({
               teamMembers={teamMembers}
             />
           ) : (
-            <EmptyConversationState
-              hasConversations={Boolean(conversations?.length)}
-            />
+            <EmptyConversationState hasConversations={conversationCount > 0} />
           )}
         </div>
       </div>
+
+      <ShortcutHintBar
+        hasSelectedConversation={selectedConversationId !== null}
+        visible={showHints}
+      />
+
+      <InboxCommandPalette
+        hasSelectedConversation={selectedConversationId !== null}
+        onClose={() => handleStatusChange("closed")}
+        onOpenChange={setCommandPaletteOpen}
+        onResolve={() => handleStatusChange("resolved")}
+        onToggleSupport={() =>
+          handleToggleSupport(!supportSettings?.supportEnabled)
+        }
+        open={commandPaletteOpen}
+        supportEnabled={supportSettings?.supportEnabled ?? false}
+      />
     </div>
   );
 }

@@ -1,11 +1,11 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
+import type { Doc } from "../_generated/dataModel";
+import type { QueryCtx } from "../_generated/server";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 
-const getAuthUser = async (
-  ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
-) => {
+const getAuthUser = async (ctx: QueryCtx) => {
   const user = await authComponent.safeGetAuthUser(ctx);
   if (!user) {
     throw new Error("Not authenticated");
@@ -13,82 +13,14 @@ const getAuthUser = async (
   return user;
 };
 
-export const list = query({
-  args: {
-    conversationId: v.id("supportConversations"),
-  },
-  handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      return [];
-    }
+async function verifySendAccess(
+  ctx: QueryCtx,
+  conversation: Doc<"supportConversations">,
+  guestId?: string
+): Promise<{ isAdmin: boolean; isOwner: boolean; senderId: string }> {
+  const user = await authComponent.safeGetAuthUser(ctx);
 
-    const conversation = await ctx.db.get(args.conversationId);
-    if (!conversation) {
-      return [];
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q
-          .eq("organizationId", conversation.organizationId)
-          .eq("userId", user._id)
-      )
-      .unique();
-
-    const isAdmin =
-      membership?.role === "admin" || membership?.role === "owner";
-    const isOwner = conversation.userId === user._id;
-
-    if (!(isAdmin || isOwner)) {
-      return [];
-    }
-
-    const messages = await ctx.db
-      .query("supportMessages")
-      .withIndex("by_conversation", (q) =>
-        q.eq("conversationId", args.conversationId)
-      )
-      .collect();
-
-    messages.sort((a, b) => a.createdAt - b.createdAt);
-
-    const messagesWithSender = await Promise.all(
-      messages.map(async (msg) => {
-        const sender = await authComponent.getAnyUserById(ctx, msg.senderId);
-        return {
-          ...msg,
-          sender: sender
-            ? {
-                id: sender._id,
-                name: sender.name || undefined,
-                email: sender.email,
-                image: sender.image || undefined,
-              }
-            : undefined,
-          isOwnMessage: msg.senderId === user._id,
-        };
-      })
-    );
-
-    return messagesWithSender;
-  },
-});
-
-export const send = mutation({
-  args: {
-    conversationId: v.id("supportConversations"),
-    body: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    const conversation = await ctx.db.get(args.conversationId);
-    if (!conversation) {
-      throw new Error("Conversation not found");
-    }
-
+  if (user) {
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -106,12 +38,119 @@ export const send = mutation({
       throw new Error("You don't have access to this conversation");
     }
 
+    return { isAdmin, isOwner, senderId: user._id };
+  }
+
+  if (guestId && conversation.guestId === guestId) {
+    return { isAdmin: false, isOwner: true, senderId: guestId };
+  }
+
+  throw new Error("You don't have access to this conversation");
+}
+
+export const list = query({
+  args: {
+    conversationId: v.id("supportConversations"),
+    guestId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.safeGetAuthUser(ctx);
+
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) {
+      return [];
+    }
+
+    // Access check: authenticated user or guest
+    if (user) {
+      const membership = await ctx.db
+        .query("organizationMembers")
+        .withIndex("by_org_user", (q) =>
+          q
+            .eq("organizationId", conversation.organizationId)
+            .eq("userId", user._id)
+        )
+        .unique();
+
+      const isAdmin =
+        membership?.role === "admin" || membership?.role === "owner";
+      const isOwner = conversation.userId === user._id;
+
+      if (!(isAdmin || isOwner)) {
+        return [];
+      }
+    } else if (!(args.guestId && conversation.guestId === args.guestId)) {
+      return [];
+    }
+
+    const currentUserId = user?._id ?? args.guestId;
+
+    const messages = await ctx.db
+      .query("supportMessages")
+      .withIndex("by_conversation", (q) =>
+        q.eq("conversationId", args.conversationId)
+      )
+      .collect();
+
+    messages.sort((a, b) => a.createdAt - b.createdAt);
+
+    const messagesWithSender = await Promise.all(
+      messages.map(async (msg) => {
+        const sender = await authComponent.getAnyUserById(ctx, msg.senderId);
+        let senderInfo:
+          | { id: string; name?: string; email: string; image?: string }
+          | undefined;
+        if (sender) {
+          senderInfo = {
+            id: sender._id,
+            name: sender.name || undefined,
+            email: sender.email,
+            image: sender.image || undefined,
+          };
+        } else if (conversation.guestEmail) {
+          senderInfo = {
+            id: msg.senderId,
+            name: undefined,
+            email: conversation.guestEmail,
+            image: undefined,
+          };
+        }
+        return {
+          ...msg,
+          sender: senderInfo,
+          isOwnMessage: msg.senderId === currentUserId,
+        };
+      })
+    );
+
+    return messagesWithSender;
+  },
+});
+
+export const send = mutation({
+  args: {
+    conversationId: v.id("supportConversations"),
+    body: v.string(),
+    guestId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    const { isAdmin, isOwner, senderId } = await verifySendAccess(
+      ctx,
+      conversation,
+      args.guestId
+    );
+
     const now = Date.now();
     const senderType = isAdmin && !isOwner ? "admin" : "user";
 
     const messageId = await ctx.db.insert("supportMessages", {
       conversationId: args.conversationId,
-      senderId: user._id,
+      senderId,
       senderType: senderType as "user" | "admin",
       body: args.body,
       isRead: false,
@@ -141,7 +180,8 @@ export const send = mutation({
 
     await ctx.db.patch(args.conversationId, updateData);
 
-    if (senderType === "admin") {
+    // Only send notifications for non-guest conversations
+    if (senderType === "admin" && !conversation.guestId) {
       await ctx.db.insert("notifications", {
         userId: conversation.userId,
         type: "new_support_message",
@@ -151,7 +191,6 @@ export const send = mutation({
         createdAt: now,
       });
 
-      // Trigger push notification
       await ctx.scheduler.runAfter(
         0,
         internal.notifications.push.sendPushNotification,
@@ -172,29 +211,38 @@ export const send = mutation({
 export const markAsRead = mutation({
   args: {
     conversationId: v.id("supportConversations"),
+    guestId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await authComponent.safeGetAuthUser(ctx);
 
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {
       throw new Error("Conversation not found");
     }
 
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q
-          .eq("organizationId", conversation.organizationId)
-          .eq("userId", user._id)
-      )
-      .unique();
+    let isAdmin = false;
+    let isOwner = false;
 
-    const isAdmin =
-      membership?.role === "admin" || membership?.role === "owner";
-    const isOwner = conversation.userId === user._id;
+    if (user) {
+      const membership = await ctx.db
+        .query("organizationMembers")
+        .withIndex("by_org_user", (q) =>
+          q
+            .eq("organizationId", conversation.organizationId)
+            .eq("userId", user._id)
+        )
+        .unique();
 
-    if (!(isAdmin || isOwner)) {
+      isAdmin = membership?.role === "admin" || membership?.role === "owner";
+      isOwner = conversation.userId === user._id;
+
+      if (!(isAdmin || isOwner)) {
+        throw new Error("You don't have access to this conversation");
+      }
+    } else if (args.guestId && conversation.guestId === args.guestId) {
+      isOwner = true;
+    } else {
       throw new Error("You don't have access to this conversation");
     }
 

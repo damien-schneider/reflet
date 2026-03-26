@@ -2,15 +2,49 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 
-const getAuthUser = async (
-  ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
-) => {
+type AuthCtx = Parameters<typeof authComponent.safeGetAuthUser>[0];
+
+const getAuthUser = async (ctx: AuthCtx) => {
   const user = await authComponent.safeGetAuthUser(ctx);
   if (!user) {
     throw new Error("Not authenticated");
   }
   return user;
 };
+
+function formatUserInfo(user: {
+  name?: string | null;
+  email: string;
+  image?: string | null;
+}) {
+  return {
+    name: user.name || undefined,
+    email: user.email,
+    image: user.image || undefined,
+  };
+}
+
+function formatGuestUserInfo(guestEmail?: string) {
+  return guestEmail
+    ? { name: undefined, email: guestEmail, image: undefined }
+    : undefined;
+}
+
+async function formatAssignedUser(ctx: AuthCtx, assignedTo?: string) {
+  if (!assignedTo) {
+    return undefined;
+  }
+  const user = await authComponent.getAnyUserById(ctx, assignedTo);
+  if (!user) {
+    return undefined;
+  }
+  return {
+    id: user._id,
+    name: user.name || undefined,
+    email: user.email,
+    image: user.image || undefined,
+  };
+}
 
 export const listForUser = query({
   args: {
@@ -90,16 +124,14 @@ export const listForAdmin = query({
 
     const conversationsWithUser = await Promise.all(
       conversations.map(async (conv) => {
-        const convUser = await authComponent.getAnyUserById(ctx, conv.userId);
+        const convUser = conv.guestId
+          ? null
+          : await authComponent.getAnyUserById(ctx, conv.userId);
         return {
           ...conv,
           user: convUser
-            ? {
-                name: convUser.name || undefined,
-                email: convUser.email,
-                image: convUser.image || undefined,
-              }
-            : undefined,
+            ? formatUserInfo(convUser)
+            : formatGuestUserInfo(conv.guestEmail),
         };
       })
     );
@@ -108,17 +140,54 @@ export const listForAdmin = query({
   },
 });
 
+export const listForGuest = query({
+  args: {
+    organizationId: v.id("organizations"),
+    guestId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const conversations = await ctx.db
+      .query("supportConversations")
+      .withIndex("by_guest", (q) => q.eq("guestId", args.guestId))
+      .collect();
+
+    const filtered = conversations.filter(
+      (c) => c.organizationId === args.organizationId
+    );
+
+    filtered.sort((a, b) => b.lastMessageAt - a.lastMessageAt);
+
+    return filtered;
+  },
+});
+
 export const get = query({
-  args: { id: v.id("supportConversations") },
+  args: {
+    id: v.id("supportConversations"),
+    guestId: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      return null;
-    }
 
     const conversation = await ctx.db.get(args.id);
     if (!conversation) {
       return null;
+    }
+
+    // Guest access: verify guestId matches
+    if (!user) {
+      const isValidGuest =
+        args.guestId && conversation.guestId === args.guestId;
+      if (!isValidGuest) {
+        return null;
+      }
+
+      return {
+        ...conversation,
+        user: formatGuestUserInfo(conversation.guestEmail),
+        assignedUser: await formatAssignedUser(ctx, conversation.assignedTo),
+        isAdmin: false,
+      };
     }
 
     const membership = await ctx.db
@@ -138,31 +207,16 @@ export const get = query({
       return null;
     }
 
-    const convUser = await authComponent.getAnyUserById(
-      ctx,
-      conversation.userId
-    );
-    const assignedUser = conversation.assignedTo
-      ? await authComponent.getAnyUserById(ctx, conversation.assignedTo)
-      : null;
+    const convUser = conversation.guestId
+      ? null
+      : await authComponent.getAnyUserById(ctx, conversation.userId);
 
     return {
       ...conversation,
       user: convUser
-        ? {
-            name: convUser.name || undefined,
-            email: convUser.email,
-            image: convUser.image || undefined,
-          }
-        : undefined,
-      assignedUser: assignedUser
-        ? {
-            id: assignedUser._id,
-            name: assignedUser.name || undefined,
-            email: assignedUser.email,
-            image: assignedUser.image || undefined,
-          }
-        : undefined,
+        ? formatUserInfo(convUser)
+        : formatGuestUserInfo(conversation.guestEmail),
+      assignedUser: await formatAssignedUser(ctx, conversation.assignedTo),
       isAdmin,
     };
   },
@@ -173,20 +227,30 @@ export const create = mutation({
     organizationId: v.id("organizations"),
     subject: v.optional(v.string()),
     initialMessage: v.string(),
+    guestId: v.optional(v.string()),
+    guestEmail: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await authComponent.safeGetAuthUser(ctx);
+
+    if (!(user || (args.guestId && args.guestEmail))) {
+      throw new Error("Either authentication or guest email is required");
+    }
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
       throw new Error("Organization not found");
     }
 
+    // Already validated that either user or guestId exists above
+    const senderId = user?._id ?? (args.guestId as string);
     const now = Date.now();
 
     const conversationId = await ctx.db.insert("supportConversations", {
       organizationId: args.organizationId,
-      userId: user._id,
+      userId: senderId,
+      guestId: user ? undefined : args.guestId,
+      guestEmail: user ? undefined : args.guestEmail,
       subject: args.subject,
       status: "open",
       assignedTo: undefined,
@@ -199,7 +263,7 @@ export const create = mutation({
 
     await ctx.db.insert("supportMessages", {
       conversationId,
-      senderId: user._id,
+      senderId,
       senderType: "user",
       body: args.initialMessage,
       isRead: false,

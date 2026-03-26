@@ -1,17 +1,23 @@
 "use client";
 
+import { CheckCircle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { use, useEffect, useState } from "react";
+import { use, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { H1, Lead } from "@/components/ui/typography";
 import { authClient } from "@/lib/auth-client";
-import { ChatView } from "./components/chat-view";
-import { ConversationListView } from "./components/conversation-list-view";
+import { ConversationComposer } from "./components/conversation-composer";
 import { LoadingState } from "./components/loading-state";
-import { NewConversationView } from "./components/new-conversation-view";
-import { SignInRequired } from "./components/sign-in-required";
 import { SupportUnavailable } from "./components/support-unavailable";
+import { useGuestSession } from "./hooks/use-guest-session";
 
 export default function PublicSupportPage({
   params,
@@ -21,6 +27,10 @@ export default function PublicSupportPage({
   const { orgSlug } = use(params);
   const { data: session } = authClient.useSession();
   const isLoggedIn = Boolean(session?.user);
+  const isGuest = !isLoggedIn;
+
+  const { guestEmail, saveGuestSession } = useGuestSession(orgSlug);
+  const [pendingEmail, setPendingEmail] = useState(guestEmail ?? "");
 
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const supportSettings = useQuery(
@@ -28,43 +38,10 @@ export default function PublicSupportPage({
     org?._id ? { organizationId: org._id } : "skip"
   );
 
-  const conversations = useQuery(
-    api.support.conversations.listForUser,
-    org?._id && isLoggedIn ? { organizationId: org._id } : "skip"
-  );
-
-  const [view, setView] = useState<"list" | "chat" | "new">("list");
-  const [selectedConversationId, setSelectedConversationId] =
-    useState<Id<"supportConversations"> | null>(null);
-  const [newSubject, setNewSubject] = useState("");
-  const [newMessage, setNewMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const selectedConversation = useQuery(
-    api.support.conversations.get,
-    selectedConversationId ? { id: selectedConversationId } : "skip"
-  );
-
-  const messages = useQuery(
-    api.support.messages.list,
-    selectedConversationId ? { conversationId: selectedConversationId } : "skip"
-  );
+  const [submitted, setSubmitted] = useState(false);
 
   const createConversation = useMutation(api.support.conversations.create);
-  const sendMessage = useMutation(api.support.messages.send);
-  const markAsRead = useMutation(api.support.messages.markAsRead);
-
-  useEffect(() => {
-    if (selectedConversationId && messages && messages.length > 0) {
-      const hasUnread = messages.some(
-        (m: { isRead: boolean; senderType: string }) =>
-          !m.isRead && m.senderType === "admin"
-      );
-      if (hasUnread) {
-        markAsRead({ conversationId: selectedConversationId });
-      }
-    }
-  }, [selectedConversationId, messages, markAsRead]);
 
   if (org === undefined || supportSettings === undefined) {
     return <LoadingState />;
@@ -78,57 +55,38 @@ export default function PublicSupportPage({
     return <SupportUnavailable orgSlug={orgSlug} />;
   }
 
-  const handleCreateConversation = async () => {
-    const trimmedMessage = newMessage.trim();
-    if (!(trimmedMessage && org?._id)) {
+  const handleSubmit = async (data: {
+    subject: string;
+    message: string;
+    email?: string;
+  }) => {
+    if (!(data.message.trim() && org?._id)) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const conversationId = await createConversation({
-        organizationId: org._id,
-        subject: newSubject.trim() || undefined,
-        initialMessage: trimmedMessage,
-      });
-      setNewSubject("");
-      setNewMessage("");
-      setSelectedConversationId(conversationId);
-      setView("chat");
+      if (isGuest) {
+        const savedGuestId = saveGuestSession(data.email ?? pendingEmail);
+        await createConversation({
+          organizationId: org._id,
+          subject: data.subject || undefined,
+          initialMessage: data.message,
+          guestId: savedGuestId,
+          guestEmail: data.email ?? pendingEmail,
+        });
+      } else {
+        await createConversation({
+          organizationId: org._id,
+          subject: data.subject || undefined,
+          initialMessage: data.message,
+        });
+      }
+      setSubmitted(true);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const handleSendMessage = async (body: string) => {
-    if (!selectedConversationId) {
-      return;
-    }
-    await sendMessage({ conversationId: selectedConversationId, body });
-  };
-
-  const handleSelectConversation = (
-    conversationId: Id<"supportConversations">
-  ) => {
-    setSelectedConversationId(conversationId);
-    setView("chat");
-  };
-
-  const handleStartNewConversation = () => {
-    setSelectedConversationId(null);
-    setNewSubject("");
-    setNewMessage("");
-    setView("new");
-  };
-
-  const handleBackToList = () => {
-    setSelectedConversationId(null);
-    setView("list");
-  };
-
-  if (!isLoggedIn) {
-    return <SignInRequired />;
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -137,38 +95,35 @@ export default function PublicSupportPage({
         <Lead>Get help from our team</Lead>
       </div>
 
-      <div className="mx-auto min-h-[600px] max-w-3xl">
-        {view === "new" && (
-          <NewConversationView
-            hasExistingConversations={
-              conversations !== undefined && conversations.length > 0
-            }
+      <div className="mx-auto max-w-lg">
+        {submitted ? (
+          <Card>
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                <CheckCircle
+                  className="h-6 w-6 text-green-600 dark:text-green-400"
+                  weight="fill"
+                />
+              </div>
+              <CardTitle>Message sent</CardTitle>
+              <CardDescription>
+                We've received your message and will get back to you soon.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <Button onClick={() => setSubmitted(false)} variant="outline">
+                Send another message
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <ConversationComposer
+            alwaysExpanded
+            guestEmail={pendingEmail}
+            isGuest={isGuest}
             isSubmitting={isSubmitting}
-            newMessage={newMessage}
-            newSubject={newSubject}
-            onBack={handleBackToList}
-            onMessageChange={setNewMessage}
-            onSubjectChange={setNewSubject}
-            onSubmit={handleCreateConversation}
-          />
-        )}
-
-        {view === "chat" && selectedConversation && (
-          <ChatView
-            conversation={selectedConversation}
-            isLoadingMessages={messages === undefined}
-            messages={messages ?? []}
-            onBack={handleBackToList}
-            onNewConversation={handleStartNewConversation}
-            onSendMessage={handleSendMessage}
-          />
-        )}
-
-        {view === "list" && (
-          <ConversationListView
-            conversations={conversations ?? []}
-            onNewConversation={handleStartNewConversation}
-            onSelectConversation={handleSelectConversation}
+            onGuestEmailChange={setPendingEmail}
+            onSubmit={handleSubmit}
           />
         )}
       </div>

@@ -36,44 +36,20 @@ vi.mock("@/components/ui/card", () => ({
   }) => <div className={className}>{children}</div>,
 }));
 
-vi.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuTrigger: ({
-    children,
-    render: Render,
+vi.mock("@/features/inbox/components/inline-status-buttons", () => ({
+  InlineStatusButtons: ({
+    currentStatus,
+    onStatusChange,
   }: {
-    children?: React.ReactNode;
-    render?:
-      | React.ReactNode
-      | ((props: Record<string, unknown>) => React.ReactNode);
-  }) => {
-    if (typeof Render === "function") {
-      return Render({});
-    }
-    return <div>{children}</div>;
-  },
-  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuGroup: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuLabel: ({ children }: { children: React.ReactNode }) => (
-    <span>{children}</span>
-  ),
-  DropdownMenuCheckboxItem: ({
-    children,
-    onCheckedChange,
-  }: {
-    children: React.ReactNode;
-    checked?: boolean;
-    onCheckedChange?: () => void;
+    currentStatus: string;
+    onStatusChange: (status: string) => void;
   }) => (
-    <button onClick={onCheckedChange} type="button">
-      {children}
-    </button>
+    <div data-testid="inline-status-buttons">
+      <span>{currentStatus}</span>
+      <button onClick={() => onStatusChange("closed")} type="button">
+        Closed
+      </button>
+    </div>
   ),
 }));
 
@@ -103,12 +79,6 @@ vi.mock("@phosphor-icons/react", () => ({
 
 vi.mock("@/features/inbox/components/assign-member-dropdown", () => ({
   AssignMemberDropdown: () => <div data-testid="assign-dropdown">Assign</div>,
-}));
-
-vi.mock("@/features/inbox/components/conversation-status-badge", () => ({
-  ConversationStatusBadge: ({ status }: { status: string }) => (
-    <span data-testid="status-badge">{status}</span>
-  ),
 }));
 
 vi.mock("@/features/inbox/components/message-input", () => ({
@@ -204,6 +174,21 @@ describe("AdminConversationView", () => {
     expect(screen.getByText(/Unknown User/)).toBeInTheDocument();
   });
 
+  it("shows guest email for guest conversations", () => {
+    render(
+      <AdminConversationView
+        {...baseProps}
+        conversation={{
+          ...baseConversation,
+          user: undefined,
+          guestEmail: "guest@example.com",
+        }}
+      />
+    );
+    expect(screen.getByText(/guest@example.com/)).toBeInTheDocument();
+    expect(screen.getByText("(guest)")).toBeInTheDocument();
+  });
+
   it("renders AssignMemberDropdown", () => {
     render(<AdminConversationView {...baseProps} />);
     expect(screen.getByTestId("assign-dropdown")).toBeInTheDocument();
@@ -253,14 +238,19 @@ describe("AdminConversationView", () => {
     );
   });
 
-  it("calls onStatusChange when a status option is clicked", async () => {
+  it("renders InlineStatusButtons", () => {
+    render(<AdminConversationView {...baseProps} />);
+    expect(screen.getByTestId("inline-status-buttons")).toBeInTheDocument();
+  });
+
+  it("calls onStatusChange when a status button is clicked", async () => {
     const onStatusChange = vi.fn();
     const user = userEvent.setup();
     render(
       <AdminConversationView {...baseProps} onStatusChange={onStatusChange} />
     );
     await user.click(screen.getByText("Closed"));
-    expect(onStatusChange).toHaveBeenCalled();
+    expect(onStatusChange).toHaveBeenCalledWith("closed");
   });
 });
 

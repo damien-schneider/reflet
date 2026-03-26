@@ -2,6 +2,7 @@
 
 import { ChatCircle } from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
+import { useCallback, useEffect, useRef } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,6 +10,7 @@ import { Text } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
 import { ConversationStatusBadge } from "./conversation-status-badge";
+import { HoverQuickActions } from "./hover-quick-actions";
 
 interface ConversationUser {
   email: string;
@@ -28,11 +30,16 @@ interface Conversation {
 }
 
 interface ConversationListProps {
+  activeIndex?: number;
   className?: string;
   conversations: Conversation[] | undefined;
   isAdmin?: boolean;
   isLoading?: boolean;
+  onQuickAssign?: (conversationId: string) => void;
+  onQuickClose?: (conversationId: string) => void;
+  onQuickResolve?: (conversationId: string) => void;
   onSelect: (conversation: Conversation) => void;
+  searchQuery?: string;
   selectedId?: string;
 }
 
@@ -49,16 +56,38 @@ function getInitials(name?: string, email?: string): string {
     .toUpperCase();
 }
 
+function matchesSearch(conversation: Conversation, query: string): boolean {
+  const lowerQuery = query.toLowerCase();
+  const subject = conversation.subject?.toLowerCase() ?? "";
+  const userName = conversation.user?.name?.toLowerCase() ?? "";
+  const userEmail = conversation.user?.email?.toLowerCase() ?? "";
+  const preview = conversation.lastMessagePreview?.toLowerCase() ?? "";
+  return (
+    subject.includes(lowerQuery) ||
+    userName.includes(lowerQuery) ||
+    userEmail.includes(lowerQuery) ||
+    preview.includes(lowerQuery)
+  );
+}
+
 function ConversationItem({
   conversation,
   isSelected,
+  isActive,
   onSelect,
   isAdmin,
+  onQuickResolve,
+  onQuickClose,
+  onQuickAssign,
 }: {
   conversation: Conversation;
   isSelected: boolean;
+  isActive: boolean;
   onSelect: () => void;
   isAdmin: boolean;
+  onQuickResolve?: () => void;
+  onQuickClose?: () => void;
+  onQuickAssign?: () => void;
 }) {
   const user = conversation.user;
   const displayName = user?.name || user?.email || "Unknown User";
@@ -67,14 +96,18 @@ function ConversationItem({
     ? conversation.adminUnreadCount
     : conversation.userUnreadCount;
   const hasUnread = unreadCount > 0;
+  const showQuickActions =
+    isAdmin && onQuickResolve && onQuickClose && onQuickAssign;
 
   return (
     <button
       className={cn(
-        "flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors hover:bg-accent",
+        "group/conversation relative flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors hover:bg-accent",
         isSelected && "bg-accent",
+        isActive && "ring-2 ring-ring",
         hasUnread && "bg-accent/50"
       )}
+      data-active={isActive}
       onClick={onSelect}
       type="button"
     >
@@ -131,6 +164,15 @@ function ConversationItem({
           )}
         </div>
       </div>
+
+      {showQuickActions && (
+        <HoverQuickActions
+          className="absolute top-2 right-2"
+          onAssignToMe={onQuickAssign}
+          onClose={onQuickClose}
+          onResolve={onQuickResolve}
+        />
+      )}
     </button>
   );
 }
@@ -142,7 +184,30 @@ export function ConversationList({
   isLoading,
   isAdmin = false,
   className,
+  activeIndex,
+  searchQuery,
+  onQuickResolve,
+  onQuickClose,
+  onQuickAssign,
 }: ConversationListProps) {
+  const activeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: "nearest" });
+  }, []);
+
+  const filtered = useCallback(() => {
+    if (!conversations) {
+      return undefined;
+    }
+    if (!searchQuery?.trim()) {
+      return conversations;
+    }
+    return conversations.filter((c) => matchesSearch(c, searchQuery));
+  }, [conversations, searchQuery]);
+
+  const displayConversations = filtered();
+
   if (isLoading) {
     return (
       <div className={cn("flex flex-1 flex-col", className)}>
@@ -167,7 +232,7 @@ export function ConversationList({
     );
   }
 
-  if (!conversations || conversations.length === 0) {
+  if (!displayConversations || displayConversations.length === 0) {
     return (
       <div className={cn("flex flex-1 items-center justify-center", className)}>
         <div className="flex flex-col items-center gap-3 p-4 text-center">
@@ -190,15 +255,35 @@ export function ConversationList({
   return (
     <ScrollArea className={cn("flex-1", className)}>
       <div className="space-y-1 p-2">
-        {conversations.map((conversation) => (
-          <ConversationItem
-            conversation={conversation}
-            isAdmin={isAdmin}
-            isSelected={selectedId === conversation._id}
-            key={conversation._id}
-            onSelect={() => onSelect(conversation)}
-          />
-        ))}
+        {displayConversations.map((conversation, index) => {
+          const isActive = activeIndex === index;
+          return (
+            <div key={conversation._id} ref={isActive ? activeRef : undefined}>
+              <ConversationItem
+                conversation={conversation}
+                isActive={isActive}
+                isAdmin={isAdmin}
+                isSelected={selectedId === conversation._id}
+                onQuickAssign={
+                  onQuickAssign
+                    ? () => onQuickAssign(conversation._id)
+                    : undefined
+                }
+                onQuickClose={
+                  onQuickClose
+                    ? () => onQuickClose(conversation._id)
+                    : undefined
+                }
+                onQuickResolve={
+                  onQuickResolve
+                    ? () => onQuickResolve(conversation._id)
+                    : undefined
+                }
+                onSelect={() => onSelect(conversation)}
+              />
+            </div>
+          );
+        })}
       </div>
     </ScrollArea>
   );

@@ -2,32 +2,15 @@
 
 import { ChatCircle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import type React from "react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { H2, H3, Muted, Text } from "@/components/ui/typography";
 import { AssignMemberDropdown } from "@/features/inbox/components/assign-member-dropdown";
-import { ConversationStatusBadge } from "@/features/inbox/components/conversation-status-badge";
+import { InlineStatusButtons } from "@/features/inbox/components/inline-status-buttons";
 import { MessageInput } from "@/features/inbox/components/message-input";
 import { MessageList } from "@/features/inbox/components/message-list";
 
 type ConversationStatus = "open" | "awaiting_reply" | "resolved" | "closed";
-
-const STATUS_OPTIONS: { value: ConversationStatus; label: string }[] = [
-  { value: "open", label: "Open" },
-  { value: "awaiting_reply", label: "Awaiting Reply" },
-  { value: "resolved", label: "Resolved" },
-  { value: "closed", label: "Closed" },
-];
 
 interface TeamMember {
   email: string;
@@ -48,9 +31,10 @@ interface Message {
 
 interface Conversation {
   assignedTo?: string;
+  guestEmail?: string;
   status: string;
   subject?: string;
-  user?: { name?: string };
+  user?: { name?: string; email?: string };
 }
 
 interface AdminConversationViewProps {
@@ -83,7 +67,14 @@ export function AdminConversationView({
             {conversation.subject || "Support Conversation"}
           </H2>
           <Text variant="bodySmall">
-            From: {conversation.user?.name ?? "Unknown User"}
+            From:{" "}
+            {conversation.user?.name ??
+              conversation.guestEmail ??
+              conversation.user?.email ??
+              "Unknown User"}
+            {conversation.guestEmail && !conversation.user?.name && (
+              <span className="ml-1 text-muted-foreground">(guest)</span>
+            )}
           </Text>
         </div>
 
@@ -94,35 +85,17 @@ export function AdminConversationView({
             onAssign={onAssign}
           />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={(props: React.ComponentProps<"button">) => (
-                <Button {...props} size="sm" variant="outline">
-                  <ConversationStatusBadge status={conversation.status} />
-                </Button>
-              )}
-            />
-            <DropdownMenuContent align="end">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Change status</DropdownMenuLabel>
-                {STATUS_OPTIONS.map((option) => (
-                  <DropdownMenuCheckboxItem
-                    checked={conversation.status === option.value}
-                    key={option.value}
-                    onCheckedChange={() => onStatusChange(option.value)}
-                  >
-                    {option.label}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <InlineStatusButtons
+            currentStatus={conversation.status}
+            onStatusChange={onStatusChange}
+          />
         </div>
       </div>
 
       <MessageList isLoading={messagesLoading} messages={messages} />
 
       <MessageInput
+        autoFocus
         disabled={isConversationClosed}
         onSend={onSendMessage}
         placeholder="Type your reply..."

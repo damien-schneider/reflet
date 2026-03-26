@@ -43,7 +43,6 @@ function ToggleGroup({
       data-slot="toggle-group"
       data-spacing={spacing}
       data-variant={variant}
-      style={{ "--gap": spacing }}
       {...props}
     >
       <ToggleGroupContext.Provider

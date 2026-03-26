@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
+  autoFocus?: boolean;
   className?: string;
   disabled?: boolean;
   onSend: (message: string) => void | Promise<void>;
@@ -16,6 +17,7 @@ interface MessageInputProps {
 
 export function MessageInput({
   onSend,
+  autoFocus = false,
   disabled = false,
   placeholder = "Type your message...",
   className,
@@ -56,6 +58,7 @@ export function MessageInput({
       )}
     >
       <Textarea
+        autoFocus={autoFocus}
         className="max-h-32 min-h-10 resize-none"
         disabled={isDisabled}
         onChange={(e) => setMessage(e.target.value)}

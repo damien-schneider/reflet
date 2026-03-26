@@ -9,6 +9,8 @@ export const supportTables = {
   supportConversations: defineTable({
     organizationId: v.id("organizations"),
     userId: v.string(),
+    guestId: v.optional(v.string()),
+    guestEmail: v.optional(v.string()),
     subject: v.optional(v.string()),
     status: supportConversationStatus,
     assignedTo: v.optional(v.string()),
@@ -22,7 +24,8 @@ export const supportTables = {
     .index("by_user", ["userId"])
     .index("by_org_user", ["organizationId", "userId"])
     .index("by_org_status", ["organizationId", "status"])
-    .index("by_assigned", ["assignedTo"]),
+    .index("by_assigned", ["assignedTo"])
+    .index("by_guest", ["guestId"]),
 
   supportMessages: defineTable({
     conversationId: v.id("supportConversations"),
