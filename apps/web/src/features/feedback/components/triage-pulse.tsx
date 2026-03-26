@@ -130,7 +130,7 @@ interface TaggedItem {
   aiComplexity?: string | null;
   aiPriority?: string | null;
   aiTimeEstimate?: string | null;
-  tags: Array<{ _id: Id<"tags">; name: string; color: string }>;
+  tags: Array<{ _id: Id<"tags">; name: string; color: string } | null>;
   title: string;
 }
 
@@ -206,7 +206,10 @@ function ResultsPopover({
         <ScrollArea classNameViewport="max-h-64">
           <div className="divide-y">
             {recentItems?.map((item: TaggedItem) => {
-              const hasTags = item.tags.length > 0;
+              const validTags = item.tags.filter(
+                (tag): tag is NonNullable<typeof tag> => tag !== null
+              );
+              const hasTags = validTags.length > 0;
               const isUncategorized =
                 !hasTags && (!item.aiPriority || item.aiPriority === "none");
 
@@ -216,7 +219,7 @@ function ResultsPopover({
                     {item.title}
                   </p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                    {item.tags.map((tag) => (
+                    {validTags.map((tag) => (
                       <Badge
                         className="h-5 font-normal text-[10px]"
                         color={tag.color}

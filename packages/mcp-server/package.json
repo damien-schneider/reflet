@@ -24,13 +24,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.28.0",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "tsup": "^8.5.1",
     "typescript": "catalog:",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.1"
   },
   "engines": {
     "node": ">=18.0.0"

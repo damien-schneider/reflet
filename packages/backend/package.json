@@ -14,7 +14,7 @@
     "deploy": "convex deploy"
   },
   "dependencies": {
-    "@ai-sdk/google": "^2.0.52",
+    "@ai-sdk/google": "^3.0.53",
     "@convex-dev/agent": "catalog:",
     "@convex-dev/better-auth": "catalog:",
     "@convex-dev/rate-limiter": "^0.3.2",
@@ -24,24 +24,24 @@
     "@openrouter/ai-sdk-provider": "^2.3.3",
     "@react-email/render": "^2.0.4",
     "@reflet/email": "workspace:*",
-    "ai": "^6.0.134",
+    "ai": "^6.0.138",
     "better-auth": "catalog:",
     "convex": "catalog:",
     "dotenv": "catalog:",
-    "resend": "^6.9.1",
+    "resend": "^6.9.4",
     "web-push": "^3.6.7",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
     "@reflet/config": "workspace:*",
-    "@types/node": "^25.2.0",
+    "@types/node": "^25.5.0",
     "@types/web-push": "^3.6.4",
-    "convex-test": "^0.0.41",
-    "stripe": "^17.6.0",
-    "tsx": "^4.19.2",
+    "convex-test": "^0.0.44",
+    "stripe": "^21.0.0",
+    "tsx": "^4.21.0",
     "typescript": "catalog:",
-    "vite": "^7.3.1",
-    "vitest": "^4.0.18"
+    "vite": "^8.0.3",
+    "vitest": "^4.1.1"
   }
 }

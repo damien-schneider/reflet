@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, FileText, Loader2 } from "lucide-react";
+import { Download, FileText, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -110,7 +110,7 @@ export function LeadMagnet({
           />
           <Button disabled={loading} type="submit">
             {loading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Download className="mr-2 h-4 w-4" />
             )}

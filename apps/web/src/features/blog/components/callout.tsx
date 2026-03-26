@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle, Info, Lightbulb } from "lucide-react";
+import { CircleAlert, CircleCheck, Info, Lightbulb } from "lucide-react";
 
 import { Text } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
@@ -30,14 +30,14 @@ const styles: Record<
   warning: {
     bg: "bg-red-500/5",
     border: "border-red-500/15",
-    icon: <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />,
+    icon: <CircleAlert className="h-5 w-5 text-red-600 dark:text-red-400" />,
     title: "Warning",
   },
   success: {
     bg: "bg-emerald-500/5",
     border: "border-emerald-500/15",
     icon: (
-      <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+      <CircleCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
     ),
     title: "Success",
   },

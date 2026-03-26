@@ -16,11 +16,7 @@ export default defineConfig({
     },
     outDir: "dist",
     minify: "terser",
-    rollupOptions: {
-      output: {
-        inlineDynamicImports: true,
-      },
-    },
+    rolldownOptions: {},
   },
   define: {
     "process.env.NODE_ENV": JSON.stringify("production"),
