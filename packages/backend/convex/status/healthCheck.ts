@@ -1,10 +1,11 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
+import { components, internal } from "../_generated/api";
 import {
   internalAction,
   internalMutation,
   internalQuery,
 } from "../_generated/server";
+import { PLAN_LIMITS } from "../billing/queries";
 
 // ============================================
 // INTERNAL QUERIES
@@ -13,8 +14,49 @@ import {
 export const getActiveMonitors = internalQuery({
   args: {},
   handler: async (ctx) => {
+    const now = Date.now();
     const monitors = await ctx.db.query("statusMonitors").collect();
-    return monitors.filter((m) => m.status !== "paused");
+
+    // Batch-fetch subscription status per org to enforce tier minimums
+    const orgTierCache = new Map<string, number>();
+    const getOrgMinInterval = async (orgId: string): Promise<number> => {
+      const cached = orgTierCache.get(orgId);
+      if (cached !== undefined) {
+        return cached;
+      }
+      const subscription = await ctx.runQuery(
+        components.stripe.public.getSubscriptionByOrgId,
+        { orgId }
+      );
+      const hasActiveSub =
+        subscription &&
+        (subscription.status === "active" ||
+          subscription.status === "trialing");
+      const min = hasActiveSub
+        ? PLAN_LIMITS.pro.minCheckIntervalMinutes
+        : PLAN_LIMITS.free.minCheckIntervalMinutes;
+      orgTierCache.set(orgId, min);
+      return min;
+    };
+
+    const results: typeof monitors = [];
+    for (const m of monitors) {
+      if (m.status === "paused") {
+        continue;
+      }
+      // Enforce tier minimum even if stored value is lower (e.g. after downgrade)
+      const tierMin = await getOrgMinInterval(m.organizationId);
+      const effectiveInterval = Math.max(m.checkIntervalMinutes, tierMin);
+
+      if (m.lastCheckedAt) {
+        const nextCheckAt = m.lastCheckedAt + effectiveInterval * 60 * 1000;
+        if (now < nextCheckAt) {
+          continue;
+        }
+      }
+      results.push(m);
+    }
+    return results;
   },
 });
 

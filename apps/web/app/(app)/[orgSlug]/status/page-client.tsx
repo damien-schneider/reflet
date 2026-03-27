@@ -1,13 +1,14 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import { use, useState } from "react";
+import { useQuery } from "convex/react";
+import { use } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Muted, Text } from "@/components/ui/typography";
+import { H1, H2, Large, Lead, Muted, Text } from "@/components/ui/typography";
+import { ResponseTimeChart } from "@/features/status/components/response-time-chart";
 import { StatusDot } from "@/features/status/components/status-dot";
+import { StatusSubscribe } from "@/features/status/components/status-subscribe";
+import { UptimeBar } from "@/features/status/components/uptime-bar";
 
 const statusMessages = {
   operational: "All Systems Operational",
@@ -21,6 +22,18 @@ const statusBannerStyles = {
   degraded:
     "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
   major_outage: "bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-200",
+} as const;
+
+const statusLabelStyles = {
+  operational: "text-emerald-600 dark:text-emerald-400",
+  degraded: "text-amber-600 dark:text-amber-400",
+  major_outage: "text-red-600 dark:text-red-400",
+} as const;
+
+const statusLabelText = {
+  operational: "Operational",
+  degraded: "Degraded",
+  major_outage: "Major Outage",
 } as const;
 
 const formatTime = (timestamp: number): string => {
@@ -69,40 +82,24 @@ export default function PublicStatusPageClient({
     orgSlug,
   });
 
+  const uptimeBars = useQuery(api.status.publicQueries.getPublicUptimeBars, {
+    orgSlug,
+  });
+
   const incidentHistory = useQuery(
     api.status.publicQueries.getPublicIncidentHistory,
     { orgSlug }
   );
 
-  const [email, setEmail] = useState("");
-  const [subscribeStatus, setSubscribeStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
-
-  // We need the org ID for subscribing — get it from the org query
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
-  const subscribe = useMutation(api.status.subscriptions.subscribe);
-
-  const handleSubscribe = async () => {
-    if (!(email.trim() && org?._id)) {
-      return;
-    }
-    try {
-      await subscribe({ organizationId: org._id, email: email.trim() });
-      setSubscribeStatus("success");
-      setEmail("");
-    } catch {
-      setSubscribeStatus("error");
-    }
-  };
 
   if (statusData === undefined) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-8">
+      <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="animate-pulse space-y-4">
           <div className="h-16 rounded-lg bg-muted" />
-          <div className="h-12 rounded-lg bg-muted" />
-          <div className="h-12 rounded-lg bg-muted" />
+          <div className="h-24 rounded-lg bg-muted" />
+          <div className="h-24 rounded-lg bg-muted" />
         </div>
       </div>
     );
@@ -110,7 +107,7 @@ export default function PublicStatusPageClient({
 
   if (statusData === null) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-8 text-center">
+      <div className="mx-auto max-w-3xl px-4 py-8 text-center">
         <Muted>Status page not available.</Muted>
       </div>
     );
@@ -119,23 +116,36 @@ export default function PublicStatusPageClient({
   const overallStatus = statusData.overallStatus as keyof typeof statusMessages;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-8">
+      {/* Header: title + subscribe */}
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <H1 variant="page">System Status</H1>
+          <Lead className="mt-2">
+            Current status and uptime for all services.
+          </Lead>
+        </div>
+        {org && (
+          <div className="flex shrink-0 items-center gap-2">
+            <StatusSubscribe organizationId={org._id} />
+          </div>
+        )}
+      </div>
+
       {/* Overall status banner */}
       <div
         className={`mb-8 rounded-xl p-6 text-center ${statusBannerStyles[overallStatus]}`}
       >
         <div className="flex items-center justify-center gap-3">
           <StatusDot pulse size="lg" status={overallStatus} />
-          <h1 className="font-semibold text-xl">
-            {statusMessages[overallStatus]}
-          </h1>
+          <Large>{statusMessages[overallStatus]}</Large>
         </div>
       </div>
 
       {/* Active incidents */}
       {statusData.activeIncidents.length > 0 && (
         <div className="mb-8 space-y-4">
-          <h2 className="font-semibold">Active Incidents</h2>
+          <H2 variant="card">Active Incidents</H2>
           {statusData.activeIncidents.map((incident) => (
             <div
               className="rounded-lg border border-red-200 p-4 dark:border-red-900"
@@ -197,37 +207,60 @@ export default function PublicStatusPageClient({
         </div>
       )}
 
-      {/* Monitor groups */}
+      {/* Monitor groups with uptime + response time cards */}
       <div className="space-y-6">
         {statusData.monitorGroups.map((group) => (
           <div key={group.name}>
-            <h2 className="mb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+            <Text className="mb-3" variant="overline">
               {group.name}
-            </h2>
-            <div className="space-y-3">
-              {group.monitors.map((monitor) => (
-                <div
-                  className="flex items-center gap-3 rounded-lg border p-3"
-                  key={monitor._id}
-                >
-                  <StatusDot
-                    status={
-                      monitor.status as
-                        | "operational"
-                        | "degraded"
-                        | "major_outage"
-                    }
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm">
-                    {monitor.name}
-                  </span>
-                  <span className="shrink-0 text-muted-foreground text-xs capitalize">
-                    {monitor.status === "major_outage"
-                      ? "Major Outage"
-                      : monitor.status}
-                  </span>
-                </div>
-              ))}
+            </Text>
+            <div className="space-y-4">
+              {group.monitors.map((monitor) => {
+                const monitorStatus = monitor.status as
+                  | "operational"
+                  | "degraded"
+                  | "major_outage";
+                const uptimeData = uptimeBars?.[monitor._id];
+
+                return (
+                  <div key={monitor._id}>
+                    {/* Monitor header */}
+                    <div className="mb-2 flex items-center gap-3 rounded-lg border bg-card p-3">
+                      <StatusDot status={monitorStatus} />
+                      <span className="min-w-0 flex-1 truncate font-medium text-sm">
+                        {monitor.name}
+                      </span>
+                      <div className="hidden items-center gap-3 sm:flex">
+                        {monitor.lastResponseTimeMs !== undefined && (
+                          <span className="font-mono text-muted-foreground text-xs">
+                            {monitor.lastResponseTimeMs}ms
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        className={`font-medium text-sm ${statusLabelStyles[monitorStatus]}`}
+                      >
+                        {statusLabelText[monitorStatus]}
+                      </span>
+                    </div>
+                    {/* Metric cards: uptime + response time */}
+                    <div className="grid grid-cols-1 gap-3">
+                      <UptimeBar
+                        days={uptimeData?.days ?? []}
+                        label="Uptime"
+                        overallUptime={uptimeData?.overallUptime}
+                        variant="card"
+                      />
+                      {monitor.recentChecks.length > 0 && (
+                        <ResponseTimeChart
+                          lastResponseTimeMs={monitor.lastResponseTimeMs}
+                          recentChecks={monitor.recentChecks}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -236,7 +269,9 @@ export default function PublicStatusPageClient({
       {/* Past incidents */}
       {incidentHistory && incidentHistory.length > 0 && (
         <div className="mt-8">
-          <h2 className="mb-4 font-semibold">Past Incidents</h2>
+          <H2 className="mb-4" variant="card">
+            Past Incidents
+          </H2>
           <div className="space-y-3">
             {incidentHistory.map((incident) => (
               <details className="group rounded-lg border" key={incident._id}>
@@ -283,44 +318,6 @@ export default function PublicStatusPageClient({
           </div>
         </div>
       )}
-
-      {/* Subscribe */}
-      <div className="mt-8 rounded-lg border p-4">
-        <Text className="mb-2 font-medium" variant="bodySmall">
-          Subscribe to status updates
-        </Text>
-        {subscribeStatus === "success" ? (
-          <p className="text-emerald-600 text-sm dark:text-emerald-400">
-            Subscribed! You'll receive email notifications about incidents.
-          </p>
-        ) : (
-          <div className="flex gap-2">
-            <Input
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleSubscribe();
-                }
-              }}
-              placeholder="your@email.com"
-              type="email"
-              value={email}
-            />
-            <Button
-              disabled={!email.trim()}
-              onClick={handleSubscribe}
-              size="sm"
-            >
-              Subscribe
-            </Button>
-          </div>
-        )}
-        {subscribeStatus === "error" && (
-          <p className="mt-1 text-red-600 text-xs">
-            Failed to subscribe. Please try again.
-          </p>
-        )}
-      </div>
     </div>
   );
 }

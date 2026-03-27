@@ -12,6 +12,7 @@ export const PLAN_LIMITS = {
     customDomain: false,
     apiAccess: false,
     prioritySupport: false,
+    minCheckIntervalMinutes: 5,
   },
   pro: {
     maxMembers: Number.POSITIVE_INFINITY, // Unlimited
@@ -20,6 +21,7 @@ export const PLAN_LIMITS = {
     customDomain: true,
     apiAccess: true,
     prioritySupport: true,
+    minCheckIntervalMinutes: 1,
   },
 } as const;
 

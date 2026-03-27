@@ -1,5 +1,6 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockUseQuery = vi.fn();
@@ -12,11 +13,13 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    changelog_subscriptions: {
-      isSubscribed: "changelog_subscriptions:isSubscribed",
-      subscribe: "changelog_subscriptions:subscribe",
-      unsubscribe: "changelog_subscriptions:unsubscribe",
-      subscribeByEmail: "changelog_subscriptions:subscribeByEmail",
+    changelog: {
+      subscriptions: {
+        isSubscribed: "changelog.subscriptions:isSubscribed",
+        subscribe: "changelog.subscriptions:subscribe",
+        unsubscribe: "changelog.subscriptions:unsubscribe",
+        subscribeByEmail: "changelog.subscriptions:subscribeByEmail",
+      },
     },
   },
 }));
@@ -67,6 +70,57 @@ vi.mock("@/components/ui/input", () => ({
   ),
 }));
 
+vi.mock("@/components/ui/email-subscribe-form", async () => {
+  const { toast: mockToastInner } =
+    await vi.importMock<typeof import("sonner")>("sonner");
+  return {
+    EmailSubscribeForm: ({
+      className,
+      onSubscribe,
+      title,
+      successMessage,
+    }: {
+      className?: string;
+      description?: string;
+      onSubscribe: (email: string) => Promise<void>;
+      placeholder?: string;
+      successMessage?: string;
+      title?: string;
+    }) => {
+      const [email, setEmail] = React.useState("");
+      return (
+        <div className={className}>
+          {title && <p>{title}</p>}
+          <form
+            onSubmit={async (e: React.FormEvent) => {
+              e.preventDefault();
+              if (!email.trim()) {
+                mockToastInner.error("Email is required");
+                return;
+              }
+              await onSubscribe(email.trim());
+              mockToastInner.success(successMessage ?? "Subscribed!");
+              setEmail("");
+            }}
+          >
+            <svg className="" data-testid="envelope-icon" />
+            <input
+              data-testid="email-input"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEmail(e.target.value)
+              }
+              placeholder="your@email.com"
+              type="email"
+              value={email}
+            />
+            <button type="submit">Subscribe</button>
+          </form>
+        </div>
+      );
+    },
+  };
+});
+
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
     useSession: vi.fn(() => ({ data: null })),
@@ -100,13 +154,13 @@ describe("ChangelogSubscribe", () => {
 
   beforeEach(() => {
     mockUseMutation.mockImplementation((mutationName: string) => {
-      if (mutationName === "changelog_subscriptions:subscribe") {
+      if (mutationName === "changelog.subscriptions:subscribe") {
         return mockSubscribe;
       }
-      if (mutationName === "changelog_subscriptions:unsubscribe") {
+      if (mutationName === "changelog.subscriptions:unsubscribe") {
         return mockUnsubscribe;
       }
-      if (mutationName === "changelog_subscriptions:subscribeByEmail") {
+      if (mutationName === "changelog.subscriptions:subscribeByEmail") {
         return mockSubscribeByEmail;
       }
       return vi.fn();

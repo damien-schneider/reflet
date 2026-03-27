@@ -53,10 +53,21 @@ export default function StatusDashboardPage({
     org?._id ? { organizationId: org._id } : "skip"
   );
 
+  const uptimeBars = useQuery(
+    api.status.monitors.getMonitorsUptimeBars,
+    org?._id ? { organizationId: org._id } : "skip"
+  );
+
   const activeIncidents = useQuery(
     api.status.incidents.getActiveIncidents,
     org?._id ? { organizationId: org._id } : "skip"
   );
+
+  const billingStatus = useQuery(
+    api.billing.queries.getStatus,
+    org?._id ? { organizationId: org._id } : "skip"
+  );
+  const isPro = billingStatus?.tier === "pro";
 
   const createMonitor = useMutation(api.status.monitors.createMonitor);
   const updateMonitor = useMutation(api.status.monitors.updateMonitor);
@@ -90,6 +101,13 @@ export default function StatusDashboardPage({
 
   const handleDeleteMonitor = async (monitorId: Id<"statusMonitors">) => {
     await deleteMonitor({ monitorId });
+  };
+
+  const handleUpdateInterval = async (
+    monitorId: Id<"statusMonitors">,
+    checkIntervalMinutes: number
+  ) => {
+    await updateMonitor({ monitorId, checkIntervalMinutes });
   };
 
   const handleCreateIncident = async (data: {
@@ -235,11 +253,14 @@ export default function StatusDashboardPage({
             <div className="space-y-2">
               {groupMonitors.map((monitor) => (
                 <MonitorCard
+                  isPro={isPro}
                   key={monitor._id}
                   monitor={monitor}
                   onDelete={handleDeleteMonitor}
                   onPause={handlePauseMonitor}
                   onResume={handleResumeMonitor}
+                  onUpdateInterval={handleUpdateInterval}
+                  uptimeData={uptimeBars?.[monitor._id]}
                 />
               ))}
             </div>

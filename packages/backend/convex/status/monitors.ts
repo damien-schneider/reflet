@@ -1,5 +1,7 @@
 import { v } from "convex/values";
+import { components } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
+import { PLAN_LIMITS } from "../billing/queries";
 import { monitorMethod, monitorStatus } from "./tableFields";
 
 // ============================================
@@ -102,6 +104,67 @@ export const getAggregateStatus = query({
   },
 });
 
+export const getMonitorsUptimeBars = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const monitors = await ctx.db
+      .query("statusMonitors")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+
+    const results = await Promise.all(
+      monitors.map(async (monitor) => {
+        const checks = await ctx.db
+          .query("statusChecks")
+          .withIndex("by_monitor_time", (q) =>
+            q.eq("monitorId", monitor._id).gte("checkedAt", ninetyDaysAgo)
+          )
+          .collect();
+
+        const dailyBuckets = new Map<string, { total: number; up: number }>();
+        for (const check of checks) {
+          const day = new Date(check.checkedAt).toISOString().split("T")[0];
+          const bucket = dailyBuckets.get(day) ?? { total: 0, up: 0 };
+          bucket.total++;
+          if (check.isUp) {
+            bucket.up++;
+          }
+          dailyBuckets.set(day, bucket);
+        }
+
+        const days = [...dailyBuckets.entries()]
+          .map(([date, bucket]) => ({
+            date,
+            uptimePercentage:
+              bucket.total > 0
+                ? Math.round((bucket.up / bucket.total) * 10_000) / 100
+                : 100,
+          }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+
+        const totalChecks = checks.length;
+        const upChecks = checks.filter((c) => c.isUp).length;
+        const overallUptime =
+          totalChecks > 0
+            ? Math.round((upChecks / totalChecks) * 10_000) / 100
+            : 100;
+
+        return {
+          monitorId: monitor._id,
+          days,
+          overallUptime,
+        };
+      })
+    );
+
+    return Object.fromEntries(results.map((r) => [r.monitorId, r]));
+  },
+});
+
 // ============================================
 // MUTATIONS
 // ============================================
@@ -120,12 +183,26 @@ export const createMonitor = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
+    // Determine tier minimum check interval
+    const subscription = await ctx.runQuery(
+      components.stripe.public.getSubscriptionByOrgId,
+      { orgId: args.organizationId }
+    );
+    const hasActiveSub =
+      subscription &&
+      (subscription.status === "active" || subscription.status === "trialing");
+    const minInterval = hasActiveSub
+      ? PLAN_LIMITS.pro.minCheckIntervalMinutes
+      : PLAN_LIMITS.free.minCheckIntervalMinutes;
+    const requestedInterval = args.checkIntervalMinutes ?? 5;
+    const checkIntervalMinutes = Math.max(requestedInterval, minInterval);
+
     return await ctx.db.insert("statusMonitors", {
       organizationId: args.organizationId,
       name: args.name,
       url: args.url,
       method: args.method,
-      checkIntervalMinutes: args.checkIntervalMinutes ?? 1,
+      checkIntervalMinutes,
       alertThreshold: args.alertThreshold ?? 3,
       status: "operational",
       consecutiveFailures: 0,
@@ -156,6 +233,28 @@ export const updateMonitor = mutation({
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([, val]) => val !== undefined)
     );
+
+    // Clamp checkIntervalMinutes to tier minimum if being updated
+    if (args.checkIntervalMinutes !== undefined) {
+      const monitor = await ctx.db.get(monitorId);
+      if (monitor) {
+        const subscription = await ctx.runQuery(
+          components.stripe.public.getSubscriptionByOrgId,
+          { orgId: monitor.organizationId }
+        );
+        const hasActiveSub =
+          subscription &&
+          (subscription.status === "active" ||
+            subscription.status === "trialing");
+        const minInterval = hasActiveSub
+          ? PLAN_LIMITS.pro.minCheckIntervalMinutes
+          : PLAN_LIMITS.free.minCheckIntervalMinutes;
+        filtered.checkIntervalMinutes = Math.max(
+          args.checkIntervalMinutes,
+          minInterval
+        );
+      }
+    }
 
     await ctx.db.patch(monitorId, {
       ...filtered,

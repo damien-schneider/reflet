@@ -48,9 +48,9 @@ export function ResponseSparkline({
       aria-label="Response time sparkline"
       className={`text-olive-500 ${className}`}
       height={height}
+      preserveAspectRatio="none"
       role="img"
       viewBox={`0 0 ${width} ${height}`}
-      width={width}
     >
       <polyline
         fill="none"

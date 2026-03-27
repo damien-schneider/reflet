@@ -1,11 +1,11 @@
-import { Bell, BellSlash, Envelope } from "@phosphor-icons/react";
+import { Bell, BellSlash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { EmailSubscribeForm } from "@/components/ui/email-subscribe-form";
 import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,6 @@ export function ChangelogSubscribe({
     api.changelog.subscriptions.subscribeByEmail
   );
 
-  const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleToggleSubscription = async () => {
@@ -59,30 +58,12 @@ export function ChangelogSubscribe({
     }
   };
 
-  const handleEmailSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!email.trim()) {
-      toast.error("Email is required");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await subscribeByEmail({
-        organizationId,
-        email: email.trim(),
-      });
-      capture("changelog_subscribed", { method: "email" });
-      toast.success("Subscribed to changelog updates!");
-      setEmail("");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to subscribe"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleEmailSubscribe = async (email: string) => {
+    await subscribeByEmail({
+      organizationId,
+      email,
+    });
+    capture("changelog_subscribed", { method: "email" });
   };
 
   // Logged in user - show toggle button
@@ -109,27 +90,13 @@ export function ChangelogSubscribe({
     );
   }
 
-  // Not logged in - show email form
+  // Not logged in - show shared email form (inline in header)
   return (
-    <form
-      className={cn("flex gap-2", className)}
-      onSubmit={handleEmailSubscribe}
-    >
-      <div className="relative flex-1">
-        <Envelope className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          className="pl-9"
-          disabled={isSubmitting}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="your@email.com"
-          type="email"
-          value={email}
-        />
-      </div>
-      <Button disabled={isSubmitting} type="submit">
-        <Bell className="mr-2 h-4 w-4" />
-        Subscribe
-      </Button>
-    </form>
+    <EmailSubscribeForm
+      className={className}
+      onSubscribe={handleEmailSubscribe}
+      successMessage="Subscribed to changelog updates!"
+      variant="inline"
+    />
   );
 }

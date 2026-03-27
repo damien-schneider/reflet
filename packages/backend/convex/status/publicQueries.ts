@@ -78,7 +78,10 @@ export const getPublicStatus = query({
       overallStatus = "degraded";
     }
 
-    // Group monitors
+    // Fetch recent checks for sparklines (last 24h)
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+
+    // Group monitors with recent checks
     const grouped = new Map<
       string,
       Array<{
@@ -86,10 +89,22 @@ export const getPublicStatus = query({
         name: string;
         status: string;
         lastResponseTimeMs?: number;
+        recentChecks: Array<{
+          responseTimeMs?: number;
+          checkedAt: number;
+          isUp: boolean;
+        }>;
       }>
     >();
 
     for (const m of publicMonitors) {
+      const recentChecks = await ctx.db
+        .query("statusChecks")
+        .withIndex("by_monitor_time", (q) =>
+          q.eq("monitorId", m._id).gte("checkedAt", oneDayAgo)
+        )
+        .collect();
+
       const group = m.groupName ?? "Services";
       const existing = grouped.get(group) ?? [];
       existing.push({
@@ -97,6 +112,11 @@ export const getPublicStatus = query({
         name: m.name,
         status: m.status,
         lastResponseTimeMs: m.lastResponseTimeMs,
+        recentChecks: recentChecks.map((c) => ({
+          responseTimeMs: c.responseTimeMs,
+          checkedAt: c.checkedAt,
+          isUp: c.isUp,
+        })),
       });
       grouped.set(group, existing);
     }
@@ -243,5 +263,78 @@ export const getMonitorUptimeHistory = query({
       monitorName: monitor.name,
       days,
     };
+  },
+});
+
+export const getPublicUptimeBars = query({
+  args: { orgSlug: v.string() },
+  handler: async (ctx, args) => {
+    const org = await ctx.db
+      .query("organizations")
+      .filter((q) => q.eq(q.field("slug"), args.orgSlug))
+      .unique();
+
+    if (!org) {
+      return null;
+    }
+
+    const monitors = await ctx.db
+      .query("statusMonitors")
+      .withIndex("by_organization", (q) => q.eq("organizationId", org._id))
+      .collect();
+
+    const publicMonitors = monitors.filter(
+      (m) => m.isPublic && m.status !== "paused"
+    );
+
+    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+
+    const results = await Promise.all(
+      publicMonitors.map(async (monitor) => {
+        const checks = await ctx.db
+          .query("statusChecks")
+          .withIndex("by_monitor_time", (q) =>
+            q.eq("monitorId", monitor._id).gte("checkedAt", ninetyDaysAgo)
+          )
+          .collect();
+
+        const dailyBuckets = new Map<string, { total: number; up: number }>();
+        for (const check of checks) {
+          const day = new Date(check.checkedAt).toISOString().split("T")[0];
+          const bucket = dailyBuckets.get(day) ?? { total: 0, up: 0 };
+          bucket.total++;
+          if (check.isUp) {
+            bucket.up++;
+          }
+          dailyBuckets.set(day, bucket);
+        }
+
+        const days = [...dailyBuckets.entries()]
+          .map(([date, bucket]) => ({
+            date,
+            uptimePercentage:
+              bucket.total > 0
+                ? Math.round((bucket.up / bucket.total) * 10_000) / 100
+                : 100,
+          }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+
+        // Calculate overall uptime across all checks
+        const totalChecks = checks.length;
+        const upChecks = checks.filter((c) => c.isUp).length;
+        const overallUptime =
+          totalChecks > 0
+            ? Math.round((upChecks / totalChecks) * 10_000) / 100
+            : 100;
+
+        return {
+          monitorId: monitor._id,
+          days,
+          overallUptime,
+        };
+      })
+    );
+
+    return Object.fromEntries(results.map((r) => [r.monitorId, r]));
   },
 });
