@@ -21,6 +21,7 @@ export const changelogTables = {
     ),
     githubPushError: v.optional(v.string()),
     githubPushErrorType: v.optional(v.string()),
+    retroactivelyGenerated: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -75,4 +76,89 @@ export const changelogTables = {
     .index("by_user_org", ["userId", "organizationId"])
     .index("by_email_org", ["email", "organizationId"])
     .index("by_unsubscribe_token", ["unsubscribeToken"]),
+
+  retroactiveJobs: defineTable({
+    organizationId: v.id("organizations"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("fetching_tags"),
+      v.literal("fetching_commits"),
+      v.literal("generating"),
+      v.literal("creating_releases"),
+      v.literal("completed"),
+      v.literal("error"),
+      v.literal("cancelled")
+    ),
+    groupingStrategy: v.union(
+      v.literal("tags"),
+      v.literal("monthly"),
+      v.literal("auto")
+    ),
+    targetBranch: v.string(),
+    skipExistingVersions: v.boolean(),
+
+    // Progress tracking
+    totalTags: v.optional(v.number()),
+    totalCommits: v.optional(v.number()),
+    fetchedCommits: v.optional(v.number()),
+    totalGroups: v.optional(v.number()),
+    processedGroups: v.optional(v.number()),
+    currentStep: v.optional(v.string()),
+
+    // Fetched tags
+    tags: v.optional(v.array(v.object({ name: v.string(), sha: v.string() }))),
+
+    // Commit groups
+    groups: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          title: v.string(),
+          version: v.optional(v.string()),
+          dateFrom: v.number(),
+          dateTo: v.number(),
+          commitCount: v.number(),
+          status: v.union(
+            v.literal("pending"),
+            v.literal("generating"),
+            v.literal("generated"),
+            v.literal("created"),
+            v.literal("skipped"),
+            v.literal("error")
+          ),
+          generatedTitle: v.optional(v.string()),
+          generatedDescription: v.optional(v.string()),
+          releaseId: v.optional(v.id("releases")),
+          error: v.optional(v.string()),
+        })
+      )
+    ),
+
+    // Results
+    createdReleaseIds: v.optional(v.array(v.id("releases"))),
+
+    // Error info
+    error: v.optional(v.string()),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_organization", ["organizationId"]),
+
+  retroactiveCommits: defineTable({
+    jobId: v.id("retroactiveJobs"),
+    groupId: v.string(),
+    commits: v.array(
+      v.object({
+        sha: v.string(),
+        message: v.string(),
+        fullMessage: v.string(),
+        author: v.string(),
+        date: v.string(),
+      })
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_job", ["jobId"])
+    .index("by_job_group", ["jobId", "groupId"]),
 };

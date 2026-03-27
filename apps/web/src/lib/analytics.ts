@@ -1,4 +1,5 @@
 import posthog from "posthog-js";
+import { hasAnalyticsConsent } from "@/components/cookie-consent-banner";
 
 interface AnalyticsEvents {
   // Feature adoption
@@ -37,7 +38,7 @@ interface AnalyticsEvents {
   widget_installed: Record<string, never>;
 }
 
-const isPostHogEnabled =
+const isPostHogConfigured =
   Boolean(process.env.NEXT_PUBLIC_POSTHOG_KEY) &&
   process.env.NODE_ENV !== "development";
 
@@ -46,7 +47,7 @@ export function capture<K extends keyof AnalyticsEvents>(
     ? [event: K]
     : [event: K, properties: AnalyticsEvents[K]]
 ): void {
-  if (!isPostHogEnabled) {
+  if (!(isPostHogConfigured && hasAnalyticsConsent())) {
     return;
   }
   const [event, properties] = args;

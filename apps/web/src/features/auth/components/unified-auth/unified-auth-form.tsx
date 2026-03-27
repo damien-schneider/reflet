@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AuthEmailField, AuthPasswordField } from "./auth-fields";
 import {
   AuthConfirmPassword,
@@ -153,6 +154,28 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
           isSubmitting={isSubmitting}
           mode={mode}
         />
+
+        {mode === "signUp" && (
+          <p className="text-center text-muted-foreground text-xs">
+            By creating an account, you agree to our{" "}
+            <Link
+              className="underline hover:text-foreground"
+              href="/terms"
+              target="_blank"
+            >
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link
+              className="underline hover:text-foreground"
+              href="/privacy"
+              target="_blank"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </p>
+        )}
 
         <AuthHelperText mode={mode} onResetMode={resetMode} />
       </form>

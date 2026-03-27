@@ -171,7 +171,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="mt-12 border-border border-t pt-8">
           <p className="text-muted-foreground text-sm">
-            &copy; {new Date().getFullYear()} Reflet Inc. Open Source.
+            &copy; {new Date().getFullYear()} Damien Schneider EI. Open Source.
           </p>
         </div>
       </div>

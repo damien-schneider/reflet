@@ -39,4 +39,28 @@ crons.daily(
   internal.surveys.mutations.abandonStaleResponses
 );
 
+crons.daily(
+  "run intelligence scans",
+  { hourUTC: 6, minuteUTC: 0 },
+  internal.intelligence.crons.runScheduledScans
+);
+
+crons.weekly(
+  "send intelligence digest",
+  { dayOfWeek: "monday", hourUTC: 10, minuteUTC: 0 },
+  internal.intelligence.notifications.sendAllIntelligenceDigests
+);
+
+crons.interval(
+  "status health checks",
+  { minutes: 1 },
+  internal.status.healthCheck.runHealthChecks
+);
+
+crons.daily(
+  "cleanup old status checks",
+  { hourUTC: 3, minuteUTC: 30 },
+  internal.status.healthCheck.cleanupOldChecks
+);
+
 export default crons;

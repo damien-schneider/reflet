@@ -1,6 +1,12 @@
 "use client";
 
-import { Code, GearSix, GithubLogo, Plus } from "@phosphor-icons/react";
+import {
+  ClockCounterClockwise,
+  Code,
+  GearSix,
+  GithubLogo,
+  Plus,
+} from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -14,6 +20,7 @@ import { ChangelogWidgetTab } from "@/features/changelog/components/changelog-wi
 import { DeleteReleaseDialog } from "@/features/changelog/components/delete-release-dialog";
 import { ReleaseSetupWizard } from "@/features/changelog/components/release-setup-wizard";
 import { ReleaseTimeline } from "@/features/changelog/components/release-timeline";
+import { RetroactiveChangelogSheet } from "@/features/changelog/components/retroactive-changelog-sheet";
 
 export default function ChangelogPage({
   params,
@@ -103,6 +110,7 @@ export default function ChangelogPage({
     NonNullable<typeof releases>[number] | null
   >(null);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
+  const [showRetroactive, setShowRetroactive] = useState(false);
 
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
@@ -180,6 +188,16 @@ export default function ChangelogPage({
         {isAdmin && (
           <div className="flex items-center gap-2">
             {githubAction}
+            {githubStatus?.isConnected && (
+              <Button
+                onClick={() => setShowRetroactive(true)}
+                variant="outline"
+              >
+                <ClockCounterClockwise className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Generate from History</span>
+                <span className="sm:hidden">History</span>
+              </Button>
+            )}
             <Link href={`/dashboard/${orgSlug}/changelog/new`}>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
@@ -265,12 +283,20 @@ export default function ChangelogPage({
       )}
 
       {githubStatus?.isConnected && (
-        <ReleaseSetupWizard
-          onOpenChange={setShowSetupWizard}
-          open={showSetupWizard}
-          organizationId={org._id}
-          orgSlug={orgSlug}
-        />
+        <>
+          <ReleaseSetupWizard
+            onOpenChange={setShowSetupWizard}
+            open={showSetupWizard}
+            organizationId={org._id}
+            orgSlug={orgSlug}
+          />
+          <RetroactiveChangelogSheet
+            onOpenChange={setShowRetroactive}
+            open={showRetroactive}
+            organizationId={org._id}
+            orgSlug={orgSlug}
+          />
+        </>
       )}
     </div>
   );

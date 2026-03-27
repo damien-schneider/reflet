@@ -3,6 +3,7 @@
 import {
   ChatCircle,
   FileText,
+  Heartbeat,
   Chat as MessageSquare,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -43,6 +44,14 @@ export default function PublicOrgLayoutClient({
 
   const supportEnabled = supportSettings?.supportEnabled ?? false;
 
+  const statusAggregation = useQuery(
+    api.status.monitors.getAggregateStatus,
+    org?._id ? { organizationId: org._id } : "skip"
+  );
+  const statusEnabled =
+    statusAggregation !== undefined &&
+    statusAggregation?.status !== "no_monitors";
+
   // Prefetch tab routes for instant navigation
   useEffect(() => {
     router.prefetch(`/${orgSlug}`);
@@ -50,7 +59,10 @@ export default function PublicOrgLayoutClient({
     if (supportEnabled) {
       router.prefetch(`/${orgSlug}/support`);
     }
-  }, [router, orgSlug, supportEnabled]);
+    if (statusEnabled) {
+      router.prefetch(`/${orgSlug}/status`);
+    }
+  }, [router, orgSlug, supportEnabled, statusEnabled]);
 
   const colorCssVars = useMemo(() => {
     const primaryColor = org?.primaryColor ?? DEFAULT_PRIMARY_COLOR;
@@ -64,6 +76,9 @@ export default function PublicOrgLayoutClient({
     }
     if (pathname === `/${orgSlug}/support`) {
       return "support";
+    }
+    if (pathname === `/${orgSlug}/status`) {
+      return "status";
     }
     return "feedback";
   }, [pathname, orgSlug]);
@@ -136,6 +151,12 @@ export default function PublicOrgLayoutClient({
               <FileText className="h-4 w-4" />
               Changelog
             </TabsTrigger>
+            {statusEnabled && (
+              <TabsTrigger value="status">
+                <Heartbeat className="h-4 w-4" />
+                Status
+              </TabsTrigger>
+            )}
             {supportEnabled && (
               <TabsTrigger value="support">
                 <ChatCircle className="h-4 w-4" />
@@ -173,6 +194,19 @@ export default function PublicOrgLayoutClient({
             <FileText className="h-5 w-5" />
             Changelog
           </Link>
+          {statusEnabled && (
+            <Link
+              className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
+                currentTab === "status"
+                  ? "font-medium text-olive-600"
+                  : "text-muted-foreground"
+              }`}
+              href={`/${orgSlug}/status`}
+            >
+              <Heartbeat className="h-5 w-5" />
+              Status
+            </Link>
+          )}
           {supportEnabled && (
             <Link
               className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${

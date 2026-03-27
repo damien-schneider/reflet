@@ -1,4 +1,5 @@
 import {
+  Binoculars,
   Brain,
   CaretUpDown,
   Chat,
@@ -7,6 +8,7 @@ import {
   Code,
   FileText,
   Gear,
+  Heartbeat,
   ShieldStar,
   SignOut,
   Trash,
@@ -113,6 +115,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   const adminNavItems = orgSlug
     ? [
         {
+          href: "/dashboard/$orgSlug/status",
+          icon: Heartbeat,
+          label: "Status",
+          badge: undefined,
+        },
+        {
           href: "/dashboard/$orgSlug/in-app",
           icon: Code,
           label: "In-App",
@@ -128,6 +136,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           href: "/dashboard/$orgSlug/ai",
           icon: Brain,
           label: "AI",
+          badge: undefined,
+        },
+        {
+          href: "/dashboard/$orgSlug/intelligence",
+          icon: Binoculars,
+          label: "Intelligence",
           badge: undefined,
         },
         {

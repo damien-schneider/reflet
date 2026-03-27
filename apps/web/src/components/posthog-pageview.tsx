@@ -3,6 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { useEffect, useRef } from "react";
+import { hasAnalyticsConsent } from "@/components/cookie-consent-banner";
 
 export function PostHogPageView() {
   const pathname = usePathname();
@@ -16,7 +17,7 @@ export function PostHogPageView() {
       return;
     }
 
-    if (pathname) {
+    if (pathname && hasAnalyticsConsent()) {
       let url = window.origin + pathname;
       if (searchParams.toString()) {
         url = `${url}?${searchParams.toString()}`;

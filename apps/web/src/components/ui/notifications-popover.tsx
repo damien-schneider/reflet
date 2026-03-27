@@ -2,6 +2,7 @@
 
 import {
   Bell,
+  Binoculars,
   Chat,
   Envelope,
   Package,
@@ -27,7 +28,8 @@ type NotificationType =
   | "vote_milestone"
   | "new_support_message"
   | "invitation"
-  | "feedback_shipped";
+  | "feedback_shipped"
+  | "intelligence_insight";
 
 const notificationIcons: Record<
   NotificationType,
@@ -39,6 +41,7 @@ const notificationIcons: Record<
   new_support_message: Envelope,
   invitation: UserPlus,
   feedback_shipped: Package,
+  intelligence_insight: Binoculars,
 };
 
 const notificationColors: Record<NotificationType, string> = {
@@ -48,6 +51,7 @@ const notificationColors: Record<NotificationType, string> = {
   new_support_message: "text-purple-500",
   invitation: "text-olive-500",
   feedback_shipped: "text-sky-500",
+  intelligence_insight: "text-indigo-500",
 };
 
 interface NotificationItemProps {

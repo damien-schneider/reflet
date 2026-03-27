@@ -6,6 +6,7 @@ import { ConvexReactClient } from "convex/react";
 import dynamic from "next/dynamic";
 import type { PostHog } from "posthog-js";
 import { useEffect, useState } from "react";
+import { hasAnalyticsConsent } from "@/components/cookie-consent-banner";
 import { authClient } from "./auth-client";
 
 const PostHogIdentifier = dynamic(
@@ -23,7 +24,7 @@ if (!convexUrl) {
 
 const convex = new ConvexReactClient(convexUrl);
 
-const isPostHogEnabled =
+const isPostHogConfigured =
   Boolean(env.NEXT_PUBLIC_POSTHOG_KEY) &&
   process.env.NODE_ENV !== "development";
 
@@ -42,7 +43,7 @@ export function Providers({
     }> | null>(null);
 
   useEffect(() => {
-    if (isPostHogEnabled) {
+    if (isPostHogConfigured && hasAnalyticsConsent()) {
       Promise.all([import("posthog-js"), import("posthog-js/react")]).then(
         ([posthogModule, reactModule]) => {
           setPosthogClient(posthogModule.default);
@@ -51,6 +52,8 @@ export function Providers({
       );
     }
   }, []);
+
+  const isPostHogEnabled = isPostHogConfigured && hasAnalyticsConsent();
 
   const inner = (
     <ConvexBetterAuthProvider
