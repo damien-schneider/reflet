@@ -56,6 +56,7 @@ const h3Variants = cva(
         default: "text-2xl leading-snug tracking-tight",
         card: "text-xl font-medium text-foreground",
         cardBold: "text-xl font-semibold text-foreground",
+        section: "font-sans text-base font-medium text-foreground text-pretty",
         landing:
           "text-[clamp(1.4rem,3vw,2rem)] leading-[1.15] tracking-[-0.01em]",
       },

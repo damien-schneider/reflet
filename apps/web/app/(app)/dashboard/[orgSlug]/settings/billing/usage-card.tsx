@@ -1,18 +1,10 @@
 import { ChartBar, CheckCircle } from "@phosphor-icons/react";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Progress,
   ProgressLabel,
   ProgressValue,
 } from "@/components/ui/progress";
-import { Text } from "@/components/ui/typography";
+import { H3, Muted, Text } from "@/components/ui/typography";
 
 import type { LimitsData, UsageData } from "./billing-types";
 
@@ -93,7 +85,7 @@ function FeatureStatus({
 // MAIN COMPONENT
 // ============================================
 
-export function UsageCard({
+export function UsageSection({
   isPro,
   usage,
   limits,
@@ -103,47 +95,44 @@ export function UsageCard({
   limits: LimitsData;
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <section className="space-y-6">
+      <div>
+        <div className="flex items-center gap-2">
           <ChartBar className="h-5 w-5" />
-          Usage
-        </CardTitle>
-        <CardDescription>
-          Track your organization&apos;s usage against plan limits
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <UsageProgress
-          atLimitMessage="Limit reached. Upgrade to Pro for unlimited members."
-          current={usage.members}
-          isUnlimited={isPro}
-          label="Team members"
-          max={limits.maxMembers}
-          nearLimitMessage="Approaching limit. Consider upgrading to Pro."
-        />
-
-        <UsageProgress
-          atLimitMessage="Limit reached. Upgrade to Pro for 5,000 feedback items."
-          current={usage.feedback}
-          label="Feedback items"
-          max={limits.maxFeedback}
-          nearLimitMessage="Approaching limit. Consider upgrading to Pro."
-        />
-
-        <div className="grid grid-cols-2 gap-4 border-t pt-4">
-          <FeatureStatus
-            enabled={limits.customBranding}
-            label="Custom Branding"
-          />
-          <FeatureStatus enabled={limits.customDomain} label="Custom Domain" />
-          <FeatureStatus enabled={limits.apiAccess} label="API Access" />
-          <FeatureStatus
-            enabled={limits.prioritySupport}
-            label="Priority Support"
-          />
+          <H3 variant="section">Usage</H3>
         </div>
-      </CardContent>
-    </Card>
+        <Muted>Track your organization&apos;s usage against plan limits</Muted>
+      </div>
+
+      <UsageProgress
+        atLimitMessage="Limit reached. Upgrade to Pro for unlimited members."
+        current={usage.members}
+        isUnlimited={isPro}
+        label="Team members"
+        max={limits.maxMembers}
+        nearLimitMessage="Approaching limit. Consider upgrading to Pro."
+      />
+
+      <UsageProgress
+        atLimitMessage="Limit reached. Upgrade to Pro for 5,000 feedback items."
+        current={usage.feedback}
+        label="Feedback items"
+        max={limits.maxFeedback}
+        nearLimitMessage="Approaching limit. Consider upgrading to Pro."
+      />
+
+      <div className="grid grid-cols-2 gap-4 border-t pt-4">
+        <FeatureStatus
+          enabled={limits.customBranding}
+          label="Custom Branding"
+        />
+        <FeatureStatus enabled={limits.customDomain} label="Custom Domain" />
+        <FeatureStatus enabled={limits.apiAccess} label="API Access" />
+        <FeatureStatus
+          enabled={limits.prioritySupport}
+          label="Priority Support"
+        />
+      </div>
+    </section>
   );
 }

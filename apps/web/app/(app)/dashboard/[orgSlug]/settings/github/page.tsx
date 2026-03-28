@@ -6,12 +6,12 @@ import { useQuery } from "convex/react";
 import { use, useEffect } from "react";
 
 import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
-import { GitHubConnectionCard } from "@/features/github/components/github-connection-card";
-import { IssuesSyncCard } from "@/features/github/components/issues-sync-card";
-import { LabelMappingsCard } from "@/features/github/components/label-mappings-card";
-import { RepositorySelectorCard } from "@/features/github/components/repository-selector-card";
-import { SyncSettingsCard } from "@/features/github/components/sync-settings-card";
-import { SyncedReleasesCard } from "@/features/github/components/synced-releases-card";
+import { GitHubConnectionSection } from "@/features/github/components/github-connection-card";
+import { IssuesSyncSection } from "@/features/github/components/issues-sync-card";
+import { LabelMappingsSection } from "@/features/github/components/label-mappings-card";
+import { RepositorySelectorSection } from "@/features/github/components/repository-selector-card";
+import { SyncSettingsSection } from "@/features/github/components/sync-settings-card";
+import { SyncedReleasesSection } from "@/features/github/components/synced-releases-card";
 import { useGitHubSettings } from "@/features/github/hooks/use-github-settings";
 import { useGitHubSettingsMutations } from "@/features/github/hooks/use-github-settings-mutations";
 import { useGitHubSettingsQueries } from "@/features/github/hooks/use-github-settings-queries";
@@ -108,7 +108,7 @@ export default function GitHubSettingsPage({
       </div>
 
       <div className="space-y-6">
-        <GitHubConnectionCard
+        <GitHubConnectionSection
           accountAvatarUrl={queries.connectionStatus?.accountAvatarUrl}
           accountLogin={queries.connectionStatus?.accountLogin}
           isAdmin={isAdmin}
@@ -119,7 +119,7 @@ export default function GitHubSettingsPage({
         />
 
         {queries.connectionStatus?.isConnected ? (
-          <RepositorySelectorCard
+          <RepositorySelectorSection
             hasRepository={
               queries.connectionStatus.hasRepository &&
               !settings.isChangingRepository
@@ -279,7 +279,7 @@ function RepositorySettingsSection({
   return (
     <>
       <H3 className="mt-8 border-t pt-4">Releases</H3>
-      <SyncSettingsCard
+      <SyncSettingsSection
         autoSyncEnabled={autoSyncEnabled}
         error={webhookSetupError}
         isAdmin={isAdmin}
@@ -293,7 +293,7 @@ function RepositorySettingsSection({
       />
 
       {githubReleases ? (
-        <SyncedReleasesCard
+        <SyncedReleasesSection
           releases={githubReleases.map((release) => ({
             ...release,
             isDraft: false,
@@ -302,7 +302,7 @@ function RepositorySettingsSection({
       ) : null}
 
       <H3 className="mt-8 border-t pt-4">Issues</H3>
-      <IssuesSyncCard
+      <IssuesSyncSection
         autoSync={issueSyncStatus?.autoSync ?? false}
         importedCount={issueSyncStatus?.importedCount ?? 0}
         isAdmin={isAdmin}
@@ -316,7 +316,7 @@ function RepositorySettingsSection({
         syncedIssuesCount={issueSyncStatus?.syncedIssuesCount ?? 0}
       />
 
-      <LabelMappingsCard
+      <LabelMappingsSection
         githubLabels={githubLabels}
         isAdmin={isAdmin}
         isLoadingLabels={isLoadingLabels}

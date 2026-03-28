@@ -1,13 +1,12 @@
 import {
   Binoculars,
-  Brain,
   CaretUpDown,
   Chat,
   ChatCircle,
   ClipboardText,
   Code,
+  Cube,
   FileText,
-  Gear,
   Heartbeat,
   ShieldStar,
   SignOut,
@@ -89,6 +88,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   const workspaceNavItems = orgSlug
     ? [
         {
+          href: "/dashboard/$orgSlug/project",
+          icon: Cube,
+          label: "Project",
+          badge: undefined,
+        },
+        {
           href: "/dashboard/$orgSlug",
           icon: Chat,
           label: "Feedback",
@@ -133,12 +138,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           badge: undefined,
         },
         {
-          href: "/dashboard/$orgSlug/ai",
-          icon: Brain,
-          label: "AI",
-          badge: undefined,
-        },
-        {
           href: "/dashboard/$orgSlug/intelligence",
           icon: Binoculars,
           label: "Intelligence",
@@ -153,16 +152,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
       ]
     : [];
 
-  const orgNavItems = orgSlug
-    ? [
-        {
-          href: "/dashboard/$orgSlug/settings",
-          icon: Gear,
-          label: "Settings",
-          badge: undefined,
-        },
-      ]
-    : [];
+  const orgNavItems: typeof adminNavItems = [];
 
   const isActive = (path: string) => {
     const fullPath = buildPath(path);
@@ -310,27 +300,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                 </SidebarGroupContent>
               </SidebarGroup>
             )}
-
-            <SidebarGroup>
-              <SidebarGroupLabel>Organization</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarList>
-                  {orgNavItems.map((item) => (
-                    <SidebarListItem key={item.href}>
-                      <SidebarListButton
-                        isActive={isActive(item.href)}
-                        render={(props) => (
-                          <Link href={buildHref(item.href)} {...props}>
-                            <item.icon className="h-4 w-4" />
-                            <span className="flex-1">{item.label}</span>
-                          </Link>
-                        )}
-                      />
-                    </SidebarListItem>
-                  ))}
-                </SidebarList>
-              </SidebarGroupContent>
-            </SidebarGroup>
           </>
         ) : (
           <SidebarGroup>

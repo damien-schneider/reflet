@@ -9,13 +9,6 @@ import {
   AlertTitle,
 } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/typography";
@@ -35,7 +28,7 @@ interface SyncSettingsCardProps {
   onToggleAutoSync: (enabled: boolean) => void;
 }
 
-export function SyncSettingsCard({
+export function SyncSettingsSection({
   autoSyncEnabled,
   lastSyncAt,
   isSyncing,
@@ -97,57 +90,46 @@ export function SyncSettingsCard({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ArrowsClockwise className="h-5 w-5" />
-          Release Sync
-        </CardTitle>
-        <CardDescription>
-          Configure how releases are synced from GitHub
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {renderError()}
+    <div className="space-y-4">
+      {renderError()}
 
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <Label htmlFor="auto-sync">Auto-sync releases</Label>
-            <Text className="text-muted-foreground text-sm">
-              Automatically import new GitHub releases to your changelog
-            </Text>
-          </div>
-          <div className="flex items-center gap-2">
-            {isSettingUp ? (
-              <Spinner className="h-4 w-4 animate-spin text-muted-foreground" />
-            ) : null}
-            <Switch
-              checked={autoSyncEnabled}
-              disabled={!isAdmin || isSettingUp}
-              id="auto-sync"
-              onCheckedChange={onToggleAutoSync}
-            />
-          </div>
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <Label htmlFor="auto-sync">Auto-sync releases</Label>
+          <Text className="text-muted-foreground text-sm">
+            Automatically import new releases to your changelog
+          </Text>
         </div>
+        <div className="flex items-center gap-2">
+          {isSettingUp ? (
+            <Spinner className="h-4 w-4 animate-spin text-muted-foreground" />
+          ) : null}
+          <Switch
+            checked={autoSyncEnabled}
+            disabled={!isAdmin || isSettingUp}
+            id="auto-sync"
+            onCheckedChange={onToggleAutoSync}
+          />
+        </div>
+      </div>
 
-        <div className="flex items-center gap-4">
-          {isAdmin ? (
-            <Button disabled={isSyncing} onClick={onSyncNow} variant="outline">
-              {isSyncing ? (
-                <Spinner className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <ArrowsClockwise className="mr-2 h-4 w-4" />
-              )}
-              Sync Now
-            </Button>
-          ) : null}
-          {lastSyncAt ? (
-            <Text className="text-muted-foreground text-sm">
-              Last synced: {new Date(lastSyncAt).toLocaleString()}
-            </Text>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex items-center gap-4">
+        {isAdmin ? (
+          <Button disabled={isSyncing} onClick={onSyncNow} variant="outline">
+            {isSyncing ? (
+              <Spinner className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ArrowsClockwise className="mr-2 h-4 w-4" />
+            )}
+            Sync Now
+          </Button>
+        ) : null}
+        {lastSyncAt ? (
+          <Text className="text-muted-foreground text-sm">
+            Last synced: {new Date(lastSyncAt).toLocaleString()}
+          </Text>
+        ) : null}
+      </div>
+    </div>
   );
 }

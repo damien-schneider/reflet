@@ -6,6 +6,7 @@ import {
   Chat,
   Envelope,
   Package,
+  ShieldWarning,
   TrendUp,
   UserPlus,
 } from "@phosphor-icons/react";
@@ -29,7 +30,9 @@ type NotificationType =
   | "new_support_message"
   | "invitation"
   | "feedback_shipped"
-  | "intelligence_insight";
+  | "intelligence_insight"
+  | "incident_detected"
+  | "incident_resolved";
 
 const notificationIcons: Record<
   NotificationType,
@@ -42,6 +45,8 @@ const notificationIcons: Record<
   invitation: UserPlus,
   feedback_shipped: Package,
   intelligence_insight: Binoculars,
+  incident_detected: ShieldWarning,
+  incident_resolved: ShieldWarning,
 };
 
 const notificationColors: Record<NotificationType, string> = {
@@ -52,6 +57,8 @@ const notificationColors: Record<NotificationType, string> = {
   invitation: "text-olive-500",
   feedback_shipped: "text-sky-500",
   intelligence_insight: "text-indigo-500",
+  incident_detected: "text-red-500",
+  incident_resolved: "text-green-500",
 };
 
 interface NotificationItemProps {

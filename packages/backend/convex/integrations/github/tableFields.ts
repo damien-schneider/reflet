@@ -144,4 +144,86 @@ export const githubTables = {
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_organization", ["organizationId"]),
+
+  projectSetupResults: defineTable({
+    organizationId: v.id("organizations"),
+    githubConnectionId: v.id("githubConnections"),
+    status: v.union(
+      v.literal("idle"),
+      v.literal("analyzing"),
+      v.literal("review"),
+      v.literal("completed"),
+      v.literal("error")
+    ),
+    steps: v.array(
+      v.object({
+        key: v.string(),
+        label: v.string(),
+        status: v.union(
+          v.literal("pending"),
+          v.literal("running"),
+          v.literal("done"),
+          v.literal("error")
+        ),
+        summary: v.optional(v.string()),
+        error: v.optional(v.string()),
+      })
+    ),
+    suggestedMonitors: v.optional(
+      v.array(
+        v.object({
+          url: v.string(),
+          name: v.string(),
+          method: v.optional(v.string()),
+          accepted: v.boolean(),
+        })
+      )
+    ),
+    suggestedKeywords: v.optional(
+      v.array(
+        v.object({
+          keyword: v.string(),
+          category: v.string(),
+          accepted: v.boolean(),
+        })
+      )
+    ),
+    suggestedTags: v.optional(
+      v.array(
+        v.object({
+          name: v.string(),
+          color: v.string(),
+          accepted: v.boolean(),
+        })
+      )
+    ),
+    changelogConfig: v.optional(
+      v.object({
+        workflow: v.union(
+          v.literal("ai_powered"),
+          v.literal("automated"),
+          v.literal("manual")
+        ),
+        importExisting: v.boolean(),
+        syncDirection: v.string(),
+        versionPrefix: v.string(),
+        targetBranch: v.string(),
+        releaseCount: v.optional(v.number()),
+        hasConventionalCommits: v.optional(v.boolean()),
+      })
+    ),
+    suggestedPrompts: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          prompt: v.string(),
+        })
+      )
+    ),
+    projectOverview: v.optional(v.string()),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_organization", ["organizationId"]),
 };

@@ -93,11 +93,14 @@ export function RetroactiveDraftReview({
       {/* Actions */}
       <div className="flex flex-col gap-3">
         {releaseCount > 0 && (
-          <Button asChild className="w-full">
-            <Link href={`/dashboard/${orgSlug}/changelog/review-drafts`}>
-              Review & Publish
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+          <Button
+            className="w-full"
+            render={
+              <Link href={`/dashboard/${orgSlug}/changelog/review-drafts`} />
+            }
+          >
+            Review & Publish
+            <ArrowRight className="h-4 w-4" />
           </Button>
         )}
         <p className="text-center text-muted-foreground text-xs">

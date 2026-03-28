@@ -13,17 +13,11 @@ import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { H1, Text } from "@/components/ui/typography";
+import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
 
 const generateSlug = (text: string): string => {
   return text
@@ -68,10 +62,10 @@ export default function GeneralSettingsPage({
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
-          <h2 className="font-semibold text-xl">Organization not found</h2>
-          <p className="mt-2 text-muted-foreground">
+          <H2 variant="card">Organization not found</H2>
+          <Muted className="mt-2">
             The organization you&apos;re looking for doesn&apos;t exist.
-          </p>
+          </Muted>
         </div>
       </div>
     );
@@ -149,18 +143,16 @@ export default function GeneralSettingsPage({
         </Text>
       </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+      <div className="space-y-8">
+        <section className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2">
               <Buildings className="h-5 w-5" />
-              Organization Details
-            </CardTitle>
-            <CardDescription>
-              Update your organization name and URL
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+              <H3 variant="section">Organization Details</H3>
+            </div>
+            <Muted>Update your organization name and URL</Muted>
+          </div>
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="org-name">Organization Name</Label>
               <Input
@@ -191,41 +183,41 @@ export default function GeneralSettingsPage({
                   value={slug}
                 />
               </div>
-              <p className="text-muted-foreground text-xs">
+              <Text variant="caption">
                 This is the URL identifier for your organization. Only lowercase
                 letters, numbers, and hyphens are allowed.
-              </p>
+              </Text>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Separator />
+
+        <section className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2">
               <Globe className="h-5 w-5" />
-              Visibility
-            </CardTitle>
-            <CardDescription>
-              Control who can see your organization&apos;s public pages
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="public-toggle">Public Organization</Label>
-                <p className="text-muted-foreground text-sm">
-                  Allow anyone to view your public roadmap and changelog
-                </p>
-              </div>
-              <Switch
-                checked={isPublic}
-                disabled={!isAdmin}
-                id="public-toggle"
-                onCheckedChange={setIsPublic}
-              />
+              <H3 variant="section">Visibility</H3>
             </div>
-          </CardContent>
-        </Card>
+            <Muted>
+              Control who can see your organization&apos;s public pages
+            </Muted>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="public-toggle">Public Organization</Label>
+              <Muted>
+                Allow anyone to view your public roadmap and changelog
+              </Muted>
+            </div>
+            <Switch
+              checked={isPublic}
+              disabled={!isAdmin}
+              id="public-toggle"
+              onCheckedChange={setIsPublic}
+            />
+          </div>
+        </section>
 
         {error ? (
           <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-destructive text-sm">

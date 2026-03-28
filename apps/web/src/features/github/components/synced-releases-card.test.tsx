@@ -11,23 +11,27 @@ vi.mock("@/components/ui/badge", () => ({
   }) => <span data-variant={variant}>{children}</span>,
 }));
 
-vi.mock("@/components/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h3>{children}</h3>
-  ),
-}));
-
 vi.mock("@/components/ui/typography", () => ({
+  H3: ({
+    children,
+    variant,
+    className,
+  }: {
+    children: React.ReactNode;
+    variant?: string;
+    className?: string;
+  }) => (
+    <h3 className={className} data-variant={variant}>
+      {children}
+    </h3>
+  ),
+  Muted: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <p className={className}>{children}</p>,
   Text: ({
     children,
     className,
@@ -37,17 +41,17 @@ vi.mock("@/components/ui/typography", () => ({
   }) => <span className={className}>{children}</span>,
 }));
 
-import { SyncedReleasesCard } from "./synced-releases-card";
+import { SyncedReleasesSection } from "./synced-releases-card";
 
 afterEach(cleanup);
 
-describe("SyncedReleasesCard", () => {
+describe("SyncedReleasesSection", () => {
   it("returns null for empty releases", () => {
-    const { container } = render(<SyncedReleasesCard releases={[]} />);
+    const { container } = render(<SyncedReleasesSection releases={[]} />);
     expect(container.innerHTML).toBe("");
   });
 
-  it("renders title and count", () => {
+  it("renders release content", () => {
     const releases = [
       {
         _id: "r1",
@@ -57,11 +61,9 @@ describe("SyncedReleasesCard", () => {
         isPrerelease: false,
       },
     ];
-    render(<SyncedReleasesCard releases={releases} />);
-    expect(screen.getByText("Synced Releases")).toBeInTheDocument();
-    expect(
-      screen.getByText("1 releases synced from GitHub")
-    ).toBeInTheDocument();
+    render(<SyncedReleasesSection releases={releases} />);
+    expect(screen.getByText("Release 1.0")).toBeInTheDocument();
+    expect(screen.getByText("v1.0.0")).toBeInTheDocument();
   });
 
   it("renders release name and tag", () => {
@@ -74,7 +76,7 @@ describe("SyncedReleasesCard", () => {
         isPrerelease: false,
       },
     ];
-    render(<SyncedReleasesCard releases={releases} />);
+    render(<SyncedReleasesSection releases={releases} />);
     expect(screen.getByText("Version 2.0")).toBeInTheDocument();
     expect(screen.getByText("v2.0.0")).toBeInTheDocument();
   });
@@ -88,7 +90,7 @@ describe("SyncedReleasesCard", () => {
         isPrerelease: false,
       },
     ];
-    render(<SyncedReleasesCard releases={releases} />);
+    render(<SyncedReleasesSection releases={releases} />);
     // tagName appears both as primary name and as secondary
     const tags = screen.getAllByText("v3.0.0");
     expect(tags.length).toBeGreaterThanOrEqual(1);
@@ -103,7 +105,7 @@ describe("SyncedReleasesCard", () => {
         isPrerelease: false,
       },
     ];
-    render(<SyncedReleasesCard releases={releases} />);
+    render(<SyncedReleasesSection releases={releases} />);
     expect(screen.getByText("Draft")).toBeInTheDocument();
   });
 
@@ -116,7 +118,7 @@ describe("SyncedReleasesCard", () => {
         isPrerelease: true,
       },
     ];
-    render(<SyncedReleasesCard releases={releases} />);
+    render(<SyncedReleasesSection releases={releases} />);
     expect(screen.getByText("Pre-release")).toBeInTheDocument();
   });
 
@@ -130,7 +132,7 @@ describe("SyncedReleasesCard", () => {
         refletReleaseId: "rel_123",
       },
     ];
-    render(<SyncedReleasesCard releases={releases} />);
+    render(<SyncedReleasesSection releases={releases} />);
     expect(screen.getByText("Imported")).toBeInTheDocument();
   });
 
@@ -142,11 +144,8 @@ describe("SyncedReleasesCard", () => {
       isDraft: false,
       isPrerelease: false,
     }));
-    render(<SyncedReleasesCard releases={releases} />);
-    expect(
-      screen.getByText("8 releases synced from GitHub")
-    ).toBeInTheDocument();
-    // Only 5 shown
+    render(<SyncedReleasesSection releases={releases} />);
+    // Only 5 shown, with "+3 more" indicator
     expect(screen.getByText("Release 0")).toBeInTheDocument();
     expect(screen.getByText("Release 4")).toBeInTheDocument();
     expect(screen.queryByText("Release 5")).toBeNull();
@@ -162,7 +161,7 @@ describe("SyncedReleasesCard", () => {
         refletReleaseId: "rel_1",
       },
     ];
-    render(<SyncedReleasesCard releases={releases} />);
+    render(<SyncedReleasesSection releases={releases} />);
     expect(screen.getByText("Draft")).toBeInTheDocument();
     expect(screen.getByText("Pre-release")).toBeInTheDocument();
     expect(screen.getByText("Imported")).toBeInTheDocument();
@@ -185,12 +184,12 @@ describe("SyncedReleasesCard", () => {
         isPrerelease: false,
       },
     ];
-    render(<SyncedReleasesCard releases={releases} />);
+    render(<SyncedReleasesSection releases={releases} />);
     expect(screen.getByText("R1")).toBeInTheDocument();
     expect(screen.getByText("R2")).toBeInTheDocument();
   });
 
-  it("shows correct count for 3 releases", () => {
+  it("shows all releases when 3 or fewer", () => {
     const releases = Array.from({ length: 3 }, (_, i) => ({
       _id: `r${i}`,
       tagName: `v${i}.0.0`,
@@ -198,17 +197,17 @@ describe("SyncedReleasesCard", () => {
       isDraft: false,
       isPrerelease: false,
     }));
-    render(<SyncedReleasesCard releases={releases} />);
-    expect(
-      screen.getByText("3 releases synced from GitHub")
-    ).toBeInTheDocument();
+    render(<SyncedReleasesSection releases={releases} />);
+    expect(screen.getByText("Release 0")).toBeInTheDocument();
+    expect(screen.getByText("Release 1")).toBeInTheDocument();
+    expect(screen.getByText("Release 2")).toBeInTheDocument();
   });
 
   it("does not show Imported badge when no refletReleaseId", () => {
     const releases = [
       { _id: "r1", tagName: "v1.0.0", isDraft: false, isPrerelease: false },
     ];
-    render(<SyncedReleasesCard releases={releases} />);
+    render(<SyncedReleasesSection releases={releases} />);
     expect(screen.queryByText("Imported")).not.toBeInTheDocument();
   });
 
@@ -216,7 +215,7 @@ describe("SyncedReleasesCard", () => {
     const releases = [
       { _id: "r1", tagName: "v1.0.0", isDraft: false, isPrerelease: false },
     ];
-    render(<SyncedReleasesCard releases={releases} />);
+    render(<SyncedReleasesSection releases={releases} />);
     expect(screen.queryByText("Draft")).not.toBeInTheDocument();
   });
 
@@ -224,7 +223,7 @@ describe("SyncedReleasesCard", () => {
     const releases = [
       { _id: "r1", tagName: "v1.0.0", isDraft: false, isPrerelease: false },
     ];
-    render(<SyncedReleasesCard releases={releases} />);
+    render(<SyncedReleasesSection releases={releases} />);
     expect(screen.queryByText("Pre-release")).not.toBeInTheDocument();
   });
 
@@ -236,7 +235,7 @@ describe("SyncedReleasesCard", () => {
       isDraft: false,
       isPrerelease: false,
     }));
-    render(<SyncedReleasesCard releases={releases} />);
+    render(<SyncedReleasesSection releases={releases} />);
     expect(screen.getByText("Release 0")).toBeInTheDocument();
     expect(screen.getByText("Release 4")).toBeInTheDocument();
     expect(screen.queryByText("Release 5")).toBeNull();

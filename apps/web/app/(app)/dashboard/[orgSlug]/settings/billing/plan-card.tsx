@@ -3,14 +3,7 @@ import { Check, Crown, Sparkle, Warning } from "@phosphor-icons/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Text } from "@/components/ui/typography";
+import { H3, Muted, Text } from "@/components/ui/typography";
 
 import type {
   BillingInterval,
@@ -234,8 +227,8 @@ export function PlanCard({
   const isUpgrade = plan.id === "pro" && currentTier === "free";
 
   return (
-    <Card
-      className={`relative flex flex-col ${
+    <div
+      className={`relative flex flex-col rounded-xl border bg-card p-6 text-card-foreground shadow-sm ${
         plan.highlighted ? "ring-2 ring-olive-600 dark:ring-olive-500" : ""
       }`}
     >
@@ -245,24 +238,24 @@ export function PlanCard({
         </div>
       )}
 
-      <CardHeader className="pb-2">
+      <div className="mb-4">
         <div className="flex items-center gap-2">
           {plan.id === "pro" ? (
             <Crown className="h-5 w-5 text-amber-500" weight="fill" />
           ) : (
             <Sparkle className="h-5 w-5 text-muted-foreground" />
           )}
-          <CardTitle>{plan.name}</CardTitle>
+          <H3 variant="section">{plan.name}</H3>
           {isCurrentPlan && (
             <Badge className="ml-auto" variant="outline">
               Current Plan
             </Badge>
           )}
         </div>
-        <CardDescription>{plan.description}</CardDescription>
-      </CardHeader>
+        <Muted>{plan.description}</Muted>
+      </div>
 
-      <CardContent className="flex flex-1 flex-col gap-6">
+      <div className="flex flex-1 flex-col gap-6">
         <PriceDisplay
           isSelected={selectedInterval === "yearly"}
           price={price}
@@ -311,7 +304,7 @@ export function PlanCard({
           planId={plan.id}
           priceKey={price.priceKey}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

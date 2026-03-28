@@ -25,7 +25,6 @@ import { H2, Muted } from "@/components/ui/typography";
 import { CommandPalette } from "@/features/command-palette/components/command-palette";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
 import { PushNotificationPrompt } from "@/features/dashboard/components/push-notification-prompt";
-import { OnboardingChecklist } from "@/features/onboarding/components/onboarding-checklist";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 import { computeDashboardNavigation } from "./use-dashboard-navigation";
@@ -43,6 +42,8 @@ const routeLabels: Record<string, string> = {
   branding: "Branding",
   "super-admin": "Super Admin",
   account: "Account",
+  project: "Project",
+  setup: "Setup",
 };
 
 /** Routes under /dashboard/ that don't require an org slug */
@@ -347,12 +348,6 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
               <>
                 <PushNotificationPrompt />
                 {children}
-                {isAdmin && org?._id && (
-                  <OnboardingChecklist
-                    organizationId={org._id}
-                    orgSlug={orgSlug}
-                  />
-                )}
               </>
             ) : null}
           </>

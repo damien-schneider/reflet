@@ -82,23 +82,27 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h3>{children}</h3>
-  ),
-}));
-
 vi.mock("@/components/ui/typography", () => ({
+  H3: ({
+    children,
+    variant,
+    className,
+  }: {
+    children: React.ReactNode;
+    variant?: string;
+    className?: string;
+  }) => (
+    <h3 className={className} data-variant={variant}>
+      {children}
+    </h3>
+  ),
+  Muted: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <p className={className}>{children}</p>,
   Text: ({
     children,
     variant,
@@ -134,7 +138,7 @@ vi.mock("./github-permission-error-alert", () => ({
   ),
 }));
 
-import { WebhookSetupCard } from "./webhook-setup-card";
+import { WebhookSetupSection } from "./webhook-setup-card";
 
 afterEach(cleanup);
 
@@ -145,43 +149,43 @@ const defaultProps = {
   onSetup: vi.fn(),
 };
 
-describe("WebhookSetupCard", () => {
+describe("WebhookSetupSection", () => {
   it("renders title", () => {
-    render(<WebhookSetupCard {...defaultProps} />);
+    render(<WebhookSetupSection {...defaultProps} />);
     expect(screen.getByText("Webhook Setup")).toBeInTheDocument();
   });
 
   it("shows setup button for admin when no webhook", () => {
-    render(<WebhookSetupCard {...defaultProps} />);
+    render(<WebhookSetupSection {...defaultProps} />);
     expect(screen.getByText("Setup Webhook")).toBeInTheDocument();
   });
 
   it("calls onSetup when setup button clicked", async () => {
     const onSetup = vi.fn();
     const user = userEvent.setup();
-    render(<WebhookSetupCard {...defaultProps} onSetup={onSetup} />);
+    render(<WebhookSetupSection {...defaultProps} onSetup={onSetup} />);
     await user.click(screen.getByText("Setup Webhook"));
     expect(onSetup).toHaveBeenCalled();
   });
 
   it("disables setup button when setting up", () => {
-    render(<WebhookSetupCard {...defaultProps} isSettingUp />);
+    render(<WebhookSetupSection {...defaultProps} isSettingUp />);
     expect(screen.getByText("Setup Webhook").closest("button")).toBeDisabled();
   });
 
   it("shows spinner when setting up", () => {
-    render(<WebhookSetupCard {...defaultProps} isSettingUp />);
+    render(<WebhookSetupSection {...defaultProps} isSettingUp />);
     expect(screen.getByTestId("icon-spinner")).toBeInTheDocument();
   });
 
   it("shows active badge when webhook exists", () => {
-    render(<WebhookSetupCard {...defaultProps} hasWebhook />);
+    render(<WebhookSetupSection {...defaultProps} hasWebhook />);
     expect(screen.getByText("Webhook Active")).toBeInTheDocument();
     expect(screen.queryByText("Setup Webhook")).toBeNull();
   });
 
   it("shows contact admin message for non-admin without webhook", () => {
-    render(<WebhookSetupCard {...defaultProps} isAdmin={false} />);
+    render(<WebhookSetupSection {...defaultProps} isAdmin={false} />);
     expect(
       screen.getByText("Contact an admin to setup the webhook.")
     ).toBeInTheDocument();
@@ -189,19 +193,19 @@ describe("WebhookSetupCard", () => {
   });
 
   it("shows description for active webhook", () => {
-    render(<WebhookSetupCard {...defaultProps} hasWebhook />);
+    render(<WebhookSetupSection {...defaultProps} hasWebhook />);
     expect(screen.getByText(/Webhook is active/)).toBeInTheDocument();
   });
 
   it("shows description for inactive webhook", () => {
-    render(<WebhookSetupCard {...defaultProps} />);
+    render(<WebhookSetupSection {...defaultProps} />);
     expect(screen.getByText(/Enable automatic syncing/)).toBeInTheDocument();
   });
 
   it("shows permission error alert", () => {
     const onResync = vi.fn();
     render(
-      <WebhookSetupCard
+      <WebhookSetupSection
         {...defaultProps}
         error={{ code: "GITHUB_PERMISSION_DENIED", message: "Denied" }}
         onResync={onResync}
@@ -214,7 +218,7 @@ describe("WebhookSetupCard", () => {
   it("shows generic error with dismiss", () => {
     const onClearError = vi.fn();
     render(
-      <WebhookSetupCard
+      <WebhookSetupSection
         {...defaultProps}
         error={{ code: "UNKNOWN", message: "Network error" }}
         onClearError={onClearError}
@@ -225,7 +229,7 @@ describe("WebhookSetupCard", () => {
   });
 
   it("does not render error when no error prop", () => {
-    render(<WebhookSetupCard {...defaultProps} />);
+    render(<WebhookSetupSection {...defaultProps} />);
     expect(screen.queryByTestId("alert")).toBeNull();
     expect(screen.queryByTestId("permission-error-alert")).toBeNull();
   });

@@ -7,14 +7,8 @@ import { useMutation, useQuery } from "convex/react";
 import { use, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { H1, Text } from "@/components/ui/typography";
+import { Separator } from "@/components/ui/separator";
+import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
 import { InvitationList } from "@/features/members/components/invitation-list";
 import { InviteMemberDialog } from "@/features/members/components/invite-member-dialog";
 import { MemberList } from "@/features/members/components/member-list";
@@ -54,10 +48,10 @@ export default function MembersGearPage({
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
-          <h2 className="font-semibold text-xl">Organization not found</h2>
-          <p className="mt-2 text-muted-foreground">
+          <H2 variant="card">Organization not found</H2>
+          <Muted className="mt-2">
             The organization you&apos;re looking for doesn&apos;t exist.
-          </p>
+          </Muted>
         </div>
       </div>
     );
@@ -91,40 +85,39 @@ export default function MembersGearPage({
         ) : null}
       </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+      <div className="space-y-8">
+        <section className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Team Members
-            </CardTitle>
-            <CardDescription>
+              <H3 variant="section">Team Members</H3>
+            </div>
+            <Muted>
               {members?.length ?? 0} member{members?.length === 1 ? "" : "s"} in
               this organization
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <MemberList
-              isOwner={isOwner}
-              members={members}
-              onRemoveMember={(id, name) => setRemovingMember({ id, name })}
-            />
-          </CardContent>
-        </Card>
+            </Muted>
+          </div>
+          <MemberList
+            isOwner={isOwner}
+            members={members}
+            onRemoveMember={(id, name) => setRemovingMember({ id, name })}
+          />
+        </section>
 
         {invitations && invitations.length > 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Invitations</CardTitle>
-              <CardDescription>
-                {invitations.length} pending invitation
-                {invitations.length === 1 ? "" : "s"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <>
+            <Separator />
+            <section className="space-y-4">
+              <div>
+                <H3 variant="section">Pending Invitations</H3>
+                <Muted>
+                  {invitations.length} pending invitation
+                  {invitations.length === 1 ? "" : "s"}
+                </Muted>
+              </div>
               <InvitationList invitations={invitations} />
-            </CardContent>
-          </Card>
+            </section>
+          </>
         ) : null}
       </div>
 

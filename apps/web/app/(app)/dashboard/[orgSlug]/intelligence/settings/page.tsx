@@ -1,39 +1,18 @@
 "use client";
 
-import { api } from "@reflet/backend/convex/_generated/api";
-import { useQuery } from "convex/react";
-import { use } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { H1, Text } from "@/components/ui/typography";
-import { IntelligenceSettings } from "@/features/intelligence/components/intelligence-settings";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default function IntelligenceSettingsPage({
-  params,
-}: {
-  params: Promise<{ orgSlug: string }>;
-}) {
-  const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
+export default function IntelligenceSettingsRedirect() {
+  const params = useParams();
+  const router = useRouter();
+  const orgSlug = typeof params?.orgSlug === "string" ? params.orgSlug : "";
 
-  if (!org) {
-    return (
-      <div className="admin-container">
-        <Skeleton className="h-8 w-48" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (orgSlug) {
+      router.replace(`/dashboard/${orgSlug}/intelligence`);
+    }
+  }, [orgSlug, router]);
 
-  return (
-    <div className="admin-container">
-      <div className="mb-8">
-        <H1>Intelligence Settings</H1>
-        <Text variant="bodySmall">
-          Configure your competitive intelligence scanning frequency and data
-          sources
-        </Text>
-      </div>
-
-      <IntelligenceSettings organizationId={org._id} />
-    </div>
-  );
+  return null;
 }

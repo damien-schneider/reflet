@@ -69,22 +69,6 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h3>{children}</h3>
-  ),
-}));
-
 vi.mock("@/components/ui/label", () => ({
   Label: ({
     children,
@@ -119,6 +103,26 @@ vi.mock("@/components/ui/switch", () => ({
 }));
 
 vi.mock("@/components/ui/typography", () => ({
+  H3: ({
+    children,
+    variant,
+    className,
+  }: {
+    children: React.ReactNode;
+    variant?: string;
+    className?: string;
+  }) => (
+    <h3 className={className} data-variant={variant}>
+      {children}
+    </h3>
+  ),
+  Muted: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <p className={className}>{children}</p>,
   Text: ({
     children,
     className,
@@ -155,7 +159,7 @@ vi.mock("./github-permission-error-alert", () => ({
   ),
 }));
 
-import { SyncSettingsCard } from "./sync-settings-card";
+import { SyncSettingsSection } from "./sync-settings-card";
 
 afterEach(cleanup);
 
@@ -167,17 +171,14 @@ const defaultProps = {
   onSyncNow: vi.fn(),
 };
 
-describe("SyncSettingsCard", () => {
-  it("renders title and description", () => {
-    render(<SyncSettingsCard {...defaultProps} />);
-    expect(screen.getByText("Release Sync")).toBeInTheDocument();
-    expect(
-      screen.getByText("Configure how releases are synced from GitHub")
-    ).toBeInTheDocument();
+describe("SyncSettingsSection", () => {
+  it("renders auto-sync toggle", () => {
+    render(<SyncSettingsSection {...defaultProps} />);
+    expect(screen.getByText("Auto-sync releases")).toBeInTheDocument();
   });
 
   it("renders auto-sync switch", () => {
-    render(<SyncSettingsCard {...defaultProps} />);
+    render(<SyncSettingsSection {...defaultProps} />);
     expect(screen.getByText("Auto-sync releases")).toBeInTheDocument();
     expect(screen.getByTestId("switch-auto-sync")).toBeInTheDocument();
   });
@@ -186,60 +187,63 @@ describe("SyncSettingsCard", () => {
     const onToggleAutoSync = vi.fn();
     const user = userEvent.setup();
     render(
-      <SyncSettingsCard {...defaultProps} onToggleAutoSync={onToggleAutoSync} />
+      <SyncSettingsSection
+        {...defaultProps}
+        onToggleAutoSync={onToggleAutoSync}
+      />
     );
     await user.click(screen.getByTestId("switch-auto-sync"));
     expect(onToggleAutoSync).toHaveBeenCalledWith(true);
   });
 
   it("shows Sync Now button for admin", () => {
-    render(<SyncSettingsCard {...defaultProps} />);
+    render(<SyncSettingsSection {...defaultProps} />);
     expect(screen.getByText("Sync Now")).toBeInTheDocument();
   });
 
   it("hides Sync Now button for non-admin", () => {
-    render(<SyncSettingsCard {...defaultProps} isAdmin={false} />);
+    render(<SyncSettingsSection {...defaultProps} isAdmin={false} />);
     expect(screen.queryByText("Sync Now")).toBeNull();
   });
 
   it("disables Sync Now button when syncing", () => {
-    render(<SyncSettingsCard {...defaultProps} isSyncing />);
+    render(<SyncSettingsSection {...defaultProps} isSyncing />);
     expect(screen.getByText("Sync Now").closest("button")).toBeDisabled();
   });
 
   it("calls onSyncNow when Sync Now clicked", async () => {
     const onSyncNow = vi.fn();
     const user = userEvent.setup();
-    render(<SyncSettingsCard {...defaultProps} onSyncNow={onSyncNow} />);
+    render(<SyncSettingsSection {...defaultProps} onSyncNow={onSyncNow} />);
     await user.click(screen.getByText("Sync Now"));
     expect(onSyncNow).toHaveBeenCalled();
   });
 
   it("shows last synced time when provided", () => {
     const lastSyncAt = new Date("2025-01-15T10:30:00Z").getTime();
-    render(<SyncSettingsCard {...defaultProps} lastSyncAt={lastSyncAt} />);
+    render(<SyncSettingsSection {...defaultProps} lastSyncAt={lastSyncAt} />);
     expect(screen.getByText(/Last synced:/)).toBeInTheDocument();
   });
 
   it("does not show last synced time when not provided", () => {
-    render(<SyncSettingsCard {...defaultProps} />);
+    render(<SyncSettingsSection {...defaultProps} />);
     expect(screen.queryByText(/Last synced:/)).toBeNull();
   });
 
   it("shows spinner when setting up", () => {
-    render(<SyncSettingsCard {...defaultProps} isSettingUp />);
+    render(<SyncSettingsSection {...defaultProps} isSettingUp />);
     expect(screen.getByTestId("icon-spinner")).toBeInTheDocument();
   });
 
   it("disables switch when not admin", () => {
-    render(<SyncSettingsCard {...defaultProps} isAdmin={false} />);
+    render(<SyncSettingsSection {...defaultProps} isAdmin={false} />);
     expect(screen.getByTestId("switch-auto-sync")).toBeDisabled();
   });
 
   it("shows permission error alert for GITHUB_PERMISSION_DENIED", () => {
     const onResyncGitHub = vi.fn();
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         error={{ code: "GITHUB_PERMISSION_DENIED", message: "Denied" }}
         onResyncGitHub={onResyncGitHub}
@@ -251,7 +255,7 @@ describe("SyncSettingsCard", () => {
 
   it("shows localhost error with additional message", () => {
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         error={{
           code: "LOCALHOST_NOT_SUPPORTED",
@@ -267,7 +271,7 @@ describe("SyncSettingsCard", () => {
     const onClearError = vi.fn();
     const _user = userEvent.setup();
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         error={{ code: "UNKNOWN", message: "Something went wrong" }}
         onClearError={onClearError}
@@ -278,7 +282,7 @@ describe("SyncSettingsCard", () => {
   });
 
   it("does not render error section when no error", () => {
-    render(<SyncSettingsCard {...defaultProps} />);
+    render(<SyncSettingsSection {...defaultProps} />);
     expect(screen.queryByTestId("alert")).toBeNull();
     expect(screen.queryByTestId("permission-error-alert")).toBeNull();
   });
@@ -287,7 +291,7 @@ describe("SyncSettingsCard", () => {
     const onClearError = vi.fn();
     const user = userEvent.setup();
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         error={{ code: "UNKNOWN", message: "Oops" }}
         onClearError={onClearError}
@@ -298,16 +302,14 @@ describe("SyncSettingsCard", () => {
   });
 
   it("shows syncing spinner inside the Sync Now button", () => {
-    render(<SyncSettingsCard {...defaultProps} isSyncing />);
+    render(<SyncSettingsSection {...defaultProps} isSyncing />);
     expect(screen.getByTestId("icon-spinner")).toBeInTheDocument();
   });
 
   it("shows auto-sync description text", () => {
-    render(<SyncSettingsCard {...defaultProps} />);
+    render(<SyncSettingsSection {...defaultProps} />);
     expect(
-      screen.getByText(
-        "Automatically import new GitHub releases to your changelog"
-      )
+      screen.getByText("Automatically import new releases to your changelog")
     ).toBeInTheDocument();
   });
 
@@ -315,7 +317,7 @@ describe("SyncSettingsCard", () => {
     const onResyncGitHub = vi.fn();
     const user = userEvent.setup();
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         error={{ code: "GITHUB_PERMISSION_DENIED", message: "Denied" }}
         onResyncGitHub={onResyncGitHub}
@@ -329,7 +331,7 @@ describe("SyncSettingsCard", () => {
     const onClearError = vi.fn();
     const user = userEvent.setup();
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         error={{ code: "GITHUB_PERMISSION_DENIED", message: "Denied" }}
         onClearError={onClearError}
@@ -341,7 +343,7 @@ describe("SyncSettingsCard", () => {
   });
 
   it("switch reflects autoSyncEnabled=true", () => {
-    render(<SyncSettingsCard {...defaultProps} autoSyncEnabled />);
+    render(<SyncSettingsSection {...defaultProps} autoSyncEnabled />);
     expect(screen.getByTestId("switch-auto-sync")).toHaveAttribute(
       "aria-checked",
       "true"
@@ -349,24 +351,24 @@ describe("SyncSettingsCard", () => {
   });
 
   it("disables switch when isSettingUp", () => {
-    render(<SyncSettingsCard {...defaultProps} isSettingUp />);
+    render(<SyncSettingsSection {...defaultProps} isSettingUp />);
     expect(screen.getByTestId("switch-auto-sync")).toBeDisabled();
   });
 
   it("shows setting up spinner when isSettingUp", () => {
-    render(<SyncSettingsCard {...defaultProps} isSettingUp />);
+    render(<SyncSettingsSection {...defaultProps} isSettingUp />);
     expect(screen.getByTestId("icon-spinner")).toBeInTheDocument();
   });
 
   it("hides Sync Now button for non-admin", () => {
-    render(<SyncSettingsCard {...defaultProps} isAdmin={false} />);
+    render(<SyncSettingsSection {...defaultProps} isAdmin={false} />);
     expect(screen.queryByText("Sync Now")).not.toBeInTheDocument();
   });
 
   it("shows last synced text for non-admin", () => {
     const syncDate = new Date("2024-01-15T10:30:00").getTime();
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         isAdmin={false}
         lastSyncAt={syncDate}
@@ -375,21 +377,14 @@ describe("SyncSettingsCard", () => {
     expect(screen.getByText(/Last synced:/)).toBeInTheDocument();
   });
 
-  it("renders Release Sync title with icon", () => {
-    render(<SyncSettingsCard {...defaultProps} />);
-    expect(screen.getByText("Release Sync")).toBeInTheDocument();
-  });
-
-  it("renders card description", () => {
-    render(<SyncSettingsCard {...defaultProps} />);
-    expect(
-      screen.getByText("Configure how releases are synced from GitHub")
-    ).toBeInTheDocument();
+  it("renders sync controls", () => {
+    render(<SyncSettingsSection {...defaultProps} />);
+    expect(screen.getByText("Auto-sync releases")).toBeInTheDocument();
   });
 
   it("shows localhost error with deployment hint", () => {
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         error={{
           code: "LOCALHOST_NOT_SUPPORTED",
@@ -405,7 +400,7 @@ describe("SyncSettingsCard", () => {
 
   it("hides dismiss button when onClearError not provided for generic error", () => {
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         error={{ code: "UNKNOWN", message: "Something went wrong" }}
         onClearError={undefined}
@@ -416,29 +411,29 @@ describe("SyncSettingsCard", () => {
   });
 
   it("renders card title", () => {
-    render(<SyncSettingsCard {...defaultProps} />);
+    render(<SyncSettingsSection {...defaultProps} />);
     const elements = screen.getAllByText(/Sync|Release|GitHub/i);
     expect(elements.length).toBeGreaterThan(0);
   });
 
   it("renders auto-sync switch", () => {
-    render(<SyncSettingsCard {...defaultProps} />);
+    render(<SyncSettingsSection {...defaultProps} />);
     expect(screen.getByRole("switch")).toBeInTheDocument();
   });
 
   it("switch reflects autoSyncEnabled prop", () => {
-    render(<SyncSettingsCard {...defaultProps} autoSyncEnabled={true} />);
+    render(<SyncSettingsSection {...defaultProps} autoSyncEnabled={true} />);
     expect(screen.getByRole("switch")).toBeChecked();
   });
 
   it("switch reflects autoSyncEnabled=false", () => {
-    render(<SyncSettingsCard {...defaultProps} autoSyncEnabled={false} />);
+    render(<SyncSettingsSection {...defaultProps} autoSyncEnabled={false} />);
     expect(screen.getByRole("switch")).not.toBeChecked();
   });
 
   it("falls through to generic alert when permission error but no onResyncGitHub", () => {
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         error={{ code: "GITHUB_PERMISSION_DENIED", message: "Denied" }}
       />
@@ -451,14 +446,14 @@ describe("SyncSettingsCard", () => {
   });
 
   it("shows spinner icon inside Sync Now button when syncing", () => {
-    render(<SyncSettingsCard {...defaultProps} isSyncing />);
+    render(<SyncSettingsSection {...defaultProps} isSyncing />);
     const syncButton = screen.getByText("Sync Now").closest("button");
     expect(syncButton).toBeInTheDocument();
     expect(screen.getByTestId("icon-spinner")).toBeInTheDocument();
   });
 
   it("shows arrows icon inside Sync Now button when not syncing", () => {
-    render(<SyncSettingsCard {...defaultProps} />);
+    render(<SyncSettingsSection {...defaultProps} />);
     const syncButton = screen.getByText("Sync Now").closest("button");
     expect(syncButton).toBeInTheDocument();
     const arrowsIcon = syncButton?.querySelector('[data-testid="icon-arrows"]');
@@ -466,13 +461,13 @@ describe("SyncSettingsCard", () => {
   });
 
   it("does not show spinner when not setting up", () => {
-    render(<SyncSettingsCard {...defaultProps} isSettingUp={false} />);
+    render(<SyncSettingsSection {...defaultProps} isSettingUp={false} />);
     expect(screen.queryByTestId("icon-spinner")).not.toBeInTheDocument();
   });
 
   it("localhost error does not show tunneling hint for non-localhost codes", () => {
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         error={{ code: "UNKNOWN", message: "Generic error" }}
       />
@@ -482,7 +477,7 @@ describe("SyncSettingsCard", () => {
 
   it("computes correct active count with combined status and tag filters", () => {
     render(
-      <SyncSettingsCard
+      <SyncSettingsSection
         {...defaultProps}
         error={{ code: "GENERIC_ERROR", message: "Oops" }}
         onClearError={vi.fn()}

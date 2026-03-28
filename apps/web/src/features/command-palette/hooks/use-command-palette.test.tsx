@@ -83,8 +83,8 @@ describe("useCommandPalette", () => {
         () => useCommandPalette({ orgSlug: "my-org" }),
         { wrapper }
       );
-      expect(result.current.buildHref("/dashboard/$orgSlug/settings")).toBe(
-        "/dashboard/my-org/settings"
+      expect(result.current.buildHref("/dashboard/$orgSlug/project")).toBe(
+        "/dashboard/my-org/project"
       );
     });
 
@@ -106,13 +106,11 @@ describe("useCommandPalette", () => {
         { wrapper }
       );
 
-      const item = result.current.filteredItems.find(
-        (i) => i.id === "settings"
-      );
+      const item = result.current.filteredItems.find((i) => i.id === "project");
 
       if (item) {
         act(() => result.current.handleSelect(item));
-        expect(mockPush).toHaveBeenCalledWith("/dashboard/my-org/settings");
+        expect(mockPush).toHaveBeenCalledWith("/dashboard/my-org/project");
         expect(result.current.isOpen).toBe(false);
       }
     });

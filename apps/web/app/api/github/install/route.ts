@@ -10,6 +10,7 @@ export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const organizationId = searchParams.get("organizationId");
   const orgSlug = searchParams.get("orgSlug");
+  const returnTo = searchParams.get("returnTo");
 
   if (!organizationId) {
     return NextResponse.json(
@@ -36,7 +37,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   // Generate a state parameter for CSRF protection and to pass org context
   const state = Buffer.from(
-    JSON.stringify({ organizationId, orgSlug, timestamp: Date.now() })
+    JSON.stringify({ organizationId, orgSlug, returnTo, timestamp: Date.now() })
   ).toString("base64url");
 
   // Store org ID in cookie for callback (backup in case state doesn't work)

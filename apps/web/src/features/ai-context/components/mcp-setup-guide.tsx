@@ -1,14 +1,17 @@
 "use client";
 
-import { Check, Copy } from "@phosphor-icons/react";
+import { Check, CheckCircle, Copy, Key, Warning } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H2, Muted, Text } from "@/components/ui/typography";
+import { useMcpApiKey } from "../hooks/use-mcp-api-key";
 
 const MCP_NPM_PACKAGE = "@reflet/mcp-server";
 const CONVEX_SITE_URL =
@@ -222,11 +225,18 @@ function CodeBlock({
 }
 
 interface McpSetupGuideProps {
-  secretKey?: string;
+  organizationId: Id<"organizations">;
 }
 
-export function McpSetupGuide({ secretKey }: McpSetupGuideProps) {
-  const displayKey = secretKey ?? "your-secret-key";
+export function McpSetupGuide({ organizationId }: McpSetupGuideProps) {
+  const {
+    hasExistingKey,
+    newSecretKey,
+    isGenerating,
+    handleGenerate,
+    clearSecretKey,
+  } = useMcpApiKey({ organizationId });
+  const displayKey = newSecretKey ?? "your-secret-key";
   const [transport, setTransport] = useState<TransportMode>("http");
 
   return (
@@ -246,14 +256,79 @@ export function McpSetupGuide({ secretKey }: McpSetupGuideProps) {
           <Badge variant="secondary">Step 1</Badge>
           <h3 className="font-semibold text-sm">Get your secret key</h3>
         </div>
-        <Muted>
-          Go to{" "}
-          <span className="font-medium text-foreground">
-            Settings &rarr; In-App
-          </span>{" "}
-          and generate an API key. Copy the <strong>secret key</strong> — you
-          will need it for the MCP configuration.
-        </Muted>
+
+        {hasExistingKey === undefined && (
+          <Skeleton className="h-16 w-full rounded-lg" />
+        )}
+
+        {hasExistingKey === false && !newSecretKey && (
+          <div className="flex items-start gap-3 rounded-lg border bg-muted/30 p-4">
+            <div className="rounded-full bg-primary/10 p-2">
+              <Key className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1">
+              <Muted>Generate an API key to connect your IDE to Reflet.</Muted>
+              <Button
+                className="mt-3"
+                disabled={isGenerating}
+                onClick={handleGenerate}
+                size="sm"
+              >
+                <Key className="mr-2 h-4 w-4" />
+                {isGenerating ? "Generating..." : "Generate API Key"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {newSecretKey && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
+            <div className="flex items-start gap-3">
+              <Warning className="mt-0.5 h-5 w-5 text-amber-600" />
+              <div className="flex-1">
+                <p className="font-medium text-amber-800 text-sm dark:text-amber-200">
+                  Save your secret key now
+                </p>
+                <p className="mt-1 text-amber-700 text-xs dark:text-amber-300">
+                  This is the only time you'll see it. The config snippets below
+                  are already populated with your key.
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <code className="flex-1 rounded bg-amber-100 px-3 py-2 font-mono text-sm dark:bg-amber-900">
+                    {newSecretKey}
+                  </code>
+                  <CopyButton label="Secret key" text={newSecretKey} />
+                </div>
+                <Button
+                  className="mt-3"
+                  onClick={clearSecretKey}
+                  size="sm"
+                  variant="ghost"
+                >
+                  I've saved my key
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {hasExistingKey && !newSecretKey && (
+          <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-4">
+            <CheckCircle className="h-5 w-5 text-green-500" weight="fill" />
+            <Muted>
+              API key configured. Paste your secret key in the config snippets
+              below, or{" "}
+              <button
+                className="font-medium text-foreground underline underline-offset-4"
+                onClick={handleGenerate}
+                type="button"
+              >
+                generate a new one
+              </button>
+              .
+            </Muted>
+          </div>
+        )}
       </section>
 
       {/* Step 2: Configure IDE */}

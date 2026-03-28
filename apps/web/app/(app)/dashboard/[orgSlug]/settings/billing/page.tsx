@@ -11,7 +11,7 @@ import { DEFAULT_LIMITS, PLANS } from "./billing-config";
 import { BillingToggle } from "./billing-toggle";
 import type { BillingInterval, PlanTier } from "./billing-types";
 import { PlanCard } from "./plan-card";
-import { UsageCard } from "./usage-card";
+import { UsageSection } from "./usage-card";
 
 export default function BillingPage({
   params,
@@ -148,7 +148,7 @@ export default function BillingPage({
         </div>
 
         {/* Usage Section */}
-        <UsageCard
+        <UsageSection
           isPro={currentTier === "pro"}
           limits={limits}
           usage={usage}

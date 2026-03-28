@@ -45,23 +45,27 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h3>{children}</h3>
-  ),
-}));
-
 vi.mock("@/components/ui/typography", () => ({
+  H3: ({
+    children,
+    variant,
+    className,
+  }: {
+    children: React.ReactNode;
+    variant?: string;
+    className?: string;
+  }) => (
+    <h3 className={className} data-variant={variant}>
+      {children}
+    </h3>
+  ),
+  Muted: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <p className={className}>{children}</p>,
   Text: ({
     children,
     variant,
@@ -77,14 +81,14 @@ vi.mock("@/components/ui/typography", () => ({
   ),
 }));
 
-import { GitHubConnectionCard } from "./github-connection-card";
+import { GitHubConnectionSection } from "./github-connection-card";
 
 afterEach(cleanup);
 
-describe("GitHubConnectionCard", () => {
+describe("GitHubConnectionSection", () => {
   it("renders connect button when not connected and admin", () => {
     render(
-      <GitHubConnectionCard
+      <GitHubConnectionSection
         isAdmin
         isConnected={false}
         isDisconnecting={false}
@@ -97,7 +101,7 @@ describe("GitHubConnectionCard", () => {
 
   it("shows non-admin message when not connected and not admin", () => {
     render(
-      <GitHubConnectionCard
+      <GitHubConnectionSection
         isAdmin={false}
         isConnected={false}
         isDisconnecting={false}
@@ -112,7 +116,7 @@ describe("GitHubConnectionCard", () => {
 
   it("renders connected state with account login", () => {
     render(
-      <GitHubConnectionCard
+      <GitHubConnectionSection
         accountAvatarUrl="https://example.com/avatar.png"
         accountLogin="octocat"
         isAdmin
@@ -128,7 +132,7 @@ describe("GitHubConnectionCard", () => {
 
   it("renders avatar image when connected", () => {
     render(
-      <GitHubConnectionCard
+      <GitHubConnectionSection
         accountAvatarUrl="https://example.com/avatar.png"
         accountLogin="octocat"
         isAdmin
@@ -145,7 +149,7 @@ describe("GitHubConnectionCard", () => {
     const onConnect = vi.fn();
     const user = userEvent.setup();
     render(
-      <GitHubConnectionCard
+      <GitHubConnectionSection
         isAdmin
         isConnected={false}
         isDisconnecting={false}
@@ -161,7 +165,7 @@ describe("GitHubConnectionCard", () => {
     const onDisconnect = vi.fn();
     const user = userEvent.setup();
     render(
-      <GitHubConnectionCard
+      <GitHubConnectionSection
         accountLogin="octocat"
         isAdmin
         isConnected
@@ -176,7 +180,7 @@ describe("GitHubConnectionCard", () => {
 
   it("disables disconnect button when disconnecting", () => {
     render(
-      <GitHubConnectionCard
+      <GitHubConnectionSection
         accountLogin="octocat"
         isAdmin
         isConnected
@@ -190,7 +194,7 @@ describe("GitHubConnectionCard", () => {
 
   it("hides disconnect for non-admin when connected", () => {
     render(
-      <GitHubConnectionCard
+      <GitHubConnectionSection
         accountLogin="octocat"
         isAdmin={false}
         isConnected

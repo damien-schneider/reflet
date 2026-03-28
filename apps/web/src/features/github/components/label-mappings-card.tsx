@@ -1,18 +1,11 @@
 "use client";
 
-import { Plus, Tag, Trash } from "@phosphor-icons/react";
+import { Plus, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -83,7 +76,7 @@ interface LabelMappingsCardProps {
   tags: RefletTag[];
 }
 
-export function LabelMappingsCard({
+export function LabelMappingsSection({
   mappings,
   githubLabels,
   tags,
@@ -131,94 +124,76 @@ export function LabelMappingsCard({
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Tag className="h-5 w-5" />
-                Label Mappings
-              </CardTitle>
-              <CardDescription>
-                Map GitHub labels to boards and tags for automatic issue sync
-              </CardDescription>
-            </div>
-            {isAdmin ? (
-              <Button onClick={handleOpenDialog} size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Mapping
-              </Button>
-            ) : null}
+      <div className="space-y-3">
+        {isAdmin ? (
+          <div className="flex justify-end">
+            <Button onClick={handleOpenDialog} size="sm" variant="outline">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Mapping
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          {mappings.length > 0 ? (
-            <div className="space-y-3">
-              {mappings.map((mapping) => (
-                <div
-                  className="flex items-center justify-between rounded-lg border p-3"
-                  key={mapping._id}
-                >
-                  <div className="flex items-center gap-3">
-                    <Badge
-                      style={{
-                        backgroundColor: mapping.githubLabelColor
-                          ? `#${mapping.githubLabelColor}`
-                          : undefined,
-                        color: mapping.githubLabelColor
-                          ? getContrastColor(mapping.githubLabelColor)
-                          : undefined,
-                      }}
-                    >
-                      {mapping.githubLabelName}
-                    </Badge>
-                    {mapping.tagName && (
-                      <>
-                        <Text className="text-muted-foreground">→</Text>
-                        <Badge
-                          style={{
-                            backgroundColor: mapping.tagColor
-                              ? `#${mapping.tagColor}`
-                              : undefined,
-                          }}
-                          variant="secondary"
-                        >
-                          {mapping.tagName}
-                        </Badge>
-                      </>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {mapping.autoSync ? (
-                      <Badge variant="secondary">Auto-sync</Badge>
-                    ) : null}
-                    {isAdmin ? (
-                      <Button
-                        onClick={() => onDeleteMapping(mapping._id)}
-                        size="icon"
-                        variant="ghost"
+        ) : null}
+        {mappings.length > 0 ? (
+          <div className="space-y-3">
+            {mappings.map((mapping) => (
+              <div
+                className="flex items-center justify-between rounded-lg border p-3"
+                key={mapping._id}
+              >
+                <div className="flex items-center gap-3">
+                  <Badge
+                    style={{
+                      backgroundColor: mapping.githubLabelColor
+                        ? `#${mapping.githubLabelColor}`
+                        : undefined,
+                      color: mapping.githubLabelColor
+                        ? getContrastColor(mapping.githubLabelColor)
+                        : undefined,
+                    }}
+                  >
+                    {mapping.githubLabelName}
+                  </Badge>
+                  {mapping.tagName && (
+                    <>
+                      <Text className="text-muted-foreground">→</Text>
+                      <Badge
+                        style={{
+                          backgroundColor: mapping.tagColor
+                            ? `#${mapping.tagColor}`
+                            : undefined,
+                        }}
+                        variant="secondary"
                       >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    ) : null}
-                  </div>
+                        {mapping.tagName}
+                      </Badge>
+                    </>
+                  )}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-8 text-center">
-              <Tag className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <Text className="mb-2 text-muted-foreground">
-                No label mappings configured
-              </Text>
-              <Text className="text-muted-foreground text-sm">
-                Add a mapping to sync GitHub issues with specific labels to your
-                boards
-              </Text>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <div className="flex items-center gap-2">
+                  {mapping.autoSync ? (
+                    <Badge variant="secondary">Auto-sync</Badge>
+                  ) : null}
+                  {isAdmin ? (
+                    <Button
+                      onClick={() => onDeleteMapping(mapping._id)}
+                      size="icon"
+                      variant="ghost"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-6 text-center">
+            <Text className="text-muted-foreground text-sm">
+              No label mappings yet. Add one to sync issues by label.
+            </Text>
+          </div>
+        )}
+      </div>
 
       <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
         <DialogContent>

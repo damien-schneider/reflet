@@ -17,16 +17,9 @@ import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Muted } from "@/components/ui/typography";
+import { H3, Muted, Text } from "@/components/ui/typography";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 interface NotificationTypeToggleProps {
@@ -53,7 +46,7 @@ function NotificationTypeToggle({
           {icon}
         </div>
         <div>
-          <p className="font-medium text-sm">{label}</p>
+          <Text variant="label">{label}</Text>
           <Muted className="text-xs">{description}</Muted>
         </div>
       </div>
@@ -144,34 +137,35 @@ export function NotificationSettings() {
   const isPushDenied = permissionState === "denied";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Push Notifications Master Toggle */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Push Notifications</CardTitle>
-          <CardDescription>
+      <section className="space-y-4">
+        <div>
+          <H3 variant="section">Push Notifications</H3>
+          <Muted>
             Receive real-time notifications on this device, even when the app is
             in the background.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </Muted>
+        </div>
+
+        <div className="space-y-4">
           {!isSupported && (
             <div className="flex items-center gap-3 rounded-lg bg-amber-50 p-3 text-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
               <Warning className="size-5 shrink-0" />
-              <p className="text-sm">
+              <Text variant="bodySmall">
                 Push notifications are not supported in this browser. Try
                 installing the app as a PWA for the best experience.
-              </p>
+              </Text>
             </div>
           )}
 
           {isPushDenied && (
             <div className="flex items-center gap-3 rounded-lg bg-red-50 p-3 text-red-800 dark:bg-red-900/20 dark:text-red-200">
               <BellSlash className="size-5 shrink-0" />
-              <p className="text-sm">
+              <Text variant="bodySmall">
                 Notifications are blocked by your browser. To enable them, open
                 your browser settings and allow notifications for this site.
-              </p>
+              </Text>
             </div>
           )}
 
@@ -185,7 +179,7 @@ export function NotificationSettings() {
                 )}
               </div>
               <div>
-                <p className="font-medium text-sm">Enable push notifications</p>
+                <Text variant="label">Enable push notifications</Text>
                 <Muted className="text-xs">
                   {pushEnabled && isSubscribed
                     ? "You will receive push notifications on this device"
@@ -205,73 +199,74 @@ export function NotificationSettings() {
               onCheckedChange={handlePushToggle}
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
+
+      <Separator />
 
       {/* Per-type Notification Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Notification Types</CardTitle>
-          <CardDescription>
+      <section className="space-y-4">
+        <div>
+          <H3 variant="section">Notification Types</H3>
+          <Muted>
             Choose which types of notifications you want to receive via push.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="divide-y">
-            <NotificationTypeToggle
-              checked={preferences?.notifyOnStatusChange ?? true}
-              description="When the status of your feedback changes"
-              disabled={!pushEnabled || isPrefsLoading}
-              icon={<TrendUp className="size-4 text-olive-500" />}
-              label="Status changes"
-              onToggle={(v) => handleTypeToggle("notifyOnStatusChange", v)}
-            />
-            <NotificationTypeToggle
-              checked={preferences?.notifyOnNewComment ?? true}
-              description="When someone comments on your feedback"
-              disabled={!pushEnabled || isPrefsLoading}
-              icon={<ChatCircle className="size-4 text-emerald-500" />}
-              label="New comments"
-              onToggle={(v) => handleTypeToggle("notifyOnNewComment", v)}
-            />
-            <NotificationTypeToggle
-              checked={preferences?.notifyOnVoteMilestone ?? true}
-              description="When your feedback reaches a vote milestone"
-              disabled={!pushEnabled || isPrefsLoading}
-              icon={<TrendUp className="size-4 text-amber-500" />}
-              label="Vote milestones"
-              onToggle={(v) => handleTypeToggle("notifyOnVoteMilestone", v)}
-            />
-            <NotificationTypeToggle
-              checked={preferences?.notifyOnNewSupportMessage ?? true}
-              description="When you receive a reply from support"
-              disabled={!pushEnabled || isPrefsLoading}
-              icon={<Envelope className="size-4 text-purple-500" />}
-              label="Support messages"
-              onToggle={(v) => handleTypeToggle("notifyOnNewSupportMessage", v)}
-            />
-            <NotificationTypeToggle
-              checked={preferences?.notifyOnInvitation ?? true}
-              description="When you're invited to join an organization"
-              disabled={!pushEnabled || isPrefsLoading}
-              icon={<Bell className="size-4 text-olive-500" />}
-              label="Invitations"
-              onToggle={(v) => handleTypeToggle("notifyOnInvitation", v)}
-            />
-          </div>
-        </CardContent>
-      </Card>
+          </Muted>
+        </div>
+
+        <div className="divide-y">
+          <NotificationTypeToggle
+            checked={preferences?.notifyOnStatusChange ?? true}
+            description="When the status of your feedback changes"
+            disabled={!pushEnabled || isPrefsLoading}
+            icon={<TrendUp className="size-4 text-olive-500" />}
+            label="Status changes"
+            onToggle={(v) => handleTypeToggle("notifyOnStatusChange", v)}
+          />
+          <NotificationTypeToggle
+            checked={preferences?.notifyOnNewComment ?? true}
+            description="When someone comments on your feedback"
+            disabled={!pushEnabled || isPrefsLoading}
+            icon={<ChatCircle className="size-4 text-emerald-500" />}
+            label="New comments"
+            onToggle={(v) => handleTypeToggle("notifyOnNewComment", v)}
+          />
+          <NotificationTypeToggle
+            checked={preferences?.notifyOnVoteMilestone ?? true}
+            description="When your feedback reaches a vote milestone"
+            disabled={!pushEnabled || isPrefsLoading}
+            icon={<TrendUp className="size-4 text-amber-500" />}
+            label="Vote milestones"
+            onToggle={(v) => handleTypeToggle("notifyOnVoteMilestone", v)}
+          />
+          <NotificationTypeToggle
+            checked={preferences?.notifyOnNewSupportMessage ?? true}
+            description="When you receive a reply from support"
+            disabled={!pushEnabled || isPrefsLoading}
+            icon={<Envelope className="size-4 text-purple-500" />}
+            label="Support messages"
+            onToggle={(v) => handleTypeToggle("notifyOnNewSupportMessage", v)}
+          />
+          <NotificationTypeToggle
+            checked={preferences?.notifyOnInvitation ?? true}
+            description="When you're invited to join an organization"
+            disabled={!pushEnabled || isPrefsLoading}
+            icon={<Bell className="size-4 text-olive-500" />}
+            label="Invitations"
+            onToggle={(v) => handleTypeToggle("notifyOnInvitation", v)}
+          />
+        </div>
+      </section>
 
       {/* Active Devices */}
       {subscriptions && subscriptions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Devices</CardTitle>
-            <CardDescription>
-              Devices currently receiving push notifications.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <>
+          <Separator />
+          <section className="space-y-4">
+            <div>
+              <H3 variant="section">Active Devices</H3>
+              <Muted>Devices currently receiving push notifications.</Muted>
+            </div>
+
             <div className="divide-y">
               {subscriptions.map((sub: PushSubscriptionInfo) => (
                 <div
@@ -283,9 +278,9 @@ export function NotificationSettings() {
                       <Devices className="size-4 text-muted-foreground" />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-sm">
+                      <Text className="truncate" variant="label">
                         {parseUserAgent(sub.userAgent)}
-                      </p>
+                      </Text>
                       <Muted className="text-xs">
                         Registered{" "}
                         {formatDistanceToNow(sub.createdAt, {
@@ -309,8 +304,8 @@ export function NotificationSettings() {
               Each device where you enable notifications is listed here. Remove
               devices you no longer use.
             </Muted>
-          </CardContent>
-        </Card>
+          </section>
+        </>
       )}
     </div>
   );

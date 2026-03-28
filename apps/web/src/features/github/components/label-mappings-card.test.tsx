@@ -56,22 +56,6 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h3>{children}</h3>
-  ),
-}));
-
 vi.mock("@/components/ui/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="dialog">{children}</div> : null,
@@ -151,6 +135,26 @@ vi.mock("@/components/ui/switch", () => ({
 }));
 
 vi.mock("@/components/ui/typography", () => ({
+  H3: ({
+    children,
+    variant,
+    className,
+  }: {
+    children: React.ReactNode;
+    variant?: string;
+    className?: string;
+  }) => (
+    <h3 className={className} data-variant={variant}>
+      {children}
+    </h3>
+  ),
+  Muted: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <p className={className}>{children}</p>,
   Text: ({
     children,
     className,
@@ -160,7 +164,7 @@ vi.mock("@/components/ui/typography", () => ({
   }) => <span className={className}>{children}</span>,
 }));
 
-import { LabelMappingsCard } from "./label-mappings-card";
+import { LabelMappingsSection } from "./label-mappings-card";
 
 afterEach(cleanup);
 
@@ -175,26 +179,23 @@ const defaultProps = {
   onFetchLabels: vi.fn(),
 };
 
-describe("LabelMappingsCard", () => {
-  it("renders title", () => {
-    render(<LabelMappingsCard {...defaultProps} />);
-    expect(screen.getByText("Label Mappings")).toBeInTheDocument();
-  });
-
+describe("LabelMappingsSection", () => {
   it("shows empty state when no mappings", () => {
-    render(<LabelMappingsCard {...defaultProps} />);
+    render(<LabelMappingsSection {...defaultProps} />);
     expect(
-      screen.getByText("No label mappings configured")
+      screen.getByText(
+        "No label mappings yet. Add one to sync issues by label."
+      )
     ).toBeInTheDocument();
   });
 
   it("shows Add Mapping button for admin", () => {
-    render(<LabelMappingsCard {...defaultProps} />);
+    render(<LabelMappingsSection {...defaultProps} />);
     expect(screen.getByText("Add Mapping")).toBeInTheDocument();
   });
 
   it("hides Add Mapping button for non-admin", () => {
-    render(<LabelMappingsCard {...defaultProps} isAdmin={false} />);
+    render(<LabelMappingsSection {...defaultProps} isAdmin={false} />);
     expect(screen.queryByText("Add Mapping")).toBeNull();
   });
 
@@ -209,7 +210,7 @@ describe("LabelMappingsCard", () => {
         tagColor: "00ff00",
       },
     ];
-    render(<LabelMappingsCard {...defaultProps} mappings={mappings} />);
+    render(<LabelMappingsSection {...defaultProps} mappings={mappings} />);
     expect(screen.getByText("bug")).toBeInTheDocument();
     expect(screen.getByText("Bug")).toBeInTheDocument();
     expect(screen.getByText("Auto-sync")).toBeInTheDocument();
@@ -224,7 +225,7 @@ describe("LabelMappingsCard", () => {
         tagName: "Feature",
       },
     ];
-    render(<LabelMappingsCard {...defaultProps} mappings={mappings} />);
+    render(<LabelMappingsSection {...defaultProps} mappings={mappings} />);
     expect(screen.getByText("→")).toBeInTheDocument();
   });
 
@@ -236,7 +237,7 @@ describe("LabelMappingsCard", () => {
         autoSync: false,
       },
     ];
-    render(<LabelMappingsCard {...defaultProps} mappings={mappings} />);
+    render(<LabelMappingsSection {...defaultProps} mappings={mappings} />);
     expect(screen.queryByText("→")).toBeNull();
   });
 
@@ -248,7 +249,7 @@ describe("LabelMappingsCard", () => {
         autoSync: true,
       },
     ];
-    render(<LabelMappingsCard {...defaultProps} mappings={mappings} />);
+    render(<LabelMappingsSection {...defaultProps} mappings={mappings} />);
     expect(screen.getByTestId("icon-trash")).toBeInTheDocument();
   });
 
@@ -261,7 +262,7 @@ describe("LabelMappingsCard", () => {
       },
     ];
     render(
-      <LabelMappingsCard
+      <LabelMappingsSection
         {...defaultProps}
         isAdmin={false}
         mappings={mappings}
@@ -281,7 +282,7 @@ describe("LabelMappingsCard", () => {
       },
     ];
     render(
-      <LabelMappingsCard
+      <LabelMappingsSection
         {...defaultProps}
         mappings={mappings}
         onDeleteMapping={onDeleteMapping}
@@ -295,7 +296,7 @@ describe("LabelMappingsCard", () => {
 
   it("opens dialog when Add Mapping clicked", async () => {
     const user = userEvent.setup();
-    render(<LabelMappingsCard {...defaultProps} />);
+    render(<LabelMappingsSection {...defaultProps} />);
     await user.click(screen.getByText("Add Mapping"));
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByText("Add Label Mapping")).toBeInTheDocument();
@@ -305,7 +306,7 @@ describe("LabelMappingsCard", () => {
     const onFetchLabels = vi.fn();
     const user = userEvent.setup();
     render(
-      <LabelMappingsCard {...defaultProps} onFetchLabels={onFetchLabels} />
+      <LabelMappingsSection {...defaultProps} onFetchLabels={onFetchLabels} />
     );
     await user.click(screen.getByText("Add Mapping"));
     expect(onFetchLabels).toHaveBeenCalled();

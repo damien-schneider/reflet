@@ -9,6 +9,7 @@ import {
 } from "../../_generated/server";
 import { repoAnalysisAgent } from "../../ai/agent";
 import { getAuthUser } from "../../shared/utils";
+import { fetchRepoData } from "./github_helpers";
 
 // ============================================
 // QUERIES
@@ -236,110 +237,6 @@ export const updateAnalysisStatus = internalMutation({
     });
   },
 });
-
-// ============================================
-// HELPERS
-// ============================================
-
-/**
- * Fetch repository data from GitHub API
- */
-async function fetchRepoData(repositoryFullName: string): Promise<{
-  rootContents: string;
-  fileTree: string;
-  readme: string | null;
-  packageJson: string | null;
-}> {
-  const headers = {
-    Accept: "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-  };
-
-  // Fetch root directory contents
-  let rootContents = "";
-  try {
-    const rootResponse = await fetch(
-      `https://api.github.com/repos/${repositoryFullName}/contents/`,
-      { headers }
-    );
-    if (rootResponse.ok) {
-      const rootData = await rootResponse.json();
-      if (Array.isArray(rootData)) {
-        rootContents = rootData
-          .map(
-            (item: { name: string; type: string }) =>
-              `${item.type === "dir" ? "[dir]" : "[file]"} ${item.name}`
-          )
-          .join("\n");
-      }
-    }
-  } catch {
-    rootContents = "Failed to fetch root contents";
-  }
-
-  // Fetch file tree
-  let fileTree = "";
-  try {
-    const treeResponse = await fetch(
-      `https://api.github.com/repos/${repositoryFullName}/git/trees/HEAD?recursive=1`,
-      { headers }
-    );
-    if (treeResponse.ok) {
-      const treeData = (await treeResponse.json()) as {
-        tree?: Array<{ path: string; type: string }>;
-      };
-      const tree = treeData.tree ?? [];
-      const limitedTree = tree.slice(0, 100);
-      fileTree = limitedTree
-        .map((item: { path: string; type: string }) => item.path)
-        .join("\n");
-      if (tree.length > 100) {
-        fileTree += `\n... and ${tree.length - 100} more files`;
-      }
-    }
-  } catch {
-    fileTree = "Failed to fetch file tree";
-  }
-
-  // Fetch README
-  let readme: string | null = null;
-  try {
-    const readmeResponse = await fetch(
-      `https://api.github.com/repos/${repositoryFullName}/readme`,
-      { headers }
-    );
-    if (readmeResponse.ok) {
-      const readmeData = (await readmeResponse.json()) as { content?: string };
-      if (readmeData.content) {
-        readme = Buffer.from(readmeData.content, "base64").toString("utf-8");
-        if (readme.length > 5000) {
-          readme = `${readme.slice(0, 5000)}\n...[truncated]`;
-        }
-      }
-    }
-  } catch {
-    readme = null;
-  }
-
-  // Fetch package.json
-  let packageJson: string | null = null;
-  try {
-    const pkgResponse = await fetch(
-      `https://api.github.com/repos/${repositoryFullName}/contents/package.json`,
-      { headers }
-    );
-    if (pkgResponse.ok) {
-      const pkgData = (await pkgResponse.json()) as { content?: string };
-      if (pkgData.content) {
-        packageJson = Buffer.from(pkgData.content, "base64").toString("utf-8");
-      }
-    }
-  } catch {
-    packageJson = null;
-  }
-
-  return { rootContents, fileTree, readme, packageJson };
-}
 
 // ============================================
 // ACTIONS

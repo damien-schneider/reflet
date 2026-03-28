@@ -25,7 +25,7 @@ describe("command-items", () => {
     });
 
     it("all items have valid group values", () => {
-      const validGroups = ["navigation", "settings", "actions"];
+      const validGroups = ["navigation", "actions"];
       for (const item of commandItems) {
         expect(validGroups).toContain(item.group);
       }
@@ -50,11 +50,6 @@ describe("command-items", () => {
       expect(navItems.length).toBeGreaterThan(0);
     });
 
-    it("has settings items", () => {
-      const settingsItems = commandItems.filter((i) => i.group === "settings");
-      expect(settingsItems.length).toBeGreaterThan(0);
-    });
-
     it("has action items", () => {
       const actionItems = commandItems.filter((i) => i.group === "actions");
       expect(actionItems.length).toBeGreaterThan(0);
@@ -77,7 +72,6 @@ describe("command-items", () => {
   describe("groupLabels", () => {
     it("has labels for all groups", () => {
       expect(groupLabels.navigation).toBe("Pages");
-      expect(groupLabels.settings).toBe("Settings");
       expect(groupLabels.actions).toBe("Actions");
     });
   });

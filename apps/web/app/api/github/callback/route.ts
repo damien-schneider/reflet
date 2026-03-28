@@ -25,14 +25,21 @@ export async function GET(request: Request): Promise<NextResponse> {
   // Fall back to cookie if state is not available
   let organizationId: string | null = null;
   let orgSlug: string | null = null;
+  let returnTo: string | null = null;
 
   if (stateParam) {
     try {
       const stateData = JSON.parse(
         Buffer.from(stateParam, "base64url").toString()
-      ) as { organizationId: string; orgSlug: string; timestamp: number };
+      ) as {
+        organizationId: string;
+        orgSlug: string;
+        returnTo?: string;
+        timestamp: number;
+      };
       organizationId = stateData.organizationId;
       orgSlug = stateData.orgSlug;
+      returnTo = stateData.returnTo ?? null;
     } catch {
       // State parsing failed, fall back to cookie
     }
@@ -127,9 +134,14 @@ export async function GET(request: Request): Promise<NextResponse> {
     );
 
     // Build redirect URL using the org slug from state
-    const redirectPath = orgSlug
-      ? `/dashboard/${orgSlug}/settings/github`
-      : "/dashboard";
+    let redirectPath: string;
+    if (orgSlug && returnTo === "setup") {
+      redirectPath = `/dashboard/${orgSlug}/setup`;
+    } else if (orgSlug) {
+      redirectPath = `/dashboard/${orgSlug}/settings/github`;
+    } else {
+      redirectPath = "/dashboard";
+    }
 
     const redirectUrl = new URL(redirectPath, request.url);
     redirectUrl.searchParams.set("success", "connected");

@@ -1,34 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { RepositorySelectorCard } from "./repository-selector-card";
+import { RepositorySelectorSection } from "./repository-selector-card";
 
 // Mock the UI components
-vi.mock("@/components/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="card">{children}</div>
-  ),
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="card-content">{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="card-description">{children}</div>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="card-header">{children}</div>
-  ),
-  CardTitle: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => (
-    <div className={className} data-testid="card-title">
-      {children}
-    </div>
-  ),
-}));
 
 vi.mock("@/components/ui/button", () => ({
   Button: ({
@@ -53,6 +28,26 @@ vi.mock("@/components/ui/label", () => ({
 }));
 
 vi.mock("@/components/ui/typography", () => ({
+  H3: ({
+    children,
+    variant,
+    className,
+  }: {
+    children: React.ReactNode;
+    variant?: string;
+    className?: string;
+  }) => (
+    <h3 className={className} data-variant={variant}>
+      {children}
+    </h3>
+  ),
+  Muted: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <p className={className}>{children}</p>,
   Text: ({
     children,
     variant,
@@ -274,7 +269,7 @@ const mockRepositories = [
   },
 ];
 
-describe("RepositorySelectorCard - Combobox Filtering", () => {
+describe("RepositorySelectorSection - Combobox Filtering", () => {
   afterEach(() => {
     cleanup();
   });
@@ -285,7 +280,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
       const onSelectRepo = vi.fn();
 
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -313,7 +308,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
       const onSelectRepo = vi.fn();
 
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -339,7 +334,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
       const onSelectRepo = vi.fn();
 
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -365,7 +360,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
       const onSelectRepo = vi.fn();
 
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -391,7 +386,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
       const onSelectRepo = vi.fn();
 
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -417,7 +412,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
       const onSelectRepo = vi.fn();
 
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -444,7 +439,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
   describe("connected state", () => {
     it("renders connected repository name", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository
           isAdmin={true}
           loadingRepos={false}
@@ -461,7 +456,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("renders Change Repository button for admin", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository
           isAdmin={true}
           loadingRepos={false}
@@ -480,7 +475,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
       const onChangeRepository = vi.fn();
       const user = userEvent.setup();
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository
           isAdmin={true}
           loadingRepos={false}
@@ -500,7 +495,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
   describe("loading state", () => {
     it("shows loading indicator when loadingRepos is true", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos
@@ -511,12 +506,12 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
           selectedRepo=""
         />
       );
-      expect(screen.getByTestId("card")).toBeInTheDocument();
+      expect(screen.getByText("Loading repositories...")).toBeInTheDocument();
     });
 
     it("shows Loading repositories text when loadingRepos", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos
@@ -532,7 +527,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("does not show combobox when loading", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos
@@ -550,7 +545,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
   describe("non-admin state", () => {
     it("renders read-only view for non-admin", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository
           isAdmin={false}
           loadingRepos={false}
@@ -567,7 +562,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("renders card title", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -583,7 +578,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("renders card description for unconnected state", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -601,7 +596,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("renders Connect Repository button for admin", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -617,7 +612,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("disables Connect Repository when no repo selected", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -633,7 +628,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("enables Connect Repository when repo is selected", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -651,7 +646,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
       const onConnect = vi.fn();
       const user = userEvent.setup();
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -668,7 +663,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("renders private badge for private repos", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -688,7 +683,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("renders repository selector combobox", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -704,7 +699,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("does not show Connect Repository button for non-admin disconnected", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={false}
           loadingRepos={false}
@@ -720,7 +715,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("shows connected description when repositoryFullName provided", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository
           isAdmin={true}
           loadingRepos={false}
@@ -737,7 +732,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("shows unconnected description when no repositoryFullName", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -757,7 +752,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
   describe("repository display and selection", () => {
     it("renders formatted repository display names", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -778,7 +773,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("renders full name under each repository item", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -796,7 +791,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("renders lock icon for private repos and globe for public", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -819,7 +814,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
       const onSelectRepo = vi.fn();
 
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}
@@ -840,7 +835,7 @@ describe("RepositorySelectorCard - Combobox Filtering", () => {
 
     it("renders with empty repositories list", () => {
       render(
-        <RepositorySelectorCard
+        <RepositorySelectorSection
           hasRepository={false}
           isAdmin={true}
           loadingRepos={false}

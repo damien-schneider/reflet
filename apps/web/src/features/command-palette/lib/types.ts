@@ -1,6 +1,6 @@
 import type { Icon } from "@phosphor-icons/react";
 
-export type CommandItemGroup = "navigation" | "settings" | "actions";
+export type CommandItemGroup = "navigation" | "actions";
 
 export interface CommandItem {
   description?: string;

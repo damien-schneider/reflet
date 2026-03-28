@@ -6,13 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { H3, Muted, Text } from "@/components/ui/typography";
 import {
   type UpdatePasswordForm,
   updatePasswordSchema,
@@ -69,74 +63,67 @@ export function PasswordSection({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Password</CardTitle>
-        <CardDescription>Change your password</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <form
-          className="space-y-4"
-          onSubmit={handleSubmitPassword(handleUpdatePassword)}
-        >
-          <PasswordInputField
-            error={passwordErrors.currentPassword}
-            id="currentPassword"
-            label="Current Password"
-            onTogglePassword={() =>
-              setShowPassword((prev) => ({
-                ...prev,
-                current: !prev.current,
-              }))
-            }
-            placeholder="Enter your current password"
-            register={registerPassword("currentPassword")}
-            showPassword={showPassword.current}
-          />
+    <section className="space-y-6">
+      <div>
+        <H3 variant="section">Password</H3>
+        <Muted>Change your password</Muted>
+      </div>
 
-          <PasswordInputField
-            error={passwordErrors.newPassword}
-            id="newPassword"
-            label="New Password"
-            onTogglePassword={() =>
-              setShowPassword((prev) => ({
-                ...prev,
-                new: !prev.new,
-              }))
-            }
-            placeholder="Enter your new password"
-            register={registerPassword("newPassword")}
-            showPassword={showPassword.new}
-          />
-          <p className="text-muted-foreground text-xs">
-            Password must be at least 8 characters
-          </p>
+      <form
+        className="space-y-4"
+        onSubmit={handleSubmitPassword(handleUpdatePassword)}
+      >
+        <PasswordInputField
+          error={passwordErrors.currentPassword}
+          id="currentPassword"
+          label="Current Password"
+          onTogglePassword={() =>
+            setShowPassword((prev) => ({
+              ...prev,
+              current: !prev.current,
+            }))
+          }
+          placeholder="Enter your current password"
+          register={registerPassword("currentPassword")}
+          showPassword={showPassword.current}
+        />
 
-          <PasswordInputField
-            error={passwordErrors.confirmPassword}
-            id="confirmPassword"
-            label="Confirm New Password"
-            onTogglePassword={() =>
-              setShowPassword((prev) => ({
-                ...prev,
-                confirm: !prev.confirm,
-              }))
-            }
-            placeholder="Confirm your new password"
-            register={registerPassword("confirmPassword")}
-            showPassword={showPassword.confirm}
-          />
+        <PasswordInputField
+          error={passwordErrors.newPassword}
+          id="newPassword"
+          label="New Password"
+          onTogglePassword={() =>
+            setShowPassword((prev) => ({
+              ...prev,
+              new: !prev.new,
+            }))
+          }
+          placeholder="Enter your new password"
+          register={registerPassword("newPassword")}
+          showPassword={showPassword.new}
+        />
+        <Text variant="caption">Password must be at least 8 characters</Text>
 
-          <Button
-            className="w-full md:w-auto"
-            disabled={isLoading}
-            type="submit"
-          >
-            <Check className="mr-2 size-4" />
-            Update Password
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        <PasswordInputField
+          error={passwordErrors.confirmPassword}
+          id="confirmPassword"
+          label="Confirm New Password"
+          onTogglePassword={() =>
+            setShowPassword((prev) => ({
+              ...prev,
+              confirm: !prev.confirm,
+            }))
+          }
+          placeholder="Confirm your new password"
+          register={registerPassword("confirmPassword")}
+          showPassword={showPassword.confirm}
+        />
+
+        <Button className="w-full md:w-auto" disabled={isLoading} type="submit">
+          <Check className="mr-2 size-4" />
+          Update Password
+        </Button>
+      </form>
+    </section>
   );
 }

@@ -91,6 +91,11 @@ export const getUntaggedFeedbackCount = query({
 
     let untaggedCount = 0;
     for (const feedback of feedbackItems) {
+      // Skip deleted or merged feedback
+      if (feedback.deletedAt || feedback.isMerged) {
+        continue;
+      }
+
       // Skip items that have already been AI-analyzed
       if (feedback.aiPriorityGeneratedAt) {
         continue;
@@ -127,9 +132,12 @@ export const getRecentlyTaggedItems = query({
       )
       .collect();
 
-    // Filter to items that were AI-analyzed after the given timestamp
+    // Filter to items that were AI-analyzed after the given timestamp, excluding deleted/merged
     const recentlyTagged = feedbackItems.filter(
-      (f) => f.aiPriorityGeneratedAt && f.aiPriorityGeneratedAt >= args.since
+      (f) =>
+        !(f.deletedAt || f.isMerged) &&
+        f.aiPriorityGeneratedAt &&
+        f.aiPriorityGeneratedAt >= args.since
     );
 
     // Get tags for each item
@@ -222,7 +230,7 @@ export const getFeedbackForAutoTagging = internalQuery({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
+    if (!feedback || feedback.deletedAt || feedback.isMerged) {
       return null;
     }
 
@@ -259,6 +267,11 @@ export const getUntaggedFeedbackIds = internalQuery({
     const untaggedIds: Id<"feedback">[] = [];
 
     for (const feedback of feedbackItems) {
+      // Skip deleted or merged feedback
+      if (feedback.deletedAt || feedback.isMerged) {
+        continue;
+      }
+
       // Skip items that have already been AI-analyzed
       if (feedback.aiPriorityGeneratedAt) {
         continue;

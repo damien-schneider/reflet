@@ -9,16 +9,10 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { H1, H2, Muted, Text } from "@/components/ui/typography";
+import { Separator } from "@/components/ui/separator";
+import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
 import { LogoUploader } from "@/features/organizations/components/logo-uploader";
 import {
   generateColorPalette,
@@ -166,184 +160,176 @@ export default function BrandingSettingsPage({
         </div>
       </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Logo</CardTitle>
-            <CardDescription>
+      <div className="space-y-8">
+        <section className="space-y-4">
+          <div>
+            <H3 variant="section">Logo</H3>
+            <Muted>
               Upload your organization logo. Displayed on public pages.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <LogoUploader
-              currentLogo={logo}
-              disabled={isLogoDisabled}
-              onLogoChange={handleLogoChange}
-            />
-          </CardContent>
-        </Card>
+            </Muted>
+          </div>
+          <LogoUploader
+            currentLogo={logo}
+            disabled={isLogoDisabled}
+            onLogoChange={handleLogoChange}
+          />
+        </section>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Primary Color</CardTitle>
-                <CardDescription>
-                  Used for buttons and accents on your public pages. Other
-                  shades are derived automatically.
-                </CardDescription>
-              </div>
-              {!isProTier && (
-                <Badge
-                  className="bg-olive-600/10 text-olive-600"
-                  variant="secondary"
-                >
-                  <Sparkle className="mr-1 h-3 w-3" />
-                  Pro
-                </Badge>
-              )}
+        <Separator />
+
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <H3 variant="section">Primary Color</H3>
+              <Muted>
+                Used for buttons and accents on your public pages. Other shades
+                are derived automatically.
+              </Muted>
             </div>
             {!isProTier && (
-              <div className="flex items-center gap-2 rounded-md border border-olive-600/20 bg-olive-600/5 px-3 py-2">
-                <p className="text-muted-foreground text-sm">
-                  Custom brand colors require the Pro plan.{" "}
-                  <Link
-                    className="font-medium text-olive-600 underline underline-offset-4"
-                    href={`/dashboard/${orgSlug}/settings/billing`}
-                  >
-                    Upgrade to Pro
-                  </Link>
-                </p>
-              </div>
+              <Badge
+                className="bg-olive-600/10 text-olive-600"
+                variant="secondary"
+              >
+                <Sparkle className="mr-1 h-3 w-3" />
+                Pro
+              </Badge>
             )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="primary-color">Color</Label>
-              <div className="flex gap-2">
-                <Input
-                  className="h-10 w-14 cursor-pointer p-1"
-                  disabled={isBrandingDisabled}
-                  id="primary-color-picker"
-                  onChange={(e) => handleColorPickerChange(e.target.value)}
-                  type="color"
-                  value={primaryColor}
-                />
-                <Input
-                  className="flex-1"
-                  disabled={isBrandingDisabled}
-                  id="primary-color"
-                  onChange={(e) => handleColorInputChange(e.target.value)}
-                  placeholder="#5c6d4f"
-                  value={colorInput}
-                />
-              </div>
-              {!isValidHexColor(colorInput) && colorInput !== "" && (
-                <p className="text-destructive text-sm">
-                  Please enter a valid hex color (e.g., #5c6d4f)
-                </p>
-              )}
+          </div>
+          {!isProTier && (
+            <div className="flex items-center gap-2 rounded-md border border-olive-600/20 bg-olive-600/5 px-3 py-2">
+              <Muted>
+                Custom brand colors require the Pro plan.{" "}
+                <Link
+                  className="font-medium text-olive-600 underline underline-offset-4"
+                  href={`/dashboard/${orgSlug}/settings/billing`}
+                >
+                  Upgrade to Pro
+                </Link>
+              </Muted>
             </div>
-          </CardContent>
-        </Card>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="primary-color">Color</Label>
+            <div className="flex gap-2">
+              <Input
+                className="h-10 w-14 cursor-pointer p-1"
+                disabled={isBrandingDisabled}
+                id="primary-color-picker"
+                onChange={(e) => handleColorPickerChange(e.target.value)}
+                type="color"
+                value={primaryColor}
+              />
+              <Input
+                className="flex-1"
+                disabled={isBrandingDisabled}
+                id="primary-color"
+                onChange={(e) => handleColorInputChange(e.target.value)}
+                placeholder="#5c6d4f"
+                value={colorInput}
+              />
+            </div>
+            {!isValidHexColor(colorInput) && colorInput !== "" && (
+              <Text className="text-destructive" variant="bodySmall">
+                Please enter a valid hex color (e.g., #5c6d4f)
+              </Text>
+            )}
+          </div>
+        </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Preview</CardTitle>
-            <CardDescription>
-              See how your branding will look on public pages
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-hidden rounded-lg border">
-              <div className="bg-background p-4">
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {logo ? (
-                      <div className="relative h-8 w-24">
-                        <Image
-                          alt="Logo preview"
-                          className="object-contain"
-                          fill
-                          src={logo}
-                        />
-                      </div>
-                    ) : (
-                      <span className="font-semibold">{org.name}</span>
-                    )}
-                  </div>
-                  <div className="flex gap-4 text-muted-foreground text-sm">
-                    <span>Feedback</span>
-                    <span>Roadmap</span>
-                    <span>Changelog</span>
-                  </div>
+        <Separator />
+
+        <section className="space-y-4">
+          <div>
+            <H3 variant="section">Preview</H3>
+            <Muted>See how your branding will look on public pages</Muted>
+          </div>
+          <div className="overflow-hidden rounded-lg border">
+            <div className="bg-background p-4">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {logo ? (
+                    <div className="relative h-8 w-24">
+                      <Image
+                        alt="Logo preview"
+                        className="object-contain"
+                        fill
+                        src={logo}
+                      />
+                    </div>
+                  ) : (
+                    <Text variant="label">{org.name}</Text>
+                  )}
                 </div>
-                <div className="space-y-3">
-                  <div className="flex gap-3">
-                    <Button
-                      className="transition-colors"
-                      style={{
-                        backgroundColor: colorPalette.primary,
-                        color: colorPalette.primaryForeground,
-                      }}
-                    >
-                      Primary Button
-                    </Button>
-                    <Button
-                      className="transition-colors"
-                      style={{
-                        backgroundColor: colorPalette.primaryLight,
-                        borderColor: colorPalette.primary,
-                        color: colorPalette.primary,
-                      }}
-                      variant="outline"
-                    >
-                      Secondary Button
-                    </Button>
-                  </div>
-                  <div
-                    className="rounded-lg p-4"
-                    style={{ backgroundColor: colorPalette.primaryLight }}
+                <div className="flex gap-4 text-muted-foreground text-sm">
+                  <Muted as="span">Feedback</Muted>
+                  <Muted as="span">Roadmap</Muted>
+                  <Muted as="span">Changelog</Muted>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <Button
+                    className="transition-colors"
+                    style={{
+                      backgroundColor: colorPalette.primary,
+                      color: colorPalette.primaryForeground,
+                    }}
                   >
-                    <p
-                      className="text-sm"
-                      style={{ color: colorPalette.primary }}
-                    >
-                      This is how accent backgrounds will appear
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      style={{
-                        borderColor: colorPalette.primary,
-                        color: colorPalette.primary,
-                      }}
-                      variant="outline"
-                    >
-                      v1.2.0
-                    </Badge>
-                    <span className="text-muted-foreground text-sm">
-                      Version badge preview
-                    </span>
-                  </div>
+                    Primary Button
+                  </Button>
+                  <Button
+                    className="transition-colors"
+                    style={{
+                      backgroundColor: colorPalette.primaryLight,
+                      borderColor: colorPalette.primary,
+                      color: colorPalette.primary,
+                    }}
+                    variant="outline"
+                  >
+                    Secondary Button
+                  </Button>
+                </div>
+                <div
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: colorPalette.primaryLight }}
+                >
+                  <Text
+                    style={{ color: colorPalette.primary }}
+                    variant="bodySmall"
+                  >
+                    This is how accent backgrounds will appear
+                  </Text>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    style={{
+                      borderColor: colorPalette.primary,
+                      color: colorPalette.primary,
+                    }}
+                    variant="outline"
+                  >
+                    v1.2.0
+                  </Badge>
+                  <Muted as="span">Version badge preview</Muted>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
 
         {saveStatus !== "idle" && (
           <div className="flex items-center justify-end gap-2 text-muted-foreground text-sm">
             {saveStatus === "saving" && (
               <>
                 <Spinner className="h-3.5 w-3.5 animate-spin" />
-                <span>Saving...</span>
+                <Muted as="span">Saving...</Muted>
               </>
             )}
             {saveStatus === "saved" && (
               <>
                 <Check className="h-3.5 w-3.5" />
-                <span>Saved</span>
+                <Muted as="span">Saved</Muted>
               </>
             )}
           </div>

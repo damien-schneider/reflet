@@ -9,14 +9,7 @@ import {
 } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Text } from "@/components/ui/typography";
+import { H3, Muted, Text } from "@/components/ui/typography";
 
 interface GitHubConnectionPromptProps {
   isAdmin: boolean;
@@ -55,44 +48,38 @@ export function GitHubConnectionPrompt({
   onConnect,
 }: GitHubConnectionPromptProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <section className="space-y-4">
+      <div>
+        <H3 className="flex items-center gap-2" variant="section">
           <GithubLogo className="h-5 w-5" />
           Connect GitHub to Enhance AI
-        </CardTitle>
-        <Text variant="bodySmall">
+        </H3>
+        <Muted>
           Link your GitHub repository to unlock AI-powered analysis and smarter
           feedback understanding.
-        </Text>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {BENEFITS.map((benefit) => (
-            <div className="flex gap-3" key={benefit.title}>
-              <benefit.icon className="mt-0.5 h-5 w-5 shrink-0 text-olive-600" />
-              <div>
-                <Text className="font-medium text-sm">{benefit.title}</Text>
-                <Text className="text-muted-foreground text-xs">
-                  {benefit.description}
-                </Text>
-              </div>
+        </Muted>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {BENEFITS.map((benefit) => (
+          <div className="flex gap-3" key={benefit.title}>
+            <benefit.icon className="mt-0.5 h-5 w-5 shrink-0 text-olive-600" />
+            <div>
+              <Text className="font-medium text-sm">{benefit.title}</Text>
+              <Text className="text-muted-foreground text-xs">
+                {benefit.description}
+              </Text>
             </div>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter>
-        {isAdmin ? (
-          <Button onClick={onConnect}>
-            <GithubLogo className="mr-2 h-4 w-4" />
-            Connect GitHub
-          </Button>
-        ) : (
-          <Text className="text-muted-foreground" variant="bodySmall">
-            Contact an admin to connect GitHub.
-          </Text>
-        )}
-      </CardFooter>
-    </Card>
+          </div>
+        ))}
+      </div>
+      {isAdmin ? (
+        <Button onClick={onConnect}>
+          <GithubLogo className="mr-2 h-4 w-4" />
+          Connect GitHub
+        </Button>
+      ) : (
+        <Muted>Contact an admin to connect GitHub.</Muted>
+      )}
+    </section>
   );
 }

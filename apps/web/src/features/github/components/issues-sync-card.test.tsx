@@ -38,22 +38,6 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h3>{children}</h3>
-  ),
-}));
-
 vi.mock("@/components/ui/label", () => ({
   Label: ({
     children,
@@ -88,6 +72,26 @@ vi.mock("@/components/ui/switch", () => ({
 }));
 
 vi.mock("@/components/ui/typography", () => ({
+  H3: ({
+    children,
+    variant,
+    className,
+  }: {
+    children: React.ReactNode;
+    variant?: string;
+    className?: string;
+  }) => (
+    <h3 className={className} data-variant={variant}>
+      {children}
+    </h3>
+  ),
+  Muted: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <p className={className}>{children}</p>,
   Text: ({
     children,
     className,
@@ -97,7 +101,7 @@ vi.mock("@/components/ui/typography", () => ({
   }) => <span className={className}>{children}</span>,
 }));
 
-import { IssuesSyncCard } from "./issues-sync-card";
+import { IssuesSyncSection } from "./issues-sync-card";
 
 afterEach(cleanup);
 
@@ -113,28 +117,23 @@ const defaultProps = {
   onSyncNow: vi.fn(),
 };
 
-describe("IssuesSyncCard", () => {
-  it("renders title", () => {
-    render(<IssuesSyncCard {...defaultProps} />);
-    expect(screen.getByText("Issue Sync")).toBeInTheDocument();
-  });
-
+describe("IssuesSyncSection", () => {
   it("renders enable sync switch", () => {
-    render(<IssuesSyncCard {...defaultProps} />);
+    render(<IssuesSyncSection {...defaultProps} />);
     expect(screen.getByTestId("switch-issues-sync")).toBeInTheDocument();
   });
 
   it("calls onToggleSync when switch toggled", async () => {
     const onToggleSync = vi.fn();
     const user = userEvent.setup();
-    render(<IssuesSyncCard {...defaultProps} onToggleSync={onToggleSync} />);
+    render(<IssuesSyncSection {...defaultProps} onToggleSync={onToggleSync} />);
     await user.click(screen.getByTestId("switch-issues-sync"));
     expect(onToggleSync).toHaveBeenCalledWith(true, false);
   });
 
   it("shows stats when enabled", () => {
     render(
-      <IssuesSyncCard
+      <IssuesSyncSection
         {...defaultProps}
         importedCount={15}
         isEnabled
@@ -148,12 +147,12 @@ describe("IssuesSyncCard", () => {
   });
 
   it("hides stats when disabled", () => {
-    render(<IssuesSyncCard {...defaultProps} isEnabled={false} />);
+    render(<IssuesSyncSection {...defaultProps} isEnabled={false} />);
     expect(screen.queryByText("Issues synced")).toBeNull();
   });
 
   it("shows auto-import switch when enabled", () => {
-    render(<IssuesSyncCard {...defaultProps} isEnabled />);
+    render(<IssuesSyncSection {...defaultProps} isEnabled />);
     expect(screen.getByTestId("switch-auto-import-issues")).toBeInTheDocument();
   });
 
@@ -161,19 +160,23 @@ describe("IssuesSyncCard", () => {
     const onToggleSync = vi.fn();
     const user = userEvent.setup();
     render(
-      <IssuesSyncCard {...defaultProps} isEnabled onToggleSync={onToggleSync} />
+      <IssuesSyncSection
+        {...defaultProps}
+        isEnabled
+        onToggleSync={onToggleSync}
+      />
     );
     await user.click(screen.getByTestId("switch-auto-import-issues"));
     expect(onToggleSync).toHaveBeenCalledWith(true, true);
   });
 
   it("shows Sync Issues Now button for admin when enabled", () => {
-    render(<IssuesSyncCard {...defaultProps} isEnabled />);
+    render(<IssuesSyncSection {...defaultProps} isEnabled />);
     expect(screen.getByText("Sync Issues Now")).toBeInTheDocument();
   });
 
   it("hides Sync Issues Now button for non-admin", () => {
-    render(<IssuesSyncCard {...defaultProps} isAdmin={false} isEnabled />);
+    render(<IssuesSyncSection {...defaultProps} isAdmin={false} isEnabled />);
     expect(screen.queryByText("Sync Issues Now")).toBeNull();
   });
 
@@ -181,14 +184,14 @@ describe("IssuesSyncCard", () => {
     const onSyncNow = vi.fn();
     const user = userEvent.setup();
     render(
-      <IssuesSyncCard {...defaultProps} isEnabled onSyncNow={onSyncNow} />
+      <IssuesSyncSection {...defaultProps} isEnabled onSyncNow={onSyncNow} />
     );
     await user.click(screen.getByText("Sync Issues Now"));
     expect(onSyncNow).toHaveBeenCalled();
   });
 
   it("disables sync button when syncing", () => {
-    render(<IssuesSyncCard {...defaultProps} isEnabled isSyncing />);
+    render(<IssuesSyncSection {...defaultProps} isEnabled isSyncing />);
     const btn = screen.getByText("Sync Issues Now").closest("button");
     expect(btn).toBeDisabled();
     expect(screen.getByTestId("icon-spinner")).toBeInTheDocument();
@@ -197,20 +200,20 @@ describe("IssuesSyncCard", () => {
   it("shows last synced time", () => {
     const lastSyncAt = Date.now();
     render(
-      <IssuesSyncCard {...defaultProps} isEnabled lastSyncAt={lastSyncAt} />
+      <IssuesSyncSection {...defaultProps} isEnabled lastSyncAt={lastSyncAt} />
     );
     expect(screen.getByText(/Last synced/)).toBeInTheDocument();
   });
 
   it("shows error badge when lastSyncStatus is error", () => {
     render(
-      <IssuesSyncCard {...defaultProps} isEnabled lastSyncStatus="error" />
+      <IssuesSyncSection {...defaultProps} isEnabled lastSyncStatus="error" />
     );
     expect(screen.getByText("Error")).toBeInTheDocument();
   });
 
   it("disables switch for non-admin", () => {
-    render(<IssuesSyncCard {...defaultProps} isAdmin={false} />);
+    render(<IssuesSyncSection {...defaultProps} isAdmin={false} />);
     expect(screen.getByTestId("switch-issues-sync")).toBeDisabled();
   });
 });

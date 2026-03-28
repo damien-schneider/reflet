@@ -121,7 +121,7 @@ export function KeywordManager({ organizationId }: KeywordManagerProps) {
               </div>
               <Select
                 onValueChange={(value) => {
-                  if (isKeywordSource(value)) {
+                  if (value && isKeywordSource(value)) {
                     setSource(value);
                   }
                 }}

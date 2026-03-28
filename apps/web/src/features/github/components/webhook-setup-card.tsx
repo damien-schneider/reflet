@@ -16,14 +16,7 @@ import {
 } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Text } from "@/components/ui/typography";
+import { H3, Muted, Text } from "@/components/ui/typography";
 
 import { GitHubPermissionErrorAlert } from "./github-permission-error-alert";
 
@@ -37,7 +30,7 @@ interface WebhookSetupCardProps {
   onSetup: () => void;
 }
 
-export function WebhookSetupCard({
+export function WebhookSetupSection({
   hasWebhook,
   isSettingUp,
   isAdmin,
@@ -124,18 +117,16 @@ export function WebhookSetupCard({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <section className="space-y-4">
+      <div>
+        <H3 className="flex items-center gap-2" variant="section">
           <WebhooksLogo className="h-5 w-5" />
           Webhook Setup
-        </CardTitle>
-        <CardDescription>{getDescription()}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {renderError()}
-        {renderContent()}
-      </CardContent>
-    </Card>
+        </H3>
+        <Muted>{getDescription()}</Muted>
+      </div>
+      {renderError()}
+      {renderContent()}
+    </section>
   );
 }

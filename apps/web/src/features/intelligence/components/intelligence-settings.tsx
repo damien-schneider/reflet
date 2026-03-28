@@ -149,7 +149,7 @@ export function IntelligenceSettings({
             <Label>Scan Frequency</Label>
             <Select
               onValueChange={(value) => {
-                if (isScanFrequency(value)) {
+                if (value && isScanFrequency(value)) {
                   setScanFrequency(value);
                 }
               }}

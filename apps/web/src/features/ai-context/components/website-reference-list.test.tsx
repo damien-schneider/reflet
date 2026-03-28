@@ -1,5 +1,4 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => ({
@@ -31,6 +30,10 @@ vi.mock("@/components/ui/button", () => ({
       {children}
     </button>
   ),
+}));
+
+vi.mock("@/components/ui/typography", () => ({
+  Muted: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
 }));
 
 vi.mock("@/components/ui/card", () => ({
@@ -74,11 +77,17 @@ import { WebsiteReferenceList } from "./website-reference-list";
 
 afterEach(cleanup);
 
+const mockDialogState = { isOpen: false, setIsOpen: vi.fn() };
+
 describe("WebsiteReferenceList", () => {
   it("renders loading spinner when data is undefined", () => {
     vi.mocked(useQuery).mockReturnValue(undefined);
     const { container } = render(
-      <WebsiteReferenceList isAdmin={true} organizationId={"org1" as never} />
+      <WebsiteReferenceList
+        dialogState={mockDialogState}
+        isAdmin={true}
+        organizationId={"org1" as never}
+      />
     );
     expect(container.querySelector(".animate-spin")).toBeInTheDocument();
   });
@@ -86,11 +95,13 @@ describe("WebsiteReferenceList", () => {
   it("renders empty state when no references", () => {
     vi.mocked(useQuery).mockReturnValue([]);
     render(
-      <WebsiteReferenceList isAdmin={false} organizationId={"org1" as never} />
+      <WebsiteReferenceList
+        dialogState={mockDialogState}
+        isAdmin={false}
+        organizationId={"org1" as never}
+      />
     );
-    expect(
-      screen.getByText(/No website references added yet/)
-    ).toBeInTheDocument();
+    expect(screen.getByText("Nothing yet")).toBeInTheDocument();
   });
 
   it("renders references list", () => {
@@ -107,37 +118,14 @@ describe("WebsiteReferenceList", () => {
       },
     ]);
     render(
-      <WebsiteReferenceList isAdmin={false} organizationId={"org1" as never} />
+      <WebsiteReferenceList
+        dialogState={mockDialogState}
+        isAdmin={false}
+        organizationId={"org1" as never}
+      />
     );
     expect(screen.getByText("https://example.com")).toBeInTheDocument();
     expect(screen.getByText("https://other.com")).toBeInTheDocument();
-  });
-
-  it("renders Add Website button for admin", () => {
-    vi.mocked(useQuery).mockReturnValue([]);
-    render(
-      <WebsiteReferenceList isAdmin={true} organizationId={"org1" as never} />
-    );
-    expect(screen.getByText("Add Website")).toBeInTheDocument();
-  });
-
-  it("does not render Add Website button for non-admin", () => {
-    vi.mocked(useQuery).mockReturnValue([]);
-    render(
-      <WebsiteReferenceList isAdmin={false} organizationId={"org1" as never} />
-    );
-    expect(screen.queryByText("Add Website")).not.toBeInTheDocument();
-  });
-
-  it("opens add dialog when Add Website is clicked", async () => {
-    vi.mocked(useQuery).mockReturnValue([]);
-    const user = userEvent.setup();
-    render(
-      <WebsiteReferenceList isAdmin={true} organizationId={"org1" as never} />
-    );
-
-    await user.click(screen.getByText("Add Website"));
-    expect(screen.getByTestId("add-dialog")).toBeInTheDocument();
   });
 
   it("renders correct number of reference cards", () => {
@@ -147,7 +135,11 @@ describe("WebsiteReferenceList", () => {
       { _id: "ref3", url: "https://c.com", status: "success" },
     ]);
     render(
-      <WebsiteReferenceList isAdmin={true} organizationId={"org1" as never} />
+      <WebsiteReferenceList
+        dialogState={mockDialogState}
+        isAdmin={true}
+        organizationId={"org1" as never}
+      />
     );
     expect(screen.getAllByTestId("ref-card")).toHaveLength(3);
   });

@@ -14,6 +14,7 @@ import { IncidentCard } from "@/features/status/components/incident-card";
 import { IncidentComposer } from "@/features/status/components/incident-composer";
 import { MonitorCard } from "@/features/status/components/monitor-card";
 import { StatusDot } from "@/features/status/components/status-dot";
+import { GitHubConnectHint } from "@/shared/components/github-connect-hint";
 
 const statusLabels = {
   operational: "All Systems Operational",
@@ -153,7 +154,12 @@ export default function StatusDashboardPage({
           <Muted className="mt-1 mb-6">
             Add your first monitor to start tracking uptime
           </Muted>
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-md space-y-4">
+            <GitHubConnectHint
+              description="endpoints and services from your codebase"
+              organizationId={org._id}
+              orgSlug={orgSlug}
+            />
             <AddMonitorInput
               onAdd={handleAddMonitor}
               organizationId={org._id}

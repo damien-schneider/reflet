@@ -34,6 +34,10 @@ export const organizationTables = {
     stripeSubscriptionId: v.optional(v.string()),
     customDomain: v.optional(v.string()),
     supportEnabled: v.optional(v.boolean()),
+    setupCompleted: v.optional(v.boolean()),
+    setupMethod: v.optional(
+      v.union(v.literal("github"), v.literal("manual"), v.literal("skipped"))
+    ),
     staleFeedbackSettings: v.optional(
       v.object({
         enabled: v.boolean(),

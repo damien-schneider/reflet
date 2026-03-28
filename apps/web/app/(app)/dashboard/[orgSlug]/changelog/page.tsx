@@ -16,6 +16,7 @@ import { use, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H1, Muted, Text } from "@/components/ui/typography";
+import { ChangelogSettingsTab } from "@/features/changelog/components/changelog-settings-tab";
 import { ChangelogWidgetTab } from "@/features/changelog/components/changelog-widget-tab";
 import { DeleteReleaseDialog } from "@/features/changelog/components/delete-release-dialog";
 import { ReleaseSetupWizard } from "@/features/changelog/components/release-setup-wizard";
@@ -106,6 +107,7 @@ export default function ChangelogPage({
     );
   });
 
+  const [activeTab, setActiveTab] = useState("releases");
   const [deletingRelease, setDeletingRelease] = useState<
     NonNullable<typeof releases>[number] | null
   >(null);
@@ -151,12 +153,14 @@ export default function ChangelogPage({
     );
   } else if (hasConfiguredSync) {
     githubAction = (
-      <Link href={`/dashboard/${orgSlug}/settings/releases`}>
-        <Button size="sm" variant="ghost">
-          <GearSix className="mr-1 h-4 w-4" />
-          <span className="hidden sm:inline">Settings</span>
-        </Button>
-      </Link>
+      <Button
+        onClick={() => setActiveTab("settings")}
+        size="sm"
+        variant="ghost"
+      >
+        <GearSix className="mr-1 h-4 w-4" />
+        <span className="hidden sm:inline">Settings</span>
+      </Button>
     );
   }
 
@@ -230,12 +234,18 @@ export default function ChangelogPage({
         </div>
       )}
 
-      <Tabs defaultValue="releases">
+      <Tabs onValueChange={setActiveTab} value={activeTab}>
         <TabsList>
           <TabsTrigger value="releases">
             <Plus className="mr-2 h-4 w-4" />
             Releases
           </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="settings">
+              <GearSix className="mr-2 h-4 w-4" />
+              Settings
+            </TabsTrigger>
+          )}
           <TabsTrigger value="widget">
             <Code className="mr-2 h-4 w-4" />
             Embed
@@ -262,6 +272,17 @@ export default function ChangelogPage({
             releases={releases ?? []}
           />
         </TabsContent>
+
+        {isAdmin && (
+          <TabsContent className="mt-6" value="settings">
+            <ChangelogSettingsTab
+              isAdmin={isAdmin}
+              onOpenSetupWizard={() => setShowSetupWizard(true)}
+              organizationId={org._id}
+              orgSlug={orgSlug}
+            />
+          </TabsContent>
+        )}
 
         <TabsContent className="mt-6" value="widget">
           <ChangelogWidgetTab

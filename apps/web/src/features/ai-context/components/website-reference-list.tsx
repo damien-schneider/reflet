@@ -7,7 +7,7 @@ import { useQuery } from "convex/react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Muted } from "@/components/ui/typography";
 
 import { AddWebsiteDialog } from "./add-website-dialog";
 import { WebsiteReferenceCard } from "./website-reference-card";
@@ -17,48 +17,45 @@ interface WebsiteReferenceListProps {
   organizationId: Id<"organizations">;
 }
 
+export function useWebsiteReferenceDialog() {
+  const [isOpen, setIsOpen] = useState(false);
+  return { isOpen, setIsOpen };
+}
+
+export function WebsiteReferenceAddButton({ onOpen }: { onOpen: () => void }) {
+  return (
+    <Button onClick={onOpen} size="sm" variant="outline">
+      <Plus className="mr-1.5 h-4 w-4" />
+      Add Website
+    </Button>
+  );
+}
+
 export function WebsiteReferenceList({
   organizationId,
   isAdmin,
-}: WebsiteReferenceListProps) {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-
+  dialogState,
+}: WebsiteReferenceListProps & {
+  dialogState: { isOpen: boolean; setIsOpen: (open: boolean) => void };
+}) {
   const references = useQuery(api.integrations.website_references.list, {
     organizationId,
   });
 
   if (references === undefined) {
     return (
-      <Card>
-        <CardContent className="py-8">
-          <div className="flex justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-olive-600 border-t-transparent" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex justify-center py-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-olive-600 border-t-transparent" />
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {isAdmin && (
-        <div className="flex justify-end">
-          <Button onClick={() => setIsAddDialogOpen(true)} variant="outline">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Website
-          </Button>
-        </div>
-      )}
-
       {references.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center py-8 text-center">
-            <p className="text-muted-foreground">
-              No website references added yet. Add websites to provide
-              additional context for AI clarifications.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="py-4 text-center">
+          <Muted>Nothing yet</Muted>
+        </div>
       ) : (
         <div className="space-y-3">
           {references.map((reference) => (
@@ -72,8 +69,8 @@ export function WebsiteReferenceList({
       )}
 
       <AddWebsiteDialog
-        onOpenChange={setIsAddDialogOpen}
-        open={isAddDialogOpen}
+        onOpenChange={dialogState.setIsOpen}
+        open={dialogState.isOpen}
         organizationId={organizationId}
       />
     </div>
