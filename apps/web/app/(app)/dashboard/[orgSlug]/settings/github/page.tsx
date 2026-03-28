@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { use, useEffect } from "react";
+import { use } from "react";
 
 import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
 import { GitHubConnectionSection } from "@/features/github/components/github-connection-card";
@@ -72,19 +72,6 @@ export default function GitHubSettingsPage({
     },
   });
 
-  useEffect(() => {
-    if (
-      queries.connectionStatus?.isConnected &&
-      !queries.connectionStatus?.hasRepository
-    ) {
-      settings.fetchRepositories();
-    }
-  }, [
-    queries.connectionStatus?.isConnected,
-    queries.connectionStatus?.hasRepository,
-    settings.fetchRepositories,
-  ]);
-
   if (!org) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -120,6 +107,7 @@ export default function GitHubSettingsPage({
 
         {queries.connectionStatus?.isConnected ? (
           <RepositorySelectorSection
+            error={settings.repoError}
             hasRepository={
               queries.connectionStatus.hasRepository &&
               !settings.isChangingRepository

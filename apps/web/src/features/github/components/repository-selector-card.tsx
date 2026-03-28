@@ -50,6 +50,7 @@ function getRepositorySearchText(repo: Repository): string {
 }
 
 interface RepositorySelectorCardProps {
+  error?: string | null;
   hasRepository: boolean;
   isAdmin: boolean;
   loadingRepos: boolean;
@@ -62,6 +63,7 @@ interface RepositorySelectorCardProps {
 }
 
 export function RepositorySelectorSection({
+  error,
   hasRepository,
   repositoryFullName,
   repositories,
@@ -106,6 +108,13 @@ export function RepositorySelectorSection({
 
   return (
     <div className="space-y-3">
+      {error ? (
+        <div className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3">
+          <Text className="text-destructive" variant="bodySmall">
+            {error}
+          </Text>
+        </div>
+      ) : null}
       <Combobox
         filter={(repo, query) => {
           if (!query) {

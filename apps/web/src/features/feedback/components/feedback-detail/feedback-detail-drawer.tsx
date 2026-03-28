@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ScreenshotGallery } from "../screenshot-gallery";
 import { CommentsSection } from "./comments-section";
+import { FeatureCheck } from "./feature-check";
 import { FeedbackContent } from "./feedback-content";
 import type {
   FeedbackDetailContentProps,
@@ -327,6 +328,16 @@ function FeedbackDetailContent({
         {isAdmin && (
           <div className="px-6 pb-4">
             <InlineClarification feedbackId={feedbackId} />
+          </div>
+        )}
+
+        {/* Feature Implementation Check (admin only) */}
+        {isAdmin && (
+          <div className="px-6 pb-4">
+            <FeatureCheck
+              feedbackId={feedbackId}
+              organizationId={feedback.organizationId}
+            />
           </div>
         )}
 

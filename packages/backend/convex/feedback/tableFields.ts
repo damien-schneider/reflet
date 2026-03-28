@@ -59,6 +59,34 @@ export const feedbackTables = {
     aiComplexityGeneratedAt: v.optional(v.number()),
     aiTimeEstimate: v.optional(v.string()),
     aiTimeEstimateGeneratedAt: v.optional(v.number()),
+    aiFeatureCheckStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("checking"),
+        v.literal("completed"),
+        v.literal("error")
+      )
+    ),
+    aiFeatureCheckResult: v.optional(
+      v.union(
+        v.literal("implemented"),
+        v.literal("partially_implemented"),
+        v.literal("not_implemented"),
+        v.literal("inconclusive")
+      )
+    ),
+    aiFeatureCheckSummary: v.optional(v.string()),
+    aiFeatureCheckEvidence: v.optional(
+      v.array(
+        v.object({
+          filePath: v.string(),
+          snippet: v.optional(v.string()),
+          relevance: v.string(),
+        })
+      )
+    ),
+    aiFeatureCheckGeneratedAt: v.optional(v.number()),
+    aiFeatureCheckError: v.optional(v.string()),
     priority: v.optional(
       v.union(
         v.literal("critical"),

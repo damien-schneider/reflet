@@ -121,6 +121,7 @@ export function GitHubSection({
           />
           {isConnected ? (
             <RepositorySelectorSection
+              error={settings.repoError}
               hasRepository={hasRepository && !settings.isChangingRepository}
               isAdmin={isAdmin}
               loadingRepos={settings.loadingRepos}

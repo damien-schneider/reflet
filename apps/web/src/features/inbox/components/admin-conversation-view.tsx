@@ -3,7 +3,6 @@
 import { ChatCircle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { H2, H3, Muted, Text } from "@/components/ui/typography";
 import { AssignMemberDropdown } from "@/features/inbox/components/assign-member-dropdown";
 import { InlineStatusButtons } from "@/features/inbox/components/inline-status-buttons";
@@ -112,20 +111,14 @@ export function EmptyConversationState({
   hasConversations,
 }: EmptyConversationStateProps) {
   return (
-    <div className="flex flex-1 items-center justify-center">
-      <Card>
-        <CardContent className="py-12 text-center">
-          <ChatCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <H3 className="mb-2" variant="card">
-            {hasConversations ? "Select a conversation" : "No conversations"}
-          </H3>
-          <Muted>
-            {hasConversations
-              ? "Choose a conversation from the sidebar to view messages"
-              : "No support requests have been submitted yet."}
-          </Muted>
-        </CardContent>
-      </Card>
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+      <ChatCircle className="h-12 w-12 text-muted-foreground" />
+      <H3>{hasConversations ? "Select a conversation" : "No conversations"}</H3>
+      <Muted>
+        {hasConversations
+          ? "Choose a conversation from the sidebar to view messages"
+          : "No support requests have been submitted yet."}
+      </Muted>
     </div>
   );
 }

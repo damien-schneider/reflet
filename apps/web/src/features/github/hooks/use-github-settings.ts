@@ -1,30 +1,10 @@
 "use client";
 
+import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useCallback, useState } from "react";
+import { useAction } from "convex/react";
+import { useCallback, useEffect, useState } from "react";
 import { capture } from "@/lib/analytics";
-
-const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? "";
-
-interface ApiErrorResponse {
-  code?: string;
-  error?: string;
-  message?: string;
-  success?: boolean;
-}
-
-const parseApiError = (json: unknown): ApiErrorResponse => {
-  if (!json || typeof json !== "object") {
-    return {};
-  }
-  const obj = json as Record<string, unknown>;
-  return {
-    success: typeof obj.success === "boolean" ? obj.success : undefined,
-    error: typeof obj.error === "string" ? obj.error : undefined,
-    code: typeof obj.code === "string" ? obj.code : undefined,
-    message: typeof obj.message === "string" ? obj.message : undefined,
-  };
-};
 
 type IssueStatus =
   | "open"
@@ -113,34 +93,55 @@ export function useGitHubSettings({
     code: string;
     message: string;
   } | null>(null);
+  const [repoError, setRepoError] = useState<string | null>(null);
+
+  const listRepositoriesAction = useAction(
+    api.integrations.github.client_actions.listRepositories
+  );
+  const listLabelsAction = useAction(
+    api.integrations.github.client_actions.listLabels
+  );
+  const syncReleasesAction = useAction(
+    api.integrations.github.client_actions.syncReleases
+  );
+  const syncIssuesAction = useAction(
+    api.integrations.github.client_actions.syncIssues
+  );
+  const setupWebhookAction = useAction(
+    api.integrations.github.client_actions.setupWebhook
+  );
 
   const fetchRepositories = useCallback(async () => {
     if (!(orgId && isConnected)) {
       return;
     }
     setLoadingRepos(true);
+    setRepoError(null);
     try {
-      const response = await fetch(
-        `${CONVEX_SITE_URL}/api/github/repositories?organizationId=${orgId}`,
-        {
-          cache: "no-store",
-        }
-      );
-      const data: unknown = await response.json();
-      if (
-        data &&
-        typeof data === "object" &&
-        "repositories" in data &&
-        Array.isArray(data.repositories)
-      ) {
-        setRepositories(data.repositories as Repository[]);
+      const repos = await listRepositoriesAction({
+        organizationId: orgId,
+      });
+      setRepositories(repos);
+      if (repos.length === 0) {
+        setRepoError(
+          "No repositories found. Make sure the GitHub App has access to at least one repository in your GitHub App installation settings."
+        );
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setRepoError(message);
       console.error("Error fetching repositories:", error);
     } finally {
       setLoadingRepos(false);
     }
-  }, [orgId, isConnected]);
+  }, [orgId, isConnected, listRepositoriesAction]);
+
+  // Auto-fetch repositories when connected but no repo selected
+  useEffect(() => {
+    if (isConnected && !hasRepository) {
+      fetchRepositories();
+    }
+  }, [isConnected, hasRepository, fetchRepositories]);
 
   const fetchLabels = useCallback(async () => {
     if (!(orgId && hasRepository)) {
@@ -148,24 +149,14 @@ export function useGitHubSettings({
     }
     setIsLoadingLabels(true);
     try {
-      const response = await fetch(
-        `${CONVEX_SITE_URL}/api/github/labels?organizationId=${orgId}`
-      );
-      const data: unknown = await response.json();
-      if (
-        data &&
-        typeof data === "object" &&
-        "labels" in data &&
-        Array.isArray(data.labels)
-      ) {
-        setGithubLabels(data.labels as GitHubLabel[]);
-      }
+      const labels = await listLabelsAction({ organizationId: orgId });
+      setGithubLabels(labels);
     } catch (error) {
       console.error("Error fetching labels:", error);
     } finally {
       setIsLoadingLabels(false);
     }
-  }, [orgId, hasRepository]);
+  }, [orgId, hasRepository, listLabelsAction]);
 
   const handleConnectGitHub = useCallback(() => {
     if (!(orgId && orgSlug)) {
@@ -204,17 +195,13 @@ export function useGitHubSettings({
     }
     setIsSyncing(true);
     try {
-      await fetch(`${CONVEX_SITE_URL}/api/github/sync`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId: orgId }),
-      });
+      await syncReleasesAction({ organizationId: orgId });
     } catch (error) {
       console.error("Error syncing releases:", error);
     } finally {
       setIsSyncing(false);
     }
-  }, [orgId]);
+  }, [orgId, syncReleasesAction]);
 
   const handleSyncIssues = useCallback(async () => {
     if (!orgId) {
@@ -222,17 +209,13 @@ export function useGitHubSettings({
     }
     setIsSyncingIssues(true);
     try {
-      await fetch(`${CONVEX_SITE_URL}/api/github/issues`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId: orgId, state: "all" }),
-      });
+      await syncIssuesAction({ organizationId: orgId, state: "all" });
     } catch (error) {
       console.error("Error syncing issues:", error);
     } finally {
       setIsSyncingIssues(false);
     }
-  }, [orgId]);
+  }, [orgId, syncIssuesAction]);
 
   const handleSetup = useCallback(async () => {
     if (!orgId) {
@@ -241,34 +224,18 @@ export function useGitHubSettings({
     setIsSettingUp(true);
     setWebhookSetupError(null);
     try {
-      const response = await fetch(`${CONVEX_SITE_URL}/api/github/setup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          organizationId: orgId,
-          setupWebhook: true,
-          setupCi: false,
-        }),
-      });
-
-      const data = parseApiError(await response.json());
-
-      if (!response.ok || data.error) {
-        setWebhookSetupError({
-          code: data.code ?? "UNKNOWN_ERROR",
-          message: data.message ?? data.error ?? "An unknown error occurred",
-        });
-      }
+      await setupWebhookAction({ organizationId: orgId });
     } catch (error) {
       console.error("Error setting up:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
       setWebhookSetupError({
-        code: "NETWORK_ERROR",
-        message: "Failed to connect to the server. Please try again.",
+        code: "SETUP_FAILED",
+        message,
       });
     } finally {
       setIsSettingUp(false);
     }
-  }, [orgId]);
+  }, [orgId, setupWebhookAction]);
 
   const clearWebhookSetupError = useCallback(() => {
     setWebhookSetupError(null);
@@ -299,42 +266,24 @@ export function useGitHubSettings({
         setIsSettingUp(true);
         setWebhookSetupError(null);
         try {
-          const response = await fetch(`${CONVEX_SITE_URL}/api/github/setup`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              organizationId: orgId,
-              setupWebhook: true,
-              setupCi: false,
-            }),
-          });
-
-          const data = parseApiError(await response.json());
-
-          if (!response.ok || data.error) {
-            setWebhookSetupError({
-              code: data.code ?? "UNKNOWN_ERROR",
-              message:
-                data.message ?? data.error ?? "An unknown error occurred",
-            });
-            setIsSettingUp(false);
-            return; // Don't enable auto-sync if webhook setup failed
-          }
+          await setupWebhookAction({ organizationId: orgId });
         } catch (error) {
           console.error("Error setting up webhook:", error);
+          const message =
+            error instanceof Error ? error.message : "Unknown error";
           setWebhookSetupError({
-            code: "NETWORK_ERROR",
-            message: "Failed to connect to the server. Please try again.",
+            code: "SETUP_FAILED",
+            message,
           });
           setIsSettingUp(false);
-          return; // Don't enable auto-sync if webhook setup failed
+          return;
         }
         setIsSettingUp(false);
       }
 
       await toggleAutoSync({ organizationId: orgId, enabled });
     },
-    [orgId, toggleAutoSync, hasWebhook]
+    [orgId, toggleAutoSync, hasWebhook, setupWebhookAction]
   );
 
   const handleToggleIssuesSync = useCallback(
@@ -390,6 +339,7 @@ export function useGitHubSettings({
     githubLabels,
     isLoadingLabels,
     webhookSetupError,
+    repoError,
     // Setters
     setSelectedRepo,
     // Handlers
