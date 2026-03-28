@@ -2,7 +2,11 @@ import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
-import { STRIPE_PRICES, stripeClient } from "./stripe";
+import {
+  createCheckoutSessionWithPromoCodes,
+  STRIPE_PRICES,
+  stripeClient,
+} from "./stripe";
 
 // ============================================
 // ACTIONS - Org-based subscription management
@@ -77,19 +81,13 @@ export const createCheckoutSession = action({
       });
     }
 
-    // Create checkout session with orgId in metadata
-    const result = await stripeClient.createCheckoutSession(ctx, {
-      priceId,
+    // Create checkout session with promotion codes enabled
+    const result = await createCheckoutSessionWithPromoCodes({
       customerId,
-      mode: "subscription",
+      priceId,
       successUrl: args.successUrl,
       cancelUrl: args.cancelUrl,
-      metadata: {
-        orgId: args.organizationId,
-      },
-      subscriptionMetadata: {
-        orgId: args.organizationId,
-      },
+      orgId: args.organizationId,
     });
 
     return {

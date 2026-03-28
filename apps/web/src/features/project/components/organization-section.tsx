@@ -116,7 +116,7 @@ export function OrganizationSection({
       setTimeout(() => setSaved(false), 2000);
 
       if (trimmedSlug !== orgSlug) {
-        router.replace(`/dashboard/${trimmedSlug}/project`);
+        router.replace(`/dashboard/${trimmedSlug}/project/general`);
       }
     } catch (err) {
       if (err instanceof Error) {

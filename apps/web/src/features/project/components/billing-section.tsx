@@ -86,7 +86,7 @@ export function BillingSection({
     try {
       const result = await createPortalSession({
         organizationId,
-        returnUrl: `${window.location.origin}/dashboard/${orgSlug}/project`,
+        returnUrl: `${window.location.origin}/dashboard/${orgSlug}/project/billing`,
       });
 
       if (result.url) {
