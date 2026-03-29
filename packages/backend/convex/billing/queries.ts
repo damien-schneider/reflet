@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { stripeTimestampToMs } from "./utils";
 
 // Plan limits for Free vs Pro tiers
 export const PLAN_LIMITS = {
@@ -97,7 +98,9 @@ export const getStatus = query({
         ? {
             priceId: subscription.priceId,
             status: subscription.status,
-            currentPeriodEnd: subscription.currentPeriodEnd,
+            currentPeriodEnd: stripeTimestampToMs(
+              subscription.currentPeriodEnd
+            ),
             cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
             cancelAt: subscription.cancelAt,
           }

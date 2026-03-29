@@ -147,6 +147,7 @@ Code in `packages/backend/convex/`, organized by domain.
 - Never name a file same as a sibling directory (triggers TS2589)
 - Static imports only — `import { internal } from "./_generated/api"` at top level
 - Migrations: `internalMutation` → `convex run` → delete migration file
+- Use the Convex CLI to query data: `bunx convex run <functionPath>` — add `--prod` to check production data
 
 ## Verification Checklist
 
