@@ -90,6 +90,14 @@ export const websiteReferenceStatus = v.union(
   v.literal("error")
 );
 
+export const domainStatus = v.union(
+  v.literal("pending_verification"),
+  v.literal("active"),
+  v.literal("invalid_configuration"),
+  v.literal("removing"),
+  v.literal("error")
+);
+
 // ============================================
 // INPUT VALIDATORS
 // ============================================

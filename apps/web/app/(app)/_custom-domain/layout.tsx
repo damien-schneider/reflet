@@ -3,21 +3,27 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import Link from "next/link";
-import { use } from "react";
+import { useEffect, useState } from "react";
 import { H1, Muted } from "@/components/ui/typography";
 import { PublicOrgShell } from "@/features/public-org/components/public-org-shell";
 
-export default function PublicOrgLayoutClient({
+export default function CustomDomainLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ orgSlug: string }>;
 }) {
-  const { orgSlug } = use(params);
-  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
+  const [hostname, setHostname] = useState<string | null>(null);
 
-  if (org === undefined) {
+  useEffect(() => {
+    setHostname(window.location.hostname);
+  }, []);
+
+  const org = useQuery(
+    api.domains.queries.getByCustomDomain,
+    hostname ? { domain: hostname } : "skip"
+  );
+
+  if (!hostname || org === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div>Loading...</div>
@@ -28,22 +34,23 @@ export default function PublicOrgLayoutClient({
   if (org === null) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
-        <H1 variant="page">Organization not found</H1>
+        <H1 variant="page">Site not found</H1>
         <Muted className="text-center">
-          The organization you&apos;re looking for doesn&apos;t exist.
+          No organization is configured for this domain.
         </Muted>
         <Link
           className="mt-4 text-olive-600 underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
-          href="/"
+          href="https://www.reflet.app"
+          rel="noopener"
         >
-          Go back home
+          Go to Reflet
         </Link>
       </div>
     );
   }
 
   return (
-    <PublicOrgShell basePath={`/${orgSlug}`} org={org} orgSlug={orgSlug}>
+    <PublicOrgShell basePath="" org={org} orgSlug={org.slug}>
       {children}
     </PublicOrgShell>
   );

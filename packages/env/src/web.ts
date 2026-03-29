@@ -11,6 +11,7 @@ export const env = createEnv({
     NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
     NEXT_PUBLIC_POSTHOG_HOST: z.url().optional(),
+    NEXT_PUBLIC_ROOT_DOMAIN: z.string().min(1).optional(),
   },
   runtimeEnv: {
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
@@ -21,6 +22,7 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    NEXT_PUBLIC_ROOT_DOMAIN: process.env.NEXT_PUBLIC_ROOT_DOMAIN,
   },
   emptyStringAsUndefined: true,
 });

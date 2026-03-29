@@ -63,4 +63,10 @@ crons.daily(
   internal.status.healthCheck.cleanupOldChecks
 );
 
+crons.interval(
+  "check pending domain verification",
+  { minutes: 5 },
+  internal.domains.crons.checkPendingDomains
+);
+
 export default crons;

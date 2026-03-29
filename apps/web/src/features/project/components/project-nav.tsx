@@ -5,6 +5,7 @@ import {
   Buildings,
   CreditCard,
   GithubLogo,
+  Globe,
   Robot,
   Users,
 } from "@phosphor-icons/react";
@@ -18,6 +19,7 @@ export type ProjectTab =
   | "github"
   | "ai-mcp"
   | "general"
+  | "domains"
   | "members"
   | "billing";
 
@@ -46,6 +48,12 @@ const NAV_ITEMS: NavItem[] = [
     label: "Organization",
     description: "Name, branding, and visibility",
     icon: Buildings,
+  },
+  {
+    id: "domains",
+    label: "Domains",
+    description: "Custom domains and subdomains",
+    icon: Globe,
   },
   {
     id: "members",

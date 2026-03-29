@@ -1,6 +1,7 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
+  domainStatus,
   feedbackStatus,
   invitationStatus,
   memberRole,
@@ -33,6 +34,19 @@ export const organizationTables = {
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     customDomain: v.optional(v.string()),
+    customDomainStatus: v.optional(domainStatus),
+    customDomainVerification: v.optional(
+      v.array(
+        v.object({
+          type: v.string(),
+          domain: v.string(),
+          value: v.string(),
+          reason: v.optional(v.string()),
+        })
+      )
+    ),
+    customDomainError: v.optional(v.string()),
+    customDomainLastCheckedAt: v.optional(v.number()),
     supportEnabled: v.optional(v.boolean()),
     setupCompleted: v.optional(v.boolean()),
     setupMethod: v.optional(
@@ -74,6 +88,7 @@ export const organizationTables = {
     ),
   })
     .index("by_slug", ["slug"])
+    .index("by_custom_domain", ["customDomain"])
     .index("by_stripe_customer", ["stripeCustomerId"])
     .searchIndex("search_name", { searchField: "name" }),
 
