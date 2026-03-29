@@ -105,55 +105,35 @@ export const getConnectionFromApiRoute = action({
  */
 export const saveInstallationFromCallback = action({
   args: {
-    userId: v.optional(v.string()),
+    userId: v.string(),
     installationId: v.string(),
     accountType: v.union(v.literal("user"), v.literal("organization")),
     accountLogin: v.string(),
     accountAvatarUrl: v.optional(v.string()),
     organizationId: v.optional(v.id("organizations")),
   },
-  handler: async (ctx, args): Promise<Id<"userGithubConnections"> | null> => {
-    let userConnectionId: Id<"userGithubConnections"> | null = null;
-
-    // Create user-level connection if userId is provided
-    if (args.userId) {
-      userConnectionId = await ctx.runMutation(
-        internal.integrations.github.mutations.saveUserInstallation,
-        {
-          userId: args.userId,
-          installationId: args.installationId,
-          accountType: args.accountType,
-          accountLogin: args.accountLogin,
-          accountAvatarUrl: args.accountAvatarUrl,
-        }
-      );
-    }
+  handler: async (ctx, args): Promise<Id<"userGithubConnections">> => {
+    const userConnectionId = await ctx.runMutation(
+      internal.integrations.github.mutations.saveUserInstallation,
+      {
+        userId: args.userId,
+        installationId: args.installationId,
+        accountType: args.accountType,
+        accountLogin: args.accountLogin,
+        accountAvatarUrl: args.accountAvatarUrl,
+      }
+    );
 
     // Link to org if organizationId was provided
     if (args.organizationId) {
-      if (userConnectionId) {
-        // New path: link via user connection
-        await ctx.runMutation(
-          internal.integrations.github.mutations.linkRepoToOrg,
-          {
-            organizationId: args.organizationId,
-            userGithubConnectionId: userConnectionId,
-            linkedByUserId: args.userId ?? "unknown",
-          }
-        );
-      } else {
-        // Legacy path: save directly to org (no user-level connection)
-        await ctx.runMutation(
-          internal.integrations.github.mutations.saveInstallationInternal,
-          {
-            organizationId: args.organizationId,
-            installationId: args.installationId,
-            accountType: args.accountType,
-            accountLogin: args.accountLogin,
-            accountAvatarUrl: args.accountAvatarUrl,
-          }
-        );
-      }
+      await ctx.runMutation(
+        internal.integrations.github.mutations.linkRepoToOrg,
+        {
+          organizationId: args.organizationId,
+          userGithubConnectionId: userConnectionId,
+          linkedByUserId: args.userId,
+        }
+      );
     }
 
     return userConnectionId;

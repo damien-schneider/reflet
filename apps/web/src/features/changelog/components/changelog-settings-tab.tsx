@@ -8,6 +8,8 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Muted } from "@/components/ui/typography";
+import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
+import { authClient } from "@/lib/auth-client";
 import { AutomationSection } from "../../../../app/(app)/dashboard/[orgSlug]/settings/releases/_components/automation-section";
 import { CurrentConfigSection } from "../../../../app/(app)/dashboard/[orgSlug]/settings/releases/_components/current-config-section";
 import { ManualSyncSection } from "../../../../app/(app)/dashboard/[orgSlug]/settings/releases/_components/manual-sync-section";
@@ -32,6 +34,7 @@ export function ChangelogSettingsTab({
   organizationId,
   orgSlug,
 }: ChangelogSettingsTabProps) {
+  const { data: session } = authClient.useSession();
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const githubStatus = useQuery(
     api.integrations.github.queries.getConnectionStatus,
@@ -202,7 +205,13 @@ export function ChangelogSettingsTab({
             </div>
             <a
               className={buttonVariants({ variant: "outline", size: "sm" })}
-              href={`/api/github/install?organizationId=${organizationId}&orgSlug=${encodeURIComponent(orgSlug)}`}
+              href={
+                buildGitHubInstallUrl({
+                  userId: session?.user?.id,
+                  organizationId,
+                  orgSlug,
+                }) ?? "#"
+              }
             >
               <GithubLogo className="mr-1.5 h-4 w-4" />
               Connect GitHub

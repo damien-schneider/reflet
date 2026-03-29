@@ -115,10 +115,9 @@ export async function GET(request: Request): Promise<NextResponse> {
       cookieStore.get("github_oauth_org_id")?.value ?? null;
   }
 
-  // userId may be absent for legacy callers — in that case, fall back to org-level save
-  if (!(state.userId || state.organizationId)) {
+  if (!state.userId) {
     return NextResponse.redirect(
-      new URL("/dashboard?error=missing_context", request.url)
+      new URL("/dashboard?error=missing_user_context", request.url)
     );
   }
 
@@ -160,7 +159,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     await fetchAction(
       api.integrations.github.actions.saveInstallationFromCallback,
       {
-        userId: state.userId ?? undefined,
+        userId: state.userId,
         installationId,
         accountType:
           installation.account.type === "Organization"

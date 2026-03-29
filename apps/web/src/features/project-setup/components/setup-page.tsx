@@ -7,10 +7,10 @@ import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { H1, Muted, Text } from "@/components/ui/typography";
+import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { AnalyzingView } from "./analyzing-view";
 import { ReviewView } from "./review-view";
 
@@ -58,9 +58,12 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
     return null;
   }
 
-  const connectHref = userId
-    ? `/api/github/install?userId=${encodeURIComponent(userId)}&organizationId=${organizationId}&orgSlug=${encodeURIComponent(orgSlug)}&returnTo=setup`
-    : undefined;
+  const connectHref = buildGitHubInstallUrl({
+    userId,
+    organizationId,
+    orgSlug,
+    returnTo: "setup",
+  });
 
   const handleStartAnalysis = async () => {
     if (isStarting) {

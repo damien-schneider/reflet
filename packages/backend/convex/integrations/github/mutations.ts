@@ -7,67 +7,6 @@ import { getAuthUser } from "../../shared/utils";
 // ============================================
 
 /**
- * Save GitHub App installation (called after OAuth callback)
- */
-export const saveInstallation = mutation({
-  args: {
-    organizationId: v.id("organizations"),
-    installationId: v.string(),
-    accountType: v.union(v.literal("user"), v.literal("organization")),
-    accountLogin: v.string(),
-    accountAvatarUrl: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can connect GitHub");
-    }
-
-    const existing = await ctx.db
-      .query("githubConnections")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .first();
-
-    const now = Date.now();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        installationId: args.installationId,
-        accountType: args.accountType,
-        accountLogin: args.accountLogin,
-        accountAvatarUrl: args.accountAvatarUrl,
-        status: "connected",
-        updatedAt: now,
-      });
-      return existing._id;
-    }
-
-    const connectionId = await ctx.db.insert("githubConnections", {
-      organizationId: args.organizationId,
-      installationId: args.installationId,
-      accountType: args.accountType,
-      accountLogin: args.accountLogin,
-      accountAvatarUrl: args.accountAvatarUrl,
-      status: "connected",
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    return connectionId;
-  },
-});
-
-/**
  * Select repository to connect
  */
 export const selectRepository = mutation({
@@ -624,54 +563,6 @@ export const handleMemberRemoved = internalMutation({
         });
       }
     }
-  },
-});
-
-/**
- * Internal mutation to save GitHub App installation
- */
-export const saveInstallationInternal = internalMutation({
-  args: {
-    organizationId: v.id("organizations"),
-    installationId: v.string(),
-    accountType: v.union(v.literal("user"), v.literal("organization")),
-    accountLogin: v.string(),
-    accountAvatarUrl: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("githubConnections")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .first();
-
-    const now = Date.now();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        installationId: args.installationId,
-        accountType: args.accountType,
-        accountLogin: args.accountLogin,
-        accountAvatarUrl: args.accountAvatarUrl,
-        status: "connected",
-        updatedAt: now,
-      });
-      return existing._id;
-    }
-
-    const connectionId = await ctx.db.insert("githubConnections", {
-      organizationId: args.organizationId,
-      installationId: args.installationId,
-      accountType: args.accountType,
-      accountLogin: args.accountLogin,
-      accountAvatarUrl: args.accountAvatarUrl,
-      status: "connected",
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    return connectionId;
   },
 });
 

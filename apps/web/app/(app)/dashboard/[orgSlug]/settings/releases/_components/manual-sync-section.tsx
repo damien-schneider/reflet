@@ -24,6 +24,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
+import { authClient } from "@/lib/auth-client";
 
 interface ManualSyncSectionProps {
   isAdmin: boolean;
@@ -120,6 +122,7 @@ export const ManualSyncSection = ({
   organizationId,
   orgSlug,
 }: ManualSyncSectionProps) => {
+  const { data: session } = authClient.useSession();
   const syncStatus = useQuery(
     api.integrations.github.queries.getReleaseSyncStatus,
     {
@@ -293,7 +296,13 @@ export const ManualSyncSection = ({
                       r.githubPushErrorType === "permission_denied" && (
                         <Link
                           className="shrink-0 font-medium text-primary text-xs hover:underline"
-                          href={`/api/github/install?organizationId=${organizationId}&orgSlug=${orgSlug}`}
+                          href={
+                            buildGitHubInstallUrl({
+                              userId: session?.user?.id,
+                              organizationId,
+                              orgSlug,
+                            }) ?? "#"
+                          }
                         >
                           Reconnect
                         </Link>

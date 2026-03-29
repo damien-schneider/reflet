@@ -18,7 +18,9 @@ import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
+import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { capture } from "@/lib/analytics";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { useAutoSaveRelease } from "../hooks/use-auto-save-release";
 import { useReleaseCommits } from "../hooks/use-release-commits";
@@ -44,6 +46,8 @@ export function ReleaseEditor({
   className,
 }: ReleaseEditorProps) {
   const router = useRouter();
+  // biome-ignore lint/correctness/noUnusedVariables: used in JSX below
+  const { data: session } = authClient.useSession();
   const updateRelease = useMutation(api.changelog.mutations.update);
   const createRelease = useMutation(api.changelog.mutations.create);
   const publishRelease = useMutation(
@@ -629,7 +633,14 @@ function ReleaseEditorFooter({
             </p>
             <Link
               className="mt-1 inline-block font-medium text-primary text-xs hover:underline"
-              href={`/api/github/install?organizationId=${organizationId}&orgSlug=${orgSlug}`}
+              href={
+                buildGitHubInstallUrl({
+                  // biome-ignore lint/correctness/noUndeclaredVariables: session is declared above
+                  userId: session?.user?.id,
+                  organizationId,
+                  orgSlug,
+                }) ?? "#"
+              }
             >
               Reconnect GitHub
             </Link>

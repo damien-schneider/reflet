@@ -4,6 +4,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction } from "convex/react";
 import { useCallback, useEffect, useState } from "react";
+import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { capture } from "@/lib/analytics";
 
 type IssueStatus =
@@ -160,9 +161,11 @@ export function useGitHubSettings({
     }
   }, [orgId, hasRepository, listLabelsAction]);
 
-  const connectHref = userId
-    ? `/api/github/install?userId=${encodeURIComponent(userId)}${orgId ? `&organizationId=${orgId}` : ""}${orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : ""}`
-    : undefined;
+  const connectHref = buildGitHubInstallUrl({
+    userId,
+    organizationId: orgId,
+    orgSlug,
+  });
 
   const handleConnectClick = useCallback(() => {
     capture("github_connected");

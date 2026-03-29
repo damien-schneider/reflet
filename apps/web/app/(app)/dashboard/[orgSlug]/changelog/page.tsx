@@ -12,7 +12,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H1, Muted, Text } from "@/components/ui/typography";
@@ -22,13 +21,17 @@ import { DeleteReleaseDialog } from "@/features/changelog/components/delete-rele
 import { ReleaseSetupWizard } from "@/features/changelog/components/release-setup-wizard";
 import { ReleaseTimeline } from "@/features/changelog/components/release-timeline";
 import { RetroactiveChangelogSheet } from "@/features/changelog/components/retroactive-changelog-sheet";
+import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
+import { authClient } from "@/lib/auth-client";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: large page component
 export default function ChangelogPage({
   params,
 }: {
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
+  const { data: session } = authClient.useSession();
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const releases = useQuery(
     api.changelog.releases.list,
@@ -139,18 +142,18 @@ export default function ChangelogPage({
 
   let githubAction: React.ReactNode = null;
   if (!githubStatus?.isConnected) {
-    githubAction = (
-      <Button
-        onClick={() => {
-          window.location.href = `/api/github/install?organizationId=${org._id}&orgSlug=${encodeURIComponent(orgSlug)}`;
-        }}
-        variant="outline"
-      >
+    const href = buildGitHubInstallUrl({
+      userId: session?.user?.id,
+      organizationId: org._id,
+      orgSlug,
+    });
+    githubAction = href ? (
+      <Button render={<Link href={href} />} variant="outline">
         <GithubLogo className="mr-2 h-4 w-4" />
         <span className="hidden sm:inline">Connect GitHub</span>
         <span className="sm:hidden">GitHub</span>
       </Button>
-    );
+    ) : null;
   } else if (hasConfiguredSync) {
     githubAction = (
       <Button

@@ -3,8 +3,9 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 /**
- * Redirect to GitHub App installation page
- * Now user-level: userId is required, organizationId/orgSlug are optional (for redirect-back)
+ * Redirect to GitHub App installation page.
+ * userId is required (user-level connection).
+ * organizationId/orgSlug are optional (for redirect-back after install).
  */
 export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
@@ -13,8 +14,9 @@ export async function GET(request: Request): Promise<NextResponse> {
   const orgSlug = searchParams.get("orgSlug");
   const returnTo = searchParams.get("returnTo");
 
-  // userId is optional — when provided, we create a user-level GitHub connection
-  // When absent (legacy callers), we fall back to org-level connection via organizationId
+  if (!userId) {
+    return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+  }
 
   const githubAppSlug = env.GITHUB_APP_SLUG;
 
@@ -25,7 +27,6 @@ export async function GET(request: Request): Promise<NextResponse> {
     );
   }
 
-  // Generate a state parameter for CSRF protection and to pass context
   const state = Buffer.from(
     JSON.stringify({
       userId,
@@ -36,18 +37,15 @@ export async function GET(request: Request): Promise<NextResponse> {
     })
   ).toString("base64url");
 
-  // Store context in cookies for callback (backup in case state doesn't work)
+  // Store context in cookies (backup in case state doesn't survive the redirect)
   const cookieStore = await cookies();
-
-  if (userId) {
-    cookieStore.set("github_oauth_user_id", userId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 10,
-      path: "/",
-    });
-  }
+  cookieStore.set("github_oauth_user_id", userId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 10,
+    path: "/",
+  });
 
   if (organizationId) {
     cookieStore.set("github_oauth_org_id", organizationId, {
@@ -59,7 +57,6 @@ export async function GET(request: Request): Promise<NextResponse> {
     });
   }
 
-  // Redirect to GitHub App installation page with state parameter
   const installUrl = `https://github.com/apps/${githubAppSlug}/installations/new?state=${state}`;
 
   return NextResponse.redirect(installUrl);
