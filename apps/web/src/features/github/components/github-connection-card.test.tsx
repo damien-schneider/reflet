@@ -177,10 +177,11 @@ describe("GitHubConnectionSection", () => {
     render(
       <GitHubConnectionSection
         accountLogin="octocat"
+        connectHref="/api/github/install?test=1"
         isAdmin
         isConnected
         isDisconnecting={false}
-        onConnect={vi.fn()}
+        onConnectClick={vi.fn()}
         onDisconnect={onDisconnect}
       />
     );

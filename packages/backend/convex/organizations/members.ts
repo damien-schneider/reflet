@@ -152,6 +152,23 @@ export const remove = mutation({
       throw new Error("You don't have permission to remove members");
     }
 
+    // Mark any GitHub connections linked by this user as "owner_left"
+    const githubConnections = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    for (const connection of githubConnections) {
+      if (connection.linkedByUserId === memberToRemove.userId) {
+        await ctx.db.patch(connection._id, {
+          status: "owner_left",
+          updatedAt: Date.now(),
+        });
+      }
+    }
+
     await ctx.db.delete(args.memberId);
     return true;
   },
@@ -274,6 +291,23 @@ export const leave = mutation({
       throw new Error(
         "Owner cannot leave. Transfer ownership first or delete the organization."
       );
+    }
+
+    // Mark any GitHub connections linked by this user as "owner_left"
+    const githubConnections = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    for (const connection of githubConnections) {
+      if (connection.linkedByUserId === user._id) {
+        await ctx.db.patch(connection._id, {
+          status: "owner_left",
+          updatedAt: Date.now(),
+        });
+      }
     }
 
     await ctx.db.delete(membership._id);

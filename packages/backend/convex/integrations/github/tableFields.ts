@@ -9,12 +9,26 @@ import {
 } from "../../shared/validators";
 
 export const githubTables = {
+  userGithubConnections: defineTable({
+    userId: v.string(),
+    installationId: v.string(),
+    accountType: v.union(v.literal("user"), v.literal("organization")),
+    accountLogin: v.string(),
+    accountAvatarUrl: v.optional(v.string()),
+    status: githubConnectionStatus,
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_installation", ["installationId"]),
+
   githubConnections: defineTable({
     organizationId: v.id("organizations"),
     installationId: v.string(),
     accountType: v.union(v.literal("user"), v.literal("organization")),
     accountLogin: v.string(),
     accountAvatarUrl: v.optional(v.string()),
+    linkedByUserId: v.optional(v.string()),
     status: githubConnectionStatus,
     repositoryId: v.optional(v.string()),
     repositoryFullName: v.optional(v.string()),

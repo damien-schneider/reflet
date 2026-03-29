@@ -20,6 +20,7 @@ afterEach(() => {
 const defaultProps = {
   orgId: "org1" as never,
   orgSlug: "my-org",
+  userId: "user_123",
   isConnected: true,
   hasRepository: true,
   hasWebhook: false,
@@ -77,10 +78,11 @@ describe("useGitHubSettings", () => {
     expect(result.current.repositories).toHaveLength(1);
   });
 
-  it("connectHref contains install URL with org params", () => {
+  it("connectHref contains install URL with user and org params", () => {
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
     expect(result.current.connectHref).toContain("/api/github/install");
+    expect(result.current.connectHref).toContain("userId=user_123");
     expect(result.current.connectHref).toContain("organizationId=org1");
   });
 

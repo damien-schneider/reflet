@@ -44,12 +44,14 @@ interface GitHubSectionProps {
   isAdmin: boolean;
   organizationId: Id<"organizations">;
   orgSlug: string;
+  userId: string | undefined;
 }
 
 export function GitHubSection({
   isAdmin,
   organizationId,
   orgSlug,
+  userId,
 }: GitHubSectionProps) {
   const queries = useGitHubSettingsQueries({ orgId: organizationId });
   const mutations = useGitHubSettingsMutations();
@@ -62,6 +64,7 @@ export function GitHubSection({
   const settings = useGitHubSettings({
     orgId: organizationId,
     orgSlug,
+    userId,
     isConnected,
     hasRepository,
     hasWebhook: queries.connectionStatus?.hasWebhook ?? false,
@@ -117,6 +120,7 @@ export function GitHubSection({
             isAdmin={isAdmin}
             isConnected={isConnected}
             isDisconnecting={settings.isDisconnecting}
+            isOwnerLeft={queries.connectionStatus?.isOwnerLeft}
             onConnectClick={settings.handleConnectClick}
             onDisconnect={settings.handleDisconnect}
           />
@@ -326,9 +330,9 @@ const SKELETON_IDS = ["summary", "tech-stack", "architecture", "features"];
 
 function AnalysisLoadingState() {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="space-y-6">
       {SKELETON_IDS.map((id) => (
-        <div className="space-y-2 rounded-lg border p-4" key={id}>
+        <div className="space-y-2" key={id}>
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
@@ -392,9 +396,9 @@ function AnalysisResults({
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="space-y-6">
       {sections.map((section) => (
-        <div className="space-y-2 rounded-lg border p-4" key={section.field}>
+        <div className="space-y-2" key={section.field}>
           <Text className="font-medium text-sm">{section.title}</Text>
           {isAdmin ? (
             <TiptapMarkdownEditor

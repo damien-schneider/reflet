@@ -64,11 +64,13 @@ interface UseGitHubSettingsProps {
     syncClosedIssues?: boolean;
     defaultStatus?: IssueStatus;
   }) => Promise<void>;
+  userId: string | undefined;
 }
 
 export function useGitHubSettings({
   orgId,
   orgSlug,
+  userId,
   isConnected,
   hasRepository,
   hasWebhook,
@@ -158,10 +160,9 @@ export function useGitHubSettings({
     }
   }, [orgId, hasRepository, listLabelsAction]);
 
-  const connectHref =
-    orgId && orgSlug
-      ? `/api/github/install?organizationId=${orgId}&orgSlug=${encodeURIComponent(orgSlug)}`
-      : undefined;
+  const connectHref = userId
+    ? `/api/github/install?userId=${encodeURIComponent(userId)}${orgId ? `&organizationId=${orgId}` : ""}${orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : ""}`
+    : undefined;
 
   const handleConnectClick = useCallback(() => {
     capture("github_connected");

@@ -15,6 +15,7 @@ import { SyncedReleasesSection } from "@/features/github/components/synced-relea
 import { useGitHubSettings } from "@/features/github/hooks/use-github-settings";
 import { useGitHubSettingsMutations } from "@/features/github/hooks/use-github-settings-mutations";
 import { useGitHubSettingsQueries } from "@/features/github/hooks/use-github-settings-queries";
+import { authClient } from "@/lib/auth-client";
 
 export default function GitHubSettingsPage({
   params,
@@ -22,6 +23,7 @@ export default function GitHubSettingsPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
+  const { data: session } = authClient.useSession();
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
     api.organizations.members.getCurrentMember,
@@ -37,6 +39,7 @@ export default function GitHubSettingsPage({
   const settings = useGitHubSettings({
     orgId: org?._id,
     orgSlug,
+    userId: session?.user?.id,
     isConnected: queries.connectionStatus?.isConnected ?? false,
     hasRepository: queries.connectionStatus?.hasRepository ?? false,
     hasWebhook: queries.connectionStatus?.hasWebhook ?? false,
@@ -102,6 +105,7 @@ export default function GitHubSettingsPage({
           isAdmin={isAdmin}
           isConnected={queries.connectionStatus?.isConnected ?? false}
           isDisconnecting={settings.isDisconnecting}
+          isOwnerLeft={queries.connectionStatus?.isOwnerLeft}
           onConnectClick={settings.handleConnectClick}
           onDisconnect={settings.handleDisconnect}
         />

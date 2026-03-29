@@ -66,7 +66,8 @@ export const widgetPosition = v.union(
 export const githubConnectionStatus = v.union(
   v.literal("connected"),
   v.literal("pending"),
-  v.literal("error")
+  v.literal("error"),
+  v.literal("owner_left")
 );
 
 export const githubSyncStatus = v.union(

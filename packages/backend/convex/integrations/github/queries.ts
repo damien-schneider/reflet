@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Id } from "../../_generated/dataModel";
 import { internalQuery, query } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
 
@@ -119,6 +120,7 @@ export const getConnectionStatus = query({
 
     return {
       isConnected: connection.status === "connected",
+      isOwnerLeft: connection.status === "owner_left",
       hasRepository: Boolean(connection.repositoryId),
       repositoryFullName: connection.repositoryFullName,
       hasWebhook: Boolean(connection.webhookId),
@@ -128,6 +130,7 @@ export const getConnectionStatus = query({
       lastSyncStatus: connection.lastSyncStatus,
       accountLogin: connection.accountLogin,
       accountAvatarUrl: connection.accountAvatarUrl,
+      linkedByUserId: connection.linkedByUserId,
     };
   },
 });
@@ -226,6 +229,84 @@ export const getReleaseSyncStatus = query({
 // ============================================
 // INTERNAL QUERIES (called from actions, not from client)
 // ============================================
+
+/**
+ * Get a user's GitHub connection by userId
+ */
+export const getUserGithubConnection = internalQuery({
+  args: { userId: v.string() },
+  returns: v.union(
+    v.object({
+      _id: v.id("userGithubConnections"),
+      _creationTime: v.number(),
+      userId: v.string(),
+      installationId: v.string(),
+      accountType: v.union(v.literal("user"), v.literal("organization")),
+      accountLogin: v.string(),
+      accountAvatarUrl: v.optional(v.string()),
+      status: v.union(
+        v.literal("connected"),
+        v.literal("pending"),
+        v.literal("error"),
+        v.literal("owner_left")
+      ),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("userGithubConnections")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+  },
+});
+
+/**
+ * Get all available GitHub installations from org members
+ * Returns installations from members who have connected their GitHub
+ */
+export const getOrgAvailableInstallations = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const members = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    const installations: Array<{
+      _id: Id<"userGithubConnections">;
+      userId: string;
+      installationId: string;
+      accountType: string;
+      accountLogin: string;
+      accountAvatarUrl?: string;
+    }> = [];
+
+    for (const member of members) {
+      const connection = await ctx.db
+        .query("userGithubConnections")
+        .withIndex("by_user", (q) => q.eq("userId", member.userId))
+        .first();
+
+      if (connection && connection.status === "connected") {
+        installations.push({
+          _id: connection._id,
+          userId: connection.userId,
+          installationId: connection.installationId,
+          accountType: connection.accountType,
+          accountLogin: connection.accountLogin,
+          accountAvatarUrl: connection.accountAvatarUrl,
+        });
+      }
+    }
+
+    return installations;
+  },
+});
 
 /**
  * Internal query to get GitHub connection by installation ID

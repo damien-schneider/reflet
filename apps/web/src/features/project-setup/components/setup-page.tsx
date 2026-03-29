@@ -27,9 +27,10 @@ const SETUP_BENEFITS = [
 interface SetupPageProps {
   organizationId: Id<"organizations">;
   orgSlug: string;
+  userId: string | undefined;
 }
 
-export function SetupPage({ organizationId, orgSlug }: SetupPageProps) {
+export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
   const router = useRouter();
   const [isStarting, setIsStarting] = useState(false);
 
@@ -57,7 +58,9 @@ export function SetupPage({ organizationId, orgSlug }: SetupPageProps) {
     return null;
   }
 
-  const connectHref = `/api/github/install?organizationId=${organizationId}&orgSlug=${encodeURIComponent(orgSlug)}&returnTo=setup`;
+  const connectHref = userId
+    ? `/api/github/install?userId=${encodeURIComponent(userId)}&organizationId=${organizationId}&orgSlug=${encodeURIComponent(orgSlug)}&returnTo=setup`
+    : undefined;
 
   const handleStartAnalysis = async () => {
     if (isStarting) {
@@ -195,7 +198,8 @@ export function SetupPage({ organizationId, orgSlug }: SetupPageProps) {
 
             <Button
               className="w-full"
-              render={<Link href={connectHref} />}
+              disabled={!connectHref}
+              render={connectHref ? <Link href={connectHref} /> : undefined}
               size="lg"
             >
               Connect GitHub
