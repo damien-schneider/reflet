@@ -4,6 +4,7 @@ import { ArrowRight, Check, Gear, GithubLogo } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -56,9 +57,7 @@ export function SetupPage({ organizationId, orgSlug }: SetupPageProps) {
     return null;
   }
 
-  const handleConnectGitHub = () => {
-    window.location.href = `/api/github/install?organizationId=${organizationId}&orgSlug=${encodeURIComponent(orgSlug)}&returnTo=setup`;
-  };
+  const connectHref = `/api/github/install?organizationId=${organizationId}&orgSlug=${encodeURIComponent(orgSlug)}&returnTo=setup`;
 
   const handleStartAnalysis = async () => {
     if (isStarting) {
@@ -194,7 +193,11 @@ export function SetupPage({ organizationId, orgSlug }: SetupPageProps) {
               ))}
             </ul>
 
-            <Button className="w-full" onClick={handleConnectGitHub} size="lg">
+            <Button
+              className="w-full"
+              render={<Link href={connectHref} />}
+              size="lg"
+            >
               Connect GitHub
               <ArrowRight className="ml-2 size-4" />
             </Button>

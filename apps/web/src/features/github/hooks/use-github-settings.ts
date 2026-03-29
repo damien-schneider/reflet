@@ -158,13 +158,21 @@ export function useGitHubSettings({
     }
   }, [orgId, hasRepository, listLabelsAction]);
 
-  const handleConnectGitHub = useCallback(() => {
-    if (!(orgId && orgSlug)) {
-      return;
-    }
+  const connectHref =
+    orgId && orgSlug
+      ? `/api/github/install?organizationId=${orgId}&orgSlug=${encodeURIComponent(orgSlug)}`
+      : undefined;
+
+  const handleConnectClick = useCallback(() => {
     capture("github_connected");
-    window.location.href = `/api/github/install?organizationId=${orgId}&orgSlug=${encodeURIComponent(orgSlug)}`;
-  }, [orgId, orgSlug]);
+  }, []);
+
+  const handleConnectNavigate = useCallback(() => {
+    if (connectHref) {
+      capture("github_connected");
+      window.location.href = connectHref;
+    }
+  }, [connectHref]);
 
   const handleChangeRepository = useCallback(async () => {
     setIsChangingRepository(true);
@@ -346,7 +354,9 @@ export function useGitHubSettings({
     fetchRepositories,
     handleChangeRepository,
     fetchLabels,
-    handleConnectGitHub,
+    connectHref,
+    handleConnectClick,
+    handleConnectNavigate,
     handleSelectRepository,
     handleSyncReleases,
     handleSyncIssues,

@@ -8,12 +8,15 @@ import {
   TreeStructure,
 } from "@phosphor-icons/react";
 
+import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
 import { H3, Muted, Text } from "@/components/ui/typography";
 
 interface GitHubConnectionPromptProps {
+  connectHref?: string;
   isAdmin: boolean;
-  onConnect: () => void;
+  onConnectClick?: () => void;
 }
 
 const BENEFITS = [
@@ -44,8 +47,9 @@ const BENEFITS = [
 ] as const;
 
 export function GitHubConnectionPrompt({
+  connectHref,
   isAdmin,
-  onConnect,
+  onConnectClick,
 }: GitHubConnectionPromptProps) {
   return (
     <section className="space-y-4">
@@ -72,14 +76,13 @@ export function GitHubConnectionPrompt({
           </div>
         ))}
       </div>
-      {isAdmin ? (
-        <Button onClick={onConnect}>
+      {isAdmin && connectHref ? (
+        <Button onClick={onConnectClick} render={<Link href={connectHref} />}>
           <GithubLogo className="mr-2 h-4 w-4" />
           Connect GitHub
         </Button>
-      ) : (
-        <Muted>Contact an admin to connect GitHub.</Muted>
-      )}
+      ) : null}
+      {isAdmin ? null : <Muted>Contact an admin to connect GitHub.</Muted>}
     </section>
   );
 }

@@ -1,5 +1,4 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
@@ -16,14 +15,21 @@ vi.mock("@/components/ui/button", () => ({
   Button: ({
     children,
     onClick,
+    render,
   }: {
     children: React.ReactNode;
     onClick?: () => void;
-  }) => (
-    <button onClick={onClick} type="button">
-      {children}
-    </button>
-  ),
+    render?: React.ReactElement;
+  }) =>
+    render ? (
+      <a href={(render.props as { href?: string }).href} onClick={onClick}>
+        {children}
+      </a>
+    ) : (
+      <button onClick={onClick} type="button">
+        {children}
+      </button>
+    ),
 }));
 
 vi.mock("@/components/ui/typography", () => ({
@@ -62,14 +68,26 @@ afterEach(cleanup);
 
 describe("GitHubConnectionPrompt", () => {
   it("renders title", () => {
-    render(<GitHubConnectionPrompt isAdmin onConnect={vi.fn()} />);
+    render(
+      <GitHubConnectionPrompt
+        connectHref="/api/github/install?test=1"
+        isAdmin
+        onConnectClick={vi.fn()}
+      />
+    );
     expect(
       screen.getByText("Connect GitHub to Enhance AI")
     ).toBeInTheDocument();
   });
 
   it("renders all benefits", () => {
-    render(<GitHubConnectionPrompt isAdmin onConnect={vi.fn()} />);
+    render(
+      <GitHubConnectionPrompt
+        connectHref="/api/github/install?test=1"
+        isAdmin
+        onConnectClick={vi.fn()}
+      />
+    );
     expect(
       screen.getByText("AI-Powered Repository Analysis")
     ).toBeInTheDocument();
@@ -83,22 +101,38 @@ describe("GitHubConnectionPrompt", () => {
   });
 
   it("shows Connect button for admin", () => {
-    render(<GitHubConnectionPrompt isAdmin onConnect={vi.fn()} />);
+    render(
+      <GitHubConnectionPrompt
+        connectHref="/api/github/install?test=1"
+        isAdmin
+        onConnectClick={vi.fn()}
+      />
+    );
     expect(screen.getByText("Connect GitHub")).toBeInTheDocument();
   });
 
   it("shows non-admin message", () => {
-    render(<GitHubConnectionPrompt isAdmin={false} onConnect={vi.fn()} />);
+    render(
+      <GitHubConnectionPrompt
+        connectHref="/api/github/install?test=1"
+        isAdmin={false}
+        onConnectClick={vi.fn()}
+      />
+    );
     expect(
       screen.getByText("Contact an admin to connect GitHub.")
     ).toBeInTheDocument();
   });
 
-  it("calls onConnect when button clicked", async () => {
-    const onConnect = vi.fn();
-    const user = userEvent.setup();
-    render(<GitHubConnectionPrompt isAdmin onConnect={onConnect} />);
-    await user.click(screen.getByText("Connect GitHub"));
-    expect(onConnect).toHaveBeenCalled();
+  it("renders connect link with correct href", () => {
+    render(
+      <GitHubConnectionPrompt
+        connectHref="/api/github/install?test=1"
+        isAdmin
+        onConnectClick={vi.fn()}
+      />
+    );
+    const link = screen.getByText("Connect GitHub").closest("a");
+    expect(link).toHaveAttribute("href", "/api/github/install?test=1");
   });
 });

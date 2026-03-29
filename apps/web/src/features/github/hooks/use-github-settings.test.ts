@@ -77,18 +77,11 @@ describe("useGitHubSettings", () => {
     expect(result.current.repositories).toHaveLength(1);
   });
 
-  it("handleConnectGitHub redirects to install URL", () => {
-    const mockLocation = { href: "" };
-    vi.stubGlobal("window", { location: mockLocation });
-
+  it("connectHref contains install URL with org params", () => {
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
-    act(() => {
-      result.current.handleConnectGitHub();
-    });
-
-    expect(mockLocation.href).toContain("/api/github/install");
-    expect(mockLocation.href).toContain("organizationId=org1");
+    expect(result.current.connectHref).toContain("/api/github/install");
+    expect(result.current.connectHref).toContain("organizationId=org1");
   });
 
   it("handleDisconnect calls disconnect mutation", async () => {

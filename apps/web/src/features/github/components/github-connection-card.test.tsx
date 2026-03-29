@@ -34,15 +34,22 @@ vi.mock("@/components/ui/button", () => ({
     children,
     onClick,
     disabled,
+    render,
   }: {
     children: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
-  }) => (
-    <button disabled={disabled} onClick={onClick} type="button">
-      {children}
-    </button>
-  ),
+    render?: React.ReactElement;
+  }) =>
+    render ? (
+      <a href={(render.props as { href?: string }).href} onClick={onClick}>
+        {children}
+      </a>
+    ) : (
+      <button disabled={disabled} onClick={onClick} type="button">
+        {children}
+      </button>
+    ),
 }));
 
 vi.mock("@/components/ui/typography", () => ({
@@ -89,10 +96,11 @@ describe("GitHubConnectionSection", () => {
   it("renders connect button when not connected and admin", () => {
     render(
       <GitHubConnectionSection
+        connectHref="/api/github/install?test=1"
         isAdmin
         isConnected={false}
         isDisconnecting={false}
-        onConnect={vi.fn()}
+        onConnectClick={vi.fn()}
         onDisconnect={vi.fn()}
       />
     );
@@ -102,10 +110,11 @@ describe("GitHubConnectionSection", () => {
   it("shows non-admin message when not connected and not admin", () => {
     render(
       <GitHubConnectionSection
+        connectHref="/api/github/install?test=1"
         isAdmin={false}
         isConnected={false}
         isDisconnecting={false}
-        onConnect={vi.fn()}
+        onConnectClick={vi.fn()}
         onDisconnect={vi.fn()}
       />
     );
@@ -119,10 +128,11 @@ describe("GitHubConnectionSection", () => {
       <GitHubConnectionSection
         accountAvatarUrl="https://example.com/avatar.png"
         accountLogin="octocat"
+        connectHref="/api/github/install?test=1"
         isAdmin
         isConnected
         isDisconnecting={false}
-        onConnect={vi.fn()}
+        onConnectClick={vi.fn()}
         onDisconnect={vi.fn()}
       />
     );
@@ -135,30 +145,30 @@ describe("GitHubConnectionSection", () => {
       <GitHubConnectionSection
         accountAvatarUrl="https://example.com/avatar.png"
         accountLogin="octocat"
+        connectHref="/api/github/install?test=1"
         isAdmin
         isConnected
         isDisconnecting={false}
-        onConnect={vi.fn()}
+        onConnectClick={vi.fn()}
         onDisconnect={vi.fn()}
       />
     );
     expect(screen.getByTestId("next-image")).toBeInTheDocument();
   });
 
-  it("calls onConnect when connect button clicked", async () => {
-    const onConnect = vi.fn();
-    const user = userEvent.setup();
+  it("renders connect link with correct href", () => {
     render(
       <GitHubConnectionSection
+        connectHref="/api/github/install?test=1"
         isAdmin
         isConnected={false}
         isDisconnecting={false}
-        onConnect={onConnect}
+        onConnectClick={vi.fn()}
         onDisconnect={vi.fn()}
       />
     );
-    await user.click(screen.getByText("Connect GitHub"));
-    expect(onConnect).toHaveBeenCalled();
+    const link = screen.getByText("Connect GitHub").closest("a");
+    expect(link).toHaveAttribute("href", "/api/github/install?test=1");
   });
 
   it("calls onDisconnect when disconnect button clicked", async () => {
@@ -182,10 +192,11 @@ describe("GitHubConnectionSection", () => {
     render(
       <GitHubConnectionSection
         accountLogin="octocat"
+        connectHref="/api/github/install?test=1"
         isAdmin
         isConnected
         isDisconnecting
-        onConnect={vi.fn()}
+        onConnectClick={vi.fn()}
         onDisconnect={vi.fn()}
       />
     );
@@ -196,10 +207,11 @@ describe("GitHubConnectionSection", () => {
     render(
       <GitHubConnectionSection
         accountLogin="octocat"
+        connectHref="/api/github/install?test=1"
         isAdmin={false}
         isConnected
         isDisconnecting={false}
-        onConnect={vi.fn()}
+        onConnectClick={vi.fn()}
         onDisconnect={vi.fn()}
       />
     );

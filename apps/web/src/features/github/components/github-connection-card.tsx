@@ -2,6 +2,7 @@
 
 import { Check, GithubLogo, Spinner, X } from "@phosphor-icons/react";
 import Image from "next/image";
+import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,11 @@ import { Muted, Text } from "@/components/ui/typography";
 interface GitHubConnectionCardProps {
   accountAvatarUrl?: string;
   accountLogin?: string;
+  connectHref?: string;
   isAdmin: boolean;
   isConnected: boolean;
   isDisconnecting: boolean;
-  onConnect: () => void;
+  onConnectClick?: () => void;
   onDisconnect: () => void;
 }
 
@@ -21,9 +23,10 @@ export function GitHubConnectionSection({
   isConnected,
   accountLogin,
   accountAvatarUrl,
+  connectHref,
   isAdmin,
   isDisconnecting,
-  onConnect,
+  onConnectClick,
   onDisconnect,
 }: GitHubConnectionCardProps) {
   if (isConnected) {
@@ -66,14 +69,13 @@ export function GitHubConnectionSection({
 
   return (
     <div>
-      {isAdmin ? (
-        <Button onClick={onConnect}>
+      {isAdmin && connectHref ? (
+        <Button onClick={onConnectClick} render={<Link href={connectHref} />}>
           <GithubLogo className="mr-2 h-4 w-4" />
           Connect GitHub
         </Button>
-      ) : (
-        <Muted>Contact an admin to connect GitHub.</Muted>
-      )}
+      ) : null}
+      {isAdmin ? null : <Muted>Contact an admin to connect GitHub.</Muted>}
     </div>
   );
 }

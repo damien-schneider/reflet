@@ -113,10 +113,11 @@ export function GitHubSection({
           <GitHubConnectionSection
             accountAvatarUrl={queries.connectionStatus?.accountAvatarUrl}
             accountLogin={queries.connectionStatus?.accountLogin}
+            connectHref={settings.connectHref}
             isAdmin={isAdmin}
             isConnected={isConnected}
             isDisconnecting={settings.isDisconnecting}
-            onConnect={settings.handleConnectGitHub}
+            onConnectClick={settings.handleConnectClick}
             onDisconnect={settings.handleDisconnect}
           />
           {isConnected ? (

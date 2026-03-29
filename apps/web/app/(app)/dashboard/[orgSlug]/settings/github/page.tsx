@@ -98,10 +98,11 @@ export default function GitHubSettingsPage({
         <GitHubConnectionSection
           accountAvatarUrl={queries.connectionStatus?.accountAvatarUrl}
           accountLogin={queries.connectionStatus?.accountLogin}
+          connectHref={settings.connectHref}
           isAdmin={isAdmin}
           isConnected={queries.connectionStatus?.isConnected ?? false}
           isDisconnecting={settings.isDisconnecting}
-          onConnect={settings.handleConnectGitHub}
+          onConnectClick={settings.handleConnectClick}
           onDisconnect={settings.handleDisconnect}
         />
 
@@ -147,7 +148,7 @@ export default function GitHubSettingsPage({
             onClearWebhookError={settings.clearWebhookSetupError}
             onDeleteMapping={settings.handleDeleteLabelMapping}
             onFetchLabels={settings.fetchLabels}
-            onResyncGitHub={settings.handleConnectGitHub}
+            onResyncGitHub={settings.handleConnectNavigate}
             onSyncIssues={settings.handleSyncIssues}
             onSyncReleases={settings.handleSyncReleases}
             onToggleAutoSync={settings.handleToggleAutoSync}
