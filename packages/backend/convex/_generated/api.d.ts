@@ -30,6 +30,7 @@ import type * as billing_internal from "../billing/internal.js";
 import type * as billing_queries from "../billing/queries.js";
 import type * as billing_stripe from "../billing/stripe.js";
 import type * as billing_tableFields from "../billing/tableFields.js";
+import type * as billing_utils from "../billing/utils.js";
 import type * as changelog_actions from "../changelog/actions.js";
 import type * as changelog_ai_actions from "../changelog/ai_actions.js";
 import type * as changelog_ai_matching from "../changelog/ai_matching.js";
@@ -197,6 +198,7 @@ declare const fullApi: ApiFromModules<{
   "billing/queries": typeof billing_queries;
   "billing/stripe": typeof billing_stripe;
   "billing/tableFields": typeof billing_tableFields;
+  "billing/utils": typeof billing_utils;
   "changelog/actions": typeof changelog_actions;
   "changelog/ai_actions": typeof changelog_ai_actions;
   "changelog/ai_matching": typeof changelog_ai_matching;
