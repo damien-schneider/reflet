@@ -65,6 +65,7 @@ function formatCommit(commit: GitHubCommit): CommitData {
 }
 
 const VERSION_TAG_REGEX = /^v?\d/;
+const QUERY_STRING_REGEX = /\?.*/;
 
 function isTagVersion(groupId: string): boolean {
   return VERSION_TAG_REGEX.test(groupId);
@@ -75,6 +76,33 @@ function buildAuthHeaders(token: string): Record<string, string> {
     ...GITHUB_HEADERS,
     Authorization: `Bearer ${token}`,
   };
+}
+
+/**
+ * Fetch from GitHub API with error handling and response body extraction.
+ * Returns the parsed JSON on success, throws a descriptive error on failure.
+ */
+async function fetchGitHub<T>(
+  url: string,
+  token: string
+): Promise<{ data: T; linkHeader: string | null }> {
+  const response = await fetch(url, { headers: buildAuthHeaders(token) });
+
+  if (!response.ok) {
+    let errorBody = "";
+    try {
+      errorBody = await response.text();
+    } catch {
+      // ignore body read failure
+    }
+    throw new Error(
+      `GitHub API ${response.status} ${response.statusText} for ${url.replace(QUERY_STRING_REGEX, "")}: ${errorBody.slice(0, 300)}`
+    );
+  }
+
+  const data = (await response.json()) as T;
+  const linkHeader = response.headers.get("Link");
+  return { data, linkHeader };
 }
 
 async function callOpenRouter(apiKey: string, prompt: string): Promise<string> {
@@ -153,15 +181,6 @@ export const fetchTagsPhase = internalAction({
     }
 
     try {
-      await ctx.runMutation(
-        internal.changelog.retroactive_mutations.updateJobProgress,
-        {
-          jobId: args.jobId,
-          status: "fetching_tags",
-          currentStep: "Fetching tags from GitHub...",
-        }
-      );
-
       const connection = await ctx.runQuery(
         internal.integrations.github.queries.getConnectionInternal,
         { organizationId: job.organizationId }
@@ -171,12 +190,25 @@ export const fetchTagsPhase = internalAction({
         throw new Error("No GitHub repository connected");
       }
 
+      await ctx.runMutation(
+        internal.changelog.retroactive_mutations.updateJobProgress,
+        {
+          jobId: args.jobId,
+          status: "fetching_tags",
+          currentStep: `Fetching tags from ${connection.repositoryFullName}...`,
+        }
+      );
+
       const { token } = await ctx.runAction(
         internal.integrations.github.node_actions.getInstallationTokenInternal,
         { installationId: connection.installationId }
       );
 
       const allTags = await fetchAllTags(token, connection.repositoryFullName);
+
+      console.log(
+        `[retroactive] fetchTagsPhase: found ${allTags.length} tags for ${connection.repositoryFullName}, branch=${job.targetBranch}`
+      );
 
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
@@ -216,24 +248,22 @@ async function fetchAllTags(
 
   while (hasMore) {
     const url = `${GITHUB_API_URL}/repos/${repoFullName}/tags?per_page=100&page=${page}`;
-    const response = await fetch(url, { headers: buildAuthHeaders(token) });
+    const { data: tags, linkHeader } = await fetchGitHub<GitHubTag[]>(
+      url,
+      token
+    );
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch tags: ${response.status} ${response.statusText}`
-      );
-    }
-
-    const tags = (await response.json()) as GitHubTag[];
     for (const tag of tags) {
       allTags.push({ name: tag.name, sha: tag.commit.sha });
     }
 
-    const linkHeader = response.headers.get("Link");
     hasMore = linkHeader?.includes('rel="next"') ?? false;
     page++;
   }
 
+  console.log(
+    `[retroactive] Fetched ${allTags.length} tags from ${repoFullName}`
+  );
   return allTags;
 }
 
@@ -283,6 +313,10 @@ export const fetchCommitsPhase = internalAction({
       const tags = job.tags ?? [];
       const useTagStrategy = tags.length > 1;
 
+      console.log(
+        `[retroactive] fetchCommitsPhase: strategy=${useTagStrategy ? "tags" : "time"}, tags=${tags.length}, cursor=${args.cursor ?? "none"}`
+      );
+
       if (useTagStrategy) {
         await fetchCommitsByTags(
           ctx,
@@ -327,6 +361,8 @@ async function fetchCommitsByTags(
   const endIndex = Math.min(startIndex + TAG_PAIRS_PER_BATCH, tags.length - 1);
   let totalFetched = previouslyFetched;
 
+  let skippedPairs = 0;
+
   for (let i = startIndex; i < endIndex; i++) {
     const base = tags[i + 1];
     const head = tags[i];
@@ -335,23 +371,32 @@ async function fetchCommitsByTags(
     }
 
     const url = `${GITHUB_API_URL}/repos/${repoFullName}/compare/${base.sha}...${head.sha}`;
-    const response = await fetch(url, { headers: buildAuthHeaders(token) });
-    if (!response.ok) {
-      continue;
-    }
 
-    const data = (await response.json()) as GitHubCompareResponse;
-    const commits = data.commits
-      .slice(0, MAX_COMMITS_PER_GROUP)
-      .map(formatCommit);
+    try {
+      const { data } = await fetchGitHub<GitHubCompareResponse>(url, token);
+      const commits = data.commits
+        .slice(0, MAX_COMMITS_PER_GROUP)
+        .map(formatCommit);
 
-    if (commits.length > 0) {
-      await ctx.runMutation(
-        internal.changelog.retroactive_mutations.saveCommitBatch,
-        { jobId: args.jobId, groupId: head.name, commits }
+      if (commits.length > 0) {
+        await ctx.runMutation(
+          internal.changelog.retroactive_mutations.saveCommitBatch,
+          { jobId: args.jobId, groupId: head.name, commits }
+        );
+        totalFetched += commits.length;
+      }
+    } catch (error) {
+      console.warn(
+        `[retroactive] Failed to compare ${base.name}...${head.name}: ${getErrorMessage(error)}`
       );
-      totalFetched += commits.length;
+      skippedPairs++;
     }
+  }
+
+  if (skippedPairs > 0) {
+    console.warn(
+      `[retroactive] Skipped ${skippedPairs} tag pairs due to errors`
+    );
   }
 
   await ctx.runMutation(
@@ -386,15 +431,15 @@ async function fetchCommitsByTime(
   const page = (args.cursor ?? 0) + 1;
 
   const url = `${GITHUB_API_URL}/repos/${repoFullName}/commits?per_page=100&sha=${encodeURIComponent(branch)}&page=${page}`;
-  const response = await fetch(url, { headers: buildAuthHeaders(token) });
+  const { data: rawCommits, linkHeader } = await fetchGitHub<GitHubCommit[]>(
+    url,
+    token
+  );
 
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch commits: ${response.status} ${response.statusText}`
-    );
-  }
+  console.log(
+    `[retroactive] Fetched page ${page}: ${rawCommits.length} commits from ${repoFullName} (branch: ${branch})`
+  );
 
-  const rawCommits = (await response.json()) as GitHubCommit[];
   const weekGroups = groupCommitsByWeek(rawCommits);
 
   for (const [weekKey, commits] of weekGroups) {
@@ -416,11 +461,10 @@ async function fetchCommitsByTime(
     {
       jobId: args.jobId,
       fetchedCommits: totalFetched,
-      currentStep: `Fetched ${totalFetched} commits`,
+      currentStep: `Fetched ${totalFetched} commits (page ${page})`,
     }
   );
 
-  const linkHeader = response.headers.get("Link");
   const hasNextPage =
     (linkHeader?.includes('rel="next"') ?? false) && rawCommits.length > 0;
 
@@ -455,6 +499,32 @@ export const groupCommitsPhase = internalAction({
         { jobId: args.jobId }
       );
 
+      const totalCommits = allCommitDocs.reduce(
+        (sum, doc) => sum + doc.commits.length,
+        0
+      );
+      console.log(
+        `[retroactive] groupCommitsPhase: ${allCommitDocs.length} commit docs, ${totalCommits} total commits, strategy=${job.groupingStrategy}, tags=${(job.tags ?? []).length}`
+      );
+
+      if (totalCommits === 0) {
+        console.warn(
+          "[retroactive] No commits found in retroactiveCommits — nothing was saved during fetch phase"
+        );
+        await ctx.runMutation(
+          internal.changelog.retroactive_mutations.updateJobProgress,
+          {
+            jobId: args.jobId,
+            status: "completed",
+            completedAt: Date.now(),
+            totalGroups: 0,
+            currentStep:
+              "No commits were retrieved from GitHub. Check that the repository has commits on the configured branch.",
+          }
+        );
+        return;
+      }
+
       const hasTags = (job.tags ?? []).length > 1;
       const useAIClustering = job.groupingStrategy === "auto" && !hasTags;
 
@@ -477,6 +547,7 @@ export const groupCommitsPhase = internalAction({
       }
 
       let groupEntries = Array.from(groupMap.entries());
+      const groupCountBeforeFilter = groupEntries.length;
 
       if (job.skipExistingVersions) {
         const existingVersions = await ctx.runQuery(
@@ -487,10 +558,21 @@ export const groupCommitsPhase = internalAction({
         groupEntries = groupEntries.filter(
           ([groupId]) => !versionSet.has(groupId)
         );
+
+        const filtered = groupCountBeforeFilter - groupEntries.length;
+        if (filtered > 0) {
+          console.log(
+            `[retroactive] Filtered out ${filtered} existing versions (${existingVersions.join(", ")})`
+          );
+        }
       }
 
       groupEntries.sort((a, b) => b[1].dateTo - a[1].dateTo);
       groupEntries = groupEntries.slice(0, MAX_GROUPS);
+
+      console.log(
+        `[retroactive] Created ${groupEntries.length} groups (from ${groupCountBeforeFilter} before filtering)`
+      );
 
       const groups = groupEntries.map(([groupId, data]) => ({
         id: groupId,
@@ -524,13 +606,20 @@ export const groupCommitsPhase = internalAction({
           { jobId: args.jobId, groupIndex: 0 }
         );
       } else {
+        const hint =
+          groupCountBeforeFilter > 0
+            ? `${groupCountBeforeFilter} groups were found but all were filtered out (existing versions). Try unchecking "Skip existing versions".`
+            : `No groups could be formed from ${totalCommits} commits.`;
+        console.warn(`[retroactive] Completed with 0 groups: ${hint}`);
+
         await ctx.runMutation(
           internal.changelog.retroactive_mutations.updateJobProgress,
           {
             jobId: args.jobId,
             status: "completed",
             completedAt: Date.now(),
-            currentStep: "No groups to process",
+            totalGroups: 0,
+            currentStep: hint,
           }
         );
       }
@@ -664,12 +753,21 @@ Return ONLY the JSON array, no markdown fences or explanation.`;
     }
 
     if (result.size > 0) {
+      console.log(
+        `[retroactive] AI clustering created ${result.size} groups from ${commitsForClustering.length} commits`
+      );
       return result;
     }
-  } catch {
-    // Fall back to weekly grouping on AI failure
+    console.warn("[retroactive] AI clustering returned 0 valid groups");
+  } catch (error) {
+    console.warn(
+      `[retroactive] AI clustering failed, falling back to heuristic: ${getErrorMessage(error)}`
+    );
   }
 
+  console.log(
+    `[retroactive] Using heuristic fallback grouping for ${commitsForClustering.length} commits`
+  );
   return buildGroupMapFromFlat(commitsForClustering);
 }
 
