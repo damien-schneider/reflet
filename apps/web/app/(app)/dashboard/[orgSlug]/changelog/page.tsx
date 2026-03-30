@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  ClockCounterClockwise,
-  Code,
-  GearSix,
-  GithubLogo,
-  Plus,
-} from "@phosphor-icons/react";
+import { Code, GearSix, GithubLogo, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -20,7 +14,8 @@ import { ChangelogWidgetTab } from "@/features/changelog/components/changelog-wi
 import { DeleteReleaseDialog } from "@/features/changelog/components/delete-release-dialog";
 import { ReleaseSetupWizard } from "@/features/changelog/components/release-setup-wizard";
 import { ReleaseTimeline } from "@/features/changelog/components/release-timeline";
-import { RetroactiveChangelogSheet } from "@/features/changelog/components/retroactive-changelog-sheet";
+import { RetroactiveDraftsBar } from "@/features/changelog/components/retroactive-drafts-bar";
+import { RetroactiveInlineFlow } from "@/features/changelog/components/retroactive-inline-flow";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { authClient } from "@/lib/auth-client";
 
@@ -115,7 +110,6 @@ export default function ChangelogPage({
     NonNullable<typeof releases>[number] | null
   >(null);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
-  const [showRetroactive, setShowRetroactive] = useState(false);
 
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
@@ -195,16 +189,6 @@ export default function ChangelogPage({
         {isAdmin && (
           <div className="flex items-center gap-2">
             {githubAction}
-            {githubStatus?.isConnected && (
-              <Button
-                onClick={() => setShowRetroactive(true)}
-                variant="outline"
-              >
-                <ClockCounterClockwise className="mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Generate from History</span>
-                <span className="sm:hidden">History</span>
-              </Button>
-            )}
             <Link href={`/dashboard/${orgSlug}/changelog/new`}>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
@@ -256,6 +240,12 @@ export default function ChangelogPage({
         </TabsList>
 
         <TabsContent className="mt-6" value="releases">
+          {githubStatus?.isConnected && org && (
+            <RetroactiveInlineFlow organizationId={org._id} />
+          )}
+          {releases && releases.length > 0 && (
+            <RetroactiveDraftsBar orgSlug={orgSlug} releases={releases} />
+          )}
           <ReleaseTimeline
             emptyAction={
               isAdmin && (
@@ -307,20 +297,12 @@ export default function ChangelogPage({
       )}
 
       {githubStatus?.isConnected && (
-        <>
-          <ReleaseSetupWizard
-            onOpenChange={setShowSetupWizard}
-            open={showSetupWizard}
-            organizationId={org._id}
-            orgSlug={orgSlug}
-          />
-          <RetroactiveChangelogSheet
-            onOpenChange={setShowRetroactive}
-            open={showRetroactive}
-            organizationId={org._id}
-            orgSlug={orgSlug}
-          />
-        </>
+        <ReleaseSetupWizard
+          onOpenChange={setShowSetupWizard}
+          open={showSetupWizard}
+          organizationId={org._id}
+          orgSlug={orgSlug}
+        />
       )}
     </div>
   );
