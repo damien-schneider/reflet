@@ -44,12 +44,7 @@ export const AutomationSection = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <GitBranch className="h-4 w-4 text-muted-foreground" />
-          <div>
-            <Label className="text-sm">Target branch</Label>
-            <p className="text-muted-foreground text-xs">
-              Branch to track for releases and code changes
-            </p>
-          </div>
+          <Label className="text-sm">Target branch</Label>
         </div>
         {isLoadingBranches ? (
           <div className="flex h-8 w-40 items-center gap-1.5 text-muted-foreground text-xs">
@@ -82,12 +77,7 @@ export const AutomationSection = ({
       </div>
 
       <div className="flex items-center justify-between">
-        <div>
-          <Label className="text-sm">Push to GitHub on publish</Label>
-          <p className="text-muted-foreground text-xs">
-            Create a GitHub Release when you publish in Reflet
-          </p>
-        </div>
+        <Label className="text-sm">Create GitHub Release on publish</Label>
         <Switch
           checked={pushToGithubOnPublish === true}
           disabled={!isAdmin || isSaving}
@@ -98,12 +88,7 @@ export const AutomationSection = ({
       </div>
 
       <div className="flex items-center justify-between">
-        <div>
-          <Label className="text-sm">Auto-publish imported</Label>
-          <p className="text-muted-foreground text-xs">
-            Publish releases automatically when imported from GitHub
-          </p>
-        </div>
+        <Label className="text-sm">Auto-publish imported releases</Label>
         <Switch
           checked={autoPublishImported === true}
           disabled={!isAdmin || isSaving}

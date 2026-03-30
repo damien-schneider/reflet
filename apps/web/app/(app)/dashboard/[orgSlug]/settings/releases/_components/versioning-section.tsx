@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Muted } from "@/components/ui/typography";
 
 interface VersioningSectionProps {
   autoVersioning?: boolean;
@@ -33,23 +32,12 @@ export const VersioningSection = ({
   <div className="space-y-4 rounded-lg border p-4">
     <div className="flex items-center gap-3">
       <Tag className="h-5 w-5 text-muted-foreground" />
-      <div>
-        <p className="font-medium text-sm">Versioning</p>
-        <Muted className="text-xs">
-          Auto-versioning and naming preferences
-        </Muted>
-      </div>
+      <p className="font-medium text-sm">Versioning</p>
     </div>
 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <Label className="text-sm">Auto-versioning</Label>
-          <p className="text-muted-foreground text-xs">
-            When enabled, versions are set automatically using the default
-            increment. Disable to allow free-form version input.
-          </p>
-        </div>
+        <Label className="text-sm">Auto-versioning</Label>
         <Switch
           checked={autoVersioning !== false}
           disabled={!isAdmin || isSaving}

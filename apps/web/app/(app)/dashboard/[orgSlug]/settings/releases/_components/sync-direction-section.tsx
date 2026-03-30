@@ -2,7 +2,6 @@
 
 import { ArrowsClockwise, GithubLogo } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { Muted } from "@/components/ui/typography";
 
 const SYNC_DIRECTION_LABELS = {
   github_first: "GitHub → Reflet",
@@ -33,12 +32,7 @@ export const SyncDirectionSection = ({
   <div className="space-y-4 rounded-lg border p-4">
     <div className="flex items-center gap-3">
       <ArrowsClockwise className="h-5 w-5 text-muted-foreground" />
-      <div>
-        <p className="font-medium text-sm">Sync Direction</p>
-        <Muted className="text-xs">
-          How releases flow between GitHub and Reflet
-        </Muted>
-      </div>
+      <p className="font-medium text-sm">Sync Direction</p>
     </div>
 
     {isConnected ? (

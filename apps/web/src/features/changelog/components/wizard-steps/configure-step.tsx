@@ -20,9 +20,9 @@ interface ConfigureStepProps {
 }
 
 const INCREMENT_OPTIONS = [
-  { id: "patch" as const, label: "Patch", example: "v1.0.0 → v1.0.1" },
-  { id: "minor" as const, label: "Minor", example: "v1.0.0 → v1.1.0" },
-  { id: "major" as const, label: "Major", example: "v1.0.0 → v2.0.0" },
+  { id: "patch" as const, label: "Patch" },
+  { id: "minor" as const, label: "Minor" },
+  { id: "major" as const, label: "Major" },
 ] as const;
 
 const isSyncDirection = (
@@ -50,9 +50,6 @@ function VersioningSection({ config, onChange }: ConfigureStepProps) {
           <Label className="text-sm" htmlFor="auto-version">
             Auto-suggest version
           </Label>
-          <p className="text-muted-foreground text-xs">
-            Suggest the next SemVer version based on your latest release
-          </p>
         </div>
         <Switch
           checked={config.autoVersioning}
@@ -62,47 +59,46 @@ function VersioningSection({ config, onChange }: ConfigureStepProps) {
       </div>
 
       {config.autoVersioning && (
-        <>
-          <div className="space-y-2">
-            <Label className="text-sm" htmlFor="version-prefix">
-              Version prefix
+        <div className="flex items-start gap-4">
+          <div className="space-y-1">
+            <Label
+              className="text-muted-foreground text-xs"
+              htmlFor="version-prefix"
+            >
+              Prefix
             </Label>
             <Input
-              className="h-8 w-20 text-sm"
+              className="h-8 w-16 text-sm"
               id="version-prefix"
               onChange={(e) => onChange({ versionPrefix: e.target.value })}
               placeholder="v"
               value={config.versionPrefix}
             />
-            <p className="text-muted-foreground text-xs">
-              Set to &quot;v&quot; for v1.0.0 format, or leave empty for 1.0.0
-            </p>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm">Default increment</Label>
-            <div className="flex gap-2">
+          <div className="space-y-1">
+            <Label className="text-muted-foreground text-xs">
+              Default bump
+            </Label>
+            <div className="inline-flex rounded-md border">
               {INCREMENT_OPTIONS.map((option) => (
                 <button
                   className={cn(
-                    "flex flex-col items-center rounded-lg border px-4 py-2 transition-colors",
+                    "px-3 py-1.5 text-xs transition-colors first:rounded-l-md last:rounded-r-md",
                     config.versionIncrement === option.id
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                   key={option.id}
                   onClick={() => onChange({ versionIncrement: option.id })}
                   type="button"
                 >
-                  <span className="font-medium text-sm">{option.label}</span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {option.example}
-                  </span>
+                  {option.label}
                 </button>
               ))}
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
@@ -111,31 +107,19 @@ function VersioningSection({ config, onChange }: ConfigureStepProps) {
 function AiPoweredConfig({ config, onChange }: ConfigureStepProps) {
   return (
     <div className="space-y-4">
-      <p className="text-muted-foreground text-sm">
-        Configure your AI-powered release workflow:
+      <p className="text-muted-foreground text-xs">
+        Reflet compares commits since your last tag on{" "}
+        <code className="rounded bg-muted px-1">{config.targetBranch}</code> and
+        generates notes with AI.
       </p>
-
-      <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 dark:border-blue-900 dark:bg-blue-950/20">
-        <p className="text-blue-800 text-xs dark:text-blue-200">
-          When you create a release, Reflet will compare commits between your
-          last release tag and the HEAD of{" "}
-          <code className="rounded bg-blue-100 px-1 dark:bg-blue-900/50">
-            {config.targetBranch}
-          </code>
-          , then generate release notes using AI.
-        </p>
-      </div>
 
       <VersioningSection config={config} onChange={onChange} />
 
       <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
         <div>
           <Label className="text-sm" htmlFor="push-to-github">
-            Push to GitHub on publish
+            Create GitHub Release on publish
           </Label>
-          <p className="text-muted-foreground text-xs">
-            Create a GitHub Release automatically when you publish in Reflet
-          </p>
         </div>
         <Switch
           checked={config.pushToGithubOnPublish}
@@ -163,17 +147,9 @@ const CONVENTIONAL_COMMIT_EXAMPLES = [
 function AutomatedConfig({ config, onChange }: ConfigureStepProps) {
   return (
     <div className="space-y-4">
-      <p className="text-muted-foreground text-sm">
-        Configure your automated release workflow:
-      </p>
-
       <div className="space-y-2 rounded-lg border p-3">
         <p className="font-medium text-sm">Conventional Commits</p>
-        <p className="text-muted-foreground text-xs">
-          This workflow uses conventional commits to automatically determine
-          version bumps. Structure your commit messages like this:
-        </p>
-        <div className="mt-2 space-y-1">
+        <div className="space-y-1">
           {CONVENTIONAL_COMMIT_EXAMPLES.map((example) => (
             <div
               className="flex items-center justify-between gap-2"
@@ -192,30 +168,32 @@ function AutomatedConfig({ config, onChange }: ConfigureStepProps) {
           ))}
         </div>
         <a
-          className="mt-2 inline-flex items-center gap-1 text-primary text-xs hover:underline"
+          className="inline-flex items-center gap-1 text-primary text-xs hover:underline"
           href="https://www.conventionalcommits.org"
           rel="noopener noreferrer"
           target="_blank"
         >
-          Learn more about conventional commits
+          Learn more
           <ArrowSquareOut className="h-3 w-3" />
         </a>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-sm" htmlFor="version-prefix-auto">
-          Version prefix
-        </Label>
-        <Input
-          className="h-8 w-20 text-sm"
-          id="version-prefix-auto"
-          onChange={(e) => onChange({ versionPrefix: e.target.value })}
-          placeholder="v"
-          value={config.versionPrefix}
-        />
-        <p className="text-muted-foreground text-xs">
-          Set to &quot;v&quot; for v1.0.0 format, or leave empty for 1.0.0
-        </p>
+      <div className="flex items-start gap-4">
+        <div className="space-y-1">
+          <Label
+            className="text-muted-foreground text-xs"
+            htmlFor="version-prefix-auto"
+          >
+            Prefix
+          </Label>
+          <Input
+            className="h-8 w-16 text-sm"
+            id="version-prefix-auto"
+            onChange={(e) => onChange({ versionPrefix: e.target.value })}
+            placeholder="v"
+            value={config.versionPrefix}
+          />
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
@@ -223,10 +201,6 @@ function AutomatedConfig({ config, onChange }: ConfigureStepProps) {
           <Label className="text-sm" htmlFor="auto-publish-imported">
             Auto-publish imported releases
           </Label>
-          <p className="text-muted-foreground text-xs">
-            Immediately publish releases imported from GitHub. When off, they
-            arrive as drafts for review.
-          </p>
         </div>
         <Switch
           checked={config.autoPublishImported}
@@ -243,18 +217,11 @@ function AutomatedConfig({ config, onChange }: ConfigureStepProps) {
 function ManualConfig({ config, onChange }: ConfigureStepProps) {
   return (
     <div className="space-y-4">
-      <p className="text-muted-foreground text-sm">
-        Configure your manual release workflow:
-      </p>
-
       <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
         <div>
           <Label className="text-sm" htmlFor="manual-sync">
             Sync with GitHub
           </Label>
-          <p className="text-muted-foreground text-xs">
-            Keep releases in sync between Reflet and GitHub
-          </p>
         </div>
         <Switch
           checked={config.manualSyncEnabled}
@@ -267,9 +234,12 @@ function ManualConfig({ config, onChange }: ConfigureStepProps) {
 
       {config.manualSyncEnabled && (
         <>
-          <div className="space-y-2">
-            <Label className="text-sm" htmlFor="sync-direction">
-              Sync direction
+          <div className="space-y-1">
+            <Label
+              className="text-muted-foreground text-xs"
+              htmlFor="sync-direction"
+            >
+              Direction
             </Label>
             <Select
               onValueChange={(val) => {
@@ -295,10 +265,6 @@ function ManualConfig({ config, onChange }: ConfigureStepProps) {
               <Label className="text-sm" htmlFor="manual-auto-publish">
                 Auto-publish imported releases
               </Label>
-              <p className="text-muted-foreground text-xs">
-                Immediately publish releases imported from GitHub. When off,
-                they arrive as drafts for review.
-              </p>
             </div>
             <Switch
               checked={config.autoPublishImported}

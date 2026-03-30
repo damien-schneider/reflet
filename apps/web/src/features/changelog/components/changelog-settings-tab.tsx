@@ -143,8 +143,8 @@ export function ChangelogSettingsTab({
                   <p className="font-medium text-sm">GitHub Sync Wizard</p>
                   <Muted className="text-xs">
                     {settings?.syncDirection
-                      ? "Re-run the guided sync setup"
-                      : "Configure GitHub release sync in a few steps"}
+                      ? "Re-run the guided setup"
+                      : "Set up GitHub release sync"}
                   </Muted>
                 </div>
               </div>
@@ -198,8 +198,8 @@ export function ChangelogSettingsTab({
               <div>
                 <p className="font-medium text-sm">GitHub Sync</p>
                 <Muted className="text-xs">
-                  Connect a GitHub repository to enable release sync, branch
-                  tracking, and AI-powered release notes.
+                  Connect a GitHub repository to enable release sync and
+                  AI-powered notes.
                 </Muted>
               </div>
             </div>
