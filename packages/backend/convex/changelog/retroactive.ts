@@ -12,7 +12,7 @@ export const startRetroactiveChangelog = mutation({
     organizationId: v.id("organizations"),
     groupingStrategy: v.union(
       v.literal("tags"),
-      v.literal("monthly"),
+      v.literal("weekly"),
       v.literal("auto")
     ),
     skipExistingVersions: v.optional(v.boolean()),

@@ -91,7 +91,7 @@ export const changelogTables = {
     ),
     groupingStrategy: v.union(
       v.literal("tags"),
-      v.literal("monthly"),
+      v.literal("weekly"),
       v.literal("auto")
     ),
     targetBranch: v.string(),

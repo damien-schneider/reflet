@@ -7,12 +7,13 @@ import {
   GithubLogo,
   Lightning,
   Spinner,
+  Warning,
   X,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,7 +25,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-type GroupingStrategy = "auto" | "tags" | "monthly";
+type GroupingStrategy = "auto" | "tags" | "weekly";
 
 const ACTIVE_STATUSES = [
   "pending",
@@ -44,10 +45,8 @@ const PHASE_STEPS = [
 const GROUPING_OPTIONS = [
   { value: "auto" as const, label: "Auto" },
   { value: "tags" as const, label: "Tags" },
-  { value: "monthly" as const, label: "Monthly" },
+  { value: "weekly" as const, label: "Weekly" },
 ];
-
-const SUCCESS_DISPLAY_DURATION = 4000;
 
 interface RetroactiveInlineFlowProps {
   organizationId: Id<"organizations">;
@@ -57,7 +56,6 @@ export function RetroactiveInlineFlow({
   organizationId,
 }: RetroactiveInlineFlowProps) {
   const [dismissed, setDismissed] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [groupingStrategy, setGroupingStrategy] =
     useState<GroupingStrategy>("auto");
   const [skipExisting, setSkipExisting] = useState(true);
@@ -89,18 +87,6 @@ export function RetroactiveInlineFlow({
     job?.status === "completed" ||
     job?.status === "error" ||
     job?.status === "cancelled";
-
-  // Show success briefly when job completes
-  useEffect(() => {
-    if (job?.status === "completed" && !showSuccess) {
-      setShowSuccess(true);
-      const timer = setTimeout(
-        () => setShowSuccess(false),
-        SUCCESS_DISPLAY_DURATION
-      );
-      return () => clearTimeout(timer);
-    }
-  }, [job?.status, showSuccess]);
 
   const repoName = githubConnection?.repositoryFullName;
   const isConnected = Boolean(repoName);
@@ -146,23 +132,9 @@ export function RetroactiveInlineFlow({
     return <ProgressView job={job} onCancel={handleCancel} />;
   }
 
-  // Brief success flash
-  if (showSuccess && job?.status === "completed") {
-    const createdCount =
-      job.groups?.filter(
-        (g) => g.status === "created" || g.status === "generated"
-      ).length ?? 0;
-
-    return (
-      <div className="mb-6 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/30">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/10">
-          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-        </div>
-        <span className="font-medium text-sm">
-          {createdCount} draft release{createdCount === 1 ? "" : "s"} created
-        </span>
-      </div>
-    );
+  // Completed state — show summary
+  if (job?.status === "completed") {
+    return <CompletionSummary job={job} onDismiss={() => setDismissed(true)} />;
   }
 
   // Error state (show trigger again with error context)
@@ -332,18 +304,24 @@ function TriggerView({
 
 // --- Progress View ---
 
-interface ProgressViewProps {
-  job: {
-    _id: Id<"retroactiveJobs">;
-    currentStep?: string;
-    groups?: Array<{
-      id: string;
-      status: string;
-      title: string;
-    }>;
+interface JobData {
+  _id: Id<"retroactiveJobs">;
+  currentStep?: string;
+  fetchedCommits?: number;
+  groups?: Array<{
+    commitCount: number;
+    error?: string;
+    id: string;
     status: string;
-    totalGroups?: number;
-  };
+    title: string;
+  }>;
+  status: string;
+  totalGroups?: number;
+  totalTags?: number;
+}
+
+interface ProgressViewProps {
+  job: JobData;
   onCancel: () => void;
 }
 
@@ -383,6 +361,22 @@ function ProgressView({ job, onCancel }: ProgressViewProps) {
           >
             Cancel
           </button>
+        </div>
+
+        {/* Live stats */}
+        <div className="flex flex-wrap gap-4">
+          {job.totalTags !== undefined && (
+            <StatBadge label="Tags" value={job.totalTags} />
+          )}
+          {job.fetchedCommits !== undefined && job.fetchedCommits > 0 && (
+            <StatBadge label="Commits" value={job.fetchedCommits} />
+          )}
+          {totalGroups > 0 && (
+            <StatBadge
+              label="Groups"
+              value={`${processedGroups}/${totalGroups}`}
+            />
+          )}
         </div>
 
         {/* Progress bar */}
@@ -429,7 +423,250 @@ function ProgressView({ job, onCancel }: ProgressViewProps) {
             );
           })}
         </div>
+
+        {/* Group details (collapsible) */}
+        {job.groups && job.groups.length > 0 && (
+          <Collapsible>
+            <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground">
+              View groups
+              <CaretDown className="h-3 w-3 transition-transform group-data-panel-open:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+                {job.groups.map((group) => (
+                  <div
+                    className="flex items-center justify-between rounded px-2 py-1 text-xs"
+                    key={group.id}
+                  >
+                    <span className="truncate text-foreground">
+                      {group.title}
+                    </span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="text-muted-foreground tabular-nums">
+                        {group.commitCount} commits
+                      </span>
+                      <GroupStatusDot status={group.status} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
       </div>
     </div>
+  );
+}
+
+// --- Completion Summary ---
+
+interface CompletionJobData {
+  error?: string;
+  fetchedCommits?: number;
+  groups?: Array<{
+    commitCount: number;
+    status: string;
+    title: string;
+  }>;
+  skipExistingVersions?: boolean;
+  totalGroups?: number;
+  totalTags?: number;
+}
+
+interface CompletionSummaryProps {
+  job: CompletionJobData;
+  onDismiss: () => void;
+}
+
+function getEmptyResultHint(
+  job: CompletionJobData,
+  totalGroups: number
+): string {
+  if ((job.fetchedCommits ?? 0) === 0) {
+    return "No commits were found on the target branch. Check that your repository has commits and the correct branch is configured.";
+  }
+  if (totalGroups === 0 && job.skipExistingVersions) {
+    return 'Commits were found but no groups could be formed. All versions may already exist — try unchecking "Skip existing versions" in the options.';
+  }
+  if (totalGroups === 0) {
+    return "Commits were found but no groups could be formed. Try a different grouping strategy.";
+  }
+  return "Groups were formed but no releases could be created. This may be due to AI generation errors. Try running again.";
+}
+
+function CompletionSummary({ job, onDismiss }: CompletionSummaryProps) {
+  const createdCount =
+    job.groups?.filter(
+      (g) => g.status === "created" || g.status === "generated"
+    ).length ?? 0;
+  const skippedCount =
+    job.groups?.filter((g) => g.status === "skipped").length ?? 0;
+  const errorCount =
+    job.groups?.filter((g) => g.status === "error").length ?? 0;
+  const totalGroups = job.totalGroups ?? job.groups?.length ?? 0;
+  const hasResults = createdCount > 0;
+
+  return (
+    <div
+      className={cn(
+        "relative mb-6 rounded-xl border p-5",
+        hasResults
+          ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
+          : "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30"
+      )}
+    >
+      <button
+        aria-label="Dismiss"
+        className="absolute top-3 right-3 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
+        onClick={onDismiss}
+        type="button"
+      >
+        <X className="h-4 w-4" />
+      </button>
+
+      <div className="flex items-start gap-3">
+        <CompletionIcon hasResults={hasResults} />
+
+        <div className="min-w-0 flex-1">
+          <h3 className="font-medium text-sm">
+            {hasResults
+              ? `${createdCount} draft release${createdCount === 1 ? "" : "s"} generated`
+              : "No draft releases generated"}
+          </h3>
+
+          <CompletionStats
+            createdCount={createdCount}
+            errorCount={errorCount}
+            fetchedCommits={job.fetchedCommits}
+            skippedCount={skippedCount}
+            totalGroups={totalGroups}
+            totalTags={job.totalTags}
+          />
+
+          {!hasResults && (
+            <div className="mt-3 rounded-md bg-background/50 px-3 py-2 text-muted-foreground text-xs">
+              <p>{getEmptyResultHint(job, totalGroups)}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompletionIcon({ hasResults }: { hasResults: boolean }) {
+  if (hasResults) {
+    return (
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/10">
+        <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+      </div>
+    );
+  }
+  return (
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
+      <Warning className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+    </div>
+  );
+}
+
+function CompletionStats({
+  totalTags,
+  fetchedCommits,
+  totalGroups,
+  createdCount,
+  skippedCount,
+  errorCount,
+}: {
+  createdCount: number;
+  errorCount: number;
+  fetchedCommits?: number;
+  skippedCount: number;
+  totalGroups: number;
+  totalTags?: number;
+}) {
+  return (
+    <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+      {totalTags !== undefined && (
+        <span className="text-muted-foreground">
+          <span className="font-medium text-foreground tabular-nums">
+            {totalTags}
+          </span>{" "}
+          tags found
+        </span>
+      )}
+      {fetchedCommits !== undefined && (
+        <span className="text-muted-foreground">
+          <span className="font-medium text-foreground tabular-nums">
+            {fetchedCommits}
+          </span>{" "}
+          commits analyzed
+        </span>
+      )}
+      {totalGroups > 0 && (
+        <span className="text-muted-foreground">
+          <span className="font-medium text-foreground tabular-nums">
+            {totalGroups}
+          </span>{" "}
+          groups formed
+        </span>
+      )}
+      {createdCount > 0 && (
+        <span className="text-muted-foreground">
+          <span className="font-medium text-foreground tabular-nums">
+            {createdCount}
+          </span>{" "}
+          releases created
+        </span>
+      )}
+      {skippedCount > 0 && (
+        <span className="text-muted-foreground">
+          <span className="font-medium text-foreground tabular-nums">
+            {skippedCount}
+          </span>{" "}
+          skipped
+        </span>
+      )}
+      {errorCount > 0 && (
+        <span className="text-destructive">
+          <span className="font-medium tabular-nums">{errorCount}</span> errors
+        </span>
+      )}
+    </div>
+  );
+}
+
+// --- Shared components ---
+
+function StatBadge({
+  label,
+  value,
+}: {
+  label: string;
+  value: number | string;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 rounded-md bg-muted/50 px-2.5 py-1">
+      <span className="font-medium text-foreground text-xs tabular-nums">
+        {value}
+      </span>
+      <span className="text-muted-foreground text-xs">{label}</span>
+    </div>
+  );
+}
+
+function GroupStatusDot({ status }: { status: string }) {
+  return (
+    <div
+      className={cn(
+        "h-2 w-2 rounded-full",
+        status === "created" && "bg-green-500",
+        status === "generated" && "bg-green-500",
+        status === "generating" && "animate-pulse bg-primary",
+        status === "pending" && "bg-muted-foreground/30",
+        status === "skipped" && "bg-muted-foreground/30",
+        status === "error" && "bg-destructive"
+      )}
+      title={status}
+    />
   );
 }
