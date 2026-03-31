@@ -46,8 +46,7 @@ export function ReleaseEditor({
   className,
 }: ReleaseEditorProps) {
   const router = useRouter();
-  // biome-ignore lint/correctness/noUnusedVariables: used in JSX below
-  const { data: session } = authClient.useSession();
+  const { data: sessionData } = authClient.useSession();
   const updateRelease = useMutation(api.changelog.mutations.update);
   const createRelease = useMutation(api.changelog.mutations.create);
   const publishRelease = useMutation(
@@ -474,6 +473,7 @@ export function ReleaseEditor({
           orgSlug={orgSlug}
           release={release}
           titleEmpty={!title.trim()}
+          userId={sessionData?.user?.id}
         />
       </div>
 
@@ -521,6 +521,7 @@ interface ReleaseEditorFooterProps {
   orgSlug: string;
   release?: Doc<"releases">;
   titleEmpty: boolean;
+  userId?: string;
 }
 
 function ReleaseEditorFooter({
@@ -540,6 +541,7 @@ function ReleaseEditorFooter({
   onCancelSchedule,
   onPushToGithub,
   onCancel,
+  userId,
 }: ReleaseEditorFooterProps) {
   const getPublishLabel = (): string => {
     if (isPublished) {
@@ -635,8 +637,7 @@ function ReleaseEditorFooter({
               className="mt-1 inline-block font-medium text-primary text-xs hover:underline"
               href={
                 buildGitHubInstallUrl({
-                  // biome-ignore lint/correctness/noUndeclaredVariables: session is declared above
-                  userId: session?.user?.id,
+                  userId,
                   organizationId,
                   orgSlug,
                 }) ?? "#"

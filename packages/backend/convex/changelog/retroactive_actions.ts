@@ -311,14 +311,17 @@ export const fetchCommitsPhase = internalAction({
       );
 
       const tags = job.tags ?? [];
-      const useTagStrategy = tags.length > 1;
+      // Only use tag-based comparison when user explicitly chose "tags" strategy
+      // For "auto" and "weekly", always fetch by time (more reliable — tag comparison
+      // fails when tags have no common ancestor, e.g. after force pushes)
+      const useTagStrategy = job.groupingStrategy === "tags" && tags.length > 1;
 
       console.log(
-        `[retroactive] fetchCommitsPhase: strategy=${useTagStrategy ? "tags" : "time"}, tags=${tags.length}, cursor=${args.cursor ?? "none"}`
+        `[retroactive] fetchCommitsPhase: fetchStrategy=${useTagStrategy ? "tags" : "time"}, tags=${tags.length}, cursor=${args.cursor ?? "none"}, groupingStrategy=${job.groupingStrategy}`
       );
 
       if (useTagStrategy) {
-        await fetchCommitsByTags(
+        const fetched = await fetchCommitsByTags(
           ctx,
           args,
           tags,
@@ -326,6 +329,22 @@ export const fetchCommitsPhase = internalAction({
           connection.repositoryFullName,
           job.fetchedCommits ?? 0
         );
+
+        // If tag-based fetching produced 0 commits (e.g. no common ancestor),
+        // fall back to time-based fetching to ensure we get the full history
+        if (fetched === 0 && !args.cursor) {
+          console.warn(
+            "[retroactive] Tag-based fetching produced 0 commits, falling back to time-based fetching"
+          );
+          await fetchCommitsByTime(
+            ctx,
+            args,
+            token,
+            connection.repositoryFullName,
+            job.targetBranch,
+            0
+          );
+        }
       } else {
         await fetchCommitsByTime(
           ctx,
@@ -349,6 +368,11 @@ export const fetchCommitsPhase = internalAction({
   },
 });
 
+/**
+ * Returns the total number of commits fetched (including previously fetched).
+ * Schedules next batch or groupCommitsPhase if there are more pairs.
+ * Returns without scheduling if this is the last batch (caller handles fallback).
+ */
 async function fetchCommitsByTags(
   ctx: ActionCtx,
   args: { jobId: Id<"retroactiveJobs">; cursor?: number },
@@ -356,11 +380,10 @@ async function fetchCommitsByTags(
   token: string,
   repoFullName: string,
   previouslyFetched: number
-): Promise<void> {
+): Promise<number> {
   const startIndex = args.cursor ?? 0;
   const endIndex = Math.min(startIndex + TAG_PAIRS_PER_BATCH, tags.length - 1);
   let totalFetched = previouslyFetched;
-
   let skippedPairs = 0;
 
   for (let i = startIndex; i < endIndex; i++) {
@@ -395,7 +418,7 @@ async function fetchCommitsByTags(
 
   if (skippedPairs > 0) {
     console.warn(
-      `[retroactive] Skipped ${skippedPairs} tag pairs due to errors`
+      `[retroactive] Skipped ${skippedPairs} of ${endIndex - startIndex} tag pairs due to errors`
     );
   }
 
@@ -404,19 +427,29 @@ async function fetchCommitsByTags(
     {
       jobId: args.jobId,
       fetchedCommits: totalFetched,
-      currentStep: `Fetched commits for ${endIndex} of ${tags.length - 1} tag pairs`,
+      currentStep: `Fetched commits for ${endIndex} of ${tags.length - 1} tag pairs (${totalFetched} commits)`,
     }
   );
 
   const hasMorePairs = endIndex < tags.length - 1;
-  const nextAction = hasMorePairs
-    ? internal.changelog.retroactive_actions.fetchCommitsPhase
-    : internal.changelog.retroactive_actions.groupCommitsPhase;
-  const nextArgs = hasMorePairs
-    ? { jobId: args.jobId, cursor: endIndex }
-    : { jobId: args.jobId };
+  if (hasMorePairs) {
+    // More tag pairs to process — schedule next batch
+    await ctx.scheduler.runAfter(
+      0,
+      internal.changelog.retroactive_actions.fetchCommitsPhase,
+      { jobId: args.jobId, cursor: endIndex }
+    );
+  } else if (totalFetched > 0) {
+    // All pairs done and we have commits — proceed to grouping
+    await ctx.scheduler.runAfter(
+      0,
+      internal.changelog.retroactive_actions.groupCommitsPhase,
+      { jobId: args.jobId }
+    );
+  }
+  // If totalFetched === 0 and no more pairs, return to caller for fallback
 
-  await ctx.scheduler.runAfter(0, nextAction, nextArgs);
+  return totalFetched;
 }
 
 async function fetchCommitsByTime(
@@ -525,15 +558,22 @@ export const groupCommitsPhase = internalAction({
         return;
       }
 
-      const hasTags = (job.tags ?? []).length > 1;
-      const useAIClustering = job.groupingStrategy === "auto" && !hasTags;
+      const tags = job.tags ?? [];
+      const hasTags = tags.length > 1;
 
       let groupMap: Map<
         string,
         { commits: CommitData[]; dateFrom: number; dateTo: number }
       >;
 
-      if (useAIClustering) {
+      if (job.groupingStrategy === "auto" && hasTags) {
+        // Auto with tags: re-group time-fetched commits by tag boundaries
+        const allCommits = allCommitDocs.flatMap((doc) => doc.commits);
+        groupMap = groupCommitsByTagBoundaries(allCommits, tags);
+        console.log(
+          `[retroactive] Grouped ${allCommits.length} commits by ${tags.length} tag boundaries → ${groupMap.size} groups`
+        );
+      } else if (job.groupingStrategy === "auto" && !hasTags) {
         await ctx.runMutation(
           internal.changelog.retroactive_mutations.updateJobProgress,
           {
@@ -664,6 +704,60 @@ function buildGroupMap(
   }
 
   return groupMap;
+}
+
+/**
+ * Group commits by tag boundaries. Each tag defines a release boundary.
+ * Commits between two consecutive tags belong to the newer tag's group.
+ * Commits after the newest tag go into an "unreleased" group.
+ */
+function groupCommitsByTagBoundaries(
+  commits: CommitData[],
+  tags: Array<{ name: string; sha: string }>
+): Map<string, { commits: CommitData[]; dateFrom: number; dateTo: number }> {
+  const result = new Map<
+    string,
+    { commits: CommitData[]; dateFrom: number; dateTo: number }
+  >();
+
+  // Build a sha→tag lookup
+  const shaToTag = new Map<string, string>();
+  for (const tag of tags) {
+    shaToTag.set(tag.sha, tag.name);
+  }
+
+  // Sort commits by date (newest first, matching tag order)
+  const sorted = [...commits].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  // Walk through commits, assigning them to the current tag group
+  let currentGroup = "unreleased";
+
+  for (const commit of sorted) {
+    const tagName = shaToTag.get(commit.sha);
+    if (tagName) {
+      currentGroup = tagName;
+    }
+
+    const ts = new Date(commit.date).getTime();
+    const existing = result.get(currentGroup);
+    if (existing) {
+      existing.commits.push(commit);
+      existing.dateFrom = Math.min(existing.dateFrom, ts);
+      existing.dateTo = Math.max(existing.dateTo, ts);
+    } else {
+      result.set(currentGroup, { commits: [commit], dateFrom: ts, dateTo: ts });
+    }
+  }
+
+  // Remove "unreleased" group if empty (all commits are within tag boundaries)
+  const unreleased = result.get("unreleased");
+  if (unreleased && unreleased.commits.length === 0) {
+    result.delete("unreleased");
+  }
+
+  return result;
 }
 
 interface AIClusterGroup {
