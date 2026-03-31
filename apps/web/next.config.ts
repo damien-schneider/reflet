@@ -97,6 +97,20 @@ const nextConfig: NextConfig = {
             value:
               "camera=(), microphone=(), geolocation=(), browsing-topics=()",
           },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' https://umami.damien-schneider.pro",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://*.convex.cloud https://avatars.githubusercontent.com https://images.unsplash.com",
+              "font-src 'self'",
+              "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.convex.site https://umami.damien-schneider.pro",
+              "frame-src 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+            ].join("; "),
+          },
         ],
       },
     ];
