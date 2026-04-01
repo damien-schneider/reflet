@@ -12,40 +12,47 @@ import type {
 } from "./types";
 
 // ============================================
-// Organization Config Hook
+// Generic query hook — single source of truth
 // ============================================
 
-/**
- * Hook to fetch organization configuration
- */
-export function useOrganizationConfig(): UseQueryResult<OrganizationConfig> {
-  const client = useRefletClient();
-  const [data, setData] = useState<OrganizationConfig | undefined>();
-  const [isLoading, setIsLoading] = useState(true);
+function useRefletQuery<T>(
+  fetchFn: () => Promise<T>,
+  enabled = true
+): UseQueryResult<T> {
+  const [data, setData] = useState<T | undefined>();
+  const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetch = useCallback(async () => {
+  const refetch = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await client.getConfig();
+      const result = await fetchFn();
       setData(result);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err
-          : new Error("Failed to fetch organization config")
-      );
+      setError(err instanceof Error ? err : new Error("Request failed"));
     } finally {
       setIsLoading(false);
     }
-  }, [client]);
+  }, [fetchFn]);
 
   useEffect(() => {
-    fetch();
-  }, [fetch]);
+    if (enabled) {
+      refetch();
+    }
+  }, [refetch, enabled]);
 
-  return { data, isLoading, error, refetch: fetch };
+  return { data, isLoading, error, refetch };
+}
+
+// ============================================
+// Organization Config Hook
+// ============================================
+
+export function useOrganizationConfig(): UseQueryResult<OrganizationConfig> {
+  const client = useRefletClient();
+  const fetchFn = useCallback(() => client.getConfig(), [client]);
+  return useRefletQuery(fetchFn);
 }
 
 // ============================================
@@ -53,18 +60,9 @@ export function useOrganizationConfig(): UseQueryResult<OrganizationConfig> {
 // ============================================
 
 export interface UseFeedbackListOptions extends FeedbackListParams {
-  /** Auto-fetch on mount */
   enabled?: boolean;
 }
 
-/**
- * Hook to fetch feedback list with filtering
- *
- * @example
- * ```tsx
- * const { data, isLoading } = useFeedbackList({ status: 'open', sortBy: 'votes' });
- * ```
- */
 export function useFeedbackList(
   options: UseFeedbackListOptions = {}
 ): UseQueryResult<{ items: FeedbackItem[]; total: number; hasMore: boolean }> {
@@ -79,204 +77,75 @@ export function useFeedbackList(
     offset,
   } = options;
 
-  // Create stable params reference
   const params = useMemo(
     () => ({ statusId, status, search, sortBy, limit, offset }),
     [statusId, status, search, sortBy, limit, offset]
   );
 
-  const [data, setData] = useState<{
-    items: FeedbackItem[];
-    total: number;
-    hasMore: boolean;
-  }>();
-  const [isLoading, setIsLoading] = useState(enabled);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetch = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await client.list(params);
-      setData(result);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch feedback")
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [client, params]);
-
-  useEffect(() => {
-    if (enabled) {
-      fetch();
-    }
-  }, [fetch, enabled]);
-
-  return { data, isLoading, error, refetch: fetch };
+  const fetchFn = useCallback(() => client.list(params), [client, params]);
+  return useRefletQuery(fetchFn, enabled);
 }
 
 // ============================================
 // Single Feedback Hook
 // ============================================
 
-/**
- * Hook to fetch a single feedback item
- *
- * @example
- * ```tsx
- * const { data: feedback, isLoading } = useFeedback('feedback_id');
- * ```
- */
 export function useFeedback(
   feedbackId: string | undefined
 ): UseQueryResult<FeedbackDetail> {
   const client = useRefletClient();
-  const [data, setData] = useState<FeedbackDetail | undefined>();
-  const [isLoading, setIsLoading] = useState(!!feedbackId);
-  const [error, setError] = useState<Error | null>(null);
 
-  const fetch = useCallback(async () => {
+  const fetchFn = useCallback(() => {
     if (!feedbackId) {
-      setData(undefined);
-      setIsLoading(false);
-      return;
+      return Promise.resolve(undefined as unknown as FeedbackDetail);
     }
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await client.get(feedbackId);
-      setData(result);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch feedback")
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    return client.get(feedbackId);
   }, [client, feedbackId]);
 
-  useEffect(() => {
-    fetch();
-  }, [fetch]);
-
-  return { data, isLoading, error, refetch: fetch };
+  return useRefletQuery(fetchFn, !!feedbackId);
 }
 
 // ============================================
 // Comments Hook
 // ============================================
 
-/**
- * Hook to fetch comments for a feedback item
- */
 export function useComments(
   feedbackId: string | undefined,
   sortBy: "newest" | "oldest" = "oldest"
 ): UseQueryResult<Comment[]> {
   const client = useRefletClient();
-  const [data, setData] = useState<Comment[] | undefined>();
-  const [isLoading, setIsLoading] = useState(!!feedbackId);
-  const [error, setError] = useState<Error | null>(null);
 
-  const fetch = useCallback(async () => {
+  const fetchFn = useCallback(() => {
     if (!feedbackId) {
-      setData(undefined);
-      setIsLoading(false);
-      return;
+      return Promise.resolve(undefined as unknown as Comment[]);
     }
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await client.getComments(feedbackId, sortBy);
-      setData(result);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch comments")
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    return client.getComments(feedbackId, sortBy);
   }, [client, feedbackId, sortBy]);
 
-  useEffect(() => {
-    fetch();
-  }, [fetch]);
-
-  return { data, isLoading, error, refetch: fetch };
+  return useRefletQuery(fetchFn, !!feedbackId);
 }
 
 // ============================================
 // Roadmap Hook
 // ============================================
 
-/**
- * Hook to fetch roadmap data
- */
 export function useRoadmap(): UseQueryResult<Roadmap> {
   const client = useRefletClient();
-  const [data, setData] = useState<Roadmap | undefined>();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetch = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await client.getRoadmap();
-      setData(result);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch roadmap")
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [client]);
-
-  useEffect(() => {
-    fetch();
-  }, [fetch]);
-
-  return { data, isLoading, error, refetch: fetch };
+  const fetchFn = useCallback(() => client.getRoadmap(), [client]);
+  return useRefletQuery(fetchFn);
 }
 
 // ============================================
 // Changelog Hook
 // ============================================
 
-/**
- * Hook to fetch changelog entries
- */
 export function useChangelog(limit?: number): UseQueryResult<ChangelogEntry[]> {
   const client = useRefletClient();
-  const [data, setData] = useState<ChangelogEntry[] | undefined>();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetch = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await client.getChangelog(limit);
-      setData(result);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch changelog")
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [client, limit]);
-
-  useEffect(() => {
-    fetch();
-  }, [fetch]);
-
-  return { data, isLoading, error, refetch: fetch };
+  const fetchFn = useCallback(
+    () => client.getChangelog(limit),
+    [client, limit]
+  );
+  return useRefletQuery(fetchFn);
 }
 
 // ============================================
@@ -285,20 +154,6 @@ export function useChangelog(limit?: number): UseQueryResult<ChangelogEntry[]> {
 
 const CHANGELOG_STORAGE_KEY_PREFIX = "reflet_changelog_seen_";
 
-/**
- * Hook to track unread changelog entries based on localStorage
- *
- * @example
- * ```tsx
- * const { unreadCount, markAsRead } = useUnreadChangelogCount('fb_pub_xxx');
- *
- * return (
- *   <button onClick={markAsRead}>
- *     What's New {unreadCount > 0 && <span>({unreadCount})</span>}
- *   </button>
- * );
- * ```
- */
 export function useUnreadChangelogCount(publicKey: string): {
   unreadCount: number;
   markAsRead: () => void;

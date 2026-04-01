@@ -1,3 +1,31 @@
+import type {
+  ChangelogEntryResponse,
+  CommentResponse,
+  ConfigResponse,
+  CreatedResponse,
+  CreateFeedbackResponse,
+  DuplicatePairResponse,
+  FeedbackDetailResponse,
+  FeedbackListResponse,
+  InvitationResponse,
+  MemberResponse,
+  MilestoneDetailResponse,
+  MilestoneListItem,
+  OrganizationResponse,
+  ReleaseDetailResponse,
+  ReleaseListResponse,
+  RoadmapResponse,
+  ScreenshotResponse,
+  StatusResponse,
+  SuccessResponse,
+  SurveyAnalyticsResponse,
+  SurveyDetailResponse,
+  SurveyListItem,
+  SurveyResponseItem,
+  TagResponse,
+  VoteResponse,
+} from "./types.js";
+
 const DEFAULT_BASE_URL = "https://harmless-clam-802.convex.site";
 
 interface ClientConfig {
@@ -68,10 +96,27 @@ export class RefletAdminClient {
   }
 
   // ============================================
+  // Query param helpers
+  // ============================================
+
+  private buildQuery(
+    params: Record<string, string | number | boolean | undefined>
+  ): string {
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined) {
+        searchParams.set(key, String(value));
+      }
+    }
+    const query = searchParams.toString();
+    return query ? `?${query}` : "";
+  }
+
+  // ============================================
   // FEEDBACK (existing public API)
   // ============================================
 
-  getConfig(): Promise<unknown> {
+  getConfig(): Promise<ConfigResponse> {
     return this.request("GET", "/api/v1/feedback");
   }
 
@@ -83,37 +128,12 @@ export class RefletAdminClient {
     sortBy?: string;
     limit?: number;
     offset?: number;
-  }): Promise<unknown> {
-    const searchParams = new URLSearchParams();
-    if (params?.statusId) {
-      searchParams.set("statusId", params.statusId);
-    }
-    if (params?.tagId) {
-      searchParams.set("tagId", params.tagId);
-    }
-    if (params?.status) {
-      searchParams.set("status", params.status);
-    }
-    if (params?.search) {
-      searchParams.set("search", params.search);
-    }
-    if (params?.sortBy) {
-      searchParams.set("sortBy", params.sortBy);
-    }
-    if (params?.limit) {
-      searchParams.set("limit", String(params.limit));
-    }
-    if (params?.offset) {
-      searchParams.set("offset", String(params.offset));
-    }
-    const query = searchParams.toString();
-    return this.request(
-      "GET",
-      `/api/v1/feedback/list${query ? `?${query}` : ""}`
-    );
+  }): Promise<FeedbackListResponse> {
+    const query = this.buildQuery(params ?? {});
+    return this.request("GET", `/api/v1/feedback/list${query}`);
   }
 
-  getFeedback(feedbackId: string): Promise<unknown> {
+  getFeedback(feedbackId: string): Promise<FeedbackDetailResponse> {
     return this.request(
       "GET",
       `/api/v1/feedback/item?id=${encodeURIComponent(feedbackId)}`
@@ -124,14 +144,14 @@ export class RefletAdminClient {
     title: string;
     description: string;
     tagId?: string;
-  }): Promise<unknown> {
+  }): Promise<CreateFeedbackResponse> {
     return this.request("POST", "/api/v1/feedback/create", params);
   }
 
   voteFeedback(
     feedbackId: string,
     voteType?: "upvote" | "downvote"
-  ): Promise<unknown> {
+  ): Promise<VoteResponse> {
     return this.request("POST", "/api/v1/feedback/vote", {
       feedbackId,
       voteType,
@@ -141,7 +161,7 @@ export class RefletAdminClient {
   listComments(
     feedbackId: string,
     sortBy?: "newest" | "oldest"
-  ): Promise<unknown> {
+  ): Promise<CommentResponse[]> {
     const params = new URLSearchParams({ feedbackId });
     if (sortBy) {
       params.set("sortBy", sortBy);
@@ -153,15 +173,15 @@ export class RefletAdminClient {
     feedbackId: string;
     body: string;
     parentId?: string;
-  }): Promise<unknown> {
+  }): Promise<CreatedResponse> {
     return this.request("POST", "/api/v1/feedback/comment", params);
   }
 
-  getRoadmap(): Promise<unknown> {
+  getRoadmap(): Promise<RoadmapResponse> {
     return this.request("GET", "/api/v1/feedback/roadmap");
   }
 
-  getChangelog(limit?: number): Promise<unknown> {
+  getChangelog(limit?: number): Promise<ChangelogEntryResponse[]> {
     const url = limit
       ? `/api/v1/feedback/changelog?limit=${limit}`
       : "/api/v1/feedback/changelog";
@@ -176,23 +196,26 @@ export class RefletAdminClient {
     feedbackId: string;
     title?: string;
     description?: string;
-  }): Promise<unknown> {
+  }): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/feedback/update", params);
   }
 
-  deleteFeedback(feedbackId: string): Promise<unknown> {
+  deleteFeedback(feedbackId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/feedback/delete", {
       feedbackId,
     });
   }
 
-  restoreFeedback(feedbackId: string): Promise<unknown> {
+  restoreFeedback(feedbackId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/feedback/restore", {
       feedbackId,
     });
   }
 
-  assignFeedback(feedbackId: string, assigneeId?: string): Promise<unknown> {
+  assignFeedback(
+    feedbackId: string,
+    assigneeId?: string
+  ): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/feedback/assign", {
       feedbackId,
       assigneeId,
@@ -203,7 +226,7 @@ export class RefletAdminClient {
     feedbackId: string,
     statusId?: string,
     status?: string
-  ): Promise<unknown> {
+  ): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/feedback/set-status", {
       feedbackId,
       statusId,
@@ -215,7 +238,7 @@ export class RefletAdminClient {
     feedbackId: string,
     addTagIds?: string[],
     removeTagIds?: string[]
-  ): Promise<unknown> {
+  ): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/feedback/update-tags", {
       feedbackId,
       addTagIds,
@@ -229,7 +252,7 @@ export class RefletAdminClient {
     complexity?: string;
     timeEstimate?: string;
     deadline?: number;
-  }): Promise<unknown> {
+  }): Promise<SuccessResponse> {
     return this.request(
       "POST",
       "/api/v1/admin/feedback/update-analysis",
@@ -241,14 +264,14 @@ export class RefletAdminClient {
   // COMMENTS ADMIN
   // ============================================
 
-  updateComment(commentId: string, body: string): Promise<unknown> {
+  updateComment(commentId: string, body: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/comment/update", {
       commentId,
       body,
     });
   }
 
-  deleteComment(commentId: string): Promise<unknown> {
+  deleteComment(commentId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/comment/delete", {
       commentId,
     });
@@ -257,7 +280,7 @@ export class RefletAdminClient {
   markCommentOfficial(
     commentId: string,
     isOfficial: boolean
-  ): Promise<unknown> {
+  ): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/comment/mark-official", {
       commentId,
       isOfficial,
@@ -268,7 +291,7 @@ export class RefletAdminClient {
   // TAGS
   // ============================================
 
-  listTags(): Promise<unknown> {
+  listTags(): Promise<TagResponse[]> {
     return this.request("GET", "/api/v1/admin/tags");
   }
 
@@ -278,7 +301,7 @@ export class RefletAdminClient {
     icon?: string;
     description?: string;
     isPublic?: boolean;
-  }): Promise<unknown> {
+  }): Promise<CreatedResponse> {
     return this.request("POST", "/api/v1/admin/tag/create", params);
   }
 
@@ -289,11 +312,11 @@ export class RefletAdminClient {
     icon?: string;
     description?: string;
     isPublic?: boolean;
-  }): Promise<unknown> {
+  }): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/tag/update", params);
   }
 
-  deleteTag(tagId: string): Promise<unknown> {
+  deleteTag(tagId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/tag/delete", { tagId });
   }
 
@@ -305,25 +328,12 @@ export class RefletAdminClient {
     status?: "draft" | "published" | "all";
     limit?: number;
     offset?: number;
-  }): Promise<unknown> {
-    const searchParams = new URLSearchParams();
-    if (params?.status) {
-      searchParams.set("status", params.status);
-    }
-    if (params?.limit) {
-      searchParams.set("limit", String(params.limit));
-    }
-    if (params?.offset) {
-      searchParams.set("offset", String(params.offset));
-    }
-    const query = searchParams.toString();
-    return this.request(
-      "GET",
-      `/api/v1/admin/releases${query ? `?${query}` : ""}`
-    );
+  }): Promise<ReleaseListResponse> {
+    const query = this.buildQuery(params ?? {});
+    return this.request("GET", `/api/v1/admin/releases${query}`);
   }
 
-  getRelease(releaseId: string): Promise<unknown> {
+  getRelease(releaseId: string): Promise<ReleaseDetailResponse | null> {
     return this.request(
       "GET",
       `/api/v1/admin/release?id=${encodeURIComponent(releaseId)}`
@@ -334,7 +344,7 @@ export class RefletAdminClient {
     title: string;
     description?: string;
     version?: string;
-  }): Promise<unknown> {
+  }): Promise<CreatedResponse> {
     return this.request("POST", "/api/v1/admin/release/create", params);
   }
 
@@ -343,23 +353,23 @@ export class RefletAdminClient {
     title?: string;
     description?: string;
     version?: string;
-  }): Promise<unknown> {
+  }): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/release/update", params);
   }
 
-  publishRelease(releaseId: string): Promise<unknown> {
+  publishRelease(releaseId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/release/publish", {
       releaseId,
     });
   }
 
-  unpublishRelease(releaseId: string): Promise<unknown> {
+  unpublishRelease(releaseId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/release/unpublish", {
       releaseId,
     });
   }
 
-  deleteRelease(releaseId: string): Promise<unknown> {
+  deleteRelease(releaseId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/release/delete", {
       releaseId,
     });
@@ -369,7 +379,7 @@ export class RefletAdminClient {
     releaseId: string,
     feedbackId: string,
     action: "link" | "unlink"
-  ): Promise<unknown> {
+  ): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/release/link-feedback", {
       releaseId,
       feedbackId,
@@ -381,11 +391,11 @@ export class RefletAdminClient {
     releaseId: string;
     scheduledPublishAt: number;
     feedbackStatus?: string;
-  }): Promise<unknown> {
+  }): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/release/schedule", params);
   }
 
-  cancelScheduledRelease(releaseId: string): Promise<unknown> {
+  cancelScheduledRelease(releaseId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/release/cancel-schedule", {
       releaseId,
     });
@@ -397,19 +407,12 @@ export class RefletAdminClient {
 
   listMilestones(params?: {
     status?: "active" | "completed" | "archived" | "all";
-  }): Promise<unknown> {
-    const searchParams = new URLSearchParams();
-    if (params?.status) {
-      searchParams.set("status", params.status);
-    }
-    const query = searchParams.toString();
-    return this.request(
-      "GET",
-      `/api/v1/admin/milestones${query ? `?${query}` : ""}`
-    );
+  }): Promise<MilestoneListItem[]> {
+    const query = this.buildQuery(params ?? {});
+    return this.request("GET", `/api/v1/admin/milestones${query}`);
   }
 
-  getMilestone(milestoneId: string): Promise<unknown> {
+  getMilestone(milestoneId: string): Promise<MilestoneDetailResponse | null> {
     return this.request(
       "GET",
       `/api/v1/admin/milestone?id=${encodeURIComponent(milestoneId)}`
@@ -424,7 +427,7 @@ export class RefletAdminClient {
     timeHorizon: string;
     targetDate?: number;
     isPublic?: boolean;
-  }): Promise<unknown> {
+  }): Promise<CreatedResponse> {
     return this.request("POST", "/api/v1/admin/milestone/create", params);
   }
 
@@ -437,17 +440,17 @@ export class RefletAdminClient {
     timeHorizon?: string;
     targetDate?: number;
     isPublic?: boolean;
-  }): Promise<unknown> {
+  }): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/milestone/update", params);
   }
 
-  completeMilestone(milestoneId: string): Promise<unknown> {
+  completeMilestone(milestoneId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/milestone/complete", {
       milestoneId,
     });
   }
 
-  deleteMilestone(milestoneId: string): Promise<unknown> {
+  deleteMilestone(milestoneId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/milestone/delete", {
       milestoneId,
     });
@@ -457,7 +460,7 @@ export class RefletAdminClient {
     milestoneId: string,
     feedbackId: string,
     action: "link" | "unlink"
-  ): Promise<unknown> {
+  ): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/milestone/link-feedback", {
       milestoneId,
       feedbackId,
@@ -469,7 +472,7 @@ export class RefletAdminClient {
   // STATUSES
   // ============================================
 
-  listStatuses(): Promise<unknown> {
+  listStatuses(): Promise<StatusResponse[]> {
     return this.request("GET", "/api/v1/admin/statuses");
   }
 
@@ -477,7 +480,7 @@ export class RefletAdminClient {
     name: string;
     color: string;
     icon?: string;
-  }): Promise<unknown> {
+  }): Promise<CreatedResponse> {
     return this.request("POST", "/api/v1/admin/status/create", params);
   }
 
@@ -486,11 +489,11 @@ export class RefletAdminClient {
     name?: string;
     color?: string;
     icon?: string;
-  }): Promise<unknown> {
+  }): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/status/update", params);
   }
 
-  deleteStatus(statusId: string): Promise<unknown> {
+  deleteStatus(statusId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/status/delete", { statusId });
   }
 
@@ -498,24 +501,24 @@ export class RefletAdminClient {
   // MEMBERS
   // ============================================
 
-  listMembers(): Promise<unknown> {
+  listMembers(): Promise<MemberResponse[]> {
     return this.request("GET", "/api/v1/admin/members");
   }
 
   createInvitation(params: {
     email: string;
     role: "admin" | "member";
-  }): Promise<unknown> {
+  }): Promise<CreatedResponse> {
     return this.request("POST", "/api/v1/admin/invitation/create", params);
   }
 
-  cancelInvitation(invitationId: string): Promise<unknown> {
+  cancelInvitation(invitationId: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/invitation/cancel", {
       invitationId,
     });
   }
 
-  listInvitations(): Promise<unknown> {
+  listInvitations(): Promise<InvitationResponse[]> {
     return this.request("GET", "/api/v1/admin/invitations");
   }
 
@@ -523,7 +526,7 @@ export class RefletAdminClient {
   // ORGANIZATION
   // ============================================
 
-  getOrganization(): Promise<unknown> {
+  getOrganization(): Promise<OrganizationResponse | null> {
     return this.request("GET", "/api/v1/admin/organization");
   }
 
@@ -532,7 +535,7 @@ export class RefletAdminClient {
     isPublic?: boolean;
     primaryColor?: string;
     supportEnabled?: boolean;
-  }): Promise<unknown> {
+  }): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/organization/update", params);
   }
 
@@ -540,14 +543,14 @@ export class RefletAdminClient {
   // DUPLICATES
   // ============================================
 
-  listPendingDuplicates(): Promise<unknown> {
+  listPendingDuplicates(): Promise<DuplicatePairResponse[]> {
     return this.request("GET", "/api/v1/admin/duplicates");
   }
 
   resolveDuplicate(params: {
     pairId: string;
     action: "confirm" | "reject";
-  }): Promise<unknown> {
+  }): Promise<null> {
     return this.request("POST", "/api/v1/admin/duplicate/resolve", params);
   }
 
@@ -555,7 +558,7 @@ export class RefletAdminClient {
     sourceFeedbackId: string;
     targetFeedbackId: string;
     pairId?: string;
-  }): Promise<unknown> {
+  }): Promise<null> {
     return this.request("POST", "/api/v1/admin/duplicate/merge", params);
   }
 
@@ -563,14 +566,14 @@ export class RefletAdminClient {
   // SCREENSHOTS
   // ============================================
 
-  listScreenshots(feedbackId: string): Promise<unknown> {
+  listScreenshots(feedbackId: string): Promise<ScreenshotResponse[]> {
     return this.request(
       "GET",
       `/api/v1/admin/screenshots?feedbackId=${encodeURIComponent(feedbackId)}`
     );
   }
 
-  deleteScreenshot(screenshotId: string): Promise<unknown> {
+  deleteScreenshot(screenshotId: string): Promise<null> {
     return this.request("POST", "/api/v1/admin/screenshot/delete", {
       screenshotId,
     });
@@ -582,19 +585,12 @@ export class RefletAdminClient {
 
   listSurveys(params?: {
     status?: "draft" | "active" | "paused" | "closed";
-  }): Promise<unknown> {
-    const searchParams = new URLSearchParams();
-    if (params?.status) {
-      searchParams.set("status", params.status);
-    }
-    const query = searchParams.toString();
-    return this.request(
-      "GET",
-      `/api/v1/admin/surveys${query ? `?${query}` : ""}`
-    );
+  }): Promise<SurveyListItem[]> {
+    const query = this.buildQuery(params ?? {});
+    return this.request("GET", `/api/v1/admin/surveys${query}`);
   }
 
-  getSurvey(surveyId: string): Promise<unknown> {
+  getSurvey(surveyId: string): Promise<SurveyDetailResponse | null> {
     return this.request(
       "GET",
       `/api/v1/admin/survey?id=${encodeURIComponent(surveyId)}`
@@ -626,34 +622,34 @@ export class RefletAdminClient {
         maxLength?: number;
       };
     }>;
-  }): Promise<unknown> {
+  }): Promise<string> {
     return this.request("POST", "/api/v1/admin/survey/create", params);
   }
 
   updateSurveyStatus(
     surveyId: string,
     status: "draft" | "active" | "paused" | "closed"
-  ): Promise<unknown> {
+  ): Promise<null> {
     return this.request("POST", "/api/v1/admin/survey/update-status", {
       surveyId,
       status,
     });
   }
 
-  deleteSurvey(surveyId: string): Promise<unknown> {
+  deleteSurvey(surveyId: string): Promise<null> {
     return this.request("POST", "/api/v1/admin/survey/delete", {
       surveyId,
     });
   }
 
-  getSurveyAnalytics(surveyId: string): Promise<unknown> {
+  getSurveyAnalytics(surveyId: string): Promise<SurveyAnalyticsResponse> {
     return this.request(
       "GET",
       `/api/v1/admin/survey/analytics?id=${encodeURIComponent(surveyId)}`
     );
   }
 
-  duplicateSurvey(surveyId: string, title?: string): Promise<unknown> {
+  duplicateSurvey(surveyId: string, title?: string): Promise<string> {
     return this.request("POST", "/api/v1/admin/survey/duplicate", {
       surveyId,
       title,
@@ -671,7 +667,7 @@ export class RefletAdminClient {
       sampleRate?: number;
     };
     maxResponses?: number;
-  }): Promise<unknown> {
+  }): Promise<null> {
     return this.request("POST", "/api/v1/admin/survey/update", params);
   }
 
@@ -681,7 +677,7 @@ export class RefletAdminClient {
       status?: "started" | "completed" | "abandoned";
       limit?: number;
     }
-  ): Promise<unknown> {
+  ): Promise<SurveyResponseItem[]> {
     const searchParams = new URLSearchParams();
     searchParams.set("id", surveyId);
     if (params?.status) {

@@ -4,6 +4,45 @@ import type { UseMutationResult } from "./react-hooks-types";
 import type { AddCommentParams, CreateFeedbackParams } from "./types";
 
 // ============================================
+// Generic mutation hook — single source of truth
+// ============================================
+
+function useRefletMutation<TData, TVariables>(
+  mutateFn: (variables: TVariables) => Promise<TData>
+): UseMutationResult<TData, TVariables> {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [data, setData] = useState<TData | undefined>();
+
+  const mutate = useCallback(
+    async (variables: TVariables) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const result = await mutateFn(variables);
+        setData(result);
+        return result;
+      } catch (err) {
+        const wrapped =
+          err instanceof Error ? err : new Error("Request failed");
+        setError(wrapped);
+        throw wrapped;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [mutateFn]
+  );
+
+  const reset = useCallback(() => {
+    setData(undefined);
+    setError(null);
+  }, []);
+
+  return { mutate, isLoading, error, data, reset };
+}
+
+// ============================================
 // Create Feedback Mutation Hook
 // ============================================
 
@@ -25,39 +64,11 @@ export function useCreateFeedback(): UseMutationResult<
   CreateFeedbackParams
 > {
   const client = useRefletClient();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [data, setData] = useState<{
-    feedbackId: string;
-    isApproved: boolean;
-  }>();
-
-  const mutate = useCallback(
-    async (params: CreateFeedbackParams) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await client.create(params);
-        setData(result);
-        return result;
-      } catch (err) {
-        const error =
-          err instanceof Error ? err : new Error("Failed to create feedback");
-        setError(error);
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    },
+  const mutateFn = useCallback(
+    (params: CreateFeedbackParams) => client.create(params),
     [client]
   );
-
-  const reset = useCallback(() => {
-    setData(undefined);
-    setError(null);
-  }, []);
-
-  return { mutate, isLoading, error, data, reset };
+  return useRefletMutation(mutateFn);
 }
 
 // ============================================
@@ -81,41 +92,17 @@ export function useVote(): UseMutationResult<
   { feedbackId: string; type?: "upvote" | "downvote" }
 > {
   const client = useRefletClient();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [data, setData] = useState<{ voted: boolean; voteCount: number }>();
-
-  const mutate = useCallback(
-    async ({
+  const mutateFn = useCallback(
+    ({
       feedbackId,
       type = "upvote",
     }: {
       feedbackId: string;
       type?: "upvote" | "downvote";
-    }) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await client.vote(feedbackId, type);
-        setData(result);
-        return result;
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error("Failed to vote");
-        setError(error);
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    },
+    }) => client.vote(feedbackId, type),
     [client]
   );
-
-  const reset = useCallback(() => {
-    setData(undefined);
-    setError(null);
-  }, []);
-
-  return { mutate, isLoading, error, data, reset };
+  return useRefletMutation(mutateFn);
 }
 
 // ============================================
@@ -130,36 +117,11 @@ export function useAddComment(): UseMutationResult<
   AddCommentParams
 > {
   const client = useRefletClient();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [data, setData] = useState<{ commentId: string }>();
-
-  const mutate = useCallback(
-    async (params: AddCommentParams) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await client.comment(params);
-        setData(result);
-        return result;
-      } catch (err) {
-        const error =
-          err instanceof Error ? err : new Error("Failed to add comment");
-        setError(error);
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    },
+  const mutateFn = useCallback(
+    (params: AddCommentParams) => client.comment(params),
     [client]
   );
-
-  const reset = useCallback(() => {
-    setData(undefined);
-    setError(null);
-  }, []);
-
-  return { mutate, isLoading, error, data, reset };
+  return useRefletMutation(mutateFn);
 }
 
 // ============================================
@@ -184,13 +146,12 @@ export function useSubscription(): {
       setIsLoading(true);
       setError(null);
       try {
-        const result = await client.subscribe(feedbackId);
-        return result;
+        return await client.subscribe(feedbackId);
       } catch (err) {
-        const error =
+        const wrapped =
           err instanceof Error ? err : new Error("Failed to subscribe");
-        setError(error);
-        throw error;
+        setError(wrapped);
+        throw wrapped;
       } finally {
         setIsLoading(false);
       }
@@ -203,13 +164,12 @@ export function useSubscription(): {
       setIsLoading(true);
       setError(null);
       try {
-        const result = await client.unsubscribe(feedbackId);
-        return result;
+        return await client.unsubscribe(feedbackId);
       } catch (err) {
-        const error =
+        const wrapped =
           err instanceof Error ? err : new Error("Failed to unsubscribe");
-        setError(error);
-        throw error;
+        setError(wrapped);
+        throw wrapped;
       } finally {
         setIsLoading(false);
       }
