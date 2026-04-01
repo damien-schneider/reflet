@@ -73,7 +73,11 @@ export const addDomain = mutation({
     }
 
     // Billing gate: only Pro orgs can add custom domains
-    if (org.subscriptionTier !== "pro") {
+    const effectiveTier = await ctx.runQuery(
+      internal.billing.internal.getOrgEffectiveTier,
+      { organizationId: args.organizationId }
+    );
+    if (effectiveTier !== "pro") {
       throw new Error(
         "Custom domains are a Pro feature. Upgrade your plan to add a custom domain."
       );

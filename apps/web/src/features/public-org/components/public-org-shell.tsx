@@ -56,6 +56,13 @@ export function PublicOrgShell({
     { organizationId: org._id }
   );
 
+  const publicPlanFeatures = useQuery(
+    api.billing.queries.getPublicPlanFeatures,
+    {
+      organizationId: org._id,
+    }
+  );
+
   const supportEnabled = supportSettings?.supportEnabled ?? false;
 
   const statusAggregation = useQuery(api.status.monitors.getAggregateStatus, {
@@ -195,7 +202,7 @@ export function PublicOrgShell({
         </div>
       </nav>
 
-      {!(org.hideBranding && org.subscriptionTier === "pro") && (
+      {!publicPlanFeatures?.hideBranding && (
         <footer className="py-8">
           <div className="container mx-auto flex items-center justify-center px-4 text-muted-foreground text-sm">
             <TypographyText variant="bodySmall">

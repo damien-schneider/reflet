@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 
@@ -335,11 +336,14 @@ export const update = mutation({
       throw new Error("Organization not found");
     }
 
-    if (
-      (args.primaryColor || args.customCss) &&
-      org.subscriptionTier === "free"
-    ) {
-      throw new Error("Custom branding requires a Pro subscription");
+    if (args.primaryColor || args.customCss) {
+      const effectiveTier = await ctx.runQuery(
+        internal.billing.internal.getOrgEffectiveTier,
+        { organizationId: args.id }
+      );
+      if (effectiveTier !== "pro") {
+        throw new Error("Custom branding requires a Pro subscription");
+      }
     }
 
     const newSlug = args.slug;

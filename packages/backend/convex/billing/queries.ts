@@ -241,3 +241,31 @@ export const checkLimit = query({
     }
   },
 });
+
+/**
+ * Public query: get plan features for an org without requiring auth.
+ * Used by public-facing pages (public board, changelog, widget) that need to
+ * know if branding should be hidden. Does NOT expose billing details.
+ */
+export const getPublicPlanFeatures = query({
+  args: { organizationId: v.id("organizations") },
+  returns: v.object({ hideBranding: v.boolean() }),
+  handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      return { hideBranding: false };
+    }
+
+    const subscription = await ctx.runQuery(
+      components.stripe.public.getSubscriptionByOrgId,
+      { orgId: args.organizationId }
+    );
+    const isPro =
+      subscription &&
+      (subscription.status === "active" || subscription.status === "trialing");
+
+    return {
+      hideBranding: org.hideBranding === true && Boolean(isPro),
+    };
+  },
+});

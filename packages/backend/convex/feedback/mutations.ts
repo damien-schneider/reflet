@@ -160,7 +160,11 @@ export const create = mutation({
         : "open");
 
     await validateCreateAccess(ctx, org, user._id, args.tagId);
-    await enforceFeedbackLimit(ctx, org._id, org.subscriptionTier);
+    const effectiveTier = await ctx.runQuery(
+      internal.billing.internal.getOrgEffectiveTier,
+      { organizationId: org._id }
+    );
+    await enforceFeedbackLimit(ctx, org._id, effectiveTier);
 
     const defaultOrgStatusId = await getDefaultOrganizationStatusId(
       ctx,

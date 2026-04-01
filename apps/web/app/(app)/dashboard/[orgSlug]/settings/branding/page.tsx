@@ -34,6 +34,10 @@ export default function BrandingSettingsPage({
     api.organizations.members.getCurrentMember,
     org?._id ? { organizationId: org._id } : "skip"
   );
+  const billingStatus = useQuery(
+    api.billing.queries.getStatus,
+    org?._id ? { organizationId: org._id } : "skip"
+  );
   const updateOrg = useMutation(api.organizations.mutations.update);
 
   const [logo, setLogo] = useState<string | null>(null);
@@ -46,7 +50,7 @@ export default function BrandingSettingsPage({
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
-  const isProTier = org?.subscriptionTier === "pro";
+  const isProTier = billingStatus?.tier === "pro";
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
   const isLogoDisabled = !isAdmin;

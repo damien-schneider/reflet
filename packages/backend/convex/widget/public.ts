@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { components } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 
 function generateVisitorId(): string {
@@ -38,6 +39,14 @@ export const getConfig = query({
       return null;
     }
 
+    const subscription = await ctx.runQuery(
+      components.stripe.public.getSubscriptionByOrgId,
+      { orgId: widget.organizationId }
+    );
+    const isPro =
+      subscription &&
+      (subscription.status === "active" || subscription.status === "trialing");
+
     return {
       widgetId: args.widgetId,
       organizationName: org.name,
@@ -48,7 +57,7 @@ export const getConfig = query({
       showLauncher: settings.showLauncher,
       autoOpen: settings.autoOpen,
       zIndex: settings.zIndex,
-      hideBranding: org.hideBranding === true && org.subscriptionTier === "pro",
+      hideBranding: org.hideBranding === true && Boolean(isPro),
     };
   },
 });

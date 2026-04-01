@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { components } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
 
 /**
@@ -72,5 +73,24 @@ export const updateOrgSubscriptionStatus = internalMutation({
       subscriptionStatus: args.subscriptionStatus,
       stripeSubscriptionId: args.stripeSubscriptionId,
     });
+  },
+});
+
+/**
+ * Get the effective subscription tier for an organization based on real-time Stripe data.
+ * This is the source of truth for feature gating — do NOT use org.subscriptionTier directly.
+ */
+export const getOrgEffectiveTier = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  returns: v.union(v.literal("free"), v.literal("pro")),
+  handler: async (ctx, args) => {
+    const subscription = await ctx.runQuery(
+      components.stripe.public.getSubscriptionByOrgId,
+      { orgId: args.organizationId }
+    );
+    const hasActiveSubscription =
+      subscription &&
+      (subscription.status === "active" || subscription.status === "trialing");
+    return hasActiveSubscription ? "pro" : "free";
   },
 });

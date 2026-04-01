@@ -34,6 +34,9 @@ export function BrandingSection({
   orgSlug,
 }: BrandingSectionProps) {
   const org = useQuery(api.organizations.queries.get, { id: organizationId });
+  const billingStatus = useQuery(api.billing.queries.getStatus, {
+    organizationId,
+  });
   const updateOrg = useMutation(api.organizations.mutations.update);
 
   const [logo, setLogo] = useState<string | null>(null);
@@ -46,7 +49,7 @@ export function BrandingSection({
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
-  const isProTier = org?.subscriptionTier === "pro";
+  const isProTier = billingStatus?.tier === "pro";
   const isLogoDisabled = !isAdmin;
   const isBrandingDisabled = !(isAdmin && isProTier);
 

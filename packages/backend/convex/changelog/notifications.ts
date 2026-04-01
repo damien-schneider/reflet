@@ -155,7 +155,11 @@ export const sendReleaseNotifications = internalAction({
       return { success: false, error: "Organization not found" };
     }
 
-    if (org.subscriptionTier !== "pro") {
+    const effectiveTier = await ctx.runQuery(
+      internal.billing.internal.getOrgEffectiveTier,
+      { organizationId: release.organizationId }
+    );
+    if (effectiveTier !== "pro") {
       console.log(
         "[Changelog Notifications] Skipping - organization is not on Pro tier"
       );

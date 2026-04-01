@@ -6,7 +6,12 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "dist/**", "public/r/**"],
-      "env": ["POSTHOG_PERSONAL_API_KEY", "POSTHOG_PROJECT_ID"]
+      "env": [
+        "CONVEX_DEPLOY_KEY",
+        "OPENROUTER_API_KEY",
+        "POSTHOG_PERSONAL_API_KEY",
+        "POSTHOG_PROJECT_ID"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]

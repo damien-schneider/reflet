@@ -144,6 +144,20 @@ function build() {
   console.log(
     `\nBuilt ${built}/${COMPONENTS.length} registry items → ${OUTPUT_DIR}`
   );
+
+  // Write a local manifest so turbo can track outputs for caching
+  const DIST_DIR = resolve(import.meta.dirname, "../dist");
+  if (!existsSync(DIST_DIR)) {
+    mkdirSync(DIST_DIR, { recursive: true });
+  }
+  writeFileSync(
+    resolve(DIST_DIR, "registry-manifest.json"),
+    JSON.stringify(
+      COMPONENTS.map((c) => c.name),
+      null,
+      2
+    )
+  );
 }
 
 build();

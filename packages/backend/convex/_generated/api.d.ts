@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admin_api___tests___test_helpers from "../admin_api/__tests__/test_helpers.js";
 import type * as admin_api_duplicates from "../admin_api/duplicates.js";
 import type * as admin_api_feedback from "../admin_api/feedback.js";
 import type * as admin_api_members from "../admin_api/members.js";
@@ -183,6 +184,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "admin_api/__tests__/test_helpers": typeof admin_api___tests___test_helpers;
   "admin_api/duplicates": typeof admin_api_duplicates;
   "admin_api/feedback": typeof admin_api_feedback;
   "admin_api/members": typeof admin_api_members;

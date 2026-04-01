@@ -5,7 +5,7 @@ import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
-import { createFeedback, createOrg } from "./test-helpers";
+import { createFeedback, createOrg } from "./test_helpers";
 
 const testSchema = schema as any;
 
