@@ -55,6 +55,13 @@ export const getAllCommitsForJob = internalQuery({
 // INTERNAL MUTATIONS
 // ============================================
 
+export const deleteCommitDoc = internalMutation({
+  args: { commitDocId: v.id("retroactiveCommits") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.commitDocId);
+  },
+});
+
 export const updateJobProgress = internalMutation({
   args: {
     jobId: v.id("retroactiveJobs"),

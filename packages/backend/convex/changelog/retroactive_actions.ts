@@ -567,6 +567,74 @@ async function fetchCommitsByTime(
   await ctx.scheduler.runAfter(0, nextAction, nextArgs);
 }
 
+interface CommitDoc {
+  _id: Id<"retroactiveCommits">;
+  commits: CommitData[];
+  groupId: string;
+}
+
+async function buildGroupsForStrategy(
+  strategy: string,
+  hasTags: boolean,
+  tags: Array<{ name: string; sha: string }>,
+  allCommitDocs: CommitDoc[],
+  ctx: ActionCtx,
+  jobId: Id<"retroactiveJobs">
+): Promise<{
+  groupMap: Map<
+    string,
+    { commits: CommitData[]; dateFrom: number; dateTo: number }
+  >;
+  needsResave: boolean;
+}> {
+  if (strategy === "auto" && hasTags) {
+    const allCommits = allCommitDocs.flatMap((doc) => doc.commits);
+    const groupMap = groupCommitsByTagBoundaries(allCommits, tags);
+    console.log(
+      `[retroactive] Grouped ${allCommits.length} commits by ${tags.length} tag boundaries → ${groupMap.size} groups`
+    );
+    return { groupMap, needsResave: true };
+  }
+
+  if (strategy === "auto" && !hasTags) {
+    await ctx.runMutation(
+      internal.changelog.retroactive_mutations.updateJobProgress,
+      { jobId, currentStep: "Clustering commits by semantic similarity..." }
+    );
+    const groupMap = await clusterCommitsWithAI(allCommitDocs);
+    return { groupMap, needsResave: true };
+  }
+
+  return { groupMap: buildGroupMap(allCommitDocs), needsResave: false };
+}
+
+async function resaveCommitsWithNewGroups(
+  ctx: ActionCtx,
+  jobId: Id<"retroactiveJobs">,
+  oldDocs: CommitDoc[],
+  groupMap: Map<
+    string,
+    { commits: CommitData[]; dateFrom: number; dateTo: number }
+  >
+): Promise<void> {
+  for (const doc of oldDocs) {
+    await ctx.runMutation(
+      internal.changelog.retroactive_mutations.deleteCommitDoc,
+      { commitDocId: doc._id }
+    );
+  }
+  for (const [groupId, data] of groupMap) {
+    await ctx.runMutation(
+      internal.changelog.retroactive_mutations.saveCommitBatch,
+      {
+        jobId,
+        groupId,
+        commits: data.commits.slice(0, MAX_COMMITS_PER_GROUP),
+      }
+    );
+  }
+}
+
 /**
  * Phase 3: Organize fetched commits into groups for release generation
  */
@@ -617,29 +685,23 @@ export const groupCommitsPhase = internalAction({
       const tags = job.tags ?? [];
       const hasTags = tags.length > 1;
 
-      let groupMap: Map<
-        string,
-        { commits: CommitData[]; dateFrom: number; dateTo: number }
-      >;
+      const { groupMap, needsResave } = await buildGroupsForStrategy(
+        job.groupingStrategy,
+        hasTags,
+        tags,
+        allCommitDocs,
+        ctx,
+        args.jobId
+      );
 
-      if (job.groupingStrategy === "auto" && hasTags) {
-        // Auto with tags: re-group time-fetched commits by tag boundaries
-        const allCommits = allCommitDocs.flatMap((doc) => doc.commits);
-        groupMap = groupCommitsByTagBoundaries(allCommits, tags);
-        console.log(
-          `[retroactive] Grouped ${allCommits.length} commits by ${tags.length} tag boundaries → ${groupMap.size} groups`
+      // Re-save commits under new groupIds when regrouping was done
+      if (needsResave) {
+        await resaveCommitsWithNewGroups(
+          ctx,
+          args.jobId,
+          allCommitDocs,
+          groupMap
         );
-      } else if (job.groupingStrategy === "auto" && !hasTags) {
-        await ctx.runMutation(
-          internal.changelog.retroactive_mutations.updateJobProgress,
-          {
-            jobId: args.jobId,
-            currentStep: "Clustering commits by semantic similarity...",
-          }
-        );
-        groupMap = await clusterCommitsWithAI(allCommitDocs);
-      } else {
-        groupMap = buildGroupMap(allCommitDocs);
       }
 
       let groupEntries = Array.from(groupMap.entries());
