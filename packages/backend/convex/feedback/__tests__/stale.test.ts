@@ -5,12 +5,9 @@ import { api, internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const testSchema = schema as any;
-
 describe("feedback_stale", () => {
   test("getSettings returns null for non-existent org", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
       const fakeId = await ctx.db.insert("organizations", {
@@ -27,7 +24,7 @@ describe("feedback_stale", () => {
   });
 
   test("getSettings returns null when no stale settings configured", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -47,7 +44,7 @@ describe("feedback_stale", () => {
   });
 
   test("archiveStaleFeedback closes stale items", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       const id = await ctx.db.insert("organizations", {
@@ -97,7 +94,7 @@ describe("feedback_stale", () => {
   });
 
   test("archiveStaleFeedback skips recent items", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -140,7 +137,7 @@ describe("feedback_stale", () => {
   });
 
   test("archiveStaleFeedback skips excluded statuses", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -183,7 +180,7 @@ describe("feedback_stale", () => {
   });
 
   test("archiveStaleFeedback skips disabled orgs", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {

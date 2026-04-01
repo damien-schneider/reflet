@@ -6,12 +6,10 @@ import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
 // Type assertion to work around convex-test version mismatch
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const testSchema = schema as any;
 
 describe("Organization slug uniqueness", () => {
   test("should reject creating an organization with a duplicate slug", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     // First, insert an organization directly into the database
     await t.run(async (ctx) => {
@@ -36,7 +34,7 @@ describe("Organization slug uniqueness", () => {
   });
 
   test("should reject creating an organization with a duplicate generated slug", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     // First, insert an organization with slug "my-org"
     await t.run(async (ctx) => {
@@ -60,7 +58,7 @@ describe("Organization slug uniqueness", () => {
   });
 
   test("should allow creating organizations with different slugs", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     // Create first organization
     const firstOrgId = await t.mutation(
@@ -90,7 +88,7 @@ describe("Organization slug uniqueness", () => {
 
 describe("Organization slug update", () => {
   test("should allow changing slug to a unique value", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     // Create an organization
     const orgId = await t.mutation(
@@ -117,7 +115,7 @@ describe("Organization slug update", () => {
   });
 
   test("should reject changing slug to one that is already taken", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     // Create first organization
     await t.mutation(internal.organizations.mutations.createOrganization, {
@@ -146,7 +144,7 @@ describe("Organization slug update", () => {
   });
 
   test("should allow keeping the same slug (no-op)", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     // Create an organization
     const orgId = await t.mutation(

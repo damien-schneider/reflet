@@ -5,19 +5,9 @@ import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
-const testSchema = schema as any;
+import { createOrg } from "./test-helpers";
 
-const createOrg = async (t: ReturnType<typeof convexTest>) =>
-  t.run(async (ctx) =>
-    ctx.db.insert("organizations", {
-      name: "Test Org",
-      slug: "test-org",
-      isPublic: false,
-      subscriptionTier: "free",
-      subscriptionStatus: "none",
-      createdAt: Date.now(),
-    })
-  );
+const testSchema = schema as any;
 
 describe("admin_api_tags", () => {
   test("createTag should create a tag with generated slug", async () => {

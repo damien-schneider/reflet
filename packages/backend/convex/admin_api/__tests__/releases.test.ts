@@ -5,39 +5,9 @@ import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
+import { createFeedback, createOrg } from "./test-helpers";
+
 const testSchema = schema as any;
-
-const createOrg = async (t: ReturnType<typeof convexTest>) =>
-  t.run(async (ctx) =>
-    ctx.db.insert("organizations", {
-      name: "Test Org",
-      slug: "test-org",
-      isPublic: false,
-      subscriptionTier: "free",
-      subscriptionStatus: "none",
-      createdAt: Date.now(),
-    })
-  );
-
-const createFeedback = async (
-  t: ReturnType<typeof convexTest>,
-  orgId: ReturnType<typeof createOrg> extends Promise<infer T> ? T : never,
-  title = "Test Feedback"
-) =>
-  t.run(async (ctx) =>
-    ctx.db.insert("feedback", {
-      organizationId: orgId,
-      title,
-      description: "Description",
-      status: "open",
-      voteCount: 0,
-      commentCount: 0,
-      isApproved: true,
-      isPinned: false,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-  );
 
 describe("admin_api_releases", () => {
   test("createRelease should create a release", async () => {

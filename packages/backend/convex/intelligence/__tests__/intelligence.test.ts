@@ -4,12 +4,9 @@ import { describe, expect, test } from "vitest";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
-// Type assertion to work around convex-test version mismatch
-const testSchema = schema as any;
-
 describe("Intelligence config", () => {
   test("should create default intelligence config", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -47,7 +44,7 @@ describe("Intelligence config", () => {
   });
 
   test("should update intelligence config fields", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -91,7 +88,7 @@ describe("Intelligence config", () => {
 
 describe("Competitors", () => {
   test("should create and retrieve a competitor", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -127,7 +124,7 @@ describe("Competitors", () => {
   });
 
   test("should store AI profile and feature list", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -176,7 +173,7 @@ describe("Competitors", () => {
 
 describe("Intelligence keywords", () => {
   test("should create and list keywords", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -222,7 +219,7 @@ describe("Intelligence keywords", () => {
 
 describe("Intelligence signals and insights", () => {
   test("should create signals and link to insights", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -292,7 +289,7 @@ describe("Intelligence signals and insights", () => {
   });
 
   test("should update insight status to dismissed", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -355,7 +352,7 @@ describe("Intelligence signals and insights", () => {
 
 describe("Battlecards and feature comparison", () => {
   test("should store battlecard for a competitor", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -404,7 +401,7 @@ describe("Battlecards and feature comparison", () => {
   });
 
   test("should store feature comparison matrix", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
@@ -462,7 +459,7 @@ describe("Battlecards and feature comparison", () => {
 
 describe("LLM visibility checks", () => {
   test("should store LLM visibility check result", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const orgId = await t.run(async (ctx) => {
       return await ctx.db.insert("organizations", {
