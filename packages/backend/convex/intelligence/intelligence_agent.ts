@@ -9,18 +9,49 @@ import {
   internalAction,
   internalQuery,
 } from "../_generated/server";
-import { generateStructured } from "./structured_output";
+import { generateStructuredWithFallback } from "./structured_output";
 
 // OpenRouter provider setup
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-// Use :online variant — OpenRouter adds web search via Exa.ai automatically
-const SEARCH_MODEL = "anthropic/claude-sonnet-4:online";
+// Model fallback chains for intelligence — try free first, fall back to paid
+const SEARCH_MODELS = [
+  "qwen/qwen3.6-plus-preview:free:online",
+  "openai/gpt-5.4-mini:online",
+] as const;
 
-// Regular model for structured extraction (no :online — tool use works reliably)
-const EXTRACTION_MODEL = "anthropic/claude-sonnet-4";
+const EXTRACTION_MODELS = [
+  "qwen/qwen3.6-plus-preview:free",
+  "openai/gpt-5.4-mini",
+] as const;
+
+/**
+ * Try generateText with each model in order until one succeeds.
+ */
+const generateTextWithFallback = async (
+  models: readonly string[],
+  options: { system: string; prompt: string }
+) => {
+  let lastError: unknown;
+  for (const modelId of models) {
+    try {
+      const result = await generateText({
+        model: openrouter(modelId),
+        system: options.system,
+        prompt: options.prompt,
+      });
+      return result;
+    } catch (error) {
+      console.warn(
+        `[intelligence] Model ${modelId} failed: ${error instanceof Error ? error.message : error}`
+      );
+      lastError = error;
+    }
+  }
+  throw lastError;
+};
 
 // Minimum relevance score to store a signal
 const MIN_RELEVANCE_SCORE = 0.4;
@@ -61,8 +92,8 @@ const extractFindings = async (
   rawText: string,
   context: string
 ): Promise<SignalOutput> =>
-  generateStructured({
-    model: EXTRACTION_MODEL,
+  generateStructuredWithFallback({
+    models: EXTRACTION_MODELS,
     schema: signalOutputSchema,
     system: `You are a data extraction specialist. Extract structured intelligence findings from the provided web search results.
 
@@ -309,8 +340,7 @@ export const runCommunitySearch = internalAction({
       );
 
       // Step 1: Use :online model to search the web and get raw results
-      const searchResponse = await generateText({
-        model: openrouter(SEARCH_MODEL),
+      const searchResponse = await generateTextWithFallback(SEARCH_MODELS, {
         system: `You are a competitive intelligence analyst. Search the web for community discussions about pain points, feature requests, and market trends in the user's product space. Focus on Reddit, Hacker News, forums, and discussion threads from the past week. Be thorough and include source URLs when found. Return detailed findings as prose.`,
         prompt,
       });
@@ -417,8 +447,7 @@ export const runCompetitorResearch = internalAction({
         );
 
         // Step 1: Use :online model to search the web for competitor intel
-        const searchResponse = await generateText({
-          model: openrouter(SEARCH_MODEL),
+        const searchResponse = await generateTextWithFallback(SEARCH_MODELS, {
           system:
             "You are a competitive intelligence analyst monitoring competitor activity. Search for recent updates, pricing changes, new features, and market moves from the specified competitor. Be thorough and include source URLs when found.",
           prompt,

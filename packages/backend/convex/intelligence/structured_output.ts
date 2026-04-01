@@ -47,3 +47,31 @@ export const generateStructured = async <T>(options: {
   const parsed: unknown = JSON.parse(jsonString);
   return options.schema.parse(parsed);
 };
+
+/**
+ * Try generateStructured with each model in order until one succeeds.
+ */
+export const generateStructuredWithFallback = async <T>(options: {
+  models: readonly string[];
+  schema: z.ZodType<T>;
+  system: string;
+  prompt: string;
+}): Promise<T> => {
+  let lastError: unknown;
+  for (const modelId of options.models) {
+    try {
+      return await generateStructured({
+        model: modelId,
+        schema: options.schema,
+        system: options.system,
+        prompt: options.prompt,
+      });
+    } catch (error) {
+      console.warn(
+        `[intelligence] Structured generation with ${modelId} failed: ${error instanceof Error ? error.message : error}`
+      );
+      lastError = error;
+    }
+  }
+  throw lastError;
+};

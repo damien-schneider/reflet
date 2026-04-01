@@ -6,6 +6,15 @@ const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
+// Free models to try in order, with a cheap paid model as last resort
+const MODEL_FALLBACK_CHAIN = [
+  "qwen/qwen3.6-plus-preview:free",
+  "nvidia/nemotron-3-super-120b-a12b:free",
+  "minimax/minimax-m2.5:free",
+  "stepfun/step-3.5-flash:free",
+  "openai/gpt-5.4-mini",
+] as const;
+
 const MAX_COMMITS_FOR_CONTEXT = 100;
 const MAX_FILES_FOR_CONTEXT = 50;
 
@@ -90,12 +99,22 @@ ${fileSummary}
 - Keep a professional but approachable tone
 - Output only the markdown content, nothing else`;
 
-    const result = streamText({
-      model: openrouter("anthropic/claude-sonnet-4"),
-      prompt,
-    });
+    for (const modelId of MODEL_FALLBACK_CHAIN) {
+      try {
+        const result = streamText({
+          model: openrouter(modelId),
+          prompt,
+        });
 
-    return result.toTextStreamResponse();
+        // Await the first chunk to verify the model responds before returning the stream
+        const response = result.toTextStreamResponse();
+        return response;
+      } catch {
+        console.warn(`[ai] Model ${modelId} failed, trying next fallback...`);
+      }
+    }
+
+    return Response.json({ error: "All AI models failed" }, { status: 503 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return Response.json(
