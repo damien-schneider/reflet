@@ -3,7 +3,7 @@ import { api } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { httpAction } from "../_generated/server";
 import { createAuth } from "../auth/auth";
-import { corsOptionsHandler, errorResponse, jsonResponse } from "./helpers";
+import { corsOptionsHandler, jsonResponse, parseJsonBody } from "./helpers";
 
 type Router = ReturnType<typeof httpRouter>;
 
@@ -250,16 +250,11 @@ const handlePostIssues = httpAction(async (ctx, request) => {
   }
 
   try {
-    let body: Record<string, unknown>;
-    try {
-      const raw: unknown = await request.json();
-      if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-        return errorResponse("Invalid JSON body", 400);
-      }
-      body = raw as Record<string, unknown>;
-    } catch {
-      return errorResponse("Invalid JSON body", 400);
+    const bodyResult = await parseJsonBody(request);
+    if (!bodyResult.success) {
+      return bodyResult.response;
     }
+    const body = bodyResult.body;
 
     const orgIdParam =
       typeof body.organizationId === "string" ? body.organizationId : "";
@@ -361,16 +356,11 @@ const handlePostSync = httpAction(async (ctx, request) => {
   }
 
   try {
-    let body: Record<string, unknown>;
-    try {
-      const raw: unknown = await request.json();
-      if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-        return errorResponse("Invalid JSON body", 400);
-      }
-      body = raw as Record<string, unknown>;
-    } catch {
-      return errorResponse("Invalid JSON body", 400);
+    const bodyResult = await parseJsonBody(request);
+    if (!bodyResult.success) {
+      return bodyResult.response;
     }
+    const body = bodyResult.body;
 
     const orgIdParam =
       typeof body.organizationId === "string" ? body.organizationId : "";
@@ -455,16 +445,11 @@ const handlePostSetup = httpAction(async (ctx, request) => {
   }
 
   try {
-    let body: Record<string, unknown>;
-    try {
-      const raw: unknown = await request.json();
-      if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-        return errorResponse("Invalid JSON body", 400);
-      }
-      body = raw as Record<string, unknown>;
-    } catch {
-      return errorResponse("Invalid JSON body", 400);
+    const bodyResult = await parseJsonBody(request);
+    if (!bodyResult.success) {
+      return bodyResult.response;
     }
+    const body = bodyResult.body;
 
     const orgIdParam =
       typeof body.organizationId === "string" ? body.organizationId : "";

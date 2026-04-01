@@ -4,7 +4,7 @@ import { internal } from "../_generated/api";
 import type { Id, TableNames } from "../_generated/dataModel";
 import { httpAction } from "../_generated/server";
 import { decodeUserToken } from "../feedback/api_auth";
-import { parseId } from "./helpers";
+import { parseId, parseJsonBody } from "./helpers";
 
 type Router = ReturnType<typeof httpRouter>;
 
@@ -103,23 +103,6 @@ function optionalStringField(
 ): string | undefined {
   const val = body[key];
   return typeof val === "string" ? val : undefined;
-}
-
-async function parseRequestBody(
-  request: Request
-): Promise<
-  | { success: true; body: Record<string, unknown> }
-  | { success: false; response: Response }
-> {
-  try {
-    const raw: unknown = await request.json();
-    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-      return { success: false, response: errorResponse("Invalid JSON body") };
-    }
-    return { success: true, body: raw as Record<string, unknown> };
-  } catch {
-    return { success: false, response: errorResponse("Invalid JSON body") };
-  }
 }
 
 function corsPreflightResponse(): Response {
@@ -886,7 +869,7 @@ export function registerPublicApiRoutes(http: Router): void {
 
         const { externalUserId } = authResult.auth;
 
-        const bodyResult = await parseRequestBody(request);
+        const bodyResult = await parseJsonBody(request);
         if (!bodyResult.success) {
           return bodyResult.response;
         }

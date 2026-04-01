@@ -4,16 +4,13 @@ import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
 import { internalAction } from "../_generated/server";
+import { stripHtml } from "../shared/text_formatters";
 
 const BATCH_SIZE = 10;
 const BATCH_DELAY_MS = 100;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function stripHtmlTags(html: string): string {
-  return html.replace(/<[^>]*>/g, "");
 }
 
 interface Subscriber {
@@ -183,7 +180,7 @@ export const sendReleaseNotifications = internalAction({
       releaseTitle: release.title,
       releaseVersion: release.version,
       descriptionText: release.description
-        ? stripHtmlTags(release.description).slice(0, 500)
+        ? stripHtml(release.description).slice(0, 500)
         : "Check out the latest updates.",
     };
 

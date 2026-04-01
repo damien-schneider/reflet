@@ -1,6 +1,14 @@
 import { internal } from "../_generated/api";
 import type { Id, TableNames } from "../_generated/dataModel";
 import type { httpAction } from "../_generated/server";
+import {
+  bool,
+  num,
+  optionalId,
+  requireStr,
+  str,
+  strArr,
+} from "../http/helpers";
 
 // ============================================
 // TYPES
@@ -29,43 +37,8 @@ interface ToolRegistration {
 // HELPER FUNCTIONS
 // ============================================
 
-function str(value: unknown): string | undefined {
-  return typeof value === "string" ? value : undefined;
-}
-
-function requireStr(value: unknown, fieldName: string): string {
-  if (typeof value !== "string" || !value) {
-    throw new Error(`Missing required field: ${fieldName}`);
-  }
-  return value;
-}
-
-function num(value: unknown): number | undefined {
-  return typeof value === "number" ? value : undefined;
-}
-
-function bool(value: unknown): boolean | undefined {
-  return typeof value === "boolean" ? value : undefined;
-}
-
-function strArr(value: unknown): string[] | undefined {
-  if (!Array.isArray(value)) {
-    return undefined;
-  }
-  return value.every((v): v is string => typeof v === "string")
-    ? value
-    : undefined;
-}
-
 function asId<T extends TableNames>(value: unknown, fieldName: string): Id<T> {
-  if (typeof value !== "string" || !value) {
-    throw new Error(`Missing required field: ${fieldName}`);
-  }
-  return value as Id<T>;
-}
-
-function optionalId<T extends TableNames>(value: unknown): Id<T> | undefined {
-  return typeof value === "string" && value ? (value as Id<T>) : undefined;
+  return requireStr(value, fieldName) as Id<T>;
 }
 
 // ============================================

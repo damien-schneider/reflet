@@ -87,6 +87,33 @@ export function optionalId<T extends TableNames>(
 }
 
 // ============================================
+// JSON BODY PARSER
+// ============================================
+
+export async function parseJsonBody(
+  request: Request
+): Promise<
+  | { success: true; body: Record<string, unknown> }
+  | { success: false; response: Response }
+> {
+  try {
+    const raw: unknown = await request.json();
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+      return {
+        success: false,
+        response: errorResponse("Invalid JSON body", 400),
+      };
+    }
+    return { success: true, body: raw as Record<string, unknown> };
+  } catch {
+    return {
+      success: false,
+      response: errorResponse("Invalid JSON body", 400),
+    };
+  }
+}
+
+// ============================================
 // AUTH HELPER
 // ============================================
 
@@ -187,18 +214,12 @@ export function adminPost(
         return authResult.response;
       }
 
-      let body: Record<string, unknown>;
-      try {
-        const raw: unknown = await request.json();
-        if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-          return errorResponse("Invalid JSON body", 400);
-        }
-        body = raw as Record<string, unknown>;
-      } catch {
-        return errorResponse("Invalid JSON body", 400);
+      const bodyResult = await parseJsonBody(request);
+      if (!bodyResult.success) {
+        return bodyResult.response;
       }
 
-      const data = await handler(ctx, authResult.auth, body);
+      const data = await handler(ctx, authResult.auth, bodyResult.body);
       return jsonResponse(data);
     } catch (error) {
       return errorResponse(

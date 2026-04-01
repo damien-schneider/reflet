@@ -155,6 +155,7 @@ import type * as organizations_tag_manager from "../organizations/tag_manager.js
 import type * as organizations_tag_manager_actions from "../organizations/tag_manager_actions.js";
 import type * as privateData from "../privateData.js";
 import type * as shared_constants from "../shared/constants.js";
+import type * as shared_text_formatters from "../shared/text_formatters.js";
 import type * as shared_utils from "../shared/utils.js";
 import type * as shared_validators from "../shared/validators.js";
 import type * as sitemap_public from "../sitemap_public.js";
@@ -329,6 +330,7 @@ declare const fullApi: ApiFromModules<{
   "organizations/tag_manager_actions": typeof organizations_tag_manager_actions;
   privateData: typeof privateData;
   "shared/constants": typeof shared_constants;
+  "shared/text_formatters": typeof shared_text_formatters;
   "shared/utils": typeof shared_utils;
   "shared/validators": typeof shared_validators;
   sitemap_public: typeof sitemap_public;

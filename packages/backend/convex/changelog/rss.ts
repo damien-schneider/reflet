@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { internalQuery } from "../_generated/server";
+import { stripHtml } from "../shared/text_formatters";
 
 /**
  * Get organization by slug (internal use only)
@@ -52,13 +53,6 @@ function escapeXml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
-}
-
-/**
- * Strip HTML tags from text
- */
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "");
 }
 
 /**

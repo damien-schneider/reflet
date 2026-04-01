@@ -2,7 +2,12 @@ import type { httpRouter } from "convex/server";
 import { api } from "../_generated/api";
 import { httpAction } from "../_generated/server";
 import { createAuth } from "../auth/auth";
-import { corsOptionsHandler, errorResponse, jsonResponse } from "./helpers";
+import {
+  corsOptionsHandler,
+  errorResponse,
+  jsonResponse,
+  parseJsonBody,
+} from "./helpers";
 
 type Router = ReturnType<typeof httpRouter>;
 type ActionCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
@@ -23,29 +28,6 @@ async function requireSession(
     };
   }
   return { success: true, session };
-}
-
-async function parseJsonBody(
-  request: Request
-): Promise<
-  | { success: true; body: Record<string, unknown> }
-  | { success: false; response: Response }
-> {
-  try {
-    const raw: unknown = await request.json();
-    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-      return {
-        success: false,
-        response: errorResponse("Invalid JSON body", 400),
-      };
-    }
-    return { success: true, body: raw as Record<string, unknown> };
-  } catch {
-    return {
-      success: false,
-      response: errorResponse("Invalid JSON body", 400),
-    };
-  }
 }
 
 function handleAiError(error: unknown): Response {
