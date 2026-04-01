@@ -29,21 +29,17 @@ STASHED=$?
 bun x ultracite fix
 FORMAT_EXIT_CODE=$?
 
-# Run Convex validation (push and typecheck against dev deployment once)
-if [ -z "$SKIP_CONVEX_VALIDATION" ]; then
-  echo "🔄 Validating Convex functions..."
-  cd packages/backend && bun run convex dev --once
-  CONVEX_EXIT_CODE=$?
-  cd - > /dev/null
+# Run Convex codegen + typecheck (no deployment, works offline)
+echo "🔄 Validating Convex functions..."
+cd packages/backend && bun run check-types
+CONVEX_EXIT_CODE=$?
+cd - > /dev/null
 
-  if [ $CONVEX_EXIT_CODE -ne 0 ]; then
-    echo "❌ Convex validation failed"
-    exit $CONVEX_EXIT_CODE
-  fi
-  echo "✅ Convex validation passed"
-else
-  echo "⏭️  Skipping Convex validation (SKIP_CONVEX_VALIDATION is set)"
+if [ $CONVEX_EXIT_CODE -ne 0 ]; then
+  echo "❌ Convex validation failed"
+  exit $CONVEX_EXIT_CODE
 fi
+echo "✅ Convex validation passed"
 
 # Restore working directory state
 if [ $STASHED -eq 0 ]; then

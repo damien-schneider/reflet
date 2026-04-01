@@ -6,6 +6,10 @@ import { api, internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
+// Type assertion to work around convex-test version mismatch
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const testSchema = schema as any;
+
 // Test the Zod schema for auto-tagging response
 const autoTaggingResponseSchema = z.object({
   selectedTagIds: z
@@ -61,7 +65,7 @@ describe("Auto-tagging response schema", () => {
 
 describe("Auto-tagging database operations", () => {
   test("should correctly count untagged feedback", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     // Create an organization first
     const orgId = await t.run(async (ctx) => {
@@ -115,7 +119,7 @@ describe("Auto-tagging database operations", () => {
   });
 
   test("should apply tags to feedback with AI indicator", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     // Create organization, feedback, and tag
     const { feedbackId, tagId } = await t.run(async (ctx) => {
@@ -171,7 +175,7 @@ describe("Auto-tagging database operations", () => {
   });
 
   test("should not duplicate tags when applying", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     // Create organization, feedback, and tag
     const { feedbackId, tagId } = await t.run(async (ctx) => {
@@ -230,7 +234,7 @@ describe("Auto-tagging database operations", () => {
   });
 
   test("should create and track auto-tagging job", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     // Create organization
     const orgId = await t.run(async (ctx) => {
@@ -267,7 +271,7 @@ describe("Auto-tagging database operations", () => {
   });
 
   test("should update job progress correctly", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     // Create organization and job
     const { jobId } = await t.run(async (ctx) => {

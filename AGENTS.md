@@ -148,12 +148,13 @@ Code in `packages/backend/convex/`, organized by domain.
 - Static imports only — `import { internal } from "./_generated/api"` at top level
 - Migrations: `internalMutation` → `convex run` → delete migration file
 - Use the Convex CLI to query data: `bunx convex run <functionPath>` — add `--prod` to check production data
+- Typecheck without deploying: `cd packages/backend && bun run check-types` (runs `convex codegen` + `tsc --noEmit`)
 
 ## Verification Checklist
 
 After every change:
 1. `bun x ultracite fix --unsafe`
-2. `bunx convex dev --once` (if backend changed — validates schema and functions)
+2. `cd packages/backend && bun run check-types` (runs `convex codegen` + `tsc --noEmit` — **always run this**, not just for backend changes. Does NOT deploy — safe to run anywhere including CI and cloud environments)
 3. `turbo check-types` (zero errors)
 4. `turbo test` (all pass)
 5. `turbo build` (full production build)

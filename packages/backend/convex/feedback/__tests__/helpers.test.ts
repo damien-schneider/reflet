@@ -5,9 +5,12 @@ import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const testSchema = schema as any;
+
 describe("weekly_digest_helpers", () => {
   test("getAllOrganizationIds returns org IDs", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     await t.run(async (ctx) => {
       await ctx.db.insert("organizations", {
@@ -28,7 +31,7 @@ describe("weekly_digest_helpers", () => {
   });
 
   test("getDigestData returns null for non-existent org", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     const orgId = await t.run(async (ctx) => {
       const id = await ctx.db.insert("organizations", {
@@ -53,7 +56,7 @@ describe("weekly_digest_helpers", () => {
   });
 
   test("getDigestData returns activity counts", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     const orgId = await t.run(async (ctx) => {
       const id = await ctx.db.insert("organizations", {
@@ -98,7 +101,7 @@ describe("weekly_digest_helpers", () => {
 
 describe("shipped_notifications_helpers", () => {
   test("getShippedNotificationData returns null for missing release", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     const fakeReleaseId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
@@ -127,7 +130,7 @@ describe("shipped_notifications_helpers", () => {
   });
 
   test("getShippedNotificationData returns linked feedback items", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     const releaseId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
@@ -180,7 +183,7 @@ describe("shipped_notifications_helpers", () => {
   });
 
   test("getFeedbackRecipients collects user IDs from votes and subs", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     // Verify the data layer: votes and subscriptions are stored properly
     await t.run(async (ctx) => {
@@ -235,7 +238,7 @@ describe("shipped_notifications_helpers", () => {
 
 describe("release_ai_matching_helpers", () => {
   test("getReleaseAndFeedback returns null for missing release", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     const fakeId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
@@ -264,7 +267,7 @@ describe("release_ai_matching_helpers", () => {
   });
 
   test("getReleaseAndFeedback excludes already linked feedback", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     const releaseId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {

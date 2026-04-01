@@ -5,6 +5,9 @@ import { internal } from "../../../_generated/api";
 import schema from "../../../schema";
 import { modules } from "../../../test.helpers";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const testSchema = schema as any;
+
 const createOrg = async (t: ReturnType<typeof convexTest>, slug = "test-org") =>
   t.run(async (ctx) =>
     ctx.db.insert("organizations", {
@@ -38,7 +41,7 @@ const createMember = async (
 
 describe("saveUserInstallation", () => {
   test("should create a new user GitHub connection", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     const connectionId = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
@@ -62,7 +65,7 @@ describe("saveUserInstallation", () => {
   });
 
   test("should upsert when user already has a connection", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     const firstId = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
@@ -100,7 +103,7 @@ describe("saveUserInstallation", () => {
 
 describe("getOrgAvailableInstallations", () => {
   test("should return installations from org members", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
     await createMember(t, orgId, "user_B", "member");
@@ -127,7 +130,7 @@ describe("getOrgAvailableInstallations", () => {
   });
 
   test("should return multiple installations from different members", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
     await createMember(t, orgId, "user_B", "admin");
@@ -166,7 +169,7 @@ describe("getOrgAvailableInstallations", () => {
   });
 
   test("should exclude disconnected installations", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
 
@@ -194,7 +197,7 @@ describe("getOrgAvailableInstallations", () => {
   });
 
   test("should return empty when no members have GitHub", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
 
@@ -213,7 +216,7 @@ describe("getOrgAvailableInstallations", () => {
 
 describe("linkRepoToOrg", () => {
   test("should create a new org repo link", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
 
@@ -248,7 +251,7 @@ describe("linkRepoToOrg", () => {
   });
 
   test("should update existing org connection when re-linking", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
     await createMember(t, orgId, "user_B", "admin");
@@ -304,7 +307,7 @@ describe("linkRepoToOrg", () => {
   });
 
   test("should throw when userGithubConnection not found", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
     // Create a fake ID that doesn't exist
@@ -338,7 +341,7 @@ describe("linkRepoToOrg", () => {
 
 describe("handleMemberRemoved", () => {
   test("should mark connections as owner_left when linking user leaves", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
 
@@ -374,7 +377,7 @@ describe("handleMemberRemoved", () => {
   });
 
   test("should not affect connections linked by other users", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
     await createMember(t, orgId, "user_B", "admin");
@@ -418,7 +421,7 @@ describe("handleMemberRemoved", () => {
 
 describe("handleInstallationDeleted (updated)", () => {
   test("should clean up userGithubConnections and all org connections", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
 
@@ -458,7 +461,7 @@ describe("handleInstallationDeleted (updated)", () => {
   });
 
   test("should handle deletion when installation spans multiple orgs", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
     const orgId1 = await createOrg(t, "org-1");
     const orgId2 = await createOrg(t, "org-2");
     await createMember(t, orgId1, "user_A", "admin");
@@ -511,7 +514,7 @@ describe("handleInstallationDeleted (updated)", () => {
 
 describe("getUserGithubConnection", () => {
   test("should return user connection by userId", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
@@ -533,7 +536,7 @@ describe("getUserGithubConnection", () => {
   });
 
   test("should return null when user has no connection", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     const connection = await t.query(
       internal.integrations.github.queries.getUserGithubConnection,

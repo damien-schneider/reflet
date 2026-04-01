@@ -5,10 +5,12 @@ import { api } from "./_generated/api";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const testSchema = schema as any;
 
 describe("sitemap_public", () => {
   test("getPublicOrgSlugs returns only public orgs", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     await t.run(async (ctx) => {
       await ctx.db.insert("organizations", {
@@ -35,14 +37,14 @@ describe("sitemap_public", () => {
   });
 
   test("getPublicOrgSlugs returns empty array when no public orgs", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     const result = await t.query(api.sitemap_public.getPublicOrgSlugs, {});
     expect(result).toEqual([]);
   });
 
   test("getPublicFeedbackForSitemap returns approved feedback from public orgs", async () => {
-    const t = convexTest(schema, modules);
+    const t = convexTest(testSchema, modules);
 
     await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {

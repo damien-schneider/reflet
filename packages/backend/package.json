@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "convex dev",
     "dev:setup": "convex dev --configure --until-success",
+    "check-types": "convex codegen && tsc --noEmit -p convex/tsconfig.json",
     "test": "vitest run",
     "verify:stripe": "tsx scripts/verify-stripe-setup.ts",
     "verify:stripe:prod": "STRIPE_MODE=production tsx scripts/verify-stripe-setup.ts",
