@@ -14,7 +14,6 @@
     "deploy": "convex deploy"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.53",
     "@convex-dev/agent": "catalog:",
     "@convex-dev/better-auth": "catalog:",
     "@convex-dev/rate-limiter": "^0.3.2",
