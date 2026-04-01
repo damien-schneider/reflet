@@ -305,10 +305,49 @@ export const fetchCommitsPhase = internalAction({
         throw new Error("No GitHub repository connected");
       }
 
+      console.log(
+        `[retroactive] Connection: repo=${connection.repositoryFullName}, installationId=${connection.installationId}, defaultBranch=${connection.repositoryDefaultBranch ?? "(not set)"}`
+      );
+
       const { token } = await ctx.runAction(
         internal.integrations.github.node_actions.getInstallationTokenInternal,
         { installationId: connection.installationId }
       );
+
+      // Verify the installation token has access to the repo
+      let effectiveBranch = job.targetBranch;
+      const repoCheckUrl = `${GITHUB_API_URL}/repos/${connection.repositoryFullName}`;
+      try {
+        const { data: repoInfo } = await fetchGitHub<{
+          default_branch: string;
+          full_name: string;
+          permissions?: Record<string, boolean>;
+          private: boolean;
+        }>(repoCheckUrl, token);
+        console.log(
+          `[retroactive] Token access verified: repo=${repoInfo.full_name}, private=${repoInfo.private}, defaultBranch=${repoInfo.default_branch}, permissions=${JSON.stringify(repoInfo.permissions)}`
+        );
+
+        // Use the actual default branch from GitHub if our stored one differs
+        effectiveBranch =
+          repoInfo.default_branch &&
+          repoInfo.default_branch !== job.targetBranch
+            ? repoInfo.default_branch
+            : job.targetBranch;
+
+        if (effectiveBranch !== job.targetBranch) {
+          console.warn(
+            `[retroactive] Branch mismatch: job has "${job.targetBranch}" but repo default is "${effectiveBranch}". Using repo default.`
+          );
+        }
+      } catch (repoError) {
+        console.error(
+          `[retroactive] Token cannot access repo ${connection.repositoryFullName}: ${getErrorMessage(repoError)}`
+        );
+        throw new Error(
+          `GitHub App cannot access ${connection.repositoryFullName}. Check that the repository is included in the App's repository access settings. Error: ${getErrorMessage(repoError)}`
+        );
+      }
 
       const tags = job.tags ?? [];
       // Only use tag-based comparison when user explicitly chose "tags" strategy
@@ -317,7 +356,7 @@ export const fetchCommitsPhase = internalAction({
       const useTagStrategy = job.groupingStrategy === "tags" && tags.length > 1;
 
       console.log(
-        `[retroactive] fetchCommitsPhase: fetchStrategy=${useTagStrategy ? "tags" : "time"}, tags=${tags.length}, cursor=${args.cursor ?? "none"}, groupingStrategy=${job.groupingStrategy}`
+        `[retroactive] fetchCommitsPhase: fetchStrategy=${useTagStrategy ? "tags" : "time"}, tags=${tags.length}, cursor=${args.cursor ?? "none"}, groupingStrategy=${job.groupingStrategy}, branch=${effectiveBranch}`
       );
 
       if (useTagStrategy) {
@@ -341,7 +380,7 @@ export const fetchCommitsPhase = internalAction({
             args,
             token,
             connection.repositoryFullName,
-            job.targetBranch,
+            effectiveBranch,
             0
           );
         }
@@ -351,7 +390,7 @@ export const fetchCommitsPhase = internalAction({
           args,
           token,
           connection.repositoryFullName,
-          job.targetBranch,
+          effectiveBranch,
           job.fetchedCommits ?? 0
         );
       }
@@ -464,14 +503,31 @@ async function fetchCommitsByTime(
   const page = (args.cursor ?? 0) + 1;
 
   const url = `${GITHUB_API_URL}/repos/${repoFullName}/commits?per_page=100&sha=${encodeURIComponent(branch)}&page=${page}`;
+  console.log(`[retroactive] Fetching commits: ${url}`);
+
   const { data: rawCommits, linkHeader } = await fetchGitHub<GitHubCommit[]>(
     url,
     token
   );
 
+  if (!Array.isArray(rawCommits)) {
+    console.error(
+      `[retroactive] Unexpected response type: ${typeof rawCommits}, value: ${JSON.stringify(rawCommits).slice(0, 200)}`
+    );
+    throw new Error(
+      `GitHub commits API returned unexpected response type: ${typeof rawCommits}`
+    );
+  }
+
   console.log(
     `[retroactive] Fetched page ${page}: ${rawCommits.length} commits from ${repoFullName} (branch: ${branch})`
   );
+
+  if (rawCommits.length === 0 && page === 1) {
+    console.warn(
+      `[retroactive] GitHub returned 0 commits for ${repoFullName} branch=${branch}. This may indicate a permissions issue with the GitHub App installation token.`
+    );
+  }
 
   const weekGroups = groupCommitsByWeek(rawCommits);
 
