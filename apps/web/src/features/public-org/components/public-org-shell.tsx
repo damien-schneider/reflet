@@ -13,13 +13,27 @@ import { useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H2, Text as TypographyText } from "@/components/ui/typography";
 import { PublicViewToolbar } from "@/features/feedback/components/public-view-toolbar";
 import { generateColorCssVars, generateColorPalette } from "@/lib/color-utils";
 
 const DEFAULT_PRIMARY_COLOR = "#5c6d4f";
+
+function resolveTab(pathname: string, basePath: string): string {
+  const relativePath = basePath ? pathname.replace(basePath, "") : pathname;
+  if (relativePath === "/changelog" || relativePath.startsWith("/changelog/")) {
+    return "changelog";
+  }
+  if (relativePath === "/support" || relativePath.startsWith("/support/")) {
+    return "support";
+  }
+  if (relativePath === "/status" || relativePath.startsWith("/status/")) {
+    return "status";
+  }
+  return "feedback";
+}
 
 interface PublicOrgShellProps {
   basePath: string;
@@ -62,28 +76,11 @@ export function PublicOrgShell({
     }
   }, [router, basePath, supportEnabled, statusEnabled]);
 
-  const colorCssVars = useMemo(() => {
-    const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
-    const palette = generateColorPalette(primaryColor);
-    return generateColorCssVars(palette);
-  }, [org.primaryColor]);
+  const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
+  const palette = generateColorPalette(primaryColor);
+  const colorCssVars = generateColorCssVars(palette);
 
-  const currentTab = useMemo(() => {
-    const relativePath = basePath ? pathname.replace(basePath, "") : pathname;
-    if (
-      relativePath === "/changelog" ||
-      relativePath.startsWith("/changelog/")
-    ) {
-      return "changelog";
-    }
-    if (relativePath === "/support" || relativePath.startsWith("/support/")) {
-      return "support";
-    }
-    if (relativePath === "/status" || relativePath.startsWith("/status/")) {
-      return "status";
-    }
-    return "feedback";
-  }, [pathname, basePath]);
+  const currentTab = resolveTab(pathname, basePath);
 
   const handleTabChange = (value: string | null) => {
     if (!value) {

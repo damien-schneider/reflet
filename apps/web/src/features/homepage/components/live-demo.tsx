@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowSquareOut } from "@phosphor-icons/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { H2, Lead, Text } from "@/components/ui/typography";
@@ -9,11 +9,11 @@ import { H2, Lead, Text } from "@/components/ui/typography";
 export default function LiveDemo() {
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const handleIframeRef = useCallback((node: HTMLIFrameElement | null) => {
+  const handleIframeRef = (node: HTMLIFrameElement | null) => {
     if (node) {
       node.addEventListener("load", () => setIsLoaded(true));
     }
-  }, []);
+  };
 
   return (
     <section className="bg-background py-24" id="demo">

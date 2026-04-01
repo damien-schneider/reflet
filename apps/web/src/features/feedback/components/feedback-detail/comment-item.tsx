@@ -10,7 +10,7 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
   const deleteComment = useMutation(api.feedback.comments.remove);
   const addReply = useMutation(api.feedback.comments.create);
 
-  const handleEdit = useCallback(async () => {
+  const handleEdit = async () => {
     if (!editContent.trim()) {
       return;
     }
@@ -56,13 +56,13 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [comment.id, editContent, updateComment]);
+  };
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = async () => {
     await deleteComment({ id: comment.id });
-  }, [comment.id, deleteComment]);
+  };
 
-  const handleReply = useCallback(async () => {
+  const handleReply = async () => {
     if (!replyContent.trim()) {
       return;
     }
@@ -78,7 +78,7 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [feedbackId, comment.id, replyContent, addReply]);
+  };
 
   return (
     <div className="group rounded-lg p-3 transition-colors hover:bg-muted/30">

@@ -4,7 +4,6 @@ import { CaretDown, Fire, Lightning, Sparkle, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useCallback } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -57,25 +56,22 @@ export function PriorityBadge({
   const config = PRIORITY_CONFIG[effectivePriority];
   const Icon = config.icon;
 
-  const handleChange = useCallback(
-    async (value: string) => {
-      if (!isPriority(value)) {
-        return;
-      }
-      await updateAnalysis({
-        feedbackId,
-        priority: value,
-      });
-    },
-    [feedbackId, updateAnalysis]
-  );
+  const handleChange = async (value: string) => {
+    if (!isPriority(value)) {
+      return;
+    }
+    await updateAnalysis({
+      feedbackId,
+      priority: value,
+    });
+  };
 
-  const handleClear = useCallback(async () => {
+  const handleClear = async () => {
     await updateAnalysis({
       feedbackId,
       clearPriority: true,
     });
-  }, [feedbackId, updateAnalysis]);
+  };
 
   const tooltipContent =
     isOverridden && aiPriority

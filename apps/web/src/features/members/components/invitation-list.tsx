@@ -2,7 +2,7 @@ import { ArrowClockwise, Check } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds - must match backend
@@ -73,26 +73,19 @@ function InvitationItem({
   const [justSent, setJustSent] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
 
-  const calculateRemaining = useCallback(() => {
-    const lastSent = invitation.lastSentAt ?? invitation._creationTime;
-    const elapsed = Date.now() - lastSent;
-    const remaining = Math.max(
-      0,
-      Math.ceil((RESEND_COOLDOWN_MS - elapsed) / 1000)
-    );
-    return remaining;
-  }, [invitation.lastSentAt, invitation._creationTime]);
-
   useEffect(() => {
     const updateTimer = () => {
-      const remaining = calculateRemaining();
-      setRemainingSeconds(remaining);
+      const lastSent = invitation.lastSentAt ?? invitation._creationTime;
+      const elapsed = Date.now() - lastSent;
+      setRemainingSeconds(
+        Math.max(0, Math.ceil((RESEND_COOLDOWN_MS - elapsed) / 1000))
+      );
     };
 
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [calculateRemaining]);
+  }, [invitation.lastSentAt, invitation._creationTime]);
 
   const handleResend = async () => {
     setIsResending(true);

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -33,7 +33,7 @@ export function MilestoneProgressRing({
   const isComplete = percentage === 100;
   const planned = total - completed - inProgress;
 
-  const segments = useMemo(() => {
+  const segments = (() => {
     if (total === 0) {
       return { completed: 0, inProgress: 0, planned: circumference };
     }
@@ -50,7 +50,7 @@ export function MilestoneProgressRing({
       inProgress: (inProgress * degreesPerItem * circumference) / 360,
       planned: (planned * degreesPerItem * circumference) / 360,
     };
-  }, [total, completed, inProgress, planned, circumference]);
+  })();
 
   const completedMotion = useMotionValue(0);
   const inProgressMotion = useMotionValue(0);

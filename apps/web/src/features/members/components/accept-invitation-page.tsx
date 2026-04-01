@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { H1, Muted } from "@/components/ui/typography";
@@ -27,7 +27,7 @@ export function AcceptInvitationContent({
   const { data: session } = authClient.useSession();
   const isAuthenticated = Boolean(session?.user?.id);
 
-  const handleAcceptInvitation = useCallback(async () => {
+  const handleAcceptInvitation = async () => {
     setIsAccepting(true);
     setError(null);
     try {
@@ -37,7 +37,7 @@ export function AcceptInvitationContent({
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
       setIsAccepting(false);
     }
-  }, [acceptInvitation, token, router]);
+  };
 
   // Loading state
   if (invitation === undefined) {

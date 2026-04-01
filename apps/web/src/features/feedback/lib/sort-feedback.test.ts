@@ -118,7 +118,11 @@ describe("sortFeedback", () => {
 
     it("handles unknown sort option gracefully (returns original order)", () => {
       const items = [createItem({ _id: "a" }), createItem({ _id: "b" })];
-      const sorted = sortFeedback(items, "unknown" as any);
+      // Cast through unknown to test the runtime default branch
+      const sorted = sortFeedback(
+        items,
+        "unknown" as unknown as Parameters<typeof sortFeedback>[1]
+      );
       expect(sorted.map((i) => i._id)).toEqual(["a", "b"]);
     });
 

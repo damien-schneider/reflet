@@ -4,7 +4,7 @@ import { CaretDown, Clock, Sparkle, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -105,55 +105,46 @@ export function TimeEstimateBadge({
   const [unit, setUnit] = useState<TimeUnit>(parsed.unit);
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleSave = useCallback(
-    async (newAmount: number, newUnit: TimeUnit) => {
-      const formatted = formatTimeEstimate(newAmount, newUnit);
-      if (formatted !== effectiveEstimate) {
-        await updateAnalysis({
-          feedbackId,
-          timeEstimate: formatted,
-        });
-      }
-    },
-    [feedbackId, effectiveEstimate, updateAnalysis]
-  );
+  const handleSave = async (newAmount: number, newUnit: TimeUnit) => {
+    const formatted = formatTimeEstimate(newAmount, newUnit);
+    if (formatted !== effectiveEstimate) {
+      await updateAnalysis({
+        feedbackId,
+        timeEstimate: formatted,
+      });
+    }
+  };
 
-  const handleClear = useCallback(async () => {
+  const handleClear = async () => {
     await updateAnalysis({
       feedbackId,
       clearTimeEstimate: true,
     });
     setIsOpen(false);
-  }, [feedbackId, updateAnalysis]);
+  };
 
-  const handleAmountChange = useCallback(
-    (value: string) => {
-      const newAmount = Number.parseInt(value, 10);
-      if (Number.isNaN(newAmount) || newAmount < 1) {
-        return;
-      }
-      setAmount(newAmount);
-      handleSave(newAmount, unit);
-    },
-    [unit, handleSave]
-  );
+  const handleAmountChange = (value: string) => {
+    const newAmount = Number.parseInt(value, 10);
+    if (Number.isNaN(newAmount) || newAmount < 1) {
+      return;
+    }
+    setAmount(newAmount);
+    handleSave(newAmount, unit);
+  };
 
-  const handleUnitChange = useCallback(
-    (value: string) => {
-      if (!isTimeUnit(value)) {
-        return;
-      }
-      const newUnit = value;
-      setUnit(newUnit);
-      const options = NUMBER_OPTIONS_BY_UNIT[newUnit];
-      const closestAmount = options.reduce((prev, curr) =>
-        Math.abs(curr - amount) < Math.abs(prev - amount) ? curr : prev
-      );
-      setAmount(closestAmount);
-      handleSave(closestAmount, newUnit);
-    },
-    [amount, handleSave]
-  );
+  const handleUnitChange = (value: string) => {
+    if (!isTimeUnit(value)) {
+      return;
+    }
+    const newUnit = value;
+    setUnit(newUnit);
+    const options = NUMBER_OPTIONS_BY_UNIT[newUnit];
+    const closestAmount = options.reduce((prev, curr) =>
+      Math.abs(curr - amount) < Math.abs(prev - amount) ? curr : prev
+    );
+    setAmount(closestAmount);
+    handleSave(closestAmount, newUnit);
+  };
 
   const tooltipContent = isOverridden
     ? `AI suggested: ${aiTimeEstimate}`

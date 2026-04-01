@@ -5,7 +5,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
-import { use, useMemo, useState } from "react";
+import { use, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -87,7 +87,7 @@ export default function ReviewDraftsPage({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
-  const drafts = useMemo(() => {
+  const drafts = (() => {
     if (!releases) {
       return [];
     }
@@ -101,7 +101,7 @@ export default function ReviewDraftsPage({
         ? b.createdAt - a.createdAt
         : a.createdAt - b.createdAt
     );
-  }, [releases, sortOrder]);
+  })();
 
   const allSelected = drafts.length > 0 && selectedIds.size === drafts.length;
 

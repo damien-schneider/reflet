@@ -1,7 +1,6 @@
 "use client";
 
 import { GitBranch, Globe, Lock, Plug, Spinner } from "@phosphor-icons/react";
-import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -74,12 +73,10 @@ export function RepositorySelectorSection({
   onConnectRepository,
   onChangeRepository,
 }: RepositorySelectorCardProps) {
-  const flatRepositories = useMemo(() => {
-    return repositories.map((repo) => ({
-      ...repo,
-      searchText: getRepositorySearchText(repo),
-    }));
-  }, [repositories]);
+  const flatRepositories = repositories.map((repo) => ({
+    ...repo,
+    searchText: getRepositorySearchText(repo),
+  }));
 
   if (hasRepository) {
     return (

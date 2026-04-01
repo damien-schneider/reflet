@@ -16,7 +16,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -123,17 +123,17 @@ export function OnboardingChecklist({
     }
   }, [hasSynced, organizationId, syncMutation]);
 
-  const toggleMinimized = useCallback(() => {
+  const toggleMinimized = () => {
     setIsMinimized((prev) => {
       const next = !prev;
       localStorage.setItem(getStorageKey(orgSlug), String(next));
       return next;
     });
-  }, [orgSlug]);
+  };
 
-  const handleDismiss = useCallback(() => {
+  const handleDismiss = () => {
     dismissMutation({ organizationId });
-  }, [dismissMutation, organizationId]);
+  };
 
   // Loading or no progress yet
   if (progress === undefined) {

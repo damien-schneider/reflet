@@ -15,7 +15,7 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -82,14 +82,14 @@ export function FeatureCheck({
 
   const [isStarting, setIsStarting] = useState(false);
 
-  const handleStart = useCallback(async () => {
+  const handleStart = async () => {
     setIsStarting(true);
     try {
       await startFeatureCheck({ feedbackId });
     } finally {
       setIsStarting(false);
     }
-  }, [feedbackId, startFeatureCheck]);
+  };
 
   if (connectionStatus === undefined) {
     return null;

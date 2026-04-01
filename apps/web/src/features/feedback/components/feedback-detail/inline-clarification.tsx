@@ -9,7 +9,7 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -30,14 +30,14 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
 
   const [isRegenerating, setIsRegenerating] = useState(false);
 
-  const handleRegenerate = useCallback(async () => {
+  const handleRegenerate = async () => {
     setIsRegenerating(true);
     try {
       await initiateClarification({ feedbackId });
     } finally {
       setIsRegenerating(false);
     }
-  }, [feedbackId, initiateClarification]);
+  };
 
   if (!status?.hasAiClarification) {
     return null;

@@ -12,7 +12,7 @@ import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
@@ -148,16 +148,16 @@ export function ReleaseEditor({
     router.push(`/dashboard/${orgSlug}/changelog`);
   };
 
-  const handleStreamStart = useCallback(() => {
+  const handleStreamStart = () => {
     setIsStreaming(true);
     setStreamedContent("");
-  }, []);
+  };
 
-  const handleStreamChunk = useCallback((content: string) => {
+  const handleStreamChunk = (content: string) => {
     setStreamedContent(content);
-  }, []);
+  };
 
-  const handleStreamComplete = useCallback((content: string) => {
+  const handleStreamComplete = (content: string) => {
     setIsStreaming(false);
     setStreamedContent("");
     if (content) {
@@ -165,11 +165,11 @@ export function ReleaseEditor({
       // Auto-trigger feedback matching after AI generation completes
       setShouldAutoMatchFeedback(true);
     }
-  }, []);
+  };
 
-  const handleTitleGenerated = useCallback((generatedTitle: string) => {
+  const handleTitleGenerated = (generatedTitle: string) => {
     setTitle(generatedTitle);
-  }, []);
+  };
 
   const handlePublish = async () => {
     if (!title.trim()) {
