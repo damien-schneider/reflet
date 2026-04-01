@@ -3,13 +3,7 @@
 import { ArrowRight, Lightning, X } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
-import {
-  forwardRef,
-  useCallback,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import { useImperativeHandle, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -46,6 +40,7 @@ interface InlineFeedbackInputProps {
   isAdmin?: boolean;
   isMember: boolean;
   onSubmit: (data: InlineSubmitData) => Promise<void>;
+  ref?: React.Ref<InlineFeedbackInputHandle>;
   tags?: Tag[];
 }
 
@@ -62,10 +57,13 @@ const INITIAL_STATE = {
   tagId: undefined as Id<"tags"> | undefined,
 };
 
-export const InlineFeedbackInput = forwardRef<
-  InlineFeedbackInputHandle,
-  InlineFeedbackInputProps
->(function InlineFeedbackInput({ isMember, isAdmin, onSubmit, tags }, ref) {
+export function InlineFeedbackInput({
+  isMember,
+  isAdmin,
+  onSubmit,
+  tags,
+  ref,
+}: InlineFeedbackInputProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [form, setForm] = useState(INITIAL_STATE);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,7 +100,7 @@ export const InlineFeedbackInput = forwardRef<
     form.attachments.length > 0 ||
     form.tagId;
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     if (!canSubmit) {
       return;
     }
@@ -124,31 +122,28 @@ export const InlineFeedbackInput = forwardRef<
     } finally {
       setIsSubmitting(false);
     }
-  }, [canSubmit, onSubmit, trimmedTitle, form]);
+  };
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = () => {
     setForm(INITIAL_STATE);
     setIsExpanded(false);
-  }, []);
+  };
 
-  const handleTitleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey && !form.description) {
-        e.preventDefault();
-        handleSubmit();
-      }
-      if (e.key === "Escape" && !hasContent) {
-        setIsExpanded(false);
-        inputRef.current?.blur();
-      }
-    },
-    [handleSubmit, hasContent, form.description]
-  );
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey && !form.description) {
+      e.preventDefault();
+      handleSubmit();
+    }
+    if (e.key === "Escape" && !hasContent) {
+      setIsExpanded(false);
+      inputRef.current?.blur();
+    }
+  };
 
-  const handleGhostClick = useCallback(() => {
+  const handleGhostClick = () => {
     setIsExpanded(true);
     requestAnimationFrame(() => inputRef.current?.focus());
-  }, []);
+  };
 
   const showTagSelector = isAdmin && tags && tags.length > 0;
 
@@ -348,4 +343,4 @@ export const InlineFeedbackInput = forwardRef<
       </div>
     </LazyMotion>
   );
-});
+}

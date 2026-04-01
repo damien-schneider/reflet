@@ -4,12 +4,9 @@ import { describe, expect, test } from "vitest";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const testSchema = schema as any;
-
 describe("onboarding", () => {
   test("onboardingProgress record can be created with default steps", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const progressId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
@@ -47,7 +44,7 @@ describe("onboarding", () => {
   });
 
   test("completing a step updates the record", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const progressId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
@@ -94,7 +91,7 @@ describe("onboarding", () => {
   });
 
   test("completedAt is set when all steps are done", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const progressId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
@@ -129,7 +126,7 @@ describe("onboarding", () => {
   });
 
   test("dismissedAt prevents further step completion", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     const progressId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
@@ -166,7 +163,7 @@ describe("onboarding", () => {
   });
 
   test("by_org_user index correctly retrieves progress", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
