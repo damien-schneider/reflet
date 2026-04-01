@@ -174,8 +174,12 @@ vi.mock("@phosphor-icons/react", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     organizations: {
-      list: "organizations.list",
-      create: "organizations.create",
+      queries: {
+        list: "organizations.queries.list",
+      },
+      mutations: {
+        create: "organizations.mutations.create",
+      },
     },
   },
 }));

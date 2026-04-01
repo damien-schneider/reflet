@@ -9,7 +9,7 @@ vi.mock("convex/react", () => ({
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
-  api: { votes: { toggle: "votes:toggle" } },
+  api: { feedback: { votes: { toggle: "votes:toggle" } } },
 }));
 
 vi.mock("@/hooks/use-auth-guard", () => ({

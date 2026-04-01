@@ -10,9 +10,11 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    tag_manager_actions: {
-      create: "tag_manager_actions:create",
-      update: "tag_manager_actions:update",
+    organizations: {
+      tag_manager_actions: {
+        create: "organizations:tag_manager_actions:create",
+        update: "organizations:tag_manager_actions:update",
+      },
     },
   },
 }));
@@ -182,10 +184,10 @@ describe("TagFormPopover", () => {
 
   beforeEach(() => {
     mockUseMutation.mockImplementation((mutationName: string) => {
-      if (mutationName === "tag_manager_actions:create") {
+      if (mutationName === "organizations:tag_manager_actions:create") {
         return mockCreateTag;
       }
-      if (mutationName === "tag_manager_actions:update") {
+      if (mutationName === "organizations:tag_manager_actions:update") {
         return mockUpdateTag;
       }
       return vi.fn();

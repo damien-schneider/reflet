@@ -10,7 +10,7 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    members: { list: "members.list" },
+    organizations: { members: { list: "members.list" } },
   },
 }));
 

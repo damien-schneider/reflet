@@ -15,11 +15,17 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    comments: {
-      list: "comments.list",
-      create: "comments.create",
-      update: "comments.update",
-      remove: "comments.remove",
+    feedback: {
+      comments: {
+        list: "comments.list",
+        create: "comments.create",
+        update: "comments.update",
+        remove: "comments.remove",
+      },
+      clarification: {
+        getDraftReplyStatus: "feedback.clarification.getDraftReplyStatus",
+        initiateDraftReply: "feedback.clarification.initiateDraftReply",
+      },
     },
   },
 }));

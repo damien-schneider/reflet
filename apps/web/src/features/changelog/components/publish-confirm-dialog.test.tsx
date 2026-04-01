@@ -10,10 +10,20 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    organizations: { get: "organizations:get" },
-    github: { getConnectionStatus: "github:getConnectionStatus" },
-    changelog_subscriptions: {
-      getSubscriberCount: "changelog_subscriptions:getSubscriberCount",
+    organizations: {
+      queries: { get: "organizations:get" },
+    },
+    integrations: {
+      github: {
+        queries: {
+          getConnectionStatus: "github:getConnectionStatus",
+        },
+      },
+    },
+    changelog: {
+      subscriptions: {
+        getSubscriberCount: "changelog_subscriptions:getSubscriberCount",
+      },
     },
   },
 }));

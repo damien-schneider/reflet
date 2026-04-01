@@ -454,7 +454,7 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
       expect(screen.getByText("owner/connected-repo")).toBeInTheDocument();
     });
 
-    it("renders Change Repository button for admin", () => {
+    it("renders Change button for admin", () => {
       render(
         <RepositorySelectorSection
           hasRepository
@@ -468,10 +468,10 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
           selectedRepo="repo-1"
         />
       );
-      expect(screen.getByText("Change Repository")).toBeInTheDocument();
+      expect(screen.getByText("Change")).toBeInTheDocument();
     });
 
-    it("calls onChangeRepository when Change Repository clicked", async () => {
+    it("calls onChangeRepository when Change clicked", async () => {
       const onChangeRepository = vi.fn();
       const user = userEvent.setup();
       render(
@@ -487,7 +487,7 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
           selectedRepo="repo-1"
         />
       );
-      await user.click(screen.getByText("Change Repository"));
+      await user.click(screen.getByText("Change"));
       expect(onChangeRepository).toHaveBeenCalled();
     });
   });
@@ -560,7 +560,7 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
       expect(screen.queryByText("Change Repository")).toBeNull();
     });
 
-    it("renders card title", () => {
+    it("renders combobox for unconnected state", () => {
       render(
         <RepositorySelectorSection
           hasRepository={false}
@@ -573,10 +573,10 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
           selectedRepo=""
         />
       );
-      expect(screen.getByText("Repository")).toBeInTheDocument();
+      expect(screen.getByTestId("combobox")).toBeInTheDocument();
     });
 
-    it("renders card description for unconnected state", () => {
+    it("renders search input for unconnected state", () => {
       render(
         <RepositorySelectorSection
           hasRepository={false}
@@ -590,7 +590,7 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
         />
       );
       expect(
-        screen.getByText(/Select a repository to sync releases from/)
+        screen.getByPlaceholderText("Search repositories...")
       ).toBeInTheDocument();
     });
 
@@ -713,7 +713,7 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
       expect(screen.queryByText("Connect Repository")).not.toBeInTheDocument();
     });
 
-    it("shows connected description when repositoryFullName provided", () => {
+    it("shows repository full name when connected", () => {
       render(
         <RepositorySelectorSection
           hasRepository
@@ -727,10 +727,10 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
           selectedRepo="repo-1"
         />
       );
-      expect(screen.getByText(/Connected to org\/my-repo/)).toBeInTheDocument();
+      expect(screen.getByText("org/my-repo")).toBeInTheDocument();
     });
 
-    it("shows unconnected description when no repositoryFullName", () => {
+    it("shows combobox when no repository connected", () => {
       render(
         <RepositorySelectorSection
           hasRepository={false}
@@ -743,9 +743,7 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
           selectedRepo=""
         />
       );
-      expect(
-        screen.getByText(/Select a repository to sync releases from/)
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("combobox")).toBeInTheDocument();
     });
   });
 

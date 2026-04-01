@@ -8,7 +8,7 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    organizations: { getBySlug: "organizations:getBySlug" },
+    organizations: { queries: { getBySlug: "organizations:getBySlug" } },
   },
 }));
 

@@ -10,7 +10,9 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    releases: { getNextVersion: "releases:getNextVersion" },
+    changelog: {
+      releases: { getNextVersion: "releases:getNextVersion" },
+    },
   },
 }));
 

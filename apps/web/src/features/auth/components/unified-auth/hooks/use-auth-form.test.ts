@@ -36,8 +36,10 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    auth_helpers: {
-      checkEmailExists: "checkEmailExists",
+    auth: {
+      helpers: {
+        checkEmailExists: "checkEmailExists",
+      },
     },
   },
 }));

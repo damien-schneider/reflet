@@ -1,16 +1,63 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const mockListRepositories = vi.fn().mockResolvedValue([]);
+const mockListLabels = vi.fn().mockResolvedValue([]);
+const mockSyncReleases = vi.fn().mockResolvedValue(undefined);
+const mockSyncIssues = vi.fn().mockResolvedValue(undefined);
+const mockSetupWebhook = vi.fn().mockResolvedValue(undefined);
+
+vi.mock("convex/react", () => ({
+  useAction: vi.fn((ref) => {
+    const name = String(ref);
+    if (name.includes("listRepositories")) {
+      return mockListRepositories;
+    }
+    if (name.includes("listLabels")) {
+      return mockListLabels;
+    }
+    if (name.includes("syncReleases")) {
+      return mockSyncReleases;
+    }
+    if (name.includes("syncIssues")) {
+      return mockSyncIssues;
+    }
+    if (name.includes("setupWebhook")) {
+      return mockSetupWebhook;
+    }
+    return vi.fn();
+  }),
+}));
+
+vi.mock("@reflet/backend/convex/_generated/api", () => ({
+  api: {
+    integrations: {
+      github: {
+        client_actions: {
+          listRepositories:
+            "integrations.github.client_actions.listRepositories",
+          listLabels: "integrations.github.client_actions.listLabels",
+          syncReleases: "integrations.github.client_actions.syncReleases",
+          syncIssues: "integrations.github.client_actions.syncIssues",
+          setupWebhook: "integrations.github.client_actions.setupWebhook",
+        },
+      },
+    },
+  },
+}));
+
+vi.mock("@/lib/analytics", () => ({
+  capture: vi.fn(),
+}));
+
 import { useGitHubSettings } from "./use-github-settings";
 
-const mockFetch = vi.fn();
-
 beforeEach(() => {
-  vi.stubGlobal("fetch", mockFetch);
-  mockFetch.mockResolvedValue({
-    ok: true,
-    json: () => Promise.resolve({}),
-  });
+  mockListRepositories.mockResolvedValue([]);
+  mockListLabels.mockResolvedValue([]);
+  mockSyncReleases.mockResolvedValue(undefined);
+  mockSyncIssues.mockResolvedValue(undefined);
+  mockSetupWebhook.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -47,23 +94,17 @@ describe("useGitHubSettings", () => {
     expect(result.current.webhookSetupError).toBeNull();
   });
 
-  it("fetchRepositories calls fetch with correct URL", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          repositories: [
-            {
-              id: "r1",
-              fullName: "org/repo",
-              name: "repo",
-              defaultBranch: "main",
-              isPrivate: false,
-              description: null,
-            },
-          ],
-        }),
-    });
+  it("fetchRepositories calls listRepositories action", async () => {
+    mockListRepositories.mockResolvedValueOnce([
+      {
+        id: "r1",
+        fullName: "org/repo",
+        name: "repo",
+        defaultBranch: "main",
+        isPrivate: false,
+        description: null,
+      },
+    ]);
 
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
@@ -71,10 +112,9 @@ describe("useGitHubSettings", () => {
       await result.current.fetchRepositories();
     });
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/github/repositories?organizationId=org1"),
-      expect.objectContaining({ cache: "no-store" })
-    );
+    expect(mockListRepositories).toHaveBeenCalledWith({
+      organizationId: "org1",
+    });
     expect(result.current.repositories).toHaveLength(1);
   });
 
@@ -101,47 +141,32 @@ describe("useGitHubSettings", () => {
     });
   });
 
-  it("handleSyncReleases calls fetch with POST", async () => {
+  it("handleSyncReleases calls syncReleases action", async () => {
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
     await act(async () => {
       await result.current.handleSyncReleases();
     });
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      "/api/github/sync",
-      expect.objectContaining({ method: "POST" })
-    );
+    expect(mockSyncReleases).toHaveBeenCalledWith({
+      organizationId: "org1",
+    });
   });
 
-  it("handleSetup calls setup endpoint", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ success: true }),
-    });
-
+  it("handleSetup calls setupWebhook action", async () => {
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
     await act(async () => {
       await result.current.handleSetup();
     });
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      "/api/github/setup",
-      expect.objectContaining({ method: "POST" })
-    );
+    expect(mockSetupWebhook).toHaveBeenCalledWith({
+      organizationId: "org1",
+    });
   });
 
   it("handleSetup sets error on failure", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: () =>
-        Promise.resolve({
-          error: "Something went wrong",
-          code: "SOME_ERROR",
-          message: "Details",
-        }),
-    });
+    mockSetupWebhook.mockRejectedValueOnce(new Error("Details"));
 
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
@@ -150,16 +175,13 @@ describe("useGitHubSettings", () => {
     });
 
     expect(result.current.webhookSetupError).toEqual({
-      code: "SOME_ERROR",
+      code: "SETUP_FAILED",
       message: "Details",
     });
   });
 
   it("clearWebhookSetupError clears the error", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: () => Promise.resolve({ error: "err", code: "ERR" }),
-    });
+    mockSetupWebhook.mockRejectedValueOnce(new Error("err"));
 
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
@@ -248,12 +270,12 @@ describe("useGitHubSettings", () => {
   });
 
   it("does nothing when orgId is undefined", async () => {
-    mockFetch.mockClear();
+    mockListRepositories.mockClear();
+    mockSyncReleases.mockClear();
+    mockSetupWebhook.mockClear();
     const { result } = renderHook(() =>
       useGitHubSettings({ ...defaultProps, orgId: undefined })
     );
-
-    mockFetch.mockClear();
 
     await act(async () => {
       await result.current.fetchRepositories();
@@ -262,32 +284,28 @@ describe("useGitHubSettings", () => {
       await result.current.handleDisconnect();
     });
 
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockListRepositories).not.toHaveBeenCalled();
+    expect(mockSyncReleases).not.toHaveBeenCalled();
+    expect(mockSetupWebhook).not.toHaveBeenCalled();
   });
 
-  it("handleSyncIssues calls fetch with POST", async () => {
+  it("handleSyncIssues calls syncIssues action", async () => {
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
     await act(async () => {
       await result.current.handleSyncIssues();
     });
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      "/api/github/issues",
-      expect.objectContaining({ method: "POST" })
-    );
+    expect(mockSyncIssues).toHaveBeenCalledWith({
+      organizationId: "org1",
+      state: "all",
+    });
   });
 
-  it("fetchLabels calls fetch with correct URL", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          labels: [
-            { id: "l1", name: "bug", color: "ff0000", description: null },
-          ],
-        }),
-    });
+  it("fetchLabels calls listLabels action", async () => {
+    mockListLabels.mockResolvedValueOnce([
+      { id: "l1", name: "bug", color: "ff0000", description: null },
+    ]);
 
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
@@ -295,18 +313,14 @@ describe("useGitHubSettings", () => {
       await result.current.fetchLabels();
     });
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/github/labels?organizationId=org1")
-    );
+    expect(mockListLabels).toHaveBeenCalledWith({
+      organizationId: "org1",
+    });
     expect(result.current.githubLabels).toHaveLength(1);
   });
 
   it("handleToggleAutoSync sets up webhook when not present", async () => {
     const toggleAutoSync = vi.fn().mockResolvedValue(undefined);
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ success: true }),
-    });
 
     const { result } = renderHook(() =>
       useGitHubSettings({
@@ -321,29 +335,22 @@ describe("useGitHubSettings", () => {
     });
 
     // Should call setup first since there's no webhook
-    expect(mockFetch).toHaveBeenCalledWith(
-      "/api/github/setup",
-      expect.objectContaining({ method: "POST" })
-    );
+    expect(mockSetupWebhook).toHaveBeenCalledWith({
+      organizationId: "org1",
+    });
   });
 
   it("handleSelectRepository calls the function without error", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          repositories: [
-            {
-              id: "r1",
-              fullName: "owner/repo",
-              name: "repo",
-              defaultBranch: "main",
-              isPrivate: false,
-              description: null,
-            },
-          ],
-        }),
-    });
+    mockListRepositories.mockResolvedValueOnce([
+      {
+        id: "r1",
+        fullName: "owner/repo",
+        name: "repo",
+        defaultBranch: "main",
+        isPrivate: false,
+        description: null,
+      },
+    ]);
 
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
@@ -351,29 +358,36 @@ describe("useGitHubSettings", () => {
       await result.current.fetchRepositories();
     });
 
-    expect(() => {
-      act(() => {
-        result.current.handleSelectRepository("r1");
-      });
-    }).not.toThrow();
+    // Select the repo
+    act(() => {
+      result.current.setSelectedRepo("r1");
+    });
+
+    await act(async () => {
+      await result.current.handleSelectRepository();
+    });
+
+    expect(defaultProps.selectRepository).toHaveBeenCalledWith({
+      organizationId: "org1",
+      repositoryId: "r1",
+      repositoryFullName: "owner/repo",
+      defaultBranch: "main",
+    });
   });
 
   it("handleChangeRepository triggers repo fetch", async () => {
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
     await act(async () => {
-      result.current.handleChangeRepository();
+      await result.current.handleChangeRepository();
     });
 
     // After handleChangeRepository, fetchRepositories should be called
-    expect(mockFetch).toHaveBeenCalled();
+    expect(mockListRepositories).toHaveBeenCalled();
   });
 
   it("fetchLabels with empty response sets empty array", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ labels: [] }),
-    });
+    mockListLabels.mockResolvedValueOnce([]);
 
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 

@@ -78,25 +78,30 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    feedback: { get: "feedback.get", update: "feedback.update" },
-    comments: {
-      list: "comments.list",
-      create: "comments.create",
-      update: "comments.update",
-      remove: "comments.remove",
+    feedback: {
+      queries: { get: "feedback.get" },
+      mutations: { update: "feedback.update" },
+      comments: {
+        list: "comments.list",
+        create: "comments.create",
+        update: "comments.update",
+        remove: "comments.remove",
+      },
+      actions: {
+        updateStatus: "feedback_actions.updateStatus",
+        updateOrganizationStatus: "feedback_actions.updateOrganizationStatus",
+        remove: "feedback_actions.remove",
+        togglePin: "feedback_actions.togglePin",
+      },
+      votes: { toggle: "votes.toggle" },
+      clarification: {
+        getDraftReplyStatus: "feedback.clarification.getDraftReplyStatus",
+        initiateDraftReply: "feedback.clarification.initiateDraftReply",
+      },
     },
-    organization_statuses: { list: "organization_statuses.list" },
-    feedback_actions: {
-      updateStatus: "feedback_actions.updateStatus",
-      updateOrganizationStatus: "feedback_actions.updateOrganizationStatus",
-      remove: "feedback_actions.remove",
-      togglePin: "feedback_actions.togglePin",
+    organizations: {
+      statuses: { list: "organization_statuses.list" },
     },
-    feedback_clarification: {
-      getDraftReplyStatus: "feedback_clarification.getDraftReplyStatus",
-      generateDraftReply: "feedback_clarification.generateDraftReply",
-    },
-    votes: { toggle: "votes.toggle" },
   },
 }));
 

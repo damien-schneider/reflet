@@ -9,7 +9,7 @@ vi.mock("convex/react", () => ({
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
-  api: { members: { updateRole: "members:updateRole" } },
+  api: { organizations: { members: { updateRole: "members:updateRole" } } },
 }));
 
 vi.mock("@phosphor-icons/react", () => ({

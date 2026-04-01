@@ -10,8 +10,10 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    feedback_api_admin: {
-      generateApiKeys: "feedback_api_admin:generateApiKeys",
+    feedback: {
+      api_admin: {
+        generateApiKeys: "feedback_api_admin:generateApiKeys",
+      },
     },
   },
 }));

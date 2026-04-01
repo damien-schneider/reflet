@@ -15,10 +15,14 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    organizations: { update: "organizations.update" },
-    github: {
-      toggleAutoSync: "github.toggleAutoSync",
-      getConnection: "github.getConnection",
+    organizations: {
+      mutations: { update: "organizations.update" },
+    },
+    integrations: {
+      github: {
+        mutations: { toggleAutoSync: "github.toggleAutoSync" },
+        queries: { getConnection: "github.getConnection" },
+      },
     },
   },
 }));

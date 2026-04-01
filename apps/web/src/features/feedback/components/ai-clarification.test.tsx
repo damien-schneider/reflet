@@ -12,10 +12,12 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    feedback_clarification: {
-      getClarificationStatus: "feedback_clarification.getClarificationStatus",
-      generateCodingPrompt: "feedback_clarification.generateCodingPrompt",
-      initiateClarification: "feedback_clarification.initiateClarification",
+    feedback: {
+      clarification: {
+        getClarificationStatus: "feedback_clarification.getClarificationStatus",
+        generateCodingPrompt: "feedback_clarification.generateCodingPrompt",
+        initiateClarification: "feedback_clarification.initiateClarification",
+      },
     },
   },
 }));

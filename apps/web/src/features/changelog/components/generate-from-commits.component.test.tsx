@@ -34,15 +34,28 @@ vi.mock("sonner", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    organizations: { get: "organizations.get" },
-    github: { getConnection: "github.getConnection" },
-    github_node_actions: {
-      getInstallationToken: "github_node_actions.getInstallationToken",
+    organizations: {
+      queries: { get: "organizations.get" },
     },
-    github_release_actions: {
-      fetchTags: "github_release_actions.fetchTags",
-      fetchCommitsBetweenRefs: "github_release_actions.fetchCommitsBetweenRefs",
-      fetchRecentCommits: "github_release_actions.fetchRecentCommits",
+    integrations: {
+      github: {
+        queries: { getConnection: "github.getConnection" },
+        node_actions: {
+          getInstallationToken: "github_node_actions.getInstallationToken",
+        },
+        release_actions: {
+          fetchTags: "github_release_actions.fetchTags",
+          fetchCommitsBetweenRefs:
+            "github_release_actions.fetchCommitsBetweenRefs",
+          fetchRecentCommits: "github_release_actions.fetchRecentCommits",
+        },
+      },
+    },
+    changelog: {
+      actions: {
+        getLatestCommitFromPreviousRelease:
+          "changelog.actions.getLatestCommitFromPreviousRelease",
+      },
     },
   },
 }));

@@ -8,11 +8,13 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    website_references: {
-      list: "website_references.list",
-      create: "website_references.create",
-      refresh: "website_references.refresh",
-      remove: "website_references.remove",
+    integrations: {
+      website_references: {
+        list: "website_references.list",
+        create: "website_references.create",
+        refresh: "website_references.refresh",
+        remove: "website_references.remove",
+      },
     },
   },
 }));

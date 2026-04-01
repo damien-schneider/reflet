@@ -24,13 +24,15 @@ vi.mock("sonner", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    notification_preferences: {
-      getPreferences: "notification_preferences.getPreferences",
-      updatePreferences: "notification_preferences.updatePreferences",
-    },
-    push_notifications_queries: {
-      getUserSubscriptions: "push_notifications_queries.getUserSubscriptions",
-      unsubscribe: "push_notifications_queries.unsubscribe",
+    notifications: {
+      preferences: {
+        getPreferences: "notification_preferences.getPreferences",
+        updatePreferences: "notification_preferences.updatePreferences",
+      },
+      push_queries: {
+        getUserSubscriptions: "push_notifications_queries.getUserSubscriptions",
+        unsubscribe: "push_notifications_queries.unsubscribe",
+      },
     },
   },
 }));
@@ -95,6 +97,19 @@ vi.mock("@/components/ui/switch", () => ({
 }));
 
 vi.mock("@/components/ui/typography", () => ({
+  H3: ({
+    children,
+    variant,
+    className,
+  }: {
+    children: React.ReactNode;
+    variant?: string;
+    className?: string;
+  }) => (
+    <h3 className={className} data-variant={variant}>
+      {children}
+    </h3>
+  ),
   Muted: ({
     children,
     className,
@@ -102,6 +117,19 @@ vi.mock("@/components/ui/typography", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <span className={className}>{children}</span>,
+  Text: ({
+    children,
+    variant,
+    className,
+  }: {
+    children: React.ReactNode;
+    variant?: string;
+    className?: string;
+  }) => (
+    <span className={className} data-variant={variant}>
+      {children}
+    </span>
+  ),
 }));
 
 vi.mock("@phosphor-icons/react", () => ({

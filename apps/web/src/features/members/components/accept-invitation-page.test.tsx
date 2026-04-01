@@ -42,9 +42,11 @@ vi.mock("@/features/auth/components/unified-auth/unified-auth-form", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    invitations: {
-      getByToken: "invitations.getByToken",
-      accept: "invitations.accept",
+    organizations: {
+      invitations: {
+        getByToken: "invitations.getByToken",
+        accept: "invitations.accept",
+      },
     },
   },
 }));

@@ -32,10 +32,12 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    comments: {
-      update: "comments.update",
-      remove: "comments.remove",
-      create: "comments.create",
+    feedback: {
+      comments: {
+        update: "comments.update",
+        remove: "comments.remove",
+        create: "comments.create",
+      },
     },
   },
 }));

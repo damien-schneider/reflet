@@ -21,12 +21,14 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    feedback_auto_tagging: {
-      getUntaggedFeedbackCount:
-        "feedback_auto_tagging.getUntaggedFeedbackCount",
-      getActiveJob: "feedback_auto_tagging.getActiveJob",
-      startBulkAutoTagging: "feedback_auto_tagging.startBulkAutoTagging",
-      dismissJob: "feedback_auto_tagging.dismissJob",
+    feedback: {
+      auto_tagging: {
+        getUntaggedFeedbackCount:
+          "feedback_auto_tagging.getUntaggedFeedbackCount",
+        getActiveJob: "feedback_auto_tagging.getActiveJob",
+        startBulkAutoTagging: "feedback_auto_tagging.startBulkAutoTagging",
+        dismissJob: "feedback_auto_tagging.dismissJob",
+      },
     },
   },
 }));

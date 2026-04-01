@@ -19,7 +19,9 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    feedback_actions: { updateAnalysis: "feedback_actions.updateAnalysis" },
+    feedback: {
+      actions: { updateAnalysis: "feedback_actions.updateAnalysis" },
+    },
   },
 }));
 

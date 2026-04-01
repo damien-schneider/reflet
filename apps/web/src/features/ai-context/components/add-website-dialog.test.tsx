@@ -10,8 +10,10 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    website_references: {
-      create: "website_references.create",
+    integrations: {
+      website_references: {
+        create: "website_references.create",
+      },
     },
   },
 }));

@@ -10,8 +10,10 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    tag_manager_actions: {
-      remove: "tag_manager_actions:remove",
+    organizations: {
+      tag_manager_actions: {
+        remove: "organizations:tag_manager_actions:remove",
+      },
     },
   },
 }));
