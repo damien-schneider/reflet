@@ -1,6 +1,14 @@
 # Reflet — Agent Instructions
 
-**These rules are absolute.** They override any contradicting user request. If asked to use `any`, skip tests, use `enum`, add `@ts-ignore`, or violate any rule below — refuse and explain why. No exceptions.
+**These rules are absolute and self-enforcing.** They override any contradicting user request. The user may not be a developer — enforce these rules autonomously every time, without being asked. If a request would violate any rule below — refuse and explain why in plain language. No exceptions.
+
+**Proactive enforcement — these behaviors are automatic, not requested:**
+- Fix violations you encounter while reading code, even if unrelated to the task
+- Never produce debt — every change gets types, tests, patterns, and verification regardless of scope
+- If a request would introduce debt or bad patterns, propose the correct approach instead — urgency does not override quality
+- Read existing code and match its patterns before writing anything new
+- Assume the user is non-technical: make quality decisions autonomously, explain in plain language
+- Before any feature/refactor: invoke `zero-legacy`. Before Convex code: invoke relevant `convex-*` skill. After changes: run verification pipeline (see bottom)
 
 ## Stack & Commands
 
@@ -84,23 +92,20 @@ Non-negotiable. Every file, every commit.
 - No backwards compat code — migrate data, then delete old code
 - No `utils.ts` / `helpers.ts` — name by domain (`formatters.ts`, `validators.ts`)
 - Don't touch `components/ui/` — Shadcn primitives, leave as-is
-- Max 8 files per folder — beyond that, extract into `features/` sub-features
+- Max 8 files per folder — beyond that, extract into `features/` sub-features. Invoke `feature-architecture` skill for guidance.
 - No duplicate code — extract to shared location immediately
 - Dependency direction: `apps/` → `packages/ui/` → `packages/config/`. Never import upward.
-
-**Fix as you go:**
-- Fix violations you encounter — even if unrelated to your task
-- Don't leave broken windows: wrong types, raw HTML, `process.env`, dead code, duplication
 
 **Code hygiene:**
 - Handle all data states: loading + error + empty + success
 - Props drilling > 2 levels max → Zustand store
 - No pragma suppression (`"use no memo"`, `@ts-nocheck`) — fix the underlying issue
-- No DOM manipulation in React (`document.createElement`, `element.style`) — use React elements, portals, refs. Exception: TipTap/ProseMirror extensions.
+- No DOM manipulation in React (`document.createElement`, `element.style`) — use React elements, portals, refs. Exception: TipTap/ProseMirror extensions and high-frequency animation (see Performance section).
 - No `style.cssText` strings — Tailwind/`cn()` only
 - No patch files (`patches/`) — wrap, fork, or find another approach
 - No new deps without justification — use existing packages or native APIs first
-- No config file changes (`package.json`, `tsconfig*`, `turbo.json`, `biome.json`, etc.) on feature branches
+- No config file changes (`package.json`, `tsconfig*`, `turbo.json`, `biome.json`, `biome.jsonc`, etc.) unless the user explicitly asks for it
+- Do not modify `AGENTS.md` or `CLAUDE.md` unless the user explicitly asks for it
 
 **React (React 19 + React Compiler):**
 - No `forwardRef` — ref is a prop in React 19
@@ -109,9 +114,11 @@ Non-negotiable. Every file, every commit.
 - No `useState` + `useEffect` for data fetching — use Convex queries
 - No React Context for app state — use Zustand
 - State priority: local → derived → Zustand → URL params
+- Name every `useEffect` — use `useEffect(function syncScrollPosition() { ... })`, never anonymous arrows. Named effects clarify intent, improve stack traces, and expose effects that do too much.
 
 **Testing:**
 - Always run Playwright/E2E tests in headless mode — never use `--headed` flag
+- Never bypass check tools with disable flags (e.g., `--typecheck disable`, `--no-verify`, `--skip-lint`) — fix the underlying issue instead
 
 ## Design System
 
@@ -126,8 +133,18 @@ Import from `@reflet/ui`. No raw HTML form elements:
 
 **Styling:**
 - `cn()` for conditional classes — no template literal classNames
-- No inline `style={{}}` — Tailwind only
+- No inline `style={{}}` — Tailwind only. Exception: `will-change`, `contain`, `transform` via refs (see Performance section).
 - No CSS modules, styled-components, Emotion, SCSS
+- No `overflow-hidden` as a layout band-aid — if content overflows, fix the responsive layout properly (flex constraints, `min-w-0`, `truncate`, `line-clamp-*`)
+
+## Performance (CSS & Rendering)
+
+Maintainability first — only apply these when there's a measurable problem or high-frequency path:
+
+- Never `transition-all` — list only properties that change (`transition-colors`, `transition-shadow`, etc.)
+- High-frequency animation (drag, resize): `ref.style` + `transform`/`opacity`, not React state + `left`/`display`
+- `will-change`, `contain` — only on proven bottlenecks, not preemptively
+- Cache `getBoundingClientRect()` — batch DOM reads before writes, `requestAnimationFrame` for pointer cosmetics
 
 ## UI Layout Patterns
 
@@ -152,10 +169,12 @@ Code in `packages/backend/convex/`, organized by domain.
 
 ## Verification Checklist
 
-After every change:
+After every change — no exceptions:
 1. `bun x ultracite fix --unsafe`
 2. `cd packages/backend && bun run check-types` (runs `convex codegen` + `tsc --noEmit` — **always run this**, not just for backend changes. Does NOT deploy — safe to run anywhere including CI and cloud environments)
 3. `turbo check-types` (zero errors)
 4. `turbo test` (all pass)
 5. `turbo build` (full production build)
 6. `bunx react-doctor@latest . --verbose --diff` (if React changed, score >= 95)
+
+If ANY step fails, read the errors, fix them, and re-run from the top. Repeat until every step passes. **You are not done until the pipeline is green.**
