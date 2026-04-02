@@ -6,8 +6,6 @@
  * self-contained implementation prompts for the Dev agent.
  */
 
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateObject } from "ai";
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
@@ -16,19 +14,8 @@ import {
   internalMutation,
   internalQuery,
 } from "../../_generated/server";
-
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
-
-// ============================================
-// MODELS
-// ============================================
-
-const CTO_MODELS = [
-  "anthropic/claude-sonnet-4-20250514",
-  "openai/gpt-4-turbo",
-] as const;
+import { MODELS } from "./models";
+import { generateObjectWithFallback } from "./shared";
 
 // ============================================
 // ZOD SCHEMA
@@ -71,8 +58,6 @@ const technicalSpecSchema = z.object({
     .describe("Optional architectural considerations or patterns to follow"),
 });
 
-type TechnicalSpec = z.infer<typeof technicalSpecSchema>;
-
 // ============================================
 // INTERNAL QUERIES
 // ============================================
@@ -96,13 +81,23 @@ export const getRepoAnalysisForCto = internalQuery({
 });
 
 /**
- * Get AGENTS.md content if available
- * TODO: No documentContent table exists yet — return null until one is created
+ * Get AGENTS.md content if available.
+ * Loads from repo analysis data if the repo was analyzed.
  */
 export const getAgentsMd = internalQuery({
   args: { organizationId: v.id("organizations") },
-  handler: (_ctx, _args) => {
-    return null;
+  handler: async (ctx, args) => {
+    const analysis = await ctx.db
+      .query("repoAnalysis")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .first();
+
+    // repoStructure may contain AGENTS.md content from analysis
+    // Return null if no analysis exists yet
+    return analysis?.repoStructure ?? null;
   },
 });
 
@@ -203,39 +198,10 @@ export const logCtoActivity = internalMutation({
 });
 
 // ============================================
-// HELPER: GENERATE OBJECT WITH FALLBACK
+// MODEL CONSTANTS
 // ============================================
 
-/**
- * Try models in sequence until one succeeds
- */
-async function generateObjectWithFallback(
-  schema: z.ZodSchema,
-  systemPrompt: string,
-  userPrompt: string
-): Promise<TechnicalSpec> {
-  let lastError: Error | null = null;
-
-  for (const model of CTO_MODELS) {
-    try {
-      const response = await generateObject({
-        model: openrouter(model),
-        schema,
-        system: systemPrompt,
-        prompt: userPrompt,
-        temperature: 0.7,
-        maxOutputTokens: 4000,
-      });
-
-      return response.object as TechnicalSpec;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      // Continue to next model
-    }
-  }
-
-  throw lastError ?? new Error("Failed to generate technical specification");
-}
+const CTO_MODELS = [MODELS.SMART, MODELS.FAST] as const;
 
 // ============================================
 // MAIN ACTION
@@ -358,11 +324,14 @@ Always prioritize:
 Create a specification that a developer can execute without asking clarifying questions.`;
 
       // Call LLM with fallback
-      const spec = await generateObjectWithFallback(
-        technicalSpecSchema,
+      const spec = await generateObjectWithFallback({
+        models: CTO_MODELS,
+        schema: technicalSpecSchema,
         systemPrompt,
-        userPrompt
-      );
+        prompt: userPrompt,
+        temperature: 0.7,
+        maxOutputTokens: 4000,
+      });
 
       // Update task with technical spec
       await ctx.runMutation(internal.autopilot.agents.cto.updateTaskWithSpec, {

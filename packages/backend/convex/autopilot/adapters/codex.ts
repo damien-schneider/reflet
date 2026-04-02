@@ -52,12 +52,22 @@ const parseCiCheckRuns = (
     return { ciStatus: "running" };
   }
 
-  const hasFailed = checkRuns.some((run) => run.conclusion === "failure");
+  const hasFailed = checkRuns.some(
+    (run) =>
+      run.conclusion === "failure" ||
+      run.conclusion === "cancelled" ||
+      run.conclusion === "timed_out"
+  );
   if (!hasFailed) {
     return { ciStatus: "passed" };
   }
 
-  const failedRun = checkRuns.find((run) => run.conclusion === "failure");
+  const failedRun = checkRuns.find(
+    (run) =>
+      run.conclusion === "failure" ||
+      run.conclusion === "cancelled" ||
+      run.conclusion === "timed_out"
+  );
   return {
     ciStatus: "failed",
     ciFailureLog: failedRun?.output?.summary?.slice(0, 2000),
@@ -80,7 +90,7 @@ const parseRepoUrl = (repoUrl: string): { owner: string; repo: string } => {
 };
 
 const log = (
-  agent: string,
+  agent: ActivityLogEntry["agent"],
   level: ActivityLogEntry["level"],
   message: string,
   details?: string

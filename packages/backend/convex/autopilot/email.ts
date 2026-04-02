@@ -6,12 +6,7 @@
  */
 
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
-import {
-  internalAction,
-  internalMutation,
-  internalQuery,
-} from "../_generated/server";
+import { internalMutation, internalQuery } from "../_generated/server";
 import { activityLogAgent, emailDirection, emailStatus } from "./tableFields";
 
 // ============================================
@@ -340,54 +335,5 @@ export const markEmailApproved = internalMutation({
 
     // Return the email data for sending
     return email;
-  },
-});
-
-// ============================================
-// INTERNAL ACTIONS
-// ============================================
-
-/**
- * Send an approved email.
- * Updates status to "sent" and sentAt timestamp.
- * In a real implementation, this would integrate with an email service provider.
- */
-export const sendApprovedEmail = internalAction({
-  args: {
-    emailId: v.id("autopilotEmails"),
-  },
-  handler: async (ctx, args) => {
-    const email = await ctx.runQuery(internal.autopilot.email.getEmail, {
-      emailId: args.emailId,
-    });
-
-    if (!email) {
-      throw new Error(`Email not found: ${args.emailId}`);
-    }
-
-    if (email.status !== "approved") {
-      throw new Error(
-        `Cannot send email with status: ${email.status}. Must be approved.`
-      );
-    }
-
-    // TODO: Integrate with email service provider (e.g., Resend, SendGrid)
-    // This would be the actual sending logic
-    // const result = await emailProvider.send({
-    //   from: email.from,
-    //   to: email.to,
-    //   cc: email.cc,
-    //   subject: email.subject,
-    //   html: email.bodyHtml,
-    //   text: email.bodyText,
-    // });
-
-    // For now, simulate successful send
-    await ctx.runMutation(internal.autopilot.email.updateEmailStatus, {
-      emailId: args.emailId,
-      status: "sent",
-    });
-
-    return { success: true, emailId: args.emailId };
   },
 });

@@ -9,10 +9,14 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
 import {
+  activityLogAgent,
+  activityLogLevel,
   assignedAgent,
   autonomyLevel,
   autopilotTaskPriority,
   autopilotTaskStatus,
+  codingAdapterType,
+  runStatus,
   taskOrigin,
 } from "./tableFields";
 
@@ -218,6 +222,7 @@ export const updateTaskStatus = internalMutation({
     prNumber: v.optional(v.number()),
     tokensUsed: v.optional(v.number()),
     estimatedCostUsd: v.optional(v.number()),
+    retryCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.taskId);
@@ -229,6 +234,10 @@ export const updateTaskStatus = internalMutation({
     const updates: Record<string, unknown> = {
       status: args.status,
     };
+
+    if (args.retryCount !== undefined) {
+      updates.retryCount = args.retryCount;
+    }
 
     if (args.status === "in_progress" && !task.startedAt) {
       updates.startedAt = now;
@@ -287,13 +296,13 @@ export const createRun = internalMutation({
   args: {
     organizationId: v.id("organizations"),
     taskId: v.id("autopilotTasks"),
-    adapter: v.string(),
+    adapter: codingAdapterType,
   },
   handler: async (ctx, args) => {
     const runId = await ctx.db.insert("autopilotRuns", {
       organizationId: args.organizationId,
       taskId: args.taskId,
-      adapter: args.adapter as "builtin" | "copilot" | "codex" | "claude_code",
+      adapter: args.adapter,
       status: "queued",
       tokensUsed: 0,
       estimatedCostUsd: 0,
@@ -310,12 +319,19 @@ export const createRun = internalMutation({
 export const updateRun = internalMutation({
   args: {
     runId: v.id("autopilotRuns"),
-    status: v.optional(v.string()),
+    status: v.optional(runStatus),
     externalRef: v.optional(v.string()),
     branch: v.optional(v.string()),
     prUrl: v.optional(v.string()),
     prNumber: v.optional(v.number()),
-    ciStatus: v.optional(v.string()),
+    ciStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("running"),
+        v.literal("passed"),
+        v.literal("failed")
+      )
+    ),
     ciFailureLog: v.optional(v.string()),
     tokensUsed: v.optional(v.number()),
     estimatedCostUsd: v.optional(v.number()),
@@ -344,8 +360,8 @@ export const logActivity = internalMutation({
     organizationId: v.id("organizations"),
     taskId: v.optional(v.id("autopilotTasks")),
     runId: v.optional(v.id("autopilotRuns")),
-    agent: v.string(),
-    level: v.string(),
+    agent: activityLogAgent,
+    level: activityLogLevel,
     message: v.string(),
     details: v.optional(v.string()),
   },
@@ -354,16 +370,8 @@ export const logActivity = internalMutation({
       organizationId: args.organizationId,
       taskId: args.taskId,
       runId: args.runId,
-      agent: args.agent as
-        | "pm"
-        | "cto"
-        | "dev"
-        | "security"
-        | "architect"
-        | "growth"
-        | "orchestrator"
-        | "system",
-      level: args.level as "info" | "action" | "success" | "warning" | "error",
+      agent: args.agent,
+      level: args.level,
       message: args.message,
       details: args.details,
       createdAt: Date.now(),

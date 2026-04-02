@@ -7,8 +7,11 @@
 
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Doc } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
+import type { ActionCtx } from "../_generated/server";
 import { internalAction } from "../_generated/server";
+
+const GITHUB_REPO_URL_REGEX = /github\.com[/:](?<owner>[^/]+)\/(?<repo>[^/.]+)/;
 
 const resolveRunStatus = (
   resultStatus: string
@@ -31,6 +34,122 @@ const resolveCompletedAt = (resultStatus: string): number | undefined =>
   resultStatus === "success" || resultStatus === "failed"
     ? Date.now()
     : undefined;
+
+const fetchAgentsMd = async (
+  credentials: Record<string, string>
+): Promise<string> => {
+  const repoUrl = credentials.repoUrl ?? "";
+  if (!(repoUrl && credentials.githubToken)) {
+    return "";
+  }
+
+  try {
+    const repoMatch = repoUrl.match(GITHUB_REPO_URL_REGEX);
+    if (!repoMatch?.groups) {
+      return "";
+    }
+
+    const { owner, repo } = repoMatch.groups;
+    const response = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/AGENTS.md?ref=${credentials.baseBranch ?? "main"}`,
+      {
+        headers: {
+          Authorization: `Bearer ${credentials.githubToken}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = (await response.json()) as { content: string };
+      return atob(data.content.replace(/\n/g, ""));
+    }
+  } catch {
+    // AGENTS.md may not exist — continue without it
+  }
+
+  return "";
+};
+
+const handleTaskResult = async (
+  ctx: ActionCtx,
+  params: {
+    result: {
+      status: string;
+      externalRef?: string;
+      prUrl?: string;
+      prNumber?: number;
+      tokensUsed?: number;
+      estimatedCostUsd?: number;
+      errorMessage?: string;
+    };
+    taskId: Id<"autopilotTasks">;
+    organizationId: Id<"organizations">;
+    runId: Id<"autopilotRuns">;
+    adapter: string;
+    autonomyLevel: string;
+    retryCount: number;
+    maxRetries: number;
+  }
+) => {
+  const {
+    result,
+    taskId,
+    organizationId,
+    runId,
+    adapter,
+    autonomyLevel,
+    retryCount,
+    maxRetries,
+  } = params;
+
+  if (result.status === "success") {
+    await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+      taskId,
+      status: resolveCompletionStatus(autonomyLevel),
+      prUrl: result.prUrl,
+      prNumber: result.prNumber,
+      tokensUsed: result.tokensUsed,
+      estimatedCostUsd: result.estimatedCostUsd,
+    });
+    return;
+  }
+
+  if (result.status === "pending") {
+    if (!result.externalRef) {
+      throw new Error(
+        `Async adapter ${adapter} returned pending status without an externalRef`
+      );
+    }
+    await ctx.scheduler.runAfter(
+      30_000,
+      internal.autopilot.execution.pollTaskStatus,
+      { organizationId, taskId, runId, externalRef: result.externalRef }
+    );
+    return;
+  }
+
+  if (result.status === "failed" && retryCount < maxRetries) {
+    await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+      taskId,
+      status: "pending",
+      retryCount: retryCount + 1,
+      errorMessage: `Retry ${retryCount + 1}/${maxRetries}: ${result.errorMessage}`,
+    });
+    return;
+  }
+
+  if (result.status === "failed") {
+    await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+      taskId,
+      status: "failed",
+      errorMessage: result.errorMessage,
+      tokensUsed: result.tokensUsed,
+      estimatedCostUsd: result.estimatedCostUsd,
+    });
+  }
+};
 
 /**
  * Execute a coding task using the org's configured adapter.
@@ -117,16 +236,35 @@ export const executeTask = internalAction({
         string
       >;
 
-      // Build the repo URL from org's GitHub config
-      // For now we pass the task's technical spec as-is
+      // Step 7b: Pre-validate credentials
+      const credentialsValid = await adapter.validateCredentials(credentials);
+      if (!credentialsValid) {
+        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+          taskId: args.taskId,
+          status: "failed",
+          errorMessage: `Invalid credentials for adapter: ${config.adapter} — update in Settings`,
+        });
+        await ctx.runMutation(internal.autopilot.tasks.updateRun, {
+          runId,
+          status: "failed",
+          errorMessage: "Invalid credentials",
+          completedAt: Date.now(),
+        });
+        return;
+      }
+
+      // Load AGENTS.md from the repo for coding conventions
+      const agentsMdContent = await fetchAgentsMd(credentials);
+      const repoUrl = credentials.repoUrl ?? "";
+
       const result = await adapter.executeTask(
         {
-          repoUrl: credentials.repoUrl ?? "",
+          repoUrl,
           baseBranch: credentials.baseBranch ?? "main",
           title: task.title,
           technicalSpec: task.technicalSpec ?? task.description,
           acceptanceCriteria: task.acceptanceCriteria ?? [],
-          agentsMdContent: "", // Will be loaded from repo
+          agentsMdContent,
           featureBranch: `autopilot/${task._id}`,
         },
         credentials
@@ -159,46 +297,17 @@ export const executeTask = internalAction({
         completedAt: resolveCompletedAt(result.status),
       });
 
-      // Step 10: Update task status
-      if (result.status === "success") {
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: args.taskId,
-          status: resolveCompletionStatus(config.autonomyLevel),
-          prUrl: result.prUrl,
-          prNumber: result.prNumber,
-          tokensUsed: result.tokensUsed,
-          estimatedCostUsd: result.estimatedCostUsd,
-        });
-      } else if (result.status === "pending") {
-        // Async adapter (Copilot, Codex) — schedule status polling
-        await ctx.scheduler.runAfter(
-          30_000, // Check after 30 seconds
-          internal.autopilot.execution.pollTaskStatus,
-          {
-            organizationId: args.organizationId,
-            taskId: args.taskId,
-            runId,
-            externalRef: result.externalRef ?? "",
-          }
-        );
-      } else if (
-        result.status === "failed" &&
-        task.retryCount < task.maxRetries
-      ) {
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: args.taskId,
-          status: "pending",
-          errorMessage: `Retry ${task.retryCount + 1}/${task.maxRetries}: ${result.errorMessage}`,
-        });
-      } else if (result.status === "failed") {
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: args.taskId,
-          status: "failed",
-          errorMessage: result.errorMessage,
-          tokensUsed: result.tokensUsed,
-          estimatedCostUsd: result.estimatedCostUsd,
-        });
-      }
+      // Step 10: Update task status based on result
+      await handleTaskResult(ctx, {
+        result,
+        taskId: args.taskId,
+        organizationId: args.organizationId,
+        runId,
+        adapter: config.adapter,
+        autonomyLevel: config.autonomyLevel,
+        retryCount: task.retryCount,
+        maxRetries: task.maxRetries,
+      });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown execution error";

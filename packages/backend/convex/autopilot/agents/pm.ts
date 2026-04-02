@@ -13,12 +13,12 @@
  * - recencyWeight (0-10): Recent signals are weighted higher
  */
 
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateObject } from "ai";
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
 import { internalAction, internalQuery } from "../../_generated/server";
+import { MODELS } from "./models";
+import { generateObjectWithFallback } from "./shared";
 
 // ============================================
 // SCHEMA & TYPES
@@ -51,18 +51,8 @@ const pmAnalysisSchema = z.object({
     .describe("Number of signals that didn't warrant tasks"),
 });
 
-type PMAnalysisOutput = z.infer<typeof pmAnalysisSchema>;
-
-// OpenRouter provider setup
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
-
 // Model fallback chain — prioritizes cost-effective models
-const PM_MODELS = [
-  "qwen/qwen-3.6-plus-preview:free",
-  "openai/gpt-4o-mini",
-] as const;
+const PM_MODELS = [MODELS.FREE, MODELS.FAST] as const;
 
 // ============================================
 // INTERNAL QUERIES
@@ -170,36 +160,6 @@ export const getIntelligenceInsights = internalQuery({
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
-
-/**
- * Generate object with fallback model chain.
- * Tries each model in PM_MODELS until one succeeds.
- */
-const generateObjectWithFallback = async (
-  systemPrompt: string,
-  userPrompt: string
-): Promise<PMAnalysisOutput> => {
-  let lastError: Error | null = null;
-
-  for (const modelId of PM_MODELS) {
-    try {
-      const response = await generateObject({
-        model: openrouter(modelId),
-        schema: pmAnalysisSchema,
-        system: systemPrompt,
-        prompt: userPrompt,
-      });
-
-      return response.object;
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-    }
-  }
-
-  throw new Error(
-    `All PM models failed. Last error: ${lastError?.message ?? "Unknown error"}`
-  );
-};
 
 /**
  * Calculate a composite score for a feedback item based on multiple signals.
@@ -361,10 +321,12 @@ For each task, provide:
 - Reasoning for the task and priority`;
 
       // 5. Call LLM with fallback chain
-      const pmOutput = await generateObjectWithFallback(
+      const pmOutput = await generateObjectWithFallback({
+        models: PM_MODELS,
+        schema: pmAnalysisSchema,
         systemPrompt,
-        userPrompt
-      );
+        prompt: userPrompt,
+      });
 
       // 6. Create tasks from the LLM output
       let createdCount = 0;

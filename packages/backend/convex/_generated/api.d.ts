@@ -36,8 +36,10 @@ import type * as autopilot_agents_architect from "../autopilot/agents/architect.
 import type * as autopilot_agents_ceo from "../autopilot/agents/ceo.js";
 import type * as autopilot_agents_cto from "../autopilot/agents/cto.js";
 import type * as autopilot_agents_growth from "../autopilot/agents/growth.js";
+import type * as autopilot_agents_models from "../autopilot/agents/models.js";
 import type * as autopilot_agents_pm from "../autopilot/agents/pm.js";
 import type * as autopilot_agents_security from "../autopilot/agents/security.js";
+import type * as autopilot_agents_shared from "../autopilot/agents/shared.js";
 import type * as autopilot_billing_gate from "../autopilot/billing_gate.js";
 import type * as autopilot_config from "../autopilot/config.js";
 import type * as autopilot_cost_guard from "../autopilot/cost_guard.js";
@@ -248,8 +250,10 @@ declare const fullApi: ApiFromModules<{
   "autopilot/agents/ceo": typeof autopilot_agents_ceo;
   "autopilot/agents/cto": typeof autopilot_agents_cto;
   "autopilot/agents/growth": typeof autopilot_agents_growth;
+  "autopilot/agents/models": typeof autopilot_agents_models;
   "autopilot/agents/pm": typeof autopilot_agents_pm;
   "autopilot/agents/security": typeof autopilot_agents_security;
+  "autopilot/agents/shared": typeof autopilot_agents_shared;
   "autopilot/billing_gate": typeof autopilot_billing_gate;
   "autopilot/config": typeof autopilot_config;
   "autopilot/cost_guard": typeof autopilot_cost_guard;

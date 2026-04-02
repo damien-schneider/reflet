@@ -27,7 +27,15 @@ export interface CodingTaskInput {
 }
 
 export interface ActivityLogEntry {
-  agent: string;
+  agent:
+    | "pm"
+    | "cto"
+    | "dev"
+    | "security"
+    | "architect"
+    | "growth"
+    | "orchestrator"
+    | "system";
   details?: string;
   level: "info" | "action" | "success" | "warning" | "error";
   message: string;

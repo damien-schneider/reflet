@@ -268,11 +268,17 @@ const getCIStatus = async (
   }
 
   const hasFailed = data.check_runs.some(
-    (run) => run.conclusion === "failure" || run.conclusion === "cancelled"
+    (run) =>
+      run.conclusion === "failure" ||
+      run.conclusion === "cancelled" ||
+      run.conclusion === "timed_out"
   );
   if (hasFailed) {
     const failedRun = data.check_runs.find(
-      (run) => run.conclusion === "failure"
+      (run) =>
+        run.conclusion === "failure" ||
+        run.conclusion === "cancelled" ||
+        run.conclusion === "timed_out"
     );
     return {
       status: "failed",
@@ -288,7 +294,7 @@ const getCIStatus = async (
 // ============================================
 
 const log = (
-  agent: string,
+  agent: ActivityLogEntry["agent"],
   level: ActivityLogEntry["level"],
   message: string,
   details?: string
@@ -512,9 +518,29 @@ export const builtinAdapter: CodingAdapter = {
     };
   },
 
-  cancelTask: async (): Promise<void> => {
-    // For builtin adapter, cancellation means closing the PR
-    // Not implemented in MVP — PRs stay as drafts
+  cancelTask: async (
+    externalRef: string,
+    credentials: Record<string, string>
+  ): Promise<void> => {
+    const match = externalRef.match(BUILTIN_REF_REGEX);
+    if (!match?.groups) {
+      return; // Can't parse ref — nothing to cancel
+    }
+    const { owner, repo, pr } = match.groups;
+    const response = await fetch(
+      `${GITHUB_API}/repos/${owner}/${repo}/pulls/${pr}`,
+      {
+        method: "PATCH",
+        headers: {
+          ...buildHeaders(credentials.githubToken),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ state: "closed" }),
+      }
+    );
+    if (!response.ok && response.status !== 422) {
+      throw new Error(`Failed to close PR #${pr}: ${response.status}`);
+    }
   },
 
   validateCredentials: async (

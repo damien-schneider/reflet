@@ -18,11 +18,12 @@
 
 import { Agent } from "@convex-dev/agent";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateObject } from "ai";
 import { v } from "convex/values";
 import { z } from "zod";
 import { components, internal } from "../../_generated/api";
 import { internalAction, internalQuery } from "../../_generated/server";
+import { MODELS } from "./models";
+import { generateObjectWithFallback } from "./shared";
 
 // ============================================
 // CEO REPORT SCHEMA
@@ -68,8 +69,6 @@ const ceoReportSchema = z.object({
     .describe("Overall product health score 0-100"),
 });
 
-type CEOReportOutput = z.infer<typeof ceoReportSchema>;
-
 // ============================================
 // OPENROUTER SETUP
 // ============================================
@@ -79,7 +78,7 @@ const openrouter = createOpenRouter({
 });
 
 // Model fallback chain for reports — prioritizes capability
-const CEO_MODELS = ["anthropic/claude-sonnet-4", "openai/gpt-4o-mini"] as const;
+const CEO_MODELS = [MODELS.SMART, MODELS.FAST] as const;
 
 // ============================================
 // CEO AGENT DEFINITION
@@ -87,7 +86,7 @@ const CEO_MODELS = ["anthropic/claude-sonnet-4", "openai/gpt-4o-mini"] as const;
 
 export const ceoAgent = new Agent(components.agent, {
   name: "CEO Agent",
-  languageModel: openrouter("anthropic/claude-sonnet-4"),
+  languageModel: openrouter(MODELS.SMART),
   instructions: `You are an AI CEO and strategic product advisor for the user's product.
 
 You have access to comprehensive product data: user feedback, development tasks, revenue metrics, competitive intelligence, and agent activity logs. You are the always-available AI partner visible in a right-side panel.
@@ -240,36 +239,6 @@ export const getCEOContext = internalQuery({
 // HELPER FUNCTIONS
 // ============================================
 
-/**
- * Generate object with fallback model chain.
- * Tries each model in CEO_MODELS until one succeeds.
- */
-const generateObjectWithFallback = async (
-  systemPrompt: string,
-  userPrompt: string
-): Promise<CEOReportOutput> => {
-  let lastError: Error | null = null;
-
-  for (const modelId of CEO_MODELS) {
-    try {
-      const response = await generateObject({
-        model: openrouter(modelId),
-        schema: ceoReportSchema,
-        system: systemPrompt,
-        prompt: userPrompt,
-      });
-
-      return response.object;
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-    }
-  }
-
-  throw new Error(
-    `All CEO models failed. Last error: ${lastError?.message ?? "Unknown error"}`
-  );
-};
-
 interface TaskStats {
   byPriority: {
     critical: number;
@@ -379,10 +348,12 @@ By type: ${Object.entries(ceoContext.inboxItemsByType)
 Generate a report that synthesizes this data into actionable insights.`;
 
       // 3. Generate report
-      const reportOutput = await generateObjectWithFallback(
+      const reportOutput = await generateObjectWithFallback({
+        models: CEO_MODELS,
+        schema: ceoReportSchema,
         systemPrompt,
-        userPrompt
-      );
+        prompt: userPrompt,
+      });
 
       // 4. Create inbox item with the report
       const reportContent = JSON.stringify({

@@ -12,21 +12,14 @@
  * security alerts in the inbox for significant findings.
  */
 
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateObject } from "ai";
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
 import { internalAction } from "../../_generated/server";
+import { MODELS } from "./models";
+import { generateObjectWithFallback } from "./shared";
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
-
-const SECURITY_MODELS = [
-  "anthropic/claude-sonnet-4",
-  "openai/gpt-5.4-mini",
-] as const;
+const SECURITY_MODELS = [MODELS.SMART, MODELS.FAST] as const;
 
 // ============================================
 // SCHEMAS
@@ -64,38 +57,6 @@ const securityScanSchema = z.object({
 // ============================================
 // HELPERS
 // ============================================
-
-const generateObjectWithFallback = async <T>(
-  model: (typeof SECURITY_MODELS)[number],
-  prompt: string,
-  schema: z.ZodType<T>,
-  retryCount = 0
-): Promise<T> => {
-  const MAX_RETRIES = SECURITY_MODELS.length - 1;
-
-  try {
-    const result = await generateObject({
-      model: openrouter(model),
-      prompt,
-      schema,
-    });
-
-    return result.object;
-  } catch (error) {
-    if (retryCount < MAX_RETRIES) {
-      const nextModel =
-        SECURITY_MODELS[(retryCount + 1) % SECURITY_MODELS.length];
-      return generateObjectWithFallback(
-        nextModel,
-        prompt,
-        schema,
-        retryCount + 1
-      );
-    }
-
-    throw error;
-  }
-};
 
 const buildSecurityContext = (repoData: {
   fileStructure?: string;
@@ -223,11 +184,12 @@ ${context}
 Provide findings in the specified schema. Include dependency audit details.`;
 
       // Call AI with fallback model chain
-      const scanResult = await generateObjectWithFallback(
-        SECURITY_MODELS[0],
-        userPrompt,
-        securityScanSchema
-      );
+      const scanResult = await generateObjectWithFallback({
+        models: SECURITY_MODELS,
+        prompt: userPrompt,
+        schema: securityScanSchema,
+        systemPrompt: "",
+      });
 
       // Process findings and create tasks/alerts
       const autoFixableCount = scanResult.findings.filter(

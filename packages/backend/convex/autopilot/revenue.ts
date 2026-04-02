@@ -8,6 +8,8 @@
 import { v } from "convex/values";
 import Stripe from "stripe";
 import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+import type { ActionCtx } from "../_generated/server";
 import {
   internalAction,
   internalMutation,
@@ -172,6 +174,26 @@ export const getSnapshotHistory = internalQuery({
 });
 
 /**
+ * Get a specific snapshot by org and date (for deduplication).
+ */
+export const getSnapshotByDate = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    snapshotDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const snapshots = await ctx.db
+      .query("autopilotRevenueSnapshots")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    return snapshots.find((s) => s.snapshotDate === args.snapshotDate) ?? null;
+  },
+});
+
+/**
  * Get computed revenue stats for the dashboard.
  * Compares latest snapshot with previous to calculate trends.
  */
@@ -309,6 +331,45 @@ export const getEnabledOrgIds = internalQuery({
 // INTERNAL ACTIONS
 // ============================================
 
+const SIGNIFICANT_CHANGE_THRESHOLD = 10;
+const CRITICAL_CHANGE_THRESHOLD = 20;
+
+const detectRevenueAlerts = async (
+  ctx: ActionCtx,
+  organizationId: Id<"organizations">,
+  metrics: { mrr: number; activeSubscriptions: number; churnRate: number },
+  prev: { mrr: number }
+) => {
+  const mrrChangePercent =
+    prev.mrr > 0 ? Math.abs((metrics.mrr - prev.mrr) / prev.mrr) * 100 : 0;
+
+  if (mrrChangePercent <= SIGNIFICANT_CHANGE_THRESHOLD) {
+    return;
+  }
+
+  const direction = metrics.mrr > prev.mrr ? "increase" : "decrease";
+  const changeAmount = Math.round(Math.abs(metrics.mrr - prev.mrr) * 100) / 100;
+
+  await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+    organizationId,
+    type: "revenue_alert",
+    title: `Revenue ${direction}: ${direction === "increase" ? "+" : "-"}$${changeAmount}`,
+    summary: `MRR changed from $${prev.mrr} to $${metrics.mrr} (${Math.round(mrrChangePercent * 10) / 10}% ${direction})`,
+    content: `Daily revenue snapshot detected a significant change in MRR. Previous: $${prev.mrr}, Current: $${metrics.mrr}. Active subscriptions: ${metrics.activeSubscriptions}. Churn rate: ${metrics.churnRate}%.`,
+    priority:
+      mrrChangePercent > CRITICAL_CHANGE_THRESHOLD ? "critical" : "high",
+    sourceAgent: "system",
+  });
+
+  await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    organizationId,
+    agent: "system",
+    level: "warning",
+    message: `Revenue alert: MRR ${direction} by ${Math.round(mrrChangePercent * 10) / 10}%`,
+    details: `Previous: $${prev.mrr}, Current: $${metrics.mrr}`,
+  });
+};
+
 /**
  * Capture a daily revenue snapshot for an organization.
  * Fetches Stripe metrics, stores snapshot, and creates alerts on significant changes.
@@ -353,20 +414,27 @@ export const captureRevenueSnapshot = internalAction({
       // Fetch metrics from Stripe
       const metrics = await getStripeMetrics(stripeSecretKey);
 
-      // Create snapshot entry
+      // Create snapshot entry (skip if one already exists for today)
       const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
 
-      await ctx.runMutation(internal.autopilot.revenue.createSnapshot, {
-        organizationId: args.organizationId,
-        snapshotDate: today,
-        mrr: metrics.mrr,
-        arr: metrics.arr,
-        activeSubscriptions: metrics.activeSubscriptions,
-        newSubscriptions: metrics.newSubscriptions,
-        cancelledSubscriptions: metrics.cancelledSubscriptions,
-        churnRate: metrics.churnRate,
-        createdAt: Date.now(),
-      });
+      const existingSnapshot = await ctx.runQuery(
+        internal.autopilot.revenue.getSnapshotByDate,
+        { organizationId: args.organizationId, snapshotDate: today }
+      );
+
+      if (!existingSnapshot) {
+        await ctx.runMutation(internal.autopilot.revenue.createSnapshot, {
+          organizationId: args.organizationId,
+          snapshotDate: today,
+          mrr: metrics.mrr,
+          arr: metrics.arr,
+          activeSubscriptions: metrics.activeSubscriptions,
+          newSubscriptions: metrics.newSubscriptions,
+          cancelledSubscriptions: metrics.cancelledSubscriptions,
+          churnRate: metrics.churnRate,
+          createdAt: Date.now(),
+        });
+      }
 
       // Get previous snapshot to detect significant changes
       const previousSnapshot = await ctx.runQuery(
@@ -376,36 +444,12 @@ export const captureRevenueSnapshot = internalAction({
 
       // Compare with previous snapshot (if exists) to detect significant changes
       if (previousSnapshot.length > 1) {
-        const prev = previousSnapshot[1];
-        const mrrChangePercent =
-          prev.mrr > 0
-            ? Math.abs((metrics.mrr - prev.mrr) / prev.mrr) * 100
-            : 0;
-
-        // Create revenue alert if change > 10%
-        if (mrrChangePercent > 10) {
-          const direction = metrics.mrr > prev.mrr ? "increase" : "decrease";
-          const changeAmount =
-            Math.round(Math.abs(metrics.mrr - prev.mrr) * 100) / 100;
-
-          await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
-            organizationId: args.organizationId,
-            type: "revenue_alert",
-            title: `Revenue ${direction}: ${direction === "increase" ? "+" : "-"}$${changeAmount}`,
-            summary: `MRR changed from $${prev.mrr} to $${metrics.mrr} (${Math.round(mrrChangePercent * 10) / 10}% ${direction})`,
-            content: `Daily revenue snapshot detected a significant change in MRR. Previous: $${prev.mrr}, Current: $${metrics.mrr}. Active subscriptions: ${metrics.activeSubscriptions}. Churn rate: ${metrics.churnRate}%.`,
-            priority: mrrChangePercent > 20 ? "critical" : "high",
-            sourceAgent: "system",
-          });
-
-          await ctx.runMutation(internal.autopilot.tasks.logActivity, {
-            organizationId: args.organizationId,
-            agent: "system",
-            level: "warning",
-            message: `Revenue alert: MRR ${direction} by ${Math.round(mrrChangePercent * 10) / 10}%`,
-            details: `Previous: $${prev.mrr}, Current: $${metrics.mrr}`,
-          });
-        }
+        await detectRevenueAlerts(
+          ctx,
+          args.organizationId,
+          metrics,
+          previousSnapshot[1]
+        );
       }
 
       // Log successful snapshot

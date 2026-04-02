@@ -148,11 +148,46 @@ export const sendAutopilotEmail = internalAction({
 
     const fromAddress = config.orgEmailAddress;
 
+    // Check blocklist for all recipients
+    for (const recipient of email.to) {
+      const isBlocked = await ctx.runQuery(
+        internal.autopilot.email_sending.isEmailBlocked,
+        {
+          organizationId: args.organizationId,
+          recipientEmail: recipient,
+        }
+      );
+      if (isBlocked) {
+        throw new Error(
+          `Recipient ${recipient} is on the email blocklist — sending blocked`
+        );
+      }
+    }
+
+    // Check CC recipients against blocklist
+    if (email.cc) {
+      for (const ccRecipient of email.cc) {
+        const isBlocked = await ctx.runQuery(
+          internal.autopilot.email_sending.isEmailBlocked,
+          {
+            organizationId: args.organizationId,
+            recipientEmail: ccRecipient,
+          }
+        );
+        if (isBlocked) {
+          throw new Error(
+            `CC recipient ${ccRecipient} is on the email blocklist — sending blocked`
+          );
+        }
+      }
+    }
+
     try {
       // Send via Resend
       const resendEmailId = await resend.sendEmail(ctx, {
         from: fromAddress,
         to: email.to,
+        cc: email.cc,
         subject: email.subject,
         html: email.bodyHtml,
         text: email.bodyText,

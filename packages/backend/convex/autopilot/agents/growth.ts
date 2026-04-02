@@ -12,33 +12,19 @@
  *   8. Log all activity
  */
 
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateObject } from "ai";
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
 import type { Doc } from "../../_generated/dataModel";
 import { internalAction } from "../../_generated/server";
-
-// ============================================
-// OPENROUTER SETUP
-// ============================================
-
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
+import { MODELS } from "./models";
+import { generateObjectWithFallback } from "./shared";
 
 // Online search-capable models for thread discovery
-const GROWTH_SEARCH_MODELS = [
-  "qwen/qwen3.6-plus-preview:free:online",
-  "openai/gpt-5.4-mini:online",
-] as const;
+const GROWTH_SEARCH_MODELS = [MODELS.SEARCH_FREE, MODELS.SEARCH_PAID] as const;
 
 // Content generation models (non-online for speed)
-const GROWTH_CONTENT_MODELS = [
-  "qwen/qwen3.6-plus-preview:free",
-  "openai/gpt-5.4-mini",
-] as const;
+const GROWTH_CONTENT_MODELS = [MODELS.FREE, MODELS.FAST] as const;
 
 // ============================================
 // ZOD SCHEMAS
@@ -84,47 +70,6 @@ const growthContentSchema = z.object({
 });
 
 // ============================================
-// HELPER FUNCTION
-// ============================================
-
-/**
- * Wrapper for generateObject with fallback logic.
- * Tries multiple models in sequence if one fails.
- */
-const generateObjectWithFallback = async <T extends z.ZodType>({
-  models,
-  schema,
-  prompt,
-  systemPrompt,
-}: {
-  models: readonly string[];
-  schema: T;
-  prompt: string;
-  systemPrompt: string;
-}): Promise<z.infer<T>> => {
-  let lastError: unknown;
-
-  for (const model of models) {
-    try {
-      const result = await generateObject({
-        model: openrouter.chat(model),
-        schema,
-        prompt,
-        system: systemPrompt,
-      });
-
-      return result.object as z.infer<T>;
-    } catch (error) {
-      lastError = error;
-      // Continue to next model on failure
-    }
-  }
-
-  throw new Error(
-    `All models failed for content generation. Last error: ${lastError}`
-  );
-};
-
 // ============================================
 // PHASE 1: THREAD DISCOVERY
 // ============================================
@@ -296,16 +241,21 @@ export const runGrowthGeneration = internalAction({
         return;
       }
 
-      // Step 2: Load org's product info
-      // In a real implementation, this would fetch from product context/repo analysis
-      const productName = "Reflet Autopilot";
+      // Step 2: Load org's product info from repo analysis
+      const repoAnalysis = await ctx.runQuery(
+        internal.autopilot.agents.cto.getRepoAnalysisForCto,
+        { organizationId: args.organizationId }
+      );
+
+      const productName = repoAnalysis?.summary
+        ? repoAnalysis.summary.split(" ")[0]
+        : "Our Product";
       const productDescription =
-        "Autonomous AI agents for development, security, and growth workflows";
-      const techStack = "TypeScript, React, Convex, OpenRouter, Claude AI";
+        repoAnalysis?.summary ?? "Software product with AI-powered features";
+      const techStack = repoAnalysis?.techStack ?? "TypeScript, React";
 
       // Step 3: Load intelligence insights
-      // In a real implementation, this would fetch from competitive analysis
-      const competitorContext = "GitHub Copilot, Vercel AI, Linear integration";
+      const competitorContext = repoAnalysis?.features ?? "";
 
       // Step 4: Phase 1 - Discover relevant threads
       let discoveredThreads: z.infer<typeof threadDiscoverySchema>;

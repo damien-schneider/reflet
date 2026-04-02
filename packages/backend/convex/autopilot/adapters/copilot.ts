@@ -48,7 +48,7 @@ const parseRepoUrl = (repoUrl: string): { owner: string; repo: string } => {
 };
 
 const log = (
-  agent: string,
+  agent: ActivityLogEntry["agent"],
   level: ActivityLogEntry["level"],
   message: string,
   details?: string
