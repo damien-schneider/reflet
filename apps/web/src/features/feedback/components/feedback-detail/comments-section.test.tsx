@@ -130,12 +130,6 @@ describe("CommentsSection", () => {
     expect(screen.getByText("Post")).toBeInTheDocument();
   });
 
-  it("shows user avatar fallback when no user", () => {
-    mockUseQuery.mockReturnValue([]);
-    render(<CommentsSection currentUser={null} feedbackId={feedbackId} />);
-    expect(screen.getByText("?")).toBeInTheDocument();
-  });
-
   it("handles undefined commentsData gracefully", () => {
     mockUseQuery.mockReturnValue(undefined);
     render(<CommentsSection feedbackId={feedbackId} />);

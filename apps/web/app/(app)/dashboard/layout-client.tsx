@@ -13,7 +13,7 @@ export default function DashboardLayoutClient({
 }) {
   const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
+  useEffect(function markClientSideReady() {
     setIsClient(true);
   }, []);
 

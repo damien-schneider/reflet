@@ -26,7 +26,7 @@ export async function generateMetadata({
 
       const ogUrl = new URL(
         "/api/og/shipped",
-        process.env.NEXT_PUBLIC_APP_URL ?? "https://reflet.app"
+        process.env.NEXT_PUBLIC_SITE_URL ?? "https://reflet.app"
       );
       ogUrl.searchParams.set("feedback", meta.title);
       if (meta.releaseTitle) {

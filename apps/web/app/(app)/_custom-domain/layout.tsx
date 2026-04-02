@@ -14,7 +14,7 @@ export default function CustomDomainLayout({
 }) {
   const [hostname, setHostname] = useState<string | null>(null);
 
-  useEffect(() => {
+  useEffect(function syncHostname() {
     setHostname(window.location.hostname);
   }, []);
 

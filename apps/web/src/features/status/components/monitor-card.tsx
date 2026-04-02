@@ -15,6 +15,7 @@ import {
   DropdownListItem,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import { ResponseTimeChart } from "./response-time-chart";
 import { StatusDot } from "./status-dot";
 import { UptimeBar } from "./uptime-bar";
@@ -88,7 +89,10 @@ export function MonitorCard({
                 {monitor.name}
               </span>
               <span
-                className={`font-medium text-xs ${statusLabelStyles[monitor.status]}`}
+                className={cn(
+                  "font-medium text-xs",
+                  statusLabelStyles[monitor.status]
+                )}
               >
                 {statusLabels[monitor.status]}
               </span>

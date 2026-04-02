@@ -1,13 +1,7 @@
 "use client";
 
 import { Check, Copy } from "@phosphor-icons/react";
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -19,16 +13,16 @@ function CopyButton({ text, className }: { text: string; className?: string }) {
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleCopy = useCallback(async () => {
+  const handleCopy = async () => {
     await navigator.clipboard.writeText(text);
     setCopied(true);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     timeoutRef.current = setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
-  }, [text]);
+  };
 
-  useEffect(() => {
+  useEffect(function cleanupCopyTimeout() {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);

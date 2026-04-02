@@ -8,7 +8,7 @@ import { FeedbackListItem } from "@/features/feedback/components/feedback-list-i
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import {
-  feedbackMagnifyingGlassAtom,
+  feedbackSearchAtom,
   feedbackSortAtom,
   hideCompletedAtom,
   selectedStatusIdsAtom,
@@ -32,7 +32,7 @@ export function FeedbackList({
   const userId = session?.user?.id;
 
   // Get filter state from Jotai atoms
-  const search = useAtomValue(feedbackMagnifyingGlassAtom);
+  const search = useAtomValue(feedbackSearchAtom);
   const sortBy = useAtomValue(feedbackSortAtom);
   const selectedStatusIds = useAtomValue(selectedStatusIdsAtom);
   const selectedTagIds = useAtomValue(selectedTagIdsAtom);

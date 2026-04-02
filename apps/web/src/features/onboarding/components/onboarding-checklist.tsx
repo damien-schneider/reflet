@@ -20,6 +20,7 @@ import { type ReactNode, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 type StepName =
   | "boardCreated"
@@ -109,19 +110,25 @@ export function OnboardingChecklist({
   const [hasSynced, setHasSynced] = useState(false);
 
   // Initialize minimized state from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(getStorageKey(orgSlug));
-    // Default to minimized (pill) — only expand if explicitly set to "false"
-    setIsMinimized(stored !== "false");
-  }, [orgSlug]);
+  useEffect(
+    function initMinimizedStateFromStorage() {
+      const stored = localStorage.getItem(getStorageKey(orgSlug));
+      // Default to minimized (pill) — only expand if explicitly set to "false"
+      setIsMinimized(stored !== "false");
+    },
+    [orgSlug]
+  );
 
   // Sync auto-detected progress once on mount
-  useEffect(() => {
-    if (!hasSynced) {
-      syncMutation({ organizationId });
-      setHasSynced(true);
-    }
-  }, [hasSynced, organizationId, syncMutation]);
+  useEffect(
+    function syncAutoDetectedProgress() {
+      if (!hasSynced) {
+        syncMutation({ organizationId });
+        setHasSynced(true);
+      }
+    },
+    [hasSynced, organizationId, syncMutation]
+  );
 
   const toggleMinimized = () => {
     setIsMinimized((prev) => {
@@ -241,9 +248,10 @@ export function OnboardingChecklist({
                           {step.icon}
                         </span>
                         <span
-                          className={`text-sm ${
-                            done ? "text-muted-foreground line-through" : ""
-                          }`}
+                          className={cn(
+                            "text-sm",
+                            done && "text-muted-foreground line-through"
+                          )}
                         >
                           {step.label}
                         </span>

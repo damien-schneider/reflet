@@ -11,13 +11,16 @@ export function AITriageCard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [step, setStep] = useState(0);
 
-  useEffect(() => {
-    if (!isAnalyzing || step >= 5) {
-      return;
-    }
-    const timeout = setTimeout(() => setStep((s) => s + 1), 450);
-    return () => clearTimeout(timeout);
-  }, [isAnalyzing, step]);
+  useEffect(
+    function advanceAnalysisStep() {
+      if (!isAnalyzing || step >= 5) {
+        return;
+      }
+      const timeout = setTimeout(() => setStep((s) => s + 1), 450);
+      return () => clearTimeout(timeout);
+    },
+    [isAnalyzing, step]
+  );
 
   const handleMouseEnter = () => {
     setIsAnalyzing(true);

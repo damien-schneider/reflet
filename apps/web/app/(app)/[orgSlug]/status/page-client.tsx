@@ -9,6 +9,7 @@ import { ResponseTimeChart } from "@/features/status/components/response-time-ch
 import { StatusDot } from "@/features/status/components/status-dot";
 import { StatusSubscribe } from "@/features/status/components/status-subscribe";
 import { UptimeBar } from "@/features/status/components/uptime-bar";
+import { cn } from "@/lib/utils";
 
 const statusMessages = {
   operational: "All Systems Operational",
@@ -134,7 +135,10 @@ export default function PublicStatusPageClient({
 
       {/* Overall status banner */}
       <div
-        className={`mb-8 rounded-xl p-6 text-center ${statusBannerStyles[overallStatus]}`}
+        className={cn(
+          "mb-8 rounded-xl p-6 text-center",
+          statusBannerStyles[overallStatus]
+        )}
       >
         <div className="flex items-center justify-center gap-3">
           <StatusDot pulse size="lg" status={overallStatus} />
@@ -238,7 +242,10 @@ export default function PublicStatusPageClient({
                         )}
                       </div>
                       <span
-                        className={`font-medium text-sm ${statusLabelStyles[monitorStatus]}`}
+                        className={cn(
+                          "font-medium text-sm",
+                          statusLabelStyles[monitorStatus]
+                        )}
                       >
                         {statusLabelText[monitorStatus]}
                       </span>

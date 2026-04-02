@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const REFLET_BASE = "https://www.reflet.app/reflet";
 
@@ -124,7 +125,7 @@ export default function MobileMenuDialog() {
                   </Link>
                 ))}
                 <a
-                  className={`${menuLinkClassName} flex items-center gap-2.5`}
+                  className={cn(menuLinkClassName, "flex items-center gap-2.5")}
                   href="https://github.com/damien-schneider/reflet"
                   onClick={close}
                   rel="noopener noreferrer"

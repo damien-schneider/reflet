@@ -21,7 +21,6 @@ vi.mock("@/components/ui/button", () => ({
     disabled,
     onClick,
     type,
-    ...rest
   }: {
     children: React.ReactNode;
     disabled?: boolean;
@@ -42,7 +41,6 @@ vi.mock("@/components/ui/button", () => ({
 vi.mock("@/components/ui/tiptap/use-image-upload", () => ({
   useImageUpload: ({
     onSuccess,
-    onError,
   }: {
     onSuccess: (url: string) => void;
     onError: (err: Error) => void;

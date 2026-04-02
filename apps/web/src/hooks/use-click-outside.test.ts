@@ -68,7 +68,7 @@ describe("useClickOutside", () => {
     const handler = vi.fn();
     const ref = createRef<HTMLDivElement>();
 
-    renderHook(() => useClickOutside(ref, handler));
+    renderHook(() => useClickOutside(ref as never, handler));
 
     document.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
     expect(handler).not.toHaveBeenCalled();

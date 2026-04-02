@@ -76,7 +76,7 @@ const mockItem = {
   description: "Test description",
   voteCount: 5,
   status: { name: "Open", color: "#00ff00" },
-} as Parameters<typeof DraggableFeedbackCard>[0]["item"];
+} as unknown as Parameters<typeof DraggableFeedbackCard>[0]["item"];
 
 afterEach(() => {
   cleanup();

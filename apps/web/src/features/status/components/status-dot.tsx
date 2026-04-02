@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 type StatusType =
   | "operational"
   | "degraded"
@@ -35,11 +37,18 @@ export function StatusDot({
   return (
     <span className="relative inline-flex">
       <span
-        className={`inline-block rounded-full ${colorMap[status]} ${sizeMap[size]}`}
+        className={cn(
+          "inline-block rounded-full",
+          colorMap[status],
+          sizeMap[size]
+        )}
       />
       {pulse && status !== "operational" && status !== "paused" && (
         <span
-          className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${colorMap[status]}`}
+          className={cn(
+            "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
+            colorMap[status]
+          )}
         />
       )}
     </span>

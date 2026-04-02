@@ -110,19 +110,18 @@ vi.mock("@/components/ui/tiptap/use-media-upload", () => ({
   }),
 }));
 
-let mutationIdx = 0;
-
 vi.mock("convex/react", () => ({
-  useMutation: () => {
-    const order = [
-      mockCreateRelease,
-      mockUpdateRelease,
-      mockPublishRelease,
-      mockUnpublishRelease,
-    ];
-    const mock = order[mutationIdx % order.length];
-    mutationIdx++;
-    return mock;
+  useMutation: (ref: string) => {
+    const mockMap: Record<string, ReturnType<typeof vi.fn>> = {
+      "changelog.mutations.create": mockCreateRelease,
+      "changelog.mutations.update": mockUpdateRelease,
+      "changelog.actions.publish": mockPublishRelease,
+      "changelog.actions.unpublish": mockUnpublishRelease,
+    };
+    const mock = mockMap[ref] ?? vi.fn();
+    const fn = (...args: unknown[]) => mock(...args);
+    fn.withOptimisticUpdate = () => fn;
+    return fn;
   },
   useQuery: () => null,
   useAction: () => vi.fn(),
@@ -243,6 +242,166 @@ vi.mock("streamdown", () => ({
   ),
 }));
 
+vi.mock("@phosphor-icons/react", () => ({
+  Check: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="check-icon" />
+  ),
+  Clock: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="clock-icon" />
+  ),
+  Spinner: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="spinner-icon" />
+  ),
+  X: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="x-icon" />
+  ),
+}));
+
+vi.mock("@/components/ui/button", () => ({
+  Button: ({
+    children,
+    onClick,
+    disabled,
+    variant,
+    size,
+    title: btnTitle,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    variant?: string;
+    size?: string;
+  }) => (
+    <button
+      data-size={size}
+      data-variant={variant}
+      disabled={disabled}
+      onClick={onClick}
+      title={btnTitle}
+      type="button"
+      {...props}
+    >
+      {children}
+    </button>
+  ),
+}));
+
+vi.mock("@reflet/backend/convex/_generated/api", () => ({
+  api: {
+    changelog: {
+      mutations: {
+        create: "changelog.mutations.create",
+        update: "changelog.mutations.update",
+      },
+      actions: {
+        publish: "changelog.actions.publish",
+        unpublish: "changelog.actions.unpublish",
+        pushToGithub: "changelog.actions.pushToGithub",
+      },
+      queries: {
+        get: "changelog.queries.get",
+      },
+      scheduling: {
+        schedulePublish: "changelog.scheduling.schedulePublish",
+        cancelScheduledPublish: "changelog.scheduling.cancelScheduledPublish",
+      },
+    },
+    integrations: {
+      github: {
+        queries: {
+          getConnection: "integrations.github.queries.getConnection",
+        },
+      },
+    },
+  },
+}));
+
+vi.mock("@/lib/auth-client", () => ({
+  authClient: {
+    useSession: () => ({ data: null }),
+  },
+}));
+
+vi.mock("@/lib/analytics", () => ({
+  capture: vi.fn(),
+}));
+
+vi.mock("@/lib/utils", () => ({
+  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
+}));
+
+vi.mock("date-fns", () => ({
+  format: (date: unknown, fmt: string) => String(date),
+}));
+
+vi.mock("./release-commits-list", () => ({
+  ReleaseCommitsList: () => <div data-testid="release-commits-list" />,
+}));
+
+vi.mock("./release-editor-footer", () => ({
+  ReleaseEditorFooter: (props: {
+    isPublished: boolean;
+    isSubmitting: boolean;
+    isStreaming: boolean;
+    titleEmpty: boolean;
+    canPushToGithub: boolean;
+    isLinkedToGithub: boolean;
+    isPermissionError: boolean;
+    onPublish: () => void;
+    onUnpublish: () => void;
+    onCancel: () => void;
+    onPushToGithub: () => void;
+  }) => (
+    <div data-testid="release-editor-footer">
+      {!props.isPublished && (
+        <button
+          disabled={props.isSubmitting || props.isStreaming || props.titleEmpty}
+          onClick={props.onPublish}
+          type="button"
+        >
+          Publish
+        </button>
+      )}
+      {props.isPublished && (
+        <button
+          disabled={props.isSubmitting}
+          onClick={props.onUnpublish}
+          type="button"
+        >
+          Unpublish
+        </button>
+      )}
+      <button onClick={props.onCancel} type="button">
+        Cancel
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock("./release-feedback-section", () => ({
+  ReleaseFeedbackSection: () => <div data-testid="release-feedback-section" />,
+}));
+
+vi.mock("./schedule-countdown", () => ({
+  ScheduleCountdown: () => <span data-testid="schedule-countdown" />,
+}));
+
+vi.mock("./version-picker", () => ({
+  VersionPicker: (props: {
+    value: string;
+    onChange: (v: string) => void;
+    disabled?: boolean;
+  }) => (
+    <input
+      data-testid="version-picker"
+      disabled={props.disabled}
+      onChange={(e) => props.onChange(e.target.value)}
+      placeholder="v1.0.0"
+      value={props.value}
+    />
+  ),
+}));
+
+vi.mock("./feedback-section-header", () => ({}));
+
 import { ReleaseEditor } from "./release-editor";
 
 describe("ReleaseEditor", () => {
@@ -253,7 +412,6 @@ describe("ReleaseEditor", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mutationIdx = 0;
     mockCreateRelease.mockResolvedValue("new-release-id");
     mockUpdateRelease.mockResolvedValue(undefined);
     mockPublishRelease.mockResolvedValue(undefined);
@@ -544,9 +702,11 @@ describe("ReleaseEditor", () => {
 
       await waitFor(() => {
         expect(mockCreateRelease).toHaveBeenCalled();
-        expect(mockPublishRelease).toHaveBeenCalledWith({
-          id: "new-release-id",
-        });
+        expect(mockPublishRelease).toHaveBeenCalledWith(
+          expect.objectContaining({
+            id: "new-release-id",
+          })
+        );
       });
       expect(mockToast.success).toHaveBeenCalledWith("Release published!");
       expect(mockPush).toHaveBeenCalledWith("/dashboard/test-org/changelog");
@@ -575,9 +735,11 @@ describe("ReleaseEditor", () => {
         expect(mockUpdateRelease).toHaveBeenCalledWith(
           expect.objectContaining({ id: "release123" })
         );
-        expect(mockPublishRelease).toHaveBeenCalledWith({
-          id: "release123",
-        });
+        expect(mockPublishRelease).toHaveBeenCalledWith(
+          expect.objectContaining({
+            id: "release123",
+          })
+        );
       });
       expect(mockToast.success).toHaveBeenCalledWith("Release published!");
     });

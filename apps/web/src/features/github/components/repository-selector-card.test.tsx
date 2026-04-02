@@ -165,7 +165,6 @@ vi.mock("@/components/ui/combobox", async () => {
     children,
     _items,
     _onValueChange,
-    _itemToStringLabel,
   }: {
     children: React.ReactNode | ((item: unknown) => React.ReactNode);
     _items?: unknown[];
@@ -194,7 +193,7 @@ vi.mock("@/components/ui/combobox", async () => {
     return React.createElement(
       "div",
       { "data-testid": "combobox-list" },
-      children
+      children as React.ReactNode
     );
   };
 
@@ -674,9 +673,7 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
           selectedRepo=""
         />
       );
-      const _lockIcons = screen.getAllByAttribute
-        ? document.querySelectorAll('[data-icon="lock"]')
-        : [];
+      document.querySelectorAll('[data-icon="lock"]');
       // At least the repository list renders
       expect(screen.getByTestId("combobox")).toBeInTheDocument();
     });

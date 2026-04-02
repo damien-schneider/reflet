@@ -89,8 +89,6 @@ vi.mock("@/components/ui/label", () => ({
 vi.mock("@/components/ui/select", () => ({
   Select: ({
     children,
-    onValueChange,
-    value,
   }: {
     children: React.ReactNode;
     onValueChange?: (value: string) => void;

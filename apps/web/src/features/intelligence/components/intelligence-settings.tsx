@@ -91,27 +91,35 @@ export function IntelligenceSettings({
   const [isSaving, setIsSaving] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  useEffect(() => {
-    if (!(config || initialized)) {
-      getOrCreate({
-        organizationId,
-      }).catch(() => {
-        // Config creation handled silently
-      });
-    }
-  }, [config, initialized, getOrCreate, organizationId]);
+  useEffect(
+    function initializeConfig() {
+      if (!(config || initialized)) {
+        getOrCreate({
+          organizationId,
+        }).catch(() => {
+          // Config creation handled silently
+        });
+      }
+    },
+    [config, initialized, getOrCreate, organizationId]
+  );
 
-  useEffect(() => {
-    if (config) {
-      setScanFrequency(
-        isScanFrequency(config.scanFrequency) ? config.scanFrequency : "weekly"
-      );
-      setCompetitorTrackingEnabled(config.competitorTrackingEnabled ?? false);
-      setRedditEnabled(config.redditEnabled ?? false);
-      setWebSearchEnabled(config.webSearchEnabled ?? false);
-      setInitialized(true);
-    }
-  }, [config]);
+  useEffect(
+    function syncStateFromConfig() {
+      if (config) {
+        setScanFrequency(
+          isScanFrequency(config.scanFrequency)
+            ? config.scanFrequency
+            : "weekly"
+        );
+        setCompetitorTrackingEnabled(config.competitorTrackingEnabled ?? false);
+        setRedditEnabled(config.redditEnabled ?? false);
+        setWebSearchEnabled(config.webSearchEnabled ?? false);
+        setInitialized(true);
+      }
+    },
+    [config]
+  );
 
   const handleSave = async () => {
     if (!config?._id) {

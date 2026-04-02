@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, Check, Copy } from "@phosphor-icons/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -135,12 +135,12 @@ const SUGGESTED_PROMPTS: Prompt[] = [
 function PromptCopyButton({ text }: { text: string }) {
   const [hasCopied, setHasCopied] = useState(false);
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = () => {
     navigator.clipboard.writeText(text);
     toast.success("Prompt copied to clipboard");
     setHasCopied(true);
     setTimeout(() => setHasCopied(false), 2000);
-  }, [text]);
+  };
 
   return (
     <Button className="shrink-0" onClick={handleCopy} size="sm" variant="ghost">

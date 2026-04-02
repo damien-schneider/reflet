@@ -155,7 +155,7 @@ vi.mock("@/components/ui/select", () => ({
 describe("InviteMemberDialog", () => {
   const mockOnOpenChange = vi.fn();
   const defaultProps = {
-    organizationId: "org123" as unknown as Id<"organizations">,
+    organizationId: "org123" as never,
     open: true,
     onOpenChange: mockOnOpenChange,
   };

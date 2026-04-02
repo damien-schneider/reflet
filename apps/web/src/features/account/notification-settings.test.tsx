@@ -41,7 +41,6 @@ vi.mock("@/components/ui/button", () => ({
   Button: ({
     children,
     onClick,
-    ...rest
   }: {
     children: React.ReactNode;
     onClick?: () => void;
@@ -478,7 +477,7 @@ describe("NotificationSettings", () => {
   it("toggles notification type when switch is clicked", async () => {
     const mockUpdatePrefs = vi.fn().mockResolvedValue(undefined);
     const { useMutation } = await import("convex/react");
-    vi.mocked(useMutation).mockReturnValue(mockUpdatePrefs);
+    vi.mocked(useMutation).mockReturnValue(mockUpdatePrefs as never);
     vi.mocked(useQuery).mockReturnValue({
       pushEnabled: true,
       notifyOnStatusChange: true,

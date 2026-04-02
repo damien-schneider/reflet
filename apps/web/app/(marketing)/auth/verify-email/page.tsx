@@ -18,43 +18,46 @@ function VerifyEmailContent() {
   const token = searchParams.get("token");
   const error = searchParams.get("error");
 
-  useEffect(() => {
-    // If there's an error in the URL, show it
-    if (error) {
-      setStatus("error");
-      setErrorMessage(
-        error === "invalid_token"
-          ? "The verification link is invalid or has expired."
-          : "An error occurred during verification."
-      );
-      return;
-    }
+  useEffect(
+    function verifyEmailToken() {
+      // If there's an error in the URL, show it
+      if (error) {
+        setStatus("error");
+        setErrorMessage(
+          error === "invalid_token"
+            ? "The verification link is invalid or has expired."
+            : "An error occurred during verification."
+        );
+        return;
+      }
 
-    // If there's a token, verify it
-    if (token) {
-      authClient
-        .verifyEmail({
-          query: { token },
-        })
-        .then((result) => {
-          if (result.error) {
+      // If there's a token, verify it
+      if (token) {
+        authClient
+          .verifyEmail({
+            query: { token },
+          })
+          .then((result) => {
+            if (result.error) {
+              setStatus("error");
+              setErrorMessage(
+                result.error.message ?? "An error occurred during verification."
+              );
+            } else {
+              setStatus("success");
+            }
+          })
+          .catch(() => {
             setStatus("error");
-            setErrorMessage(
-              result.error.message ?? "An error occurred during verification."
-            );
-          } else {
-            setStatus("success");
-          }
-        })
-        .catch(() => {
-          setStatus("error");
-          setErrorMessage("An error occurred during verification.");
-        });
-    } else {
-      // No token and no error - check if user is already verified
-      setStatus("success");
-    }
-  }, [token, error]);
+            setErrorMessage("An error occurred during verification.");
+          });
+      } else {
+        // No token and no error - check if user is already verified
+        setStatus("success");
+      }
+    },
+    [token, error]
+  );
 
   const handleContinue = () => {
     router.push("/pending-invitations");

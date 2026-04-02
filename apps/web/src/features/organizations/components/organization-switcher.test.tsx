@@ -63,7 +63,6 @@ vi.mock("@/components/ui/button", () => ({
     children,
     disabled,
     onClick,
-    ...rest
   }: {
     children: React.ReactNode;
     disabled?: boolean;
@@ -364,7 +363,7 @@ describe("OrganizationSwitcher", () => {
   it("does not create org when name is empty", async () => {
     const createOrgMock = vi.fn();
     const { useMutation } = await import("convex/react");
-    vi.mocked(useMutation).mockReturnValue(createOrgMock);
+    vi.mocked(useMutation).mockReturnValue(createOrgMock as never);
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", name: "Acme", slug: "acme", logo: null },
     ]);
@@ -378,7 +377,7 @@ describe("OrganizationSwitcher", () => {
   it("creates org and navigates to dashboard on success", async () => {
     const createOrgMock = vi.fn().mockResolvedValue({ _id: "new-org" });
     const { useMutation } = await import("convex/react");
-    vi.mocked(useMutation).mockReturnValue(createOrgMock);
+    vi.mocked(useMutation).mockReturnValue(createOrgMock as never);
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", name: "Acme", slug: "acme", logo: null },
     ]);
@@ -396,7 +395,7 @@ describe("OrganizationSwitcher", () => {
       .fn()
       .mockRejectedValue(new Error("Duplicate name"));
     const { useMutation } = await import("convex/react");
-    vi.mocked(useMutation).mockReturnValue(createOrgMock);
+    vi.mocked(useMutation).mockReturnValue(createOrgMock as never);
     const { toast } = await import("sonner");
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", name: "Acme", slug: "acme", logo: null },
@@ -412,7 +411,7 @@ describe("OrganizationSwitcher", () => {
   it("shows generic error toast for non-Error exceptions", async () => {
     const createOrgMock = vi.fn().mockRejectedValue("string error");
     const { useMutation } = await import("convex/react");
-    vi.mocked(useMutation).mockReturnValue(createOrgMock);
+    vi.mocked(useMutation).mockReturnValue(createOrgMock as never);
     const { toast } = await import("sonner");
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", name: "Acme", slug: "acme", logo: null },
@@ -428,7 +427,7 @@ describe("OrganizationSwitcher", () => {
   it("submits on Enter key in the input", async () => {
     const createOrgMock = vi.fn().mockResolvedValue({ _id: "new-org" });
     const { useMutation } = await import("convex/react");
-    vi.mocked(useMutation).mockReturnValue(createOrgMock);
+    vi.mocked(useMutation).mockReturnValue(createOrgMock as never);
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", name: "Acme", slug: "acme", logo: null },
     ]);

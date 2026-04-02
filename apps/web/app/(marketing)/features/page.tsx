@@ -11,6 +11,7 @@ import { FeatureMockup } from "@/features/homepage/components/feature-mockups";
 import Footer from "@/features/homepage/components/footer";
 import Navbar from "@/features/homepage/components/navbar";
 import { generatePageMetadata } from "@/lib/seo-config";
+import { cn } from "@/lib/utils";
 
 export const metadata = generatePageMetadata({
   title: "Features | Reflet - Built for Developer-Led SaaS Teams",
@@ -161,14 +162,21 @@ export default function FeaturesPage() {
                 const isReversed = idx % 2 === 1;
                 return (
                   <div
-                    className={`grid items-start gap-8 lg:grid-cols-2 lg:gap-16 ${isReversed ? "lg:[&>*:first-child]:order-2" : ""}`}
+                    className={cn(
+                      "grid items-start gap-8 lg:grid-cols-2 lg:gap-16",
+                      isReversed && "lg:[&>*:first-child]:order-2"
+                    )}
                     key={feature.id}
                   >
                     {/* Text content */}
                     <div>
                       <div className="mb-4 flex items-center gap-3">
                         <div
-                          className={`flex size-10 items-center justify-center rounded-xl ${feature.accentBg} ${feature.accent}`}
+                          className={cn(
+                            "flex size-10 items-center justify-center rounded-xl",
+                            feature.accentBg,
+                            feature.accent
+                          )}
                         >
                           <Icon size={20} weight="duotone" />
                         </div>

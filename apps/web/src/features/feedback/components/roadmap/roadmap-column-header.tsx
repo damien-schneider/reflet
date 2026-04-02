@@ -56,10 +56,13 @@ export function RoadmapColumnHeader({
   const textColor = getTagTextColor(displayColor, isDark);
 
   // Sync local state when prop changes
-  useEffect(() => {
-    setEditedName(name);
-    setHasUnsavedChanges(false);
-  }, [name]);
+  useEffect(
+    function syncEditedNameWithProp() {
+      setEditedName(name);
+      setHasUnsavedChanges(false);
+    },
+    [name]
+  );
 
   const handleNameChange = useCallback(
     (newName: string) => {

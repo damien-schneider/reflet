@@ -109,23 +109,33 @@ export default function InboxPage({
     api.support.conversations.updateSupportSettings
   );
 
-  useEffect(() => {
-    if (selectedConversationId && messages && messages.length > 0) {
-      const hasUnread = messages.some(
-        (m: { isRead: boolean; senderType: string }) =>
-          !m.isRead && m.senderType === "user"
-      );
-      if (hasUnread) {
-        markAsRead({ conversationId: selectedConversationId });
+  useEffect(
+    function markUnreadMessagesAsRead() {
+      if (selectedConversationId && messages && messages.length > 0) {
+        const hasUnread = messages.some(
+          (m: { isRead: boolean; senderType: string }) =>
+            !m.isRead && m.senderType === "user"
+        );
+        if (hasUnread) {
+          markAsRead({ conversationId: selectedConversationId });
+        }
       }
-    }
-  }, [selectedConversationId, messages, markAsRead]);
+    },
+    [selectedConversationId, messages, markAsRead]
+  );
 
-  useEffect(() => {
-    if (conversations && conversations.length > 0 && !selectedConversationId) {
-      setSelectedConversationId(conversations[0]._id);
-    }
-  }, [conversations, selectedConversationId]);
+  useEffect(
+    function selectFirstConversation() {
+      if (
+        conversations &&
+        conversations.length > 0 &&
+        !selectedConversationId
+      ) {
+        setSelectedConversationId(conversations[0]._id);
+      }
+    },
+    [conversations, selectedConversationId]
+  );
 
   const isAdmin = membership?.role === "admin" || membership?.role === "owner";
 

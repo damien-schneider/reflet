@@ -1,9 +1,10 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { env } from "@reflet/env/server";
 import { streamText } from "ai";
 import { z } from "zod";
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 // Free models to try in order, with a cheap paid model as last resort

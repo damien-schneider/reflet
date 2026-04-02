@@ -14,6 +14,7 @@ import { IncidentCard } from "@/features/status/components/incident-card";
 import { IncidentComposer } from "@/features/status/components/incident-composer";
 import { MonitorCard } from "@/features/status/components/monitor-card";
 import { StatusDot } from "@/features/status/components/status-dot";
+import { cn } from "@/lib/utils";
 import { GitHubConnectHint } from "@/shared/components/github-connect-hint";
 
 const statusLabels = {
@@ -209,7 +210,10 @@ export default function StatusDashboardPage({
 
       {/* Overall status banner */}
       <div
-        className={`mb-6 flex items-center gap-3 rounded-lg p-4 ${getStatusBannerClass(status)}`}
+        className={cn(
+          "mb-6 flex items-center gap-3 rounded-lg p-4",
+          getStatusBannerClass(status)
+        )}
       >
         <StatusDot pulse size="lg" status={status} />
         <span className="font-medium text-sm">{statusLabels[status]}</span>

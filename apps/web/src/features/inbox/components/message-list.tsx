@@ -137,11 +137,14 @@ export function MessageList({
 
   const messagesLength = messages?.length ?? 0;
 
-  useEffect(() => {
-    if (messagesLength > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messagesLength]);
+  useEffect(
+    function scrollToLatestMessage() {
+      if (messagesLength > 0) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }
+    },
+    [messagesLength]
+  );
 
   if (isLoading) {
     return (

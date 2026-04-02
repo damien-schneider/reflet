@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /** Safari-specific gesture event with scale/rotation properties. */
 interface GestureEvent extends Event {
@@ -42,74 +42,74 @@ export function useTrackpadZoom({
   const ref = useRef<HTMLDivElement>(null);
   const lastGestureScaleRef = useRef(1);
 
-  const clamp = useCallback(
-    (value: number) => Math.min(max, Math.max(min, value)),
-    [min, max]
-  );
-
-  useEffect(() => {
-    if (!enabled) {
-      return;
-    }
-
-    const el = ref.current;
-    if (!el) {
-      return;
-    }
-
-    // Find scroll-area viewport if present (so we intercept events before scroll)
-    const viewport = el.querySelector<HTMLElement>(
-      '[data-slot="scroll-area-viewport"]'
-    );
-    const target = viewport ?? el;
-
-    // Chrome / Firefox: ctrl + wheel
-    const handleWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey) {
+  useEffect(
+    function registerTrackpadZoomGestures() {
+      if (!enabled) {
         return;
       }
-      e.preventDefault();
-      setZoom((prev) => clamp(prev + -e.deltaY * sensitivity));
-    };
 
-    // Safari: native gesture events
-    const handleGestureStart = (e: GestureEvent) => {
-      e.preventDefault();
-      lastGestureScaleRef.current = 1;
-    };
+      const el = ref.current;
+      if (!el) {
+        return;
+      }
 
-    const handleGestureChange = (e: GestureEvent) => {
-      e.preventDefault();
-      const gestureScale = e.scale;
-      const scaleDelta = gestureScale / lastGestureScaleRef.current;
-      lastGestureScaleRef.current = gestureScale;
-      setZoom((prev) => clamp(prev * scaleDelta));
-    };
+      const clamp = (value: number) => Math.min(max, Math.max(min, value));
 
-    target.addEventListener("wheel", handleWheel, { passive: false });
-    target.addEventListener(
-      "gesturestart",
-      handleGestureStart as EventListener,
-      { passive: false }
-    );
-    target.addEventListener(
-      "gesturechange",
-      handleGestureChange as EventListener,
-      { passive: false }
-    );
+      // Find scroll-area viewport if present (so we intercept events before scroll)
+      const viewport = el.querySelector<HTMLElement>(
+        '[data-slot="scroll-area-viewport"]'
+      );
+      const target = viewport ?? el;
 
-    return () => {
-      target.removeEventListener("wheel", handleWheel);
-      target.removeEventListener(
+      // Chrome / Firefox: ctrl + wheel
+      const handleWheel = (e: WheelEvent) => {
+        if (!e.ctrlKey) {
+          return;
+        }
+        e.preventDefault();
+        setZoom((prev) => clamp(prev + -e.deltaY * sensitivity));
+      };
+
+      // Safari: native gesture events
+      const handleGestureStart = (e: GestureEvent) => {
+        e.preventDefault();
+        lastGestureScaleRef.current = 1;
+      };
+
+      const handleGestureChange = (e: GestureEvent) => {
+        e.preventDefault();
+        const gestureScale = e.scale;
+        const scaleDelta = gestureScale / lastGestureScaleRef.current;
+        lastGestureScaleRef.current = gestureScale;
+        setZoom((prev) => clamp(prev * scaleDelta));
+      };
+
+      target.addEventListener("wheel", handleWheel, { passive: false });
+      target.addEventListener(
         "gesturestart",
-        handleGestureStart as EventListener
+        handleGestureStart as EventListener,
+        { passive: false }
       );
-      target.removeEventListener(
+      target.addEventListener(
         "gesturechange",
-        handleGestureChange as EventListener
+        handleGestureChange as EventListener,
+        { passive: false }
       );
-    };
-  }, [enabled, clamp, sensitivity]);
+
+      return () => {
+        target.removeEventListener("wheel", handleWheel);
+        target.removeEventListener(
+          "gesturestart",
+          handleGestureStart as EventListener
+        );
+        target.removeEventListener(
+          "gesturechange",
+          handleGestureChange as EventListener
+        );
+      };
+    },
+    [enabled, min, max, sensitivity]
+  );
 
   return { zoom, ref } as const;
 }

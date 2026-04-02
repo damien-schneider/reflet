@@ -69,4 +69,50 @@ crons.interval(
   internal.domains.crons.checkPendingDomains
 );
 
+// ============================================
+// AUTOPILOT CRONS
+// ============================================
+
+crons.interval(
+  "autopilot orchestrator",
+  { minutes: 2 },
+  internal.autopilot.crons.runOrchestrator
+);
+
+crons.daily(
+  "autopilot daily CEO report",
+  { hourUTC: 8, minuteUTC: 0 },
+  internal.autopilot.crons.runDailyCEOReports
+);
+
+crons.weekly(
+  "autopilot weekly CEO report",
+  { dayOfWeek: "monday", hourUTC: 9, minuteUTC: 30 },
+  internal.autopilot.crons.runWeeklyCEOReports
+);
+
+crons.daily(
+  "autopilot daily security scan",
+  { hourUTC: 7, minuteUTC: 0 },
+  internal.autopilot.crons.runDailySecurityScans
+);
+
+crons.weekly(
+  "autopilot weekly architect review",
+  { dayOfWeek: "wednesday", hourUTC: 8, minuteUTC: 0 },
+  internal.autopilot.crons.runWeeklyArchitectReviews
+);
+
+crons.daily(
+  "autopilot inbox expiration",
+  { hourUTC: 1, minuteUTC: 0 },
+  internal.autopilot.crons.runInboxExpiration
+);
+
+crons.daily(
+  "autopilot cost reset",
+  { hourUTC: 0, minuteUTC: 0 },
+  internal.autopilot.cost_guard.resetDailyCounters
+);
+
 export default crons;

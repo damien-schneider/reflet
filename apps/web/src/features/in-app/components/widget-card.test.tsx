@@ -78,7 +78,6 @@ vi.mock("@/components/ui/button", () => ({
   Button: ({
     children,
     onClick,
-    ...rest
   }: {
     children: React.ReactNode;
     onClick?: () => void;
@@ -202,6 +201,8 @@ const baseWidget = {
   name: "Support Widget",
   isActive: true,
   organizationId: "org1" as never,
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
   settings: {
     _id: "ws1" as never,
     _creationTime: Date.now(),

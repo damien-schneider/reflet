@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 export function useCustomDomainOrg() {
   const [hostname, setHostname] = useState<string | null>(null);
 
-  useEffect(() => {
+  useEffect(function readHostname() {
     setHostname(window.location.hostname);
   }, []);
 

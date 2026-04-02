@@ -112,7 +112,7 @@ describe("StatusDisplay", () => {
         isAdmin={false}
         onStatusChange={vi.fn()}
         organizationStatuses={undefined}
-        statusId="s1"
+        statusId={"s1" as never}
       />
     );
     expect(screen.getByText("Open")).toBeInTheDocument();
@@ -125,7 +125,7 @@ describe("StatusDisplay", () => {
         isAdmin
         onStatusChange={vi.fn()}
         organizationStatuses={statuses}
-        statusId="s2"
+        statusId={"s2" as never}
       />
     );
     expect(screen.getAllByText("In Progress").length).toBeGreaterThanOrEqual(1);
@@ -153,7 +153,7 @@ describe("StatusDisplay", () => {
         isAdmin
         onStatusChange={onStatusChange}
         organizationStatuses={statuses}
-        statusId="s1"
+        statusId={"s1" as never}
       />
     );
     await user.click(screen.getByText("Done"));

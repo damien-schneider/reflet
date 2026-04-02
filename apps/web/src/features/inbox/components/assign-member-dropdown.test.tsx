@@ -23,7 +23,6 @@ vi.mock("@/components/ui/avatar", () => ({
 vi.mock("@/components/ui/button", () => ({
   Button: ({
     children,
-    ...props
   }: {
     children: React.ReactNode;
     [key: string]: unknown;
@@ -178,7 +177,7 @@ describe("AssignMemberDropdown", () => {
 
     // Get the Unassigned button in the dropdown (not the trigger)
     const unassignedButtons = screen.getAllByText("Unassigned");
-    await user.click(unassignedButtons.at(-1));
+    await user.click(unassignedButtons.at(-1)!);
     expect(onAssign).toHaveBeenCalledWith(undefined);
   });
 

@@ -34,13 +34,16 @@ export function ScheduleCountdown({
 }: ScheduleCountdownProps) {
   const [remaining, setRemaining] = useState(scheduledAt - Date.now());
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRemaining(scheduledAt - Date.now());
-    }, 1000);
+  useEffect(
+    function tickCountdownInterval() {
+      const interval = setInterval(() => {
+        setRemaining(scheduledAt - Date.now());
+      }, 1000);
 
-    return () => clearInterval(interval);
-  }, [scheduledAt]);
+      return () => clearInterval(interval);
+    },
+    [scheduledAt]
+  );
 
   if (remaining <= 0) {
     return (

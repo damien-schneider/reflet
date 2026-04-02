@@ -6,6 +6,7 @@ import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { PostHogPageView } from "@/components/posthog-pageview";
 import { defaultMetadata, viewport as seoViewport } from "@/lib/seo-config";
 import { ThemeProvider } from "@/lib/theme-provider";
+import { cn } from "@/lib/utils";
 
 import "./globals.css";
 
@@ -32,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html
-      className={`${inter.className} ${inter.variable} ${instrumentSerif.variable}`}
+      className={cn(inter.className, inter.variable, instrumentSerif.variable)}
       lang="en"
       suppressHydrationWarning
     >

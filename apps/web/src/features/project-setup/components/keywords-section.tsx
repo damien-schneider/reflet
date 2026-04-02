@@ -4,12 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-
-interface SuggestedKeyword {
-  accepted: boolean;
-  category: string;
-  keyword: string;
-}
+import type { SuggestedKeyword } from "@/features/project-setup/components/review-types";
 
 interface KeywordsSectionProps {
   keywords: SuggestedKeyword[];

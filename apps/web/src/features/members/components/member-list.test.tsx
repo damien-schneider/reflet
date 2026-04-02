@@ -50,7 +50,6 @@ vi.mock("@/components/ui/button", () => ({
   Button: ({
     children,
     onClick,
-    ...props
   }: {
     children: React.ReactNode;
     onClick?: () => void;
@@ -101,7 +100,7 @@ const makeMember = (
     user: { name: string | null; email: string | null; image: string | null };
   }> = {}
 ) => ({
-  _id: overrides._id ?? ("m1" as never),
+  _id: (overrides._id ?? "m1") as never,
   role: overrides.role ?? "member",
   user: overrides.user ?? {
     name: "John Doe",

@@ -172,7 +172,6 @@ vi.mock("@/components/ui/popover", () => ({
   Popover: ({
     children,
     open,
-    onOpenChange,
   }: {
     children: React.ReactNode;
     open: boolean;
@@ -233,7 +232,6 @@ vi.mock("@/lib/utils", () => ({
 vi.mock("./delete-tag-dialog", () => ({
   DeleteTagDialog: ({
     tagId,
-    onOpenChange,
     onSuccess,
   }: {
     tagId: string | null;

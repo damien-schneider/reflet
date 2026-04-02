@@ -72,15 +72,18 @@ export function OrganizationSwitcher({
   const currentOrg = organizations?.find((org) => org?.slug === currentOrgSlug);
 
   // Prefetch organization routes for instant switching
-  useEffect(() => {
-    if (organizations) {
-      for (const org of organizations) {
-        if (org?.slug && org.slug !== currentOrgSlug) {
-          router.prefetch(`/dashboard/${org.slug}`);
+  useEffect(
+    function prefetchOrganizationRoutes() {
+      if (organizations) {
+        for (const org of organizations) {
+          if (org?.slug && org.slug !== currentOrgSlug) {
+            router.prefetch(`/dashboard/${org.slug}`);
+          }
         }
       }
-    }
-  }, [organizations, currentOrgSlug, router]);
+    },
+    [organizations, currentOrgSlug, router]
+  );
 
   const handleCreateOrg = async () => {
     if (!newOrgName.trim()) {

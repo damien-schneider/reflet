@@ -140,11 +140,14 @@ export function WorkflowStep({
     fetchBranches,
   ]);
 
-  useEffect(() => {
-    if (isConnected && needsGitHub) {
-      loadBranches();
-    }
-  }, [isConnected, needsGitHub, loadBranches]);
+  useEffect(
+    function fetchBranchesOnConnect() {
+      if (isConnected && needsGitHub) {
+        loadBranches();
+      }
+    },
+    [isConnected, needsGitHub, loadBranches]
+  );
 
   return (
     <div className="space-y-3">

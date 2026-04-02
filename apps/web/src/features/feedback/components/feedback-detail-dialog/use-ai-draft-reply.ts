@@ -26,12 +26,15 @@ export function useAIDraftReply({
   const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
 
   // Populate comment input when draft reply is ready
-  useEffect(() => {
-    if (draftReplyStatus?.aiDraftReply && isGeneratingDraft) {
-      setNewComment(draftReplyStatus.aiDraftReply);
-      setIsGeneratingDraft(false);
-    }
-  }, [draftReplyStatus?.aiDraftReply, isGeneratingDraft, setNewComment]);
+  useEffect(
+    function populateCommentWithDraftReply() {
+      if (draftReplyStatus?.aiDraftReply && isGeneratingDraft) {
+        setNewComment(draftReplyStatus.aiDraftReply);
+        setIsGeneratingDraft(false);
+      }
+    },
+    [draftReplyStatus?.aiDraftReply, isGeneratingDraft, setNewComment]
+  );
 
   const handleGenerateDraftReply = useCallback(async () => {
     if (!feedbackId) {

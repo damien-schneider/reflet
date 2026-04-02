@@ -5,7 +5,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,50 +56,47 @@ export default function BrandingSettingsPage({
   const isLogoDisabled = !isAdmin;
   const isBrandingDisabled = !(isAdmin && isProTier);
 
-  useEffect(() => {
-    if (org) {
-      setLogo(org.logo ?? null);
-      const color = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
-      setPrimaryColor(color);
-      setColorInput(color);
+  useEffect(
+    function syncOrgBranding() {
+      if (org) {
+        setLogo(org.logo ?? null);
+        const color = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
+        setPrimaryColor(color);
+        setColorInput(color);
+      }
+    },
+    [org]
+  );
+
+  const save = async (newLogo: string | null, newColor: string) => {
+    if (!(org?._id && isAdmin)) {
+      return;
     }
-  }, [org]);
+    setSaveStatus("saving");
+    try {
+      await updateOrg({
+        id: org._id,
+        logo: newLogo ?? undefined,
+        ...(isProTier ? { primaryColor: newColor } : {}),
+      });
+      setSaveStatus("saved");
+      if (savedTimerRef.current) {
+        clearTimeout(savedTimerRef.current);
+      }
+      savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch {
+      setSaveStatus("idle");
+    }
+  };
 
-  const save = useCallback(
-    async (newLogo: string | null, newColor: string) => {
-      if (!(org?._id && isAdmin)) {
-        return;
-      }
-      setSaveStatus("saving");
-      try {
-        await updateOrg({
-          id: org._id,
-          logo: newLogo ?? undefined,
-          ...(isProTier ? { primaryColor: newColor } : {}),
-        });
-        setSaveStatus("saved");
-        if (savedTimerRef.current) {
-          clearTimeout(savedTimerRef.current);
-        }
-        savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000);
-      } catch {
-        setSaveStatus("idle");
-      }
-    },
-    [org?._id, isAdmin, isProTier, updateOrg]
-  );
-
-  const debouncedSave = useCallback(
-    (newLogo: string | null, newColor: string) => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      debounceTimerRef.current = setTimeout(() => {
-        save(newLogo, newColor);
-      }, AUTOSAVE_DEBOUNCE_MS);
-    },
-    [save]
-  );
+  const debouncedSave = (newLogo: string | null, newColor: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      save(newLogo, newColor);
+    }, AUTOSAVE_DEBOUNCE_MS);
+  };
 
   const handleColorInputChange = (value: string) => {
     setColorInput(value);
@@ -124,7 +121,7 @@ export default function BrandingSettingsPage({
     save(newLogo, primaryColor);
   };
 
-  useEffect(() => {
+  useEffect(function cleanupDebounceTimers() {
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);

@@ -1,37 +1,22 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 
+import {
+  BG_CREAM,
+  instrumentSerifItalic,
+  instrumentSerifRegular,
+  interRegular,
+  interSemiBold,
+  OLIVE_100,
+  OLIVE_300,
+  OLIVE_400,
+  OLIVE_600,
+  TEXT_DARK,
+  TEXT_MUTED,
+  truncate,
+} from "./og-helpers";
+
 export const runtime = "edge";
-
-// Brand colors from globals.css
-const BG_CREAM = "#f5f2ed";
-const TEXT_DARK = "#1a1810";
-const TEXT_MUTED = "#7a7868";
-const OLIVE_600 = "#5b5b4b";
-const OLIVE_400 = "#abab9c";
-const OLIVE_300 = "#d8d8d0";
-const OLIVE_100 = "#f4f4f0";
-
-// Load brand fonts (TTF files co-located with this route)
-const instrumentSerifRegular = fetch(
-  new URL("./InstrumentSerif-Regular.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
-
-const instrumentSerifItalic = fetch(
-  new URL("./InstrumentSerif-Italic.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
-
-const interRegular = fetch(
-  new URL("./Inter-Regular.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
-
-const interSemiBold = fetch(
-  new URL("./Inter-SemiBold.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
-
-function truncate(str: string, max: number): string {
-  return str.length > max ? `${str.slice(0, max - 3)}...` : str;
-}
 
 export async function GET(request: NextRequest) {
   const [instrumentData, instrumentItalicData, interData, interSemiBoldData] =

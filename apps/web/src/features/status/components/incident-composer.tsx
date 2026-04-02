@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 interface Monitor {
   _id: Id<"statusMonitors">;
@@ -97,11 +98,12 @@ export function IncidentComposer({
           <div className="flex flex-wrap gap-1.5">
             {monitors.map((m) => (
               <button
-                className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs transition-colors",
                   selectedMonitors.has(m._id)
                     ? "border-red-500 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
                     : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                }`}
+                )}
                 key={m._id}
                 onClick={() => toggleMonitor(m._id)}
                 type="button"
@@ -117,11 +119,12 @@ export function IncidentComposer({
           <div className="flex gap-1.5">
             {severityOptions.map((opt) => (
               <button
-                className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs transition-colors",
                   severity === opt.value
                     ? opt.color
                     : "bg-muted text-muted-foreground hover:text-foreground"
-                }`}
+                )}
                 key={opt.value}
                 onClick={() => setSeverity(opt.value)}
                 type="button"

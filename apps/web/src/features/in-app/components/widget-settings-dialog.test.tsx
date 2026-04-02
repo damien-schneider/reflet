@@ -91,7 +91,6 @@ vi.mock("@/components/ui/select", () => ({
   Select: ({
     children,
     value,
-    onValueChange,
   }: {
     children: React.ReactNode;
     value: string;
@@ -157,6 +156,8 @@ const baseWidget = {
   name: "Test Widget",
   isActive: true,
   organizationId: "org1" as never,
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
   settings: {
     _id: "ws1" as never,
     _creationTime: Date.now(),
@@ -496,7 +497,7 @@ describe("WidgetSettingsDialog", () => {
   });
 
   it("calls mutation and closes dialog on Save Changes", async () => {
-    const { __mockMutationFn } = (await import("convex/react")) as {
+    const { __mockMutationFn } = (await import("convex/react")) as unknown as {
       __mockMutationFn: ReturnType<typeof vi.fn>;
     };
     const { toast } = await import("sonner");
@@ -526,7 +527,7 @@ describe("WidgetSettingsDialog", () => {
   });
 
   it("shows error toast when save fails", async () => {
-    const { __mockMutationFn } = (await import("convex/react")) as {
+    const { __mockMutationFn } = (await import("convex/react")) as unknown as {
       __mockMutationFn: ReturnType<typeof vi.fn>;
     };
     __mockMutationFn.mockRejectedValueOnce(new Error("fail"));
@@ -544,7 +545,7 @@ describe("WidgetSettingsDialog", () => {
   });
 
   it("converts empty greeting message to undefined", async () => {
-    const { __mockMutationFn } = (await import("convex/react")) as {
+    const { __mockMutationFn } = (await import("convex/react")) as unknown as {
       __mockMutationFn: ReturnType<typeof vi.fn>;
     };
     const user = userEvent.setup();
@@ -568,10 +569,10 @@ describe("WidgetSettingsDialog", () => {
   });
 
   it("shows Saving... text while save is in progress", async () => {
-    const { __mockMutationFn } = (await import("convex/react")) as {
+    const { __mockMutationFn } = (await import("convex/react")) as unknown as {
       __mockMutationFn: ReturnType<typeof vi.fn>;
     };
-    let resolveFn: () => void;
+    let resolveFn: (() => void) | undefined;
     __mockMutationFn.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         resolveFn = resolve;

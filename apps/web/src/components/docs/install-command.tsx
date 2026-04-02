@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Copy } from "@phosphor-icons/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ function InstallCommand({ command }: InstallCommandProps) {
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleCopy = useCallback(async () => {
+  const handleCopy = async () => {
     await navigator.clipboard.writeText(command);
     setCopied(true);
 
@@ -26,9 +26,9 @@ function InstallCommand({ command }: InstallCommandProps) {
     timeoutRef.current = setTimeout(() => {
       setCopied(false);
     }, COPY_FEEDBACK_DURATION_MS);
-  }, [command]);
+  };
 
-  useEffect(() => {
+  useEffect(function cleanupCopyTimeout() {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);

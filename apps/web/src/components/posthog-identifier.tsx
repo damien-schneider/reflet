@@ -23,41 +23,50 @@ export function PostHogIdentifier() {
   const lastGroupedOrgId = useRef<string | null>(null);
 
   // Identify user when session changes
-  useEffect(() => {
-    const userId = session?.user?.id;
-    if (!userId || userId === lastIdentifiedUserId.current) {
-      return;
-    }
+  useEffect(
+    function identifyUser() {
+      const userId = session?.user?.id;
+      if (!userId || userId === lastIdentifiedUserId.current) {
+        return;
+      }
 
-    posthog.identify(userId, {
-      email: session.user.email,
-      name: session.user.name,
-    });
-    lastIdentifiedUserId.current = userId;
-  }, [posthog, session?.user?.id, session?.user?.email, session?.user?.name]);
+      posthog.identify(userId, {
+        email: session.user.email,
+        name: session.user.name,
+      });
+      lastIdentifiedUserId.current = userId;
+    },
+    [posthog, session?.user?.id, session?.user?.email, session?.user?.name]
+  );
 
   // Set organization group when org context changes
-  useEffect(() => {
-    const orgId = org?._id;
-    if (!orgId || orgId === lastGroupedOrgId.current) {
-      return;
-    }
+  useEffect(
+    function setOrganizationGroup() {
+      const orgId = org?._id;
+      if (!orgId || orgId === lastGroupedOrgId.current) {
+        return;
+      }
 
-    posthog.group("organization", orgId, {
-      name: org.name,
-      slug: org.slug,
-      subscription_tier: org.subscriptionTier,
-    });
-    lastGroupedOrgId.current = orgId;
-  }, [posthog, org?._id, org?.name, org?.slug, org?.subscriptionTier]);
+      posthog.group("organization", orgId, {
+        name: org.name,
+        slug: org.slug,
+        subscription_tier: org.subscriptionTier,
+      });
+      lastGroupedOrgId.current = orgId;
+    },
+    [posthog, org?._id, org?.name, org?.slug, org?.subscriptionTier]
+  );
 
   // Clear refs when user logs out (reset handled in sign-out handlers)
-  useEffect(() => {
-    if (!session?.user?.id) {
-      lastIdentifiedUserId.current = null;
-      lastGroupedOrgId.current = null;
-    }
-  }, [session?.user?.id]);
+  useEffect(
+    function clearRefsOnLogout() {
+      if (!session?.user?.id) {
+        lastIdentifiedUserId.current = null;
+        lastGroupedOrgId.current = null;
+      }
+    },
+    [session?.user?.id]
+  );
 
   return null;
 }

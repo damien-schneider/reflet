@@ -8,6 +8,7 @@ import {
   Cube,
   FileText,
   Heartbeat,
+  Robot,
   ShieldStar,
   SignOut,
   Trash,
@@ -141,6 +142,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           href: "/dashboard/$orgSlug/intelligence",
           icon: Binoculars,
           label: "Intelligence",
+          badge: undefined,
+        },
+        {
+          href: "/dashboard/$orgSlug/autopilot",
+          icon: Robot,
+          label: "Autopilot",
           badge: undefined,
         },
         {

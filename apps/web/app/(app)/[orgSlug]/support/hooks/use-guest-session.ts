@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 
 interface GuestSession {
   guestEmail: string;
@@ -45,15 +45,15 @@ function emitChange() {
 }
 
 export function useGuestSession(orgSlug: string) {
-  const subscribe = useCallback((onStoreChange: () => void) => {
+  const subscribe = (onStoreChange: () => void) => {
     listeners.push(onStoreChange);
     return () => {
       listeners = listeners.filter((l) => l !== onStoreChange);
     };
-  }, []);
+  };
 
-  const getSnapshot = useCallback(() => readSession(orgSlug), [orgSlug]);
-  const getServerSnapshot = useCallback(() => null, []);
+  const getSnapshot = () => readSession(orgSlug);
+  const getServerSnapshot = () => null;
 
   const session = useSyncExternalStore(
     subscribe,
@@ -61,30 +61,24 @@ export function useGuestSession(orgSlug: string) {
     getServerSnapshot
   );
 
-  const saveGuestSession = useCallback(
-    (email: string) => {
-      const existing = readSession(orgSlug);
-      const guestId = existing?.guestId ?? generateGuestId();
-      const data: GuestSession = { guestId, guestEmail: email };
-      localStorage.setItem(getStorageKey(orgSlug), JSON.stringify(data));
-      emitChange();
-      return guestId;
-    },
-    [orgSlug]
-  );
+  const saveGuestSession = (email: string) => {
+    const existing = readSession(orgSlug);
+    const guestId = existing?.guestId ?? generateGuestId();
+    const data: GuestSession = { guestId, guestEmail: email };
+    localStorage.setItem(getStorageKey(orgSlug), JSON.stringify(data));
+    emitChange();
+    return guestId;
+  };
 
-  const clearGuestSession = useCallback(() => {
+  const clearGuestSession = () => {
     localStorage.removeItem(getStorageKey(orgSlug));
     emitChange();
-  }, [orgSlug]);
+  };
 
-  return useMemo(
-    () => ({
-      guestId: session?.guestId ?? null,
-      guestEmail: session?.guestEmail ?? null,
-      saveGuestSession,
-      clearGuestSession,
-    }),
-    [session, saveGuestSession, clearGuestSession]
-  );
+  return {
+    guestId: session?.guestId ?? null,
+    guestEmail: session?.guestEmail ?? null,
+    saveGuestSession,
+    clearGuestSession,
+  };
 }

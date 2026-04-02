@@ -120,91 +120,99 @@ export function ReleaseFeedbackSection({
   });
 
   // Auto-link matched feedback when AI returns results
-  useEffect(() => {
-    if (
-      matches.length === 0 ||
-      !releaseId ||
-      isMatching ||
-      autoLinkInProgress.current
-    ) {
-      return;
-    }
-
-    const linkedIds = new Set(
-      (releaseData?.feedbackItems ?? [])
-        .filter((f): f is NonNullable<typeof f> => f !== null)
-        .map((f) => f._id)
-    );
-
-    const toLink = getMatchesToAutoLink(matches, linkedIds);
-    if (toLink.length === 0) {
-      clearMatches();
-      return;
-    }
-
-    let cancelled = false;
-    autoLinkInProgress.current = true;
-    const statusToSet =
-      linkStatusRef.current === "keep" ? undefined : linkStatusRef.current;
-
-    (async () => {
-      const results = await Promise.allSettled(
-        toLink.map((feedbackId) =>
-          linkFeedback({
-            releaseId,
-            feedbackId: feedbackId as Id<"feedback">,
-            newStatus: statusToSet,
-          })
-        )
-      );
-
-      if (cancelled) {
-        autoLinkInProgress.current = false;
+  useEffect(
+    function autoLinkMatchedFeedback() {
+      if (
+        matches.length === 0 ||
+        !releaseId ||
+        isMatching ||
+        autoLinkInProgress.current
+      ) {
         return;
       }
 
-      const succeeded = results.filter((r) => r.status === "fulfilled").length;
-      const failed = results.filter((r) => r.status === "rejected").length;
+      const linkedIds = new Set(
+        (releaseData?.feedbackItems ?? [])
+          .filter((f): f is NonNullable<typeof f> => f !== null)
+          .map((f) => f._id)
+      );
 
-      if (succeeded > 0) {
-        toast.success(
-          `Auto-linked ${succeeded} related feedback item${succeeded === 1 ? "" : "s"}`
-        );
-      }
-      if (failed > 0) {
-        toast.error(
-          `Failed to auto-link ${failed} feedback item${failed === 1 ? "" : "s"}`
-        );
+      const toLink = getMatchesToAutoLink(matches, linkedIds);
+      if (toLink.length === 0) {
+        clearMatches();
+        return;
       }
 
-      clearMatches();
-      autoLinkInProgress.current = false;
-    })();
+      let cancelled = false;
+      autoLinkInProgress.current = true;
+      const statusToSet =
+        linkStatusRef.current === "keep" ? undefined : linkStatusRef.current;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [matches, releaseId, isMatching, releaseData, linkFeedback, clearMatches]);
+      (async () => {
+        const results = await Promise.allSettled(
+          toLink.map((feedbackId) =>
+            linkFeedback({
+              releaseId,
+              feedbackId: feedbackId as Id<"feedback">,
+              newStatus: statusToSet,
+            })
+          )
+        );
+
+        if (cancelled) {
+          autoLinkInProgress.current = false;
+          return;
+        }
+
+        const succeeded = results.filter(
+          (r) => r.status === "fulfilled"
+        ).length;
+        const failed = results.filter((r) => r.status === "rejected").length;
+
+        if (succeeded > 0) {
+          toast.success(
+            `Auto-linked ${succeeded} related feedback item${succeeded === 1 ? "" : "s"}`
+          );
+        }
+        if (failed > 0) {
+          toast.error(
+            `Failed to auto-link ${failed} feedback item${failed === 1 ? "" : "s"}`
+          );
+        }
+
+        clearMatches();
+        autoLinkInProgress.current = false;
+      })();
+
+      return () => {
+        cancelled = true;
+      };
+    },
+    [matches, releaseId, isMatching, releaseData, linkFeedback, clearMatches]
+  );
 
   // Show toast for matching errors and zero-match results
-  useEffect(() => {
-    if (matchError) {
-      toast.error(`Failed to find related feedback: ${matchError}`);
+  useEffect(
+    function showMatchingResultToasts() {
+      if (matchError) {
+        toast.error(`Failed to find related feedback: ${matchError}`);
+        wasMatchingRef.current = false;
+        return;
+      }
+
+      if (isMatching) {
+        wasMatchingRef.current = true;
+        return;
+      }
+
+      // Matching just completed (was matching, now isn't)
+      if (wasMatchingRef.current && !isMatching && matches.length === 0) {
+        toast.info("No related feedback found for this release");
+      }
       wasMatchingRef.current = false;
-      return;
-    }
-
-    if (isMatching) {
-      wasMatchingRef.current = true;
-      return;
-    }
-
-    // Matching just completed (was matching, now isn't)
-    if (wasMatchingRef.current && !isMatching && matches.length === 0) {
-      toast.info("No related feedback found for this release");
-    }
-    wasMatchingRef.current = false;
-  }, [matchError, isMatching, matches.length]);
+    },
+    [matchError, isMatching, matches.length]
+  );
 
   const handleTriggerMatching = useCallback(() => {
     if (!availableFeedback || availableFeedback.length === 0) {
@@ -342,26 +350,29 @@ function useAutoTriggerMatching({
   setHasAutoTriggered,
   matchFeedback,
 }: AutoTriggerParams) {
-  useEffect(() => {
-    const canAutoTrigger =
-      autoTriggerMatching &&
-      !hasAutoTriggered &&
-      description.trim() &&
-      commits.length > 0 &&
-      availableFeedback &&
-      availableFeedback.length > 0;
+  useEffect(
+    function autoTriggerFeedbackMatching() {
+      const canAutoTrigger =
+        autoTriggerMatching &&
+        !hasAutoTriggered &&
+        description.trim() &&
+        commits.length > 0 &&
+        availableFeedback &&
+        availableFeedback.length > 0;
 
-    if (canAutoTrigger) {
-      setHasAutoTriggered(true);
-      matchFeedback(description, commits, availableFeedback);
-    }
-  }, [
-    autoTriggerMatching,
-    hasAutoTriggered,
-    description,
-    commits,
-    availableFeedback,
-    setHasAutoTriggered,
-    matchFeedback,
-  ]);
+      if (canAutoTrigger) {
+        setHasAutoTriggered(true);
+        matchFeedback(description, commits, availableFeedback);
+      }
+    },
+    [
+      autoTriggerMatching,
+      hasAutoTriggered,
+      description,
+      commits,
+      availableFeedback,
+      setHasAutoTriggered,
+      matchFeedback,
+    ]
+  );
 }

@@ -11,9 +11,12 @@ export default function AIPage({
   const { orgSlug } = use(params);
   const router = useRouter();
 
-  useEffect(() => {
-    router.replace(`/dashboard/${orgSlug}/project`);
-  }, [orgSlug, router]);
+  useEffect(
+    function redirectToProject() {
+      router.replace(`/dashboard/${orgSlug}/project`);
+    },
+    [orgSlug, router]
+  );
 
   return null;
 }

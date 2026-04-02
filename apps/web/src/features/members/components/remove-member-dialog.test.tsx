@@ -113,7 +113,7 @@ describe("RemoveMemberDialog", () => {
     );
     // Both buttons have text, get the destructive one
     const buttons = screen.getAllByText("Remove member");
-    await user.click(buttons.at(-1));
+    await user.click(buttons.at(-1)!);
     expect(onConfirm).toHaveBeenCalled();
   });
 

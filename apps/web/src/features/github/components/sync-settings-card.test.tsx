@@ -269,7 +269,6 @@ describe("SyncSettingsSection", () => {
 
   it("shows generic error with dismiss button", async () => {
     const onClearError = vi.fn();
-    const _user = userEvent.setup();
     render(
       <SyncSettingsSection
         {...defaultProps}

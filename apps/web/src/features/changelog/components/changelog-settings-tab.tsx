@@ -89,11 +89,14 @@ export function ChangelogSettingsTab({
     fetchBranchesAction,
   ]);
 
-  useEffect(() => {
-    if (isGitHubConnected) {
-      loadBranches();
-    }
-  }, [isGitHubConnected, loadBranches]);
+  useEffect(
+    function loadBranchesOnConnect() {
+      if (isGitHubConnected) {
+        loadBranches();
+      }
+    },
+    [isGitHubConnected, loadBranches]
+  );
 
   const handleUpdate = useCallback(
     async (updates: Record<string, unknown>) => {

@@ -485,7 +485,7 @@ describe("CommentItem", () => {
         />
       );
       const buttons = screen.getAllByText("Reply");
-      const replySubmitButton = buttons.at(-1);
+      const replySubmitButton = buttons.at(-1)!;
       fireEvent.click(replySubmitButton);
       expect(defaultProps.onSubmitReply).toHaveBeenCalledWith("comment1");
     });

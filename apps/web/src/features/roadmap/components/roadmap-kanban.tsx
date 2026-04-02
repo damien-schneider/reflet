@@ -2,7 +2,7 @@ import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -66,7 +66,7 @@ export function RoadmapKanban({
   const createStatus = useMutation(api.organizations.statuses.create);
 
   // Build lane configuration from organization statuses
-  const laneConfigs = useMemo((): LaneConfig[] => {
+  const laneConfigs: LaneConfig[] = (() => {
     if (!organizationStatuses || organizationStatuses.length === 0) {
       return [];
     }
@@ -79,10 +79,10 @@ export function RoadmapKanban({
       isDoneStatus: status.name.toLowerCase() === "completed",
       laneOrder: status.order,
     }));
-  }, [organizationStatuses]);
+  })();
 
   // Transform data for display - group by organizationStatusId
-  const itemsByLane = useMemo(() => {
+  const itemsByLane = (() => {
     if (!roadmapData) {
       const empty: Record<string, RoadmapItemData[]> = { backlog: [] };
       return empty;
@@ -127,51 +127,51 @@ export function RoadmapKanban({
     }
 
     return grouped;
-  }, [roadmapData, laneConfigs]);
+  })();
 
-  const handleDragStart = useCallback(
-    (e: React.DragEvent<HTMLDivElement>, item: RoadmapItemData) => {
-      setDraggingItemId(item._id);
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData(
-        "application/json",
-        JSON.stringify({ itemId: item._id })
-      );
-    },
-    []
-  );
+  const handleDragStart = (
+    e: React.DragEvent<HTMLDivElement>,
+    item: RoadmapItemData
+  ) => {
+    setDraggingItemId(item._id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({ itemId: item._id })
+    );
+  };
 
-  const handleDragEnd = useCallback(() => {
+  const handleDragEnd = () => {
     setDraggingItemId(null);
-  }, []);
+  };
 
-  const handleDrop = useCallback(
-    async (e: React.DragEvent<HTMLDivElement>, targetLane: string) => {
-      e.preventDefault();
-      const currentDraggedId = draggingItemId;
-      setDraggingItemId(null);
+  const handleDrop = async (
+    e: React.DragEvent<HTMLDivElement>,
+    targetLane: string
+  ) => {
+    e.preventDefault();
+    const currentDraggedId = draggingItemId;
+    setDraggingItemId(null);
 
-      if (!(isAdmin && currentDraggedId)) {
-        return;
-      }
+    if (!(isAdmin && currentDraggedId)) {
+      return;
+    }
 
-      // If dropping into backlog, remove statusId
-      if (targetLane === "backlog") {
-        await updateFeedbackStatus({
-          feedbackId: currentDraggedId,
-          organizationStatusId: undefined,
-        });
-        return;
-      }
-
-      // Update feedback with new statusId (lane ID is an organization status ID)
+    // If dropping into backlog, remove statusId
+    if (targetLane === "backlog") {
       await updateFeedbackStatus({
         feedbackId: currentDraggedId,
-        organizationStatusId: toId("organizationStatuses", targetLane),
+        organizationStatusId: undefined,
       });
-    },
-    [isAdmin, draggingItemId, updateFeedbackStatus]
-  );
+      return;
+    }
+
+    // Update feedback with new statusId (lane ID is an organization status ID)
+    await updateFeedbackStatus({
+      feedbackId: currentDraggedId,
+      organizationStatusId: toId("organizationStatuses", targetLane),
+    });
+  };
 
   // Handle creating a new column (board status)
   const handleCreateColumn = async () => {
@@ -199,7 +199,7 @@ export function RoadmapKanban({
   };
 
   // Build lane display config including backlog
-  const allLaneConfigs = useMemo(() => {
+  const allLaneConfigs = (() => {
     const backlogConfig: LaneConfig = {
       id: "backlog",
       label: "Backlog",
@@ -209,7 +209,7 @@ export function RoadmapKanban({
       laneOrder: -1,
     };
     return isAdmin ? [backlogConfig, ...laneConfigs] : laneConfigs;
-  }, [isAdmin, laneConfigs]);
+  })();
 
   // Calculate grid columns
   const gridColumns = isAdmin

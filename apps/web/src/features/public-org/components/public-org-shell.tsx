@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H2, Text as TypographyText } from "@/components/ui/typography";
 import { PublicViewToolbar } from "@/features/feedback/components/public-view-toolbar";
 import { generateColorCssVars, generateColorPalette } from "@/lib/color-utils";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_PRIMARY_COLOR = "#5c6d4f";
 
@@ -72,16 +73,19 @@ export function PublicOrgShell({
     statusAggregation !== undefined &&
     statusAggregation?.status !== "no_monitors";
 
-  useEffect(() => {
-    router.prefetch(`${basePath}/`);
-    router.prefetch(`${basePath}/changelog`);
-    if (supportEnabled) {
-      router.prefetch(`${basePath}/support`);
-    }
-    if (statusEnabled) {
-      router.prefetch(`${basePath}/status`);
-    }
-  }, [router, basePath, supportEnabled, statusEnabled]);
+  useEffect(
+    function prefetchPublicRoutes() {
+      router.prefetch(`${basePath}/`);
+      router.prefetch(`${basePath}/changelog`);
+      if (supportEnabled) {
+        router.prefetch(`${basePath}/support`);
+      }
+      if (statusEnabled) {
+        router.prefetch(`${basePath}/status`);
+      }
+    },
+    [router, basePath, supportEnabled, statusEnabled]
+  );
 
   const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
   const palette = generateColorPalette(primaryColor);
@@ -152,22 +156,24 @@ export function PublicOrgShell({
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background md:hidden">
         <div className="flex items-center justify-around">
           <Link
-            className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
+            className={cn(
+              "flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors",
               currentTab === "feedback"
                 ? "font-medium text-olive-600"
                 : "text-muted-foreground"
-            }`}
+            )}
             href={basePath || "/"}
           >
             <MessageSquare className="h-5 w-5" />
             Feedback
           </Link>
           <Link
-            className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
+            className={cn(
+              "flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors",
               currentTab === "changelog"
                 ? "font-medium text-olive-600"
                 : "text-muted-foreground"
-            }`}
+            )}
             href={`${basePath}/changelog`}
           >
             <FileText className="h-5 w-5" />
@@ -175,11 +181,12 @@ export function PublicOrgShell({
           </Link>
           {statusEnabled && (
             <Link
-              className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
+              className={cn(
+                "flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors",
                 currentTab === "status"
                   ? "font-medium text-olive-600"
                   : "text-muted-foreground"
-              }`}
+              )}
               href={`${basePath}/status`}
             >
               <Heartbeat className="h-5 w-5" />
@@ -188,11 +195,12 @@ export function PublicOrgShell({
           )}
           {supportEnabled && (
             <Link
-              className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
+              className={cn(
+                "flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors",
                 currentTab === "support"
                   ? "font-medium text-olive-600"
                   : "text-muted-foreground"
-              }`}
+              )}
               href={`${basePath}/support`}
             >
               <ChatCircle className="h-5 w-5" />

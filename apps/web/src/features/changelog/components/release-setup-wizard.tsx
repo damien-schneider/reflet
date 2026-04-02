@@ -92,17 +92,20 @@ export function ReleaseSetupWizard({
   );
 
   // Initialize targetBranch from the GitHub connection's default branch
-  useEffect(() => {
-    if (githubConnection?.repositoryDefaultBranch) {
-      setConfig((prev) => ({
-        ...prev,
-        targetBranch:
-          prev.targetBranch === "main"
-            ? (githubConnection.repositoryDefaultBranch ?? "main")
-            : prev.targetBranch,
-      }));
-    }
-  }, [githubConnection?.repositoryDefaultBranch]);
+  useEffect(
+    function initTargetBranchFromGitHub() {
+      if (githubConnection?.repositoryDefaultBranch) {
+        setConfig((prev) => ({
+          ...prev,
+          targetBranch:
+            prev.targetBranch === "main"
+              ? (githubConnection.repositoryDefaultBranch ?? "main")
+              : prev.targetBranch,
+        }));
+      }
+    },
+    [githubConnection?.repositoryDefaultBranch]
+  );
 
   const updateConfig = (partial: Partial<WizardConfig>) => {
     setConfig((prev) => ({ ...prev, ...partial }));

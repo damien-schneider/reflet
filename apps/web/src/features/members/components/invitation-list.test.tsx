@@ -42,7 +42,6 @@ vi.mock("@/components/ui/button", () => ({
     children,
     onClick,
     disabled,
-    ...rest
   }: {
     children: React.ReactNode;
     onClick?: () => void;
@@ -71,7 +70,7 @@ const makeInvitation = (
     lastSentAt: number;
   }> = {}
 ) => ({
-  _id: overrides._id ?? ("inv1" as never),
+  _id: (overrides._id ?? "inv1") as never,
   _creationTime: overrides._creationTime ?? Date.now() - 120_000,
   email: overrides.email ?? "invite@example.com",
   role: overrides.role ?? ("member" as const),

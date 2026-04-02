@@ -8,7 +8,7 @@ const TABLET_MAX = 1024;
 export function useIsTablet(): boolean {
   const [isTablet, setIsTablet] = useState<boolean>(false);
 
-  useEffect(() => {
+  useEffect(function trackTabletBreakpoint() {
     const mql = window.matchMedia(
       `(min-width: ${TABLET_MIN}px) and (max-width: ${TABLET_MAX - 1}px)`
     );

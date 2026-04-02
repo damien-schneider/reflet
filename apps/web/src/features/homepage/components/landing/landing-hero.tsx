@@ -17,6 +17,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { H1, Lead } from "@/components/ui/typography";
 
+import { cn } from "@/lib/utils";
+
 import { METRICS } from "./landing-data";
 
 export default function LandingHero() {
@@ -103,7 +105,7 @@ export default function LandingHero() {
         <div className="hero-animate hero-fade-in hero-delay-5 flex flex-wrap gap-8 sm:gap-12">
           {METRICS.map((m, i) => (
             <div
-              className={`hero-animate hero-fade-up hero-delay-${6 + i}`}
+              className={cn("hero-animate hero-fade-up", `hero-delay-${6 + i}`)}
               key={m.label}
             >
               <span className="block font-display text-[2rem] text-olive-950 tracking-[-0.02em] sm:text-[2.5rem] dark:text-olive-100">

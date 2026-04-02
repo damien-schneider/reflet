@@ -192,7 +192,7 @@ export function ConversationList({
 }: ConversationListProps) {
   const activeRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useEffect(function scrollActiveItemIntoView() {
     activeRef.current?.scrollIntoView({ block: "nearest" });
   }, []);
 

@@ -4,6 +4,7 @@ import { Check, Crown, Sparkle, Warning } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { H3, Muted, Text } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 import type {
   BillingInterval,
@@ -30,7 +31,10 @@ function FeatureItem({
     <li className="flex items-center gap-2 text-sm">
       {included ? (
         <Check
-          className={`h-4 w-4 shrink-0 ${highlight ? "text-green-500" : "text-muted-foreground"}`}
+          className={cn(
+            "h-4 w-4 shrink-0",
+            highlight ? "text-green-500" : "text-muted-foreground"
+          )}
           weight="bold"
         />
       ) : (
@@ -84,7 +88,10 @@ function PriceDisplay({
         <span className="text-muted-foreground">/mo</span>
         {price.savings && (
           <Badge
-            className={`ml-2 transition-opacity ${showYearlyDetails ? "opacity-100" : "opacity-0"}`}
+            className={cn(
+              "ml-2 transition-opacity",
+              showYearlyDetails ? "opacity-100" : "opacity-0"
+            )}
             color="green"
           >
             Save {price.currency}
@@ -97,9 +104,10 @@ function PriceDisplay({
         )}
       </div>
       <span
-        className={`absolute bottom-0 left-0 text-muted-foreground text-sm transition-opacity ${
+        className={cn(
+          "absolute bottom-0 left-0 text-muted-foreground text-sm transition-opacity",
           isYearly ? "opacity-100" : "opacity-0"
-        }`}
+        )}
       >
         Billed yearly ({price.currency}
         {price.amount})
@@ -228,9 +236,10 @@ export function PlanCard({
 
   return (
     <div
-      className={`relative flex flex-col rounded-xl border bg-card p-6 text-card-foreground shadow-sm ${
-        plan.highlighted ? "ring-2 ring-olive-600 dark:ring-olive-500" : ""
-      }`}
+      className={cn(
+        "relative flex flex-col rounded-xl border bg-card p-6 text-card-foreground shadow-sm",
+        plan.highlighted && "ring-2 ring-olive-600 dark:ring-olive-500"
+      )}
     >
       {plan.badge && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">

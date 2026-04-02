@@ -154,7 +154,7 @@ describe("MarkdownRenderer", () => {
   });
 
   it("skips setContent when editor is null", () => {
-    vi.mocked(useEditor).mockReturnValueOnce(null);
+    vi.mocked(useEditor).mockReturnValueOnce(null as never);
     render(<MarkdownRenderer content="test" />);
     expect(mockSetContent).not.toHaveBeenCalled();
   });

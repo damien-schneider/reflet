@@ -40,7 +40,7 @@ const isSortOption = (value: string): value is SortOption =>
   SORT_OPTIONS.some((o) => o === value);
 
 import {
-  feedbackMagnifyingGlassAtom,
+  feedbackSearchAtom,
   feedbackSortAtom,
   hideCompletedAtom,
   selectedStatusIdsAtom,
@@ -68,7 +68,7 @@ export function FeedbackFunnels({
 }: FeedbackFunnelsProps) {
   const [filterOpen, setFunnelOpen] = useState(false);
 
-  const [search, setMagnifyingGlass] = useAtom(feedbackMagnifyingGlassAtom);
+  const [search, setSearch] = useAtom(feedbackSearchAtom);
   const [sortBy, setSortBy] = useAtom(feedbackSortAtom);
   const [selectedStatusIds, setSelectedStatusIds] = useAtom(
     selectedStatusIdsAtom
@@ -116,7 +116,7 @@ export function FeedbackFunnels({
             <MagnifyingGlass className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="pl-9"
-              onChange={(e) => setMagnifyingGlass(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="MagnifyingGlass feedback..."
               type="search"
               value={search}

@@ -50,13 +50,16 @@ export default function GeneralSettingsPage({
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
 
-  useEffect(() => {
-    if (org) {
-      setName(org.name);
-      setSlug(org.slug);
-      setIsPublic(org.isPublic ?? false);
-    }
-  }, [org]);
+  useEffect(
+    function syncOrgSettings() {
+      if (org) {
+        setName(org.name);
+        setSlug(org.slug);
+        setIsPublic(org.isPublic ?? false);
+      }
+    },
+    [org]
+  );
 
   if (!org) {
     return (

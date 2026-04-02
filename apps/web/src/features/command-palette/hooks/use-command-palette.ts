@@ -50,17 +50,20 @@ export function useCommandPalette({
     [buildHref, router, setIsOpen]
   );
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
-        event.preventDefault();
-        setIsOpen((prev) => !prev);
-      }
-    };
+  useEffect(
+    function registerKeyboardShortcut() {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+          event.preventDefault();
+          setIsOpen((prev) => !prev);
+        }
+      };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [setIsOpen]);
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    },
+    [setIsOpen]
+  );
 
   return {
     isOpen,

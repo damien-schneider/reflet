@@ -57,8 +57,6 @@ vi.mock("motion/react", () => ({
       children,
       className,
       onClick,
-      animate,
-      ...rest
     }: {
       children?: React.ReactNode;
       className?: string;

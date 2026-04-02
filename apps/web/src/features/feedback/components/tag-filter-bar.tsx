@@ -13,9 +13,9 @@ import {
   ContextListTrigger,
 } from "@/components/ui/context-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { TriagePulse } from "@/features/feedback/components/triage-pulse";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag-dialog";
 import { TagFormPopover } from "@/features/tags/components/tag-form-popover";
-import { TriagePulse } from "./triage-pulse";
 
 export interface Tag {
   _id: Id<"tags">;

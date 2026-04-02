@@ -4,7 +4,7 @@ import { GithubLogo, MagicWand } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useAction, useMutation, useQuery } from "convex/react";
 import Link from "next/link";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { H1, Muted, Text } from "@/components/ui/typography";
@@ -60,64 +60,62 @@ export default function ReleaseSettingsPage({
   const orgId = org?._id;
   const isGitHubConnected = githubStatus?.isConnected === true;
 
-  const loadBranches = useCallback(async () => {
-    if (
-      !(githubConnection?.installationId && githubConnection.repositoryFullName)
-    ) {
-      return;
-    }
-
-    setIsLoadingBranches(true);
-    try {
-      const { token } = await getToken({
-        installationId: githubConnection.installationId,
-      });
-      const result = await fetchBranchesAction({
-        installationToken: token,
-        repositoryFullName: githubConnection.repositoryFullName,
-      });
-      setBranches(result);
-    } catch {
-      setBranches([]);
-    } finally {
-      setIsLoadingBranches(false);
-    }
-  }, [
-    githubConnection?.installationId,
-    githubConnection?.repositoryFullName,
-    getToken,
-    fetchBranchesAction,
-  ]);
-
-  useEffect(() => {
-    if (isGitHubConnected) {
-      loadBranches();
-    }
-  }, [isGitHubConnected, loadBranches]);
-
-  const handleUpdate = useCallback(
-    async (updates: Record<string, unknown>) => {
-      if (!orgId) {
+  useEffect(
+    function syncBranches() {
+      if (!isGitHubConnected) {
         return;
       }
-      setIsSaving(true);
-      try {
-        await updateOrg({
-          id: orgId,
-          changelogSettings: {
-            ...settings,
-            ...updates,
-          },
-        });
-        toast.success("Settings saved");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to save");
-      } finally {
-        setIsSaving(false);
+      const installationId = githubConnection?.installationId;
+      const repositoryFullName = githubConnection?.repositoryFullName;
+      if (!(installationId && repositoryFullName)) {
+        return;
       }
+      const run = async () => {
+        setIsLoadingBranches(true);
+        try {
+          const { token } = await getToken({ installationId });
+          const result = await fetchBranchesAction({
+            installationToken: token,
+            repositoryFullName,
+          });
+          setBranches(result);
+        } catch {
+          setBranches([]);
+        } finally {
+          setIsLoadingBranches(false);
+        }
+      };
+      run();
     },
-    [orgId, settings, updateOrg]
+    [
+      isGitHubConnected,
+      githubConnection?.installationId,
+      githubConnection?.repositoryFullName,
+      getToken,
+      fetchBranchesAction,
+    ]
   );
+
+  const handleUpdate = async (updates: Record<string, unknown>) => {
+    if (!orgId) {
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await updateOrg({
+        id: orgId,
+        changelogSettings: {
+          ...settings,
+          ...updates,
+        },
+      });
+      toast.success("Settings saved");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (!(org && orgId)) {
     return null;

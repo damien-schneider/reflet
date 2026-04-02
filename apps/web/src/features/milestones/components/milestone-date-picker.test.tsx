@@ -17,7 +17,6 @@ vi.mock("@/components/ui/button", () => ({
   Button: ({
     children,
     onClick,
-    ...rest
   }: {
     children: React.ReactNode;
     onClick?: () => void;
@@ -32,7 +31,6 @@ vi.mock("@/components/ui/button", () => ({
 vi.mock("@/components/ui/calendar", () => ({
   Calendar: ({
     onSelect,
-    selected,
   }: {
     onSelect: (day: Date | undefined) => void;
     selected?: Date;
@@ -53,8 +51,6 @@ vi.mock("@/components/ui/calendar", () => ({
 vi.mock("@/components/ui/popover", () => ({
   Popover: ({
     children,
-    open,
-    onOpenChange,
   }: {
     children: React.ReactNode;
     open: boolean;

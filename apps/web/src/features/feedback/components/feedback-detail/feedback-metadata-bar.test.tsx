@@ -46,16 +46,6 @@ vi.mock("@/hooks/use-auth-guard", () => ({
   }),
 }));
 
-let _capturedVoteHandler: ((voteType: "upvote" | "downvote") => void) | null =
-  null;
-let _capturedStatusHandler: ((statusId: string | null) => void) | null = null;
-let _capturedAssigneeHandler: ((id: string) => void) | null = null;
-let _capturedTagHandler: ((tagId: string, isApplied: boolean) => void) | null =
-  null;
-let _capturedSubscriptionHandler: (() => void) | null = null;
-let _capturedDeadlineOnChange: ((date: Date) => void) | null = null;
-let _capturedDeadlineOnClear: (() => void) | null = null;
-
 vi.mock("./ai-analysis-display", () => ({
   AiAnalysisDisplay: () => <div data-testid="ai-analysis" />,
 }));
@@ -69,7 +59,6 @@ vi.mock("./assignee-display", () => ({
     isAdmin: boolean;
     members?: unknown;
   }) => {
-    _capturedAssigneeHandler = onAssigneeChange;
     return (
       <div data-testid="assignee-display">
         <button onClick={() => onAssigneeChange("user-123")} type="button">
@@ -98,8 +87,6 @@ vi.mock("./deadline-display", () => ({
     onChange: (date: Date) => void;
     onClear: () => void;
   }) => {
-    _capturedDeadlineOnChange = onChange;
-    _capturedDeadlineOnClear = onClear;
     return (
       <div data-testid="deadline-display">
         <button onClick={() => onChange(new Date(2027, 0, 1))} type="button">
@@ -123,7 +110,6 @@ vi.mock("./status-display", () => ({
     organizationStatuses?: unknown;
     statusId?: unknown;
   }) => {
-    _capturedStatusHandler = onStatusChange;
     return (
       <div data-testid="status-display">
         <button onClick={() => onStatusChange("status-1")} type="button">
@@ -144,7 +130,6 @@ vi.mock("./subscribe-button", () => ({
     isSubscribed?: boolean;
     onToggle: () => void;
   }) => {
-    _capturedSubscriptionHandler = onToggle;
     return (
       <div data-testid="subscribe-button">
         <button onClick={onToggle} type="button">
@@ -165,7 +150,6 @@ vi.mock("./tag-display", () => ({
     isAdmin: boolean;
     validTags: unknown[];
   }) => {
-    _capturedTagHandler = onToggleTag;
     return (
       <div data-testid="tag-display">
         <button onClick={() => onToggleTag("tag-1", false)} type="button">
@@ -187,7 +171,6 @@ vi.mock("./vote-buttons", () => ({
     userVoteType: "upvote" | "downvote" | null;
     voteCount: number;
   }) => {
-    _capturedVoteHandler = onVote;
     return (
       <div data-testid="vote-buttons">
         <button onClick={() => onVote("upvote")} type="button">
@@ -253,36 +236,25 @@ describe("FeedbackMetadataBar", () => {
     expect(screen.queryByTestId("copy-for-agents")).not.toBeInTheDocument();
   });
 
-  it("shows Details toggle when admin", () => {
+  it("renders AI analysis display when admin", () => {
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    expect(screen.getByText("Details")).toBeInTheDocument();
-  });
-
-  it("shows Details toggle when AI fields are present (non-admin)", () => {
-    render(
-      <FeedbackMetadataBar {...baseProps} aiPriority="high" isAdmin={false} />
-    );
-    expect(screen.getByText("Details")).toBeInTheDocument();
-  });
-
-  it("does not show Details toggle when non-admin and no AI fields", () => {
-    render(<FeedbackMetadataBar {...baseProps} isAdmin={false} />);
-    expect(screen.queryByText("Details")).not.toBeInTheDocument();
-  });
-
-  it("renders expanded details with AI analysis when Details is clicked", () => {
-    render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     expect(screen.getByTestId("ai-analysis")).toBeInTheDocument();
+  });
+
+  it("renders assignee display", () => {
+    render(<FeedbackMetadataBar {...baseProps} isAdmin />);
     expect(screen.getByTestId("assignee-display")).toBeInTheDocument();
+  });
+
+  it("renders deadline display when admin", () => {
+    render(<FeedbackMetadataBar {...baseProps} isAdmin />);
     expect(screen.getByTestId("deadline-display")).toBeInTheDocument();
   });
 
-  it("does not show deadline inside details for non-admin", () => {
+  it("does not show deadline for non-admin", () => {
     render(
       <FeedbackMetadataBar {...baseProps} aiPriority="medium" isAdmin={false} />
     );
-    fireEvent.click(screen.getByText("Details"));
     expect(screen.queryByTestId("deadline-display")).not.toBeInTheDocument();
   });
 
@@ -317,8 +289,7 @@ describe("FeedbackMetadataBar", () => {
         timeEstimate="2 hours"
       />
     );
-    // Should render and show Details toggle
-    expect(screen.getByText("Details")).toBeInTheDocument();
+    expect(screen.getByTestId("ai-analysis")).toBeInTheDocument();
   });
 
   it("renders with assignee data", () => {
@@ -334,8 +305,6 @@ describe("FeedbackMetadataBar", () => {
         isAdmin
       />
     );
-    // Expand details section to show assignee
-    fireEvent.click(screen.getByText("Details"));
     expect(screen.getByTestId("assignee-display")).toBeInTheDocument();
   });
 
@@ -343,7 +312,7 @@ describe("FeedbackMetadataBar", () => {
     render(
       <FeedbackMetadataBar {...baseProps} deadline={Date.now() + 86_400_000} />
     );
-    expect(screen.getByText("Details")).toBeInTheDocument();
+    expect(screen.getByTestId("ai-analysis")).toBeInTheDocument();
   });
 
   it("renders with user vote type", () => {
@@ -356,7 +325,7 @@ describe("FeedbackMetadataBar", () => {
     expect(screen.getByTestId("vote-buttons")).toBeInTheDocument();
   });
 
-  it("hides deadline-display inside details for non-admin with AI fields", () => {
+  it("hides deadline for non-admin with AI fields", () => {
     render(
       <FeedbackMetadataBar
         {...baseProps}
@@ -365,18 +334,16 @@ describe("FeedbackMetadataBar", () => {
         isAdmin={false}
       />
     );
-    fireEvent.click(screen.getByText("Details"));
     expect(screen.getByTestId("ai-analysis")).toBeInTheDocument();
     expect(screen.queryByTestId("deadline-display")).not.toBeInTheDocument();
   });
 
-  it("shows deadline-display inside details for admin", () => {
+  it("shows deadline for admin", () => {
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     expect(screen.getByTestId("deadline-display")).toBeInTheDocument();
   });
 
-  it("does not render Details when non-admin and no AI/manual fields", () => {
+  it("renders all sub-components when non-admin without AI fields", () => {
     render(
       <FeedbackMetadataBar
         {...baseProps}
@@ -389,7 +356,7 @@ describe("FeedbackMetadataBar", () => {
         timeEstimate={undefined}
       />
     );
-    expect(screen.queryByText("Details")).not.toBeInTheDocument();
+    expect(screen.getByTestId("vote-buttons")).toBeInTheDocument();
   });
 
   it("renders with empty tags array", () => {
@@ -468,7 +435,6 @@ describe("FeedbackMetadataBar", () => {
     const assignMock = vi.fn();
     mockUseMutation.mockReturnValue(assignMock);
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     fireEvent.click(screen.getByText("assign"));
     expect(assignMock).toHaveBeenCalled();
   });
@@ -477,7 +443,6 @@ describe("FeedbackMetadataBar", () => {
     const assignMock = vi.fn();
     mockUseMutation.mockReturnValue(assignMock);
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     fireEvent.click(screen.getByText("unassign"));
     expect(assignMock).toHaveBeenCalled();
   });
@@ -510,7 +475,6 @@ describe("FeedbackMetadataBar", () => {
     const updateAnalysisMock = vi.fn();
     mockUseMutation.mockReturnValue(updateAnalysisMock);
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     fireEvent.click(screen.getByText("set-deadline"));
     expect(updateAnalysisMock).toHaveBeenCalled();
   });
@@ -519,7 +483,6 @@ describe("FeedbackMetadataBar", () => {
     const updateAnalysisMock = vi.fn();
     mockUseMutation.mockReturnValue(updateAnalysisMock);
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     fireEvent.click(screen.getByText("clear-deadline"));
     expect(updateAnalysisMock).toHaveBeenCalled();
   });

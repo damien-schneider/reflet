@@ -46,42 +46,45 @@ export function useKeyboardShortcuts(
   const shortcutsRef = useRef(shortcuts);
   shortcutsRef.current = shortcuts;
 
-  useEffect(() => {
-    if (!enabled) {
-      return;
-    }
+  useEffect(
+    function registerKeyboardShortcuts() {
+      if (!enabled) {
+        return;
+      }
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      for (const [shortcutKey, handler] of Object.entries(
-        shortcutsRef.current
-      )) {
-        const parsed = parseShortcut(shortcutKey);
+      const handleKeyDown = (event: KeyboardEvent) => {
+        for (const [shortcutKey, handler] of Object.entries(
+          shortcutsRef.current
+        )) {
+          const parsed = parseShortcut(shortcutKey);
 
-        const keyMatches = event.key.toLowerCase() === parsed.key;
-        const metaMatches = parsed.modifiers.meta === event.metaKey;
-        const shiftMatches = parsed.modifiers.shift === event.shiftKey;
-        const altMatches = parsed.modifiers.alt === event.altKey;
+          const keyMatches = event.key.toLowerCase() === parsed.key;
+          const metaMatches = parsed.modifiers.meta === event.metaKey;
+          const shiftMatches = parsed.modifiers.shift === event.shiftKey;
+          const altMatches = parsed.modifiers.alt === event.altKey;
 
-        if (
-          !parsed.hasModifier &&
-          (event.metaKey || event.ctrlKey || event.altKey)
-        ) {
-          continue;
-        }
-
-        if (keyMatches && metaMatches && shiftMatches && altMatches) {
-          if (!parsed.hasModifier && isInputFocused()) {
+          if (
+            !parsed.hasModifier &&
+            (event.metaKey || event.ctrlKey || event.altKey)
+          ) {
             continue;
           }
 
-          event.preventDefault();
-          handler();
-          return;
-        }
-      }
-    };
+          if (keyMatches && metaMatches && shiftMatches && altMatches) {
+            if (!parsed.hasModifier && isInputFocused()) {
+              continue;
+            }
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [enabled]);
+            event.preventDefault();
+            handler();
+            return;
+          }
+        }
+      };
+
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    },
+    [enabled]
+  );
 }

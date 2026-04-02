@@ -90,19 +90,22 @@ export function MilestoneProgressRing({
     Math.round(v)
   );
 
-  useEffect(() => {
-    completedMotion.set(segments.completed);
-    inProgressMotion.set(segments.inProgress);
-    plannedMotion.set(segments.planned);
-    percentageMotion.set(percentage);
-  }, [
-    segments,
-    percentage,
-    completedMotion,
-    inProgressMotion,
-    plannedMotion,
-    percentageMotion,
-  ]);
+  useEffect(
+    function animateProgressSegments() {
+      completedMotion.set(segments.completed);
+      inProgressMotion.set(segments.inProgress);
+      plannedMotion.set(segments.planned);
+      percentageMotion.set(percentage);
+    },
+    [
+      segments,
+      percentage,
+      completedMotion,
+      inProgressMotion,
+      plannedMotion,
+      percentageMotion,
+    ]
+  );
 
   const activeSegments = [
     completed > 0 && { key: "completed" as const },

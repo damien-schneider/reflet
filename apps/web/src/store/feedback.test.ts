@@ -3,13 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   feedbackDetailModalOpenAtom,
   feedbackFiltersAtom,
-  feedbackMagnifyingGlassAtom,
   feedbackSearchAtom,
   feedbackSortAtom,
   hideCompletedAtom,
   newFeedbackDialogOpenAtom,
   selectedFeedbackIdAtom,
-  selectedStatusesAtom,
   selectedStatusIdsAtom,
   selectedTagIdsAtom,
 } from "./feedback";
@@ -34,11 +32,6 @@ describe("feedback store", () => {
     it("selectedStatusIdsAtom defaults to empty array", () => {
       const store = createStore();
       expect(store.get(selectedStatusIdsAtom)).toEqual([]);
-    });
-
-    it("selectedStatusesAtom defaults to empty array", () => {
-      const store = createStore();
-      expect(store.get(selectedStatusesAtom)).toEqual([]);
     });
 
     it("selectedTagIdsAtom defaults to empty array", () => {
@@ -69,17 +62,6 @@ describe("feedback store", () => {
     it("feedbackDetailModalOpenAtom defaults to false", () => {
       const store = createStore();
       expect(store.get(feedbackDetailModalOpenAtom)).toBe(false);
-    });
-  });
-
-  describe("legacy aliases", () => {
-    it("feedbackMagnifyingGlassAtom is the same atom as feedbackSearchAtom", () => {
-      const store = createStore();
-      store.set(feedbackSearchAtom, "test query");
-      expect(store.get(feedbackMagnifyingGlassAtom)).toBe("test query");
-
-      store.set(feedbackMagnifyingGlassAtom, "updated");
-      expect(store.get(feedbackSearchAtom)).toBe("updated");
     });
   });
 

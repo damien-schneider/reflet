@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/tooltip";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
 interface ManualSyncSectionProps {
   isAdmin: boolean;
@@ -206,7 +207,7 @@ export const ManualSyncSection = ({
           variant="outline"
         >
           <ArrowsClockwise
-            className={`mr-1.5 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
+            className={cn("mr-1.5 h-4 w-4", isSyncing && "animate-spin")}
           />
           {isSyncing ? "Syncing…" : "Sync with GitHub"}
         </Button>

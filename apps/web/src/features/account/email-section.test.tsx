@@ -24,7 +24,6 @@ vi.mock("@/components/ui/button", () => ({
     children,
     disabled,
     type,
-    ...rest
   }: {
     children: React.ReactNode;
     disabled?: boolean;

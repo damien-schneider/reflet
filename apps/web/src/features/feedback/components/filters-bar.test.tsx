@@ -223,7 +223,7 @@ describe("FiltersBar", () => {
 
   it("displays the current sort value label", () => {
     const { container } = render(
-      <FiltersBar {...defaultProps} sortBy="recent" />
+      <FiltersBar {...defaultProps} sortBy={"recent" as never} />
     );
     expect(container.textContent).toMatch(
       /Most Votes|Newest|Oldest|Most Comments/i

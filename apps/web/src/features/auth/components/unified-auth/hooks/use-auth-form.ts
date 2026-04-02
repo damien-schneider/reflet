@@ -99,46 +99,58 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
   const watchedConfirmPassword = watch("confirmPassword");
   const [debouncedEmail] = useDebouncedValue(watchedEmail, { wait: 800 });
 
-  useEffect(() => {
-    if (mode === "signUp" && watchedPassword && watchedConfirmPassword) {
-      trigger("confirmPassword");
-    }
-  }, [watchedPassword, mode, trigger, watchedConfirmPassword]);
+  useEffect(
+    function triggerConfirmPasswordValidation() {
+      if (mode === "signUp" && watchedPassword && watchedConfirmPassword) {
+        trigger("confirmPassword");
+      }
+    },
+    [watchedPassword, mode, trigger, watchedConfirmPassword]
+  );
 
-  useEffect(() => {
-    if (mode !== "signUp") {
-      setPasswordMismatchError(null);
-      return;
-    }
+  useEffect(
+    function checkPasswordMismatch() {
+      if (mode !== "signUp") {
+        setPasswordMismatchError(null);
+        return;
+      }
 
-    const hasConfirmPassword = watchedConfirmPassword.length > 0;
-    const passwordsMatch = watchedPassword === watchedConfirmPassword;
+      const hasConfirmPassword = watchedConfirmPassword.length > 0;
+      const passwordsMatch = watchedPassword === watchedConfirmPassword;
 
-    if (hasConfirmPassword && !passwordsMatch) {
-      setPasswordMismatchError("Passwords do not match");
-    } else {
-      setPasswordMismatchError(null);
-    }
-  }, [mode, watchedPassword, watchedConfirmPassword]);
+      if (hasConfirmPassword && !passwordsMatch) {
+        setPasswordMismatchError("Passwords do not match");
+      } else {
+        setPasswordMismatchError(null);
+      }
+    },
+    [mode, watchedPassword, watchedConfirmPassword]
+  );
 
-  useEffect(() => {
-    if (emailExistsData !== undefined && emailChecked) {
-      const exists = emailExistsData.exists;
-      setMode(exists ? "signIn" : "signUp");
-      setIsCheckingEmail(false);
-      setLastCheckedEmail(email);
-    }
-  }, [emailExistsData, emailChecked, email]);
+  useEffect(
+    function setAuthModeFromEmailCheck() {
+      if (emailExistsData !== undefined && emailChecked) {
+        const exists = emailExistsData.exists;
+        setMode(exists ? "signIn" : "signUp");
+        setIsCheckingEmail(false);
+        setLastCheckedEmail(email);
+      }
+    },
+    [emailExistsData, emailChecked, email]
+  );
 
-  useEffect(() => {
-    const currentEmail = debouncedEmail.trim();
+  useEffect(
+    function triggerDebouncedEmailCheck() {
+      const currentEmail = debouncedEmail.trim();
 
-    if (currentEmail?.includes("@") && currentEmail !== lastCheckedEmail) {
-      setEmail(currentEmail);
-      setIsCheckingEmail(true);
-      setEmailChecked(true);
-    }
-  }, [debouncedEmail, lastCheckedEmail]);
+      if (currentEmail?.includes("@") && currentEmail !== lastCheckedEmail) {
+        setEmail(currentEmail);
+        setIsCheckingEmail(true);
+        setEmailChecked(true);
+      }
+    },
+    [debouncedEmail, lastCheckedEmail]
+  );
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setApiError(null);

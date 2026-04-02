@@ -90,7 +90,7 @@ export function BoardCustomizePopover({ orgSlug }: BoardCustomizePopoverProps) {
     }
   };
 
-  useEffect(() => {
+  useEffect(function clearSavedTimerOnUnmount() {
     return () => {
       if (savedTimerRef.current) {
         clearTimeout(savedTimerRef.current);

@@ -87,13 +87,11 @@ describe("AuthForgotPasswordLink", () => {
 
 describe("AuthConfirmPassword", () => {
   const baseProps = {
-    register: vi.fn(() => ({ name: "confirmPassword" })) as ReturnType<
-      typeof vi.fn
-    >,
+    register: vi.fn(() => ({ name: "confirmPassword" })) as never,
     isSubmitting: false,
-    onConfirmPasswordChange: vi.fn(),
-    setValue: vi.fn(),
-    trigger: vi.fn(),
+    onConfirmPasswordChange: vi.fn() as never,
+    setValue: vi.fn() as never,
+    trigger: vi.fn() as never,
   };
 
   it("renders confirm password field in signUp mode", () => {

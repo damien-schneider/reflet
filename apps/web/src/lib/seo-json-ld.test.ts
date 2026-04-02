@@ -8,6 +8,18 @@ import {
   getOrgPageJsonLd,
 } from "./seo-json-ld";
 
+function findGraphEntry(
+  ld: ReturnType<typeof getHomePageJsonLd>,
+  type: string
+): Record<string, unknown> {
+  const graph = ld["@graph"] as unknown as Record<string, unknown>[];
+  const entry = graph.find((item) => item["@type"] === type);
+  if (!entry) {
+    throw new Error(`No ${type} entry in @graph`);
+  }
+  return entry;
+}
+
 describe("getHomePageJsonLd", () => {
   it("returns schema.org context", () => {
     const ld = getHomePageJsonLd();
@@ -22,10 +34,7 @@ describe("getHomePageJsonLd", () => {
 
   it("contains a WebSite entry", () => {
     const ld = getHomePageJsonLd();
-    const webSite = ld["@graph"].find(
-      (item: Record<string, unknown>) => item["@type"] === "WebSite"
-    );
-    expect(webSite).toBeDefined();
+    const webSite = findGraphEntry(ld, "WebSite");
     expect(webSite.url).toBe(BASE_URL);
     expect(webSite.name).toBe(SITE_NAME);
     expect(webSite.description).toBe(DEFAULT_DESCRIPTION);
@@ -34,10 +43,7 @@ describe("getHomePageJsonLd", () => {
 
   it("contains an Organization entry", () => {
     const ld = getHomePageJsonLd();
-    const org = ld["@graph"].find(
-      (item: Record<string, unknown>) => item["@type"] === "Organization"
-    );
-    expect(org).toBeDefined();
+    const org = findGraphEntry(ld, "Organization");
     expect(org.name).toBe(SITE_NAME);
     expect(org.url).toBe(BASE_URL);
     expect(org.logo).toBeDefined();
@@ -46,10 +52,7 @@ describe("getHomePageJsonLd", () => {
 
   it("contains a SoftwareApplication entry", () => {
     const ld = getHomePageJsonLd();
-    const app = ld["@graph"].find(
-      (item: Record<string, unknown>) => item["@type"] === "SoftwareApplication"
-    );
-    expect(app).toBeDefined();
+    const app = findGraphEntry(ld, "SoftwareApplication");
     expect(app.name).toBe(SITE_NAME);
     expect(app.applicationCategory).toBe("BusinessApplication");
     expect(app.operatingSystem).toBe("Web");
@@ -59,31 +62,26 @@ describe("getHomePageJsonLd", () => {
 
   it("contains a FAQPage entry with questions", () => {
     const ld = getHomePageJsonLd();
-    const faq = ld["@graph"].find(
-      (item: Record<string, unknown>) => item["@type"] === "FAQPage"
-    );
-    expect(faq).toBeDefined();
-    expect(faq.mainEntity).toBeInstanceOf(Array);
-    expect(faq.mainEntity.length).toBeGreaterThan(0);
+    const faq = findGraphEntry(ld, "FAQPage");
+    const mainEntity = faq.mainEntity as Record<string, unknown>[];
+    expect(mainEntity).toBeInstanceOf(Array);
+    expect(mainEntity.length).toBeGreaterThan(0);
 
-    for (const q of faq.mainEntity) {
+    for (const q of mainEntity) {
       expect(q["@type"]).toBe("Question");
       expect(q.name).toBeTruthy();
-      expect(q.acceptedAnswer).toBeDefined();
-      expect(q.acceptedAnswer["@type"]).toBe("Answer");
-      expect(q.acceptedAnswer.text).toBeTruthy();
+      const answer = q.acceptedAnswer as Record<string, unknown>;
+      expect(answer).toBeDefined();
+      expect(answer["@type"]).toBe("Answer");
+      expect(answer.text).toBeTruthy();
     }
   });
 
   it("does not contain a fake SearchAction (no /search page exists)", () => {
     const ld = getHomePageJsonLd();
-    const webSite = ld["@graph"].find(
-      (item: Record<string, unknown>) => item["@type"] === "WebSite"
-    );
+    const webSite = findGraphEntry(ld, "WebSite");
     // potentialAction is omitted to avoid misleading structured data
-    expect(
-      (webSite as Record<string, unknown>).potentialAction
-    ).toBeUndefined();
+    expect(webSite.potentialAction).toBeUndefined();
   });
 });
 

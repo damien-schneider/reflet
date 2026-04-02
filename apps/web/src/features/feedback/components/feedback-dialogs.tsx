@@ -2,6 +2,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -48,6 +49,9 @@ export function CreateFeedbackDialog({
       setNewFeedback({ title: "", description: "" });
     } catch (error) {
       console.error("Failed to create feedback:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create feedback"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -120,6 +124,9 @@ export function DeleteFeedbackDialog({
       onClose();
     } catch (error) {
       console.error("Failed to delete feedback:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete feedback"
+      );
     }
   };
 

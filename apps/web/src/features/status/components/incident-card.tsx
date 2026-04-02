@@ -4,6 +4,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { StatusDot } from "./status-dot";
 
 interface IncidentUpdate {
@@ -74,7 +75,10 @@ export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
 
   return (
     <div
-      className={`rounded-lg border-l-4 bg-card p-4 ${severityColors[incident.severity]}`}
+      className={cn(
+        "rounded-lg border-l-4 bg-card p-4",
+        severityColors[incident.severity]
+      )}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -139,11 +143,12 @@ export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
           <div className="flex gap-1.5">
             {statusOptions.map((opt) => (
               <button
-                className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs transition-colors",
                   updateStatus === opt.value
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:text-foreground"
-                }`}
+                )}
                 key={opt.value}
                 onClick={() => setUpdateStatus(opt.value)}
                 type="button"

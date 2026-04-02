@@ -58,25 +58,28 @@ export function TagFormDialog({
     icon: undefined,
   });
 
-  useEffect(() => {
-    if (editingTag) {
-      // Migrate old hex colors to new named colors
-      const color = isValidTagColor(editingTag.color)
-        ? editingTag.color
-        : migrateHexToNamedColor(editingTag.color);
-      setFormData({
-        name: editingTag.name,
-        color,
-        icon: editingTag.icon,
-      });
-    } else {
-      setFormData({
-        name: "",
-        color: "blue",
-        icon: undefined,
-      });
-    }
-  }, [editingTag]);
+  useEffect(
+    function syncEditingTagToForm() {
+      if (editingTag) {
+        // Migrate old hex colors to new named colors
+        const color = isValidTagColor(editingTag.color)
+          ? editingTag.color
+          : migrateHexToNamedColor(editingTag.color);
+        setFormData({
+          name: editingTag.name,
+          color,
+          icon: editingTag.icon,
+        });
+      } else {
+        setFormData({
+          name: "",
+          color: "blue",
+          icon: undefined,
+        });
+      }
+    },
+    [editingTag]
+  );
 
   const handleCreateTag = async () => {
     if (!formData.name.trim()) {

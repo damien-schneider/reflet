@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Muted, Text } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 const STATUS_LABELS = {
   operational: "All systems operational",
@@ -44,7 +45,10 @@ export function StatusCard({ aggregateStatus, basePath }: StatusCardProps) {
             <>
               <div className="flex items-center gap-2">
                 <span
-                  className={`size-2 rounded-full ${STATUS_COLORS[aggregateStatus.status]}`}
+                  className={cn(
+                    "size-2 rounded-full",
+                    STATUS_COLORS[aggregateStatus.status]
+                  )}
                 />
                 <Text className="font-medium" variant="bodySmall">
                   {STATUS_LABELS[aggregateStatus.status]}

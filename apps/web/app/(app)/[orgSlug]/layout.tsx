@@ -17,7 +17,7 @@ export async function generateMetadata({
 
   try {
     const orgs = await fetchQuery(api.sitemap_public.getPublicOrgSlugs, {});
-    const org = orgs.find((o) => o.slug === orgSlug);
+    const org = orgs.find((o: { slug: string }) => o.slug === orgSlug);
     if (org) {
       return generatePageMetadata({
         title: `${orgSlug} - Feature Requests & Feedback`,

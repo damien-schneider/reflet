@@ -29,6 +29,12 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
+  CalendarBlank: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="calendar-icon" />
+  ),
+  CheckCircle: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="check-circle-icon" />
+  ),
   GithubLogo: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="github-icon" />
   ),
@@ -133,6 +139,54 @@ vi.mock("@/components/ui/dialog", () => ({
     <h2 data-testid="dialog-title">{children}</h2>
   ),
 }));
+
+vi.mock("@/components/ui/tabs", () => ({
+  Tabs: ({
+    children,
+    value,
+    onValueChange,
+  }: {
+    children: React.ReactNode;
+    value: string;
+    onValueChange: (v: string) => void;
+  }) => (
+    <div data-testid="tabs" data-value={value}>
+      {children}
+    </div>
+  ),
+  TabsList: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <div className={className}>{children}</div>,
+  TabsTrigger: ({
+    children,
+    value,
+  }: {
+    children: React.ReactNode;
+    value: string;
+  }) => (
+    <button data-value={value} type="button">
+      {children}
+    </button>
+  ),
+  TabsContent: ({
+    children,
+    value,
+  }: {
+    children: React.ReactNode;
+    value: string;
+    className?: string;
+  }) => <div data-value={value}>{children}</div>,
+}));
+
+vi.mock("./schedule-picker", () => ({
+  SchedulePicker: () => <div data-testid="schedule-picker" />,
+}));
+
+vi.mock("./feedback-section-header", () => ({}));
 
 import { PublishConfirmDialog } from "./publish-confirm-dialog";
 

@@ -127,11 +127,14 @@ export function SyncDirectionStep({
   ]);
 
   // Fetch branches when GitHub is connected
-  useEffect(() => {
-    if (isConnected && needsGitHub) {
-      loadBranches();
-    }
-  }, [isConnected, needsGitHub, loadBranches]);
+  useEffect(
+    function fetchBranchesOnConnect() {
+      if (isConnected && needsGitHub) {
+        loadBranches();
+      }
+    },
+    [isConnected, needsGitHub, loadBranches]
+  );
 
   return (
     <div className="space-y-3">

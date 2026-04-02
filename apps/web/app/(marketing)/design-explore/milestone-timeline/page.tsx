@@ -9,7 +9,7 @@ import {
   TrendUpIcon,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -333,9 +333,9 @@ function MomentumLabel({ milestone }: { milestone: MockMilestone }) {
 
 function useActiveMilestone() {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const toggle = useCallback((id: string) => {
+  const toggle = (id: string) => {
     setActiveId((prev) => (prev === id ? null : id));
-  }, []);
+  };
   return { activeId, toggle };
 }
 
@@ -947,7 +947,7 @@ function DesignCompactStrip() {
 function DesignEditorialTimeline() {
   const { activeId, toggle } = useActiveMilestone();
 
-  const grouped = useMemo(() => {
+  const grouped = (() => {
     const map = new Map<string, MockMilestone[]>();
     for (const h of TIME_HORIZONS_ORDERED) {
       map.set(h.key, []);
@@ -959,7 +959,7 @@ function DesignEditorialTimeline() {
       }
     }
     return map;
-  }, []);
+  })();
 
   const nonEmpty = TIME_HORIZONS_ORDERED.filter((h) => {
     const arr = grouped.get(h.key);

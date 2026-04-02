@@ -1,7 +1,6 @@
 "use client";
 
 import { useSetAtom } from "jotai";
-import { useCallback } from "react";
 import { authClient } from "@/lib/auth-client";
 import { openAuthDialogAtom } from "@/store/auth";
 
@@ -37,20 +36,18 @@ export function useAuthGuard(options: AuthGuardOptions = {}) {
 
   const isAuthenticated = Boolean(session?.user?.id);
 
-  const guard = useCallback(
-    <T>(action: () => T | Promise<T>): T | Promise<T> | undefined => {
-      if (isAuthenticated) {
-        return action();
-      }
+  const guard = <T>(
+    action: () => T | Promise<T>
+  ): T | Promise<T> | undefined => {
+    if (isAuthenticated) {
+      return action();
+    }
 
-      openAuthDialog({
-        message:
-          options.message ?? "Connectez-vous pour effectuer cette action",
-      });
-      return undefined;
-    },
-    [isAuthenticated, openAuthDialog, options.message]
-  );
+    openAuthDialog({
+      message: options.message ?? "Connectez-vous pour effectuer cette action",
+    });
+    return undefined;
+  };
 
   return {
     /** Whether the current user is authenticated */

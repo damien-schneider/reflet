@@ -3,6 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,6 +37,9 @@ export function DeleteTagDialog({
       onSuccess();
     } catch (error) {
       console.error("Failed to delete tag:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete tag"
+      );
     }
   };
 

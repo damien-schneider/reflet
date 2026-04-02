@@ -207,6 +207,7 @@ describe("useFeedbackMatching", () => {
             message: "feat: dark mode",
             fullMessage: "feat: dark mode support",
             author: "dev",
+            date: "2024-01-01",
           },
         ],
         [

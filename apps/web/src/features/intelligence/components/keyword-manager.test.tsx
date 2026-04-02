@@ -165,6 +165,8 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+const testOrgId = "org-1" as never;
+
 const sampleKeywords = [
   { _id: "kw-1", keyword: "product analytics", source: "reddit" },
   { _id: "kw-2", keyword: "user feedback", source: "web" },
@@ -175,7 +177,7 @@ describe("KeywordManager", () => {
   it("renders keyword list", () => {
     mockUseQuery.mockReturnValue(sampleKeywords);
     mockUseMutation.mockReturnValue(vi.fn());
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     expect(screen.getByText("product analytics")).toBeInTheDocument();
     expect(screen.getByText("user feedback")).toBeInTheDocument();
     expect(screen.getByText("NPS survey")).toBeInTheDocument();
@@ -184,21 +186,21 @@ describe("KeywordManager", () => {
   it("renders the Keywords title", () => {
     mockUseQuery.mockReturnValue(sampleKeywords);
     mockUseMutation.mockReturnValue(vi.fn());
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     expect(screen.getByText("Keywords")).toBeInTheDocument();
   });
 
   it("shows loading state when keywords are undefined", () => {
     mockUseQuery.mockReturnValue(undefined);
     mockUseMutation.mockReturnValue(vi.fn());
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("shows empty state when no keywords exist", () => {
     mockUseQuery.mockReturnValue([]);
     mockUseMutation.mockReturnValue(vi.fn());
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     expect(
       screen.getByText(
         "No keywords added yet. Add keywords to monitor discussions."
@@ -209,7 +211,7 @@ describe("KeywordManager", () => {
   it("renders source badge for reddit", () => {
     mockUseQuery.mockReturnValue([sampleKeywords[0]]);
     mockUseMutation.mockReturnValue(vi.fn());
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     const badges = screen.getAllByText("Reddit");
     const sourceBadge = badges.find((el) => el.tagName === "SPAN");
     expect(sourceBadge).toBeInTheDocument();
@@ -219,7 +221,7 @@ describe("KeywordManager", () => {
   it("renders source badge for web", () => {
     mockUseQuery.mockReturnValue([sampleKeywords[1]]);
     mockUseMutation.mockReturnValue(vi.fn());
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     const badges = screen.getAllByText("Web");
     const sourceBadge = badges.find((el) => el.tagName === "SPAN");
     expect(sourceBadge).toBeInTheDocument();
@@ -229,7 +231,7 @@ describe("KeywordManager", () => {
   it("renders source badge for both", () => {
     mockUseQuery.mockReturnValue([sampleKeywords[2]]);
     mockUseMutation.mockReturnValue(vi.fn());
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     const badges = screen.getAllByText("Both");
     const sourceBadge = badges.find((el) => el.tagName === "SPAN");
     expect(sourceBadge).toBeInTheDocument();
@@ -239,14 +241,14 @@ describe("KeywordManager", () => {
   it("shows subreddit when present", () => {
     mockUseQuery.mockReturnValue([sampleKeywords[2]]);
     mockUseMutation.mockReturnValue(vi.fn());
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     expect(screen.getByText("r/SaaS")).toBeInTheDocument();
   });
 
   it("renders remove button for each keyword", () => {
     mockUseQuery.mockReturnValue(sampleKeywords);
     mockUseMutation.mockReturnValue(vi.fn());
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     expect(
       screen.getByLabelText("Remove keyword product analytics")
     ).toBeInTheDocument();
@@ -263,7 +265,7 @@ describe("KeywordManager", () => {
     mockUseQuery.mockReturnValue(sampleKeywords);
     mockRemoveKeyword.mockResolvedValue(undefined);
     mockUseMutation.mockReturnValue(mockRemoveKeyword);
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     await user.click(screen.getByLabelText("Remove keyword product analytics"));
     expect(mockRemoveKeyword).toHaveBeenCalledWith({ id: "kw-1" });
   });
@@ -271,7 +273,7 @@ describe("KeywordManager", () => {
   it("renders the add keyword form with input and submit button", () => {
     mockUseQuery.mockReturnValue([]);
     mockUseMutation.mockReturnValue(vi.fn());
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     expect(
       screen.getByPlaceholderText("Enter a keyword...")
     ).toBeInTheDocument();
@@ -283,7 +285,7 @@ describe("KeywordManager", () => {
     mockUseQuery.mockReturnValue([]);
     mockCreateKeyword.mockResolvedValue(undefined);
     mockUseMutation.mockReturnValue(mockCreateKeyword);
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
 
     await user.type(
       screen.getByPlaceholderText("Enter a keyword..."),
@@ -302,7 +304,7 @@ describe("KeywordManager", () => {
   it("disables submit button when keyword input is empty", () => {
     mockUseQuery.mockReturnValue([]);
     mockUseMutation.mockReturnValue(vi.fn());
-    render(<KeywordManager organizationId="org-1" />);
+    render(<KeywordManager organizationId={testOrgId} />);
     const addButton = screen.getByText("Add");
     expect(addButton).toBeDisabled();
   });

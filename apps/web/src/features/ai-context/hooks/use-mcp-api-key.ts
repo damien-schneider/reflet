@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface UseMcpApiKeyProps {
@@ -33,7 +33,7 @@ export function useMcpApiKey({
 
   const hasExistingKey = apiKeys === undefined ? undefined : apiKeys.length > 0;
 
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
     try {
       const result = await generateApiKeysMutation({
@@ -49,11 +49,11 @@ export function useMcpApiKey({
     } finally {
       setIsGenerating(false);
     }
-  }, [organizationId, generateApiKeysMutation]);
+  };
 
-  const clearSecretKey = useCallback(() => {
+  const clearSecretKey = () => {
     setNewSecretKey(null);
-  }, []);
+  };
 
   return {
     hasExistingKey,

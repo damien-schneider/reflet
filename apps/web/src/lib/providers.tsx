@@ -42,7 +42,7 @@ export function Providers({
       children: React.ReactNode;
     }> | null>(null);
 
-  useEffect(() => {
+  useEffect(function initPostHogAnalytics() {
     if (isPostHogConfigured && hasAnalyticsConsent()) {
       Promise.all([import("posthog-js"), import("posthog-js/react")]).then(
         ([posthogModule, reactModule]) => {

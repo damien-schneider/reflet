@@ -65,7 +65,6 @@ vi.mock("@/components/ui/button", () => ({
     children,
     disabled,
     onClick,
-    ...rest
   }: {
     children: React.ReactNode;
     disabled?: boolean;
@@ -103,6 +102,7 @@ afterEach(() => {
 const defaultProps = {
   organizationId: "org1" as never,
   orgSlug: "test-org",
+  releaseId: "release1" as never,
   version: "1.0.0",
   onStreamStart: vi.fn(),
   onStreamChunk: vi.fn(),

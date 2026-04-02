@@ -73,19 +73,22 @@ function InvitationItem({
   const [justSent, setJustSent] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
 
-  useEffect(() => {
-    const updateTimer = () => {
-      const lastSent = invitation.lastSentAt ?? invitation._creationTime;
-      const elapsed = Date.now() - lastSent;
-      setRemainingSeconds(
-        Math.max(0, Math.ceil((RESEND_COOLDOWN_MS - elapsed) / 1000))
-      );
-    };
+  useEffect(
+    function updateResendCooldownTimer() {
+      const updateTimer = () => {
+        const lastSent = invitation.lastSentAt ?? invitation._creationTime;
+        const elapsed = Date.now() - lastSent;
+        setRemainingSeconds(
+          Math.max(0, Math.ceil((RESEND_COOLDOWN_MS - elapsed) / 1000))
+        );
+      };
 
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [invitation.lastSentAt, invitation._creationTime]);
+      updateTimer();
+      const interval = setInterval(updateTimer, 1000);
+      return () => clearInterval(interval);
+    },
+    [invitation.lastSentAt, invitation._creationTime]
+  );
 
   const handleResend = async () => {
     setIsResending(true);

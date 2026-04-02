@@ -115,7 +115,6 @@ vi.mock("@/components/ui/typography", () => ({
 vi.mock("./github-permission-error-alert", () => ({
   GitHubPermissionErrorAlert: ({
     title,
-    message,
     onResync,
     onDismiss,
   }: {

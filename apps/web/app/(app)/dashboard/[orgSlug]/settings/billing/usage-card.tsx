@@ -5,6 +5,7 @@ import {
   ProgressValue,
 } from "@/components/ui/progress";
 import { H3, Muted, Text } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 import type { LimitsData, UsageData } from "./billing-types";
 
@@ -68,7 +69,10 @@ function FeatureStatus({
   return (
     <div className="flex items-center gap-2">
       <CheckCircle
-        className={`h-4 w-4 ${enabled ? "text-green-500" : "text-muted-foreground/30"}`}
+        className={cn(
+          "h-4 w-4",
+          enabled ? "text-green-500" : "text-muted-foreground/30"
+        )}
         weight="fill"
       />
       <Text

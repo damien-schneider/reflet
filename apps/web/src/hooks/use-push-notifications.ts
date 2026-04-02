@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import { env } from "@reflet/env/web";
 import { useMutation } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Convert a URL-safe base64 string to a Uint8Array.
@@ -53,7 +53,7 @@ export function usePushNotifications() {
   );
 
   // Register service worker and check initial state
-  useEffect(() => {
+  useEffect(function initPushNotificationState() {
     const init = async () => {
       const supported =
         "serviceWorker" in navigator &&
@@ -100,7 +100,7 @@ export function usePushNotifications() {
    * Request push permission and subscribe to push notifications.
    * Sends the subscription keys to Convex for server-side push sending.
    */
-  const subscribe = useCallback(async (): Promise<boolean> => {
+  const subscribe = async (): Promise<boolean> => {
     if (!state.registration) {
       return false;
     }
@@ -148,12 +148,12 @@ export function usePushNotifications() {
       console.error("[Push] Subscribe failed:", error);
       return false;
     }
-  }, [state.registration, subscribeMutation]);
+  };
 
   /**
    * Unsubscribe from push notifications and remove from Convex.
    */
-  const unsubscribeFromPush = useCallback(async (): Promise<boolean> => {
+  const unsubscribeFromPush = async (): Promise<boolean> => {
     if (!state.registration) {
       return false;
     }
@@ -174,7 +174,7 @@ export function usePushNotifications() {
       console.error("[Push] Unsubscribe failed:", error);
       return false;
     }
-  }, [state.registration, unsubscribeMutation]);
+  };
 
   return {
     isSupported: state.isSupported,

@@ -36,47 +36,50 @@ export function AutoTagButton({ organizationId }: AutoTagButtonProps) {
   const jobSuccessful = job?.successfulItems ?? 0;
   const jobFailed = job?.failedItems ?? 0;
 
-  useEffect(() => {
-    const prevStatus = prevJobStatusRef.current;
+  useEffect(
+    function notifyOnStatusTransition() {
+      const prevStatus = prevJobStatusRef.current;
 
-    if (prevStatus === jobStatus) {
-      return;
-    }
+      if (prevStatus === jobStatus) {
+        return;
+      }
 
-    const wasActive = prevStatus === "pending" || prevStatus === "processing";
+      const wasActive = prevStatus === "pending" || prevStatus === "processing";
 
-    // Transition to completed — auto-dismiss the job
-    if (jobStatus === "completed" && wasActive) {
-      if (jobFailed > 0) {
-        toast.warning("Auto-tagging completed with errors", {
+      // Transition to completed — auto-dismiss the job
+      if (jobStatus === "completed" && wasActive) {
+        if (jobFailed > 0) {
+          toast.warning("Auto-tagging completed with errors", {
+            description: `${jobSuccessful} tagged, ${jobFailed} failed`,
+          });
+        } else {
+          toast.success("Auto-tagging complete", {
+            description: `${jobSuccessful} feedback items tagged`,
+          });
+        }
+        if (job) {
+          dismissJob({ jobId: job._id }).catch(() => {
+            // Dismiss errors are non-critical
+          });
+        }
+      }
+
+      // Transition to failed
+      if (jobStatus === "failed" && wasActive) {
+        toast.error("Auto-tagging failed", {
           description: `${jobSuccessful} tagged, ${jobFailed} failed`,
         });
-      } else {
-        toast.success("Auto-tagging complete", {
-          description: `${jobSuccessful} feedback items tagged`,
-        });
+        if (job) {
+          dismissJob({ jobId: job._id }).catch(() => {
+            // Dismiss errors are non-critical
+          });
+        }
       }
-      if (job) {
-        dismissJob({ jobId: job._id }).catch(() => {
-          // Dismiss errors are non-critical
-        });
-      }
-    }
 
-    // Transition to failed
-    if (jobStatus === "failed" && wasActive) {
-      toast.error("Auto-tagging failed", {
-        description: `${jobSuccessful} tagged, ${jobFailed} failed`,
-      });
-      if (job) {
-        dismissJob({ jobId: job._id }).catch(() => {
-          // Dismiss errors are non-critical
-        });
-      }
-    }
-
-    prevJobStatusRef.current = jobStatus;
-  }, [jobStatus, jobSuccessful, jobFailed, job, dismissJob]);
+      prevJobStatusRef.current = jobStatus;
+    },
+    [jobStatus, jobSuccessful, jobFailed, job, dismissJob]
+  );
 
   const handleStartAutoTag = async () => {
     try {

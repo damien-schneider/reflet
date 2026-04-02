@@ -78,13 +78,16 @@ export function OrganizationSection({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (org) {
-      setName(org.name);
-      setSlug(org.slug);
-      setIsPublic(org.isPublic ?? false);
-    }
-  }, [org]);
+  useEffect(
+    function syncOrgFormState() {
+      if (org) {
+        setName(org.name);
+        setSlug(org.slug);
+        setIsPublic(org.isPublic ?? false);
+      }
+    },
+    [org]
+  );
 
   const handleSlugChange = (value: string) => {
     setSlug(generateSlug(value));

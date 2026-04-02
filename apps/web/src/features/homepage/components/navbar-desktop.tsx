@@ -75,7 +75,7 @@ const RESOURCE_ITEMS: ResourceItem[] = [
 export default function NavbarDesktop() {
   const [hasScrolled, setHasScrolled] = useState(false);
 
-  useEffect(() => {
+  useEffect(function trackScrollPosition() {
     const handleScroll = () => setHasScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);

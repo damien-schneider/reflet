@@ -1,33 +1,24 @@
-import {
-  Check,
-  Clock,
-  CloudArrowUp,
-  Spinner,
-  WarningCircle,
-  X,
-} from "@phosphor-icons/react";
+import { Check, Clock, Spinner, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { format } from "date-fns";
-import Link from "next/link";
+import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
-import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
-import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { useAutoSaveRelease } from "../hooks/use-auto-save-release";
+import { useReleaseActions } from "../hooks/use-release-actions";
+import { useReleaseAiStream } from "../hooks/use-release-ai-stream";
 import { useReleaseCommits } from "../hooks/use-release-commits";
 import type { FeedbackLinkStatus } from "./feedback-section-header";
 import { GenerateFromCommits } from "./generate-from-commits";
 import { PublishConfirmDialog } from "./publish-confirm-dialog";
 import { ReleaseCommitsList } from "./release-commits-list";
+import { ReleaseEditorFooter } from "./release-editor-footer";
 import { ReleaseFeedbackSection } from "./release-feedback-section";
 import { ScheduleCountdown } from "./schedule-countdown";
 import { VersionPicker } from "./version-picker";
@@ -47,77 +38,11 @@ export function ReleaseEditor({
 }: ReleaseEditorProps) {
   const router = useRouter();
   const { data: sessionData } = authClient.useSession();
-  const updateRelease = useMutation(api.changelog.mutations.update);
-  const createRelease = useMutation(api.changelog.mutations.create);
-  const publishRelease = useMutation(
-    api.changelog.actions.publish
-  ).withOptimisticUpdate((localStore, args) => {
-    const current = localStore.getQuery(api.changelog.queries.get, {
-      id: args.id,
-    });
-    if (!current) {
-      return;
-    }
-    localStore.setQuery(
-      api.changelog.queries.get,
-      { id: args.id },
-      {
-        ...current,
-        publishedAt: Date.now(),
-      }
-    );
-  });
-
-  const unpublishRelease = useMutation(
-    api.changelog.actions.unpublish
-  ).withOptimisticUpdate((localStore, args) => {
-    const current = localStore.getQuery(api.changelog.queries.get, {
-      id: args.id,
-    });
-    if (!current) {
-      return;
-    }
-    localStore.setQuery(
-      api.changelog.queries.get,
-      { id: args.id },
-      {
-        ...current,
-        publishedAt: undefined,
-      }
-    );
-  });
-
-  const schedulePublish = useMutation(api.changelog.scheduling.schedulePublish);
-  const cancelSchedule = useMutation(
-    api.changelog.scheduling.cancelScheduledPublish
-  );
-  const pushToGithub = useMutation(api.changelog.actions.pushToGithub);
-  const githubConnection = useQuery(
-    api.integrations.github.queries.getConnection,
-    {
-      organizationId,
-    }
-  );
-
-  const isPublished = release?.publishedAt !== undefined;
-  const isScheduled = !!release?.scheduledPublishAt;
-  const hasGithubConnection = !!githubConnection;
-  const isLinkedToGithub = !!release?.githubReleaseId;
-  const canPushToGithub =
-    isPublished && hasGithubConnection && !isLinkedToGithub;
-  const isPermissionError =
-    release?.githubPushStatus === "failed" &&
-    release?.githubPushErrorType === "permission_denied";
 
   const [title, setTitle] = useState(release?.title ?? "");
   const [version, setVersion] = useState(release?.version ?? "");
   const [description, setDescription] = useState(release?.description ?? "");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
-
-  // Streaming AI generation state
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamedContent, setStreamedContent] = useState("");
 
   // Feedback matching auto-trigger
   const [shouldAutoMatchFeedback, setShouldAutoMatchFeedback] = useState(false);
@@ -137,6 +62,16 @@ export function ReleaseEditor({
   const { commits, files, previousTag, handleCommitsFetched } =
     useReleaseCommits(releaseId);
 
+  // AI streaming
+  const {
+    isStreaming,
+    streamedContent,
+    handleStreamStart,
+    handleStreamChunk,
+    handleStreamComplete,
+    handleTitleGenerated,
+  } = useReleaseAiStream(setDescription, setTitle, setShouldAutoMatchFeedback);
+
   // Get linked feedback count for the publish dialog
   const releaseData = useQuery(
     api.changelog.queries.get,
@@ -148,171 +83,31 @@ export function ReleaseEditor({
     router.push(`/dashboard/${orgSlug}/changelog`);
   };
 
-  const handleStreamStart = () => {
-    setIsStreaming(true);
-    setStreamedContent("");
-  };
-
-  const handleStreamChunk = (content: string) => {
-    setStreamedContent(content);
-  };
-
-  const handleStreamComplete = (content: string) => {
-    setIsStreaming(false);
-    setStreamedContent("");
-    if (content) {
-      setDescription(content);
-      // Auto-trigger feedback matching after AI generation completes
-      setShouldAutoMatchFeedback(true);
-    }
-  };
-
-  const handleTitleGenerated = (generatedTitle: string) => {
-    setTitle(generatedTitle);
-  };
-
-  const handlePublish = async () => {
-    if (!title.trim()) {
-      toast.error("Title is required to publish");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      let idToPublish = releaseId;
-
-      if (idToPublish) {
-        await updateRelease({
-          id: idToPublish,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
-          description: description.trim() || undefined,
-        });
-      } else {
-        idToPublish = await createRelease({
-          organizationId,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
-          description: description.trim() || undefined,
-        });
-      }
-
-      await publishRelease({
-        id: idToPublish,
-        feedbackStatus:
-          feedbackLinkStatus === "keep" ? undefined : feedbackLinkStatus,
-      });
-      capture("release_published", {
-        has_version: Boolean(version.trim()),
-      });
-      setShowPublishConfirm(false);
-      toast.success("Release published!");
-      navigateToChangelog();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to publish");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSchedule = async (scheduledAt: number) => {
-    if (!title.trim()) {
-      toast.error("Title is required to schedule");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      let idToSchedule = releaseId;
-
-      if (idToSchedule) {
-        await updateRelease({
-          id: idToSchedule,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
-          description: description.trim() || undefined,
-        });
-      } else {
-        idToSchedule = await createRelease({
-          organizationId,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
-          description: description.trim() || undefined,
-        });
-      }
-
-      await schedulePublish({
-        id: idToSchedule,
-        scheduledPublishAt: scheduledAt,
-        feedbackStatus:
-          feedbackLinkStatus === "keep" ? undefined : feedbackLinkStatus,
-      });
-      capture("release_scheduled", {
-        has_version: Boolean(version.trim()),
-      });
-      setShowPublishConfirm(false);
-      toast.success(
-        `Release scheduled for ${format(scheduledAt, "MMM d, yyyy 'at' h:mm a")}`
-      );
-      navigateToChangelog();
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to schedule"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCancelSchedule = async () => {
-    if (!releaseId) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await cancelSchedule({ id: releaseId });
-      toast.success("Schedule cancelled");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to cancel schedule"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleUnpublish = async () => {
-    if (!releaseId) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await unpublishRelease({ id: releaseId });
-      toast.success("Release unpublished");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to unpublish"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handlePushToGithub = async () => {
-    if (!releaseId) {
-      return;
-    }
-    try {
-      await pushToGithub({ releaseId });
-      toast.success("Push to GitHub scheduled");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to push to GitHub"
-      );
-    }
-  };
+  // Release actions (publish, schedule, unpublish, github push)
+  const {
+    isSubmitting,
+    isPublished,
+    isScheduled,
+    canPushToGithub,
+    isLinkedToGithub,
+    isPermissionError,
+    handlePublish,
+    handleSchedule,
+    handleCancelSchedule,
+    handleUnpublish,
+    handlePushToGithub,
+  } = useReleaseActions({
+    organizationId,
+    orgSlug,
+    release,
+    releaseId,
+    title,
+    version,
+    description,
+    feedbackLinkStatus,
+    onSuccess: navigateToChangelog,
+    onPublishDialogClose: () => setShowPublishConfirm(false),
+  });
 
   const handleCancel = () => {
     router.push(`/dashboard/${orgSlug}/changelog`);
@@ -380,7 +175,7 @@ export function ReleaseEditor({
               Published
             </span>
           )}
-          {isScheduled && !isPublished && release.scheduledPublishAt && (
+          {isScheduled && !isPublished && release?.scheduledPublishAt && (
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 text-xs dark:bg-amber-900/30 dark:text-amber-400">
                 <Clock className="h-3 w-3" />
@@ -490,164 +285,6 @@ export function ReleaseEditor({
         title={title}
         version={version}
       />
-    </div>
-  );
-}
-
-function pushButtonLabel(status?: string): string {
-  if (status === "pending") {
-    return "Pushing…";
-  }
-  if (status === "failed") {
-    return "Retry Push to GitHub";
-  }
-  return "Push to GitHub";
-}
-
-interface ReleaseEditorFooterProps {
-  canPushToGithub: boolean;
-  isLinkedToGithub: boolean;
-  isPermissionError: boolean;
-  isPublished: boolean;
-  isScheduled: boolean;
-  isStreaming: boolean;
-  isSubmitting: boolean;
-  onCancel: () => void;
-  onCancelSchedule: () => void;
-  onPublish: () => void;
-  onPushToGithub: () => void;
-  onUnpublish: () => void;
-  organizationId: Id<"organizations">;
-  orgSlug: string;
-  release?: Doc<"releases">;
-  titleEmpty: boolean;
-  userId?: string;
-}
-
-function ReleaseEditorFooter({
-  isPublished,
-  isScheduled,
-  isSubmitting,
-  isStreaming,
-  titleEmpty,
-  canPushToGithub,
-  isLinkedToGithub,
-  isPermissionError,
-  release,
-  organizationId,
-  orgSlug,
-  onPublish,
-  onUnpublish,
-  onCancelSchedule,
-  onPushToGithub,
-  onCancel,
-  userId,
-}: ReleaseEditorFooterProps) {
-  const getPublishLabel = (): string => {
-    if (isPublished) {
-      return "Unpublish";
-    }
-    if (isScheduled) {
-      return "Cancel Schedule";
-    }
-    return "Publish";
-  };
-
-  const getPrimaryAction = () => {
-    if (isPublished) {
-      return onUnpublish;
-    }
-    if (isScheduled) {
-      return onCancelSchedule;
-    }
-    return onPublish;
-  };
-
-  const publishButtonLabel = getPublishLabel();
-
-  const handlePrimaryAction = getPrimaryAction();
-  return (
-    <div
-      className={cn("border-t bg-muted/30 px-6 py-4", "flex flex-col gap-3")}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Button
-            disabled={isSubmitting || isStreaming || titleEmpty}
-            onClick={handlePrimaryAction}
-            size="sm"
-            type="button"
-            variant={isPublished || isScheduled ? "outline" : "default"}
-          >
-            {publishButtonLabel}
-          </Button>
-
-          {canPushToGithub && (
-            <Button
-              disabled={isSubmitting || release?.githubPushStatus === "pending"}
-              onClick={onPushToGithub}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              {release?.githubPushStatus === "pending" ? (
-                <Spinner className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <CloudArrowUp className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              {pushButtonLabel(release?.githubPushStatus)}
-            </Button>
-          )}
-
-          {isLinkedToGithub && release?.githubHtmlUrl && (
-            <a
-              className="flex items-center gap-1.5 text-green-600 text-sm dark:text-green-400"
-              href={release.githubHtmlUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <Check className="h-3.5 w-3.5" />
-              Linked to GitHub
-            </a>
-          )}
-        </div>
-
-        <Button
-          disabled={isSubmitting || isStreaming}
-          onClick={onCancel}
-          size="sm"
-          type="button"
-          variant="outline"
-        >
-          Cancel
-        </Button>
-      </div>
-
-      {isPermissionError && (
-        <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5">
-          <WarningCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-          <div className="text-sm">
-            <p className="font-medium text-destructive">
-              GitHub permissions insufficient
-            </p>
-            <p className="mt-0.5 text-muted-foreground">
-              Reconnect your GitHub App to grant the required permissions.
-            </p>
-            <Link
-              className="mt-1 inline-block font-medium text-primary text-xs hover:underline"
-              href={
-                buildGitHubInstallUrl({
-                  userId,
-                  organizationId,
-                  orgSlug,
-                }) ?? "#"
-              }
-            >
-              Reconnect GitHub
-            </Link>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

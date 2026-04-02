@@ -65,7 +65,6 @@ vi.mock("motion/react", () => ({
       children,
       className,
       onClick,
-      ...rest
     }: {
       children?: React.ReactNode;
       className?: string;
@@ -82,8 +81,6 @@ vi.mock("motion/react", () => ({
 vi.mock("@/components/ui/scroll-area", () => ({
   ScrollArea: ({
     children,
-    ref,
-    ...rest
   }: {
     children: React.ReactNode;
     ref?: unknown;

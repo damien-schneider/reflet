@@ -269,7 +269,7 @@ describe("useTiptapMarkdownEditor", () => {
   it("passes debounceMs to useDebouncedCallback", async () => {
     const { useDebouncedCallback } = (await import(
       "@tanstack/react-pacer"
-    )) as {
+    )) as unknown as {
       useDebouncedCallback: ReturnType<typeof vi.fn>;
     };
     useDebouncedCallback.mockClear();
@@ -286,7 +286,9 @@ describe("useTiptapMarkdownEditor", () => {
   });
 
   it("calls createExtensions with options including placeholder and maxLength", async () => {
-    const { createExtensions } = (await import("../editor-extensions")) as {
+    const { createExtensions } = (await import(
+      "../editor-extensions"
+    )) as unknown as {
       createExtensions: ReturnType<typeof vi.fn>;
     };
     createExtensions.mockClear();
@@ -307,7 +309,9 @@ describe("useTiptapMarkdownEditor", () => {
   });
 
   it("uses default placeholder when not provided", async () => {
-    const { createExtensions } = (await import("../editor-extensions")) as {
+    const { createExtensions } = (await import(
+      "../editor-extensions"
+    )) as unknown as {
       createExtensions: ReturnType<typeof vi.fn>;
     };
     createExtensions.mockClear();
@@ -323,7 +327,7 @@ describe("useTiptapMarkdownEditor", () => {
     const origStorage = mockEditor.storage;
     mockEditor.storage = {
       markdown: { getMarkdown: vi.fn(() => "") },
-    };
+    } as never;
     const { result } = renderHook(() =>
       useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
     );

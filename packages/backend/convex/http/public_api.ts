@@ -1,10 +1,23 @@
 import type { httpRouter } from "convex/server";
 import { z } from "zod";
 import { internal } from "../_generated/api";
-import type { Id, TableNames } from "../_generated/dataModel";
+import type { Id } from "../_generated/dataModel";
 import { httpAction } from "../_generated/server";
-import { decodeUserToken } from "../feedback/api_auth";
 import { parseId, parseJsonBody } from "./helpers";
+import {
+  authenticateApiRequest,
+  checkOrganizationAccess,
+} from "./lib/api_auth";
+import {
+  corsPreflightResponse,
+  errorResponse,
+  jsonResponse,
+  optionalNumberField,
+  optionalStringField,
+  parseEnumParam,
+  parseOptionalId,
+  stringFieldOr,
+} from "./lib/api_helpers";
 
 type Router = ReturnType<typeof httpRouter>;
 
@@ -48,195 +61,6 @@ const FEEDBACK_SORT_OPTIONS = [
   "comments",
 ] as const;
 const COMMENTS_SORT_OPTIONS = ["newest", "oldest"] as const;
-
-// ============================================
-// HELPERS
-// ============================================
-
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-User-Token, X-Visitor-Id",
-  "Access-Control-Max-Age": "86400",
-};
-
-function jsonResponse(
-  data: unknown,
-  status = 200,
-  headers: Record<string, string> = {}
-): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      ...CORS_HEADERS,
-      ...headers,
-    },
-  });
-}
-
-function errorResponse(error: string, status = 400): Response {
-  return jsonResponse({ error }, status);
-}
-
-function stringFieldOr(
-  body: Record<string, unknown>,
-  key: string,
-  defaultVal: string
-): string {
-  const val = body[key];
-  return typeof val === "string" ? val : defaultVal;
-}
-
-function optionalNumberField(
-  body: Record<string, unknown>,
-  key: string
-): number | undefined {
-  const val = body[key];
-  return typeof val === "number" ? val : undefined;
-}
-
-function optionalStringField(
-  body: Record<string, unknown>,
-  key: string
-): string | undefined {
-  const val = body[key];
-  return typeof val === "string" ? val : undefined;
-}
-
-function corsPreflightResponse(): Response {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
-}
-
-function parseEnumParam<T extends string>(
-  value: string | null,
-  validValues: readonly T[]
-): T | undefined {
-  if (value && (validValues as readonly string[]).includes(value)) {
-    return value as T;
-  }
-  return undefined;
-}
-
-function parseOptionalId<T extends TableNames>(
-  value: string | null | undefined
-): Id<T> | undefined {
-  return value ? (value as Id<T>) : undefined;
-}
-
-interface ApiAuthContext {
-  externalUserId?: Id<"externalUsers">;
-  isSecretKey: boolean;
-  organizationApiKeyId: Id<"organizationApiKeys">;
-  organizationId: Id<"organizations">;
-}
-
-async function checkOrganizationAccess(
-  ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
-  organizationId: Id<"organizations">,
-  isSecretKey: boolean
-): Promise<{ allowed: true } | { allowed: false; response: Response }> {
-  const org = await ctx.runQuery(
-    internal.feedback.api_public.getOrganizationConfig,
-    {
-      organizationId,
-    }
-  );
-
-  if (!org) {
-    return {
-      allowed: false,
-      response: errorResponse("Organization not found", 404),
-    };
-  }
-
-  if (!(org.isPublic || isSecretKey)) {
-    return {
-      allowed: false,
-      response: errorResponse(
-        "This organization is not public. Use a secret key for private access.",
-        403
-      ),
-    };
-  }
-
-  return { allowed: true };
-}
-
-async function authenticateApiRequest(
-  ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
-  request: Request
-): Promise<
-  | { success: true; auth: ApiAuthContext }
-  | { success: false; response: Response }
-> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return {
-      success: false,
-      response: errorResponse("Missing or invalid Authorization header", 401),
-    };
-  }
-
-  const apiKey = authHeader.slice(7);
-  const validation = await ctx.runQuery(
-    internal.feedback.api_auth.validateApiKey,
-    {
-      apiKey,
-    }
-  );
-
-  if (
-    !(
-      validation.success &&
-      validation.organizationId &&
-      validation.organizationApiKeyId
-    )
-  ) {
-    return {
-      success: false,
-      response: errorResponse(validation.error ?? "Invalid API key", 401),
-    };
-  }
-
-  const organizationId = validation.organizationId;
-  const organizationApiKeyId = validation.organizationApiKeyId;
-  const isSecretKey = validation.isSecretKey ?? false;
-
-  ctx.runMutation(internal.feedback.api_auth.updateOrganizationApiKeyLastUsed, {
-    apiKeyId: organizationApiKeyId,
-  });
-
-  const userToken = request.headers.get("X-User-Token");
-  let externalUserId: Id<"externalUsers"> | undefined;
-
-  if (userToken) {
-    const decoded = decodeUserToken(userToken);
-    if (decoded) {
-      const externalUser = await ctx.runMutation(
-        internal.feedback.api_auth.getOrCreateExternalUser,
-        {
-          organizationId,
-          externalId: decoded.id,
-          email: decoded.email,
-          name: decoded.name,
-        }
-      );
-      externalUserId = externalUser.externalUserId;
-    }
-  }
-
-  return {
-    success: true,
-    auth: {
-      organizationId,
-      organizationApiKeyId,
-      isSecretKey,
-      externalUserId,
-    },
-  };
-}
 
 // ============================================
 // ROUTE REGISTRATION

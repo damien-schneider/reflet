@@ -10,7 +10,7 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,22 +70,19 @@ function TagEditButton({ tag }: TagEditButtonProps) {
 
   const updateTag = useMutation(api.organizations.tag_manager_actions.update);
 
-  const handleOpenChange = useCallback(
-    (isOpen: boolean) => {
-      setOpen(isOpen);
-      if (isOpen) {
-        setEditedName(tag.name);
-        setEditedColor(
-          isValidTagColor(tag.color)
-            ? tag.color
-            : migrateHexToNamedColor(tag.color)
-        );
-      }
-    },
-    [tag.name, tag.color]
-  );
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      setEditedName(tag.name);
+      setEditedColor(
+        isValidTagColor(tag.color)
+          ? tag.color
+          : migrateHexToNamedColor(tag.color)
+      );
+    }
+  };
 
-  const handleSave = useCallback(async () => {
+  const handleSave = async () => {
     const trimmedName = editedName.trim();
     if (!trimmedName) {
       setOpen(false);
@@ -103,24 +100,21 @@ function TagEditButton({ tag }: TagEditButtonProps) {
       });
     }
     setOpen(false);
-  }, [editedName, editedColor, tag._id, tag.name, tag.color, updateTag]);
+  };
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSave();
-      } else if (e.key === "Escape") {
-        setOpen(false);
-      }
-    },
-    [handleSave]
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  };
 
-  const handleDeleteSuccess = useCallback(() => {
+  const handleDeleteSuccess = () => {
     setShowDeleteDialog(false);
     setOpen(false);
-  }, []);
+  };
 
   return (
     <>
@@ -195,23 +189,23 @@ export function TagFilterDropdown({
 
   const createTag = useMutation(api.organizations.tag_manager_actions.create);
 
-  const filteredTags = useMemo(() => {
+  const filteredTags = (() => {
     if (!searchValue.trim()) {
       return tags;
     }
     const search = searchValue.toLowerCase();
     return tags.filter((tag) => tag.name.toLowerCase().includes(search));
-  }, [tags, searchValue]);
+  })();
 
-  const canCreateTag = useMemo(() => {
+  const canCreateTag = (() => {
     if (!(isAdmin && searchValue.trim())) {
       return false;
     }
     const search = searchValue.toLowerCase().trim();
     return !tags.some((tag) => tag.name.toLowerCase() === search);
-  }, [isAdmin, searchValue, tags]);
+  })();
 
-  const handleCreateTag = useCallback(async () => {
+  const handleCreateTag = async () => {
     if (!canCreateTag || isCreating) {
       return;
     }
@@ -227,15 +221,12 @@ export function TagFilterDropdown({
     } finally {
       setIsCreating(false);
     }
-  }, [canCreateTag, isCreating, createTag, organizationId, searchValue]);
+  };
 
-  const handleTagSelect = useCallback(
-    (tagId: string) => {
-      const isSelected = selectedTagIds.includes(tagId);
-      onTagChange(tagId, !isSelected);
-    },
-    [selectedTagIds, onTagChange]
-  );
+  const handleTagSelect = (tagId: string) => {
+    const isSelected = selectedTagIds.includes(tagId);
+    onTagChange(tagId, !isSelected);
+  };
 
   return (
     <Popover onOpenChange={setOpen} open={open}>

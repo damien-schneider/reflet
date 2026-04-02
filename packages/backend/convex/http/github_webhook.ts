@@ -263,6 +263,17 @@ async function handlePullRequestWebhook(
         },
       }
     );
+
+    // Trigger autopilot security scan + architect review on merge
+    await ctx.runMutation(internal.autopilot.webhooks.handlePrMerged, {
+      organizationId: connection.organizationId,
+      prNumber: pull_request.number,
+      prTitle: pull_request.title,
+      prUrl: pull_request.html_url,
+      headRef: pull_request.head.ref,
+      baseRef: pull_request.base.ref,
+      authorLogin: pull_request.user?.login,
+    });
   }
 
   return webhookJson({ success: true, action: "pr_processed" });

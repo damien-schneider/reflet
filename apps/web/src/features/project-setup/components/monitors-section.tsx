@@ -3,13 +3,7 @@ import { Heartbeat } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-
-interface SuggestedMonitor {
-  accepted: boolean;
-  method?: string;
-  name: string;
-  url: string;
-}
+import type { SuggestedMonitor } from "@/features/project-setup/components/review-types";
 
 interface MonitorsSectionProps {
   monitors: SuggestedMonitor[];

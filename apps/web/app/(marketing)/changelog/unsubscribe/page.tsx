@@ -21,24 +21,27 @@ function UnsubscribeContent() {
     api.changelog.subscriptions.unsubscribeByToken
   );
 
-  useEffect(() => {
-    if (!token) {
-      setStatus("error");
-      setErrorMessage("Invalid unsubscribe link. Please check your email.");
-      return;
-    }
-
-    unsubscribeMutation({ token })
-      .then(() => {
-        setStatus("success");
-      })
-      .catch((error: Error) => {
+  useEffect(
+    function processUnsubscribe() {
+      if (!token) {
         setStatus("error");
-        setErrorMessage(
-          error.message ?? "An error occurred while unsubscribing."
-        );
-      });
-  }, [token, unsubscribeMutation]);
+        setErrorMessage("Invalid unsubscribe link. Please check your email.");
+        return;
+      }
+
+      unsubscribeMutation({ token })
+        .then(() => {
+          setStatus("success");
+        })
+        .catch((error: Error) => {
+          setStatus("error");
+          setErrorMessage(
+            error.message ?? "An error occurred while unsubscribing."
+          );
+        });
+    },
+    [token, unsubscribeMutation]
+  );
 
   if (status === "loading") {
     return (

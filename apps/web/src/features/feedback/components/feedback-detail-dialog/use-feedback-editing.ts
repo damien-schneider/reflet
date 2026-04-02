@@ -30,13 +30,16 @@ export function useFeedbackEditing({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Sync local state when feedback loads or changes
-  useEffect(() => {
-    if (feedback) {
-      setEditedTitle(feedback.title);
-      setEditedDescription(feedback.description ?? "");
-      setHasUnsavedChanges(false);
-    }
-  }, [feedback]);
+  useEffect(
+    function syncLocalStateWithFeedback() {
+      if (feedback) {
+        setEditedTitle(feedback.title);
+        setEditedDescription(feedback.description ?? "");
+        setHasUnsavedChanges(false);
+      }
+    },
+    [feedback]
+  );
 
   const handleTitleChange = useCallback(
     (newTitle: string) => {

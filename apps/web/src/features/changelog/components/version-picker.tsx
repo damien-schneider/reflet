@@ -36,21 +36,24 @@ export function VersionPicker({
   const hasAppliedDefault = useRef(false);
 
   // Auto-apply the default increment version for new releases
-  useEffect(() => {
-    if (hasAppliedDefault.current || value || !isAutoVersioning) {
-      return;
-    }
-    if (!versionSuggestions) {
-      return;
-    }
+  useEffect(
+    function applyDefaultVersion() {
+      if (hasAppliedDefault.current || value || !isAutoVersioning) {
+        return;
+      }
+      if (!versionSuggestions) {
+        return;
+      }
 
-    const defaultVersion =
-      versionSuggestions[versionSuggestions.defaultIncrement ?? "patch"];
-    if (defaultVersion) {
-      hasAppliedDefault.current = true;
-      onChange(defaultVersion);
-    }
-  }, [versionSuggestions, value, isAutoVersioning, onChange]);
+      const defaultVersion =
+        versionSuggestions[versionSuggestions.defaultIncrement ?? "patch"];
+      if (defaultVersion) {
+        hasAppliedDefault.current = true;
+        onChange(defaultVersion);
+      }
+    },
+    [versionSuggestions, value, isAutoVersioning, onChange]
+  );
 
   const patchVersion = versionSuggestions?.patch;
   const minorVersion = versionSuggestions?.minor;

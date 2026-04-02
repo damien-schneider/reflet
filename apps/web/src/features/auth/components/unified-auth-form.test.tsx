@@ -307,7 +307,7 @@ describe("UnifiedAuthForm", () => {
   // and mode switching which is difficult to mock in unit tests.
 
   it("disables submit when mode is signUp and password too short", () => {
-    mockWatch.mockImplementation((field: string) => {
+    mockWatch.mockImplementation(((field: string) => {
       if (field === "password") {
         return "short";
       }
@@ -315,7 +315,7 @@ describe("UnifiedAuthForm", () => {
         return "short";
       }
       return "";
-    });
+    }) as never);
     defaultHookReturn.mode = "signUp";
     render(<UnifiedAuthForm />);
     const buttons = screen.getAllByRole("button");
@@ -324,7 +324,7 @@ describe("UnifiedAuthForm", () => {
 
   it("renders with signIn mode", () => {
     defaultHookReturn.mode = "signIn";
-    mockWatch.mockImplementation((field: string) => {
+    mockWatch.mockImplementation(((field: string) => {
       if (field === "password") {
         return "pass";
       }
@@ -332,7 +332,7 @@ describe("UnifiedAuthForm", () => {
         return "";
       }
       return "";
-    });
+    }) as never);
     render(<UnifiedAuthForm />);
     const form = document.querySelector("form");
     expect(form).toBeInTheDocument();

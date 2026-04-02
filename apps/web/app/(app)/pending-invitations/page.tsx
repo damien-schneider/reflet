@@ -35,18 +35,24 @@ export default function PendingInvitationsPage() {
     invitations !== undefined && invitations.length === 0;
 
   // Redirect to login if not authenticated
-  useEffect(() => {
-    if (shouldRedirectToLogin) {
-      router.push("/auth/sign-in");
-    }
-  }, [shouldRedirectToLogin, router]);
+  useEffect(
+    function redirectToLoginIfUnauthenticated() {
+      if (shouldRedirectToLogin) {
+        router.push("/auth/sign-in");
+      }
+    },
+    [shouldRedirectToLogin, router]
+  );
 
   // Redirect to dashboard if no pending invitations
-  useEffect(() => {
-    if (shouldRedirectToDashboard) {
-      router.push("/dashboard");
-    }
-  }, [shouldRedirectToDashboard, router]);
+  useEffect(
+    function redirectToDashboardIfNoInvitations() {
+      if (shouldRedirectToDashboard) {
+        router.push("/dashboard");
+      }
+    },
+    [shouldRedirectToDashboard, router]
+  );
 
   // Show loading state while checking auth or loading invitations
   if (isSessionLoading || invitations === undefined || shouldRedirectToLogin) {

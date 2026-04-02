@@ -32,9 +32,14 @@ export default function PublicRoadmapPageClient({
     );
   }
 
+  type RoadmapLane = NonNullable<
+    NonNullable<typeof roadmapConfig>["lanes"]
+  >[number];
+  type FeedbackItem = NonNullable<typeof roadmapFeedback>[number];
+
   const primaryColor = org.primaryColor ?? "#3b82f6";
-  const roadmapLanes = roadmapConfig.lanes || [];
-  const allFeedback = roadmapFeedback || [];
+  const roadmapLanes: RoadmapLane[] = roadmapConfig.lanes ?? [];
+  const allFeedback: FeedbackItem[] = roadmapFeedback ?? [];
 
   if (roadmapLanes.length === 0) {
     return (
@@ -49,14 +54,14 @@ export default function PublicRoadmapPageClient({
     );
   }
 
-  const feedbackByLane = roadmapLanes.reduce<
-    Record<string, typeof allFeedback>
-  >((acc, lane) => {
-    acc[lane._id] = allFeedback.filter((f) =>
-      f?.tags?.filter(Boolean).some((t) => t?._id === lane._id)
+  const feedbackByLane: Record<string, FeedbackItem[]> = {};
+  for (const lane of roadmapLanes) {
+    feedbackByLane[lane._id] = allFeedback.filter((f) =>
+      f?.tags
+        ?.filter((t): t is NonNullable<typeof t> => t !== null)
+        .some((t) => t._id === lane._id)
     );
-    return acc;
-  }, {});
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

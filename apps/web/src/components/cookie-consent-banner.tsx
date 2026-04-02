@@ -26,7 +26,7 @@ export function hasAnalyticsConsent(): boolean {
 export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
 
-  useEffect(() => {
+  useEffect(function checkCookieConsent() {
     if (getCookieConsent() === null) {
       setVisible(true);
     }

@@ -2,7 +2,6 @@
 
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
 import { toId } from "@/lib/convex-helpers";
 
 const FEEDBACK_PARAM_KEY = "f";
@@ -35,77 +34,64 @@ export function useFeedbackDrawer(
   const searchParams = useSearchParams();
 
   // Parse current state from URL
-  const state = useMemo((): FeedbackDrawerState => {
-    const feedbackIdParam = searchParams.get(FEEDBACK_PARAM_KEY);
-    const selectedFeedbackId = feedbackIdParam
-      ? toId("feedback", feedbackIdParam)
-      : null;
+  const feedbackIdParam = searchParams.get(FEEDBACK_PARAM_KEY);
+  const selectedFeedbackId = feedbackIdParam
+    ? toId("feedback", feedbackIdParam)
+    : null;
 
-    return {
-      selectedFeedbackId,
-      isOpen: selectedFeedbackId !== null,
-    };
-  }, [searchParams]);
+  const state: FeedbackDrawerState = {
+    selectedFeedbackId,
+    isOpen: selectedFeedbackId !== null,
+  };
 
   // Helper to update URL params
-  const updateParams = useCallback(
-    (feedbackId: string | null) => {
-      const params = new URLSearchParams(searchParams.toString());
+  const updateParams = (feedbackId: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
 
-      if (feedbackId === null) {
-        params.delete(FEEDBACK_PARAM_KEY);
-      } else {
-        params.set(FEEDBACK_PARAM_KEY, feedbackId);
-      }
+    if (feedbackId === null) {
+      params.delete(FEEDBACK_PARAM_KEY);
+    } else {
+      params.set(FEEDBACK_PARAM_KEY, feedbackId);
+    }
 
-      const queryString = params.toString();
-      const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-      router.push(newUrl, { scroll: false });
-    },
-    [router, pathname, searchParams]
-  );
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    router.push(newUrl, { scroll: false });
+  };
 
   // Actions
-  const openFeedback = useCallback(
-    (id: string) => {
-      updateParams(id);
-    },
-    [updateParams]
-  );
+  const openFeedback = (id: string) => {
+    updateParams(id);
+  };
 
-  const closeFeedback = useCallback(() => {
+  const closeFeedback = () => {
     updateParams(null);
-  }, [updateParams]);
+  };
 
-  const navigateToFeedback = useCallback(
-    (id: Id<"feedback">) => {
-      updateParams(id);
-    },
-    [updateParams]
-  );
+  const navigateToFeedback = (id: Id<"feedback">) => {
+    updateParams(id);
+  };
 
   // Navigation
-  const currentIndex = useMemo(() => {
-    if (!state.selectedFeedbackId || feedbackIds.length === 0) {
-      return -1;
-    }
-    return feedbackIds.indexOf(state.selectedFeedbackId);
-  }, [state.selectedFeedbackId, feedbackIds]);
+  const currentIndex =
+    !state.selectedFeedbackId || feedbackIds.length === 0
+      ? -1
+      : feedbackIds.indexOf(state.selectedFeedbackId);
 
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex >= 0 && currentIndex < feedbackIds.length - 1;
 
-  const goToPrevious = useCallback(() => {
+  const goToPrevious = () => {
     if (hasPrevious && feedbackIds[currentIndex - 1]) {
       navigateToFeedback(feedbackIds[currentIndex - 1]);
     }
-  }, [hasPrevious, feedbackIds, currentIndex, navigateToFeedback]);
+  };
 
-  const goToNext = useCallback(() => {
+  const goToNext = () => {
     if (hasNext && feedbackIds[currentIndex + 1]) {
       navigateToFeedback(feedbackIds[currentIndex + 1]);
     }
-  }, [hasNext, feedbackIds, currentIndex, navigateToFeedback]);
+  };
 
   return {
     ...state,

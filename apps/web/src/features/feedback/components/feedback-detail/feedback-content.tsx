@@ -39,11 +39,14 @@ export function FeedbackContent({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Sync local state when props change
-  useEffect(() => {
-    setEditedTitle(title);
-    setEditedDescription(description);
-    setHasUnsavedChanges(false);
-  }, [title, description]);
+  useEffect(
+    function syncLocalStateWithProps() {
+      setEditedTitle(title);
+      setEditedDescription(description);
+      setHasUnsavedChanges(false);
+    },
+    [title, description]
+  );
 
   const handleTitleChange = useCallback(
     (newTitle: string) => {

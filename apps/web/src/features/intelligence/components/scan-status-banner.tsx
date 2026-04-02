@@ -96,55 +96,61 @@ export const ScanStatusBanner = ({
   const isStale = job !== null && job !== undefined && "_stale" in job;
 
   // Auto-cancel stale jobs (stuck >2min)
-  useEffect(() => {
-    if (!(isStale && job)) {
-      return;
-    }
-    toast.error("Intelligence scan timed out", {
-      description: "The scan took too long and was cancelled automatically.",
-    });
-    cancelScan({ organizationId }).catch(noop);
-  }, [isStale, job, cancelScan, organizationId]);
+  useEffect(
+    function autoCancelStaleJobs() {
+      if (!(isStale && job)) {
+        return;
+      }
+      toast.error("Intelligence scan timed out", {
+        description: "The scan took too long and was cancelled automatically.",
+      });
+      cancelScan({ organizationId }).catch(noop);
+    },
+    [isStale, job, cancelScan, organizationId]
+  );
 
   // Fire toast on status transitions
-  useEffect(() => {
-    const prevStatus = prevJobStatusRef.current;
-    if (prevStatus === jobStatus) {
-      return;
-    }
-    prevJobStatusRef.current = jobStatus;
+  useEffect(
+    function notifyOnScanStatusTransition() {
+      const prevStatus = prevJobStatusRef.current;
+      if (prevStatus === jobStatus) {
+        return;
+      }
+      prevJobStatusRef.current = jobStatus;
 
-    const wasActive = prevStatus === "pending" || prevStatus === "processing";
-    if (!wasActive) {
-      return;
-    }
+      const wasActive = prevStatus === "pending" || prevStatus === "processing";
+      if (!wasActive) {
+        return;
+      }
 
-    if (jobStatus === "completed") {
-      const stats = job?.stats;
-      if (stats && stats.itemsProcessed > 0) {
-        toast.success("Intelligence scan complete", {
-          description: `${stats.itemsProcessed} steps completed, ${stats.errors} errors`,
-        });
-      } else {
-        toast.info("Scan complete — no new signals found", {
+      if (jobStatus === "completed") {
+        const stats = job?.stats;
+        if (stats && stats.itemsProcessed > 0) {
+          toast.success("Intelligence scan complete", {
+            description: `${stats.itemsProcessed} steps completed, ${stats.errors} errors`,
+          });
+        } else {
+          toast.info("Scan complete — no new signals found", {
+            description:
+              "Try adding more keywords or competitors for better results.",
+          });
+        }
+        if (job) {
+          dismissScan({ jobId: job._id }).catch(noop);
+        }
+      } else if (jobStatus === "failed") {
+        toast.error("Intelligence scan failed", {
           description:
-            "Try adding more keywords or competitors for better results.",
+            job?.errorMessage ??
+            "Check your OpenRouter API key and intelligence settings.",
         });
+        if (job) {
+          dismissScan({ jobId: job._id }).catch(noop);
+        }
       }
-      if (job) {
-        dismissScan({ jobId: job._id }).catch(noop);
-      }
-    } else if (jobStatus === "failed") {
-      toast.error("Intelligence scan failed", {
-        description:
-          job?.errorMessage ??
-          "Check your OpenRouter API key and intelligence settings.",
-      });
-      if (job) {
-        dismissScan({ jobId: job._id }).catch(noop);
-      }
-    }
-  }, [jobStatus, job, dismissScan]);
+    },
+    [jobStatus, job, dismissScan]
+  );
 
   const handleStartScan = async () => {
     try {

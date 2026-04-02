@@ -213,11 +213,14 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   const { redirectTo, orgNotAccessible, hasOrganizations } =
     computeDashboardNavigation({ orgSlug, org, organizations });
 
-  useEffect(() => {
-    if (redirectTo && !isNonOrgRoute) {
-      router.replace(redirectTo);
-    }
-  }, [router, redirectTo, isNonOrgRoute]);
+  useEffect(
+    function handleDashboardRedirect() {
+      if (redirectTo && !isNonOrgRoute) {
+        router.replace(redirectTo);
+      }
+    },
+    [router, redirectTo, isNonOrgRoute]
+  );
 
   return (
     <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>

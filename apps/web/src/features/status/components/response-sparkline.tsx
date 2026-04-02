@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 interface SparklineProps {
   className?: string;
   data: Array<{ responseTimeMs?: number; checkedAt: number }>;
@@ -14,7 +16,10 @@ export function ResponseSparkline({
   if (data.length === 0) {
     return (
       <div
-        className={`flex items-center justify-center text-muted-foreground text-xs ${className}`}
+        className={cn(
+          "flex items-center justify-center text-muted-foreground text-xs",
+          className
+        )}
         style={{ height }}
       >
         No data
@@ -46,7 +51,7 @@ export function ResponseSparkline({
   return (
     <svg
       aria-label="Response time sparkline"
-      className={`text-olive-500 ${className}`}
+      className={cn("text-olive-500", className)}
       height={height}
       preserveAspectRatio="none"
       role="img"

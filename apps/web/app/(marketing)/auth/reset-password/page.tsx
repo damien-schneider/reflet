@@ -54,18 +54,21 @@ function ResetPasswordContent() {
   const watchedPassword = watch("password");
   const watchedConfirmPassword = watch("confirmPassword");
 
-  useEffect(() => {
-    if (error) {
-      setStatus("error");
-      setApiError(
-        error === "invalid_token"
-          ? "The reset link is invalid or has expired."
-          : "An error occurred."
-      );
-    } else if (!token) {
-      setStatus("invalid");
-    }
-  }, [error, token]);
+  useEffect(
+    function validateResetToken() {
+      if (error) {
+        setStatus("error");
+        setApiError(
+          error === "invalid_token"
+            ? "The reset link is invalid or has expired."
+            : "An error occurred."
+        );
+      } else if (!token) {
+        setStatus("invalid");
+      }
+    },
+    [error, token]
+  );
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     if (!token) {

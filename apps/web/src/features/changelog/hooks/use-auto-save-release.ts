@@ -84,28 +84,31 @@ export function useAutoSaveRelease({
     updateRelease,
   ]);
 
-  useEffect(() => {
-    if (isFirstEditRef.current) {
-      isFirstEditRef.current = false;
-      return;
-    }
+  useEffect(
+    function debouncedAutoSave() {
+      if (isFirstEditRef.current) {
+        isFirstEditRef.current = false;
+        return;
+      }
 
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    if (hasContent) {
-      debounceTimerRef.current = setTimeout(() => {
-        autoSave();
-      }, AUTO_SAVE_DEBOUNCE_MS);
-    }
-
-    return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
-    };
-  }, [hasContent, autoSave]);
+
+      if (hasContent) {
+        debounceTimerRef.current = setTimeout(() => {
+          autoSave();
+        }, AUTO_SAVE_DEBOUNCE_MS);
+      }
+
+      return () => {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+      };
+    },
+    [hasContent, autoSave]
+  );
 
   return { releaseId, saveStatus };
 }

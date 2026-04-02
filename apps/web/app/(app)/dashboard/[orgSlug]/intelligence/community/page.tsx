@@ -8,11 +8,14 @@ export default function CommunityRedirect() {
   const router = useRouter();
   const orgSlug = typeof params?.orgSlug === "string" ? params.orgSlug : "";
 
-  useEffect(() => {
-    if (orgSlug) {
-      router.replace(`/dashboard/${orgSlug}/intelligence`);
-    }
-  }, [orgSlug, router]);
+  useEffect(
+    function redirectToIntelligence() {
+      if (orgSlug) {
+        router.replace(`/dashboard/${orgSlug}/intelligence`);
+      }
+    },
+    [orgSlug, router]
+  );
 
   return null;
 }

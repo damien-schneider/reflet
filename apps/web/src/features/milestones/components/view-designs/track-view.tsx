@@ -57,63 +57,69 @@ export function TrackView({
 
   const hasMilestones = (milestones?.length ?? 0) > 0;
 
-  useEffect(() => {
-    if (!hasMilestones) {
-      return;
-    }
-
-    const wrapper = trackRef.current;
-    if (!wrapper) {
-      return;
-    }
-
-    const viewport = wrapper.querySelector<HTMLElement>(
-      '[data-slot="scroll-area-viewport"]'
-    );
-    const el = viewport ?? wrapper;
-
-    const handleWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey) {
+  useEffect(
+    function syncTrackZoomGestures() {
+      if (!hasMilestones) {
         return;
       }
-      e.preventDefault();
-      setZoneMinWidth((prev) => {
-        const delta = -e.deltaY * ZOOM_SENSITIVITY;
-        return Math.min(MAX_ZONE_WIDTH, Math.max(MIN_ZONE_WIDTH, prev + delta));
-      });
-    };
 
-    const handleGestureStart = (e: Event) => {
-      e.preventDefault();
-      lastGestureScaleRef.current = 1;
-    };
-
-    const handleGestureChange = (e: Event) => {
-      e.preventDefault();
-      if (!isSafariGestureEvent(e)) {
+      const wrapper = trackRef.current;
+      if (!wrapper) {
         return;
       }
-      const scaleDelta = e.scale / lastGestureScaleRef.current;
-      lastGestureScaleRef.current = e.scale;
-      setZoneMinWidth((prev) =>
-        Math.min(MAX_ZONE_WIDTH, Math.max(MIN_ZONE_WIDTH, prev * scaleDelta))
+
+      const viewport = wrapper.querySelector<HTMLElement>(
+        '[data-slot="scroll-area-viewport"]'
       );
-    };
+      const el = viewport ?? wrapper;
 
-    el.addEventListener("wheel", handleWheel, { passive: false });
-    el.addEventListener("gesturestart", handleGestureStart, {
-      passive: false,
-    });
-    el.addEventListener("gesturechange", handleGestureChange, {
-      passive: false,
-    });
+      const handleWheel = (e: WheelEvent) => {
+        if (!e.ctrlKey) {
+          return;
+        }
+        e.preventDefault();
+        setZoneMinWidth((prev) => {
+          const delta = -e.deltaY * ZOOM_SENSITIVITY;
+          return Math.min(
+            MAX_ZONE_WIDTH,
+            Math.max(MIN_ZONE_WIDTH, prev + delta)
+          );
+        });
+      };
 
-    return () => {
-      el.removeEventListener("wheel", handleWheel);
-      el.removeEventListener("gesturestart", handleGestureStart);
-      el.removeEventListener("gesturechange", handleGestureChange);
-    };
-  }, [hasMilestones]);
+      const handleGestureStart = (e: Event) => {
+        e.preventDefault();
+        lastGestureScaleRef.current = 1;
+      };
+
+      const handleGestureChange = (e: Event) => {
+        e.preventDefault();
+        if (!isSafariGestureEvent(e)) {
+          return;
+        }
+        const scaleDelta = e.scale / lastGestureScaleRef.current;
+        lastGestureScaleRef.current = e.scale;
+        setZoneMinWidth((prev) =>
+          Math.min(MAX_ZONE_WIDTH, Math.max(MIN_ZONE_WIDTH, prev * scaleDelta))
+        );
+      };
+
+      el.addEventListener("wheel", handleWheel, { passive: false });
+      el.addEventListener("gesturestart", handleGestureStart, {
+        passive: false,
+      });
+      el.addEventListener("gesturechange", handleGestureChange, {
+        passive: false,
+      });
+
+      return () => {
+        el.removeEventListener("wheel", handleWheel);
+        el.removeEventListener("gesturestart", handleGestureStart);
+        el.removeEventListener("gesturechange", handleGestureChange);
+      };
+    },
+    [hasMilestones]
+  );
 
   const handleMilestoneClick = useCallback((milestoneId: Id<"milestones">) => {
     setActiveMilestoneId((prev) => (prev === milestoneId ? null : milestoneId));

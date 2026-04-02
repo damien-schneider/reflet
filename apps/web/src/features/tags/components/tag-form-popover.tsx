@@ -62,24 +62,27 @@ export function TagFormPopover({
     icon: undefined,
   });
 
-  useEffect(() => {
-    if (editingTag) {
-      const color = isValidTagColor(editingTag.color)
-        ? editingTag.color
-        : migrateHexToNamedColor(editingTag.color);
-      setFormData({
-        name: editingTag.name,
-        color,
-        icon: editingTag.icon,
-      });
-    } else {
-      setFormData({
-        name: "",
-        color: "blue",
-        icon: undefined,
-      });
-    }
-  }, [editingTag]);
+  useEffect(
+    function syncEditingTagToForm() {
+      if (editingTag) {
+        const color = isValidTagColor(editingTag.color)
+          ? editingTag.color
+          : migrateHexToNamedColor(editingTag.color);
+        setFormData({
+          name: editingTag.name,
+          color,
+          icon: editingTag.icon,
+        });
+      } else {
+        setFormData({
+          name: "",
+          color: "blue",
+          icon: undefined,
+        });
+      }
+    },
+    [editingTag]
+  );
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {

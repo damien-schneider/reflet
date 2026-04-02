@@ -5,7 +5,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Link from "next/link";
-import { use, useCallback, useState } from "react";
+import { use, useState } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -34,11 +34,11 @@ export default function ShippedCardClient({
       ? `/${orgSlug}/shipped/${feedbackId}`
       : window.location.href;
 
-  const handleCopy = useCallback(async () => {
+  const handleCopy = async () => {
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [shareUrl]);
+  };
 
   if (meta === undefined) {
     return (

@@ -20,29 +20,35 @@ export function useReleaseCommits(releaseId: Id<"releases"> | null) {
   );
 
   // Sync persisted commits into local state on initial load
-  useEffect(() => {
-    if (persistedCommits && commits.length === 0) {
-      setCommits(persistedCommits.commits);
-      setFiles(persistedCommits.files ?? undefined);
-      setPreviousTag(persistedCommits.previousTag ?? undefined);
-    }
-  }, [persistedCommits, commits.length]);
+  useEffect(
+    function syncPersistedCommitsToState() {
+      if (persistedCommits && commits.length === 0) {
+        setCommits(persistedCommits.commits);
+        setFiles(persistedCommits.files ?? undefined);
+        setPreviousTag(persistedCommits.previousTag ?? undefined);
+      }
+    },
+    [persistedCommits, commits.length]
+  );
 
   // Save unsaved commits when releaseId becomes available (handles race condition
   // where commits are fetched before auto-save creates the release)
-  useEffect(() => {
-    if (releaseId && commits.length > 0 && !hasSavedRef.current) {
-      hasSavedRef.current = true;
-      saveReleaseCommits({
-        releaseId,
-        commits,
-        files,
-        previousTag,
-      }).catch(() => {
-        hasSavedRef.current = false;
-      });
-    }
-  }, [releaseId, commits, files, previousTag, saveReleaseCommits]);
+  useEffect(
+    function saveCommitsWhenReleaseReady() {
+      if (releaseId && commits.length > 0 && !hasSavedRef.current) {
+        hasSavedRef.current = true;
+        saveReleaseCommits({
+          releaseId,
+          commits,
+          files,
+          previousTag,
+        }).catch(() => {
+          hasSavedRef.current = false;
+        });
+      }
+    },
+    [releaseId, commits, files, previousTag, saveReleaseCommits]
+  );
 
   const handleCommitsFetched = useCallback(
     (

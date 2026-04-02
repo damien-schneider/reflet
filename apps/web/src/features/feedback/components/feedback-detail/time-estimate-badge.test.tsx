@@ -122,7 +122,6 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenuTrigger: ({
     children,
     className,
-    render: renderProp,
   }: {
     children: React.ReactNode;
     className?: string;
@@ -165,7 +164,6 @@ vi.mock("@/components/ui/popover", () => ({
   }) => <div data-testid="popover-content">{children}</div>,
   PopoverTrigger: ({
     children,
-    render: renderProp,
   }: {
     children: React.ReactNode;
     render?: React.ReactNode;
@@ -290,8 +288,6 @@ describe("TimeEstimateBadge", () => {
     );
     // Non-admin gets a Tooltip wrapper, not a Popover
     expect(screen.getByText("3 days")).toBeInTheDocument();
-    // Should not have popover trigger (button type)
-    const _buttons = screen.queryAllByRole("button");
     // Non-admin rendering may have minimal buttons
     expect(screen.getByText("3 days")).toBeInTheDocument();
   });
@@ -424,7 +420,9 @@ describe("TimeEstimateBadge", () => {
       <TimeEstimateBadge
         effectiveEstimate="2 hours"
         feedbackId={feedbackId}
+        hasHumanOverride={false}
         isAdmin={false}
+        isOverridden={false}
       />
     );
     expect(screen.getByText("2 hours")).toBeInTheDocument();
@@ -435,7 +433,9 @@ describe("TimeEstimateBadge", () => {
       <TimeEstimateBadge
         effectiveEstimate="3 days"
         feedbackId={feedbackId}
+        hasHumanOverride={false}
         isAdmin={false}
+        isOverridden={false}
       />
     );
     expect(screen.getByText("3 days")).toBeInTheDocument();
@@ -446,7 +446,9 @@ describe("TimeEstimateBadge", () => {
       <TimeEstimateBadge
         effectiveEstimate="1 week"
         feedbackId={feedbackId}
+        hasHumanOverride={false}
         isAdmin={false}
+        isOverridden={false}
       />
     );
     expect(screen.queryByTestId("popover-content")).not.toBeInTheDocument();
@@ -457,7 +459,9 @@ describe("TimeEstimateBadge", () => {
       <TimeEstimateBadge
         effectiveEstimate=""
         feedbackId={feedbackId}
+        hasHumanOverride={false}
         isAdmin={false}
+        isOverridden={false}
       />
     );
     // Empty estimate still renders badge markup

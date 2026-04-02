@@ -3,6 +3,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,16 +46,19 @@ export function InviteMemberDialog({
   const [copied, setCopied] = useState(false);
 
   // Reset state when dialog closes
-  useEffect(() => {
-    if (!open) {
-      setInviteEmail("");
-      setInviteRole("member");
-      setIsSubmitting(false);
-      setDialogState("form");
-      setInvitationToken(null);
-      setCopied(false);
-    }
-  }, [open]);
+  useEffect(
+    function resetStateOnDialogClose() {
+      if (!open) {
+        setInviteEmail("");
+        setInviteRole("member");
+        setIsSubmitting(false);
+        setDialogState("form");
+        setInvitationToken(null);
+        setCopied(false);
+      }
+    },
+    [open]
+  );
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) {
@@ -73,6 +77,9 @@ export function InviteMemberDialog({
       setDialogState("success");
     } catch (error) {
       console.error("Failed to invite member:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to invite member"
+      );
     } finally {
       setIsSubmitting(false);
     }
