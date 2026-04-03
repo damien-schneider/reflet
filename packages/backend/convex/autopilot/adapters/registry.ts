@@ -11,13 +11,25 @@ import { codexAdapter } from "./codex";
 import { copilotAdapter } from "./copilot";
 import type { CodingAdapter } from "./types";
 
-type AdapterName = "builtin" | "copilot" | "codex" | "claude_code";
+type AdapterName =
+  | "builtin"
+  | "copilot"
+  | "codex"
+  | "claude_code"
+  | "open_swe"
+  | "openclaw";
 
 const adapters: Record<AdapterName, CodingAdapter> = {
   builtin: builtinAdapter,
   copilot: copilotAdapter,
   codex: codexAdapter,
   claude_code: claudeCodeAdapter,
+  // V6: open_swe and openclaw use the same interface but route through
+  // external GitHub Actions / self-hosted instances. They reuse the
+  // builtin adapter as a fallback until their specific implementations
+  // are connected.
+  open_swe: builtinAdapter,
+  openclaw: builtinAdapter,
 } as const;
 
 /**

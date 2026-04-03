@@ -17,6 +17,7 @@ import {
   growthItemType,
   inboxItemStatus,
   inboxItemType,
+  leadStatus,
 } from "./tableFields";
 
 // ============================================
@@ -63,11 +64,22 @@ export const getConfig = query({
       emailDailyLimit: v.optional(v.number()),
       enabled: v.boolean(),
       intelligenceEnabled: v.optional(v.boolean()),
+      pmEnabled: v.optional(v.boolean()),
+      ctoEnabled: v.optional(v.boolean()),
+      devEnabled: v.optional(v.boolean()),
+      securityEnabled: v.optional(v.boolean()),
+      architectEnabled: v.optional(v.boolean()),
+      growthEnabled: v.optional(v.boolean()),
       supportEnabled: v.optional(v.boolean()),
       analyticsEnabled: v.optional(v.boolean()),
       docsEnabled: v.optional(v.boolean()),
       qaEnabled: v.optional(v.boolean()),
       opsEnabled: v.optional(v.boolean()),
+      salesEnabled: v.optional(v.boolean()),
+      autonomyMode: v.optional(v.string()),
+      stoppedAt: v.optional(v.number()),
+      fullAutoDelay: v.optional(v.number()),
+      autoMergeThreshold: v.optional(v.number()),
       maxTasksPerDay: v.number(),
       organizationId: v.id("organizations"),
       orgEmailAddress: v.optional(v.string()),
@@ -489,6 +501,7 @@ export const getDashboardStats = query({
       enabled: config?.enabled ?? false,
       adapter: config?.adapter ?? "builtin",
       autonomyLevel: config?.autonomyLevel ?? "review_required",
+      autonomyMode: config?.autonomyMode ?? "supervised",
       tasksUsedToday: config?.tasksUsedToday ?? 0,
       maxTasksPerDay: config?.maxTasksPerDay ?? 10,
       costUsedTodayUsd: config?.costUsedTodayUsd ?? 0,
@@ -498,5 +511,83 @@ export const getDashboardStats = query({
       completedTaskCount: completedTasks.length,
       pendingInboxCount: pendingInbox.length,
     };
+  },
+});
+
+// ============================================
+// LEADS (V6)
+// ============================================
+
+export const listLeads = query({
+  args: {
+    organizationId: v.id("organizations"),
+    status: v.optional(leadStatus),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgMembership(ctx, args.organizationId, user._id);
+
+    const limit = args.limit ?? 50;
+
+    if (args.status) {
+      const { status } = args;
+      return ctx.db
+        .query("autopilotLeads")
+        .withIndex("by_org_status", (q) =>
+          q.eq("organizationId", args.organizationId).eq("status", status)
+        )
+        .order("desc")
+        .take(limit);
+    }
+
+    return ctx.db
+      .query("autopilotLeads")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .take(limit);
+  },
+});
+
+// ============================================
+// AGENT THREADS (V6)
+// ============================================
+
+export const listAgentThreads = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgMembership(ctx, args.organizationId, user._id);
+
+    return ctx.db
+      .query("autopilotAgentThreads")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+  },
+});
+
+export const getThreadMessages = query({
+  args: {
+    threadId: v.id("autopilotAgentThreads"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) {
+      return [];
+    }
+
+    await requireOrgMembership(ctx, thread.organizationId, user._id);
+
+    return ctx.db
+      .query("autopilotAgentMessages")
+      .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
+      .order("desc")
+      .take(args.limit ?? 100);
   },
 });

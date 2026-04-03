@@ -6,11 +6,13 @@
  */
 
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { type MutationCtx, mutation } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 import {
   autonomyLevel,
+  autonomyMode,
   autopilotTaskPriority,
   codingAdapterType,
   growthItemStatus,
@@ -73,6 +75,9 @@ export const initConfig = mutation({
       enabled: false,
       adapter: "builtin",
       autonomyLevel: "review_required",
+      autonomyMode: "supervised",
+      autoMergeThreshold: 80,
+      fullAutoDelay: 15 * 60 * 1000,
       maxTasksPerDay: 10,
       tasksUsedToday: 0,
       tasksResetAt: now + TWENTY_FOUR_HOURS,
@@ -93,6 +98,19 @@ export const updateConfig = mutation({
     maxTasksPerDay: v.optional(v.number()),
     autoMergePRs: v.optional(v.boolean()),
     requireArchitectReview: v.optional(v.boolean()),
+    intelligenceEnabled: v.optional(v.boolean()),
+    pmEnabled: v.optional(v.boolean()),
+    ctoEnabled: v.optional(v.boolean()),
+    devEnabled: v.optional(v.boolean()),
+    securityEnabled: v.optional(v.boolean()),
+    architectEnabled: v.optional(v.boolean()),
+    growthEnabled: v.optional(v.boolean()),
+    supportEnabled: v.optional(v.boolean()),
+    analyticsEnabled: v.optional(v.boolean()),
+    docsEnabled: v.optional(v.boolean()),
+    qaEnabled: v.optional(v.boolean()),
+    opsEnabled: v.optional(v.boolean()),
+    salesEnabled: v.optional(v.boolean()),
     dailyCostCapUsd: v.optional(v.number()),
     emailDailyLimit: v.optional(v.number()),
   },
@@ -118,6 +136,17 @@ export const updateConfig = mutation({
       ...filtered,
       updatedAt: Date.now(),
     });
+
+    // Detect enabled: false → true transition → bootstrap
+    const wasEnabled = config.enabled;
+    const isNowEnabled = args.enabled;
+    if (!wasEnabled && isNowEnabled) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.onboarding.bootstrapAutopilot,
+        { organizationId: config.organizationId }
+      );
+    }
   },
 });
 
@@ -149,6 +178,109 @@ export const emergencyStop = mutation({
       createdAt: Date.now(),
       level: "warning",
       message: "Emergency stop activated — autopilot disabled",
+      organizationId: args.organizationId,
+    });
+  },
+});
+
+/**
+ * V6: Set the autonomy mode — the main toggle.
+ * supervised / full_auto / stopped
+ */
+export const setAutonomyMode = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    mode: autonomyMode,
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, user._id);
+
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    if (!config) {
+      throw new Error("Autopilot not configured");
+    }
+
+    const previousMode = config.autonomyMode ?? "supervised";
+    const now = Date.now();
+
+    // Transitioning TO stopped — pause tasks
+    if (args.mode === "stopped" && previousMode !== "stopped") {
+      const inProgressTasks = await ctx.db
+        .query("autopilotTasks")
+        .withIndex("by_org_status", (q) =>
+          q
+            .eq("organizationId", args.organizationId)
+            .eq("status", "in_progress")
+        )
+        .collect();
+
+      for (const task of inProgressTasks) {
+        await ctx.db.patch(task._id, { status: "paused" });
+      }
+
+      await ctx.db.patch(config._id, {
+        autonomyMode: "stopped",
+        stoppedAt: now,
+        updatedAt: now,
+      });
+
+      await ctx.db.insert("autopilotActivityLog", {
+        agent: "system",
+        createdAt: now,
+        level: "warning",
+        message: `Autopilot stopped — ${inProgressTasks.length} tasks paused`,
+        organizationId: args.organizationId,
+      });
+      return;
+    }
+
+    // Transitioning FROM stopped — resume tasks
+    if (previousMode === "stopped" && args.mode !== "stopped") {
+      const pausedTasks = await ctx.db
+        .query("autopilotTasks")
+        .withIndex("by_org_status", (q) =>
+          q.eq("organizationId", args.organizationId).eq("status", "paused")
+        )
+        .collect();
+
+      for (const task of pausedTasks) {
+        await ctx.db.patch(task._id, { status: "in_progress" });
+      }
+
+      await ctx.db.patch(config._id, {
+        autonomyMode: args.mode,
+        stoppedAt: undefined,
+        updatedAt: now,
+      });
+
+      await ctx.db.insert("autopilotActivityLog", {
+        agent: "system",
+        createdAt: now,
+        level: "success",
+        message: `Autopilot resumed in ${args.mode} mode — ${pausedTasks.length} tasks resumed`,
+        organizationId: args.organizationId,
+      });
+      return;
+    }
+
+    // Mode switch between supervised/full_auto
+    await ctx.db.patch(config._id, {
+      autonomyMode: args.mode,
+      updatedAt: now,
+    });
+
+    await ctx.db.insert("autopilotActivityLog", {
+      agent: "system",
+      createdAt: now,
+      level: "info",
+      message: `Autonomy mode changed to ${args.mode}`,
       organizationId: args.organizationId,
     });
   },

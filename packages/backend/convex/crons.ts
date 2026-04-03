@@ -158,4 +158,11 @@ crons.daily(
   internal.autopilot.crons.runOpsSnapshot
 );
 
+// V6 crons
+crons.interval(
+  "autopilot sales follow-up",
+  { minutes: 5 },
+  internal.autopilot.crons.runSalesFollowUp
+);
+
 export default crons;

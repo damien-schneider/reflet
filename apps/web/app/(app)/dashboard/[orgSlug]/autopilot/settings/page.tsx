@@ -1,11 +1,33 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
+import {
+  IconBolt,
+  IconBrain,
+  IconCode,
+  IconCurrencyDollar,
+  IconGauge,
+  IconKey,
+  IconLock,
+  IconMail,
+  IconPower,
+  IconRobot,
+  IconSettings,
+  IconShieldCheck,
+} from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -15,11 +37,93 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { H2 } from "@/components/ui/typography";
+import { H2, Muted } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
+import { cn } from "@/lib/utils";
+
+const ADAPTER_OPTIONS = [
+  {
+    value: "builtin",
+    label: "Built-in",
+    detail: "AI SDK + GitHub API",
+    icon: IconCode,
+  },
+  {
+    value: "copilot",
+    label: "GitHub Copilot",
+    detail: "Copilot Workspace",
+    icon: IconRobot,
+  },
+  {
+    value: "codex",
+    label: "OpenAI Codex",
+    detail: "Codex CLI",
+    icon: IconBolt,
+  },
+  {
+    value: "claude_code",
+    label: "Claude Code",
+    detail: "Anthropic CLI",
+    icon: IconBrain,
+  },
+] as const;
+
+const AUTONOMY_OPTIONS = [
+  {
+    value: "full_auto",
+    label: "Full Auto",
+    description: "Everything runs autonomously",
+    color: "text-orange-500",
+  },
+  {
+    value: "review_required",
+    label: "Review Required",
+    description: "Outputs need your approval",
+    color: "text-sky-500",
+  },
+  {
+    value: "manual",
+    label: "Manual",
+    description: "Agents work only when triggered",
+    color: "text-muted-foreground",
+  },
+] as const;
+
+function SectionHeader({
+  icon: Icon,
+  title,
+  description,
+  badge,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  badge?: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="rounded-lg bg-muted p-2">
+        <Icon className="size-5 text-foreground" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-base tracking-tight">{title}</h3>
+          {badge && (
+            <Badge
+              className="text-[10px] uppercase tracking-wider"
+              variant="outline"
+            >
+              {badge}
+            </Badge>
+          )}
+        </div>
+        <p className="text-muted-foreground text-sm">{description}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function AutopilotSettingsPage() {
   const { isAdmin, organizationId } = useAutopilotContext();
@@ -37,14 +141,18 @@ export default function AutopilotSettingsPage() {
 
   if (config === undefined) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="h-64 w-full" />
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Skeleton className="h-24 rounded-xl" key={`s-${String(i)}`} />
+          ))}
+        </div>
+        <Skeleton className="h-48 rounded-xl" />
       </div>
     );
   }
 
-  // Show setup button if no config exists
   if (!config) {
     const handleInit = async () => {
       try {
@@ -58,14 +166,25 @@ export default function AutopilotSettingsPage() {
     return (
       <div className="space-y-6">
         <H2 variant="card">Settings</H2>
-        <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed p-8">
-          <p className="text-muted-foreground text-sm">
-            Autopilot hasn&apos;t been configured for this organization yet.
-          </p>
-          {isAdmin && (
-            <Button onClick={handleInit}>Initialize Autopilot</Button>
-          )}
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center gap-4 py-16">
+            <div className="rounded-2xl bg-muted p-4">
+              <IconRobot className="size-8 text-muted-foreground" />
+            </div>
+            <div className="text-center">
+              <p className="font-medium">Autopilot not configured</p>
+              <p className="mt-1 text-muted-foreground text-sm">
+                Initialize Autopilot to start your AI-powered product team.
+              </p>
+            </div>
+            {isAdmin && (
+              <Button className="mt-2" onClick={handleInit} size="lg">
+                <IconPower className="mr-2 size-4" />
+                Initialize Autopilot
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -124,278 +243,306 @@ export default function AutopilotSettingsPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <H2 variant="card">Settings</H2>
+    <div className="space-y-10">
+      {/* Page header */}
+      <div>
+        <H2 variant="card">Settings</H2>
+        <Muted className="mt-1">
+          Configure your AI team&apos;s behavior, agents, and resource limits.
+        </Muted>
+      </div>
 
-      <section className="space-y-4">
-        <h3 className="font-semibold text-lg">General</h3>
+      {/* ── General ─────────────────────────────────── */}
+      <section className="space-y-5">
+        <SectionHeader
+          description="Master controls for your Autopilot instance"
+          icon={IconSettings}
+          title="General"
+        />
 
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <Label>Enable Autopilot</Label>
-            <p className="text-muted-foreground text-sm">
-              Start the AI product team
-            </p>
-          </div>
-          <Switch
-            checked={config.enabled}
-            disabled={!isAdmin}
-            onCheckedChange={(v) => handleToggle("enabled", v)}
-          />
-        </div>
+        <Card>
+          <CardContent className="divide-y">
+            {/* Enable Autopilot */}
+            <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+              <div className="flex items-center gap-3">
+                <div
+                  className={cn(
+                    "rounded-lg p-2",
+                    config.enabled
+                      ? "bg-green-500/10 text-green-500"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  <IconPower className="size-4" />
+                </div>
+                <div>
+                  <Label className="font-medium text-sm">
+                    Enable Autopilot
+                  </Label>
+                  <p className="text-muted-foreground text-xs">
+                    Start the AI product team
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={config.enabled}
+                disabled={!isAdmin}
+                onCheckedChange={(v) => handleToggle("enabled", v)}
+              />
+            </div>
 
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <Label>Auto-merge PRs</Label>
-            <p className="text-muted-foreground text-sm">
-              Merge PRs automatically after CI passes
-            </p>
-          </div>
-          <Switch
-            checked={config.autoMergePRs}
-            disabled={!isAdmin}
-            onCheckedChange={(v) => handleToggle("autoMergePRs", v)}
-          />
-        </div>
+            {/* Auto-merge PRs */}
+            <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-muted p-2 text-muted-foreground">
+                  <IconCode className="size-4" />
+                </div>
+                <div>
+                  <Label className="font-medium text-sm">Auto-merge PRs</Label>
+                  <p className="text-muted-foreground text-xs">
+                    Merge PRs automatically after CI passes
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={config.autoMergePRs}
+                disabled={!isAdmin}
+                onCheckedChange={(v) => handleToggle("autoMergePRs", v)}
+              />
+            </div>
 
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <Label>Require Architect Review</Label>
-            <p className="text-muted-foreground text-sm">
-              Architect agent reviews every PR
-            </p>
-          </div>
-          <Switch
-            checked={config.requireArchitectReview}
-            disabled={!isAdmin}
-            onCheckedChange={(v) => handleToggle("requireArchitectReview", v)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <Label>Enable Intelligence</Label>
-            <p className="text-muted-foreground text-sm">
-              Competitive intelligence scanning and insights
-            </p>
-          </div>
-          <Switch
-            checked={config.intelligenceEnabled ?? false}
-            disabled={!isAdmin}
-            onCheckedChange={(v) => handleToggle("intelligenceEnabled", v)}
-          />
-        </div>
+            {/* Require Architect Review */}
+            <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-muted p-2 text-muted-foreground">
+                  <IconShieldCheck className="size-4" />
+                </div>
+                <div>
+                  <Label className="font-medium text-sm">
+                    Require Architect Review
+                  </Label>
+                  <p className="text-muted-foreground text-xs">
+                    Architect agent reviews every PR
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={config.requireArchitectReview}
+                disabled={!isAdmin}
+                onCheckedChange={(v) =>
+                  handleToggle("requireArchitectReview", v)
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
-      <Separator />
+      {/* ── Autonomy ────────────────────────────────── */}
+      <section className="space-y-5">
+        <SectionHeader
+          description="How much independence your agents operate with"
+          icon={IconGauge}
+          title="Autonomy"
+        />
 
-      <section className="space-y-4">
-        <h3 className="font-semibold text-lg">V5 Agents</h3>
-
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <Label>Support Agent</Label>
-            <p className="text-muted-foreground text-sm">
-              Triages conversations, drafts replies, escalates bugs
-            </p>
-          </div>
-          <Switch
-            checked={config.supportEnabled ?? false}
-            disabled={!isAdmin}
-            onCheckedChange={(v) => handleToggle("supportEnabled", v)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <Label>Analytics Agent</Label>
-            <p className="text-muted-foreground text-sm">
-              Daily snapshots, anomaly detection, weekly briefs
-            </p>
-          </div>
-          <Switch
-            checked={config.analyticsEnabled ?? false}
-            disabled={!isAdmin}
-            onCheckedChange={(v) => handleToggle("analyticsEnabled", v)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <Label>Docs Agent</Label>
-            <p className="text-muted-foreground text-sm">
-              Stale doc detection, FAQ generation, doc updates
-            </p>
-          </div>
-          <Switch
-            checked={config.docsEnabled ?? false}
-            disabled={!isAdmin}
-            onCheckedChange={(v) => handleToggle("docsEnabled", v)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <Label>QA Agent</Label>
-            <p className="text-muted-foreground text-sm">
-              E2E test generation, regression detection
-            </p>
-          </div>
-          <Switch
-            checked={config.qaEnabled ?? false}
-            disabled={!isAdmin}
-            onCheckedChange={(v) => handleToggle("qaEnabled", v)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <Label>Ops Agent</Label>
-            <p className="text-muted-foreground text-sm">
-              Deploy monitoring, error spikes, reliability reports
-            </p>
-          </div>
-          <Switch
-            checked={config.opsEnabled ?? false}
-            disabled={!isAdmin}
-            onCheckedChange={(v) => handleToggle("opsEnabled", v)}
-          />
-        </div>
+        <Card>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="autonomy-select">Autonomy Level</Label>
+              <Select
+                disabled={!isAdmin}
+                onValueChange={(v) =>
+                  handleUpdate("autonomyLevel", v ?? undefined)
+                }
+                value={config.autonomyLevel ?? undefined}
+              >
+                <SelectTrigger id="autonomy-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AUTONOMY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      <div className="flex items-baseline gap-2">
+                        <span className={cn("font-medium", opt.color)}>
+                          {opt.label}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          {opt.description}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
-      <Separator />
+      {/* ── Adapter ─────────────────────────────────── */}
+      <section className="space-y-5">
+        <SectionHeader
+          description="Choose the engine that executes coding tasks"
+          icon={IconBolt}
+          title="Coding Adapter"
+        />
 
-      <section className="space-y-4">
-        <h3 className="font-semibold text-lg">Adapter</h3>
+        <Card>
+          <CardContent className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="adapter-select">Active Adapter</Label>
+              <Select
+                disabled={!isAdmin}
+                onValueChange={(v) => handleUpdate("adapter", v ?? undefined)}
+                value={config.adapter ?? undefined}
+              >
+                <SelectTrigger id="adapter-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ADAPTER_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      <div className="flex items-center gap-2">
+                        <opt.icon className="size-4 text-muted-foreground" />
+                        <span className="font-medium">{opt.label}</span>
+                        <span className="text-muted-foreground text-xs">
+                          — {opt.detail}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="adapter-select">Coding Adapter</Label>
-          <Select
-            disabled={!isAdmin}
-            onValueChange={(v) => handleUpdate("adapter", v ?? undefined)}
-            value={config.adapter ?? undefined}
-          >
-            <SelectTrigger id="adapter-select">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="builtin">
-                Built-in (AI SDK + GitHub API)
-              </SelectItem>
-              <SelectItem value="copilot">GitHub Copilot</SelectItem>
-              <SelectItem value="codex">OpenAI Codex</SelectItem>
-              <SelectItem value="claude_code">Claude Code</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="cred-input">Adapter Credentials (JSON)</Label>
-          <div className="flex gap-2">
-            <Input
-              disabled={!isAdmin}
-              id="cred-input"
-              onChange={(e) => setCredentialInput(e.target.value)}
-              placeholder='{"apiKey": "..."}'
-              type="password"
-              value={credentialInput}
-            />
-            <Button
-              disabled={!(isAdmin && credentialInput.trim()) || isSaving}
-              onClick={handleSaveCredentials}
-              variant="outline"
-            >
-              Save
-            </Button>
-          </div>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="cred-input">
+                <div className="flex items-center gap-1.5">
+                  <IconKey className="size-3.5" />
+                  Adapter Credentials
+                </div>
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  className="font-mono text-xs"
+                  disabled={!isAdmin}
+                  id="cred-input"
+                  onChange={(e) => setCredentialInput(e.target.value)}
+                  placeholder='{"apiKey": "sk-..."}'
+                  type="password"
+                  value={credentialInput}
+                />
+                <Button
+                  disabled={!(isAdmin && credentialInput.trim()) || isSaving}
+                  onClick={handleSaveCredentials}
+                  variant="outline"
+                >
+                  <IconLock className="mr-1.5 size-3.5" />
+                  Save
+                </Button>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Credentials are encrypted at rest and never exposed in the UI.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
-      <Separator />
+      {/* ── Limits ──────────────────────────────────── */}
+      <section className="space-y-5">
+        <SectionHeader
+          description="Guard-rails to prevent runaway costs and activity"
+          icon={IconShieldCheck}
+          title="Limits & Safeguards"
+        />
 
-      <section className="space-y-4">
-        <h3 className="font-semibold text-lg">Autonomy</h3>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <IconRobot className="size-4 text-muted-foreground" />
+                Tasks / Day
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Max tasks agents can create daily
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Input
+                className="font-mono"
+                defaultValue={config.maxTasksPerDay}
+                disabled={!isAdmin}
+                id="max-tasks"
+                min={1}
+                onBlur={(e) => {
+                  const val = Number.parseInt(e.target.value, 10);
+                  if (!Number.isNaN(val) && val > 0) {
+                    handleUpdate("maxTasksPerDay", val);
+                  }
+                }}
+                type="number"
+              />
+            </CardContent>
+          </Card>
 
-        <div className="space-y-2">
-          <Label htmlFor="autonomy-select">Autonomy Level</Label>
-          <Select
-            disabled={!isAdmin}
-            onValueChange={(v) => handleUpdate("autonomyLevel", v ?? undefined)}
-            value={config.autonomyLevel ?? undefined}
-          >
-            <SelectTrigger id="autonomy-select">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="full_auto">
-                Full Auto — everything runs autonomously
-              </SelectItem>
-              <SelectItem value="review_required">
-                Review Required — outputs need approval
-              </SelectItem>
-              <SelectItem value="manual">
-                Manual — agents only work when triggered
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </section>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <IconCurrencyDollar className="size-4 text-muted-foreground" />
+                Cost Cap
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Daily spending limit in USD
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Input
+                className="font-mono"
+                defaultValue={config.dailyCostCapUsd ?? ""}
+                disabled={!isAdmin}
+                id="cost-cap"
+                min={0}
+                onBlur={(e) => {
+                  const val = Number.parseFloat(e.target.value);
+                  if (!Number.isNaN(val) && val >= 0) {
+                    handleUpdate("dailyCostCapUsd", val);
+                  }
+                }}
+                step="0.01"
+                type="number"
+              />
+            </CardContent>
+          </Card>
 
-      <Separator />
-
-      <section className="space-y-4">
-        <h3 className="font-semibold text-lg">Limits</h3>
-
-        <div className="space-y-2">
-          <Label htmlFor="max-tasks">Max Tasks Per Day</Label>
-          <Input
-            defaultValue={config.maxTasksPerDay}
-            disabled={!isAdmin}
-            id="max-tasks"
-            min={1}
-            onBlur={(e) => {
-              const val = Number.parseInt(e.target.value, 10);
-              if (!Number.isNaN(val) && val > 0) {
-                handleUpdate("maxTasksPerDay", val);
-              }
-            }}
-            type="number"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="cost-cap">Daily Cost Cap ($)</Label>
-          <Input
-            defaultValue={config.dailyCostCapUsd ?? ""}
-            disabled={!isAdmin}
-            id="cost-cap"
-            min={0}
-            onBlur={(e) => {
-              const val = Number.parseFloat(e.target.value);
-              if (!Number.isNaN(val) && val >= 0) {
-                handleUpdate("dailyCostCapUsd", val);
-              }
-            }}
-            step="0.01"
-            type="number"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="email-limit">Daily Email Limit</Label>
-          <Input
-            defaultValue={config.emailDailyLimit ?? 20}
-            disabled={!isAdmin}
-            id="email-limit"
-            min={0}
-            onBlur={(e) => {
-              const val = Number.parseInt(e.target.value, 10);
-              if (!Number.isNaN(val) && val >= 0) {
-                handleUpdate("emailDailyLimit", val);
-              }
-            }}
-            type="number"
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <IconMail className="size-4 text-muted-foreground" />
+                Emails / Day
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Max outbound emails daily
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Input
+                className="font-mono"
+                defaultValue={config.emailDailyLimit ?? 20}
+                disabled={!isAdmin}
+                id="email-limit"
+                min={0}
+                onBlur={(e) => {
+                  const val = Number.parseInt(e.target.value, 10);
+                  if (!Number.isNaN(val) && val >= 0) {
+                    handleUpdate("emailDailyLimit", val);
+                  }
+                }}
+                type="number"
+              />
+            </CardContent>
+          </Card>
         </div>
       </section>
     </div>

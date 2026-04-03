@@ -12,7 +12,7 @@ import {
   internalMutation,
   internalQuery,
 } from "../_generated/server";
-import { autonomyLevel, codingAdapterType } from "./tableFields";
+import { autonomyLevel, autonomyMode, codingAdapterType } from "./tableFields";
 
 // ============================================
 // INTERNAL QUERIES
@@ -30,11 +30,18 @@ export const getConfig = internalQuery({
       organizationId: v.id("organizations"),
       enabled: v.boolean(),
       intelligenceEnabled: v.optional(v.boolean()),
+      pmEnabled: v.optional(v.boolean()),
+      ctoEnabled: v.optional(v.boolean()),
+      devEnabled: v.optional(v.boolean()),
+      securityEnabled: v.optional(v.boolean()),
+      architectEnabled: v.optional(v.boolean()),
+      growthEnabled: v.optional(v.boolean()),
       supportEnabled: v.optional(v.boolean()),
       analyticsEnabled: v.optional(v.boolean()),
       docsEnabled: v.optional(v.boolean()),
       qaEnabled: v.optional(v.boolean()),
       opsEnabled: v.optional(v.boolean()),
+      salesEnabled: v.optional(v.boolean()),
       adapter: codingAdapterType,
       autonomyLevel,
       maxTasksPerDay: v.number(),
@@ -42,6 +49,16 @@ export const getConfig = internalQuery({
       tasksResetAt: v.number(),
       autoMergePRs: v.boolean(),
       requireArchitectReview: v.boolean(),
+      autonomyMode: v.optional(autonomyMode),
+      stoppedAt: v.optional(v.number()),
+      fullAutoDelay: v.optional(v.number()),
+      autoMergeThreshold: v.optional(v.number()),
+      ceoChatThreadId: v.optional(v.string()),
+      costUsedTodayUsd: v.optional(v.number()),
+      dailyCostCapUsd: v.optional(v.number()),
+      emailBlocklist: v.optional(v.array(v.string())),
+      emailDailyLimit: v.optional(v.number()),
+      orgEmailAddress: v.optional(v.string()),
       createdAt: v.number(),
       updatedAt: v.number(),
     }),
@@ -106,6 +123,60 @@ export const canDispatchTask = internalQuery({
   },
 });
 
+/**
+ * Check if a specific agent is enabled for an org.
+ * Returns true if the agent's flag is explicitly true, OR
+ * if the flag doesn't exist (backwards compat — agents default to enabled).
+ */
+export const isAgentEnabled = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    agent: v.string(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    if (!config?.enabled) {
+      return false;
+    }
+
+    switch (args.agent) {
+      case "pm":
+        return config.pmEnabled !== false;
+      case "cto":
+        return config.ctoEnabled !== false;
+      case "dev":
+        return config.devEnabled !== false;
+      case "security":
+        return config.securityEnabled !== false;
+      case "architect":
+        return config.architectEnabled !== false;
+      case "growth":
+        return config.growthEnabled !== false;
+      case "support":
+        return config.supportEnabled !== false;
+      case "analytics":
+        return config.analyticsEnabled !== false;
+      case "docs":
+        return config.docsEnabled !== false;
+      case "qa":
+        return config.qaEnabled !== false;
+      case "ops":
+        return config.opsEnabled !== false;
+      case "sales":
+        return config.salesEnabled !== false;
+      default:
+        return true;
+    }
+  },
+});
+
 // ============================================
 // INTERNAL MUTATIONS
 // ============================================
@@ -134,13 +205,23 @@ export const createDefaultConfig = internalMutation({
       organizationId: args.organizationId,
       enabled: false,
       intelligenceEnabled: false,
+      pmEnabled: true,
+      ctoEnabled: true,
+      devEnabled: true,
+      securityEnabled: true,
+      architectEnabled: true,
+      growthEnabled: false,
       supportEnabled: false,
       analyticsEnabled: false,
       docsEnabled: false,
       qaEnabled: false,
       opsEnabled: false,
+      salesEnabled: false,
       adapter: "builtin",
       autonomyLevel: "review_required",
+      autonomyMode: "supervised",
+      autoMergeThreshold: 80,
+      fullAutoDelay: 15 * 60 * 1000,
       maxTasksPerDay: 10,
       tasksUsedToday: 0,
       tasksResetAt: now + TWENTY_FOUR_HOURS,
@@ -164,12 +245,22 @@ export const updateConfig = internalMutation({
     maxTasksPerDay: v.optional(v.number()),
     autoMergePRs: v.optional(v.boolean()),
     intelligenceEnabled: v.optional(v.boolean()),
+    pmEnabled: v.optional(v.boolean()),
+    ctoEnabled: v.optional(v.boolean()),
+    devEnabled: v.optional(v.boolean()),
+    securityEnabled: v.optional(v.boolean()),
+    architectEnabled: v.optional(v.boolean()),
+    growthEnabled: v.optional(v.boolean()),
     supportEnabled: v.optional(v.boolean()),
     analyticsEnabled: v.optional(v.boolean()),
     docsEnabled: v.optional(v.boolean()),
     qaEnabled: v.optional(v.boolean()),
     opsEnabled: v.optional(v.boolean()),
+    salesEnabled: v.optional(v.boolean()),
     requireArchitectReview: v.optional(v.boolean()),
+    autonomyMode: v.optional(autonomyMode),
+    fullAutoDelay: v.optional(v.number()),
+    autoMergeThreshold: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { configId, ...updates } = args;

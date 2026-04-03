@@ -35,7 +35,13 @@ export interface ActivityLogEntry {
     | "architect"
     | "growth"
     | "orchestrator"
-    | "system";
+    | "system"
+    | "support"
+    | "analytics"
+    | "docs"
+    | "qa"
+    | "ops"
+    | "sales";
   details?: string;
   level: "info" | "action" | "success" | "warning" | "error";
   message: string;
@@ -101,7 +107,13 @@ export interface CodingAdapter {
     credentials: Record<string, string>
   ) => Promise<TaskStatusResponse>;
   /** Unique adapter identifier */
-  readonly name: "builtin" | "copilot" | "codex" | "claude_code";
+  readonly name:
+    | "builtin"
+    | "copilot"
+    | "codex"
+    | "claude_code"
+    | "open_swe"
+    | "openclaw";
   /** What the adapter needs in credentials JSON */
   readonly requiredCredentials: string[];
 

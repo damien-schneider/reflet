@@ -15,7 +15,7 @@ import { internalAction, internalQuery } from "../_generated/server";
 // ============================================
 
 /**
- * Find all organizations with autopilot enabled and pending tasks.
+ * Find all organizations with autopilot enabled, not stopped, and pending tasks.
  */
 export const getOrgsWithPendingWork = internalQuery({
   args: {},
@@ -28,6 +28,11 @@ export const getOrgsWithPendingWork = internalQuery({
     }> = [];
     for (const config of configs) {
       if (!config.enabled) {
+        continue;
+      }
+
+      // V6: Skip orgs in stopped mode
+      if ((config.autonomyMode ?? "supervised") === "stopped") {
         continue;
       }
 
@@ -125,6 +130,26 @@ export const dispatchOrgTasks = internalAction({
     // We dispatch one at a time to respect the throttle and allow
     // inter-task dependencies to resolve
     const task = tasks[0];
+
+    // Check if the assigned agent is enabled
+    const agentEnabled = await ctx.runQuery(
+      internal.autopilot.config.isAgentEnabled,
+      {
+        organizationId: args.organizationId,
+        agent: task.assignedAgent,
+      }
+    );
+
+    if (!agentEnabled) {
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: args.organizationId,
+        taskId: task._id,
+        agent: "orchestrator",
+        level: "info",
+        message: `Skipped task "${task.title}" — ${task.assignedAgent} agent is disabled`,
+      });
+      return;
+    }
 
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
@@ -267,6 +292,18 @@ export const dispatchOrgTasks = internalAction({
         );
         break;
 
+      case "sales":
+        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+          taskId: task._id,
+          status: "in_progress",
+        });
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.agents.sales.runSalesFollowUp,
+          { organizationId: args.organizationId }
+        );
+        break;
+
       default:
         // PM and orchestrator tasks are handled by their own crons
         await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
@@ -290,14 +327,16 @@ export const dispatchOrgTasks = internalAction({
 // ============================================
 
 /**
- * Get all enabled autopilot orgs (for cron handlers).
+ * Get all enabled autopilot orgs that are not stopped (for cron handlers).
  */
 export const getEnabledOrgs = internalQuery({
   args: {},
   handler: async (ctx) => {
     const configs = await ctx.db.query("autopilotConfig").collect();
     return configs
-      .filter((c) => c.enabled)
+      .filter(
+        (c) => c.enabled && (c.autonomyMode ?? "supervised") !== "stopped"
+      )
       .map((c) => ({ organizationId: c.organizationId }));
   },
 });
@@ -354,6 +393,13 @@ export const runDailySecurityScans = internalAction({
 
     for (const org of orgs) {
       try {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent: "security" }
+        );
+        if (!enabled) {
+          continue;
+        }
         await ctx.runAction(
           internal.autopilot.agents.security.runSecurityScan,
           {
@@ -378,6 +424,13 @@ export const runWeeklyArchitectReviews = internalAction({
 
     for (const org of orgs) {
       try {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent: "architect" }
+        );
+        if (!enabled) {
+          continue;
+        }
         await ctx.runAction(
           internal.autopilot.agents.architect.runArchitectReview,
           {
@@ -424,6 +477,13 @@ export const runPMAnalysis = internalAction({
 
     for (const org of orgs) {
       try {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent: "pm" }
+        );
+        if (!enabled) {
+          continue;
+        }
         await ctx.runAction(internal.autopilot.agents.pm.runPMAnalysis, {
           organizationId: org.organizationId,
         });
@@ -448,6 +508,13 @@ export const runSupportTriage = internalAction({
 
     for (const org of orgs) {
       try {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent: "support" }
+        );
+        if (!enabled) {
+          continue;
+        }
         await ctx.runAction(
           internal.autopilot.agents.support.runSupportTriage,
           { organizationId: org.organizationId }
@@ -469,6 +536,13 @@ export const runAnalyticsSnapshot = internalAction({
 
     for (const org of orgs) {
       try {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent: "analytics" }
+        );
+        if (!enabled) {
+          continue;
+        }
         await ctx.runAction(
           internal.autopilot.agents.analytics.captureAnalyticsSnapshot,
           { organizationId: org.organizationId }
@@ -490,6 +564,13 @@ export const runAnalyticsBrief = internalAction({
 
     for (const org of orgs) {
       try {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent: "analytics" }
+        );
+        if (!enabled) {
+          continue;
+        }
         await ctx.runAction(
           internal.autopilot.agents.analytics.runAnalyticsBrief,
           { organizationId: org.organizationId }
@@ -511,6 +592,13 @@ export const runDocsStaleCheck = internalAction({
 
     for (const org of orgs) {
       try {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent: "docs" }
+        );
+        if (!enabled) {
+          continue;
+        }
         await ctx.runAction(internal.autopilot.agents.docs.runDocsStaleCheck, {
           organizationId: org.organizationId,
         });
@@ -531,6 +619,13 @@ export const runOpsMonitoring = internalAction({
 
     for (const org of orgs) {
       try {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent: "ops" }
+        );
+        if (!enabled) {
+          continue;
+        }
         await ctx.runAction(internal.autopilot.agents.ops.monitorDeployments, {
           organizationId: org.organizationId,
         });
@@ -551,7 +646,45 @@ export const runOpsSnapshot = internalAction({
 
     for (const org of orgs) {
       try {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent: "ops" }
+        );
+        if (!enabled) {
+          continue;
+        }
         await ctx.runAction(internal.autopilot.agents.ops.captureOpsSnapshot, {
+          organizationId: org.organizationId,
+        });
+      } catch {
+        // Best effort — continue with other orgs
+      }
+    }
+  },
+});
+
+// ============================================
+// V6 CRON HANDLERS
+// ============================================
+
+/**
+ * Run sales follow-up check for all enabled orgs.
+ */
+export const runSalesFollowUp = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const orgs = await ctx.runQuery(internal.autopilot.crons.getEnabledOrgs);
+
+    for (const org of orgs) {
+      try {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent: "sales" }
+        );
+        if (!enabled) {
+          continue;
+        }
+        await ctx.runAction(internal.autopilot.agents.sales.runSalesFollowUp, {
           organizationId: org.organizationId,
         });
       } catch {

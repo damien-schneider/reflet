@@ -8,6 +8,7 @@ import { use } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H2, Muted } from "@/components/ui/typography";
+import { AutonomyToggle } from "@/features/autopilot/components/autonomy-toggle";
 import { AutopilotContext } from "@/features/autopilot/components/autopilot-context";
 import { AutopilotNav } from "@/features/autopilot/components/autopilot-nav";
 import { CeoChatPanel } from "@/features/autopilot/components/ceo-chat/ceo-chat-panel";
@@ -112,20 +113,9 @@ export default function AutopilotLayout({
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <AutonomyToggle />
               <CeoChatToggle />
               {config?.enabled && <EmergencyStopButton />}
-              <div className="flex items-center gap-2">
-                <div
-                  className={
-                    config?.enabled
-                      ? "size-2 rounded-full bg-green-500"
-                      : "size-2 rounded-full bg-muted-foreground/30"
-                  }
-                />
-                <span className="text-muted-foreground text-sm">
-                  {config?.enabled ? "Active" : "Inactive"}
-                </span>
-              </div>
             </div>
           </div>
 

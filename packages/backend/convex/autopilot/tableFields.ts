@@ -9,7 +9,9 @@ export const codingAdapterType = v.union(
   v.literal("builtin"),
   v.literal("copilot"),
   v.literal("codex"),
-  v.literal("claude_code")
+  v.literal("claude_code"),
+  v.literal("open_swe"),
+  v.literal("openclaw")
 );
 
 export const autonomyLevel = v.union(
@@ -18,11 +20,24 @@ export const autonomyLevel = v.union(
   v.literal("manual")
 );
 
+/**
+ * V6 autonomy mode — the three-mode system for the main toggle.
+ * supervised = asks before acting (default)
+ * full_auto = autonomous with 15-min delay on external actions
+ * stopped = all agent activity paused
+ */
+export const autonomyMode = v.union(
+  v.literal("supervised"),
+  v.literal("full_auto"),
+  v.literal("stopped")
+);
+
 export const autopilotTaskStatus = v.union(
   v.literal("pending"),
   v.literal("in_progress"),
   v.literal("blocked"),
   v.literal("waiting_review"),
+  v.literal("paused"),
   v.literal("completed"),
   v.literal("failed"),
   v.literal("cancelled")
@@ -47,7 +62,8 @@ export const assignedAgent = v.union(
   v.literal("analytics"),
   v.literal("docs"),
   v.literal("qa"),
-  v.literal("ops")
+  v.literal("ops"),
+  v.literal("sales")
 );
 
 export const taskOrigin = v.union(
@@ -61,7 +77,9 @@ export const taskOrigin = v.union(
   v.literal("analytics_signal"),
   v.literal("qa_regression"),
   v.literal("ops_incident"),
-  v.literal("docs_update")
+  v.literal("docs_update"),
+  v.literal("sales_outreach"),
+  v.literal("onboarding")
 );
 
 export const runStatus = v.union(
@@ -100,7 +118,8 @@ export const activityLogAgent = v.union(
   v.literal("analytics"),
   v.literal("docs"),
   v.literal("qa"),
-  v.literal("ops")
+  v.literal("ops"),
+  v.literal("sales")
 );
 
 export const emailDirection = v.union(
@@ -167,8 +186,36 @@ export const inboxItemType = v.union(
   v.literal("ops_deploy_failure"),
   v.literal("ops_error_spike"),
   v.literal("ops_reliability_report"),
-  v.literal("ops_rollback")
+  v.literal("ops_rollback"),
+  v.literal("sales_lead"),
+  v.literal("sales_outreach_draft"),
+  v.literal("sales_pipeline_update")
 );
+
+// V6 Sales agent validators
+export const leadStatus = v.union(
+  v.literal("discovered"),
+  v.literal("contacted"),
+  v.literal("replied"),
+  v.literal("demo"),
+  v.literal("converted"),
+  v.literal("churned"),
+  v.literal("disqualified")
+);
+
+export const leadSource = v.union(
+  v.literal("github_star"),
+  v.literal("github_fork"),
+  v.literal("product_hunt"),
+  v.literal("hackernews"),
+  v.literal("reddit"),
+  v.literal("web_search"),
+  v.literal("referral"),
+  v.literal("manual")
+);
+
+// V6 Agent thread role
+export const agentThreadRole = v.union(v.literal("user"), v.literal("agent"));
 
 // ============================================
 // AUTOPILOT TABLES
@@ -191,11 +238,18 @@ export const autopilotTables = {
     emailDailyLimit: v.optional(v.number()),
     enabled: v.boolean(),
     intelligenceEnabled: v.optional(v.boolean()),
+    pmEnabled: v.optional(v.boolean()),
+    ctoEnabled: v.optional(v.boolean()),
+    devEnabled: v.optional(v.boolean()),
+    securityEnabled: v.optional(v.boolean()),
+    architectEnabled: v.optional(v.boolean()),
+    growthEnabled: v.optional(v.boolean()),
     supportEnabled: v.optional(v.boolean()),
     analyticsEnabled: v.optional(v.boolean()),
     docsEnabled: v.optional(v.boolean()),
     qaEnabled: v.optional(v.boolean()),
     opsEnabled: v.optional(v.boolean()),
+    salesEnabled: v.optional(v.boolean()),
     maxTasksPerDay: v.number(),
     organizationId: v.id("organizations"),
     orgEmailAddress: v.optional(v.string()),
@@ -203,6 +257,11 @@ export const autopilotTables = {
     tasksResetAt: v.number(),
     tasksUsedToday: v.number(),
     updatedAt: v.number(),
+    // V6 autonomy mode (main toggle)
+    autonomyMode: v.optional(autonomyMode),
+    stoppedAt: v.optional(v.number()),
+    fullAutoDelay: v.optional(v.number()),
+    autoMergeThreshold: v.optional(v.number()),
   }).index("by_organization", ["organizationId"]),
 
   /**
@@ -218,6 +277,8 @@ export const autopilotTables = {
      * - copilot: { githubPat: string }
      * - codex: { openaiApiKey: string }
      * - claude_code: { anthropicApiKey: string }
+     * - open_swe: { langchainApiKey: string }
+     * - openclaw: { instanceUrl: string, apiKey: string }
      */
     credentials: v.string(),
     isValid: v.boolean(),
@@ -479,4 +540,106 @@ export const autopilotTables = {
   })
     .index("by_organization", ["organizationId"])
     .index("by_org_date", ["organizationId", "snapshotDate"]),
+
+  // ============================================
+  // V6 TABLES
+  // ============================================
+
+  /**
+   * Repository analysis results from auto-onboarding.
+   * Stores tech stack, maturity, infrastructure findings.
+   */
+  autopilotRepoAnalysis: defineTable({
+    organizationId: v.id("organizations"),
+    repoUrl: v.string(),
+    techStack: v.optional(v.string()),
+    framework: v.optional(v.string()),
+    hasCI: v.optional(v.boolean()),
+    hasTests: v.optional(v.boolean()),
+    hasDocs: v.optional(v.boolean()),
+    hasLandingPage: v.optional(v.boolean()),
+    hasAnalytics: v.optional(v.boolean()),
+    hasMonitoring: v.optional(v.boolean()),
+    projectStructure: v.optional(v.string()),
+    maturityLevel: v.optional(
+      v.union(
+        v.literal("new"),
+        v.literal("early"),
+        v.literal("established"),
+        v.literal("mature")
+      )
+    ),
+    findings: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
+
+  /**
+   * Sales leads managed by the Sales agent.
+   * Tracks leads through discovery → outreach → conversion pipeline.
+   */
+  autopilotLeads: defineTable({
+    organizationId: v.id("organizations"),
+    name: v.string(),
+    email: v.optional(v.string()),
+    company: v.optional(v.string()),
+    source: leadSource,
+    status: leadStatus,
+    sourceUrl: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    lastContactedAt: v.optional(v.number()),
+    nextFollowUpAt: v.optional(v.number()),
+    convertedAt: v.optional(v.number()),
+    outreachCount: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_status", ["organizationId", "status"])
+    .index("by_org_source", ["organizationId", "source"])
+    .index("by_org_follow_up", ["organizationId", "nextFollowUpAt"]),
+
+  /**
+   * Per-agent conversational threads.
+   * Each agent gets its own chat that users can interact with directly.
+   */
+  autopilotAgentThreads: defineTable({
+    organizationId: v.id("organizations"),
+    agent: assignedAgent,
+    threadId: v.string(),
+    lastMessageAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_agent", ["organizationId", "agent"]),
+
+  /**
+   * Messages within agent threads.
+   */
+  autopilotAgentMessages: defineTable({
+    organizationId: v.id("organizations"),
+    threadId: v.id("autopilotAgentThreads"),
+    role: agentThreadRole,
+    content: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_thread", ["threadId"])
+    .index("by_org_thread", ["organizationId", "threadId"]),
+
+  /**
+   * Agent performance metrics — tracks effectiveness over time.
+   */
+  autopilotAgentMetrics: defineTable({
+    organizationId: v.id("organizations"),
+    agent: assignedAgent,
+    period: v.string(),
+    tasksCompleted: v.number(),
+    tasksFailed: v.number(),
+    avgCompletionTimeMs: v.optional(v.number()),
+    approvalRate: v.optional(v.number()),
+    tokensUsed: v.optional(v.number()),
+    costUsd: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_org_agent", ["organizationId", "agent"])
+    .index("by_org_period", ["organizationId", "period"]),
 };

@@ -6,6 +6,7 @@ import {
   IconBrain,
   IconChartBar,
   IconCode,
+  IconCoin,
   IconFileText,
   IconHeadset,
   IconRocket,
@@ -86,6 +87,12 @@ const AGENTS = [
     label: "Ops",
     icon: IconServer,
     description: "Deploy monitoring",
+  },
+  {
+    id: "sales",
+    label: "Sales",
+    icon: IconCoin,
+    description: "Lead pipeline",
   },
 ] as const;
 
