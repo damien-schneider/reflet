@@ -18,11 +18,13 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    intelligence: {
-      keywords: {
-        list: "intelligence.keywords.list",
-        create: "intelligence.keywords.create",
-        remove: "intelligence.keywords.remove",
+    autopilot: {
+      intelligence: {
+        keywords: {
+          list: "autopilot.intelligence.keywords.list",
+          create: "autopilot.intelligence.keywords.create",
+          remove: "autopilot.intelligence.keywords.remove",
+        },
       },
     },
   },

@@ -1,5 +1,4 @@
 import {
-  Binoculars,
   CaretUpDown,
   Chat,
   ChatCircle,
@@ -136,12 +135,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           href: "/dashboard/$orgSlug/surveys",
           icon: ClipboardText,
           label: "Surveys",
-          badge: undefined,
-        },
-        {
-          href: "/dashboard/$orgSlug/intelligence",
-          icon: Binoculars,
-          label: "Intelligence",
           badge: undefined,
         },
         {

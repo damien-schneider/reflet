@@ -36,7 +36,9 @@ interface AddCompetitorDialogProps {
 export function AddCompetitorDialog({
   organizationId,
 }: AddCompetitorDialogProps) {
-  const createCompetitor = useMutation(api.intelligence.competitors.create);
+  const createCompetitor = useMutation(
+    api.autopilot.intelligence.competitors.create
+  );
 
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);

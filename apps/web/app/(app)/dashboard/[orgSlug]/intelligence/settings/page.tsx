@@ -11,7 +11,7 @@ export default function IntelligenceSettingsRedirect() {
   useEffect(
     function redirectToIntelligence() {
       if (orgSlug) {
-        router.replace(`/dashboard/${orgSlug}/intelligence`);
+        router.replace(`/dashboard/${orgSlug}/autopilot/intelligence`);
       }
     },
     [orgSlug, router]

@@ -37,7 +37,7 @@ export function ProjectHubPage({
     organizationId,
   });
 
-  const keywords = useQuery(api.intelligence.keywords.list, {
+  const keywords = useQuery(api.autopilot.intelligence.keywords.list, {
     organizationId,
   });
 

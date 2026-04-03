@@ -17,14 +17,28 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const TYPE_LABELS = {
+  analytics_anomaly: "Anomaly",
+  analytics_brief: "Analytics Brief",
+  analytics_insight: "Insight",
   architect_finding: "Architecture",
   ceo_report: "CEO Report",
+  docs_stale: "Stale Docs",
+  docs_update: "Docs Update",
   email_draft: "Email Draft",
   email_received: "Email",
   growth_post: "Growth",
+  ops_deploy_failure: "Deploy Failure",
+  ops_error_spike: "Error Spike",
+  ops_reliability_report: "Reliability",
+  ops_rollback: "Rollback",
   pr_review: "PR Review",
+  qa_regression: "Regression",
+  qa_test_ready: "QA Test",
   revenue_alert: "Revenue",
   security_alert: "Security",
+  shipped_notification: "Shipped",
+  support_escalation: "Escalation",
+  support_reply: "Support Reply",
   task_approval: "Task",
 } as const;
 

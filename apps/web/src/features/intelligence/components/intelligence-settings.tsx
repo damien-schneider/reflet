@@ -77,11 +77,13 @@ interface IntelligenceSettingsProps {
 export function IntelligenceSettings({
   organizationId,
 }: IntelligenceSettingsProps) {
-  const config = useQuery(api.intelligence.config.get, {
+  const config = useQuery(api.autopilot.intelligence.config.get, {
     organizationId,
   });
-  const updateConfig = useMutation(api.intelligence.config.update);
-  const getOrCreate = useMutation(api.intelligence.config.getOrCreate);
+  const updateConfig = useMutation(api.autopilot.intelligence.config.update);
+  const getOrCreate = useMutation(
+    api.autopilot.intelligence.config.getOrCreate
+  );
 
   const [scanFrequency, setScanFrequency] = useState<ScanFrequency>("weekly");
   const [competitorTrackingEnabled, setCompetitorTrackingEnabled] =

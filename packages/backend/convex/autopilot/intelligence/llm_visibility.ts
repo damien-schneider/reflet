@@ -2,14 +2,14 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateObject } from "ai";
 import { v } from "convex/values";
 import { z } from "zod";
-import { internal } from "../_generated/api";
+import { internal } from "../../_generated/api";
 import {
   internalAction,
   internalMutation,
   internalQuery,
   query,
-} from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+} from "../../_generated/server";
+import { getAuthUser } from "../../shared/utils";
 
 const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
 const LLM_CHECK_MODEL = "anthropic/claude-sonnet-4";
@@ -139,7 +139,7 @@ export const runVisibilityCheck = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     const orgData = await ctx.runQuery(
-      internal.intelligence.llm_visibility.getOrgForVisibility,
+      internal.autopilot.intelligence.llm_visibility.getOrgForVisibility,
       { organizationId: args.organizationId }
     );
 
@@ -177,7 +177,7 @@ Answer the user's question naturally, then analyze your own response to determin
         });
 
         await ctx.runMutation(
-          internal.intelligence.llm_visibility.storeVisibilityResult,
+          internal.autopilot.intelligence.llm_visibility.storeVisibilityResult,
           {
             organizationId: args.organizationId,
             prompt,

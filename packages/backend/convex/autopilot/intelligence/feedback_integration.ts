@@ -1,13 +1,13 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
+import { internal } from "../../_generated/api";
+import type { Id } from "../../_generated/dataModel";
 import {
   internalAction,
   internalMutation,
   internalQuery,
   query,
-} from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+} from "../../_generated/server";
+import { getAuthUser } from "../../shared/utils";
 
 // ============================================
 // PRIORITY RANKING (higher index = higher priority)
@@ -253,7 +253,8 @@ export const runPriorityBoostForOrg = internalAction({
   },
   handler: async (ctx, args) => {
     const insights = await ctx.runQuery(
-      internal.intelligence.feedback_integration.getNewInsightsWithFeedback,
+      internal.autopilot.intelligence.feedback_integration
+        .getNewInsightsWithFeedback,
       { organizationId: args.organizationId }
     );
 
@@ -266,7 +267,8 @@ export const runPriorityBoostForOrg = internalAction({
 
       for (const feedbackId of insight.linkedFeedbackIds ?? []) {
         await ctx.runMutation(
-          internal.intelligence.feedback_integration.applyPriorityBoost,
+          internal.autopilot.intelligence.feedback_integration
+            .applyPriorityBoost,
           {
             feedbackId,
             boostReason,

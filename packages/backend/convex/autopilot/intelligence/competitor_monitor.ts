@@ -1,13 +1,13 @@
 import { v } from "convex/values";
 import { z } from "zod";
-import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
+import { internal } from "../../_generated/api";
+import type { Id } from "../../_generated/dataModel";
 import {
   type ActionCtx,
   internalAction,
   internalMutation,
   internalQuery,
-} from "../_generated/server";
+} from "../../_generated/server";
 import { generateStructured } from "./structured_output";
 
 // Top-level regex patterns
@@ -362,7 +362,7 @@ export const scrapeCompetitor = internalAction({
   args: { competitorId: v.id("competitors") },
   handler: async (ctx, args) => {
     const competitor = await ctx.runQuery(
-      internal.intelligence.competitor_monitor.getCompetitor,
+      internal.autopilot.intelligence.competitor_monitor.getCompetitor,
       { competitorId: args.competitorId }
     );
 
@@ -371,14 +371,17 @@ export const scrapeCompetitor = internalAction({
     }
 
     const jobId = await ctx.runMutation(
-      internal.intelligence.competitor_monitor.createJob,
+      internal.autopilot.intelligence.competitor_monitor.createJob,
       { organizationId: competitor.organizationId, type: "competitor_scrape" }
     );
 
-    await ctx.runMutation(internal.intelligence.competitor_monitor.updateJob, {
-      jobId,
-      status: "processing",
-    });
+    await ctx.runMutation(
+      internal.autopilot.intelligence.competitor_monitor.updateJob,
+      {
+        jobId,
+        status: "processing",
+      }
+    );
 
     const urlEntries = buildUrlEntries(competitor);
     const {
@@ -416,7 +419,8 @@ export const scrapeCompetitor = internalAction({
     totalErrors += aiErrors;
 
     await ctx.runMutation(
-      internal.intelligence.competitor_monitor.updateCompetitorAfterScrape,
+      internal.autopilot.intelligence.competitor_monitor
+        .updateCompetitorAfterScrape,
       {
         competitorId: args.competitorId,
         lastScrapedContent: combinedContent || undefined,
@@ -427,17 +431,20 @@ export const scrapeCompetitor = internalAction({
       }
     );
 
-    await ctx.runMutation(internal.intelligence.competitor_monitor.updateJob, {
-      jobId,
-      status: totalErrors === urlEntries.length ? "failed" : "completed",
-      errorMessage:
-        errorMessages.length > 0 ? errorMessages.join(" | ") : undefined,
-      stats: {
-        itemsFound: urlEntries.length,
-        itemsProcessed: processed,
-        errors: totalErrors,
-      },
-    });
+    await ctx.runMutation(
+      internal.autopilot.intelligence.competitor_monitor.updateJob,
+      {
+        jobId,
+        status: totalErrors === urlEntries.length ? "failed" : "completed",
+        errorMessage:
+          errorMessages.length > 0 ? errorMessages.join(" | ") : undefined,
+        stats: {
+          itemsFound: urlEntries.length,
+          itemsProcessed: processed,
+          errors: totalErrors,
+        },
+      }
+    );
   },
 });
 
@@ -473,7 +480,7 @@ const detectAndSignalChanges = async (
         : "competitor_update";
 
     await ctx.runMutation(
-      internal.intelligence.competitor_monitor.createSignal,
+      internal.autopilot.intelligence.competitor_monitor.createSignal,
       {
         organizationId: competitor.organizationId,
         jobId,

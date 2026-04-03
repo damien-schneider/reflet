@@ -1,13 +1,13 @@
 import { v } from "convex/values";
 import { z } from "zod";
-import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
+import { internal } from "../../_generated/api";
+import type { Id } from "../../_generated/dataModel";
 import {
   type ActionCtx,
   internalAction,
   internalMutation,
   internalQuery,
-} from "../_generated/server";
+} from "../../_generated/server";
 import { generateStructured } from "./structured_output";
 
 const SYNTHESIS_MODEL = "anthropic/claude-sonnet-4";
@@ -307,19 +307,22 @@ const storeInsights = async (
       existingFeedback
     );
 
-    await ctx.runMutation(internal.intelligence.synthesis.createInsight, {
-      organizationId,
-      signalIds: relatedSignalIds,
-      type: insight.type,
-      title: insight.title,
-      summary: insight.summary,
-      reasoning: insight.reasoning,
-      priority: insight.priority,
-      suggestedFeedbackTitle: insight.suggestedFeedbackTitle,
-      suggestedFeedbackDescription: insight.suggestedFeedbackDescription,
-      linkedFeedbackIds:
-        matchedFeedbackIds.length > 0 ? matchedFeedbackIds : undefined,
-    });
+    await ctx.runMutation(
+      internal.autopilot.intelligence.synthesis.createInsight,
+      {
+        organizationId,
+        signalIds: relatedSignalIds,
+        type: insight.type,
+        title: insight.title,
+        summary: insight.summary,
+        reasoning: insight.reasoning,
+        priority: insight.priority,
+        suggestedFeedbackTitle: insight.suggestedFeedbackTitle,
+        suggestedFeedbackDescription: insight.suggestedFeedbackDescription,
+        linkedFeedbackIds:
+          matchedFeedbackIds.length > 0 ? matchedFeedbackIds : undefined,
+      }
+    );
     count++;
   }
   return count;
@@ -336,7 +339,7 @@ export const runSynthesis = internalAction({
     const since = Date.now() - SEVEN_DAYS_MS;
 
     const signals = await ctx.runQuery(
-      internal.intelligence.synthesis.getRecentSignals,
+      internal.autopilot.intelligence.synthesis.getRecentSignals,
       { organizationId: args.organizationId, since }
     );
 
@@ -350,7 +353,7 @@ export const runSynthesis = internalAction({
     }
 
     const existingFeedback = await ctx.runQuery(
-      internal.intelligence.synthesis.getExistingFeedback,
+      internal.autopilot.intelligence.synthesis.getExistingFeedback,
       { organizationId: args.organizationId }
     );
 
@@ -461,7 +464,7 @@ export const generateBattlecard = internalAction({
     const since = Date.now() - SEVEN_DAYS_MS;
 
     const signals = await ctx.runQuery(
-      internal.intelligence.synthesis.getRecentSignals,
+      internal.autopilot.intelligence.synthesis.getRecentSignals,
       { organizationId: args.organizationId, since }
     );
 
@@ -503,11 +506,14 @@ Generate a comprehensive sales battlecard.`;
 
       const content = JSON.stringify(result);
 
-      await ctx.runMutation(internal.intelligence.synthesis.upsertBattlecard, {
-        organizationId: args.organizationId,
-        competitorId: args.competitorId,
-        content,
-      });
+      await ctx.runMutation(
+        internal.autopilot.intelligence.synthesis.upsertBattlecard,
+        {
+          organizationId: args.organizationId,
+          competitorId: args.competitorId,
+          content,
+        }
+      );
 
       return { success: true };
     } catch (error) {
@@ -536,7 +542,7 @@ export const updateFeatureComparison = internalAction({
     }
 
     const signals: Signal[] = await ctx.runQuery(
-      internal.intelligence.synthesis.getRecentSignals,
+      internal.autopilot.intelligence.synthesis.getRecentSignals,
       { organizationId: args.organizationId, since }
     );
 
@@ -618,7 +624,7 @@ Generate a feature comparison matrix. Use the exact competitor IDs from the sign
       }));
 
       await ctx.runMutation(
-        internal.intelligence.synthesis.upsertFeatureComparison,
+        internal.autopilot.intelligence.synthesis.upsertFeatureComparison,
         {
           organizationId: args.organizationId,
           features,

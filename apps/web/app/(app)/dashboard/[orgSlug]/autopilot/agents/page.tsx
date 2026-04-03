@@ -4,9 +4,14 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   IconBrain,
+  IconChartBar,
   IconCode,
+  IconFileText,
+  IconHeadset,
   IconRocket,
+  IconServer,
   IconShield,
+  IconTestPipe,
   IconTrendingUp,
   IconUsers,
 } from "@tabler/icons-react";
@@ -77,6 +82,54 @@ const AGENTS = [
     description:
       "Generates marketing content from completed tasks for social distribution",
     capabilities: ["Content generation", "Thread discovery", "Social posting"],
+  },
+  {
+    id: "support",
+    label: "Support Agent",
+    icon: IconHeadset,
+    description:
+      "Triages support conversations, drafts replies, and escalates bugs",
+    capabilities: ["Conversation triage", "Reply drafting", "Bug escalation"],
+  },
+  {
+    id: "analytics",
+    label: "Analytics Agent",
+    icon: IconChartBar,
+    description:
+      "Captures daily snapshots, detects anomalies, and generates weekly briefs",
+    capabilities: ["Anomaly detection", "Weekly briefs", "Metric tracking"],
+  },
+  {
+    id: "docs",
+    label: "Docs Agent",
+    icon: IconFileText,
+    description:
+      "Detects stale documentation, generates FAQ entries, and creates update tasks",
+    capabilities: ["Stale detection", "FAQ generation", "Doc updates"],
+  },
+  {
+    id: "qa",
+    label: "QA Agent",
+    icon: IconTestPipe,
+    description:
+      "Generates E2E Playwright tests from specs and detects regressions",
+    capabilities: [
+      "Test generation",
+      "Regression detection",
+      "Coverage analysis",
+    ],
+  },
+  {
+    id: "ops",
+    label: "Ops Agent",
+    icon: IconServer,
+    description:
+      "Monitors deployments, detects error spikes, and generates reliability reports",
+    capabilities: [
+      "Deploy monitoring",
+      "Error detection",
+      "Reliability reports",
+    ],
   },
 ] as const;
 
@@ -169,7 +222,7 @@ function AgentList({
   if (activity === undefined) {
     return (
       <div className="space-y-4">
-        {Array.from({ length: 6 }, (_, i) => (
+        {Array.from({ length: 11 }, (_, i) => (
           <Skeleton
             className="h-32 w-full rounded-lg"
             key={`skel-${String(i)}`}

@@ -36,17 +36,18 @@ export const FeedbackIntelligenceSection = (
   const [isOpen, setIsOpen] = useState(false);
 
   const insights = useQuery(
-    api.intelligence.feedback_integration.getInsightsForFeedback,
+    api.autopilot.intelligence.feedback_integration.getInsightsForFeedback,
     { feedbackId }
   );
 
   const signals = useQuery(
-    api.intelligence.feedback_integration.getSignalsForFeedback,
+    api.autopilot.intelligence.feedback_integration.getSignalsForFeedback,
     { feedbackId }
   );
 
   const competitorStatus = useQuery(
-    api.intelligence.feedback_integration.getCompetitorStatusForFeedback,
+    api.autopilot.intelligence.feedback_integration
+      .getCompetitorStatusForFeedback,
     { feedbackId }
   );
 

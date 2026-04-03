@@ -204,6 +204,69 @@ export const dispatchOrgTasks = internalAction({
         );
         break;
 
+      case "support":
+        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+          taskId: task._id,
+          status: "in_progress",
+        });
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.agents.support.runSupportTriage,
+          { organizationId: args.organizationId }
+        );
+        break;
+
+      case "analytics":
+        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+          taskId: task._id,
+          status: "in_progress",
+        });
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.agents.analytics.captureAnalyticsSnapshot,
+          { organizationId: args.organizationId }
+        );
+        break;
+
+      case "docs":
+        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+          taskId: task._id,
+          status: "in_progress",
+        });
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.agents.docs.runDocsCheck,
+          { organizationId: args.organizationId }
+        );
+        break;
+
+      case "qa":
+        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+          taskId: task._id,
+          status: "in_progress",
+        });
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.agents.qa.generateE2ETests,
+          {
+            organizationId: args.organizationId,
+            taskId: task._id,
+          }
+        );
+        break;
+
+      case "ops":
+        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+          taskId: task._id,
+          status: "in_progress",
+        });
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.agents.ops.monitorDeployments,
+          { organizationId: args.organizationId }
+        );
+        break;
+
       default:
         // PM and orchestrator tasks are handled by their own crons
         await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
@@ -340,6 +403,155 @@ export const runInboxExpiration = internalAction({
     for (const org of orgs) {
       try {
         await ctx.runMutation(internal.autopilot.inbox.expireOldItems, {
+          organizationId: org.organizationId,
+        });
+      } catch {
+        // Best effort — continue with other orgs
+      }
+    }
+  },
+});
+
+/**
+ * Run PM analysis for all enabled orgs.
+ * Scans feedback and intelligence to create prioritized tasks,
+ * ensuring agents have work to do when autopilot is enabled.
+ */
+export const runPMAnalysis = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const orgs = await ctx.runQuery(internal.autopilot.crons.getEnabledOrgs);
+
+    for (const org of orgs) {
+      try {
+        await ctx.runAction(internal.autopilot.agents.pm.runPMAnalysis, {
+          organizationId: org.organizationId,
+        });
+      } catch {
+        // Best effort — continue with other orgs
+      }
+    }
+  },
+});
+
+// ============================================
+// V5 AGENT CRON HANDLERS
+// ============================================
+
+/**
+ * Run support triage for all enabled orgs.
+ */
+export const runSupportTriage = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const orgs = await ctx.runQuery(internal.autopilot.crons.getEnabledOrgs);
+
+    for (const org of orgs) {
+      try {
+        await ctx.runAction(
+          internal.autopilot.agents.support.runSupportTriage,
+          { organizationId: org.organizationId }
+        );
+      } catch {
+        // Best effort — continue with other orgs
+      }
+    }
+  },
+});
+
+/**
+ * Capture daily analytics snapshot for all enabled orgs.
+ */
+export const runAnalyticsSnapshot = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const orgs = await ctx.runQuery(internal.autopilot.crons.getEnabledOrgs);
+
+    for (const org of orgs) {
+      try {
+        await ctx.runAction(
+          internal.autopilot.agents.analytics.captureAnalyticsSnapshot,
+          { organizationId: org.organizationId }
+        );
+      } catch {
+        // Best effort — continue with other orgs
+      }
+    }
+  },
+});
+
+/**
+ * Generate weekly analytics brief for all enabled orgs.
+ */
+export const runAnalyticsBrief = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const orgs = await ctx.runQuery(internal.autopilot.crons.getEnabledOrgs);
+
+    for (const org of orgs) {
+      try {
+        await ctx.runAction(
+          internal.autopilot.agents.analytics.runAnalyticsBrief,
+          { organizationId: org.organizationId }
+        );
+      } catch {
+        // Best effort — continue with other orgs
+      }
+    }
+  },
+});
+
+/**
+ * Run docs stale check for all enabled orgs.
+ */
+export const runDocsStaleCheck = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const orgs = await ctx.runQuery(internal.autopilot.crons.getEnabledOrgs);
+
+    for (const org of orgs) {
+      try {
+        await ctx.runAction(internal.autopilot.agents.docs.runDocsStaleCheck, {
+          organizationId: org.organizationId,
+        });
+      } catch {
+        // Best effort — continue with other orgs
+      }
+    }
+  },
+});
+
+/**
+ * Run ops deployment monitoring for all enabled orgs.
+ */
+export const runOpsMonitoring = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const orgs = await ctx.runQuery(internal.autopilot.crons.getEnabledOrgs);
+
+    for (const org of orgs) {
+      try {
+        await ctx.runAction(internal.autopilot.agents.ops.monitorDeployments, {
+          organizationId: org.organizationId,
+        });
+      } catch {
+        // Best effort — continue with other orgs
+      }
+    }
+  },
+});
+
+/**
+ * Capture daily ops snapshot for all enabled orgs.
+ */
+export const runOpsSnapshot = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const orgs = await ctx.runQuery(internal.autopilot.crons.getEnabledOrgs);
+
+    for (const org of orgs) {
+      try {
+        await ctx.runAction(internal.autopilot.agents.ops.captureOpsSnapshot, {
           organizationId: org.organizationId,
         });
       } catch {

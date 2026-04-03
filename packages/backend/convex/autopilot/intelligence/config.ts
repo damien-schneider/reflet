@@ -1,7 +1,7 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
-import { internalQuery, mutation, query } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { internal } from "../../_generated/api";
+import { internalQuery, mutation, query } from "../../_generated/server";
+import { getAuthUser } from "../../shared/utils";
 
 // ============================================
 // QUERIES
@@ -319,10 +319,14 @@ export const startManualScan = mutation({
     });
 
     // Schedule the actual scan with reference to the master job
-    await ctx.scheduler.runAfter(0, internal.intelligence.crons.runOrgScan, {
-      organizationId: args.organizationId,
-      masterJobId,
-    });
+    await ctx.scheduler.runAfter(
+      0,
+      internal.autopilot.intelligence.crons.runOrgScan,
+      {
+        organizationId: args.organizationId,
+        masterJobId,
+      }
+    );
 
     return { started: true };
   },

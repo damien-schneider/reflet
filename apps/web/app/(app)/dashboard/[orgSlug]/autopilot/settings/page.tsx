@@ -171,6 +171,96 @@ export default function AutopilotSettingsPage() {
             onCheckedChange={(v) => handleToggle("requireArchitectReview", v)}
           />
         </div>
+
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <Label>Enable Intelligence</Label>
+            <p className="text-muted-foreground text-sm">
+              Competitive intelligence scanning and insights
+            </p>
+          </div>
+          <Switch
+            checked={config.intelligenceEnabled ?? false}
+            disabled={!isAdmin}
+            onCheckedChange={(v) => handleToggle("intelligenceEnabled", v)}
+          />
+        </div>
+      </section>
+
+      <Separator />
+
+      <section className="space-y-4">
+        <h3 className="font-semibold text-lg">V5 Agents</h3>
+
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <Label>Support Agent</Label>
+            <p className="text-muted-foreground text-sm">
+              Triages conversations, drafts replies, escalates bugs
+            </p>
+          </div>
+          <Switch
+            checked={config.supportEnabled ?? false}
+            disabled={!isAdmin}
+            onCheckedChange={(v) => handleToggle("supportEnabled", v)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <Label>Analytics Agent</Label>
+            <p className="text-muted-foreground text-sm">
+              Daily snapshots, anomaly detection, weekly briefs
+            </p>
+          </div>
+          <Switch
+            checked={config.analyticsEnabled ?? false}
+            disabled={!isAdmin}
+            onCheckedChange={(v) => handleToggle("analyticsEnabled", v)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <Label>Docs Agent</Label>
+            <p className="text-muted-foreground text-sm">
+              Stale doc detection, FAQ generation, doc updates
+            </p>
+          </div>
+          <Switch
+            checked={config.docsEnabled ?? false}
+            disabled={!isAdmin}
+            onCheckedChange={(v) => handleToggle("docsEnabled", v)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <Label>QA Agent</Label>
+            <p className="text-muted-foreground text-sm">
+              E2E test generation, regression detection
+            </p>
+          </div>
+          <Switch
+            checked={config.qaEnabled ?? false}
+            disabled={!isAdmin}
+            onCheckedChange={(v) => handleToggle("qaEnabled", v)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <Label>Ops Agent</Label>
+            <p className="text-muted-foreground text-sm">
+              Deploy monitoring, error spikes, reliability reports
+            </p>
+          </div>
+          <Switch
+            checked={config.opsEnabled ?? false}
+            disabled={!isAdmin}
+            onCheckedChange={(v) => handleToggle("opsEnabled", v)}
+          />
+        </div>
       </section>
 
       <Separator />

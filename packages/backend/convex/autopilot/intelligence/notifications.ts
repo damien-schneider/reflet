@@ -1,10 +1,10 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
+import { internal } from "../../_generated/api";
 import {
   internalAction,
   internalMutation,
   internalQuery,
-} from "../_generated/server";
+} from "../../_generated/server";
 
 // ============================================
 // INTERNAL QUERIES
@@ -170,13 +170,15 @@ export const notifyHighPriorityInsights = internalAction({
     const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
 
     const insights = await ctx.runQuery(
-      internal.intelligence.notifications.getHighPriorityInsightsSince,
+      internal.autopilot.intelligence.notifications
+        .getHighPriorityInsightsSince,
       { organizationId: args.organizationId, since: tenMinutesAgo }
     );
 
     for (const insight of insights) {
       await ctx.runMutation(
-        internal.intelligence.notifications.createInsightNotifications,
+        internal.autopilot.intelligence.notifications
+          .createInsightNotifications,
         {
           organizationId: args.organizationId,
           insightTitle: insight.title,
@@ -195,7 +197,7 @@ export const sendIntelligenceDigest = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     const digest = await ctx.runQuery(
-      internal.intelligence.notifications.getDigestData,
+      internal.autopilot.intelligence.notifications.getDigestData,
       { organizationId: args.organizationId }
     );
 
@@ -204,7 +206,7 @@ export const sendIntelligenceDigest = internalAction({
     }
 
     const adminUserIds = await ctx.runQuery(
-      internal.intelligence.notifications.getAdminUserIds,
+      internal.autopilot.intelligence.notifications.getAdminUserIds,
       { organizationId: args.organizationId }
     );
 
@@ -220,7 +222,7 @@ export const sendIntelligenceDigest = internalAction({
       summaryParts.push(`${digest.totalInsights} total insights`);
 
       await ctx.runMutation(
-        internal.intelligence.notifications.createDigestNotification,
+        internal.autopilot.intelligence.notifications.createDigestNotification,
         {
           userId,
           message: `Weekly Intelligence: ${summaryParts.join(", ")} from ${digest.totalSignals} signals across ${digest.activeCompetitors} competitors.`,
@@ -237,15 +239,18 @@ export const sendAllIntelligenceDigests = internalAction({
   args: {},
   handler: async (ctx) => {
     const configs = await ctx.runQuery(
-      internal.intelligence.notifications.getAllConfiguredOrgs,
+      internal.autopilot.intelligence.notifications.getAllConfiguredOrgs,
       {}
     );
 
     for (const config of configs) {
       await ctx
-        .runAction(internal.intelligence.notifications.sendIntelligenceDigest, {
-          organizationId: config.organizationId,
-        })
+        .runAction(
+          internal.autopilot.intelligence.notifications.sendIntelligenceDigest,
+          {
+            organizationId: config.organizationId,
+          }
+        )
         .catch(() => {
           // Non-fatal: individual org digest failures don't block others
         });

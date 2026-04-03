@@ -17,7 +17,9 @@ export function IntelligenceSection({
   organizationId,
   orgSlug,
 }: IntelligenceSectionProps) {
-  const config = useQuery(api.intelligence.config.get, { organizationId });
+  const config = useQuery(api.autopilot.intelligence.config.get, {
+    organizationId,
+  });
 
   const hasConfig = config !== undefined && config !== null;
 
@@ -31,7 +33,7 @@ export function IntelligenceSection({
             Set up competitor tracking, community monitoring, and AI-powered
             insights.
           </p>
-          <Link href={`/dashboard/${orgSlug}/intelligence/settings`}>
+          <Link href={`/dashboard/${orgSlug}/autopilot/intelligence`}>
             <Button className="mt-4" size="sm" variant="default">
               Set Up Intelligence
             </Button>

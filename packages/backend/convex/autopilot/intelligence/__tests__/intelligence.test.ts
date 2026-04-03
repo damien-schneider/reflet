@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
-import schema from "../../schema";
-import { modules } from "../../test.helpers";
+import schema from "../../../schema";
+import { modules } from "../../../test.helpers";
 
 describe("Intelligence config", () => {
   test("should create default intelligence config", async () => {

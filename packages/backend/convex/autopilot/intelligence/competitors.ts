@@ -1,7 +1,7 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
-import { mutation, query } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { internal } from "../../_generated/api";
+import { mutation, query } from "../../_generated/server";
+import { getAuthUser } from "../../shared/utils";
 
 // ============================================
 // URL VALIDATION
@@ -150,7 +150,7 @@ export const create = mutation({
     // Schedule a scrape
     await ctx.scheduler.runAfter(
       0,
-      internal.intelligence.competitor_monitor.scrapeCompetitor,
+      internal.autopilot.intelligence.competitor_monitor.scrapeCompetitor,
       { competitorId }
     );
 

@@ -2,6 +2,7 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
+import { useAtomValue } from "jotai";
 import { use } from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,7 +10,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { H2, Muted } from "@/components/ui/typography";
 import { AutopilotContext } from "@/features/autopilot/components/autopilot-context";
 import { AutopilotNav } from "@/features/autopilot/components/autopilot-nav";
+import { CeoChatPanel } from "@/features/autopilot/components/ceo-chat/ceo-chat-panel";
+import { CeoChatToggle } from "@/features/autopilot/components/ceo-chat/ceo-chat-toggle";
 import { EmergencyStopButton } from "@/features/autopilot/components/emergency-stop-button";
+import { cn } from "@/lib/utils";
+import { ceoChatOpenAtom } from "@/store/ui";
+
+const CEO_CHAT_WIDTH = "w-96";
+const CEO_CHAT_CONTENT_PADDING = "pr-96";
 
 export default function AutopilotLayout({
   children,
@@ -19,6 +27,8 @@ export default function AutopilotLayout({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
+  const isChatOpen = useAtomValue(ceoChatOpenAtom);
+
   const org = useQuery(api.organizations.queries.getBySlug, {
     slug: orgSlug,
   });
@@ -87,45 +97,64 @@ export default function AutopilotLayout({
 
   return (
     <AutopilotContext value={{ organizationId: org._id, isAdmin, orgSlug }}>
-      <div className="mx-auto max-w-6xl px-4 pt-12 pb-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="font-bold text-2xl">Autopilot</h1>
-            <p className="text-muted-foreground text-sm">
-              AI-powered product team for your codebase
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {config?.enabled && <EmergencyStopButton />}
-            <div className="flex items-center gap-2">
-              <div
-                className={
-                  config?.enabled
-                    ? "size-2 rounded-full bg-green-500"
-                    : "size-2 rounded-full bg-muted-foreground/30"
-                }
-              />
-              <span className="text-muted-foreground text-sm">
-                {config?.enabled ? "Active" : "Inactive"}
-              </span>
+      <div
+        className={cn(
+          "transition-[padding] duration-300 ease-in-out",
+          isChatOpen && CEO_CHAT_CONTENT_PADDING
+        )}
+      >
+        <div className="mx-auto max-w-6xl px-4 pt-12 pb-8">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="font-bold text-2xl">Autopilot</h1>
+              <p className="text-muted-foreground text-sm">
+                AI-powered product team for your codebase
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <CeoChatToggle />
+              {config?.enabled && <EmergencyStopButton />}
+              <div className="flex items-center gap-2">
+                <div
+                  className={
+                    config?.enabled
+                      ? "size-2 rounded-full bg-green-500"
+                      : "size-2 rounded-full bg-muted-foreground/30"
+                  }
+                />
+                <span className="text-muted-foreground text-sm">
+                  {config?.enabled ? "Active" : "Inactive"}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-col md:flex-row md:gap-8">
-          <ScrollArea className="-mx-4 mb-6 md:hidden" direction="horizontal">
-            <div className="px-4">
-              <AutopilotNav baseUrl={baseUrl} variant="tabs" />
+          <div className="flex flex-col md:flex-row md:gap-8">
+            <ScrollArea className="-mx-4 mb-6 md:hidden" direction="horizontal">
+              <div className="px-4">
+                <AutopilotNav baseUrl={baseUrl} variant="tabs" />
+              </div>
+            </ScrollArea>
+
+            <div className="sticky top-12 hidden w-56 shrink-0 self-start md:block">
+              <AutopilotNav baseUrl={baseUrl} variant="sidebar" />
             </div>
-          </ScrollArea>
 
-          <div className="sticky top-12 hidden w-56 shrink-0 self-start md:block">
-            <AutopilotNav baseUrl={baseUrl} variant="sidebar" />
+            <div className="min-w-0 flex-1">{children}</div>
           </div>
-
-          <div className="min-w-0 flex-1">{children}</div>
         </div>
       </div>
+
+      {isChatOpen && (
+        <aside
+          className={cn(
+            "fixed inset-y-0 right-0 z-40 border-border border-l bg-background",
+            CEO_CHAT_WIDTH
+          )}
+        >
+          <CeoChatPanel organizationId={org._id} />
+        </aside>
+      )}
     </AutopilotContext>
   );
 }

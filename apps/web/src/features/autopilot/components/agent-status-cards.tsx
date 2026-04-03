@@ -4,9 +4,14 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   IconBrain,
+  IconChartBar,
   IconCode,
+  IconFileText,
+  IconHeadset,
   IconRocket,
+  IconServer,
   IconShield,
+  IconTestPipe,
   IconTrendingUp,
   IconUsers,
 } from "@tabler/icons-react";
@@ -52,6 +57,36 @@ const AGENTS = [
     icon: IconRocket,
     description: "Content generation",
   },
+  {
+    id: "support",
+    label: "Support",
+    icon: IconHeadset,
+    description: "Conversation triage",
+  },
+  {
+    id: "analytics",
+    label: "Analytics",
+    icon: IconChartBar,
+    description: "Anomaly detection",
+  },
+  {
+    id: "docs",
+    label: "Docs",
+    icon: IconFileText,
+    description: "Doc freshness",
+  },
+  {
+    id: "qa",
+    label: "QA",
+    icon: IconTestPipe,
+    description: "Test generation",
+  },
+  {
+    id: "ops",
+    label: "Ops",
+    icon: IconServer,
+    description: "Deploy monitoring",
+  },
 ] as const;
 
 export function AgentStatusCards({
@@ -67,7 +102,7 @@ export function AgentStatusCards({
   if (activity === undefined) {
     return (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {Array.from({ length: 6 }, (_, i) => (
+        {Array.from({ length: 11 }, (_, i) => (
           <Skeleton
             className="h-24 w-full rounded-lg"
             key={`skel-${String(i)}`}

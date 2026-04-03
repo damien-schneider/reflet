@@ -2,13 +2,13 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { v } from "convex/values";
 import { z } from "zod";
-import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
+import { internal } from "../../_generated/api";
+import type { Id } from "../../_generated/dataModel";
 import {
   type ActionCtx,
   internalAction,
   internalQuery,
-} from "../_generated/server";
+} from "../../_generated/server";
 import { generateStructuredWithFallback } from "./structured_output";
 
 // OpenRouter provider setup
@@ -260,7 +260,7 @@ const storeFindings = async (
 
     try {
       await ctx.runMutation(
-        internal.intelligence.competitor_monitor.createSignal,
+        internal.autopilot.intelligence.competitor_monitor.createSignal,
         {
           organizationId,
           jobId,
@@ -302,7 +302,7 @@ export const runCommunitySearch = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     const keywords = await ctx.runQuery(
-      internal.intelligence.intelligence_agent.getKeywords,
+      internal.autopilot.intelligence.intelligence_agent.getKeywords,
       { organizationId: args.organizationId }
     );
 
@@ -311,21 +311,24 @@ export const runCommunitySearch = internalAction({
     }
 
     const competitors = await ctx.runQuery(
-      internal.intelligence.intelligence_agent.getCompetitors,
+      internal.autopilot.intelligence.intelligence_agent.getCompetitors,
       { organizationId: args.organizationId }
     );
 
     const competitorNames = competitors.map((c: { name: string }) => c.name);
 
     const jobId = await ctx.runMutation(
-      internal.intelligence.competitor_monitor.createJob,
+      internal.autopilot.intelligence.competitor_monitor.createJob,
       { organizationId: args.organizationId, type: "reddit_scan" }
     );
 
-    await ctx.runMutation(internal.intelligence.competitor_monitor.updateJob, {
-      jobId,
-      status: "processing",
-    });
+    await ctx.runMutation(
+      internal.autopilot.intelligence.competitor_monitor.updateJob,
+      {
+        jobId,
+        status: "processing",
+      }
+    );
 
     let itemsFound = 0;
     let itemsProcessed = 0;
@@ -387,7 +390,7 @@ export const runCommunitySearch = internalAction({
       const allFailed = itemsProcessed === 0 && errors > 0;
 
       await ctx.runMutation(
-        internal.intelligence.competitor_monitor.updateJob,
+        internal.autopilot.intelligence.competitor_monitor.updateJob,
         {
           jobId,
           status: allFailed ? "failed" : "completed",
@@ -416,7 +419,7 @@ export const runCompetitorResearch = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     const competitors = await ctx.runQuery(
-      internal.intelligence.intelligence_agent.getCompetitors,
+      internal.autopilot.intelligence.intelligence_agent.getCompetitors,
       { organizationId: args.organizationId }
     );
 
@@ -425,14 +428,17 @@ export const runCompetitorResearch = internalAction({
     }
 
     const jobId = await ctx.runMutation(
-      internal.intelligence.competitor_monitor.createJob,
+      internal.autopilot.intelligence.competitor_monitor.createJob,
       { organizationId: args.organizationId, type: "web_search" }
     );
 
-    await ctx.runMutation(internal.intelligence.competitor_monitor.updateJob, {
-      jobId,
-      status: "processing",
-    });
+    await ctx.runMutation(
+      internal.autopilot.intelligence.competitor_monitor.updateJob,
+      {
+        jobId,
+        status: "processing",
+      }
+    );
 
     let itemsFound = 0;
     let itemsProcessed = 0;
@@ -506,17 +512,22 @@ export const runCompetitorResearch = internalAction({
       `[intelligence] Competitor research done: ${itemsProcessed} stored, ${errors} errors`
     );
 
-    await ctx.runMutation(internal.intelligence.competitor_monitor.updateJob, {
-      jobId,
-      status: allFailed ? "failed" : "completed",
-      errorMessage:
-        competitorErrors.length > 0 ? competitorErrors.join(" | ") : undefined,
-      stats: {
-        itemsFound,
-        itemsProcessed,
-        errors,
-      },
-    });
+    await ctx.runMutation(
+      internal.autopilot.intelligence.competitor_monitor.updateJob,
+      {
+        jobId,
+        status: allFailed ? "failed" : "completed",
+        errorMessage:
+          competitorErrors.length > 0
+            ? competitorErrors.join(" | ")
+            : undefined,
+        stats: {
+          itemsFound,
+          itemsProcessed,
+          errors,
+        },
+      }
+    );
 
     // Propagate failure to the pipeline so it's counted as an error
     if (allFailed) {

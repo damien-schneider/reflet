@@ -1,12 +1,12 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
+import { internal } from "../../_generated/api";
+import type { Id } from "../../_generated/dataModel";
 import {
   type ActionCtx,
   internalAction,
   internalMutation,
   internalQuery,
-} from "../_generated/server";
+} from "../../_generated/server";
 
 // ============================================
 // QUERIES
@@ -150,13 +150,13 @@ export const runScheduledScans = internalAction({
   args: {},
   handler: async (ctx) => {
     const dueOrgs = await ctx.runQuery(
-      internal.intelligence.crons.getOrgsDueForScan,
+      internal.autopilot.intelligence.crons.getOrgsDueForScan,
       {}
     );
 
     for (const { organizationId } of dueOrgs) {
       await ctx
-        .runAction(internal.intelligence.crons.runOrgScan, {
+        .runAction(internal.autopilot.intelligence.crons.runOrgScan, {
           organizationId,
         })
         .catch(() => {
@@ -275,7 +275,7 @@ const reportProgress = async (
     return;
   }
   await ctx
-    .runMutation(internal.intelligence.crons.updateMasterJob, {
+    .runMutation(internal.autopilot.intelligence.crons.updateMasterJob, {
       jobId: masterJobId,
       status: "processing",
       currentStep,
@@ -314,7 +314,7 @@ const runPipelines = async (
     countStep(
       await runStep(() =>
         ctx.runAction(
-          internal.intelligence.intelligence_agent.runCommunitySearch,
+          internal.autopilot.intelligence.intelligence_agent.runCommunitySearch,
           { organizationId: orgId }
         )
       ),
@@ -328,7 +328,8 @@ const runPipelines = async (
     countStep(
       await runStep(() =>
         ctx.runAction(
-          internal.intelligence.intelligence_agent.runCompetitorResearch,
+          internal.autopilot.intelligence.intelligence_agent
+            .runCompetitorResearch,
           { organizationId: orgId }
         )
       ),
@@ -337,7 +338,7 @@ const runPipelines = async (
     );
 
     const competitors = await ctx.runQuery(
-      internal.intelligence.crons.getActiveCompetitors,
+      internal.autopilot.intelligence.crons.getActiveCompetitors,
       { organizationId: orgId }
     );
 
@@ -351,7 +352,7 @@ const runPipelines = async (
       countStep(
         await runStep(() =>
           ctx.runAction(
-            internal.intelligence.competitor_monitor.scrapeCompetitor,
+            internal.autopilot.intelligence.competitor_monitor.scrapeCompetitor,
             { competitorId: c._id }
           )
         ),
@@ -368,10 +369,13 @@ const runPipelines = async (
         stats
       );
       await runStep(() =>
-        ctx.runAction(internal.intelligence.synthesis.generateBattlecard, {
-          organizationId: orgId,
-          competitorId: c._id,
-        })
+        ctx.runAction(
+          internal.autopilot.intelligence.synthesis.generateBattlecard,
+          {
+            organizationId: orgId,
+            competitorId: c._id,
+          }
+        )
       );
     }
 
@@ -382,9 +386,12 @@ const runPipelines = async (
       stats
     );
     await runStep(() =>
-      ctx.runAction(internal.intelligence.synthesis.updateFeatureComparison, {
-        organizationId: orgId,
-      })
+      ctx.runAction(
+        internal.autopilot.intelligence.synthesis.updateFeatureComparison,
+        {
+          organizationId: orgId,
+        }
+      )
     );
   }
 
@@ -392,7 +399,7 @@ const runPipelines = async (
   await reportProgress(ctx, masterJobId, "Generating insights...", stats);
   countStep(
     await runStep(() =>
-      ctx.runAction(internal.intelligence.synthesis.runSynthesis, {
+      ctx.runAction(internal.autopilot.intelligence.synthesis.runSynthesis, {
         organizationId: orgId,
       })
     ),
@@ -409,14 +416,15 @@ const runPipelines = async (
   );
   await runStep(() =>
     ctx.runAction(
-      internal.intelligence.feedback_integration.runPriorityBoostForOrg,
+      internal.autopilot.intelligence.feedback_integration
+        .runPriorityBoostForOrg,
       { organizationId: orgId }
     )
   );
   await reportProgress(ctx, masterJobId, "Sending notifications...", stats);
   await runStep(() =>
     ctx.runAction(
-      internal.intelligence.notifications.notifyHighPriorityInsights,
+      internal.autopilot.intelligence.notifications.notifyHighPriorityInsights,
       { organizationId: orgId }
     )
   );
@@ -434,28 +442,37 @@ export const runOrgScan = internalAction({
 
     // Mark master job as processing
     if (masterJobId) {
-      await ctx.runMutation(internal.intelligence.crons.updateMasterJob, {
-        jobId: masterJobId,
-        status: "processing",
-        currentStep: "Initializing scan...",
-      });
+      await ctx.runMutation(
+        internal.autopilot.intelligence.crons.updateMasterJob,
+        {
+          jobId: masterJobId,
+          status: "processing",
+          currentStep: "Initializing scan...",
+        }
+      );
     }
 
-    const config = await ctx.runQuery(internal.intelligence.crons.getConfig, {
-      organizationId: args.organizationId,
-    });
+    const config = await ctx.runQuery(
+      internal.autopilot.intelligence.crons.getConfig,
+      {
+        organizationId: args.organizationId,
+      }
+    );
 
     const hasCommunity = config?.redditEnabled || config?.webSearchEnabled;
     const hasCompetitors = config?.competitorTrackingEnabled;
 
     if (!(config && (hasCommunity || hasCompetitors))) {
       if (masterJobId) {
-        await ctx.runMutation(internal.intelligence.crons.updateMasterJob, {
-          jobId: masterJobId,
-          status: "completed",
-          currentStep: "No pipelines enabled",
-          stats: { itemsFound: 0, itemsProcessed: 0, errors: 0 },
-        });
+        await ctx.runMutation(
+          internal.autopilot.intelligence.crons.updateMasterJob,
+          {
+            jobId: masterJobId,
+            status: "completed",
+            currentStep: "No pipelines enabled",
+            stats: { itemsFound: 0, itemsProcessed: 0, errors: 0 },
+          }
+        );
       }
       return;
     }
@@ -469,32 +486,38 @@ export const runOrgScan = internalAction({
         masterJobId
       );
 
-      await ctx.runMutation(internal.intelligence.crons.updateScanTimestamps, {
-        organizationId: args.organizationId,
-      });
+      await ctx.runMutation(
+        internal.autopilot.intelligence.crons.updateScanTimestamps,
+        {
+          organizationId: args.organizationId,
+        }
+      );
 
       const allFailed = result.errored > 0 && result.completed === 0;
 
       if (masterJobId) {
-        await ctx.runMutation(internal.intelligence.crons.updateMasterJob, {
-          jobId: masterJobId,
-          status: allFailed ? "failed" : "completed",
-          currentStep: allFailed ? "Scan failed" : "Scan complete",
-          errorMessage:
-            result.errorMessages.length > 0
-              ? result.errorMessages.join(" | ")
-              : undefined,
-          stats: {
-            itemsFound: result.completed + result.errored,
-            itemsProcessed: result.completed,
-            errors: result.errored,
-          },
-        });
+        await ctx.runMutation(
+          internal.autopilot.intelligence.crons.updateMasterJob,
+          {
+            jobId: masterJobId,
+            status: allFailed ? "failed" : "completed",
+            currentStep: allFailed ? "Scan failed" : "Scan complete",
+            errorMessage:
+              result.errorMessages.length > 0
+                ? result.errorMessages.join(" | ")
+                : undefined,
+            stats: {
+              itemsFound: result.completed + result.errored,
+              itemsProcessed: result.completed,
+              errors: result.errored,
+            },
+          }
+        );
       }
     } catch (error: unknown) {
       if (masterJobId) {
         await ctx
-          .runMutation(internal.intelligence.crons.updateMasterJob, {
+          .runMutation(internal.autopilot.intelligence.crons.updateMasterJob, {
             jobId: masterJobId,
             status: "failed",
             currentStep: "Unexpected error",

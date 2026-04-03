@@ -42,7 +42,12 @@ export const assignedAgent = v.union(
   v.literal("security"),
   v.literal("architect"),
   v.literal("growth"),
-  v.literal("orchestrator")
+  v.literal("orchestrator"),
+  v.literal("support"),
+  v.literal("analytics"),
+  v.literal("docs"),
+  v.literal("qa"),
+  v.literal("ops")
 );
 
 export const taskOrigin = v.union(
@@ -51,7 +56,12 @@ export const taskOrigin = v.union(
   v.literal("architect_review"),
   v.literal("growth_suggestion"),
   v.literal("user_created"),
-  v.literal("cto_breakdown")
+  v.literal("cto_breakdown"),
+  v.literal("support_escalation"),
+  v.literal("analytics_signal"),
+  v.literal("qa_regression"),
+  v.literal("ops_incident"),
+  v.literal("docs_update")
 );
 
 export const runStatus = v.union(
@@ -85,7 +95,12 @@ export const activityLogAgent = v.union(
   v.literal("architect"),
   v.literal("growth"),
   v.literal("orchestrator"),
-  v.literal("system")
+  v.literal("system"),
+  v.literal("support"),
+  v.literal("analytics"),
+  v.literal("docs"),
+  v.literal("qa"),
+  v.literal("ops")
 );
 
 export const emailDirection = v.union(
@@ -138,7 +153,21 @@ export const inboxItemType = v.union(
   v.literal("pr_review"),
   v.literal("revenue_alert"),
   v.literal("security_alert"),
-  v.literal("task_approval")
+  v.literal("task_approval"),
+  v.literal("support_reply"),
+  v.literal("support_escalation"),
+  v.literal("shipped_notification"),
+  v.literal("analytics_insight"),
+  v.literal("analytics_anomaly"),
+  v.literal("analytics_brief"),
+  v.literal("docs_update"),
+  v.literal("docs_stale"),
+  v.literal("qa_test_ready"),
+  v.literal("qa_regression"),
+  v.literal("ops_deploy_failure"),
+  v.literal("ops_error_spike"),
+  v.literal("ops_reliability_report"),
+  v.literal("ops_rollback")
 );
 
 // ============================================
@@ -154,12 +183,19 @@ export const autopilotTables = {
     adapter: codingAdapterType,
     autonomyLevel,
     autoMergePRs: v.boolean(),
+    ceoChatThreadId: v.optional(v.string()),
     costUsedTodayUsd: v.optional(v.number()),
     createdAt: v.number(),
     dailyCostCapUsd: v.optional(v.number()),
     emailBlocklist: v.optional(v.array(v.string())),
     emailDailyLimit: v.optional(v.number()),
     enabled: v.boolean(),
+    intelligenceEnabled: v.optional(v.boolean()),
+    supportEnabled: v.optional(v.boolean()),
+    analyticsEnabled: v.optional(v.boolean()),
+    docsEnabled: v.optional(v.boolean()),
+    qaEnabled: v.optional(v.boolean()),
+    opsEnabled: v.optional(v.boolean()),
     maxTasksPerDay: v.number(),
     organizationId: v.id("organizations"),
     orgEmailAddress: v.optional(v.string()),
@@ -413,4 +449,34 @@ export const autopilotTables = {
   })
     .index("by_org_date", ["organizationId", "snapshotDate"])
     .index("by_organization", ["organizationId"]),
+
+  autopilotAnalyticsSnapshots: defineTable({
+    organizationId: v.id("organizations"),
+    snapshotDate: v.string(),
+    activeUsers: v.number(),
+    newUsers: v.number(),
+    retention7d: v.optional(v.number()),
+    retention30d: v.optional(v.number()),
+    topFeatures: v.optional(v.string()),
+    funnelDropoffs: v.optional(v.string()),
+    errorCount: v.optional(v.number()),
+    insights: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_date", ["organizationId", "snapshotDate"]),
+
+  autopilotOpsSnapshots: defineTable({
+    organizationId: v.id("organizations"),
+    snapshotDate: v.string(),
+    deployCount: v.number(),
+    failedDeploys: v.number(),
+    avgBuildTime: v.optional(v.number()),
+    errorRate: v.optional(v.number()),
+    uptimePercent: v.optional(v.number()),
+    incidentCount: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_date", ["organizationId", "snapshotDate"]),
 };

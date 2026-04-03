@@ -22,7 +22,7 @@ export function IntelligenceCard({
 }: IntelligenceCardProps) {
   if (!keywords) {
     return (
-      <Link href={`${basePath}/intelligence`}>
+      <Link href={`${basePath}/autopilot/intelligence`}>
         <Card className="h-full transition-colors hover:bg-muted/30">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
@@ -39,7 +39,7 @@ export function IntelligenceCard({
   }
 
   return (
-    <Link href={`${basePath}/intelligence`}>
+    <Link href={`${basePath}/autopilot/intelligence`}>
       <Card className="h-full transition-colors hover:bg-muted/30">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">

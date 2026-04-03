@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  IconBinoculars,
   IconCurrencyDollar,
   IconDashboard,
   IconInbox,
@@ -22,6 +23,12 @@ const NAV_ITEMS = [
   { id: "tasks", label: "Tasks", icon: IconListDetails, path: "/tasks" },
   { id: "agents", label: "Agents", icon: IconUsers, path: "/agents" },
   { id: "growth", label: "Growth", icon: IconRocket, path: "/growth" },
+  {
+    id: "intelligence",
+    label: "Intelligence",
+    icon: IconBinoculars,
+    path: "/intelligence",
+  },
   { id: "email", label: "Email", icon: IconMail, path: "/email" },
   { id: "costs", label: "Costs", icon: IconCurrencyDollar, path: "/costs" },
   { id: "settings", label: "Settings", icon: IconSettings, path: "/settings" },

@@ -41,11 +41,11 @@ interface KeywordManagerProps {
 }
 
 export function KeywordManager({ organizationId }: KeywordManagerProps) {
-  const keywords = useQuery(api.intelligence.keywords.list, {
+  const keywords = useQuery(api.autopilot.intelligence.keywords.list, {
     organizationId,
   });
-  const createKeyword = useMutation(api.intelligence.keywords.create);
-  const removeKeyword = useMutation(api.intelligence.keywords.remove);
+  const createKeyword = useMutation(api.autopilot.intelligence.keywords.create);
+  const removeKeyword = useMutation(api.autopilot.intelligence.keywords.remove);
 
   const [keyword, setKeyword] = useState("");
   const [source, setSource] = useState<KeywordSource>("both");

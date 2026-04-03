@@ -68,19 +68,19 @@ export const ScanStatusBanner = ({
 }: ScanStatusBannerProps) => {
   const prevJobStatusRef = useRef<string | null>(null);
 
-  const config = useQuery(api.intelligence.config.get, {
+  const config = useQuery(api.autopilot.intelligence.config.get, {
     organizationId,
   });
 
-  const job = useQuery(api.intelligence.config.getActiveScan, {
+  const job = useQuery(api.autopilot.intelligence.config.getActiveScan, {
     organizationId,
   });
 
-  const keywords = useQuery(api.intelligence.keywords.list, {
+  const keywords = useQuery(api.autopilot.intelligence.keywords.list, {
     organizationId,
   });
 
-  const competitors = useQuery(api.intelligence.competitors.list, {
+  const competitors = useQuery(api.autopilot.intelligence.competitors.list, {
     organizationId,
   });
 
@@ -88,9 +88,13 @@ export const ScanStatusBanner = ({
   const hasCompetitors = competitors && competitors.length > 0;
   const canScan = hasKeywords || hasCompetitors;
 
-  const startManualScan = useMutation(api.intelligence.config.startManualScan);
-  const dismissScan = useMutation(api.intelligence.config.dismissScan);
-  const cancelScan = useMutation(api.intelligence.config.cancelScan);
+  const startManualScan = useMutation(
+    api.autopilot.intelligence.config.startManualScan
+  );
+  const dismissScan = useMutation(
+    api.autopilot.intelligence.config.dismissScan
+  );
+  const cancelScan = useMutation(api.autopilot.intelligence.config.cancelScan);
 
   const jobStatus = job?.status ?? null;
   const isStale = job !== null && job !== undefined && "_stale" in job;
@@ -231,14 +235,14 @@ export const ScanStatusBanner = ({
           Add{" "}
           <Link
             className="underline hover:text-foreground"
-            href={`/dashboard/${orgSlug}/intelligence/community`}
+            href={`/dashboard/${orgSlug}/autopilot/intelligence`}
           >
             keywords
           </Link>{" "}
           or{" "}
           <Link
             className="underline hover:text-foreground"
-            href={`/dashboard/${orgSlug}/intelligence/competitors`}
+            href={`/dashboard/${orgSlug}/autopilot/intelligence`}
           >
             competitors
           </Link>{" "}

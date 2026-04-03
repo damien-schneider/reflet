@@ -1,6 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { adminApiTables } from "./admin_api/tableFields";
+import { intelligenceTables } from "./autopilot/intelligence/tableFields";
 import { autopilotTables } from "./autopilot/tableFields";
 import { billingTables } from "./billing/tableFields";
 import { changelogTables } from "./changelog/tableFields";
@@ -8,7 +9,6 @@ import { duplicateTables } from "./duplicates/tableFields";
 import { emailTables } from "./email/tableFields";
 import { feedbackTables } from "./feedback/tableFields";
 import { githubTables } from "./integrations/github/tableFields";
-import { intelligenceTables } from "./intelligence/tableFields";
 import { notificationTables } from "./notifications/tableFields";
 import { organizationTables } from "./organizations/tableFields";
 import { statusTables } from "./status/tableFields";

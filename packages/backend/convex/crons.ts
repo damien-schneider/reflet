@@ -39,18 +39,6 @@ crons.daily(
   internal.surveys.mutations.abandonStaleResponses
 );
 
-crons.daily(
-  "run intelligence scans",
-  { hourUTC: 6, minuteUTC: 0 },
-  internal.intelligence.crons.runScheduledScans
-);
-
-crons.weekly(
-  "send intelligence digest",
-  { dayOfWeek: "monday", hourUTC: 10, minuteUTC: 0 },
-  internal.intelligence.notifications.sendAllIntelligenceDigests
-);
-
 crons.interval(
   "status health checks",
   { minutes: 1 },
@@ -113,6 +101,61 @@ crons.daily(
   "autopilot cost reset",
   { hourUTC: 0, minuteUTC: 0 },
   internal.autopilot.cost_guard.resetDailyCounters
+);
+
+crons.interval(
+  "autopilot PM analysis",
+  { hours: 6 },
+  internal.autopilot.crons.runPMAnalysis
+);
+
+crons.daily(
+  "autopilot intelligence scans",
+  { hourUTC: 6, minuteUTC: 0 },
+  internal.autopilot.intelligence.crons.runScheduledScans
+);
+
+crons.weekly(
+  "autopilot intelligence digest",
+  { dayOfWeek: "monday", hourUTC: 10, minuteUTC: 0 },
+  internal.autopilot.intelligence.notifications.sendAllIntelligenceDigests
+);
+
+// V5 Agent Crons
+crons.interval(
+  "autopilot support triage",
+  { minutes: 5 },
+  internal.autopilot.crons.runSupportTriage
+);
+
+crons.daily(
+  "autopilot analytics snapshot",
+  { hourUTC: 7, minuteUTC: 30 },
+  internal.autopilot.crons.runAnalyticsSnapshot
+);
+
+crons.weekly(
+  "autopilot analytics brief",
+  { dayOfWeek: "monday", hourUTC: 8, minuteUTC: 0 },
+  internal.autopilot.crons.runAnalyticsBrief
+);
+
+crons.weekly(
+  "autopilot docs stale check",
+  { dayOfWeek: "wednesday", hourUTC: 6, minuteUTC: 0 },
+  internal.autopilot.crons.runDocsStaleCheck
+);
+
+crons.interval(
+  "autopilot ops monitoring",
+  { hours: 1 },
+  internal.autopilot.crons.runOpsMonitoring
+);
+
+crons.daily(
+  "autopilot ops snapshot",
+  { hourUTC: 23, minuteUTC: 0 },
+  internal.autopilot.crons.runOpsSnapshot
 );
 
 export default crons;
