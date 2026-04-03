@@ -12,7 +12,7 @@ import {
 import { getAuthUser } from "../../shared/utils";
 
 const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
-const LLM_CHECK_MODEL = "anthropic/claude-sonnet-4";
+const LLM_CHECK_MODEL = "qwen/qwen3.6-plus:free";
 
 const visibilitySchema = z.object({
   mentionsProduct: z.boolean(),

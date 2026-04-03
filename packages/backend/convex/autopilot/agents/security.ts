@@ -39,7 +39,11 @@ export const securityFindingSchema = z.object({
   ]),
   title: z.string(),
   description: z.string(),
-  filePath: z.string().default(""),
+  filePath: z
+    .string()
+    .describe(
+      "File path where the issue was found, or empty string if not file-specific"
+    ),
   recommendation: z.string(),
   autoFixable: z.boolean(),
 });

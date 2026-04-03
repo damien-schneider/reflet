@@ -28,14 +28,20 @@ export const docsCheckSchema = z.object({
       section: z.string(),
       reason: z.string(),
       priority: z.enum(["low", "medium", "high"]),
-      suggestedContent: z.string().default(""),
+      suggestedContent: z
+        .string()
+        .describe("Suggested content for the update, or empty string if none"),
     })
   ),
   stalePages: z.array(
     z.object({
       page: z.string(),
       reason: z.string(),
-      lastRelevantChange: z.string().default(""),
+      lastRelevantChange: z
+        .string()
+        .describe(
+          "Last relevant change that made this page stale, or empty string if unknown"
+        ),
     })
   ),
   faqEntries: z.array(
@@ -135,6 +141,7 @@ Identify: doc updates needed, stale pages, and FAQ entries to add.`,
         sourceAgent: "docs",
         priority: "low",
         metadata: JSON.stringify(stale),
+        autoApproved: true,
       });
     }
 

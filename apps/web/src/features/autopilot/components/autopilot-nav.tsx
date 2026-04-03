@@ -13,7 +13,6 @@ import {
   IconSettings,
   IconShield,
   IconUserSearch,
-  IconUsers,
 } from "@tabler/icons-react";
 import { LayoutGroup, motion } from "motion/react";
 import Link from "next/link";
@@ -25,7 +24,6 @@ const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: IconDashboard, path: "" },
   { id: "inbox", label: "Inbox", icon: IconInbox, path: "/inbox" },
   { id: "tasks", label: "Tasks", icon: IconListDetails, path: "/tasks" },
-  { id: "agents", label: "Agents", icon: IconUsers, path: "/agents" },
   {
     id: "growth",
     label: "Growth & Intel",

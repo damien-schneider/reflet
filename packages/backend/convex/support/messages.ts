@@ -180,6 +180,27 @@ export const send = mutation({
 
     await ctx.db.patch(args.conversationId, updateData);
 
+    // Trigger autopilot support triage when a user sends a message
+    if (senderType === "user") {
+      const autopilotConfig = await ctx.db
+        .query("autopilotConfig")
+        .withIndex("by_organization", (q) =>
+          q.eq("organizationId", conversation.organizationId)
+        )
+        .unique();
+
+      if (
+        autopilotConfig?.enabled &&
+        autopilotConfig.supportEnabled !== false
+      ) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.agents.support.runSupportTriage,
+          { organizationId: conversation.organizationId }
+        );
+      }
+    }
+
     // Only send notifications for non-guest conversations
     if (senderType === "admin" && !conversation.guestId) {
       await ctx.db.insert("notifications", {

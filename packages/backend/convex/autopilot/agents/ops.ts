@@ -71,7 +71,9 @@ export const reliabilityReportSchema = z.object({
       date: z.string(),
       description: z.string(),
       resolved: z.boolean(),
-      duration: z.string().default(""),
+      duration: z
+        .string()
+        .describe("Duration of the incident, empty string if unknown"),
     })
   ),
   recommendations: z.array(z.string()),
@@ -261,6 +263,7 @@ export const generateReliabilityReport = internalAction({
       content: JSON.stringify(report),
       sourceAgent: "ops",
       priority: "medium",
+      autoApproved: true,
     });
 
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {

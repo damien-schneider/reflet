@@ -218,6 +218,28 @@ describe("autopilot inbox", () => {
     expect(item?.title).toBe("Test inbox item");
   });
 
+  test("createInboxItem with autoApproved creates item with auto_approved status", async () => {
+    const t = convexTest(testSchema, modules);
+    const orgId = await createOrg(t);
+
+    const itemId = await t.mutation(internal.autopilot.inbox.createInboxItem, {
+      organizationId: orgId,
+      type: "growth_post",
+      title: "Growth Agent Started",
+      summary: "Informational status update",
+      sourceAgent: "growth",
+      priority: "low",
+      autoApproved: true,
+    });
+
+    const item = await t.query(internal.autopilot.inbox.getInboxItem, {
+      itemId,
+    });
+
+    expect(item).not.toBeNull();
+    expect(item?.status).toBe("auto_approved");
+  });
+
   test("updateInboxItemStatus changes status", async () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);

@@ -6,14 +6,14 @@
  */
 
 export const MODELS = {
-  /** Free inference — high-quality open model */
-  FREE: "qwen/qwen3-235b-a22b:free",
-  /** Fast paid model — good cost/quality balance */
-  FAST: "openai/gpt-4.1-mini",
-  /** Smartest paid model — for complex reasoning */
-  SMART: "anthropic/claude-sonnet-4",
+  /** Free inference — high-quality open model (default) */
+  FREE: "qwen/qwen3.6-plus:free",
+  /** Fast paid fallback */
+  FAST: "openai/gpt-5.4-mini",
+  /** Smartest model — defaults to free, falls back to paid */
+  SMART: "qwen/qwen3.6-plus:free",
   /** Free model with online search capability */
-  SEARCH_FREE: "qwen/qwen3-235b-a22b:free:online",
+  SEARCH_FREE: "qwen/qwen3.6-plus:free:online",
   /** Paid model with online search capability */
-  SEARCH_PAID: "openai/gpt-4.1-mini:online",
+  SEARCH_PAID: "openai/gpt-5.4-mini:online",
 } as const;

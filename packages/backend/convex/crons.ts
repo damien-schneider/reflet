@@ -122,10 +122,19 @@ crons.weekly(
 );
 
 // V5 Agent Crons
-crons.interval(
-  "autopilot support triage",
-  { minutes: 5 },
+// Support triage is event-driven (triggered on new conversation/message),
+// with a daily fallback to catch anything missed.
+crons.daily(
+  "autopilot support triage fallback",
+  { hourUTC: 10, minuteUTC: 0 },
   internal.autopilot.crons.runSupportTriage
+);
+
+// Notify users when features they requested have shipped.
+crons.daily(
+  "autopilot support shipped notifications",
+  { hourUTC: 11, minuteUTC: 0 },
+  internal.autopilot.crons.runShippedNotifications
 );
 
 crons.daily(
@@ -158,10 +167,10 @@ crons.daily(
   internal.autopilot.crons.runOpsSnapshot
 );
 
-// V6 crons
-crons.interval(
+// V6 crons — sales follow-ups are on a 3-7 day cadence, daily check is sufficient.
+crons.daily(
   "autopilot sales follow-up",
-  { minutes: 5 },
+  { hourUTC: 9, minuteUTC: 0 },
   internal.autopilot.crons.runSalesFollowUp
 );
 

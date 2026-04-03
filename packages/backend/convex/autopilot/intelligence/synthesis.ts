@@ -10,7 +10,7 @@ import {
 } from "../../_generated/server";
 import { generateStructured } from "./structured_output";
 
-const SYNTHESIS_MODEL = "anthropic/claude-sonnet-4";
+const SYNTHESIS_MODEL = "qwen/qwen3.6-plus:free";
 
 // ============================================
 // AI SCHEMAS

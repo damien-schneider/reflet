@@ -40,19 +40,17 @@ const ceoReportSchema = z.object({
     z.object({
       heading: z.string().describe("Section heading"),
       content: z.string().describe("Section content and analysis"),
-      metrics: z.optional(
-        z.array(
+      metrics: z
+        .array(
           z.object({
             label: z
               .string()
               .describe("Metric label (e.g., 'Conversion Rate')"),
             value: z.string().describe("Metric value with unit"),
-            trend: z.optional(
-              z.enum(["up", "down", "stable"]).describe("Trend direction")
-            ),
+            trend: z.enum(["up", "down", "stable"]).describe("Trend direction"),
           })
         )
-      ),
+        .describe("Metrics for this section, empty array if none"),
     })
   ),
   recommendations: z.array(
@@ -435,6 +433,7 @@ Generate a report that synthesizes this data into actionable insights.`;
           reportType: args.reportType,
           healthScore: reportOutput.overallHealthScore,
         }),
+        autoApproved: true,
       });
 
       // 5. Log the report generation

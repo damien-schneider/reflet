@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 
@@ -269,6 +270,22 @@ export const create = mutation({
       isRead: false,
       createdAt: now,
     });
+
+    // Trigger autopilot support triage if enabled
+    const autopilotConfig = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    if (autopilotConfig?.enabled && autopilotConfig.supportEnabled !== false) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.agents.support.runSupportTriage,
+        { organizationId: args.organizationId }
+      );
+    }
 
     return conversationId;
   },

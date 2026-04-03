@@ -80,29 +80,34 @@ export function ActivityFeed({
           AGENT_COLORS.system;
 
         return (
-          <div
-            className="flex items-start gap-3 rounded-lg border p-3"
-            key={entry._id}
-          >
-            <div className={cn("mt-0.5 rounded-full p-1", agentColor)}>
-              <LevelIcon className="size-3.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <Badge className={cn("text-xs", agentColor)} variant="outline">
-                  {entry.agent}
-                </Badge>
-                <span className="text-muted-foreground text-xs">
-                  {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
-                </span>
+          <div className="relative rounded-lg bg-card p-3" key={entry._id}>
+            <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  "mt-0.5 inline-flex rounded-full p-1",
+                  agentColor
+                )}
+              >
+                <LevelIcon className="size-3.5" />
               </div>
-              <p className="mt-1 text-sm">{entry.message}</p>
-              {entry.details && (
-                <p className="mt-0.5 text-muted-foreground text-xs">
-                  {entry.details}
-                </p>
-              )}
+              <Badge
+                className={cn("absolute top-2 right-2 text-xs", agentColor)}
+                variant="outline"
+              >
+                {entry.agent}
+              </Badge>
+              <span className="text-muted-foreground text-xs">
+                {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
+              </span>
             </div>
+            <p className="mt-1 font-medium text-muted-foreground text-sm">
+              {entry.message}
+            </p>
+            {entry.details && (
+              <p className="mt-0.5 text-muted-foreground text-xs">
+                {entry.details}
+              </p>
+            )}
           </div>
         );
       })}

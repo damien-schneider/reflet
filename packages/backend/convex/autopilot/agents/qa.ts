@@ -60,7 +60,9 @@ export const regressionCheckSchema = z.object({
       severity: z.enum(["low", "medium", "high", "critical"]),
       description: z.string(),
       affectedArea: z.string(),
-      reproductionSteps: z.array(z.string()).default([]),
+      reproductionSteps: z
+        .array(z.string())
+        .describe("Steps to reproduce, empty array if unknown"),
     })
   ),
   summary: z.string(),

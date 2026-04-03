@@ -476,7 +476,7 @@ describe("LLM visibility checks", () => {
       return await ctx.db.insert("llmVisibilityChecks", {
         organizationId: orgId,
         prompt: "What are the best feedback tools?",
-        model: "anthropic/claude-sonnet-4",
+        model: "qwen/qwen3.6-plus:free",
         mentionsProduct: true,
         mentionedCompetitors: ["Canny", "Productboard"],
         sentiment: "positive",

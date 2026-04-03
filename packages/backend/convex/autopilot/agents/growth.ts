@@ -61,7 +61,6 @@ export const growthContentSchema = z.object({
         .describe("The full pre-written content, ready to post"),
       targetUrl: z
         .string()
-        .default("")
         .describe(
           "URL of the thread/post to reply to, or empty string if not applicable"
         ),
@@ -201,6 +200,7 @@ export const runGrowthGeneration = internalAction({
         priority: "medium",
         content:
           "Growth Agent is analyzing recent work to generate distribution content.",
+        autoApproved: true,
       });
 
       // Step 1: Load recently completed tasks and merged PRs
@@ -231,6 +231,7 @@ export const runGrowthGeneration = internalAction({
             "No completed tasks in the past 7 days to generate content from",
           sourceAgent: "growth",
           priority: "low",
+          autoApproved: true,
         });
         return;
       }
@@ -272,6 +273,7 @@ export const runGrowthGeneration = internalAction({
           sourceAgent: "growth",
           priority: "low",
           content: errorMessage,
+          autoApproved: true,
         });
 
         return;
@@ -300,6 +302,7 @@ export const runGrowthGeneration = internalAction({
           sourceAgent: "growth",
           priority: "low",
           content: errorMessage,
+          autoApproved: true,
         });
 
         return;
@@ -347,6 +350,7 @@ export const runGrowthGeneration = internalAction({
         content: generatedContent.summary,
         sourceAgent: "growth",
         priority: "low",
+        autoApproved: true,
       });
 
       // Log activity
@@ -382,6 +386,7 @@ export const runGrowthGeneration = internalAction({
         sourceAgent: "growth",
         priority: "high",
         content: errorMessage,
+        autoApproved: true,
       });
     }
   },

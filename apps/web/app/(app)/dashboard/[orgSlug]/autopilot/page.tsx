@@ -7,7 +7,7 @@ import { useAutopilotContext } from "@/features/autopilot/components/autopilot-c
 import { DashboardStats } from "@/features/autopilot/components/dashboard-stats";
 
 export default function AutopilotDashboardPage() {
-  const { organizationId } = useAutopilotContext();
+  const { organizationId, isAdmin } = useAutopilotContext();
 
   return (
     <div className="space-y-8">
@@ -17,7 +17,7 @@ export default function AutopilotDashboardPage() {
         <H2 className="mb-4" variant="card">
           Agent Status
         </H2>
-        <AgentStatusCards organizationId={organizationId} />
+        <AgentStatusCards isAdmin={isAdmin} organizationId={organizationId} />
       </section>
 
       <section>

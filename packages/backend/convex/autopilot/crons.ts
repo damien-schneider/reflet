@@ -164,6 +164,7 @@ export const runOrchestrator = internalAction({
       }
 
       // Proactive discovery: run lightweight scans for idle orgs
+      // Note: support triage is event-driven (triggered on new messages), not polled.
       const proactiveAgents = [
         {
           agent: "pm" as const,
@@ -177,11 +178,6 @@ export const runOrchestrator = internalAction({
             organizationId: org.organizationId,
             triggerReason: "daily_scan" as const,
           },
-        },
-        {
-          agent: "support" as const,
-          action: internal.autopilot.agents.support.runSupportTriage,
-          args: { organizationId: org.organizationId },
         },
       ];
 
@@ -633,6 +629,35 @@ export const runSupportTriage = internalAction({
         }
         await ctx.runAction(
           internal.autopilot.agents.support.runSupportTriage,
+          { organizationId: org.organizationId }
+        );
+      } catch {
+        // Best effort — continue with other orgs
+      }
+    }
+  },
+});
+
+/**
+ * Run shipped feature notifications for all enabled orgs.
+ * Checks recently completed tasks and notifies linked feedback authors.
+ */
+export const runShippedNotifications = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const orgs = await ctx.runQuery(internal.autopilot.crons.getEnabledOrgs);
+
+    for (const org of orgs) {
+      try {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent: "support" }
+        );
+        if (!enabled) {
+          continue;
+        }
+        await ctx.runAction(
+          internal.autopilot.agents.support.notifyFeatureShipped,
           { organizationId: org.organizationId }
         );
       } catch {

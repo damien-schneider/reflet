@@ -236,6 +236,7 @@ export const runAnalyticsBrief = internalAction({
       content: JSON.stringify(brief),
       sourceAgent: "analytics",
       priority: "medium",
+      autoApproved: true,
     });
 
     // Create insights for notable trends
@@ -249,6 +250,7 @@ export const runAnalyticsBrief = internalAction({
           sourceAgent: "analytics",
           priority: trend.impact === "negative" ? "high" : "low",
           metadata: JSON.stringify(trend),
+          autoApproved: true,
         });
       }
     }

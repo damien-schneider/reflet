@@ -165,6 +165,7 @@ export const createInboxItem = internalMutation({
     relatedRunId: v.optional(v.id("autopilotRuns")),
     metadata: v.optional(v.string()),
     expiresAt: v.optional(v.number()),
+    autoApproved: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -180,7 +181,7 @@ export const createInboxItem = internalMutation({
       relatedRunId: args.relatedRunId,
       relatedTaskId: args.relatedTaskId,
       sourceAgent: args.sourceAgent,
-      status: "pending",
+      status: args.autoApproved ? "auto_approved" : "pending",
       summary: args.summary,
       title: args.title,
       type: args.type,

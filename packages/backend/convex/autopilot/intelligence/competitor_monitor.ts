@@ -17,7 +17,7 @@ const STYLE_TAG_REGEX = /<style[^>]*>[\s\S]*?<\/style>/gi;
 const HTML_TAG_REGEX = /<[^>]+>/g;
 
 // AI model configuration
-const PROFILE_MODEL = "anthropic/claude-sonnet-4";
+const PROFILE_MODEL = "qwen/qwen3.6-plus:free";
 const EXTRACTION_MODELS = [
   "arcee-ai/trinity-large-preview:free",
   "upstage/solar-pro-3:free",

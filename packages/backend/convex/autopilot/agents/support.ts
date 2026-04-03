@@ -13,7 +13,11 @@ import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
-import { type ActionCtx, internalAction } from "../../_generated/server";
+import {
+  type ActionCtx,
+  internalAction,
+  internalQuery,
+} from "../../_generated/server";
 import { MODELS } from "./models";
 import { generateObjectWithFallback } from "./shared";
 
@@ -43,8 +47,12 @@ export const triageResultSchema = z.object({
       severity: z.enum(["low", "medium", "high", "critical"]),
       suggestedReply: z.string(),
       shouldEscalate: z.boolean(),
-      escalationReason: z.string().default(""),
-      relatedFeature: z.string().default(""),
+      escalationReason: z
+        .string()
+        .describe("Reason for escalation, or empty string if not escalating"),
+      relatedFeature: z
+        .string()
+        .describe("Related feature name, or empty string if none"),
     })
   ),
   summary: z.string(),
@@ -230,6 +238,7 @@ export const notifyFeatureShipped = internalAction({
         summary: notification.message,
         sourceAgent: "support",
         priority: "low",
+        autoApproved: true,
       });
     }
 
@@ -245,8 +254,6 @@ export const notifyFeatureShipped = internalAction({
 // ============================================
 // INTERNAL QUERIES
 // ============================================
-
-import { internalQuery } from "../../_generated/server";
 
 export const getRecentConversations = internalQuery({
   args: { organizationId: v.id("organizations") },
@@ -269,15 +276,29 @@ export const getRecentConversations = internalQuery({
       .order("desc")
       .take(50);
 
-    return conversations
-      .filter((c) => c.status === "open" && c._creationTime > oneDayAgo)
-      .map((c) => ({
-        _id: c._id,
-        _creationTime: c._creationTime,
-        subject: c.subject ?? undefined,
-        lastMessage: undefined,
-        status: c.status,
-      }));
+    const conversationsWithMessages = await Promise.all(
+      conversations
+        .filter((c) => c.status === "open" && c._creationTime > oneDayAgo)
+        .map(async (c) => {
+          const latestMessage = await ctx.db
+            .query("supportMessages")
+            .withIndex("by_conversation_created", (q) =>
+              q.eq("conversationId", c._id)
+            )
+            .order("desc")
+            .first();
+
+          return {
+            _id: c._id,
+            _creationTime: c._creationTime,
+            subject: c.subject ?? undefined,
+            lastMessage: latestMessage?.body,
+            status: c.status,
+          };
+        })
+    );
+
+    return conversationsWithMessages;
   },
 });
 
