@@ -15,6 +15,7 @@ import {
   internalQuery,
 } from "../../_generated/server";
 import { MODELS } from "./models";
+import { buildAgentPrompt, CTO_SYSTEM_PROMPT } from "./prompts";
 import { generateObjectWithFallback } from "./shared";
 
 // ============================================
@@ -54,8 +55,10 @@ export const technicalSpecSchema = z.object({
     .describe("Measurable acceptance criteria for the implementation"),
   architectureNotes: z
     .string()
-    .optional()
-    .describe("Optional architectural considerations or patterns to follow"),
+    .default("")
+    .describe(
+      "Architectural considerations or patterns to follow, or empty string if none"
+    ),
 });
 
 // ============================================
@@ -275,33 +278,16 @@ ${repoAnalysis.repoStructure || "No structure information"}
         ? `## Coding Guidelines and Standards\n\n${agentsMd}`
         : "Use standard best practices and modern TypeScript patterns.";
 
-      // Build the system prompt for CTO
-      const systemPrompt = `You are the CTO (Chief Technology Officer) of a development team. Your role is to take high-level product requirements and break them down into detailed, actionable technical specifications that developers can execute on autonomously.
-
-You understand:
-- The existing codebase architecture and technology stack
-- Coding standards and patterns used in the project
-- Risk assessment and complexity estimation
-- How to write clear, self-contained implementation prompts
-
-When generating technical specifications, you produce:
-1. **Files to Modify**: Exact file paths and changes needed
-2. **Dependencies**: Any packages to add or remove
-3. **Risk & Complexity**: Realistic assessments based on the codebase
-4. **Implementation Prompt**: A detailed, self-contained prompt that a developer can execute without additional context
-5. **Test Requirements**: Specific tests that must pass
-6. **Acceptance Criteria**: Measurable success criteria
-
-${repoContext}
-
-${codingGuidelines}
-
-Always prioritize:
-- Code quality and zero technical debt
-- Type safety and explicit intent
-- Clear architectural patterns
-- Comprehensive test coverage
-- Self-contained implementation details`;
+      // Build the system prompt for CTO using centralized prompt
+      const feedbackContext = await ctx.runQuery(
+        internal.autopilot.feedback.buildFeedbackPromptContext,
+        { organizationId: args.organizationId, agent: "cto" }
+      );
+      const systemPrompt = buildAgentPrompt(
+        CTO_SYSTEM_PROMPT,
+        feedbackContext,
+        `${repoContext}\n\n${codingGuidelines}`
+      );
 
       // Build user prompt with task details
       const userPrompt = `Please generate a detailed technical specification for the following task:

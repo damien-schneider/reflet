@@ -278,6 +278,28 @@ export const createSnapshot = internalMutation({
   },
   returns: v.id("autopilotRevenueSnapshots"),
   handler: async (ctx, args) => {
+    // Deduplicate: check if snapshot already exists for this date
+    const existing = await ctx.db
+      .query("autopilotRevenueSnapshots")
+      .withIndex("by_org_date", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("snapshotDate", args.snapshotDate)
+      )
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        mrr: args.mrr,
+        arr: args.arr,
+        activeSubscriptions: args.activeSubscriptions,
+        newSubscriptions: args.newSubscriptions,
+        cancelledSubscriptions: args.cancelledSubscriptions,
+        churnRate: args.churnRate,
+      });
+      return existing._id;
+    }
+
     return await ctx.db.insert("autopilotRevenueSnapshots", {
       organizationId: args.organizationId,
       snapshotDate: args.snapshotDate,

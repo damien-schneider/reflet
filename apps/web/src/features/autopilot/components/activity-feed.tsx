@@ -13,7 +13,7 @@ import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -70,47 +70,42 @@ export function ActivityFeed({
   }
 
   return (
-    <ScrollArea className="h-[400px]">
-      <div className="space-y-2 pr-4">
-        {activity.map((entry: (typeof activity)[number]) => {
-          const LevelIcon =
-            LEVEL_ICONS[entry.level as keyof typeof LEVEL_ICONS] ??
-            IconInfoCircle;
-          const agentColor =
-            AGENT_COLORS[entry.agent as keyof typeof AGENT_COLORS] ??
-            AGENT_COLORS.system;
+    <div className="space-y-2">
+      {activity.map((entry: (typeof activity)[number]) => {
+        const LevelIcon =
+          LEVEL_ICONS[entry.level as keyof typeof LEVEL_ICONS] ??
+          IconInfoCircle;
+        const agentColor =
+          AGENT_COLORS[entry.agent as keyof typeof AGENT_COLORS] ??
+          AGENT_COLORS.system;
 
-          return (
-            <div
-              className="flex items-start gap-3 rounded-lg border p-3"
-              key={entry._id}
-            >
-              <div className={cn("mt-0.5 rounded-full p-1", agentColor)}>
-                <LevelIcon className="size-3.5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <Badge
-                    className={cn("text-xs", agentColor)}
-                    variant="outline"
-                  >
-                    {entry.agent}
-                  </Badge>
-                  <span className="text-muted-foreground text-xs">
-                    {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm">{entry.message}</p>
-                {entry.details && (
-                  <p className="mt-0.5 text-muted-foreground text-xs">
-                    {entry.details}
-                  </p>
-                )}
-              </div>
+        return (
+          <div
+            className="flex items-start gap-3 rounded-lg border p-3"
+            key={entry._id}
+          >
+            <div className={cn("mt-0.5 rounded-full p-1", agentColor)}>
+              <LevelIcon className="size-3.5" />
             </div>
-          );
-        })}
-      </div>
-    </ScrollArea>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <Badge className={cn("text-xs", agentColor)} variant="outline">
+                  {entry.agent}
+                </Badge>
+                <span className="text-muted-foreground text-xs">
+                  {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
+                </span>
+              </div>
+              <p className="mt-1 text-sm">{entry.message}</p>
+              {entry.details && (
+                <p className="mt-0.5 text-muted-foreground text-xs">
+                  {entry.details}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

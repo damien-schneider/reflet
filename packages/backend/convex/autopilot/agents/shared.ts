@@ -32,7 +32,7 @@ export const generateObjectWithFallback = async <T extends z.ZodType>({
   temperature?: number;
   maxOutputTokens?: number;
 }): Promise<z.infer<T>> => {
-  let lastError: unknown;
+  const errors: Array<{ model: string; error: string }> = [];
 
   for (const model of models) {
     try {
@@ -41,17 +41,20 @@ export const generateObjectWithFallback = async <T extends z.ZodType>({
         schema,
         prompt,
         system: systemPrompt,
-        temperature,
+        temperature: temperature ?? 0,
         maxTokens: maxOutputTokens,
       });
 
       return result.object as z.infer<T>;
     } catch (error) {
-      lastError = error;
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push({ model, error: message });
     }
   }
 
-  throw new Error(
-    `All models failed. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`
-  );
+  const errorDetails = errors
+    .map((e) => `  [${e.model}]: ${e.error}`)
+    .join("\n");
+
+  throw new Error(`All ${models.length} models failed:\n${errorDetails}`);
 };

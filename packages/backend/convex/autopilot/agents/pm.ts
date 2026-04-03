@@ -18,6 +18,7 @@ import { z } from "zod";
 import { internal } from "../../_generated/api";
 import { internalAction, internalQuery } from "../../_generated/server";
 import { MODELS } from "./models";
+import { buildAgentPrompt, PM_SYSTEM_PROMPT } from "./prompts";
 import { generateObjectWithFallback } from "./shared";
 
 // ============================================
@@ -278,28 +279,14 @@ export const runPMAnalysis = internalAction({
         )
         .join("\n");
 
-      const systemPrompt = `You are a Product Manager analyzing user feedback and market signals to create engineering tasks.
-
-Your responsibilities:
-1. Read feedback items (user-generated requests with vote counts)
-2. Review existing tasks to avoid duplicates
-3. Consider competitive intelligence and revenue signals
-4. Generate prioritized tasks for the engineering team
-
-Task assignment:
-- "cto": Architecture reviews, technical planning, major refactors
-- "dev": New features, bug fixes, implementations
-- "security": Security vulnerabilities, compliance, data protection
-- "architect": System design reviews, performance optimization
-- "growth": Marketing, analytics, user acquisition features
-
-Priority guidelines:
-- critical: Blocking bugs, security issues, major revenue opportunities
-- high: Important features, competitive gaps, retention risks
-- medium: Standard features, nice-to-haves with good feedback
-- low: Polish, minor improvements, future consideration
-
-Be concise. Create only tasks that are truly necessary.`;
+      const systemPrompt = buildAgentPrompt(
+        PM_SYSTEM_PROMPT,
+        await ctx.runQuery(
+          internal.autopilot.feedback.buildFeedbackPromptContext,
+          { organizationId: args.organizationId, agent: "pm" }
+        ),
+        ""
+      );
 
       const userPrompt = `Analyze this feedback and create actionable tasks for the engineering team.
 

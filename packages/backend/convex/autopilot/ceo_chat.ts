@@ -20,6 +20,7 @@ import { components, internal } from "../_generated/api";
 import { internalAction, mutation, query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 import { ceoAgent } from "./agents/ceo";
+import { makeCeoToolsForOrg } from "./agents/ceo_tools";
 
 // ============================================
 // QUERIES
@@ -203,17 +204,76 @@ export const generateCEOResponseAsync = internalAction({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    // Get aggregate context
     const ceoContext = await ctx.runQuery(
       internal.autopilot.agents.ceo.getCEOContext,
       { organizationId: args.organizationId }
     );
 
+    // Get detailed context with task titles, agent states, errors, inbox items
+    const detailed = await ctx.runQuery(
+      internal.autopilot.agents.ceo.getDetailedCEOContext,
+      { organizationId: args.organizationId }
+    );
+
+    const taskLines = detailed.taskSummaries
+      .map(
+        (t: {
+          agent: string;
+          priority: string;
+          status: string;
+          title: string;
+        }) => `  - [${t.status}] ${t.title} (${t.priority}, ${t.agent})`
+      )
+      .join("\n");
+
+    const agentLines = Object.entries(detailed.agentStates)
+      .map(([agent, enabled]) => `  - ${agent}: ${enabled ? "ON" : "OFF"}`)
+      .join("\n");
+
+    const errorLines =
+      detailed.recentErrors.length > 0
+        ? detailed.recentErrors
+            .map(
+              (e: { agent: string; ago: number; message: string }) =>
+                `  - ${e.agent}: ${e.message} (${e.ago}m ago)`
+            )
+            .join("\n")
+        : "  None";
+
+    const inboxLines =
+      detailed.inboxSummaries.length > 0
+        ? detailed.inboxSummaries
+            .map(
+              (i: { priority: string; title: string; type: string }) =>
+                `  - [${i.type}] ${i.title} (${i.priority})`
+            )
+            .join("\n")
+        : "  None";
+
     const contextMessage = `[PRODUCT CONTEXT — updated in real time]
-Tasks: ${ceoContext.taskStats.total} total (${ceoContext.taskStats.pending} pending, ${ceoContext.taskStats.inProgress} in progress, ${ceoContext.taskStats.completed} completed)
-Priority breakdown: Critical (${ceoContext.taskStats.byPriority.critical}), High (${ceoContext.taskStats.byPriority.high}), Medium (${ceoContext.taskStats.byPriority.medium}), Low (${ceoContext.taskStats.byPriority.low})
-Recent activity: ${ceoContext.recentActivityCount} actions in last 7 days
-Feedback: ${ceoContext.feedbackStats.total} active items
-Inbox: ${ceoContext.pendingInboxCount} pending items`;
+Autonomy mode: ${detailed.autonomyMode}
+
+TASK OVERVIEW:
+Total: ${ceoContext.taskStats.total} | Pending: ${ceoContext.taskStats.pending} | In Progress: ${ceoContext.taskStats.inProgress} | Completed: ${ceoContext.taskStats.completed} | Failed: ${ceoContext.taskStats.failed}
+Priority: Critical (${ceoContext.taskStats.byPriority.critical}), High (${ceoContext.taskStats.byPriority.high}), Medium (${ceoContext.taskStats.byPriority.medium}), Low (${ceoContext.taskStats.byPriority.low})
+
+RECENT TASKS:
+${taskLines || "  None"}
+
+AGENT STATES:
+${agentLines}
+
+RECENT ERRORS:
+${errorLines}
+
+PENDING INBOX (${ceoContext.pendingInboxCount} total):
+${inboxLines}
+
+ACTIVITY: ${ceoContext.recentActivityCount} actions in last 7 days
+FEEDBACK: ${ceoContext.feedbackStats.total} active items
+
+You have tools available to create tasks, check agent statuses, view tasks, trigger PM analysis, and view recent activity. Use them when the user asks you to take action.`;
 
     await ceoAgent.streamText(
       ctx,
@@ -221,6 +281,7 @@ Inbox: ${ceoContext.pendingInboxCount} pending items`;
       {
         promptMessageId: args.promptMessageId,
         system: contextMessage,
+        tools: makeCeoToolsForOrg(args.organizationId),
       },
       { saveStreamDeltas: true }
     );

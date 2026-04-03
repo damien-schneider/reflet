@@ -448,6 +448,18 @@ export const updateInboxItem = mutation({
       message: `Inbox item ${args.status}: ${item.title}`,
       organizationId: item.organizationId,
     });
+
+    // Record feedback for agent learning
+    if (args.status === "approved" || args.status === "rejected") {
+      await ctx.db.insert("autopilotFeedbackLog", {
+        organizationId: item.organizationId,
+        inboxItemId: args.itemId,
+        agent: item.sourceAgent,
+        itemType: item.type,
+        decision: args.status,
+        createdAt: now,
+      });
+    }
   },
 });
 

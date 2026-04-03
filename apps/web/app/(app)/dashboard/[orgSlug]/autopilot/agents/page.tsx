@@ -259,7 +259,7 @@ function StatusDot({
   status,
   accentColor,
 }: {
-  status: "active" | "error" | "idle" | "disabled";
+  status: "active" | "error" | "idle" | "sleeping" | "disabled";
   accentColor: keyof typeof ACCENT_STYLES;
 }) {
   if (status === "active") {
@@ -287,6 +287,18 @@ function StatusDot({
         <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-60" />
         <span className="relative inline-flex size-2.5 rounded-full bg-red-500" />
       </span>
+    );
+  }
+
+  if (status === "sleeping") {
+    return (
+      <span
+        className={cn(
+          "inline-flex size-2 rounded-full",
+          ACCENT_STYLES[accentColor].pulse,
+          "opacity-40"
+        )}
+      />
     );
   }
 
@@ -318,16 +330,23 @@ function AgentCard({
   index: number;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const isRecent =
-    lastActivity && Date.now() - lastActivity.createdAt < FIVE_MINUTES;
+  const timeSinceActivity = lastActivity
+    ? Date.now() - lastActivity.createdAt
+    : null;
+  const isActiveNow =
+    timeSinceActivity !== null && timeSinceActivity < ACTIVE_WINDOW;
+  const isRecentlyActive =
+    timeSinceActivity !== null && timeSinceActivity < RECENT_WINDOW;
   const hasError = lastActivity?.level === "error";
-  const isWorking = enabled && isRecent && !hasError;
 
-  let status: "active" | "error" | "idle" | "disabled" = "disabled";
-  if (enabled && hasError) {
+  let status: "active" | "error" | "idle" | "sleeping" | "disabled" =
+    "disabled";
+  if (enabled && hasError && isRecentlyActive) {
     status = "error";
-  } else if (enabled && isWorking) {
+  } else if (enabled && isActiveNow) {
     status = "active";
+  } else if (enabled && isRecentlyActive) {
+    status = "sleeping";
   } else if (enabled) {
     status = "idle";
   }
@@ -345,10 +364,13 @@ function AgentCard({
           "group relative w-full rounded-xl border p-4 text-left transition-all duration-200",
           "hover:shadow-sm",
           !enabled && "border-border/60 bg-card/50 opacity-55",
-          enabled && hasError && "border-red-500/40 bg-red-500/[0.04]",
-          enabled &&
-            isWorking && [accentStyles.activeBorder, accentStyles.activeBg],
-          enabled && !(hasError || isWorking) && "border-border bg-card"
+          status === "error" && "border-red-500/40 bg-red-500/[0.04]",
+          status === "active" && [
+            accentStyles.activeBorder,
+            accentStyles.activeBg,
+          ],
+          (status === "sleeping" || status === "idle") &&
+            "border-border bg-card"
         )}
         onClick={() => setIsExpanded((prev) => !prev)}
         type="button"
@@ -482,7 +504,8 @@ function SummaryBar({
   );
 }
 
-const FIVE_MINUTES = 5 * 60 * 1000;
+const ACTIVE_WINDOW = 5 * 60 * 1000;
+const RECENT_WINDOW = 30 * 60 * 1000;
 
 function computeAgentCounts(
   config: Record<string, unknown>,
@@ -498,11 +521,13 @@ function computeAgentCounts(
         continue;
       }
       const last = agentLastActivity.get(agent.id);
-      const isRecent = last && now - last.createdAt < FIVE_MINUTES;
+      const timeSince = last ? now - last.createdAt : null;
       const hasError = last?.level === "error";
-      if (hasError) {
+      const isActiveNow = timeSince !== null && timeSince < ACTIVE_WINDOW;
+      const isRecent = timeSince !== null && timeSince < RECENT_WINDOW;
+      if (hasError && isRecent) {
         counts.error++;
-      } else if (isRecent) {
+      } else if (isActiveNow) {
         counts.active++;
       } else {
         counts.idle++;

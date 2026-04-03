@@ -6,7 +6,6 @@ import {
   IconBrain,
   IconCode,
   IconCurrencyDollar,
-  IconGauge,
   IconKey,
   IconLock,
   IconMail,
@@ -67,27 +66,6 @@ const ADAPTER_OPTIONS = [
     label: "Claude Code",
     detail: "Anthropic CLI",
     icon: IconBrain,
-  },
-] as const;
-
-const AUTONOMY_OPTIONS = [
-  {
-    value: "full_auto",
-    label: "Full Auto",
-    description: "Everything runs autonomously",
-    color: "text-orange-500",
-  },
-  {
-    value: "review_required",
-    label: "Review Required",
-    description: "Outputs need your approval",
-    color: "text-sky-500",
-  },
-  {
-    value: "manual",
-    label: "Manual",
-    description: "Agents work only when triggered",
-    color: "text-muted-foreground",
   },
 ] as const;
 
@@ -333,48 +311,6 @@ export default function AutopilotSettingsPage() {
                   handleToggle("requireArchitectReview", v)
                 }
               />
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* ── Autonomy ────────────────────────────────── */}
-      <section className="space-y-5">
-        <SectionHeader
-          description="How much independence your agents operate with"
-          icon={IconGauge}
-          title="Autonomy"
-        />
-
-        <Card>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="autonomy-select">Autonomy Level</Label>
-              <Select
-                disabled={!isAdmin}
-                onValueChange={(v) =>
-                  handleUpdate("autonomyLevel", v ?? undefined)
-                }
-                value={config.autonomyLevel ?? undefined}
-              >
-                <SelectTrigger id="autonomy-select">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {AUTONOMY_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      <div className="flex items-baseline gap-2">
-                        <span className={cn("font-medium", opt.color)}>
-                          {opt.label}
-                        </span>
-                        <span className="text-muted-foreground text-xs">
-                          {opt.description}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>

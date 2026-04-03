@@ -80,7 +80,7 @@ export function CeoChatPanel({
   };
 
   return (
-    <div className="flex h-full flex-col bg-background">
+    <div className="flex h-full flex-col">
       <div className="flex items-center gap-2.5 border-border border-b px-4 py-3">
         <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
           <IconSparkles className="size-3.5 text-primary" />

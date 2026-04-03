@@ -591,3 +591,180 @@ export const getThreadMessages = query({
       .take(args.limit ?? 100);
   },
 });
+
+// ============================================
+// SYSTEM HEALTH
+// ============================================
+
+export const getSystemHealth = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgMembership(ctx, args.organizationId, user._id);
+
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    type HealthStatus = "critical" | "degraded" | "healthy" | "stopped";
+    interface HealthIssue {
+      id: string;
+      message: string;
+      resolution: string;
+      severity: "critical" | "info" | "warning";
+    }
+
+    const issues: HealthIssue[] = [];
+    let status: HealthStatus = "healthy";
+
+    if (!config) {
+      return {
+        status: "critical" as const,
+        issues: [
+          {
+            id: "no_config",
+            severity: "critical" as const,
+            message: "Autopilot is not configured",
+            resolution: "Go to Settings to initialize autopilot",
+          },
+        ],
+        lastActivity: null,
+        enabledAgentCount: 0,
+        totalAgentCount: 12,
+      };
+    }
+
+    if (!config.enabled) {
+      return {
+        status: "stopped" as const,
+        issues: [
+          {
+            id: "disabled",
+            severity: "info" as const,
+            message: "Autopilot is disabled",
+            resolution: "Enable autopilot in Settings",
+          },
+        ],
+        lastActivity: null,
+        enabledAgentCount: 0,
+        totalAgentCount: 12,
+      };
+    }
+
+    if ((config.autonomyMode ?? "supervised") === "stopped") {
+      status = "stopped";
+      issues.push({
+        id: "stopped_mode",
+        severity: "warning",
+        message: "Autopilot is paused (stopped mode)",
+        resolution: "Resume autopilot from the header controls",
+      });
+    }
+
+    const agentFields = [
+      "pmEnabled",
+      "ctoEnabled",
+      "devEnabled",
+      "securityEnabled",
+      "architectEnabled",
+      "growthEnabled",
+      "supportEnabled",
+      "analyticsEnabled",
+      "docsEnabled",
+      "qaEnabled",
+      "opsEnabled",
+      "salesEnabled",
+    ] as const;
+
+    const enabledCount = agentFields.filter(
+      (field) => config[field] !== false
+    ).length;
+
+    if (enabledCount === 0) {
+      status = "critical";
+      issues.push({
+        id: "no_agents",
+        severity: "critical",
+        message: "No agents are enabled",
+        resolution: "Enable at least one agent in the Agents page",
+      });
+    }
+
+    const lastActivityEntry = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .first();
+
+    const lastActivity = lastActivityEntry?.createdAt ?? null;
+
+    const ONE_HOUR = 60 * 60 * 1000;
+    if (
+      config.enabled &&
+      status !== "stopped" &&
+      lastActivity &&
+      Date.now() - lastActivity > ONE_HOUR
+    ) {
+      if (status === "healthy") {
+        status = "degraded";
+      }
+      issues.push({
+        id: "stale_activity",
+        severity: "warning",
+        message: "No agent activity in the last hour",
+        resolution: "Agents need pending tasks to work",
+      });
+    }
+
+    const inProgressTasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "in_progress")
+      )
+      .collect();
+
+    const stuckTasks = inProgressTasks.filter(
+      (t) => t.startedAt && Date.now() - t.startedAt > ONE_HOUR
+    );
+
+    if (stuckTasks.length > 0) {
+      if (status === "healthy") {
+        status = "degraded";
+      }
+      issues.push({
+        id: "stuck_tasks",
+        severity: "warning",
+        message: `${stuckTasks.length} task(s) stuck for over 1 hour`,
+        resolution: "Check Tasks page for stuck work",
+      });
+    }
+
+    if (
+      config.tasksUsedToday >= config.maxTasksPerDay &&
+      Date.now() < config.tasksResetAt
+    ) {
+      if (status === "healthy") {
+        status = "degraded";
+      }
+      issues.push({
+        id: "task_throttle",
+        severity: "warning",
+        message: "Daily task dispatch limit reached",
+        resolution: "Increase limit in Settings or wait for reset",
+      });
+    }
+
+    return {
+      status,
+      issues,
+      lastActivity,
+      enabledAgentCount: enabledCount,
+      totalAgentCount: 12,
+    };
+  },
+});

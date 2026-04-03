@@ -165,4 +165,11 @@ crons.interval(
   internal.autopilot.crons.runSalesFollowUp
 );
 
+// V7 crons
+crons.interval(
+  "autopilot CEO coordination",
+  { minutes: 30 },
+  internal.autopilot.crons.runCEOCoordination
+);
+
 export default crons;

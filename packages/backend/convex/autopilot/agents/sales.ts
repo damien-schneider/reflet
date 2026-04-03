@@ -257,7 +257,7 @@ export const runSalesFollowUp = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     // Check autonomy mode
-    const stopped = await ctx.runQuery(internal.autopilot.autonomy.isStopped, {
+    const stopped = await ctx.runQuery(internal.autopilot.gate.isStopped, {
       organizationId: args.organizationId,
     });
     if (stopped) {

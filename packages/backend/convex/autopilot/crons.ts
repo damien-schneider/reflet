@@ -56,6 +56,60 @@ export const getOrgsWithPendingWork = internalQuery({
   },
 });
 
+/**
+ * Get recent activity log entries for an org (used by CEO tools).
+ */
+export const getRecentActivityForOrg = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    limit: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .take(args.limit);
+  },
+});
+
+const THIRTY_MINUTES = 30 * 60 * 1000;
+
+/**
+ * Check if an org has been idle (no activity) for 30+ minutes.
+ * Used by the orchestrator to trigger proactive PM analysis.
+ */
+export const isOrgIdle = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const cutoff = Date.now() - THIRTY_MINUTES;
+
+    // Check for any recent activity
+    const recentActivity = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_org_created", (q) =>
+        q.eq("organizationId", args.organizationId).gte("createdAt", cutoff)
+      )
+      .first();
+
+    if (recentActivity) {
+      return false;
+    }
+
+    // Also check there are no in-progress tasks (agents could be working)
+    const inProgressTask = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "in_progress")
+      )
+      .first();
+
+    return !inProgressTask;
+  },
+});
+
 // ============================================
 // ACTIONS
 // ============================================
@@ -63,21 +117,17 @@ export const getOrgsWithPendingWork = internalQuery({
 /**
  * Main orchestrator entry point — called by the cron scheduler.
  *
- * For each org with autopilot enabled and pending tasks:
- *   1. Check if throttle allows dispatch
- *   2. Get dispatchable tasks (pending + unblocked)
- *   3. Dispatch up to the throttle limit
+ * For each org with autopilot enabled:
+ *   1. Dispatch pending tasks to appropriate agents
+ *   2. Detect idle orgs (no pending tasks, no recent activity) and trigger PM analysis
  */
 export const runOrchestrator = internalAction({
   args: {},
   handler: async (ctx) => {
+    // Dispatch pending work
     const orgsWithWork = await ctx.runQuery(
       internal.autopilot.crons.getOrgsWithPendingWork
     );
-
-    if (orgsWithWork.length === 0) {
-      return;
-    }
 
     for (const org of orgsWithWork) {
       try {
@@ -89,6 +139,65 @@ export const runOrchestrator = internalAction({
         console.error(
           `[autopilot] Orchestrator error for org ${org.organizationId}: ${msg}`
         );
+      }
+    }
+
+    // Idle detection: trigger proactive discovery for orgs with no work
+    const orgsWithWorkIds = new Set(
+      orgsWithWork.map((o: { organizationId: string }) => o.organizationId)
+    );
+    const allEnabledOrgs = await ctx.runQuery(
+      internal.autopilot.crons.getEnabledOrgs
+    );
+
+    for (const org of allEnabledOrgs) {
+      if (orgsWithWorkIds.has(org.organizationId)) {
+        continue;
+      }
+
+      const isIdle = await ctx.runQuery(internal.autopilot.crons.isOrgIdle, {
+        organizationId: org.organizationId,
+      });
+
+      if (!isIdle) {
+        continue;
+      }
+
+      // Proactive discovery: run lightweight scans for idle orgs
+      const proactiveAgents = [
+        {
+          agent: "pm" as const,
+          action: internal.autopilot.agents.pm.runPMAnalysis,
+          args: { organizationId: org.organizationId },
+        },
+        {
+          agent: "security" as const,
+          action: internal.autopilot.agents.security.runSecurityScan,
+          args: {
+            organizationId: org.organizationId,
+            triggerReason: "daily_scan" as const,
+          },
+        },
+        {
+          agent: "support" as const,
+          action: internal.autopilot.agents.support.runSupportTriage,
+          args: { organizationId: org.organizationId },
+        },
+      ];
+
+      for (const { agent, action, args } of proactiveAgents) {
+        const enabled = await ctx.runQuery(
+          internal.autopilot.config.isAgentEnabled,
+          { organizationId: org.organizationId, agent }
+        );
+        if (!enabled) {
+          continue;
+        }
+        try {
+          await ctx.runAction(action, args);
+        } catch {
+          // Best effort — proactive scans are not critical
+        }
       }
     }
   },
@@ -117,207 +226,214 @@ export const dispatchOrgTasks = internalAction({
     }
 
     // Get dispatchable tasks
-    const tasks = await ctx.runQuery(
+    const allTasks = await ctx.runQuery(
       internal.autopilot.tasks.getDispatchableTasks,
       { organizationId: args.organizationId }
     );
 
-    if (tasks.length === 0) {
+    if (allTasks.length === 0) {
       return;
     }
 
-    // Dispatch the highest priority task
-    // We dispatch one at a time to respect the throttle and allow
-    // inter-task dependencies to resolve
-    const task = tasks[0];
+    // Dispatch up to 3 tasks per tick, skipping disabled agents
+    const MAX_DISPATCHES_PER_TICK = 3;
+    let dispatched = 0;
 
-    // Check if the assigned agent is enabled
-    const agentEnabled = await ctx.runQuery(
-      internal.autopilot.config.isAgentEnabled,
-      {
-        organizationId: args.organizationId,
-        agent: task.assignedAgent,
+    for (const task of allTasks) {
+      if (dispatched >= MAX_DISPATCHES_PER_TICK) {
+        break;
       }
-    );
 
-    if (!agentEnabled) {
+      // Check if the assigned agent is enabled — skip to next task if not
+      const agentEnabled = await ctx.runQuery(
+        internal.autopilot.config.isAgentEnabled,
+        {
+          organizationId: args.organizationId,
+          agent: task.assignedAgent,
+        }
+      );
+
+      if (!agentEnabled) {
+        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+          organizationId: args.organizationId,
+          taskId: task._id,
+          agent: "orchestrator",
+          level: "info",
+          message: `Skipped task "${task.title}" — ${task.assignedAgent} agent is disabled`,
+        });
+        continue;
+      }
+
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
         taskId: task._id,
         agent: "orchestrator",
-        level: "info",
-        message: `Skipped task "${task.title}" — ${task.assignedAgent} agent is disabled`,
+        level: "action",
+        message: `Dispatching task: ${task.title}`,
+        details: `Adapter: ${task.assignedAgent} | Priority: ${task.priority}`,
       });
-      return;
-    }
 
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
-      organizationId: args.organizationId,
-      taskId: task._id,
-      agent: "orchestrator",
-      level: "action",
-      message: `Dispatching task: ${task.title}`,
-      details: `Adapter: ${task.assignedAgent} | Priority: ${task.priority}`,
-    });
+      dispatched++;
 
-    // Route to the appropriate agent based on assignedAgent
-    switch (task.assignedAgent) {
-      case "dev":
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.execution.executeTask,
-          {
+      // Route to the appropriate agent based on assignedAgent
+      switch (task.assignedAgent) {
+        case "dev":
+          await ctx.scheduler.runAfter(
+            0,
+            internal.autopilot.execution.executeTask,
+            {
+              organizationId: args.organizationId,
+              taskId: task._id,
+            }
+          );
+          break;
+
+        case "cto":
+          await ctx.scheduler.runAfter(
+            0,
+            internal.autopilot.agents.cto.runCTOSpecGeneration,
+            {
+              organizationId: args.organizationId,
+              taskId: task._id,
+            }
+          );
+          break;
+
+        case "security":
+          await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+            taskId: task._id,
+            status: "in_progress",
+          });
+          await ctx.scheduler.runAfter(
+            0,
+            internal.autopilot.agents.security.runSecurityScan,
+            {
+              organizationId: args.organizationId,
+              triggerReason: "on_demand",
+            }
+          );
+          break;
+
+        case "architect":
+          await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+            taskId: task._id,
+            status: "in_progress",
+          });
+          await ctx.scheduler.runAfter(
+            0,
+            internal.autopilot.agents.architect.runArchitectReview,
+            {
+              organizationId: args.organizationId,
+              triggerReason: "on_demand",
+            }
+          );
+          break;
+
+        case "growth":
+          await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+            taskId: task._id,
+            status: "in_progress",
+          });
+          await ctx.scheduler.runAfter(
+            0,
+            internal.autopilot.agents.growth.runGrowthGeneration,
+            {
+              organizationId: args.organizationId,
+              triggerReason: "task_completed",
+            }
+          );
+          break;
+
+        case "support":
+          await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+            taskId: task._id,
+            status: "in_progress",
+          });
+          await ctx.scheduler.runAfter(
+            0,
+            internal.autopilot.agents.support.runSupportTriage,
+            { organizationId: args.organizationId }
+          );
+          break;
+
+        case "analytics":
+          await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+            taskId: task._id,
+            status: "in_progress",
+          });
+          await ctx.scheduler.runAfter(
+            0,
+            internal.autopilot.agents.analytics.captureAnalyticsSnapshot,
+            { organizationId: args.organizationId }
+          );
+          break;
+
+        case "docs":
+          await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+            taskId: task._id,
+            status: "in_progress",
+          });
+          await ctx.scheduler.runAfter(
+            0,
+            internal.autopilot.agents.docs.runDocsCheck,
+            { organizationId: args.organizationId }
+          );
+          break;
+
+        case "qa":
+          await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+            taskId: task._id,
+            status: "in_progress",
+          });
+          await ctx.scheduler.runAfter(
+            0,
+            internal.autopilot.agents.qa.generateE2ETests,
+            {
+              organizationId: args.organizationId,
+              taskId: task._id,
+            }
+          );
+          break;
+
+        case "ops":
+          await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+            taskId: task._id,
+            status: "in_progress",
+          });
+          await ctx.scheduler.runAfter(
+            0,
+            internal.autopilot.agents.ops.monitorDeployments,
+            { organizationId: args.organizationId }
+          );
+          break;
+
+        case "sales":
+          await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+            taskId: task._id,
+            status: "in_progress",
+          });
+          await ctx.scheduler.runAfter(
+            0,
+            internal.autopilot.agents.sales.runSalesFollowUp,
+            { organizationId: args.organizationId }
+          );
+          break;
+
+        default:
+          // PM and orchestrator tasks are handled by their own crons
+          await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+            taskId: task._id,
+            status: "in_progress",
+          });
+          await ctx.runMutation(internal.autopilot.tasks.logActivity, {
             organizationId: args.organizationId,
             taskId: task._id,
-          }
-        );
-        break;
-
-      case "cto":
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.cto.runCTOSpecGeneration,
-          {
-            organizationId: args.organizationId,
-            taskId: task._id,
-          }
-        );
-        break;
-
-      case "security":
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: task._id,
-          status: "in_progress",
-        });
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.security.runSecurityScan,
-          {
-            organizationId: args.organizationId,
-            triggerReason: "on_demand",
-          }
-        );
-        break;
-
-      case "architect":
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: task._id,
-          status: "in_progress",
-        });
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.architect.runArchitectReview,
-          {
-            organizationId: args.organizationId,
-            triggerReason: "on_demand",
-          }
-        );
-        break;
-
-      case "growth":
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: task._id,
-          status: "in_progress",
-        });
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.growth.runGrowthGeneration,
-          {
-            organizationId: args.organizationId,
-            triggerReason: "task_completed",
-          }
-        );
-        break;
-
-      case "support":
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: task._id,
-          status: "in_progress",
-        });
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.support.runSupportTriage,
-          { organizationId: args.organizationId }
-        );
-        break;
-
-      case "analytics":
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: task._id,
-          status: "in_progress",
-        });
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.analytics.captureAnalyticsSnapshot,
-          { organizationId: args.organizationId }
-        );
-        break;
-
-      case "docs":
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: task._id,
-          status: "in_progress",
-        });
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.docs.runDocsCheck,
-          { organizationId: args.organizationId }
-        );
-        break;
-
-      case "qa":
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: task._id,
-          status: "in_progress",
-        });
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.qa.generateE2ETests,
-          {
-            organizationId: args.organizationId,
-            taskId: task._id,
-          }
-        );
-        break;
-
-      case "ops":
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: task._id,
-          status: "in_progress",
-        });
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.ops.monitorDeployments,
-          { organizationId: args.organizationId }
-        );
-        break;
-
-      case "sales":
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: task._id,
-          status: "in_progress",
-        });
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.sales.runSalesFollowUp,
-          { organizationId: args.organizationId }
-        );
-        break;
-
-      default:
-        // PM and orchestrator tasks are handled by their own crons
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: task._id,
-          status: "in_progress",
-        });
-        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
-          organizationId: args.organizationId,
-          taskId: task._id,
-          agent: task.assignedAgent,
-          level: "info",
-          message: `Task picked up by ${task.assignedAgent} agent`,
-        });
-        break;
+            agent: task.assignedAgent,
+            level: "info",
+            message: `Task picked up by ${task.assignedAgent} agent`,
+          });
+          break;
+      }
     }
   },
 });
@@ -685,6 +801,27 @@ export const runSalesFollowUp = internalAction({
           continue;
         }
         await ctx.runAction(internal.autopilot.agents.sales.runSalesFollowUp, {
+          organizationId: org.organizationId,
+        });
+      } catch {
+        // Best effort — continue with other orgs
+      }
+    }
+  },
+});
+
+/**
+ * Run CEO coordination loop for all enabled orgs.
+ * Cross-agent health check, conflict detection, and proactive alerts.
+ */
+export const runCEOCoordination = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const orgs = await ctx.runQuery(internal.autopilot.crons.getEnabledOrgs);
+
+    for (const org of orgs) {
+      try {
+        await ctx.runAction(internal.autopilot.agents.ceo.runCEOCoordination, {
           organizationId: org.organizationId,
         });
       } catch {

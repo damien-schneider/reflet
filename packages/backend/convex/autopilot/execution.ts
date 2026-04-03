@@ -131,12 +131,23 @@ const handleTaskResult = async (
   }
 
   if (result.status === "failed" && retryCount < maxRetries) {
+    // Exponential backoff: 5min, 10min, 20min, 40min...
+    const RETRY_BASE_DELAY_MS = 5 * 60 * 1000;
+    const retryDelay = RETRY_BASE_DELAY_MS * 2 ** retryCount;
+
     await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId,
-      status: "pending",
+      status: "paused",
       retryCount: retryCount + 1,
       errorMessage: `Retry ${retryCount + 1}/${maxRetries}: ${result.errorMessage}`,
     });
+
+    // Schedule retry with backoff instead of immediate re-queue
+    await ctx.scheduler.runAfter(
+      retryDelay,
+      internal.autopilot.execution.retryTask,
+      { organizationId, taskId }
+    );
     return;
   }
 
@@ -545,6 +556,39 @@ export const cancelTask = internalAction({
     await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId: args.taskId,
       status: "cancelled",
+    });
+  },
+});
+
+/**
+ * Retry a paused task after backoff delay.
+ * Sets status back to pending so the orchestrator picks it up.
+ */
+export const retryTask = internalAction({
+  args: {
+    organizationId: v.id("organizations"),
+    taskId: v.id("autopilotTasks"),
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.runQuery(internal.autopilot.tasks.getTask, {
+      taskId: args.taskId,
+    });
+
+    if (!task || task.status === "cancelled") {
+      return;
+    }
+
+    await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+      taskId: args.taskId,
+      status: "pending",
+    });
+
+    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      organizationId: args.organizationId,
+      taskId: args.taskId,
+      agent: "orchestrator",
+      level: "info",
+      message: `Retry ${task.retryCount}/${task.maxRetries}: re-queued after backoff`,
     });
   },
 });

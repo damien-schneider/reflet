@@ -956,4 +956,510 @@ The agents learn. They get better. The cycle accelerates.
 The company runs.
 ```
 
+---
+
+## 13. UX Resilience — Error Handling, Edge Cases & Activity Visibility
+
+> This section is critical. An autonomous system that fails silently is worse than no system at all. The user must ALWAYS know what's happening, what's broken, and what to do about it.
+
+### 13.1 The Always-Visible Activity Banner
+
+A persistent, collapsible banner at the bottom of every Autopilot page. Think of it as the "terminal" of the company — always running, always visible.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Main page content                                                │
+│                                                                   │
+│                                                                   │
+│                                                                   │
+├─────────────────────────────────────────────────────────────────┤
+│ ▼ Company Activity                                    [Expand ↑] │
+│ 🟢 14:32 PM: Created task "Add rate limiting" from feedback #42  │
+│ 🟢 14:30 CTO: Generated spec for "Dark mode toggle"             │
+│ 🟡 14:28 Dev: PR #47 waiting for CI — running tests...          │
+│ 🔴 14:25 Security: Scan failed — GitHub token expired            │
+│ 🟢 14:22 Support: Drafted reply to user@example.com             │
+│ ⏸  14:20 System: Autopilot paused by user                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Design:**
+- **Collapsed (default):** Single-line showing the latest event + count of recent events
+- **Expanded:** Scrollable log of last 50 events, color-coded by severity
+- **Persists across all Autopilot pages** (mounted in layout.tsx)
+- **Real-time updates** via Convex subscription (no polling)
+- **Color coding:** 🟢 success, 🟡 warning/waiting, 🔴 error/failure, ⏸ paused, 🔵 info
+- **Clickable entries:** Click any event to jump to the relevant page (task, inbox item, agent)
+- **Filter buttons:** All | Errors only | Agent-specific
+- **Notification dot** on collapsed banner when there are unread errors
+
+**Implementation:**
+```typescript
+// components/activity-banner.tsx
+// Subscribes to autopilotActivityLogs via useQuery
+// Filters by organizationId, orders by createdAt desc
+// Shows latest 50 entries with real-time updates
+// Collapsed mode shows only the last entry
+// Red notification dot when any entry has level: "error" and is newer than last viewed
+```
+
+### 13.2 Setup Gate — Nothing Works Until Setup is Complete
+
+**The Problem:** Right now, if a user navigates to Autopilot without setup, they see partial UI with empty data. No guidance on what to do.
+
+**The Solution: Setup Wizard Gate**
+
+The entire Autopilot section is gated behind a setup check. If setup is incomplete, the user sees a guided wizard instead of broken pages.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                   │
+│   ┌─────────────────────────────────────────────────────────┐    │
+│   │  Welcome to Reflet Autopilot                             │    │
+│   │                                                           │    │
+│   │  Let's set up your autonomous company.                    │    │
+│   │                                                           │    │
+│   │  Step 1 of 4                                              │    │
+│   │  ────────────────────────────────────────────             │    │
+│   │                                                           │    │
+│   │  ● Connect your GitHub repository                         │    │
+│   │    ○ Select your coding adapter                           │    │
+│   │    ○ Add credentials                                      │    │
+│   │    ○ Enable Autopilot                                     │    │
+│   │                                                           │    │
+│   │  [Select Repository ▾]                                    │    │
+│   │                                                           │    │
+│   │  Connected repos:                                         │    │
+│   │    reflet/reflet (main) ✓                                 │    │
+│   │                                                           │    │
+│   │                               [Continue →]                │    │
+│   └─────────────────────────────────────────────────────────┘    │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Setup Steps (blocking — must complete in order):**
+
+| Step | What | Required? | Validation |
+|------|------|-----------|------------|
+| 1. Connect Repo | Link a GitHub repository | Yes | `githubConnections` has entry for org |
+| 2. Select Adapter | Choose coding backend (builtin/copilot/codex/claude_code) | Yes | `autopilotConfig.adapter` is set |
+| 3. Add Credentials | Provide API keys for chosen adapter | Yes for non-builtin | `autopilotAdapterCredentials.isValid === true` |
+| 4. Enable | Toggle autopilot on | Yes | `autopilotConfig.enabled === true` |
+
+**After completing setup:**
+- Onboarding tasks auto-generate
+- Agents start their initial scans
+- Setup wizard disappears, replaced by the real dashboard
+- A "Setup Complete" inbox item appears with next steps
+
+**If user navigates to ANY autopilot page before setup is complete:**
+- Redirect to `/autopilot` which shows the setup wizard
+- Nav items are visible but grayed out with tooltips: "Complete setup first"
+
+**Implementation:**
+```typescript
+// In layout.tsx, wrap children with:
+const setupStatus = useSetupStatus(organizationId);
+
+if (!setupStatus.isComplete) {
+  return <SetupWizard currentStep={setupStatus.currentStep} />;
+}
+
+// useSetupStatus checks:
+// 1. Has githubConnection? → step 1 done
+// 2. Has autopilotConfig with adapter? → step 2 done
+// 3. Has valid credentials for adapter? → step 3 done
+// 4. Is enabled? → step 4 done
+```
+
+### 13.3 Stopped Mode — Everything Shows Why
+
+When the user toggles to "Stopped," every page must clearly communicate:
+
+**Global banner (replaces normal status bar):**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ ⏸  AUTOPILOT PAUSED — Agents are not running. No tasks will     │
+│    be dispatched. Paused at 2:30 PM today.  [Resume →]          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Per-page behavior when stopped:**
+
+| Page | What Changes |
+|------|-------------|
+| **Dashboard** | Stats show last-active values with "(paused)" suffix. Agent cards show ⏸ icon. Activity feed shows "Paused at {time}" as latest entry. |
+| **Inbox** | Items still visible and actionable (user can approve/reject while paused). Yellow banner: "New items won't be generated while paused." |
+| **Tasks** | Tasks visible. Paused tasks show ⏸ badge. "Paused tasks will resume when autopilot is restarted." |
+| **Agents** | All agent cards show ⏸ state. Toggle switches are disabled with tooltip: "Resume autopilot to change agent settings." |
+| **Growth** | Content still visible. Banner: "No new content will be generated while paused." |
+| **Settings** | Fully functional — user can change settings while paused. |
+| **All new pages** | Same pattern: data visible, read-only context, clear message about pause state. |
+
+### 13.4 Agent Blocked States — Always Show Why
+
+When an agent can't work, the user must know why and what to do:
+
+**Agent Card States (on Agents page and Dashboard):**
+
+| State | Indicator | Message | Action |
+|-------|-----------|---------|--------|
+| 🟢 Active | Green dot, pulsing | "Working — last active 2 min ago" | — |
+| 🟡 Idle | Yellow dot | "Waiting for tasks" | — |
+| ⏸ Paused | Gray dot, pause icon | "Autopilot is paused" | [Resume] button |
+| 🔴 Error | Red dot, ! icon | "Last run failed: {reason}" | [View Error] → task detail |
+| ⚪ Disabled | Gray dot, strikethrough | "Agent is disabled" | [Enable] toggle |
+| 🔒 Blocked | Lock icon | "Missing {requirement}" | [Fix →] link to settings |
+| 💰 Cost Limited | Dollar icon | "Daily cost cap reached" | [Increase Limit] → settings |
+| 🔄 Rate Limited | Clock icon | "Daily task limit reached — resets in 4h" | — |
+
+**"Blocked" reasons and their resolutions:**
+
+```typescript
+const BLOCK_REASONS = {
+  no_repo: {
+    message: "No GitHub repository connected",
+    action: "Connect a repository in Settings",
+    link: "/settings",
+  },
+  no_credentials: {
+    message: "Adapter credentials not configured",
+    action: "Add your API keys in Settings",
+    link: "/settings",
+  },
+  invalid_credentials: {
+    message: "Adapter credentials are invalid",
+    action: "Update your API keys in Settings",
+    link: "/settings",
+  },
+  no_config: {
+    message: "Autopilot not initialized",
+    action: "Complete the setup wizard",
+    link: "/autopilot",
+  },
+  agent_disabled: {
+    message: "This agent is turned off",
+    action: "Enable it in Agents settings",
+    link: "/agents",
+  },
+  dependency_blocked: {
+    message: "Waiting for task #{taskId} to complete",
+    action: "View the blocking task",
+    link: "/tasks/{taskId}",
+  },
+  plan_limit: {
+    message: "Your plan doesn't include this agent",
+    action: "Upgrade to Pro for all agents",
+    link: "/settings/billing",
+  },
+  daily_limit: {
+    message: "Daily task limit reached (10/10)",
+    action: "Resets at {resetTime}",
+    link: null,
+  },
+  cost_limit: {
+    message: "Daily cost cap reached ($5.00/$5.00)",
+    action: "Increase cap in Settings or wait for reset",
+    link: "/settings",
+  },
+} as const;
+```
+
+### 13.5 Empty States — First Time & No Data
+
+Every page needs two empty states: **first-time** (never had data) and **filtered-empty** (had data but filters exclude it).
+
+**First-time empty states:**
+
+| Page | Empty State Message | CTA |
+|------|-------------------|-----|
+| **Dashboard** | "Your company is booting up. Agents are running their initial analysis — results will appear here shortly." | Animated spinner + progress checklist of onboarding tasks |
+| **Inbox** | "No items yet. Agents will create inbox items as they work — you'll see drafts, alerts, and reports here." | "Learn how the inbox works" link |
+| **Tasks** | "No tasks yet. The PM agent will create tasks from your feedback, or you can create one manually." | [Create Task] button |
+| **Growth** | "No content generated yet. The Growth agent will create content once features are shipped." | "Growth agent needs completed tasks to generate content." |
+| **Security** | "No scan results yet. The first security scan runs within 10 minutes of setup." | Progress indicator if scan is running |
+| **Support** | "No conversations yet. Support will activate when users start reaching out." | "Set up your support email in Settings" link |
+| **Analytics** | "No data yet. Connect PostHog to see user analytics, or wait for the first daily snapshot." | [Connect PostHog] button |
+| **Ops** | "No deployment data yet. Connect Vercel to monitor deployments." | [Connect Vercel] button |
+| **Sales** | "No leads yet. The Sales agent will discover potential customers from community activity." | "Sales agent requires Business plan" (if on free/pro) |
+| **Email** | "No emails yet. Set up your org email address in Settings to start sending." | [Configure Email] link |
+| **Costs** | "No cost data yet. Costs will appear once agents start using AI models." | — |
+
+**Filtered-empty states:**
+```
+"No {items} match your current filters."
+[Clear Filters] button
+```
+
+### 13.6 Error Recovery — Never Leave the User Stuck
+
+**Global Error Boundary:**
+```typescript
+// components/autopilot-error-boundary.tsx
+// Wraps every Autopilot page
+// Catches React render errors
+// Shows: "Something went wrong in the {pageName} page."
+// Action: [Reload Page] [Go to Dashboard] [Report Issue]
+// Logs error to activity feed automatically
+```
+
+**Mutation Failure Pattern:**
+Every mutation that can fail should:
+1. Show a toast with the error message
+2. Include a [Retry] action in the toast
+3. For critical failures, show an inline error banner that persists (not just a toast that disappears)
+
+```typescript
+// Pattern for all mutation calls:
+const handleAction = async () => {
+  try {
+    await mutate(args);
+    toast.success("Action completed");
+  } catch (error) {
+    toast.error("Failed to {action}: {error.message}", {
+      action: <Button onClick={() => handleAction()}>Retry</Button>,
+      duration: 10000, // 10 seconds, not the default 3
+    });
+    // For critical actions, also set inline error state:
+    setInlineError(`Failed to {action}. ${error.message}`);
+  }
+};
+```
+
+**Task Stuck Detection:**
+A background check (cron or client-side polling) that detects stuck states:
+
+```typescript
+// packages/backend/convex/autopilot/health.ts
+
+export const getSystemHealth = query({
+  handler: async (ctx, args) => {
+    // Returns:
+    return {
+      status: "healthy" | "degraded" | "critical" | "stopped",
+      issues: [
+        {
+          type: "stuck_task",
+          message: "Task #42 has been in_progress for 2 hours without updates",
+          action: "retry" | "cancel" | "investigate",
+          taskId: "...",
+        },
+        {
+          type: "credential_expired",
+          message: "GitHub token expired — Dev agent cannot create PRs",
+          action: "update_credentials",
+        },
+        {
+          type: "agent_failing",
+          message: "Security agent has failed 3 consecutive runs",
+          action: "check_logs",
+        },
+      ],
+      lastActivity: timestamp, // When was the last successful agent action?
+      agentStatuses: { pm: "active", cto: "idle", dev: "error", ... },
+    };
+  },
+});
+```
+
+**Health indicator in header (next to the mode toggle):**
+```
+When healthy:    🟢 All systems operational
+When degraded:   🟡 1 issue needs attention    [View →]
+When critical:   🔴 3 issues blocking agents   [Fix Now →]
+When stopped:    ⏸  Paused
+```
+
+Clicking "View" or "Fix Now" opens a **System Health Panel** (slide-over from the right) showing all issues with one-click resolution actions.
+
+### 13.7 Silent Failure Elimination
+
+**Backend fixes — every silent failure gets an inbox item:**
+
+| Silent Failure | Fix |
+|---|---|
+| Config deleted during polling → task hangs | Detect missing config in pollTaskStatus, mark task as `failed`, create inbox item: "Task failed — autopilot config was removed" |
+| Credentials deleted during polling → task hangs | Detect missing creds in pollTaskStatus, mark task as `failed`, create inbox item: "Task failed — credentials were removed" |
+| Cron job fails for an org → console.log only | Wrap cron in try-catch that creates inbox item: "System error — {agent} cron failed: {error}" |
+| AGENTS.md fetch fails → silent empty string | Log warning to activity: "Could not load AGENTS.md — agent specs may be less accurate" |
+| Repo URL missing → falls back to placeholder | Block task execution entirely, create inbox item: "Cannot execute task — no GitHub repository connected" |
+| Email limit stored but never checked | Wire emailDailyLimit into email_sending.ts, reject sends when limit hit, create inbox item |
+| Cost cap reached but task continues | Actually stop task execution when cost cap hit, not just log |
+| Autonomy mode changed mid-task | Re-read config before setting final task status |
+
+### 13.8 Connectivity & External Service Health
+
+Agents depend on external services. When they're down, the user should know:
+
+**Service health checks (run every 5 minutes):**
+
+```typescript
+const EXTERNAL_SERVICES = [
+  {
+    name: "GitHub",
+    check: "validate GitHub token with API call",
+    affects: ["Dev", "CTO", "QA", "Docs", "Architect"],
+  },
+  {
+    name: "OpenRouter",
+    check: "validate API key with models list call",
+    affects: ["All agents (AI calls)"],
+  },
+  {
+    name: "Resend",
+    check: "validate domain with Resend API",
+    affects: ["Email sending", "Support replies", "Sales outreach"],
+  },
+  {
+    name: "PostHog",
+    check: "validate project access",
+    affects: ["Analytics", "Ops (error tracking)"],
+  },
+  {
+    name: "Vercel",
+    check: "validate deployment access",
+    affects: ["Ops (deploy monitoring)"],
+  },
+];
+```
+
+**When a service is down:**
+- Affected agents show 🔒 state: "GitHub is unreachable — Dev, CTO, QA, Docs, Architect paused"
+- Activity banner shows: "🔴 GitHub API unreachable since 2:30 PM — 5 agents affected"
+- Tasks that need the service are not dispatched (held in pending instead of failing)
+- When service recovers: "🟢 GitHub API is back online — resuming 5 agents"
+
+### 13.9 "Nothing Happening" Detection
+
+**The worst UX state: the user sees an active system with no movement.**
+
+Detection rules:
+```typescript
+const INACTIVITY_THRESHOLDS = {
+  // If NO activity for this long, something is wrong
+  no_activity_warning: 30 * 60 * 1000,   // 30 minutes
+  no_activity_critical: 2 * 60 * 60 * 1000, // 2 hours
+
+  // If tasks are pending but none dispatched
+  pending_not_dispatched: 15 * 60 * 1000, // 15 minutes
+
+  // If in_progress tasks haven't updated
+  task_stale: 60 * 60 * 1000, // 1 hour
+};
+```
+
+**When "nothing happening" is detected:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ 🟡 No agent activity for 45 minutes                             │
+│                                                                   │
+│ Possible reasons:                                                 │
+│ • All tasks are completed — waiting for new feedback or events    │
+│ • Daily task limit reached (10/10) — resets in 3h 12m            │
+│ • No pending tasks in queue                                       │
+│                                                                   │
+│ You can:                                                          │
+│ [Create a Task] [Trigger PM Analysis] [Ask CEO What's Up]        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Specific scenarios and messages:**
+
+| Scenario | Detection | Message |
+|---|---|---|
+| All tasks done, no new feedback | `pendingTasks === 0 && lastActivity > 30min` | "All caught up! Your company is waiting for new feedback or events. Everything is healthy." |
+| Task limit reached | `tasksUsedToday >= maxTasksPerDay` | "Daily task limit reached (10/10). Agents are paused until tomorrow at {resetTime}." |
+| Cost cap hit | `costUsedTodayUsd >= dailyCostCapUsd` | "Daily cost cap reached (${used}/${cap}). Increase the cap in Settings or wait for reset." |
+| Tasks pending but not dispatching | `pendingTasks > 0 && lastDispatch > 15min` | "3 tasks are pending but not being dispatched. Check if agents are enabled and credentials are valid." |
+| Task stuck in_progress | `task.status === "in_progress" && lastUpdate > 1h` | "Task #{id} has been running for 2 hours with no updates. It may be stuck." + [Retry] [Cancel] |
+| Agent repeatedly failing | `lastNRuns.filter(failed).length >= 3` | "Security agent has failed 3 times in a row. Last error: {message}" + [View Logs] [Disable Agent] |
+
+### 13.10 Onboarding Progress Indicator
+
+After setup, while initial scans are running, show a progress checklist:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ 🚀 Your company is booting up...                                 │
+│                                                                   │
+│ ✅ Repository analyzed                                            │
+│ ✅ 7 onboarding tasks created                                     │
+│ ✅ CEO welcome report generated                                   │
+│ 🔄 Security baseline scan running...                              │
+│ 🔄 Architecture review running...                                 │
+│ ○  Market analysis (queued)                                       │
+│ ○  SEO analysis (queued)                                          │
+│ ○  Documentation audit (queued)                                   │
+│                                                                   │
+│ Estimated time: ~5 minutes remaining                              │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━░░░░░░░░░  62%                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+This replaces the dashboard content during the first ~10 minutes. Once all onboarding tasks have completed or produced their first output, it transitions to the normal dashboard with a "Setup complete" toast.
+
+---
+
+## 14. Updated Build Tasks for Error Handling & UX
+
+### Phase 8J: UX Resilience (Add to V7 Build Plan)
+
+| # | Task | File(s) | Effort |
+|---|------|---------|--------|
+| 8J.1 | Build Always-Visible Activity Banner component | components/activity-banner.tsx | Medium |
+| 8J.2 | Mount Activity Banner in autopilot layout.tsx | layout.tsx | Small |
+| 8J.3 | Build Setup Wizard Gate component | components/setup-wizard.tsx | Large |
+| 8J.4 | Build `useSetupStatus` hook (check repo, config, creds, enabled) | hooks/use-setup-status.ts | Medium |
+| 8J.5 | Gate all autopilot pages behind setup check in layout.tsx | layout.tsx | Small |
+| 8J.6 | Build Stopped Mode global banner | components/stopped-banner.tsx | Small |
+| 8J.7 | Add stopped-mode indicators to all pages (⏸ badges, disabled states) | All page.tsx files | Medium |
+| 8J.8 | Build agent blocked-state system (BLOCK_REASONS with resolution links) | components/agent-status-cards.tsx | Medium |
+| 8J.9 | Build first-time empty states for all 11 pages | All page.tsx files | Medium |
+| 8J.10 | Build filtered-empty states for list pages | inbox, tasks, growth, email pages | Small |
+| 8J.11 | Build Autopilot Error Boundary wrapper | components/autopilot-error-boundary.tsx | Small |
+| 8J.12 | Add retry actions to all mutation toast errors | All pages with mutations | Medium |
+| 8J.13 | Build `getSystemHealth` query (stuck tasks, credential issues, failing agents) | autopilot/health.ts | Medium |
+| 8J.14 | Build System Health Panel (slide-over with one-click resolutions) | components/system-health-panel.tsx | Medium |
+| 8J.15 | Add health indicator to header (next to mode toggle) | components/autopilot-status-bar.tsx | Small |
+| 8J.16 | Build "nothing happening" detection and messaging | autopilot/health.ts + dashboard | Medium |
+| 8J.17 | Build onboarding progress indicator | components/onboarding-progress.tsx | Medium |
+| 8J.18 | Build external service health checks | autopilot/health.ts | Medium |
+| 8J.19 | Fix silent failure: config deleted during polling | execution.ts | Small |
+| 8J.20 | Fix silent failure: credentials deleted during polling | execution.ts | Small |
+| 8J.21 | Fix silent failure: cron errors create inbox items | crons.ts | Small |
+| 8J.22 | Fix silent failure: missing repo blocks execution (no placeholder fallback) | onboarding.ts, execution.ts | Small |
+| 8J.23 | Fix silent failure: wire emailDailyLimit into sending | email_sending.ts | Small |
+| 8J.24 | Fix silent failure: cost cap actually stops execution | execution.ts | Small |
+| 8J.25 | Fix race condition: re-read autonomy mode before task completion | execution.ts | Small |
+| 8J.26 | Fix duplicate onboarding tasks on rapid enable/disable | onboarding.ts | Small |
+
+---
+
+## Updated Parallel Execution Map (Full V7)
+
+```
+Phase 8A (Safety Foundation) ──────────────────────────────────
+         │
+         ├── Phase 8B (Growth + Intel Merge) ────────┐
+         │                                            │
+         ├── Phase 8C (CEO V2)  ─────────────────────┤
+         │                                            │
+         ├── Phase 8D (Proactivity Engine) ───────────┤
+         │                                            │
+         ├── Phase 8E (Feedback Loops) ──────────────┤
+         │                                            │
+         ├── Phase 8G (Prompt Engineering) ───────────┤
+         │                                            │
+         ├── Phase 8H (Bug Fixes) ───────────────────┤
+         │                                            │
+         └── Phase 8J.19-26 (Silent Failure Fixes) ──┤
+                                                      │
+                                      Phase 8F (New Frontend Pages)
+                                      Phase 8J.1-18 (UX Resilience)
+                                                      │
+                                      Phase 8I (Integration & Testing)
+```
+
 This is V7. After this, Reflet ships.

@@ -18,6 +18,7 @@ import { internal } from "../../_generated/api";
 import type { Doc } from "../../_generated/dataModel";
 import { internalAction } from "../../_generated/server";
 import { MODELS } from "./models";
+import { buildAgentPrompt, GROWTH_SYSTEM_PROMPT } from "./prompts";
 import { generateObjectWithFallback } from "./shared";
 
 // Online search-capable models for thread discovery
@@ -59,8 +60,11 @@ export const growthContentSchema = z.object({
         .string()
         .describe("The full pre-written content, ready to post"),
       targetUrl: z
-        .optional(z.string())
-        .describe("URL of the thread/post to reply to, if applicable"),
+        .string()
+        .default("")
+        .describe(
+          "URL of the thread/post to reply to, or empty string if not applicable"
+        ),
       reasoning: z
         .string()
         .describe("Why this content was generated and its expected impact"),
@@ -121,17 +125,7 @@ const generateGrowthContent = async (
   completedTasks: string[],
   discoveredThreads: z.infer<typeof threadDiscoverySchema>
 ): Promise<z.infer<typeof growthContentSchema>> => {
-  const systemPrompt = `You are an expert growth marketer and content creator specializing in authentic, non-spammy product marketing.
-
-Guidelines:
-- Write authentic content that provides genuine value first
-- For Reddit/HN replies: answer the thread's question naturally, mention the product only when relevant
-- For LinkedIn: professional tone, focus on the feature/improvement story
-- For Twitter/X: concise, engaging, under 280 chars when possible
-- For blog posts: full markdown article with sections
-- For changelog: formatted release notes
-- Match each platform's voice and conventions
-- Never be overtly promotional — value first, product second`;
+  const systemPrompt = buildAgentPrompt(GROWTH_SYSTEM_PROMPT, "", "");
 
   const threadsContext = discoveredThreads.threads
     .map(

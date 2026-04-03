@@ -9,7 +9,11 @@ import {
 import { useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useAutopilotContext } from "./autopilot-context";
 
@@ -19,23 +23,26 @@ const MODES = [
     label: "Supervised",
     icon: IconPlayerPlay,
     description: "Asks before acting",
-    activeClass: "border-green-500/50 bg-green-500/10 text-green-600",
-    dotClass: "bg-green-500",
+    activeClass:
+      "bg-green-500/10 text-green-600 dark:text-green-400 shadow-[inset_0_0_0_1px_rgba(34,197,94,0.3)]",
+    dotClass: "bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]",
   },
   {
     value: "full_auto",
     label: "Full Auto",
     icon: IconRobot,
     description: "Autonomous with delay",
-    activeClass: "border-orange-500/50 bg-orange-500/10 text-orange-600",
-    dotClass: "bg-orange-500",
+    activeClass:
+      "bg-orange-500/10 text-orange-600 dark:text-orange-400 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.3)]",
+    dotClass: "bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.5)]",
   },
   {
     value: "stopped",
     label: "Stopped",
     icon: IconPlayerPause,
     description: "All agents paused",
-    activeClass: "border-muted-foreground/30 bg-muted text-muted-foreground",
+    activeClass:
+      "bg-muted text-muted-foreground shadow-[inset_0_0_0_1px_rgba(128,128,128,0.2)]",
     dotClass: "bg-muted-foreground/50",
   },
 ] as const;
@@ -70,28 +77,36 @@ export function AutonomyToggle() {
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center rounded-lg border border-border/50 bg-muted/30 p-0.5">
       {MODES.map((mode) => {
         const isActive = currentMode === mode.value;
 
         return (
-          <Button
-            className={cn(
-              "h-auto flex-col gap-1 px-4 py-2",
-              isActive && mode.activeClass
-            )}
-            disabled={!isAdmin}
-            key={mode.value}
-            onClick={() => handleModeChange(mode.value)}
-            size="sm"
-            variant={isActive ? "outline" : "ghost"}
-          >
-            <div className="flex items-center gap-1.5">
-              <mode.icon className="size-3.5" />
-              <span className="font-medium text-xs">{mode.label}</span>
-            </div>
-            <span className="text-[10px] opacity-70">{mode.description}</span>
-          </Button>
+          <Tooltip key={mode.value}>
+            <TooltipTrigger
+              aria-label={`${mode.label}: ${mode.description}`}
+              className={cn(
+                "relative flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs transition-all duration-200",
+                "text-muted-foreground hover:text-foreground",
+                "disabled:pointer-events-none disabled:opacity-50",
+                isActive && mode.activeClass
+              )}
+              disabled={!isAdmin}
+              onClick={() => handleModeChange(mode.value)}
+            >
+              {isActive && (
+                <span
+                  className={cn(
+                    "size-1.5 shrink-0 rounded-full",
+                    mode.dotClass
+                  )}
+                />
+              )}
+              <mode.icon className="size-3.5 shrink-0" />
+              <span className="font-medium">{mode.label}</span>
+            </TooltipTrigger>
+            <TooltipContent>{mode.description}</TooltipContent>
+          </Tooltip>
         );
       })}
     </div>

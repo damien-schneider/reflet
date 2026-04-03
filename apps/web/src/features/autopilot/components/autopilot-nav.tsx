@@ -1,14 +1,18 @@
 "use client";
 
 import {
-  IconBinoculars,
+  IconChartBar,
   IconCurrencyDollar,
   IconDashboard,
   IconInbox,
   IconListDetails,
   IconMail,
+  IconMessageCircle,
   IconRocket,
+  IconServer,
   IconSettings,
+  IconShield,
+  IconUserSearch,
   IconUsers,
 } from "@tabler/icons-react";
 import { LayoutGroup, motion } from "motion/react";
@@ -22,13 +26,32 @@ const NAV_ITEMS = [
   { id: "inbox", label: "Inbox", icon: IconInbox, path: "/inbox" },
   { id: "tasks", label: "Tasks", icon: IconListDetails, path: "/tasks" },
   { id: "agents", label: "Agents", icon: IconUsers, path: "/agents" },
-  { id: "growth", label: "Growth", icon: IconRocket, path: "/growth" },
   {
-    id: "intelligence",
-    label: "Intelligence",
-    icon: IconBinoculars,
-    path: "/intelligence",
+    id: "growth",
+    label: "Growth & Intel",
+    icon: IconRocket,
+    path: "/growth",
   },
+  {
+    id: "security",
+    label: "Security",
+    icon: IconShield,
+    path: "/security",
+  },
+  {
+    id: "support",
+    label: "Support",
+    icon: IconMessageCircle,
+    path: "/support",
+  },
+  {
+    id: "analytics",
+    label: "Analytics",
+    icon: IconChartBar,
+    path: "/analytics",
+  },
+  { id: "ops", label: "Ops", icon: IconServer, path: "/ops" },
+  { id: "sales", label: "Sales", icon: IconUserSearch, path: "/sales" },
   { id: "email", label: "Email", icon: IconMail, path: "/email" },
   { id: "costs", label: "Costs", icon: IconCurrencyDollar, path: "/costs" },
   { id: "settings", label: "Settings", icon: IconSettings, path: "/settings" },

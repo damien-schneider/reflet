@@ -21,8 +21,10 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { v } from "convex/values";
 import { z } from "zod";
 import { components, internal } from "../../_generated/api";
+import type { Id } from "../../_generated/dataModel";
 import { internalAction, internalQuery } from "../../_generated/server";
 import { MODELS } from "./models";
+import { buildAgentPrompt, CEO_SYSTEM_PROMPT } from "./prompts";
 import { generateObjectWithFallback } from "./shared";
 
 // ============================================
@@ -87,49 +89,8 @@ const CEO_MODELS = [MODELS.SMART, MODELS.FAST] as const;
 export const ceoAgent = new Agent(components.agent, {
   name: "CEO Agent",
   languageModel: openrouter(MODELS.SMART),
-  instructions: `You are an AI CEO and strategic product advisor for the user's product.
-
-You have access to comprehensive product data: user feedback, development tasks, revenue metrics, competitive intelligence, and agent activity logs. You are the always-available AI partner visible in a right-side panel.
-
-**Your Core Responsibilities:**
-
-1. **Strategic Guidance**: Provide data-driven product recommendations, market analysis, and competitive insights. Help the user make informed decisions about priorities and direction.
-
-2. **Product Intelligence**: Access and synthesize information from:
-   - User feedback and voting patterns
-   - Completed and in-progress tasks
-   - Revenue and financial metrics
-   - Competitor intelligence and market signals
-   - Agent activity and automation status
-
-3. **Task & Agent Management**: Create new tasks, trigger specialized agents (PM, CTO, Security, Growth), and explain what each agent is working on and why.
-
-4. **Inbox & Approvals**: Review and approve/reject inbox items, including security alerts, architect findings, email drafts, and revenue reports.
-
-5. **Reporting**: Generate comprehensive reports on product health, including:
-   - Weekly executive summaries
-   - Revenue analysis and opportunities
-   - Feature completion rates
-   - User satisfaction trends
-   - Competitive positioning
-
-6. **Explaining Agent Work**: Help the user understand what other agents (PM, CTO, Security, Architect, Growth) are doing, their findings, and recommendations.
-
-**Tone & Approach:**
-- Professional but approachable — be direct and friendly
-- Data-driven — base recommendations on metrics and evidence
-- Strategic — think about long-term product direction and sustainability
-- Collaborative — work with other agents and the user to achieve goals
-- Transparent — explain your reasoning and surface assumptions
-
-**Key Principles:**
-- Always cite data when making recommendations
-- Highlight both opportunities and risks
-- Consider user experience and business metrics equally
-- Be honest about trade-offs and constraints
-- Keep recommendations actionable and prioritized
-
-You are not just a chatbot — you are a true strategic partner in building the product.`,
+  instructions: buildAgentPrompt(CEO_SYSTEM_PROMPT, "", ""),
+  maxSteps: 5,
 });
 
 // ============================================
@@ -231,6 +192,102 @@ export const getCEOContext = internalQuery({
         },
         {} as Record<string, number>
       ),
+    };
+  },
+});
+
+/**
+ * Get detailed context for the CEO chat — includes task titles, agent states,
+ * recent errors, and pending inbox details (not just aggregate counts).
+ */
+export const getDetailedCEOContext = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    // Recent tasks with titles (last 20)
+    const recentTasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .take(20);
+
+    const taskSummaries = recentTasks.map((t) => ({
+      title: t.title,
+      status: t.status,
+      priority: t.priority,
+      agent: t.assignedAgent,
+    }));
+
+    // Agent enable/disable states
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    const agentStates: Record<string, boolean> = {};
+    if (config) {
+      const agents = [
+        "pm",
+        "cto",
+        "dev",
+        "security",
+        "architect",
+        "growth",
+        "support",
+        "analytics",
+        "docs",
+        "qa",
+        "ops",
+        "sales",
+      ] as const;
+      for (const agent of agents) {
+        const field = `${agent}Enabled` as keyof typeof config;
+        agentStates[agent] = config[field] !== false;
+      }
+    }
+
+    // Recent errors (last 10)
+    const recentActivity = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .take(100);
+
+    const recentErrors = recentActivity
+      .filter((a) => a.level === "error")
+      .slice(0, 10)
+      .map((a) => ({
+        agent: a.agent,
+        message: a.message,
+        ago: Math.round((Date.now() - a.createdAt) / 60_000),
+      }));
+
+    // Pending inbox items with titles (last 10)
+    const pendingInbox = await ctx.db
+      .query("autopilotInboxItems")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "pending")
+      )
+      .order("desc")
+      .take(10);
+
+    const inboxSummaries = pendingInbox.map((item) => ({
+      title: item.title,
+      type: item.type,
+      priority: item.priority,
+    }));
+
+    return {
+      taskSummaries,
+      agentStates,
+      recentErrors,
+      inboxSummaries,
+      autonomyMode: config?.autonomyMode ?? "supervised",
     };
   },
 });
@@ -404,6 +461,215 @@ Generate a report that synthesizes this data into actionable insights.`;
       });
 
       throw new Error(`CEO report generation failed: ${errorMessage}`);
+    }
+  },
+});
+
+// ============================================
+// CEO V2 COORDINATION SCHEMA
+// ============================================
+
+const coordinationSchema = z.object({
+  agentAssessments: z.array(
+    z.object({
+      agent: z.string().describe("Agent name (pm, cto, growth, etc.)"),
+      status: z
+        .enum(["healthy", "idle", "blocked", "needs_attention"])
+        .describe("Agent operational status"),
+      recommendation: z.string().describe("Action to take for this agent"),
+    })
+  ),
+  crossAgentConflicts: z.array(
+    z.object({
+      agents: z.array(z.string()).describe("Conflicting agents"),
+      description: z.string().describe("Nature of the conflict"),
+      resolution: z.string().describe("Suggested resolution"),
+    })
+  ),
+  priorityOverrides: z.array(
+    z.object({
+      taskId: z.string().describe("Task to reprioritize"),
+      newPriority: z
+        .enum(["critical", "high", "medium", "low"])
+        .describe("New priority"),
+      reason: z.string().describe("Why reprioritize"),
+    })
+  ),
+  proactiveAlerts: z.array(
+    z.object({
+      title: z.string().describe("Alert title"),
+      severity: z
+        .enum(["info", "warning", "critical"])
+        .describe("Alert severity"),
+      description: z.string().describe("Alert details"),
+    })
+  ),
+});
+
+// ============================================
+// CEO V2 COORDINATION LOOP
+// ============================================
+
+/**
+ * Run the CEO coordination loop.
+ * Checks all agent statuses, detects conflicts, identifies idle agents,
+ * and generates proactive alerts. Runs every 30 minutes.
+ */
+export const runCEOCoordination = internalAction({
+  args: { organizationId: v.id("organizations") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    try {
+      // 1. Get agent activity overview
+      const ceoContext = await ctx.runQuery(
+        internal.autopilot.agents.ceo.getCEOContext,
+        { organizationId: args.organizationId }
+      );
+
+      // 2. Get pending tasks by agent
+      const pendingTasks = await ctx.runQuery(
+        internal.autopilot.tasks.getTasksByOrg,
+        {
+          organizationId: args.organizationId,
+          status: "pending",
+        }
+      );
+      const inProgressTasks = await ctx.runQuery(
+        internal.autopilot.tasks.getTasksByOrg,
+        {
+          organizationId: args.organizationId,
+          status: "in_progress",
+        }
+      );
+
+      // 3. Build coordination context
+      const agentActivity = Object.entries(ceoContext.activityByAgent)
+        .map(([agent, count]) => `${agent}: ${count} actions in last 7d`)
+        .join("\n");
+
+      const pendingByAgent: Record<string, number> = {};
+      for (const task of pendingTasks) {
+        pendingByAgent[task.assignedAgent] =
+          (pendingByAgent[task.assignedAgent] ?? 0) + 1;
+      }
+
+      const inProgressByAgent: Record<string, number> = {};
+      for (const task of inProgressTasks) {
+        inProgressByAgent[task.assignedAgent] =
+          (inProgressByAgent[task.assignedAgent] ?? 0) + 1;
+      }
+
+      const systemPrompt = `You are the CEO coordination engine analyzing the health and alignment of all AI agents in the system.
+
+Your job is to:
+1. Assess each active agent's operational status
+2. Detect conflicts between agents (duplicate work, contradictions)
+3. Identify idle agents that should be doing work
+4. Generate proactive alerts for emerging issues
+5. Suggest priority overrides when needed
+
+Be specific and actionable. Only flag real issues, not hypotheticals.`;
+
+      const prompt = `Analyze the current state of all agents and generate coordination directives.
+
+AGENT ACTIVITY (last 7 days):
+${agentActivity || "No recent activity"}
+
+PENDING TASKS BY AGENT:
+${
+  Object.entries(pendingByAgent)
+    .map(([a, c]) => `${a}: ${c} pending`)
+    .join("\n") || "None"
+}
+
+IN-PROGRESS TASKS BY AGENT:
+${
+  Object.entries(inProgressByAgent)
+    .map(([a, c]) => `${a}: ${c} in progress`)
+    .join("\n") || "None"
+}
+
+TASK STATS:
+${formatTaskStats(ceoContext.taskStats)}
+
+PENDING INBOX ITEMS: ${ceoContext.pendingInboxCount}
+
+Assess each agent, identify conflicts, suggest priority changes, and raise alerts.`;
+
+      const coordination = await generateObjectWithFallback({
+        models: CEO_MODELS,
+        schema: coordinationSchema,
+        systemPrompt,
+        prompt,
+        temperature: 0,
+      });
+
+      // 4. Apply priority overrides to tasks
+      for (const override of coordination.priorityOverrides) {
+        try {
+          await ctx.runMutation(internal.autopilot.tasks.updateTaskPriority, {
+            taskId: override.taskId as Id<"autopilotTasks">,
+            priority: override.newPriority as
+              | "critical"
+              | "high"
+              | "medium"
+              | "low",
+          });
+          await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+            organizationId: args.organizationId,
+            agent: "orchestrator",
+            level: "action",
+            message: `CEO reprioritized task to ${override.newPriority}: ${override.reason}`,
+          });
+        } catch {
+          // Task may no longer exist — skip
+        }
+      }
+
+      // 5. Create alerts for critical issues
+      for (const alert of coordination.proactiveAlerts) {
+        if (alert.severity !== "info") {
+          await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+            organizationId: args.organizationId,
+            type: "ceo_report",
+            title: `CEO Alert: ${alert.title}`,
+            summary: alert.description,
+            sourceAgent: "orchestrator",
+            priority: alert.severity === "critical" ? "critical" : "high",
+          });
+        }
+      }
+
+      // 6. Log coordination results
+      const blockedAgents = coordination.agentAssessments.filter(
+        (a) => a.status === "blocked" || a.status === "needs_attention"
+      );
+
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: args.organizationId,
+        agent: "orchestrator",
+        level: blockedAgents.length > 0 ? "warning" : "success",
+        message: `CEO coordination: ${coordination.agentAssessments.length} agents assessed, ${coordination.crossAgentConflicts.length} conflicts, ${coordination.proactiveAlerts.length} alerts`,
+        details: JSON.stringify({
+          blockedAgents: blockedAgents.map((a) => a.agent),
+          conflicts: coordination.crossAgentConflicts.length,
+          priorityOverrides: coordination.priorityOverrides.length,
+        }),
+      });
+
+      return null;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: args.organizationId,
+        agent: "orchestrator",
+        level: "error",
+        message: `CEO coordination failed: ${errorMessage}`,
+      });
+
+      return null;
     }
   },
 });

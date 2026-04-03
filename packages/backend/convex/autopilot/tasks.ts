@@ -290,6 +290,23 @@ export const updateTaskStatus = internalMutation({
 });
 
 /**
+ * Update a task's priority (used by CEO coordination).
+ */
+export const updateTaskPriority = internalMutation({
+  args: {
+    taskId: v.id("autopilotTasks"),
+    priority: autopilotTaskPriority,
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      return;
+    }
+    await ctx.db.patch(args.taskId, { priority: args.priority });
+  },
+});
+
+/**
  * Create a coding run record.
  */
 export const createRun = internalMutation({
