@@ -191,4 +191,130 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
       return `Recent Activity:\n${lines.join("\n")}`;
     },
   }),
+
+  approveInboxItem: createTool<
+    { itemId: string; decision: "approved" | "rejected" },
+    string,
+    CeoCtx
+  >({
+    description:
+      "Approve or reject a pending inbox item. Use when items need human decision.",
+    inputSchema: z.object({
+      itemId: z.string().describe("The inbox item ID to act on"),
+      decision: z
+        .enum(["approved", "rejected"])
+        .describe("Approve or reject the item"),
+    }),
+    execute: async (ctx, input) => {
+      await ctx.runMutation(internal.autopilot.inbox.updateInboxItemStatus, {
+        itemId: input.itemId as Id<"autopilotInboxItems">,
+        status: input.decision,
+      });
+      return `Inbox item ${input.decision}.`;
+    },
+  }),
+
+  toggleAgent: createTool<{ agent: string; enabled: boolean }, string, CeoCtx>({
+    description: "Enable or disable a specific agent.",
+    inputSchema: z.object({
+      agent: z
+        .enum([
+          "pm",
+          "cto",
+          "dev",
+          "security",
+          "architect",
+          "growth",
+          "support",
+          "analytics",
+          "docs",
+          "qa",
+          "ops",
+          "sales",
+        ])
+        .describe("Agent to toggle"),
+      enabled: z.boolean().describe("Enable (true) or disable (false)"),
+    }),
+    execute: async (ctx, input) => {
+      const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
+        organizationId,
+      });
+      if (!config) {
+        return "Error: Autopilot not configured.";
+      }
+      const field = `${input.agent}Enabled`;
+      await ctx.runMutation(internal.autopilot.config.updateConfig, {
+        configId: config._id,
+        [field]: input.enabled,
+      });
+      return `${input.agent} agent ${input.enabled ? "enabled" : "disabled"}.`;
+    },
+  }),
+
+  setAutonomyMode: createTool<
+    { mode: "supervised" | "full_auto" | "stopped" },
+    string,
+    CeoCtx
+  >({
+    description:
+      "Change the autonomy mode. 'supervised' requires approval for external actions, 'full_auto' executes with delay, 'stopped' pauses everything.",
+    inputSchema: z.object({
+      mode: z
+        .enum(["supervised", "full_auto", "stopped"])
+        .describe("The autonomy mode to set"),
+    }),
+    execute: async (ctx, input) => {
+      await ctx.runMutation(internal.autopilot.autonomy.setAutonomyMode, {
+        organizationId,
+        mode: input.mode,
+      });
+      return `Autonomy mode set to ${input.mode}.`;
+    },
+  }),
+
+  getPendingInbox: createTool<Record<string, never>, string, CeoCtx>({
+    description:
+      "Get pending inbox items that need approval. Shows items waiting for human review.",
+    inputSchema: z.object({}),
+    execute: async (ctx) => {
+      const items = await ctx.runQuery(
+        internal.autopilot.inbox.getPendingInboxItems,
+        { organizationId }
+      );
+      if (items.length === 0) {
+        return "No pending inbox items.";
+      }
+      const lines = items.map(
+        (item: {
+          type: string;
+          title: string;
+          priority: string;
+          sourceAgent: string;
+          createdAt: number;
+          _id: string;
+        }) => {
+          const ago = Math.round((Date.now() - item.createdAt) / 60_000);
+          return `- [${item.priority}] ${item.title} (${item.type}, from ${item.sourceAgent}, ${ago}m ago) ID: ${item._id}`;
+        }
+      );
+      return `Pending Inbox (${items.length}):\n${lines.join("\n")}`;
+    },
+  }),
+
+  getCosts: createTool<Record<string, never>, string, CeoCtx>({
+    description: "Get current cost usage, limits, and task quotas.",
+    inputSchema: z.object({}),
+    execute: async (ctx) => {
+      const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
+        organizationId,
+      });
+      if (!config) {
+        return "Autopilot not configured.";
+      }
+      const costLine = config.dailyCostCapUsd
+        ? `$${config.costUsedTodayUsd ?? 0} / $${config.dailyCostCapUsd}`
+        : `$${config.costUsedTodayUsd ?? 0} (no cap)`;
+      return `Cost today: ${costLine} | Tasks: ${config.tasksUsedToday}/${config.maxTasksPerDay}`;
+    },
+  }),
 });

@@ -101,6 +101,7 @@ Non-negotiable. Every file, every commit.
 - Props drilling > 2 levels max → Zustand store
 - No pragma suppression (`"use no memo"`, `@ts-nocheck`) — fix the underlying issue
 - No DOM manipulation in React (`document.createElement`, `element.style`) — use React elements, portals, refs. Exception: TipTap/ProseMirror extensions and high-frequency animation (see Performance section).
+- No manually tracked state that can be derived — compute from the source of truth (e.g., status from a stream, counts from a list, flags from actual data). Redundant state drifts out of sync; derived values are always correct.
 - No `style.cssText` strings — Tailwind/`cn()` only
 - No patch files (`patches/`) — wrap, fork, or find another approach
 - No new deps without justification — use existing packages or native APIs first

@@ -25,6 +25,24 @@ import { generateObjectWithFallback } from "./shared";
 // SCHEMA & TYPES
 // ============================================
 
+const VALID_AGENTS = [
+  "pm",
+  "cto",
+  "dev",
+  "security",
+  "architect",
+  "growth",
+  "orchestrator",
+  "support",
+  "analytics",
+  "docs",
+  "qa",
+  "ops",
+  "sales",
+] as const;
+
+// ============================================
+
 export const pmAnalysisSchema = z.object({
   tasks: z.array(
     z.object({
@@ -36,8 +54,10 @@ export const pmAnalysisSchema = z.object({
         .enum(["critical", "high", "medium", "low"])
         .describe("Task priority level"),
       assignedAgent: z
-        .enum(["cto", "dev", "security", "architect", "growth"])
-        .describe("Agent responsible for this task"),
+        .enum(VALID_AGENTS)
+        .describe(
+          "Agent responsible for this task — must be from the enabled agents list"
+        ),
       acceptanceCriteria: z
         .array(z.string())
         .describe("Clear acceptance criteria for task completion"),
@@ -225,19 +245,38 @@ export const runPMAnalysis = internalAction({
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
-      // 1. Query feedback items
+      // 1. Query enabled agents to constrain task assignment
+      const enabledAgents = await ctx.runQuery(
+        internal.autopilot.config.getEnabledAgents,
+        { organizationId: args.organizationId }
+      );
+
+      // Filter out "pm" — PM doesn't assign tasks to itself
+      const assignableAgents = enabledAgents.filter((a) => a !== "pm");
+
+      if (assignableAgents.length === 0) {
+        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+          organizationId: args.organizationId,
+          agent: "pm",
+          level: "warning",
+          message: "PM analysis skipped — no assignable agents are enabled",
+        });
+        return null;
+      }
+
+      // 2. Query feedback items
       const feedbackItems = await ctx.runQuery(
         internal.autopilot.agents.pm.getFeedbackForOrganization,
         { organizationId: args.organizationId }
       );
 
-      // 2. Query existing tasks to avoid duplicates
+      // 3. Query existing tasks to avoid duplicates
       const existingTasks = await ctx.runQuery(
         internal.autopilot.agents.pm.getExistingTasksForOrganization,
         { organizationId: args.organizationId }
       );
 
-      // 3. Query intelligence insights
+      // 4. Query intelligence insights
       const intelligenceInsights = await ctx.runQuery(
         internal.autopilot.agents.pm.getIntelligenceInsights,
         { organizationId: args.organizationId }
@@ -249,10 +288,10 @@ export const runPMAnalysis = internalAction({
         agent: "pm",
         level: "action",
         message: "Starting PM analysis",
-        details: `Feedback items: ${feedbackItems.length} | Existing tasks: ${existingTasks.length}`,
+        details: `Feedback items: ${feedbackItems.length} | Existing tasks: ${existingTasks.length} | Assignable agents: ${assignableAgents.join(", ")}`,
       });
 
-      // 4. Build context string for the LLM
+      // 5. Build context string for the LLM
       const feedbackContext = feedbackItems
         .map(
           (f: {
@@ -290,6 +329,9 @@ export const runPMAnalysis = internalAction({
 
       const userPrompt = `Analyze this feedback and create actionable tasks for the engineering team.
 
+ENABLED AGENTS (you MUST only assign tasks to these agents):
+${assignableAgents.join(", ")}
+
 FEEDBACK ITEMS:
 ${feedbackContext || "(none)"}
 
@@ -303,11 +345,11 @@ Generate tasks that address the highest-priority feedback items and intelligence
 For each task, provide:
 - A clear title and description
 - Priority (critical/high/medium/low)
-- Assigned agent (cto/dev/security/architect/growth)
+- Assigned agent (MUST be one of: ${assignableAgents.join(", ")})
 - 2-3 acceptance criteria
 - Reasoning for the task and priority`;
 
-      // 5. Call LLM with fallback chain
+      // 6. Call LLM with fallback chain
       const pmOutput = await generateObjectWithFallback({
         models: PM_MODELS,
         schema: pmAnalysisSchema,
@@ -315,9 +357,21 @@ For each task, provide:
         prompt: userPrompt,
       });
 
-      // 6. Create tasks from the LLM output
+      // 7. Create tasks from the LLM output, validating agent assignment
+      const assignableSet = new Set(assignableAgents);
       let createdCount = 0;
       for (const task of pmOutput.tasks) {
+        // Validate agent is enabled — skip if LLM assigned to a disabled agent
+        if (!assignableSet.has(task.assignedAgent)) {
+          await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+            organizationId: args.organizationId,
+            agent: "pm",
+            level: "warning",
+            message: `Skipped task "${task.title}" — assigned to disabled agent "${task.assignedAgent}"`,
+          });
+          continue;
+        }
+
         // Check if a similar task already exists
         const existingTask = existingTasks.find(
           (t: { title: string; status: string }) =>
@@ -365,7 +419,7 @@ For each task, provide:
         });
       }
 
-      // 7. Log analysis completion
+      // 8. Log analysis completion
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
         agent: "pm",

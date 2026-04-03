@@ -7,10 +7,12 @@
 
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import {
   internalAction,
   internalMutation,
   internalQuery,
+  type QueryCtx,
 } from "../_generated/server";
 import { autonomyLevel, autonomyMode, codingAdapterType } from "./tableFields";
 
@@ -174,6 +176,101 @@ export const isAgentEnabled = internalQuery({
       default:
         return true;
     }
+  },
+});
+
+/**
+ * All agent names and their corresponding config fields.
+ */
+const AGENT_CONFIG_FIELDS = [
+  { name: "pm", field: "pmEnabled" },
+  { name: "cto", field: "ctoEnabled" },
+  { name: "dev", field: "devEnabled" },
+  { name: "security", field: "securityEnabled" },
+  { name: "architect", field: "architectEnabled" },
+  { name: "growth", field: "growthEnabled" },
+  { name: "support", field: "supportEnabled" },
+  { name: "analytics", field: "analyticsEnabled" },
+  { name: "docs", field: "docsEnabled" },
+  { name: "qa", field: "qaEnabled" },
+  { name: "ops", field: "opsEnabled" },
+  { name: "sales", field: "salesEnabled" },
+] as const;
+
+async function fetchEnabledAgents(
+  ctx: { db: QueryCtx["db"] },
+  organizationId: Id<"organizations">
+): Promise<string[]> {
+  const config = await ctx.db
+    .query("autopilotConfig")
+    .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+    .unique();
+
+  if (!config?.enabled) {
+    return [];
+  }
+
+  return AGENT_CONFIG_FIELDS.filter(
+    ({ field }) =>
+      (config[field as keyof typeof config] as boolean | undefined) !== false
+  ).map(({ name }) => name);
+}
+
+/**
+ * Get the list of currently enabled agent names for an org.
+ * Returns an empty array if autopilot is disabled.
+ */
+export const getEnabledAgents = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  returns: v.array(v.string()),
+  handler: async (ctx, args) => {
+    return await fetchEnabledAgents(ctx, args.organizationId);
+  },
+});
+
+/**
+ * Get orphaned tasks — tasks assigned to currently disabled agents.
+ */
+export const getOrphanedTasks = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  returns: v.array(
+    v.object({
+      _id: v.id("autopilotTasks"),
+      title: v.string(),
+      assignedAgent: v.string(),
+      status: v.string(),
+      createdAt: v.number(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const enabledAgents = await fetchEnabledAgents(ctx, args.organizationId);
+
+    const pendingTasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "pending")
+      )
+      .collect();
+
+    const inProgressTasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "in_progress")
+      )
+      .collect();
+
+    const allActiveTasks = [...pendingTasks, ...inProgressTasks];
+    const enabledSet = new Set(enabledAgents);
+
+    return allActiveTasks
+      .filter((t) => !enabledSet.has(t.assignedAgent))
+      .map((t) => ({
+        _id: t._id,
+        title: t.title,
+        assignedAgent: t.assignedAgent,
+        status: t.status,
+        createdAt: t.createdAt,
+      }));
   },
 });
 

@@ -5,9 +5,12 @@ import { useQuery } from "convex/react";
 import {
   AlertTriangleIcon,
   CheckCircle2Icon,
+  ChevronDownIcon,
   OctagonXIcon,
   PauseCircleIcon,
 } from "lucide-react";
+import { useState } from "react";
+
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +46,7 @@ export function HealthBanner() {
   const health = useQuery(api.autopilot.health.getSystemHealth, {
     organizationId,
   });
+  const [expanded, setExpanded] = useState(false);
 
   if (!health || health.status === "healthy") {
     return null;
@@ -50,30 +54,48 @@ export function HealthBanner() {
 
   const config = STATUS_CONFIG[health.status];
   const Icon = config.icon;
-  const topIssue = health.issues[0];
+  const hasMultipleIssues = health.issues.length > 1;
+  const visibleIssues = expanded ? health.issues : health.issues.slice(0, 1);
 
   return (
-    <div
-      className={cn(
-        "mb-4 flex items-start gap-3 rounded-lg border p-3",
-        config.bg
-      )}
-    >
-      <Icon className={cn("mt-0.5 size-4 shrink-0", config.text)} />
-      <div className="min-w-0 flex-1">
-        <p className={cn("font-medium text-sm", config.text)}>{config.label}</p>
-        {topIssue && (
-          <p className="mt-0.5 text-muted-foreground text-xs">
-            {topIssue.message}
-            {topIssue.resolution ? ` — ${topIssue.resolution}` : ""}
+    <div className={cn("mb-4 rounded-lg border p-3", config.bg)}>
+      <button
+        className="flex w-full items-start gap-3 text-left"
+        disabled={!hasMultipleIssues}
+        onClick={() => setExpanded((prev) => !prev)}
+        type="button"
+      >
+        <Icon className={cn("mt-0.5 size-4 shrink-0", config.text)} />
+        <div className="min-w-0 flex-1">
+          <p className={cn("font-medium text-sm", config.text)}>
+            {config.label}
+            {hasMultipleIssues && (
+              <span className="ml-1 text-muted-foreground/70 text-xs">
+                ({health.issues.length} issues)
+              </span>
+            )}
           </p>
+        </div>
+        {hasMultipleIssues && (
+          <ChevronDownIcon
+            className={cn(
+              "mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform",
+              expanded && "rotate-180"
+            )}
+          />
         )}
-        {health.issues.length > 1 && (
-          <p className="mt-1 text-muted-foreground/70 text-xs">
-            +{health.issues.length - 1} more issue
-            {health.issues.length > 2 ? "s" : ""}
-          </p>
-        )}
+      </button>
+      <div className="mt-2 space-y-1.5 pl-7">
+        {visibleIssues.map((issue) => (
+          <div className="text-muted-foreground text-xs" key={issue.message}>
+            <span>{issue.message}</span>
+            {issue.resolution && (
+              <span className="ml-1 text-muted-foreground/60">
+                — {issue.resolution}
+              </span>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

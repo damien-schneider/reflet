@@ -198,6 +198,33 @@ function checkTaskThrottle(
   }
 }
 
+function checkOrphanedTasks(orphanedCount: number, state: HealthState): void {
+  if (orphanedCount > 0) {
+    degradeTo(state, "degraded");
+    state.issues.push({
+      id: "orphaned_tasks",
+      severity: "warning",
+      message: `${orphanedCount} task(s) assigned to disabled agents`,
+      resolution: "Enable the agents or cancel these tasks from the Tasks page",
+    });
+  }
+}
+
+function checkCredentials(
+  hasInvalidCredentials: boolean,
+  state: HealthState
+): void {
+  if (hasInvalidCredentials) {
+    degradeTo(state, "degraded");
+    state.issues.push({
+      id: "credentials_invalid",
+      severity: "warning",
+      message: "Adapter credentials are invalid or unvalidated",
+      resolution: "Update credentials in Settings",
+    });
+  }
+}
+
 /**
  * Check the overall health of the autopilot system for an organization.
  */
@@ -289,6 +316,38 @@ export const getSystemHealth = query({
     checkErrors(recentLogs.filter((l) => l.level === "error").length, state);
     checkCostCap(config, state);
     checkTaskThrottle(config, state);
+
+    // Check for orphaned tasks (assigned to disabled agents)
+    const enabledAgentNames = AGENT_FIELDS.filter(
+      (field) => (config as unknown as Record<string, unknown>)[field] !== false
+    ).map((field) => field.replace("Enabled", ""));
+    const enabledSet = new Set(enabledAgentNames);
+
+    const pendingTasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "pending")
+      )
+      .collect();
+
+    const orphanedCount = pendingTasks.filter(
+      (t) => !enabledSet.has(t.assignedAgent)
+    ).length;
+    checkOrphanedTasks(orphanedCount, state);
+
+    // Check adapter credentials validity
+    const credentials = await ctx.db
+      .query("autopilotAdapterCredentials")
+      .withIndex("by_org_adapter", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("adapter", config.adapter)
+      )
+      .unique();
+
+    const hasInvalidCreds =
+      credentials !== null && credentials.isValid === false;
+    checkCredentials(hasInvalidCreds, state);
 
     return {
       status: state.status,

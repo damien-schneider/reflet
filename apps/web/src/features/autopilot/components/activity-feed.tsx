@@ -17,16 +17,22 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-const AGENT_COLORS = {
+const AGENT_COLORS: Record<string, string> = {
   pm: "bg-blue-500/10 text-blue-500",
   cto: "bg-purple-500/10 text-purple-500",
   dev: "bg-green-500/10 text-green-500",
   security: "bg-red-500/10 text-red-500",
   architect: "bg-amber-500/10 text-amber-500",
   growth: "bg-pink-500/10 text-pink-500",
+  support: "bg-teal-500/10 text-teal-500",
+  analytics: "bg-indigo-500/10 text-indigo-500",
+  docs: "bg-emerald-500/10 text-emerald-500",
+  qa: "bg-violet-500/10 text-violet-500",
+  ops: "bg-orange-500/10 text-orange-500",
+  sales: "bg-rose-500/10 text-rose-500",
   orchestrator: "bg-cyan-500/10 text-cyan-500",
   system: "bg-muted-foreground/10 text-muted-foreground",
-} as const;
+};
 
 const LEVEL_ICONS = {
   info: IconInfoCircle,
@@ -75,9 +81,7 @@ export function ActivityFeed({
         const LevelIcon =
           LEVEL_ICONS[entry.level as keyof typeof LEVEL_ICONS] ??
           IconInfoCircle;
-        const agentColor =
-          AGENT_COLORS[entry.agent as keyof typeof AGENT_COLORS] ??
-          AGENT_COLORS.system;
+        const agentColor = AGENT_COLORS[entry.agent] ?? AGENT_COLORS.system;
 
         return (
           <div className="relative rounded-lg bg-card p-3" key={entry._id}>
