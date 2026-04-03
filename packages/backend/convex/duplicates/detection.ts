@@ -64,7 +64,7 @@ export const findSimilarFeedback = internalAction({
 
     const candidateDescriptions = candidates
       .map(
-        (c, i) =>
+        (c: { _id: string; title: string; description: string }, i: number) =>
           `[${i}] ID: ${c._id}\nTitle: ${c.title}\nDescription: ${c.description.slice(0, 200)}`
       )
       .join("\n\n");

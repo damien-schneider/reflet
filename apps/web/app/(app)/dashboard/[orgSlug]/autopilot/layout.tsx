@@ -3,22 +3,21 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useAtomValue } from "jotai";
-import { use } from "react";
+import { usePathname } from "next/navigation";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { H2, Muted } from "@/components/ui/typography";
+import { H1, H2, Muted } from "@/components/ui/typography";
 import { AutonomyToggle } from "@/features/autopilot/components/autonomy-toggle";
 import { AutopilotContext } from "@/features/autopilot/components/autopilot-context";
 import { AutopilotNav } from "@/features/autopilot/components/autopilot-nav";
 import { CeoChatPanel } from "@/features/autopilot/components/ceo-chat/ceo-chat-panel";
 import { CeoChatToggle } from "@/features/autopilot/components/ceo-chat/ceo-chat-toggle";
 import { EmergencyStopButton } from "@/features/autopilot/components/emergency-stop-button";
-import { cn } from "@/lib/utils";
+import { HealthBanner } from "@/features/autopilot/components/health-banner";
+import { SetupGate } from "@/features/autopilot/components/setup-gate";
 import { ceoChatOpenAtom } from "@/store/ui";
-
-const CEO_CHAT_WIDTH = "w-96";
-const CEO_CHAT_CONTENT_PADDING = "pr-96";
 
 export default function AutopilotLayout({
   children,
@@ -29,6 +28,59 @@ export default function AutopilotLayout({
 }) {
   const { orgSlug } = use(params);
   const isChatOpen = useAtomValue(ceoChatOpenAtom);
+  const pathname = usePathname();
+
+  const panelRef = useRef<HTMLElement>(null);
+  const isResizing = useRef(false);
+  const [panelWidth, setPanelWidth] = useState<number | null>(null);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) {
+        return;
+      }
+      const minWidth =
+        Number.parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            "--ceo-chat-min-width"
+          )
+        ) * 16;
+      const maxWidth =
+        Number.parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue(
+            "--ceo-chat-max-width"
+          )
+        ) * 16;
+      const newWidth = Math.min(
+        Math.max(window.innerWidth - e.clientX, minWidth),
+        maxWidth
+      );
+      setPanelWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      if (!isResizing.current) {
+        return;
+      }
+      isResizing.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
 
   const org = useQuery(api.organizations.queries.getBySlug, {
     slug: orgSlug,
@@ -95,26 +147,29 @@ export default function AutopilotLayout({
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
   const baseUrl = `/dashboard/${orgSlug}/autopilot`;
+  const isSettingsPage = pathname.endsWith("/settings");
+  const needsSetup = config !== undefined && !config?.enabled;
+
+  const chatWidthStyle = panelWidth ? `${String(panelWidth)}px` : undefined;
 
   return (
     <AutopilotContext value={{ organizationId: org._id, isAdmin, orgSlug }}>
       <div
-        className={cn(
-          "transition-[padding] duration-300 ease-in-out",
-          isChatOpen && CEO_CHAT_CONTENT_PADDING
-        )}
+        className="transition-[padding] duration-300 ease-in-out"
+        style={{
+          paddingRight: isChatOpen
+            ? `calc(${chatWidthStyle ?? "var(--ceo-chat-width)"} + 1.5rem)`
+            : undefined,
+        }}
       >
         <div className="mx-auto max-w-6xl px-4 pt-12 pb-8">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h1 className="font-bold text-2xl">Autopilot</h1>
-              <p className="text-muted-foreground text-sm">
-                AI-powered product team for your codebase
-              </p>
+              <H1 variant="page">Autopilot</H1>
+              <Muted>AI-powered product team for your codebase</Muted>
             </div>
             <div className="flex items-center gap-3">
               <AutonomyToggle />
-              <CeoChatToggle />
               {config?.enabled && <EmergencyStopButton />}
             </div>
           </div>
@@ -130,18 +185,32 @@ export default function AutopilotLayout({
               <AutopilotNav baseUrl={baseUrl} variant="sidebar" />
             </div>
 
-            <div className="min-w-0 flex-1">{children}</div>
+            <div className="min-w-0 flex-1">
+              <HealthBanner />
+              {needsSetup && !isSettingsPage ? <SetupGate /> : children}
+            </div>
           </div>
         </div>
       </div>
 
+      <CeoChatToggle />
+
       {isChatOpen && (
         <aside
-          className={cn(
-            "fixed inset-y-0 right-0 z-40 border-border border-l bg-background",
-            CEO_CHAT_WIDTH
-          )}
+          className="fixed top-3 right-3 bottom-3 z-40 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
+          ref={panelRef}
+          style={{
+            width: chatWidthStyle ?? "var(--ceo-chat-width)",
+            minWidth: "var(--ceo-chat-min-width)",
+            maxWidth: "var(--ceo-chat-max-width)",
+          }}
         >
+          <button
+            aria-label="Resize chat panel"
+            className="absolute inset-y-0 left-0 z-50 w-1.5 cursor-col-resize border-none bg-transparent p-0 transition-colors hover:bg-primary/10"
+            onMouseDown={handleMouseDown}
+            type="button"
+          />
           <CeoChatPanel organizationId={org._id} />
         </aside>
       )}

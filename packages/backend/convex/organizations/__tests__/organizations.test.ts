@@ -111,7 +111,7 @@ describe("Organization slug update", () => {
       return await ctx.db.get(orgId);
     });
 
-    expect(org?.slug).toBe("new-slug");
+    expect((org as { slug: string } | null)?.slug).toBe("new-slug");
   });
 
   test("should reject changing slug to one that is already taken", async () => {
@@ -167,6 +167,6 @@ describe("Organization slug update", () => {
       return await ctx.db.get(orgId);
     });
 
-    expect(org?.slug).toBe("my-org");
+    expect((org as { slug: string } | null)?.slug).toBe("my-org");
   });
 });

@@ -17,6 +17,7 @@ import { z } from "zod";
 import { internal } from "../../_generated/api";
 import { internalAction } from "../../_generated/server";
 import { MODELS } from "./models";
+import { buildAgentPrompt, SECURITY_SYSTEM_PROMPT } from "./prompts";
 import { generateObjectWithFallback } from "./shared";
 
 const SECURITY_MODELS = [MODELS.SMART, MODELS.FAST] as const;
@@ -25,7 +26,7 @@ const SECURITY_MODELS = [MODELS.SMART, MODELS.FAST] as const;
 // SCHEMAS
 // ============================================
 
-const securityFindingSchema = z.object({
+export const securityFindingSchema = z.object({
   severity: z.enum(["critical", "high", "medium", "low", "info"]),
   category: z.enum([
     "dependency",
@@ -38,12 +39,12 @@ const securityFindingSchema = z.object({
   ]),
   title: z.string(),
   description: z.string(),
-  filePath: z.optional(z.string()),
+  filePath: z.string().default(""),
   recommendation: z.string(),
   autoFixable: z.boolean(),
 });
 
-const securityScanSchema = z.object({
+export const securityScanSchema = z.object({
   findings: z.array(securityFindingSchema),
   summary: z.string(),
   overallRiskLevel: z.enum(["low", "medium", "high", "critical"]),
@@ -184,19 +185,28 @@ ${context}
 Provide findings in the specified schema. Include dependency audit details.`;
 
       // Call AI with fallback model chain
-      const scanResult = await generateObjectWithFallback({
-        models: SECURITY_MODELS,
-        prompt: userPrompt,
-        schema: securityScanSchema,
-        systemPrompt: "",
-      });
+      const scanResult: z.infer<typeof securityScanSchema> =
+        await generateObjectWithFallback({
+          models: SECURITY_MODELS,
+          prompt: userPrompt,
+          schema: securityScanSchema,
+          systemPrompt: buildAgentPrompt(
+            SECURITY_SYSTEM_PROMPT,
+            await ctx.runQuery(
+              internal.autopilot.feedback.buildFeedbackPromptContext,
+              { organizationId: args.organizationId, agent: "security" }
+            ),
+            ""
+          ),
+        });
 
       // Process findings and create tasks/alerts
+      type Finding = z.infer<typeof securityFindingSchema>;
       const autoFixableCount = scanResult.findings.filter(
-        (f) => f.autoFixable
+        (f: Finding) => f.autoFixable
       ).length;
       const criticalCount = scanResult.findings.filter(
-        (f) => f.severity === "critical"
+        (f: Finding) => f.severity === "critical"
       ).length;
 
       // Create autopilot tasks for auto-fixable issues

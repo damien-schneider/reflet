@@ -626,6 +626,76 @@ export const autopilotTables = {
     .index("by_org_thread", ["organizationId", "threadId"]),
 
   /**
+   * Feedback log for tracking user approvals/rejections of inbox items.
+   * Agents query this to adapt behavior over time.
+   */
+  autopilotFeedbackLog: defineTable({
+    organizationId: v.id("organizations"),
+    inboxItemId: v.id("autopilotInboxItems"),
+    agent: activityLogAgent,
+    itemType: inboxItemType,
+    decision: v.union(v.literal("approved"), v.literal("rejected")),
+    rejectionReason: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_org_agent", ["organizationId", "agent"]),
+
+  /**
+   * Security findings from automated scans.
+   * Tracks vulnerabilities through discovery → fix lifecycle.
+   */
+  autopilotSecurityFindings: defineTable({
+    organizationId: v.id("organizations"),
+    severity: v.union(
+      v.literal("critical"),
+      v.literal("high"),
+      v.literal("medium"),
+      v.literal("low"),
+      v.literal("info")
+    ),
+    status: v.union(
+      v.literal("open"),
+      v.literal("fixing"),
+      v.literal("fixed"),
+      v.literal("dismissed")
+    ),
+    title: v.string(),
+    description: v.string(),
+    category: v.string(),
+    filePath: v.optional(v.string()),
+    lineNumber: v.optional(v.number()),
+    recommendation: v.optional(v.string()),
+    autoFixable: v.optional(v.boolean()),
+    scanId: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_status", ["organizationId", "status"]),
+
+  /**
+   * Support conversations managed by the Support agent.
+   * Tracks conversations through triage → reply → resolution lifecycle.
+   */
+  autopilotSupportConversations: defineTable({
+    organizationId: v.id("organizations"),
+    subject: v.optional(v.string()),
+    lastMessage: v.optional(v.string()),
+    userEmail: v.optional(v.string()),
+    agentDraftReply: v.optional(v.string()),
+    status: v.union(
+      v.literal("new"),
+      v.literal("triaged"),
+      v.literal("drafted"),
+      v.literal("replied"),
+      v.literal("escalated"),
+      v.literal("resolved")
+    ),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_status", ["organizationId", "status"]),
+
+  /**
    * Agent performance metrics — tracks effectiveness over time.
    */
   autopilotAgentMetrics: defineTable({

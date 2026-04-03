@@ -12,13 +12,13 @@ export function CeoChatToggle() {
   return (
     <Button
       aria-label={isOpen ? "Close CEO chat" : "Open CEO chat"}
-      className="gap-1.5"
+      className="fixed right-6 bottom-6 z-50 size-14 gap-1.5 rounded-full shadow-lg"
       onClick={() => setIsOpen((prev) => !prev)}
-      size="sm"
+      size="icon"
       variant={isOpen ? "default" : "outline"}
     >
-      <IconMessageChatbot className="size-4" />
-      <span className="hidden sm:inline">CEO</span>
+      <IconMessageChatbot className="size-5" />
+      <span className="sr-only">CEO</span>
     </Button>
   );
 }

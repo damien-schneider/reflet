@@ -35,7 +35,7 @@ const severityToPriority = (
 // ZOD SCHEMAS
 // ============================================
 
-const triageResultSchema = z.object({
+export const triageResultSchema = z.object({
   conversations: z.array(
     z.object({
       conversationId: z.string(),
@@ -43,14 +43,14 @@ const triageResultSchema = z.object({
       severity: z.enum(["low", "medium", "high", "critical"]),
       suggestedReply: z.string(),
       shouldEscalate: z.boolean(),
-      escalationReason: z.optional(z.string()),
-      relatedFeature: z.optional(z.string()),
+      escalationReason: z.string().default(""),
+      relatedFeature: z.string().default(""),
     })
   ),
   summary: z.string(),
 });
 
-const shippedNotificationSchema = z.object({
+export const shippedNotificationSchema = z.object({
   notifications: z.array(
     z.object({
       feedbackTitle: z.string(),
@@ -66,9 +66,9 @@ const shippedNotificationSchema = z.object({
 
 interface TriagedConversation {
   conversationId: string;
-  escalationReason?: string;
+  escalationReason: string;
   intent: string;
-  relatedFeature?: string;
+  relatedFeature: string;
   severity: string;
   shouldEscalate: boolean;
   suggestedReply: string;
@@ -101,9 +101,9 @@ async function processTriagedConversation(
   await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
     organizationId,
     type: "support_escalation",
-    title: `Escalation: ${conv.intent} — ${conv.escalationReason ?? "Needs attention"}`,
+    title: `Escalation: ${conv.intent} — ${conv.escalationReason || "Needs attention"}`,
     summary:
-      conv.escalationReason ?? "Support conversation requires escalation",
+      conv.escalationReason || "Support conversation requires escalation",
     sourceAgent: "support",
     priority: severityToPriority(conv.severity),
     metadata: JSON.stringify({
@@ -121,7 +121,7 @@ async function processTriagedConversation(
   const label = conv.intent === "bug_report" ? "Bug" : "Feature request";
   await ctx.runMutation(internal.autopilot.tasks.createTask, {
     organizationId,
-    title: `[Support] ${label}: ${conv.relatedFeature ?? conv.conversationId}`,
+    title: `[Support] ${label}: ${conv.relatedFeature || conv.conversationId}`,
     description: conv.escalationReason ?? conv.suggestedReply,
     priority: conv.severity === "critical" ? "critical" : "high",
     assignedAgent: "pm",
@@ -161,7 +161,7 @@ export const runSupportTriage = internalAction({
 
     const conversationSummaries = conversations
       .map(
-        (c) =>
+        (c: { _id: string; subject?: string; lastMessage?: string }) =>
           `[${c._id}] ${c.subject ?? "No subject"}: ${c.lastMessage ?? "No messages"}`
       )
       .join("\n");
@@ -208,7 +208,10 @@ export const notifyFeatureShipped = internalAction({
     }
 
     const taskSummaries = recentlyCompleted
-      .map((t) => `- ${t.title}: ${t.description}`)
+      .map(
+        (t: { title: string; description: string }) =>
+          `- ${t.title}: ${t.description}`
+      )
       .join("\n");
 
     const notifications = await generateObjectWithFallback({

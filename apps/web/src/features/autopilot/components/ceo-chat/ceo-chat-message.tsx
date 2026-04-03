@@ -3,6 +3,7 @@
 import type { UIMessage } from "@convex-dev/agent";
 import { useSmoothText } from "@convex-dev/agent/react";
 import { IconSparkles, IconUser } from "@tabler/icons-react";
+import { Streamdown } from "streamdown";
 
 import { cn } from "@/lib/utils";
 
@@ -20,7 +21,7 @@ export function CeoChatMessage({ message }: { message: UIMessage }) {
     return (
       <div className="flex items-start justify-end gap-2">
         <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3.5 py-2 text-primary-foreground text-sm">
-          <p className="whitespace-pre-wrap break-words leading-relaxed">
+          <p className="wrap-break-word whitespace-pre-wrap leading-relaxed">
             {displayText}
           </p>
         </div>
@@ -44,9 +45,15 @@ export function CeoChatMessage({ message }: { message: UIMessage }) {
           )}
         >
           {displayText ? (
-            <p className="whitespace-pre-wrap break-words leading-relaxed">
-              {displayText}
-            </p>
+            <div className="ceo-chat-markdown wrap-break-word max-w-none leading-relaxed">
+              <Streamdown
+                caret={isStreaming ? "block" : undefined}
+                isAnimating={isStreaming}
+                mode={isStreaming ? "streaming" : "static"}
+              >
+                {displayText}
+              </Streamdown>
+            </div>
           ) : (
             <span className="inline-flex items-center gap-1">
               <span className="size-1 animate-pulse rounded-full bg-foreground/20" />

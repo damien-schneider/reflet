@@ -21,7 +21,7 @@ import { generateObjectWithFallback } from "./shared";
 // ZOD SCHEMA
 // ============================================
 
-const technicalSpecSchema = z.object({
+export const technicalSpecSchema = z.object({
   filesToModify: z.array(
     z.object({
       path: z.string().describe("Absolute file path relative to project root"),

@@ -260,12 +260,20 @@ describe("Auto-tagging database operations", () => {
     });
 
     expect(job).toBeDefined();
-    expect(job?.status).toBe("pending");
-    expect(job?.totalItems).toBe(10);
-    expect(job?.processedItems).toBe(0);
-    expect(job?.successfulItems).toBe(0);
-    expect(job?.failedItems).toBe(0);
-    expect(job?.errors).toEqual([]);
+    const typedJob = job as {
+      status: string;
+      totalItems: number;
+      processedItems: number;
+      successfulItems: number;
+      failedItems: number;
+      errors: unknown[];
+    } | null;
+    expect(typedJob?.status).toBe("pending");
+    expect(typedJob?.totalItems).toBe(10);
+    expect(typedJob?.processedItems).toBe(0);
+    expect(typedJob?.successfulItems).toBe(0);
+    expect(typedJob?.failedItems).toBe(0);
+    expect(typedJob?.errors).toEqual([]);
   });
 
   test("should update job progress correctly", async () => {

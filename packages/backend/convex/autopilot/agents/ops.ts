@@ -38,7 +38,7 @@ const OPS_MODELS = [MODELS.FREE, MODELS.FAST] as const;
 // ZOD SCHEMAS
 // ============================================
 
-const deploymentAnalysisSchema = z.object({
+export const deploymentAnalysisSchema = z.object({
   issues: z.array(
     z.object({
       type: z.enum([
@@ -56,7 +56,7 @@ const deploymentAnalysisSchema = z.object({
   summary: z.string(),
 });
 
-const reliabilityReportSchema = z.object({
+export const reliabilityReportSchema = z.object({
   summary: z.string(),
   uptimePercent: z.number(),
   highlights: z.array(
@@ -71,7 +71,7 @@ const reliabilityReportSchema = z.object({
       date: z.string(),
       description: z.string(),
       resolved: z.boolean(),
-      duration: z.optional(z.string()),
+      duration: z.string().default(""),
     })
   ),
   recommendations: z.array(z.string()),
@@ -101,7 +101,12 @@ export const monitorDeployments = internalAction({
       recentSnapshots.length > 0
         ? recentSnapshots
             .map(
-              (s) =>
+              (s: {
+                snapshotDate: string;
+                deployCount: number;
+                failedDeploys: number;
+                errorRate?: number;
+              }) =>
                 `${s.snapshotDate}: ${s.deployCount} deploys, ${s.failedDeploys} failed, ${s.errorRate ?? 0}% errors`
             )
             .join("\n")
@@ -229,7 +234,13 @@ export const generateReliabilityReport = internalAction({
 
     const snapshotData = snapshots
       .map(
-        (s) =>
+        (s: {
+          snapshotDate: string;
+          deployCount: number;
+          failedDeploys: number;
+          uptimePercent?: number;
+          incidentCount: number;
+        }) =>
           `${s.snapshotDate}: ${s.deployCount} deploys, ${s.failedDeploys} failed, ${s.uptimePercent ?? 100}% uptime, ${s.incidentCount} incidents`
       )
       .join("\n");

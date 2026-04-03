@@ -15,6 +15,7 @@ import { z } from "zod";
 import { internal } from "../../_generated/api";
 import { internalAction, internalQuery } from "../../_generated/server";
 import { MODELS } from "./models";
+import { ANALYTICS_SYSTEM_PROMPT, buildAgentPrompt } from "./prompts";
 import { generateObjectWithFallback } from "./shared";
 
 const ANALYTICS_MODELS = [MODELS.FREE, MODELS.FAST] as const;
@@ -23,7 +24,7 @@ const ANALYTICS_MODELS = [MODELS.FREE, MODELS.FAST] as const;
 // ZOD SCHEMAS
 // ============================================
 
-const anomalyDetectionSchema = z.object({
+export const anomalyDetectionSchema = z.object({
   anomalies: z.array(
     z.object({
       metric: z.string(),
@@ -37,7 +38,7 @@ const anomalyDetectionSchema = z.object({
   overallHealth: z.enum(["healthy", "warning", "critical"]),
 });
 
-const analyticsBriefSchema = z.object({
+export const analyticsBriefSchema = z.object({
   summary: z.string(),
   keyTrends: z.array(
     z.object({
@@ -99,14 +100,21 @@ export const captureAnalyticsSnapshot = internalAction({
     if (recentSnapshots.length >= 3) {
       const baselineAvg = {
         activeUsers:
-          recentSnapshots.reduce((sum, s) => sum + s.activeUsers, 0) /
-          recentSnapshots.length,
+          recentSnapshots.reduce(
+            (sum: number, s: { activeUsers: number }) => sum + s.activeUsers,
+            0
+          ) / recentSnapshots.length,
         newUsers:
-          recentSnapshots.reduce((sum, s) => sum + s.newUsers, 0) /
-          recentSnapshots.length,
+          recentSnapshots.reduce(
+            (sum: number, s: { newUsers: number }) => sum + s.newUsers,
+            0
+          ) / recentSnapshots.length,
         errorCount:
-          recentSnapshots.reduce((sum, s) => sum + (s.errorCount ?? 0), 0) /
-          recentSnapshots.length,
+          recentSnapshots.reduce(
+            (sum: number, s: { errorCount?: number }) =>
+              sum + (s.errorCount ?? 0),
+            0
+          ) / recentSnapshots.length,
       };
 
       const snapshotSummary = `Current: ${snapshotData.activeUsers} active users, ${snapshotData.newUsers} new users.
@@ -115,8 +123,14 @@ Baseline (7d avg): ${Math.round(baselineAvg.activeUsers)} active, ${Math.round(b
       const anomalyResult = await generateObjectWithFallback({
         models: ANALYTICS_MODELS,
         schema: anomalyDetectionSchema,
-        systemPrompt:
-          "You detect anomalies in product analytics by comparing current metrics to historical baselines. Flag significant deviations.",
+        systemPrompt: buildAgentPrompt(
+          ANALYTICS_SYSTEM_PROMPT,
+          await ctx.runQuery(
+            internal.autopilot.feedback.buildFeedbackPromptContext,
+            { organizationId: args.organizationId, agent: "analytics" }
+          ),
+          ""
+        ),
         prompt: `Analyze these metrics for anomalies:\n\n${snapshotSummary}`,
       });
 
@@ -181,21 +195,36 @@ export const runAnalyticsBrief = internalAction({
 
     const snapshotData = snapshots
       .map(
-        (s) =>
+        (s: {
+          snapshotDate: string;
+          activeUsers: number;
+          newUsers: number;
+          errorCount?: number;
+        }) =>
           `${s.snapshotDate}: ${s.activeUsers} active, ${s.newUsers} new, ${s.errorCount ?? 0} errors`
       )
       .join("\n");
 
     const taskData =
       completedTasks.length > 0
-        ? completedTasks.map((t) => `- ${t.title}`).join("\n")
+        ? completedTasks
+            .map((t: { title: string }) => `- ${t.title}`)
+            .join("\n")
         : "No recently shipped features";
+
+    const analyticsFeedback = await ctx.runQuery(
+      internal.autopilot.feedback.buildFeedbackPromptContext,
+      { organizationId: args.organizationId, agent: "analytics" }
+    );
 
     const brief = await generateObjectWithFallback({
       models: ANALYTICS_MODELS,
       schema: analyticsBriefSchema,
-      systemPrompt:
-        "You are a product analytics expert. Generate a concise weekly brief analyzing product health, user trends, and feature adoption.",
+      systemPrompt: buildAgentPrompt(
+        ANALYTICS_SYSTEM_PROMPT,
+        analyticsFeedback,
+        ""
+      ),
       prompt: `Generate a weekly analytics brief from this data:\n\nMetrics (last 30 days):\n${snapshotData}\n\nRecently shipped:\n${taskData}`,
     });
 

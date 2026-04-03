@@ -24,7 +24,7 @@ import { generateObjectWithFallback } from "./shared";
 // SCHEMA & TYPES
 // ============================================
 
-const pmAnalysisSchema = z.object({
+export const pmAnalysisSchema = z.object({
   tasks: z.array(
     z.object({
       title: z.string().describe("Short, actionable task title"),

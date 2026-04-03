@@ -40,7 +40,7 @@ const severityToPriority = (
 // ZOD SCHEMAS
 // ============================================
 
-const testGenerationSchema = z.object({
+export const testGenerationSchema = z.object({
   tests: z.array(
     z.object({
       filename: z.string(),
@@ -52,7 +52,7 @@ const testGenerationSchema = z.object({
   summary: z.string(),
 });
 
-const regressionCheckSchema = z.object({
+export const regressionCheckSchema = z.object({
   hasRegression: z.boolean(),
   findings: z.array(
     z.object({
@@ -60,7 +60,7 @@ const regressionCheckSchema = z.object({
       severity: z.enum(["low", "medium", "high", "critical"]),
       description: z.string(),
       affectedArea: z.string(),
-      reproductionSteps: z.optional(z.array(z.string())),
+      reproductionSteps: z.array(z.string()).default([]),
     })
   ),
   summary: z.string(),
@@ -156,7 +156,7 @@ async function processRegressionFinding(
     severity: string;
     affectedArea: string;
     description: string;
-    reproductionSteps?: string[];
+    reproductionSteps: string[];
   }
 ) {
   await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
@@ -183,9 +183,9 @@ async function processRegressionFinding(
       finding.description,
       "",
       "Reproduction steps:",
-      ...(finding.reproductionSteps?.map((s) => `- ${s}`) ?? [
-        "- No reproduction steps available",
-      ]),
+      ...(finding.reproductionSteps.length > 0
+        ? finding.reproductionSteps.map((s) => `- ${s}`)
+        : ["- No reproduction steps available"]),
     ].join("\n"),
     priority: finding.severity === "critical" ? "critical" : "high",
     assignedAgent: "dev",
@@ -215,7 +215,10 @@ export const runRegressionCheck = internalAction({
     );
 
     const taskContext = recentTasks
-      .map((t) => `- ${t.title} (PR: ${t.prUrl ?? "N/A"})`)
+      .map(
+        (t: { title: string; prUrl?: string }) =>
+          `- ${t.title} (PR: ${t.prUrl ?? "N/A"})`
+      )
       .join("\n");
 
     const result = await generateObjectWithFallback({

@@ -21,6 +21,7 @@ import { z } from "zod";
 import { internal } from "../../_generated/api";
 import { internalAction } from "../../_generated/server";
 import { MODELS } from "./models";
+import { ARCHITECT_SYSTEM_PROMPT, buildAgentPrompt } from "./prompts";
 import { generateObjectWithFallback } from "./shared";
 
 const ARCHITECT_MODELS = [MODELS.SMART, MODELS.FAST] as const;
@@ -29,7 +30,7 @@ const ARCHITECT_MODELS = [MODELS.SMART, MODELS.FAST] as const;
 // SCHEMAS
 // ============================================
 
-const architectFindingSchema = z.object({
+export const architectFindingSchema = z.object({
   category: z.enum([
     "file_length",
     "function_complexity",
@@ -50,7 +51,7 @@ const architectFindingSchema = z.object({
   estimatedEffort: z.enum(["trivial", "small", "medium", "large"]),
 });
 
-const architectReviewSchema = z.object({
+export const architectReviewSchema = z.object({
   findings: z.array(architectFindingSchema),
   summary: z.string(),
   codeHealthScore: z.number().min(0).max(100),
@@ -193,22 +194,31 @@ ${args.prUrl ? `Focus on changes in this PR: ${args.prUrl}` : ""}
 Provide findings in the specified schema. Include compliance scores.`;
 
       // Call AI with fallback model chain
-      const reviewResult = await generateObjectWithFallback({
-        models: ARCHITECT_MODELS,
-        prompt: userPrompt,
-        schema: architectReviewSchema,
-        systemPrompt: "",
-      });
+      const reviewResult: z.infer<typeof architectReviewSchema> =
+        await generateObjectWithFallback({
+          models: ARCHITECT_MODELS,
+          prompt: userPrompt,
+          schema: architectReviewSchema,
+          systemPrompt: buildAgentPrompt(
+            ARCHITECT_SYSTEM_PROMPT,
+            await ctx.runQuery(
+              internal.autopilot.feedback.buildFeedbackPromptContext,
+              { organizationId: args.organizationId, agent: "architect" }
+            ),
+            ""
+          ),
+        });
 
       // Process findings and create tasks/alerts
+      type Finding = z.infer<typeof architectFindingSchema>;
       const violationCount = reviewResult.findings.filter(
-        (f) => f.severity === "violation"
+        (f: Finding) => f.severity === "violation"
       ).length;
       const warningCount = reviewResult.findings.filter(
-        (f) => f.severity === "warning"
+        (f: Finding) => f.severity === "warning"
       ).length;
       const autoFixableCount = reviewResult.findings.filter(
-        (f) => f.autoFixable
+        (f: Finding) => f.autoFixable
       ).length;
 
       // Create autopilot tasks for auto-fixable violations

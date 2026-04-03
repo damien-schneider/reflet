@@ -30,7 +30,7 @@ const GROWTH_CONTENT_MODELS = [MODELS.FREE, MODELS.FAST] as const;
 // ZOD SCHEMAS
 // ============================================
 
-const threadDiscoverySchema = z.object({
+export const threadDiscoverySchema = z.object({
   threads: z.array(
     z.object({
       platform: z.enum(["reddit", "hackernews", "linkedin", "twitter"]),
@@ -42,7 +42,7 @@ const threadDiscoverySchema = z.object({
   ),
 });
 
-const growthContentSchema = z.object({
+export const growthContentSchema = z.object({
   items: z.array(
     z.object({
       type: z.enum([

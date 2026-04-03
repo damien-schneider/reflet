@@ -22,20 +22,20 @@ const DOCS_MODELS = [MODELS.FREE, MODELS.FAST] as const;
 // ZOD SCHEMAS
 // ============================================
 
-const docsCheckSchema = z.object({
+export const docsCheckSchema = z.object({
   updates: z.array(
     z.object({
       section: z.string(),
       reason: z.string(),
       priority: z.enum(["low", "medium", "high"]),
-      suggestedContent: z.optional(z.string()),
+      suggestedContent: z.string().default(""),
     })
   ),
   stalePages: z.array(
     z.object({
       page: z.string(),
       reason: z.string(),
-      lastRelevantChange: z.optional(z.string()),
+      lastRelevantChange: z.string().default(""),
     })
   ),
   faqEntries: z.array(
@@ -80,7 +80,12 @@ export const runDocsCheck = internalAction({
 
     const taskSummaries =
       completedTasks.length > 0
-        ? completedTasks.map((t) => `- ${t.title}: ${t.description}`).join("\n")
+        ? completedTasks
+            .map(
+              (t: { title: string; description: string }) =>
+                `- ${t.title}: ${t.description}`
+            )
+            .join("\n")
         : "No recently shipped changes";
 
     const supportSummary =

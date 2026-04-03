@@ -58,6 +58,11 @@
 }
 
 :root {
+  /* CEO chat panel */
+  --ceo-chat-width: 24rem;
+  --ceo-chat-min-width: 20rem;
+  --ceo-chat-max-width: 40rem;
+
   /* Font families */
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono:
@@ -330,5 +335,103 @@
 @layer components {
   .admin-container {
     @apply mx-auto max-w-3xl px-4 pt-12 pb-8;
+  }
+
+  .ceo-chat-markdown {
+    @apply text-sm text-foreground;
+
+    & > *:first-child {
+      margin-top: 0;
+    }
+
+    & > *:last-child {
+      margin-bottom: 0;
+    }
+
+    & p {
+      @apply my-2 leading-relaxed;
+    }
+
+    & h1,
+    & h2,
+    & h3,
+    & h4 {
+      @apply mt-4 mb-2 font-semibold leading-tight;
+    }
+
+    & h1 {
+      @apply text-base;
+    }
+
+    & h2 {
+      @apply text-sm;
+    }
+
+    & h3,
+    & h4 {
+      @apply text-xs uppercase tracking-wide text-muted-foreground;
+    }
+
+    & strong {
+      @apply font-semibold;
+    }
+
+    & em {
+      @apply italic;
+    }
+
+    & a {
+      @apply text-primary underline underline-offset-2;
+    }
+
+    & :where(ul),
+    & :where(ol) {
+      @apply my-2 space-y-1 pl-5;
+    }
+
+    & :where(ul) {
+      @apply list-disc;
+    }
+
+    & :where(ol) {
+      @apply list-decimal;
+    }
+
+    & li {
+      @apply leading-relaxed;
+    }
+
+    & li > ul,
+    & li > ol {
+      @apply my-0.5;
+    }
+
+    & code:not(pre code) {
+      @apply rounded bg-muted px-1 py-0.5 font-mono text-xs;
+    }
+
+    & pre {
+      @apply my-2 overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs leading-relaxed;
+    }
+
+    & blockquote {
+      @apply my-2 border-border border-l-2 pl-3 text-muted-foreground italic;
+    }
+
+    & hr {
+      @apply my-3 border-border;
+    }
+
+    & table {
+      @apply my-2 w-full text-xs;
+    }
+
+    & th {
+      @apply border-border border-b pb-1 text-left font-semibold;
+    }
+
+    & td {
+      @apply border-border border-b py-1;
+    }
   }
 }
