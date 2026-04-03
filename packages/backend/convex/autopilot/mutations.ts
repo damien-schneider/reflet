@@ -150,39 +150,6 @@ export const updateConfig = mutation({
   },
 });
 
-export const emergencyStop = mutation({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-    await requireOrgAdmin(ctx, args.organizationId, user._id);
-
-    const config = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    if (!config) {
-      throw new Error("Autopilot not configured");
-    }
-
-    await ctx.db.patch(config._id, {
-      enabled: false,
-      updatedAt: Date.now(),
-    });
-
-    // Log the emergency stop
-    await ctx.db.insert("autopilotActivityLog", {
-      agent: "system",
-      createdAt: Date.now(),
-      level: "warning",
-      message: "Emergency stop activated — autopilot disabled",
-      organizationId: args.organizationId,
-    });
-  },
-});
-
 /**
  * V6: Set the autonomy mode — the main toggle.
  * supervised / full_auto / stopped
@@ -210,7 +177,7 @@ export const setAutonomyMode = mutation({
     const previousMode = config.autonomyMode ?? "supervised";
     const now = Date.now();
 
-    // Transitioning TO stopped — pause tasks
+    // Transitioning TO stopped — pause tasks and disable autopilot
     if (args.mode === "stopped" && previousMode !== "stopped") {
       const inProgressTasks = await ctx.db
         .query("autopilotTasks")
@@ -226,6 +193,7 @@ export const setAutonomyMode = mutation({
       }
 
       await ctx.db.patch(config._id, {
+        enabled: false,
         autonomyMode: "stopped",
         stoppedAt: now,
         updatedAt: now,
@@ -255,6 +223,7 @@ export const setAutonomyMode = mutation({
       }
 
       await ctx.db.patch(config._id, {
+        enabled: true,
         autonomyMode: args.mode,
         stoppedAt: undefined,
         updatedAt: now,

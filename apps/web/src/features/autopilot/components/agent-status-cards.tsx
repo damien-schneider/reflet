@@ -16,100 +16,135 @@ import {
   IconTrendingUp,
   IconUsers,
 } from "@tabler/icons-react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+import { toast } from "sonner";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 const AGENTS = [
-  {
-    id: "pm",
-    label: "PM Agent",
-    icon: IconUsers,
-    description: "Product triage",
-  },
-  {
-    id: "cto",
-    label: "CTO Agent",
-    icon: IconBrain,
-    description: "Technical specs",
-  },
-  {
-    id: "dev",
-    label: "Dev Agent",
-    icon: IconCode,
-    description: "Code execution",
-  },
+  { id: "pm", label: "PM", icon: IconUsers, configField: "pmEnabled" },
+  { id: "cto", label: "CTO", icon: IconBrain, configField: "ctoEnabled" },
+  { id: "dev", label: "Dev", icon: IconCode, configField: "devEnabled" },
   {
     id: "security",
     label: "Security",
     icon: IconShield,
-    description: "Vulnerability scan",
+    configField: "securityEnabled",
   },
   {
     id: "architect",
     label: "Architect",
     icon: IconTrendingUp,
-    description: "Code review",
+    configField: "architectEnabled",
   },
   {
     id: "growth",
     label: "Growth",
     icon: IconRocket,
-    description: "Content generation",
+    configField: "growthEnabled",
   },
   {
     id: "support",
     label: "Support",
     icon: IconHeadset,
-    description: "Conversation triage",
+    configField: "supportEnabled",
   },
   {
     id: "analytics",
     label: "Analytics",
     icon: IconChartBar,
-    description: "Anomaly detection",
+    configField: "analyticsEnabled",
   },
   {
     id: "docs",
     label: "Docs",
     icon: IconFileText,
-    description: "Doc freshness",
+    configField: "docsEnabled",
   },
-  {
-    id: "qa",
-    label: "QA",
-    icon: IconTestPipe,
-    description: "Test generation",
-  },
-  {
-    id: "ops",
-    label: "Ops",
-    icon: IconServer,
-    description: "Deploy monitoring",
-  },
+  { id: "qa", label: "QA", icon: IconTestPipe, configField: "qaEnabled" },
+  { id: "ops", label: "Ops", icon: IconServer, configField: "opsEnabled" },
   {
     id: "sales",
     label: "Sales",
     icon: IconCoin,
-    description: "Lead pipeline",
+    configField: "salesEnabled",
   },
 ] as const;
 
+const ACTIVE_WINDOW = 5 * 60 * 1000;
+const RECENT_WINDOW = 30 * 60 * 1000;
+
+type AgentStatus = "active" | "error" | "idle" | "disabled";
+
+function getAgentStatus(
+  enabled: boolean,
+  last: { level: string; createdAt: number } | undefined
+): AgentStatus {
+  if (!enabled) {
+    return "disabled";
+  }
+  const timeSince = last ? Date.now() - last.createdAt : null;
+  const hasError = last?.level === "error";
+  const isRecent = timeSince !== null && timeSince < RECENT_WINDOW;
+  const isActiveNow = timeSince !== null && timeSince < ACTIVE_WINDOW;
+
+  if (hasError && isRecent) {
+    return "error";
+  }
+  if (isActiveNow) {
+    return "active";
+  }
+  return "idle";
+}
+
+const STATUS_STYLES: Record<
+  AgentStatus,
+  { card: string; dot: string; label: string }
+> = {
+  active: {
+    card: "border-green-500/30 bg-green-500/5",
+    dot: "bg-green-500",
+    label: "Working",
+  },
+  error: {
+    card: "border-red-500/30 bg-red-500/5",
+    dot: "bg-red-500",
+    label: "Error",
+  },
+  idle: {
+    card: "border-border bg-muted",
+    dot: "bg-muted-foreground/30",
+    label: "Idle",
+  },
+  disabled: {
+    card: "border-border bg-muted opacity-50",
+    dot: "bg-muted-foreground/20",
+    label: "Off",
+  },
+};
+
 export function AgentStatusCards({
   organizationId,
+  isAdmin,
 }: {
   organizationId: Id<"organizations">;
+  isAdmin: boolean;
 }) {
   const activity = useQuery(api.autopilot.queries.listActivity, {
     organizationId,
-    limit: 20,
+    limit: 50,
   });
+  const config = useQuery(api.autopilot.queries.getConfig, {
+    organizationId,
+  });
+  const updateConfig = useMutation(api.autopilot.mutations.updateConfig);
 
-  if (activity === undefined) {
+  if (activity === undefined || config === undefined) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {Array.from({ length: 11 }, (_, i) => (
+      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6">
+        {Array.from({ length: 12 }, (_, i) => (
           <Skeleton
             className="h-24 w-full rounded-lg"
             key={`skel-${String(i)}`}
@@ -117,6 +152,10 @@ export function AgentStatusCards({
         ))}
       </div>
     );
+  }
+
+  if (!config) {
+    return null;
   }
 
   const agentLastActivity = new Map<
@@ -132,42 +171,40 @@ export function AgentStatusCards({
     }
   }
 
-  const FIVE_MINUTES = 5 * 60 * 1000;
-  const now = Date.now();
+  const handleToggle = async (field: string, value: boolean) => {
+    try {
+      await updateConfig({ configId: config._id, [field]: value });
+      toast.success(value ? "Agent enabled" : "Agent disabled");
+    } catch {
+      toast.error("Failed to update agent");
+    }
+  };
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-1 overflow-hidden rounded-4xl sm:grid-cols-3 lg:grid-cols-6">
       {AGENTS.map((agent) => {
-        const last = agentLastActivity.get(agent.id);
-        const isRecent = last && now - last.createdAt < FIVE_MINUTES;
-        const hasError = last?.level === "error";
-        const isWorking = isRecent && !hasError;
-
-        let statusColor = "border-border bg-card";
-        let statusLabel = "Idle";
-        let dotColor = "bg-muted-foreground/30";
-
-        if (hasError) {
-          statusColor = "border-red-500/30 bg-red-500/5";
-          statusLabel = "Error";
-          dotColor = "bg-red-500";
-        } else if (isWorking) {
-          statusColor = "border-green-500/30 bg-green-500/5";
-          statusLabel = "Working";
-          dotColor = "bg-green-500";
-        }
+        const enabled =
+          (config[agent.configField as keyof typeof config] as boolean) ??
+          false;
+        const status = getAgentStatus(enabled, agentLastActivity.get(agent.id));
+        const styles = STATUS_STYLES[status];
 
         return (
-          <div
-            className={cn("rounded-lg border p-3", statusColor)}
-            key={agent.id}
-          >
+          <div className={cn("rounded-lg p-3", styles.card)} key={agent.id}>
             <div className="flex items-center justify-between">
               <agent.icon className="size-4 text-muted-foreground" />
-              <div className={cn("size-2 rounded-full", dotColor)} />
+              <div className="flex items-center gap-1.5">
+                <div className={cn("size-2 rounded-full", styles.dot)} />
+                <Switch
+                  checked={enabled}
+                  disabled={!isAdmin}
+                  onCheckedChange={(v) => handleToggle(agent.configField, v)}
+                  size="sm"
+                />
+              </div>
             </div>
             <p className="mt-2 font-medium text-sm">{agent.label}</p>
-            <p className="text-muted-foreground text-xs">{statusLabel}</p>
+            <p className="text-muted-foreground text-xs">{styles.label}</p>
           </div>
         );
       })}

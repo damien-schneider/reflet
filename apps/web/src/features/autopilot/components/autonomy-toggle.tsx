@@ -38,9 +38,9 @@ const MODES = [
   },
   {
     value: "stopped",
-    label: "Stopped",
+    label: "Off",
     icon: IconPlayerPause,
-    description: "All agents paused",
+    description: "All agents stopped",
     activeClass:
       "bg-muted text-muted-foreground shadow-[inset_0_0_0_1px_rgba(128,128,128,0.2)]",
     dotClass: "bg-muted-foreground/50",

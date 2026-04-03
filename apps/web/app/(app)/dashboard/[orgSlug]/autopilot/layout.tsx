@@ -14,7 +14,6 @@ import { AutopilotContext } from "@/features/autopilot/components/autopilot-cont
 import { AutopilotNav } from "@/features/autopilot/components/autopilot-nav";
 import { CeoChatPanel } from "@/features/autopilot/components/ceo-chat/ceo-chat-panel";
 import { CeoChatToggle } from "@/features/autopilot/components/ceo-chat/ceo-chat-toggle";
-import { EmergencyStopButton } from "@/features/autopilot/components/emergency-stop-button";
 import { HealthBanner } from "@/features/autopilot/components/health-banner";
 import { SetupGate } from "@/features/autopilot/components/setup-gate";
 import { ceoChatOpenAtom } from "@/store/ui";
@@ -170,7 +169,6 @@ export default function AutopilotLayout({
             </div>
             <div className="flex items-center gap-3">
               <AutonomyToggle />
-              {config?.enabled && <EmergencyStopButton />}
             </div>
           </div>
 
