@@ -157,7 +157,7 @@ crons.weekly(
 
 crons.interval(
   "autopilot ops monitoring",
-  { hours: 1 },
+  { hours: 6 },
   internal.autopilot.crons.runOpsMonitoring
 );
 
@@ -177,8 +177,15 @@ crons.daily(
 // V7 crons
 crons.interval(
   "autopilot CEO coordination",
-  { minutes: 30 },
+  { hours: 4 },
   internal.autopilot.crons.runCEOCoordination
+);
+
+// V8 crons
+crons.interval(
+  "autopilot self-healing",
+  { minutes: 10 },
+  internal.autopilot.self_heal.runSelfHealing
 );
 
 export default crons;

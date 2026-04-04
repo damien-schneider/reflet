@@ -55,6 +55,8 @@ export const technicalSpecSchema = z.object({
     .describe("Measurable acceptance criteria for the implementation"),
   architectureNotes: z
     .string()
+    .optional()
+    .default("")
     .describe(
       "Architectural considerations or patterns to follow, or empty string if none"
     ),

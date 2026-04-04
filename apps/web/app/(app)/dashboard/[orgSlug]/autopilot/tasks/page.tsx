@@ -40,7 +40,7 @@ const STATUS_OPTIONS = [
 ] as const;
 
 export default function AutopilotTasksPage() {
-  const { isAdmin, organizationId, orgSlug } = useAutopilotContext();
+  const { isAdmin, organizationId } = useAutopilotContext();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -58,8 +58,6 @@ export default function AutopilotTasksPage() {
   });
 
   const createTask = useMutation(api.autopilot.mutations.createTask);
-
-  const baseUrl = `/dashboard/${orgSlug}/autopilot`;
 
   const handleCreate = async () => {
     if (!(newTitle.trim() && newDescription.trim())) {
@@ -205,7 +203,7 @@ export default function AutopilotTasksPage() {
       ) : (
         <div className="space-y-3">
           {tasks.map((task) => (
-            <TaskCard baseUrl={baseUrl} key={task._id} task={task} />
+            <TaskCard key={task._id} task={task} />
           ))}
         </div>
       )}

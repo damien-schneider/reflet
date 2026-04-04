@@ -15,6 +15,8 @@ const THIRTY_MINUTES = 30 * 60 * 1000;
 type HealthStatus = "critical" | "degraded" | "healthy" | "stopped";
 
 interface HealthIssue {
+  actionLabel?: string;
+  actionUrl?: string;
   id: string;
   message: string;
   resolution: string;
@@ -78,7 +80,9 @@ function checkAgentCount(
       id: "no_agents",
       severity: "critical",
       message: "No agents are enabled",
-      resolution: "Enable at least one agent in the Agents page",
+      resolution: "Enable at least one agent to start your autonomous team",
+      actionUrl: "",
+      actionLabel: "Enable Agents",
     });
   } else if (enabledCount <= 2) {
     degradeTo(state, "degraded");
@@ -133,7 +137,9 @@ function checkStuckTasks(stuckCount: number, state: HealthState): void {
       id: "stuck_tasks",
       severity: "warning",
       message: `${stuckCount} task(s) stuck in progress for over 1 hour`,
-      resolution: "Check Tasks page for stuck work. Consider cancelling.",
+      resolution: "Self-healing will auto-cancel these, or cancel manually",
+      actionUrl: "tasks",
+      actionLabel: "View Tasks",
     });
   }
 }
@@ -165,6 +171,8 @@ function checkCostCap(
       severity: "warning",
       message: "Daily cost cap reached — agents paused until reset",
       resolution: "Increase cost cap in Settings or wait for daily reset",
+      actionUrl: "settings",
+      actionLabel: "Adjust Cost Cap",
     });
   } else if (usagePercent >= 0.8) {
     state.issues.push({
@@ -194,6 +202,8 @@ function checkTaskThrottle(
       severity: "warning",
       message: "Daily task dispatch limit reached",
       resolution: "Increase max tasks per day in Settings or wait for reset",
+      actionUrl: "settings",
+      actionLabel: "Adjust Limits",
     });
   }
 }
@@ -205,22 +215,37 @@ function checkOrphanedTasks(orphanedCount: number, state: HealthState): void {
       id: "orphaned_tasks",
       severity: "warning",
       message: `${orphanedCount} task(s) assigned to disabled agents`,
-      resolution: "Enable the agents or cancel these tasks from the Tasks page",
+      resolution: "Self-healing will auto-cancel these, or enable the agents",
+      actionUrl: "tasks",
+      actionLabel: "View Tasks",
     });
   }
 }
 
 function checkCredentials(
-  hasInvalidCredentials: boolean,
+  credentialStatus: "missing" | "invalid" | "valid",
+  adapterName: string,
   state: HealthState
 ): void {
-  if (hasInvalidCredentials) {
+  if (credentialStatus === "missing") {
+    state.status = "critical";
+    state.issues.unshift({
+      id: "credentials_missing",
+      severity: "critical",
+      message: `No credentials configured for "${adapterName}" adapter — agents cannot execute tasks`,
+      resolution: "Add your API keys in Settings to enable task execution",
+      actionUrl: "settings",
+      actionLabel: "Configure Credentials",
+    });
+  } else if (credentialStatus === "invalid") {
     degradeTo(state, "degraded");
     state.issues.push({
       id: "credentials_invalid",
       severity: "warning",
-      message: "Adapter credentials are invalid or unvalidated",
-      resolution: "Update credentials in Settings",
+      message: "Adapter credentials are invalid or expired",
+      resolution: "Update your API keys in Settings",
+      actionUrl: "settings",
+      actionLabel: "Update Credentials",
     });
   }
 }
@@ -345,9 +370,11 @@ export const getSystemHealth = query({
       )
       .unique();
 
-    const hasInvalidCreds =
-      credentials !== null && credentials.isValid === false;
-    checkCredentials(hasInvalidCreds, state);
+    let credentialStatus: "missing" | "invalid" | "valid" = "missing";
+    if (credentials) {
+      credentialStatus = credentials.isValid ? "valid" : "invalid";
+    }
+    checkCredentials(credentialStatus, config.adapter, state);
 
     return {
       status: state.status,

@@ -86,6 +86,30 @@ export const reliabilityReportSchema = z.object({
 export const monitorDeployments = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
+    // Check prerequisites — skip LLM call if no real data
+    const prereq = await ctx.runQuery(
+      internal.autopilot.prerequisites.checkOpsPrerequisites,
+      { organizationId: args.organizationId }
+    );
+
+    if (!prereq.ready) {
+      const recentSkipLog = await ctx.runQuery(
+        internal.autopilot.prerequisites.wasSkipLoggedRecently,
+        { organizationId: args.organizationId, agent: "ops", windowHours: 24 }
+      );
+      if (!recentSkipLog) {
+        await ctx.runMutation(
+          internal.autopilot.prerequisites.logPrerequisiteSkip,
+          {
+            organizationId: args.organizationId,
+            agent: "ops",
+            reason: prereq.reason ?? "Prerequisites not met",
+          }
+        );
+      }
+      return;
+    }
+
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
       agent: "ops",
@@ -99,34 +123,47 @@ export const monitorDeployments = internalAction({
       { organizationId: args.organizationId, limit: 3 }
     );
 
-    const snapshotContext =
-      recentSnapshots.length > 0
-        ? recentSnapshots
-            .map(
-              (s: {
-                snapshotDate: string;
-                deployCount: number;
-                failedDeploys: number;
-                errorRate?: number;
-              }) =>
-                `${s.snapshotDate}: ${s.deployCount} deploys, ${s.failedDeploys} failed, ${s.errorRate ?? 0}% errors`
-            )
-            .join("\n")
-        : "No historical ops data";
+    // Filter out all-zero snapshots — they cause the LLM to hallucinate issues
+    const meaningfulSnapshots = recentSnapshots.filter(
+      (s: { deployCount: number; failedDeploys: number; errorRate?: number }) =>
+        s.deployCount > 0 || s.failedDeploys > 0 || (s.errorRate ?? 0) > 0
+    );
 
-    // In production, this would use Vercel MCP to get actual deployment data
-    // For now, analyze based on available snapshot data
+    if (meaningfulSnapshots.length === 0) {
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: args.organizationId,
+        agent: "ops",
+        level: "info",
+        message:
+          "Deployment check skipped — all recent snapshots contain zero data",
+      });
+      return;
+    }
+
+    const snapshotContext = meaningfulSnapshots
+      .map(
+        (s: {
+          snapshotDate: string;
+          deployCount: number;
+          failedDeploys: number;
+          errorRate?: number;
+        }) =>
+          `${s.snapshotDate}: ${s.deployCount} deploys, ${s.failedDeploys} failed, ${s.errorRate ?? 0}% errors`
+      )
+      .join("\n");
+
     const analysis = await generateObjectWithFallback({
       models: OPS_MODELS,
       schema: deploymentAnalysisSchema,
       systemPrompt:
-        "You are a DevOps monitoring agent. Analyze deployment health and flag issues requiring attention.",
+        "You are a DevOps monitoring agent. Analyze deployment health and flag issues requiring attention. Only report issues you can confirm from the data — do NOT report issues when data is insufficient.",
       prompt: `Analyze deployment health:
 
 Recent ops snapshots:
 ${snapshotContext}
 
-Check for: failed deploys, error spikes, performance regressions, rollback candidates.`,
+Check for: failed deploys, error spikes, performance regressions, rollback candidates.
+If the data is insufficient to draw conclusions, return an empty issues array with overallStatus "healthy".`,
     });
 
     for (const issue of analysis.issues) {
@@ -186,13 +223,29 @@ export const captureOpsSnapshot = internalAction({
       message: `Capturing ops snapshot for ${today}`,
     });
 
-    // Store snapshot (in production, populated from Vercel MCP + PostHog)
+    // In production, this would be populated from Vercel MCP + PostHog.
+    // Skip storing zero-data snapshots — they pollute the LLM context and
+    // cause hallucinated alerts when monitorDeployments sees non-empty snapshot list.
+    const deployCount = 0;
+    const failedDeploys = 0;
+    const incidentCount = 0;
+
+    if (deployCount === 0 && failedDeploys === 0 && incidentCount === 0) {
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: args.organizationId,
+        agent: "ops",
+        level: "info",
+        message: `Ops snapshot skipped for ${today} — no deployment data available`,
+      });
+      return;
+    }
+
     await ctx.runMutation(internal.autopilot.agents.ops.storeOpsSnapshot, {
       organizationId: args.organizationId,
       snapshotDate: today,
-      deployCount: 0,
-      failedDeploys: 0,
-      incidentCount: 0,
+      deployCount,
+      failedDeploys,
+      incidentCount,
       createdAt: Date.now(),
     });
 
@@ -230,6 +283,26 @@ export const generateReliabilityReport = internalAction({
         agent: "ops",
         level: "info",
         message: "No ops data available for reliability report",
+      });
+      return;
+    }
+
+    // Filter out all-zero snapshots — no value in sending empty data to LLM
+    const meaningful = snapshots.filter(
+      (s: {
+        deployCount: number;
+        failedDeploys: number;
+        incidentCount: number;
+      }) => s.deployCount > 0 || s.failedDeploys > 0 || s.incidentCount > 0
+    );
+
+    if (meaningful.length === 0) {
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: args.organizationId,
+        agent: "ops",
+        level: "info",
+        message:
+          "Reliability report skipped — no meaningful deployment data in snapshots",
       });
       return;
     }

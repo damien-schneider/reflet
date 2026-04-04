@@ -55,6 +55,8 @@ export const getConfig = internalQuery({
       stoppedAt: v.optional(v.number()),
       fullAutoDelay: v.optional(v.number()),
       autoMergeThreshold: v.optional(v.number()),
+      maxPendingTasksPerAgent: v.optional(v.number()),
+      maxPendingTasksTotal: v.optional(v.number()),
       ceoChatThreadId: v.optional(v.string()),
       costUsedTodayUsd: v.optional(v.number()),
       dailyCostCapUsd: v.optional(v.number()),
@@ -228,6 +230,152 @@ export const getEnabledAgents = internalQuery({
   },
 });
 
+// ============================================
+// TASK CAP DEFAULTS
+// ============================================
+
+const DEFAULT_MAX_PENDING_PER_AGENT = 2;
+const DEFAULT_MAX_PENDING_TOTAL = 5;
+
+/**
+ * Check if creating a new task would exceed the per-agent pending cap.
+ */
+export const checkAgentTaskCap = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    agent: v.string(),
+  },
+  returns: v.object({
+    allowed: v.boolean(),
+    current: v.number(),
+    cap: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    const cap =
+      config?.maxPendingTasksPerAgent ?? DEFAULT_MAX_PENDING_PER_AGENT;
+
+    const pendingTasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "pending")
+      )
+      .collect();
+
+    const agentPending = pendingTasks.filter(
+      (t) => t.assignedAgent === args.agent
+    ).length;
+
+    return {
+      allowed: agentPending < cap,
+      current: agentPending,
+      cap,
+    };
+  },
+});
+
+/**
+ * Check if creating a new task would exceed the total pending cap.
+ */
+export const checkTotalTaskCap = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  returns: v.object({
+    allowed: v.boolean(),
+    current: v.number(),
+    cap: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    const cap = config?.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
+
+    const pendingTasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "pending")
+      )
+      .collect();
+
+    return {
+      allowed: pendingTasks.length < cap,
+      current: pendingTasks.length,
+      cap,
+    };
+  },
+});
+
+/**
+ * Get task cap usage per agent (for dashboard display).
+ */
+export const getTaskCapUsage = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  returns: v.object({
+    perAgentCap: v.number(),
+    totalCap: v.number(),
+    totalPending: v.number(),
+    agentUsage: v.array(
+      v.object({
+        agent: v.string(),
+        pending: v.number(),
+        cap: v.number(),
+      })
+    ),
+  }),
+  handler: async (ctx, args) => {
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    const perAgentCap =
+      config?.maxPendingTasksPerAgent ?? DEFAULT_MAX_PENDING_PER_AGENT;
+    const totalCap = config?.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
+
+    const pendingTasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "pending")
+      )
+      .collect();
+
+    const enabledAgents = await fetchEnabledAgents(ctx, args.organizationId);
+    const agentCounts = new Map<string, number>();
+
+    for (const task of pendingTasks) {
+      agentCounts.set(
+        task.assignedAgent,
+        (agentCounts.get(task.assignedAgent) ?? 0) + 1
+      );
+    }
+
+    const agentUsage = enabledAgents.map((agent) => ({
+      agent,
+      pending: agentCounts.get(agent) ?? 0,
+      cap: perAgentCap,
+    }));
+
+    return {
+      perAgentCap,
+      totalCap,
+      totalPending: pendingTasks.length,
+      agentUsage,
+    };
+  },
+});
+
 /**
  * Get orphaned tasks — tasks assigned to currently disabled agents.
  */
@@ -316,9 +464,9 @@ export const createDefaultConfig = internalMutation({
       salesEnabled: false,
       adapter: "builtin",
       autonomyLevel: "review_required",
-      autonomyMode: "supervised",
+      autonomyMode: "full_auto",
       autoMergeThreshold: 80,
-      fullAutoDelay: 15 * 60 * 1000,
+      fullAutoDelay: 5 * 60 * 1000,
       maxTasksPerDay: 10,
       tasksUsedToday: 0,
       tasksResetAt: now + TWENTY_FOUR_HOURS,
@@ -358,6 +506,8 @@ export const updateConfig = internalMutation({
     autonomyMode: v.optional(autonomyMode),
     fullAutoDelay: v.optional(v.number()),
     autoMergeThreshold: v.optional(v.number()),
+    maxPendingTasksPerAgent: v.optional(v.number()),
+    maxPendingTasksTotal: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { configId, ...updates } = args;

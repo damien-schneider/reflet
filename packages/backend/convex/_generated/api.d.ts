@@ -85,10 +85,12 @@ import type * as autopilot_intelligence_tableFields from "../autopilot/intellige
 import type * as autopilot_mutations from "../autopilot/mutations.js";
 import type * as autopilot_onboarding from "../autopilot/onboarding.js";
 import type * as autopilot_ops_queries from "../autopilot/ops_queries.js";
+import type * as autopilot_prerequisites from "../autopilot/prerequisites.js";
 import type * as autopilot_queries from "../autopilot/queries.js";
 import type * as autopilot_revenue from "../autopilot/revenue.js";
 import type * as autopilot_sales_queries from "../autopilot/sales_queries.js";
 import type * as autopilot_security_queries from "../autopilot/security_queries.js";
+import type * as autopilot_self_heal from "../autopilot/self_heal.js";
 import type * as autopilot_support_queries from "../autopilot/support_queries.js";
 import type * as autopilot_tableFields from "../autopilot/tableFields.js";
 import type * as autopilot_tasks from "../autopilot/tasks.js";
@@ -320,10 +322,12 @@ declare const fullApi: ApiFromModules<{
   "autopilot/mutations": typeof autopilot_mutations;
   "autopilot/onboarding": typeof autopilot_onboarding;
   "autopilot/ops_queries": typeof autopilot_ops_queries;
+  "autopilot/prerequisites": typeof autopilot_prerequisites;
   "autopilot/queries": typeof autopilot_queries;
   "autopilot/revenue": typeof autopilot_revenue;
   "autopilot/sales_queries": typeof autopilot_sales_queries;
   "autopilot/security_queries": typeof autopilot_security_queries;
+  "autopilot/self_heal": typeof autopilot_self_heal;
   "autopilot/support_queries": typeof autopilot_support_queries;
   "autopilot/tableFields": typeof autopilot_tableFields;
   "autopilot/tasks": typeof autopilot_tasks;

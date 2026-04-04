@@ -21,8 +21,12 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { v } from "convex/values";
 import { z } from "zod";
 import { components, internal } from "../../_generated/api";
-import type { Id } from "../../_generated/dataModel";
-import { internalAction, internalQuery } from "../../_generated/server";
+import type { Doc, Id } from "../../_generated/dataModel";
+import {
+  type ActionCtx,
+  internalAction,
+  internalQuery,
+} from "../../_generated/server";
 import { MODELS } from "./models";
 import { buildAgentPrompt, CEO_SYSTEM_PROMPT } from "./prompts";
 import { generateObjectWithFallback } from "./shared";
@@ -487,7 +491,9 @@ const coordinationSchema = z.object({
   ),
   priorityOverrides: z.array(
     z.object({
-      taskId: z.string().describe("Task to reprioritize"),
+      taskId: z
+        .string()
+        .describe("Exact task ID from the provided candidate list"),
       newPriority: z
         .enum(["critical", "high", "medium", "low"])
         .describe("New priority"),
@@ -504,6 +510,99 @@ const coordinationSchema = z.object({
     })
   ),
 });
+
+type CoordinationOutput = z.infer<typeof coordinationSchema>;
+type CoordinationTask = Doc<"autopilotTasks">;
+
+function countTasksByAgent(tasks: CoordinationTask[]): Record<string, number> {
+  const taskCountsByAgent: Record<string, number> = {};
+
+  for (const task of tasks) {
+    taskCountsByAgent[task.assignedAgent] =
+      (taskCountsByAgent[task.assignedAgent] ?? 0) + 1;
+  }
+
+  return taskCountsByAgent;
+}
+
+function buildPriorityOverrideCandidates(tasks: CoordinationTask[]) {
+  const validTaskIds = new Map<string, Id<"autopilotTasks">>();
+
+  for (const task of tasks) {
+    validTaskIds.set(task._id, task._id);
+  }
+
+  const summary = tasks
+    .map(
+      (task) =>
+        `${task._id} | ${task.status} | ${task.priority} | ${task.assignedAgent} | ${task.title}`
+    )
+    .join("\n");
+
+  return {
+    summary,
+    validTaskIds,
+  };
+}
+
+async function applyPriorityOverrides(
+  ctx: ActionCtx,
+  organizationId: Id<"organizations">,
+  overrides: CoordinationOutput["priorityOverrides"],
+  validTaskIds: Map<string, Id<"autopilotTasks">>
+) {
+  for (const override of overrides) {
+    const taskId = validTaskIds.get(override.taskId);
+    if (!taskId) {
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId,
+        agent: "orchestrator",
+        level: "info",
+        message: `CEO skipped invalid priority override task ID: ${override.taskId}`,
+      });
+      continue;
+    }
+
+    try {
+      await ctx.runMutation(internal.autopilot.tasks.updateTaskPriority, {
+        taskId,
+        priority: override.newPriority,
+      });
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId,
+        agent: "orchestrator",
+        level: "action",
+        message: `CEO reprioritized task to ${override.newPriority}: ${override.reason}`,
+      });
+    } catch {
+      // Task may no longer exist — skip.
+    }
+  }
+}
+
+async function createCoordinationAlerts(
+  ctx: ActionCtx,
+  organizationId: Id<"organizations">,
+  alerts: CoordinationOutput["proactiveAlerts"]
+) {
+  // CEO coordination alerts are purely internal — log them instead of
+  // flooding the inbox. Only truly critical alerts (requiring human decision)
+  // go to inbox. Most alerts are actionable by the system itself.
+  for (const alert of alerts) {
+    if (alert.severity === "info") {
+      continue;
+    }
+
+    // Log all alerts as activity — visible in the dashboard activity feed
+    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      organizationId,
+      agent: "orchestrator",
+      level: alert.severity === "critical" ? "warning" : "info",
+      message: `CEO Alert: ${alert.title}`,
+      details: alert.description,
+    });
+  }
+}
 
 // ============================================
 // CEO V2 COORDINATION LOOP
@@ -546,17 +645,11 @@ export const runCEOCoordination = internalAction({
         .map(([agent, count]) => `${agent}: ${count} actions in last 7d`)
         .join("\n");
 
-      const pendingByAgent: Record<string, number> = {};
-      for (const task of pendingTasks) {
-        pendingByAgent[task.assignedAgent] =
-          (pendingByAgent[task.assignedAgent] ?? 0) + 1;
-      }
-
-      const inProgressByAgent: Record<string, number> = {};
-      for (const task of inProgressTasks) {
-        inProgressByAgent[task.assignedAgent] =
-          (inProgressByAgent[task.assignedAgent] ?? 0) + 1;
-      }
+      const pendingByAgent = countTasksByAgent(pendingTasks);
+      const inProgressByAgent = countTasksByAgent(inProgressTasks);
+      const allCandidateTasks = [...pendingTasks, ...inProgressTasks];
+      const priorityOverrideCandidates =
+        buildPriorityOverrideCandidates(allCandidateTasks);
 
       const systemPrompt = `You are the CEO coordination engine analyzing the health and alignment of all AI agents in the system.
 
@@ -593,6 +686,11 @@ ${formatTaskStats(ceoContext.taskStats)}
 
 PENDING INBOX ITEMS: ${ceoContext.pendingInboxCount}
 
+VALID TASK IDS FOR PRIORITY OVERRIDES:
+${priorityOverrideCandidates.summary || "None"}
+
+Only return priority overrides for task IDs from the candidate list above. If no candidate needs a change, return an empty array.
+
 Assess each agent, identify conflicts, suggest priority changes, and raise alerts.`;
 
       const coordination = await generateObjectWithFallback({
@@ -604,40 +702,19 @@ Assess each agent, identify conflicts, suggest priority changes, and raise alert
       });
 
       // 4. Apply priority overrides to tasks
-      for (const override of coordination.priorityOverrides) {
-        try {
-          await ctx.runMutation(internal.autopilot.tasks.updateTaskPriority, {
-            taskId: override.taskId as Id<"autopilotTasks">,
-            priority: override.newPriority as
-              | "critical"
-              | "high"
-              | "medium"
-              | "low",
-          });
-          await ctx.runMutation(internal.autopilot.tasks.logActivity, {
-            organizationId: args.organizationId,
-            agent: "orchestrator",
-            level: "action",
-            message: `CEO reprioritized task to ${override.newPriority}: ${override.reason}`,
-          });
-        } catch {
-          // Task may no longer exist — skip
-        }
-      }
+      await applyPriorityOverrides(
+        ctx,
+        args.organizationId,
+        coordination.priorityOverrides,
+        priorityOverrideCandidates.validTaskIds
+      );
 
       // 5. Create alerts for critical issues
-      for (const alert of coordination.proactiveAlerts) {
-        if (alert.severity !== "info") {
-          await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
-            organizationId: args.organizationId,
-            type: "ceo_report",
-            title: `CEO Alert: ${alert.title}`,
-            summary: alert.description,
-            sourceAgent: "orchestrator",
-            priority: alert.severity === "critical" ? "critical" : "high",
-          });
-        }
-      }
+      await createCoordinationAlerts(
+        ctx,
+        args.organizationId,
+        coordination.proactiveAlerts
+      );
 
       // 6. Log coordination results
       const blockedAgents = coordination.agentAssessments.filter(

@@ -155,10 +155,11 @@ export const runSecurityScan = internalAction({
       );
 
       // Build context from repo analysis data
+      const techStack = repoAnalysis?.techStack
+        ? [repoAnalysis.techStack]
+        : undefined;
       const context = buildSecurityContext({
-        techStack: repoAnalysis?.techStack
-          ? [repoAnalysis.techStack]
-          : undefined,
+        techStack,
         fileStructure: repoAnalysis?.repoStructure ?? undefined,
       });
 
@@ -213,44 +214,51 @@ Provide findings in the specified schema. Include dependency audit details.`;
         (f: Finding) => f.severity === "critical"
       ).length;
 
-      // Create autopilot tasks for auto-fixable issues
+      // Create autopilot tasks for auto-fixable issues and inbox items for significant ones
       const taskIds: string[] = [];
 
       for (const finding of scanResult.findings) {
-        if (finding.autoFixable) {
-          const taskId = await ctx.runMutation(
-            internal.autopilot.tasks.createTask,
-            {
-              organizationId: args.organizationId,
-              assignedAgent: "dev",
-              title: `Security Fix: ${finding.title}`,
-              description: finding.recommendation,
-              origin: "security_scan",
-              priority: finding.severity === "critical" ? "critical" : "high",
-              autonomyLevel: "review_required",
-              technicalSpec: JSON.stringify({
-                securityFinding: finding,
-                category: finding.category,
-              }),
-            }
-          );
-
-          taskIds.push(taskId);
-        }
-      }
-
-      // Create inbox items for significant findings
-      for (const finding of scanResult.findings) {
-        if (finding.severity === "critical" || finding.severity === "high") {
+        // Create inbox items for significant findings
+        const isSignificant =
+          finding.severity === "critical" || finding.severity === "high";
+        if (isSignificant) {
+          const fileInfo = finding.filePath
+            ? `\nFile: ${finding.filePath}`
+            : "";
           await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
             organizationId: args.organizationId,
             type: "security_alert",
             title: finding.title,
             summary: finding.description,
-            content: `Category: ${finding.category}\nRecommendation: ${finding.recommendation}${finding.filePath ? `\nFile: ${finding.filePath}` : ""}`,
+            content: `Category: ${finding.category}\nRecommendation: ${finding.recommendation}${fileInfo}`,
             sourceAgent: "security",
             priority: mapSeverityToInboxPriority(finding.severity),
           });
+        }
+
+        if (!finding.autoFixable) {
+          continue;
+        }
+
+        const taskId = await ctx.runMutation(
+          internal.autopilot.tasks.createTask,
+          {
+            organizationId: args.organizationId,
+            assignedAgent: "dev",
+            title: `Security Fix: ${finding.title}`,
+            description: finding.recommendation,
+            origin: "security_scan",
+            priority: finding.severity === "critical" ? "critical" : "high",
+            autonomyLevel: "review_required",
+            technicalSpec: JSON.stringify({
+              securityFinding: finding,
+              category: finding.category,
+            }),
+          }
+        );
+
+        if (taskId) {
+          taskIds.push(taskId);
         }
       }
 

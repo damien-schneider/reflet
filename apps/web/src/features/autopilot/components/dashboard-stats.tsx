@@ -42,6 +42,10 @@ export function DashboardStats({
   const taskRatio =
     stats.maxTasksPerDay > 0 ? stats.tasksUsedToday / stats.maxTasksPerDay : 0;
 
+  const totalPending = stats.pendingTaskCount;
+  const totalCap = stats.maxPendingTasksTotal ?? 5;
+  const totalCapRatio = totalCap > 0 ? totalPending / totalCap : 0;
+
   const cards = [
     {
       label: "Tasks Today",
@@ -55,8 +59,8 @@ export function DashboardStats({
     },
     {
       label: "Pending",
-      value: String(stats.pendingTaskCount),
-      warn: false,
+      value: `${totalPending}/${totalCap}`,
+      warn: totalCapRatio > 0.8,
     },
     {
       label: "In Progress",
@@ -75,20 +79,69 @@ export function DashboardStats({
     },
   ];
 
+  const pendingTasksByAgent = stats.pendingTasksByAgent ?? {};
+  const agentEntries = Object.entries(pendingTasksByAgent);
+  const perAgentCap = stats.maxPendingTasksPerAgent ?? 2;
+
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-      {cards.map((card) => (
-        <div
-          className={cn(
-            "rounded-lg border p-4",
-            card.warn && "border-amber-500/30 bg-amber-500/5"
-          )}
-          key={card.label}
-        >
-          <p className="text-muted-foreground text-sm">{card.label}</p>
-          <p className="mt-1 font-semibold text-2xl">{card.value}</p>
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {cards.map((card) => (
+          <div
+            className={cn(
+              "rounded-lg border p-4",
+              card.warn && "border-amber-500/30 bg-amber-500/5"
+            )}
+            key={card.label}
+          >
+            <p className="text-muted-foreground text-sm">{card.label}</p>
+            <p className="mt-1 font-semibold text-2xl">{card.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {agentEntries.length > 0 && (
+        <div className="rounded-lg border p-4">
+          <p className="mb-3 font-medium text-sm">Pending Tasks by Agent</p>
+          <div className="space-y-2">
+            {agentEntries.map(([agent, count]) => {
+              const ratio = perAgentCap > 0 ? count / perAgentCap : 0;
+              const atCap = ratio >= 1;
+              const nearCap = ratio > 0.5 && !atCap;
+
+              return (
+                <div className="flex items-center gap-3" key={agent}>
+                  <span className="w-24 truncate text-muted-foreground text-sm capitalize">
+                    {agent}
+                  </span>
+                  <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={cn(
+                        "absolute inset-y-0 left-0 rounded-full transition-all",
+                        atCap && "bg-red-500",
+                        nearCap && "bg-amber-500",
+                        !(atCap || nearCap) && "bg-emerald-500"
+                      )}
+                      style={{
+                        width: `${String(Math.min(ratio * 100, 100))}%`,
+                      }}
+                    />
+                  </div>
+                  <span
+                    className={cn(
+                      "w-12 text-right font-mono text-xs",
+                      atCap && "text-red-500",
+                      nearCap && "text-amber-500"
+                    )}
+                  >
+                    {count}/{perAgentCap}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      ))}
+      )}
     </div>
   );
 }

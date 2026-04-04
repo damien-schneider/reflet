@@ -262,6 +262,9 @@ export const autopilotTables = {
     stoppedAt: v.optional(v.number()),
     fullAutoDelay: v.optional(v.number()),
     autoMergeThreshold: v.optional(v.number()),
+    // V8 task caps
+    maxPendingTasksPerAgent: v.optional(v.number()),
+    maxPendingTasksTotal: v.optional(v.number()),
   }).index("by_organization", ["organizationId"]),
 
   /**

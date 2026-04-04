@@ -252,7 +252,7 @@ export const runPMAnalysis = internalAction({
       );
 
       // Filter out "pm" — PM doesn't assign tasks to itself
-      const assignableAgents = enabledAgents.filter((a) => a !== "pm");
+      const assignableAgents = enabledAgents.filter((a: string) => a !== "pm");
 
       if (assignableAgents.length === 0) {
         await ctx.runMutation(internal.autopilot.tasks.logActivity, {
@@ -279,6 +279,12 @@ export const runPMAnalysis = internalAction({
       // 4. Query intelligence insights
       const intelligenceInsights = await ctx.runQuery(
         internal.autopilot.agents.pm.getIntelligenceInsights,
+        { organizationId: args.organizationId }
+      );
+
+      // 5. Get task cap usage for context
+      const taskCapUsage = await ctx.runQuery(
+        internal.autopilot.config.getTaskCapUsage,
         { organizationId: args.organizationId }
       );
 
@@ -331,6 +337,13 @@ export const runPMAnalysis = internalAction({
 
 ENABLED AGENTS (you MUST only assign tasks to these agents):
 ${assignableAgents.join(", ")}
+
+TASK CAPS:
+- Max pending per agent: ${taskCapUsage.perAgentCap}
+- Max total pending: ${taskCapUsage.totalCap} (currently ${taskCapUsage.totalPending}/${taskCapUsage.totalCap})
+- Current per-agent usage: ${taskCapUsage.agentUsage.map((a: { agent: string; pending: number; cap: number }) => `${a.agent} (${a.pending}/${a.cap}${a.pending >= a.cap ? " FULL" : ""})`).join(", ")}
+- Only create tasks for agents with available capacity.
+- Prioritize agents with 0 pending tasks first.
 
 FEEDBACK ITEMS:
 ${feedbackContext || "(none)"}
@@ -405,6 +418,11 @@ For each task, provide:
             acceptanceCriteria: task.acceptanceCriteria,
           }
         );
+
+        // Task was rejected by cap enforcement
+        if (!taskId) {
+          continue;
+        }
 
         createdCount++;
 

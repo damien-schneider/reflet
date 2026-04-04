@@ -113,6 +113,8 @@ export const updateConfig = mutation({
     salesEnabled: v.optional(v.boolean()),
     dailyCostCapUsd: v.optional(v.number()),
     emailDailyLimit: v.optional(v.number()),
+    maxPendingTasksPerAgent: v.optional(v.number()),
+    maxPendingTasksTotal: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -365,6 +367,40 @@ export const cancelTask = mutation({
       level: "warning",
       message: `Task cancelled: ${task.title}`,
       createdAt: Date.now(),
+    });
+  },
+});
+
+export const retryTask = mutation({
+  args: { taskId: v.id("autopilotTasks") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    await requireOrgAdmin(ctx, task.organizationId, user._id);
+
+    if (task.status !== "failed" && task.status !== "cancelled") {
+      throw new Error("Only failed or cancelled tasks can be retried");
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(args.taskId, {
+      status: "pending",
+      errorMessage: undefined,
+      startedAt: undefined,
+      completedAt: undefined,
+    });
+
+    await ctx.db.insert("autopilotActivityLog", {
+      organizationId: task.organizationId,
+      taskId: args.taskId,
+      agent: "system",
+      level: "info",
+      message: `Task retried: ${task.title}`,
+      createdAt: now,
     });
   },
 });

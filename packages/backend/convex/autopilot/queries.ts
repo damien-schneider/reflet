@@ -80,6 +80,8 @@ export const getConfig = query({
       stoppedAt: v.optional(v.number()),
       fullAutoDelay: v.optional(v.number()),
       autoMergeThreshold: v.optional(v.number()),
+      maxPendingTasksPerAgent: v.optional(v.number()),
+      maxPendingTasksTotal: v.optional(v.number()),
       maxTasksPerDay: v.number(),
       organizationId: v.id("organizations"),
       orgEmailAddress: v.optional(v.string()),
@@ -510,6 +512,14 @@ export const getDashboardStats = query({
       inProgressTaskCount: inProgressTasks.length,
       completedTaskCount: completedTasks.length,
       pendingInboxCount: pendingInbox.length,
+      maxPendingTasksPerAgent: config?.maxPendingTasksPerAgent ?? 2,
+      maxPendingTasksTotal: config?.maxPendingTasksTotal ?? 5,
+      pendingTasksByAgent: Object.fromEntries(
+        pendingTasks.reduce((acc, t) => {
+          acc.set(t.assignedAgent, (acc.get(t.assignedAgent) ?? 0) + 1);
+          return acc;
+        }, new Map<string, number>())
+      ),
     };
   },
 });
@@ -589,6 +599,156 @@ export const getThreadMessages = query({
       .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
       .order("desc")
       .take(args.limit ?? 100);
+  },
+});
+
+// ============================================
+// AGENT READINESS
+// ============================================
+
+/**
+ * Get per-agent readiness status for the dashboard.
+ * Returns which agents are blocked and why.
+ */
+export const getAgentReadiness = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgMembership(ctx, args.organizationId, user._id);
+
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    if (!config) {
+      return {};
+    }
+
+    const readiness: Record<
+      string,
+      { ready: boolean; reason?: string; actionUrl?: string }
+    > = {};
+
+    // Check adapter credentials for dev/cto agents
+    const credentials = await ctx.db
+      .query("autopilotAdapterCredentials")
+      .withIndex("by_org_adapter", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("adapter", config.adapter)
+      )
+      .unique();
+
+    const hasValidCreds = credentials?.isValid === true;
+    const hasCreds = credentials !== null;
+
+    // Dev needs valid credentials
+    if (!hasCreds) {
+      readiness.dev = {
+        ready: false,
+        reason: "No credentials configured",
+        actionUrl: "settings",
+      };
+      readiness.qa = {
+        ready: false,
+        reason: "No credentials configured",
+        actionUrl: "settings",
+      };
+    } else if (!hasValidCreds) {
+      readiness.dev = {
+        ready: false,
+        reason: "Credentials invalid",
+        actionUrl: "settings",
+      };
+      readiness.qa = {
+        ready: false,
+        reason: "Credentials invalid",
+        actionUrl: "settings",
+      };
+    }
+
+    // Ops needs real deployment data
+    const opsSnapshots = await ctx.db
+      .query("autopilotOpsSnapshots")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    const opsHasRealData = opsSnapshots.some(
+      (s) => s.deployCount > 0 || s.failedDeploys > 0 || (s.errorRate ?? 0) > 0
+    );
+
+    if (!opsHasRealData) {
+      readiness.ops = {
+        ready: false,
+        reason: "No deployment data",
+        actionUrl: "ops",
+      };
+    }
+
+    // Analytics needs snapshot data
+    const analyticsSnapshots = await ctx.db
+      .query("autopilotAnalyticsSnapshots")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    const analyticsHasData = analyticsSnapshots.some(
+      (s) => s.activeUsers > 0 || s.newUsers > 0
+    );
+
+    if (!analyticsHasData) {
+      readiness.analytics = {
+        ready: false,
+        reason: "No analytics data",
+        actionUrl: "analytics",
+      };
+    }
+
+    // Sales needs leads
+    const hasLeads = await ctx.db
+      .query("autopilotLeads")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+
+    if (!hasLeads) {
+      readiness.sales = {
+        ready: false,
+        reason: "No leads in pipeline",
+        actionUrl: "sales",
+      };
+    }
+
+    // Growth needs completed tasks or feedback
+    const completedTask = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "completed")
+      )
+      .first();
+
+    const hasFeedback = await ctx.db
+      .query("feedback")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+
+    if (!(completedTask || hasFeedback)) {
+      readiness.growth = {
+        ready: false,
+        reason: "No completed tasks or feedback",
+      };
+    }
+
+    return readiness;
   },
 });
 

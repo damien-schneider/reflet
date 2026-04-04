@@ -244,7 +244,9 @@ Provide findings in the specified schema. Include compliance scores.`;
             }
           );
 
-          taskIds.push(taskId);
+          if (taskId) {
+            taskIds.push(taskId);
+          }
         }
       }
 

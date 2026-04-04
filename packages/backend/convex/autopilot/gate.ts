@@ -45,12 +45,21 @@ const AGENT_RATE_LIMITS = {
 
 const ACTION_LIMIT_MAP: Record<string, number> = {
   create_inbox_item: AGENT_RATE_LIMITS.max_inbox_items_per_hour,
-  create_task: AGENT_RATE_LIMITS.max_tasks_per_hour,
   send_email: AGENT_RATE_LIMITS.max_emails_per_hour,
   publish_content: AGENT_RATE_LIMITS.max_content_per_hour,
   create_pr: AGENT_RATE_LIMITS.max_prs_per_hour,
 };
 
+// Actions that are always autonomous (both supervised and full_auto).
+// create_task and create_inbox_item are always allowed — task caps handle limits.
+const ALWAYS_AUTONOMOUS_ACTIONS = new Set([
+  "read",
+  "create_inbox_item",
+  "create_task",
+  "update_task",
+]);
+
+// Actions requiring approval in supervised mode, auto with delay in full_auto.
 const APPROVAL_REQUIRED_ACTIONS = new Set([
   "send_email",
   "publish_content",
@@ -59,10 +68,9 @@ const APPROVAL_REQUIRED_ACTIONS = new Set([
   "deploy",
   "rollback",
   "contact_user",
-  "sales_outreach",
-  "delete",
 ]);
 
+// Actions that always require approval regardless of mode.
 const ALWAYS_APPROVAL_ACTIONS = new Set(["sales_outreach", "delete"]);
 
 // ============================================
@@ -133,8 +141,8 @@ export const checkGate = internalQuery({
       return { proceed: false, reason: "agent_disabled" as const };
     }
 
-    // 4. Read-only actions always pass
-    if (args.action === "read") {
+    // 4. Always-autonomous actions pass without rate limits
+    if (ALWAYS_AUTONOMOUS_ACTIONS.has(args.action)) {
       return { proceed: true, reason: "allowed" as const };
     }
 
@@ -169,7 +177,7 @@ export const checkGate = internalQuery({
       return { proceed: false, reason: "cost_limit" as const };
     }
 
-    // 7. Task throttle check
+    // 7. Task throttle check (daily limit — kept as a safety cap)
     if (args.action === "create_task") {
       const now = Date.now();
       const tasksUsedToday = config.tasksUsedToday;

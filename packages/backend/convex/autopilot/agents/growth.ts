@@ -189,6 +189,34 @@ export const runGrowthGeneration = internalAction({
   handler: async (ctx, args) => {
     const now = Date.now();
 
+    // Check prerequisites — skip if no completed tasks or feedback
+    const prereq = await ctx.runQuery(
+      internal.autopilot.prerequisites.checkGrowthPrerequisites,
+      { organizationId: args.organizationId }
+    );
+
+    if (!prereq.ready) {
+      const recentSkipLog = await ctx.runQuery(
+        internal.autopilot.prerequisites.wasSkipLoggedRecently,
+        {
+          organizationId: args.organizationId,
+          agent: "growth",
+          windowHours: 24,
+        }
+      );
+      if (!recentSkipLog) {
+        await ctx.runMutation(
+          internal.autopilot.prerequisites.logPrerequisiteSkip,
+          {
+            organizationId: args.organizationId,
+            agent: "growth",
+            reason: prereq.reason ?? "Prerequisites not met",
+          }
+        );
+      }
+      return;
+    }
+
     try {
       // Log start
       await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {

@@ -159,6 +159,7 @@ export const getRunsForTask = internalQuery({
 
 /**
  * Create a new autopilot task.
+ * Enforces per-agent and total pending task caps before insertion.
  */
 export const createTask = internalMutation({
   args: {
@@ -177,6 +178,56 @@ export const createTask = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+
+    // Check task caps before creating
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    const DEFAULT_MAX_PENDING_PER_AGENT = 2;
+    const DEFAULT_MAX_PENDING_TOTAL = 5;
+    const perAgentCap =
+      config?.maxPendingTasksPerAgent ?? DEFAULT_MAX_PENDING_PER_AGENT;
+    const totalCap = config?.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
+
+    const pendingTasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "pending")
+      )
+      .collect();
+
+    // Check total pending cap
+    if (pendingTasks.length >= totalCap) {
+      await ctx.db.insert("autopilotActivityLog", {
+        organizationId: args.organizationId,
+        agent: args.assignedAgent,
+        level: "info",
+        message: `Skipped creating task "${args.title}" — total pending tasks at cap (${pendingTasks.length}/${totalCap})`,
+        createdAt: now,
+      });
+      return null;
+    }
+
+    // Check per-agent pending cap
+    const agentPending = pendingTasks.filter(
+      (t) => t.assignedAgent === args.assignedAgent
+    ).length;
+
+    if (agentPending >= perAgentCap) {
+      await ctx.db.insert("autopilotActivityLog", {
+        organizationId: args.organizationId,
+        agent: args.assignedAgent,
+        level: "info",
+        message: `Skipped creating task "${args.title}" — agent "${args.assignedAgent}" at cap (${agentPending}/${perAgentCap})`,
+        createdAt: now,
+      });
+      return null;
+    }
+
     const taskId = await ctx.db.insert("autopilotTasks", {
       organizationId: args.organizationId,
       title: args.title,

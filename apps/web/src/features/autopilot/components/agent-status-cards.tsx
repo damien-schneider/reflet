@@ -106,14 +106,18 @@ const SPECIALISTS = [
 const ACTIVE_WINDOW = 5 * 60 * 1000;
 const RECENT_WINDOW = 30 * 60 * 1000;
 
-type AgentStatus = "active" | "error" | "idle" | "disabled";
+type AgentStatus = "active" | "blocked" | "error" | "idle" | "disabled";
 
 function getAgentStatus(
   enabled: boolean,
-  last: { level: string; createdAt: number } | undefined
+  last: { level: string; createdAt: number } | undefined,
+  blocked: boolean
 ): AgentStatus {
   if (!enabled) {
     return "disabled";
+  }
+  if (blocked) {
+    return "blocked";
   }
   const timeSince = last ? Date.now() - last.createdAt : null;
   const hasError = last?.level === "error";
@@ -134,22 +138,27 @@ const STATUS_STYLES: Record<
   { card: string; dot: string; label: string }
 > = {
   active: {
-    card: "border-green-500/30 bg-green-500/5",
+    card: "bg-green-500/5",
     dot: "bg-green-500 animate-pulse",
     label: "Working",
   },
+  blocked: {
+    card: "bg-amber-500/5",
+    dot: "bg-amber-500",
+    label: "Blocked",
+  },
   error: {
-    card: "border-red-500/30 bg-red-500/5",
+    card: "bg-red-500/5",
     dot: "bg-red-500",
     label: "Error",
   },
   idle: {
-    card: "border-border bg-muted",
+    card: "bg-card",
     dot: "bg-muted-foreground/30",
     label: "Idle",
   },
   disabled: {
-    card: "border-border bg-muted opacity-50",
+    card: "bg-muted opacity-50",
     dot: "bg-muted-foreground/20",
     label: "Off",
   },
@@ -165,6 +174,7 @@ function AgentCard({
   isAdmin,
   lastActivity,
   taskCount,
+  blockedReason,
   onToggle,
 }: {
   agent: (typeof AGENTS)[number];
@@ -172,14 +182,16 @@ function AgentCard({
   isAdmin: boolean;
   lastActivity: { level: string; createdAt: number } | undefined;
   taskCount: number;
+  blockedReason?: { reason: string; actionUrl?: string };
   onToggle: (field: string, value: boolean) => void;
 }) {
   const enabled = (config[agent.configField] as boolean | undefined) !== false;
-  const status = getAgentStatus(enabled, lastActivity);
+  const isBlocked = enabled && blockedReason !== undefined;
+  const status = getAgentStatus(enabled, lastActivity, isBlocked);
   const styles = STATUS_STYLES[status];
 
   return (
-    <div className={cn("rounded-lg border p-3", styles.card)}>
+    <div className={cn("rounded-lg p-3", styles.card)}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <agent.icon className="size-4 text-muted-foreground" />
@@ -200,19 +212,26 @@ function AgentCard({
           />
         </div>
       </div>
-      <div className="mt-1.5 flex items-center gap-2">
-        <span className="text-muted-foreground text-xs">{styles.label}</span>
-        {lastActivity && (
-          <Tooltip>
-            <TooltipTrigger>
-              <span className="text-muted-foreground/60 text-xs">
-                {formatDistanceToNow(lastActivity.createdAt, {
-                  addSuffix: true,
-                })}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>Last activity</TooltipContent>
-          </Tooltip>
+      <div className="mt-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground text-xs">{styles.label}</span>
+          {lastActivity && status !== "blocked" && (
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="text-muted-foreground/60 text-xs">
+                  {formatDistanceToNow(lastActivity.createdAt, {
+                    addSuffix: true,
+                  })}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Last activity</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+        {isBlocked && blockedReason && (
+          <p className="mt-1 text-amber-600 text-xs dark:text-amber-400">
+            {blockedReason.reason}
+          </p>
         )}
       </div>
     </div>
@@ -252,6 +271,9 @@ export function AgentStatusCards({
   const tasks = useQuery(api.autopilot.queries.listTasks, {
     organizationId,
     status: "in_progress",
+  });
+  const readiness = useQuery(api.autopilot.queries.getAgentReadiness, {
+    organizationId,
   });
   const updateConfig = useMutation(api.autopilot.mutations.updateConfig);
 
@@ -324,9 +346,21 @@ export function AgentStatusCards({
     if (!agent) {
       return null;
     }
+    const agentReadiness = readiness?.[agentId] as
+      | { ready: boolean; reason?: string; actionUrl?: string }
+      | undefined;
+    const blockedReason =
+      agentReadiness && !agentReadiness.ready
+        ? {
+            reason: agentReadiness.reason ?? "Prerequisites not met",
+            actionUrl: agentReadiness.actionUrl,
+          }
+        : undefined;
+
     return (
       <AgentCard
         agent={agent}
+        blockedReason={blockedReason}
         config={config as unknown as Record<string, unknown>}
         isAdmin={isAdmin}
         key={agent.id}

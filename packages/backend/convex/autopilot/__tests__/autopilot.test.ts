@@ -36,7 +36,10 @@ describe("autopilot tasks", () => {
       autonomyLevel: "review_required",
     });
 
-    expect(taskId).toBeDefined();
+    expect(taskId).not.toBeNull();
+    if (!taskId) {
+      return;
+    }
 
     const task = await t.query(internal.autopilot.tasks.getTask, {
       taskId,
@@ -90,6 +93,9 @@ describe("autopilot tasks", () => {
       origin: "pm_analysis",
       autonomyLevel: "full_auto",
     });
+    if (!taskId) {
+      return;
+    }
 
     await t.mutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId,
@@ -117,6 +123,9 @@ describe("autopilot tasks", () => {
       origin: "pm_analysis",
       autonomyLevel: "full_auto",
     });
+    if (!taskId) {
+      return;
+    }
 
     await t.mutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId,
@@ -157,6 +166,9 @@ describe("autopilot tasks", () => {
         autonomyLevel: "full_auto",
       }
     );
+    if (!completedTaskId) {
+      return;
+    }
 
     await t.mutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId: completedTaskId,
@@ -208,9 +220,13 @@ describe("autopilot inbox", () => {
     });
 
     expect(itemId).toBeDefined();
+    expect(itemId).not.toBeNull();
+
+    // itemId is guaranteed non-null for unique items (dedup only triggers on duplicates)
+    const validItemId = itemId!;
 
     const item = await t.query(internal.autopilot.inbox.getInboxItem, {
-      itemId,
+      itemId: validItemId,
     });
 
     expect(item).not.toBeNull();
@@ -232,8 +248,11 @@ describe("autopilot inbox", () => {
       autoApproved: true,
     });
 
+    expect(itemId).not.toBeNull();
+    const validItemId = itemId!;
+
     const item = await t.query(internal.autopilot.inbox.getInboxItem, {
-      itemId,
+      itemId: validItemId,
     });
 
     expect(item).not.toBeNull();
@@ -253,13 +272,16 @@ describe("autopilot inbox", () => {
       priority: "high",
     });
 
+    expect(itemId).not.toBeNull();
+    const validItemId = itemId!;
+
     await t.mutation(internal.autopilot.inbox.updateInboxItemStatus, {
-      itemId,
+      itemId: validItemId,
       status: "approved",
     });
 
     const item = await t.query(internal.autopilot.inbox.getInboxItem, {
-      itemId,
+      itemId: validItemId,
     });
 
     expect(item?.status).toBe("approved");

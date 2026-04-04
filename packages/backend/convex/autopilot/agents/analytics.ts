@@ -65,6 +65,34 @@ export const analyticsBriefSchema = z.object({
 export const captureAnalyticsSnapshot = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
+    // Check prerequisites — skip LLM analysis if no real data
+    const prereq = await ctx.runQuery(
+      internal.autopilot.prerequisites.checkAnalyticsPrerequisites,
+      { organizationId: args.organizationId }
+    );
+
+    if (!prereq.ready) {
+      const recentSkipLog = await ctx.runQuery(
+        internal.autopilot.prerequisites.wasSkipLoggedRecently,
+        {
+          organizationId: args.organizationId,
+          agent: "analytics",
+          windowHours: 24,
+        }
+      );
+      if (!recentSkipLog) {
+        await ctx.runMutation(
+          internal.autopilot.prerequisites.logPrerequisiteSkip,
+          {
+            organizationId: args.organizationId,
+            agent: "analytics",
+            reason: prereq.reason ?? "Prerequisites not met",
+          }
+        );
+      }
+      return;
+    }
+
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
       agent: "analytics",

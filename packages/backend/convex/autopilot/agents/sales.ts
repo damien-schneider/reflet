@@ -272,6 +272,34 @@ export const runSalesFollowUp = internalAction({
       return;
     }
 
+    // Check prerequisites — skip if no leads at all
+    const prereq = await ctx.runQuery(
+      internal.autopilot.prerequisites.checkSalesPrerequisites,
+      { organizationId: args.organizationId }
+    );
+
+    if (!prereq.ready) {
+      const recentSkipLog = await ctx.runQuery(
+        internal.autopilot.prerequisites.wasSkipLoggedRecently,
+        {
+          organizationId: args.organizationId,
+          agent: "sales",
+          windowHours: 24,
+        }
+      );
+      if (!recentSkipLog) {
+        await ctx.runMutation(
+          internal.autopilot.prerequisites.logPrerequisiteSkip,
+          {
+            organizationId: args.organizationId,
+            agent: "sales",
+            reason: prereq.reason ?? "Prerequisites not met",
+          }
+        );
+      }
+      return;
+    }
+
     const leads = await ctx.runQuery(
       internal.autopilot.agents.sales.getLeadsDueForFollowUp,
       { organizationId: args.organizationId }

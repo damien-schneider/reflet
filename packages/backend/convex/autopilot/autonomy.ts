@@ -1,11 +1,12 @@
 /**
- * V6 Autonomy Engine — determines whether an agent action should execute.
+ * V9 Autonomy Engine — maximizes autonomous execution.
  *
- * Every agent action checks this before executing. The engine reads
- * the organization's autonomyMode and the action's category to decide:
- * - execute immediately
- * - create inbox item for approval
- * - block entirely (stopped mode)
+ * Principle: only real-world-impacting actions need human approval.
+ * Everything internal (analysis, docs, orchestration, planning, scanning,
+ * drafting content) executes autonomously regardless of mode.
+ *
+ * Real-world impact = contacting a human, deploying code, merging PRs,
+ * sending emails, publishing externally, sales outreach.
  */
 
 import { v } from "convex/values";
@@ -18,8 +19,8 @@ import { autonomyMode } from "./tableFields";
 // ============================================
 
 /**
- * Actions that never require approval regardless of mode.
- * These are read-only, internal, or planning-only operations.
+ * Actions that execute autonomously in ALL modes (except stopped).
+ * These are internal operations with zero real-world side effects.
  */
 const ALWAYS_AUTONOMOUS_ACTIONS = new Set([
   "agent_communication",
@@ -30,28 +31,22 @@ const ALWAYS_AUTONOMOUS_ACTIONS = new Set([
   "draft_content",
   "run_scan",
   "create_inbox_item",
-]) as ReadonlySet<string>;
-
-/**
- * Actions that always require approval regardless of mode.
- * These contact real people and can't be reversed.
- */
-const ALWAYS_REQUIRE_APPROVAL_ACTIONS = new Set([
-  "sales_outreach",
-]) as ReadonlySet<string>;
-
-/**
- * Actions that require approval in supervised mode but
- * auto-execute in full_auto mode (with delay).
- */
-const SUPERVISED_APPROVAL_ACTIONS = new Set([
   "create_pr",
+]) as ReadonlySet<string>;
+
+/**
+ * Actions with REAL-WORLD IMPACT — these contact humans, deploy code,
+ * or publish externally. In supervised mode, they require approval.
+ * In full_auto mode, they execute with a safety delay.
+ */
+const REAL_WORLD_IMPACT_ACTIONS = new Set([
   "merge_pr",
   "send_email",
   "publish_content",
   "contact_user",
   "deploy",
   "rollback",
+  "sales_outreach",
 ]) as ReadonlySet<string>;
 
 // ============================================
@@ -122,7 +117,7 @@ export const shouldExecuteAction = internalQuery({
       };
     }
 
-    const mode = config.autonomyMode ?? "supervised";
+    const mode = config.autonomyMode ?? "full_auto";
 
     // Stopped mode — block everything
     if (mode === "stopped") {
@@ -144,54 +139,30 @@ export const shouldExecuteAction = internalQuery({
       };
     }
 
-    // Always-require-approval actions
-    if (ALWAYS_REQUIRE_APPROVAL_ACTIONS.has(args.action)) {
-      return {
-        allowed: true,
-        reason: "Sales outreach always requires approval",
-        requiresInbox: true,
-        delayMs: 0,
-      };
-    }
+    // Real-world impact actions — gated by mode
+    if (REAL_WORLD_IMPACT_ACTIONS.has(args.action)) {
+      // Supervised mode — send to inbox for human approval
+      if (mode === "supervised") {
+        return {
+          allowed: true,
+          reason: "Supervised mode requires approval for real-world actions",
+          requiresInbox: true,
+          delayMs: 0,
+        };
+      }
 
-    // Check cost cap
-    const HIGH_COST_THRESHOLD_USD = 1;
-    const isHighCost =
-      args.estimatedCostUsd !== undefined &&
-      args.estimatedCostUsd > HIGH_COST_THRESHOLD_USD;
-
-    if (isHighCost && mode === "supervised") {
-      return {
-        allowed: true,
-        reason: `Estimated cost $${args.estimatedCostUsd} exceeds threshold`,
-        requiresInbox: true,
-        delayMs: 0,
-      };
-    }
-
-    // Supervised mode — approval-requiring actions go to inbox
-    if (mode === "supervised" && SUPERVISED_APPROVAL_ACTIONS.has(args.action)) {
-      return {
-        allowed: true,
-        reason: "Supervised mode requires approval for this action",
-        requiresInbox: true,
-        delayMs: 0,
-      };
-    }
-
-    // Full auto mode — external actions get a delay
-    if (mode === "full_auto" && SUPERVISED_APPROVAL_ACTIONS.has(args.action)) {
-      const DEFAULT_FULL_AUTO_DELAY_MS = 15 * 60 * 1000;
+      // Full auto mode — execute with a safety delay
+      const DEFAULT_FULL_AUTO_DELAY_MS = 5 * 60 * 1000;
       const delay = config.fullAutoDelay ?? DEFAULT_FULL_AUTO_DELAY_MS;
       return {
         allowed: true,
-        reason: "Full auto mode — executing with delay",
+        reason: "Full auto mode — executing with safety delay",
         requiresInbox: false,
         delayMs: delay,
       };
     }
 
-    // Default: allow
+    // Default: allow immediately
     return {
       allowed: true,
       reason: "Action permitted",

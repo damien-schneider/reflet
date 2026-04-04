@@ -146,8 +146,15 @@ export const getInboxCountsByType = internalQuery({
 // ============================================
 
 /**
- * Create a new inbox item.
- * Automatically sets status to "pending" and createdAt to current time.
+ * Dedup cooldown — skip creating inbox items if a matching one exists within this window.
+ * Prevents agents from flooding the inbox with the same alerts every cron cycle.
+ */
+const DEDUP_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+/**
+ * Create a new inbox item with deduplication.
+ * Skips creation if a pending/auto_approved item with the same type, source agent,
+ * and title already exists within the dedup cooldown window.
  * Also logs the creation to autopilotActivityLog.
  */
 export const createInboxItem = internalMutation({
@@ -169,6 +176,28 @@ export const createInboxItem = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const cutoff = now - DEDUP_COOLDOWN_MS;
+
+    // Dedup: check for recent items with matching type + source from same org
+    const recentItems = await ctx.db
+      .query("autopilotInboxItems")
+      .withIndex("by_org_type", (q) =>
+        q.eq("organizationId", args.organizationId).eq("type", args.type)
+      )
+      .collect();
+
+    const isDuplicate = recentItems.some(
+      (item) =>
+        item.createdAt > cutoff &&
+        item.sourceAgent === args.sourceAgent &&
+        item.title === args.title &&
+        (item.status === "pending" || item.status === "auto_approved")
+    );
+
+    if (isDuplicate) {
+      return null;
+    }
+
     const itemId = await ctx.db.insert("autopilotInboxItems", {
       actionUrl: args.actionUrl,
       content: args.content,
@@ -346,5 +375,55 @@ export const expireOldItems = internalMutation({
     }
 
     return expiredIds.length;
+  },
+});
+
+/**
+ * Auto-dismiss internal alerts that don't require human action.
+ * CEO coordination alerts, ops no-data alerts, and other system-generated
+ * noise should be auto-approved so they don't clog the inbox.
+ */
+const AUTO_DISMISS_TYPES = new Set([
+  "ceo_report",
+  "ops_error_spike",
+  "ops_deploy_failure",
+  "ops_rollback",
+  "ops_reliability_report",
+]) as ReadonlySet<string>;
+
+export const autoDismissInternalAlerts = internalMutation({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const pendingItems = await ctx.db
+      .query("autopilotInboxItems")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "pending")
+      )
+      .collect();
+
+    let dismissed = 0;
+
+    for (const item of pendingItems) {
+      if (AUTO_DISMISS_TYPES.has(item.type)) {
+        await ctx.db.patch(item._id, {
+          status: "auto_approved",
+          reviewedAt: now,
+        });
+        dismissed++;
+      }
+    }
+
+    if (dismissed > 0) {
+      await ctx.db.insert("autopilotActivityLog", {
+        agent: "system",
+        createdAt: now,
+        level: "info",
+        message: `Auto-dismissed ${dismissed} internal alerts from inbox`,
+        organizationId: args.organizationId,
+      });
+    }
+
+    return dismissed;
   },
 });
