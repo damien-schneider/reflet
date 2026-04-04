@@ -40,7 +40,7 @@ export const generateObjectWithFallback = async <T extends z.ZodType>({
         model: openrouter(model),
         schema,
         prompt,
-        system: systemPrompt,
+        system: `${systemPrompt}\n\nRespond in JSON format.`,
         temperature: temperature ?? 0,
         maxTokens: maxOutputTokens,
       });
