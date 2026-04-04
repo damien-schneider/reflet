@@ -262,6 +262,12 @@ Provide findings in the specified schema. Include dependency audit details.`;
         }
       }
 
+      // Complete any in_progress tasks assigned to security
+      await ctx.runMutation(internal.autopilot.tasks.completeAgentTasks, {
+        organizationId: args.organizationId,
+        agent: "security",
+      });
+
       // Log completion
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,

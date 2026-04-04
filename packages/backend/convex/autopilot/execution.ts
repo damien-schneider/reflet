@@ -1,7 +1,7 @@
 /**
  * Task execution — dispatches tasks to the selected coding adapter.
  *
- * This is the bridge between the Convex orchestrator and the
+ * This is the bridge between the heartbeat scheduler and the
  * provider-agnostic adapter layer.
  */
 
@@ -189,7 +189,7 @@ export const executeTask = internalAction({
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
         taskId: args.taskId,
-        agent: "orchestrator",
+        agent: "system",
         level: "warning",
         message: "Autopilot is disabled — task not executed",
       });
@@ -562,7 +562,7 @@ export const cancelTask = internalAction({
 
 /**
  * Retry a paused task after backoff delay.
- * Sets status back to pending so the orchestrator picks it up.
+ * Sets status back to pending so the heartbeat picks it up.
  */
 export const retryTask = internalAction({
   args: {
@@ -586,7 +586,7 @@ export const retryTask = internalAction({
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
       taskId: args.taskId,
-      agent: "orchestrator",
+      agent: "system",
       level: "info",
       message: `Retry ${task.retryCount}/${task.maxRetries}: re-queued after backoff`,
     });

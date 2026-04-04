@@ -14,7 +14,11 @@ import {
   internalQuery,
   type QueryCtx,
 } from "../_generated/server";
-import { autonomyLevel, autonomyMode, codingAdapterType } from "./tableFields";
+import {
+  autonomyLevel,
+  autonomyMode,
+  codingAdapterType,
+} from "./schema/validators";
 
 // ============================================
 // INTERNAL QUERIES
@@ -39,10 +43,7 @@ export const getConfig = internalQuery({
       architectEnabled: v.optional(v.boolean()),
       growthEnabled: v.optional(v.boolean()),
       supportEnabled: v.optional(v.boolean()),
-      analyticsEnabled: v.optional(v.boolean()),
       docsEnabled: v.optional(v.boolean()),
-      qaEnabled: v.optional(v.boolean()),
-      opsEnabled: v.optional(v.boolean()),
       salesEnabled: v.optional(v.boolean()),
       adapter: codingAdapterType,
       autonomyLevel,
@@ -165,14 +166,8 @@ export const isAgentEnabled = internalQuery({
         return config.growthEnabled !== false;
       case "support":
         return config.supportEnabled !== false;
-      case "analytics":
-        return config.analyticsEnabled !== false;
       case "docs":
         return config.docsEnabled !== false;
-      case "qa":
-        return config.qaEnabled !== false;
-      case "ops":
-        return config.opsEnabled !== false;
       case "sales":
         return config.salesEnabled !== false;
       default:
@@ -192,10 +187,7 @@ const AGENT_CONFIG_FIELDS = [
   { name: "architect", field: "architectEnabled" },
   { name: "growth", field: "growthEnabled" },
   { name: "support", field: "supportEnabled" },
-  { name: "analytics", field: "analyticsEnabled" },
   { name: "docs", field: "docsEnabled" },
-  { name: "qa", field: "qaEnabled" },
-  { name: "ops", field: "opsEnabled" },
   { name: "sales", field: "salesEnabled" },
 ] as const;
 
@@ -227,6 +219,28 @@ export const getEnabledAgents = internalQuery({
   returns: v.array(v.string()),
   handler: async (ctx, args) => {
     return await fetchEnabledAgents(ctx, args.organizationId);
+  },
+});
+
+/**
+ * Get all enabled org configs — used by heartbeat to iterate organizations.
+ */
+export const getEnabledConfigs = internalQuery({
+  args: {},
+  returns: v.array(
+    v.object({
+      organizationId: v.id("organizations"),
+      autonomyMode: v.optional(v.string()),
+    })
+  ),
+  handler: async (ctx) => {
+    const configs = await ctx.db.query("autopilotConfig").collect();
+    return configs
+      .filter((c) => c.enabled && c.autonomyMode !== "stopped")
+      .map((c) => ({
+        organizationId: c.organizationId,
+        autonomyMode: c.autonomyMode,
+      }));
   },
 });
 
@@ -457,10 +471,7 @@ export const createDefaultConfig = internalMutation({
       architectEnabled: true,
       growthEnabled: false,
       supportEnabled: false,
-      analyticsEnabled: false,
       docsEnabled: false,
-      qaEnabled: false,
-      opsEnabled: false,
       salesEnabled: false,
       adapter: "builtin",
       autonomyLevel: "review_required",
@@ -497,10 +508,7 @@ export const updateConfig = internalMutation({
     architectEnabled: v.optional(v.boolean()),
     growthEnabled: v.optional(v.boolean()),
     supportEnabled: v.optional(v.boolean()),
-    analyticsEnabled: v.optional(v.boolean()),
     docsEnabled: v.optional(v.boolean()),
-    qaEnabled: v.optional(v.boolean()),
-    opsEnabled: v.optional(v.boolean()),
     salesEnabled: v.optional(v.boolean()),
     requireArchitectReview: v.optional(v.boolean()),
     autonomyMode: v.optional(autonomyMode),

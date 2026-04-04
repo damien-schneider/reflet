@@ -62,39 +62,15 @@ crons.interval(
 // ============================================
 
 crons.interval(
-  "autopilot orchestrator",
-  { minutes: 2 },
-  internal.autopilot.crons.runOrchestrator
+  "autopilot heartbeat",
+  { minutes: 3 },
+  internal.autopilot.heartbeat.runHeartbeat
 );
 
-crons.daily(
-  "autopilot daily CEO report",
-  { hourUTC: 8, minuteUTC: 0 },
-  internal.autopilot.crons.runDailyCEOReports
-);
-
-crons.weekly(
-  "autopilot weekly CEO report",
-  { dayOfWeek: "monday", hourUTC: 9, minuteUTC: 30 },
-  internal.autopilot.crons.runWeeklyCEOReports
-);
-
-crons.daily(
-  "autopilot daily security scan",
-  { hourUTC: 7, minuteUTC: 0 },
-  internal.autopilot.crons.runDailySecurityScans
-);
-
-crons.weekly(
-  "autopilot weekly architect review",
-  { dayOfWeek: "wednesday", hourUTC: 8, minuteUTC: 0 },
-  internal.autopilot.crons.runWeeklyArchitectReviews
-);
-
-crons.daily(
-  "autopilot inbox expiration",
-  { hourUTC: 1, minuteUTC: 0 },
-  internal.autopilot.crons.runInboxExpiration
+crons.interval(
+  "autopilot self-healing",
+  { minutes: 10 },
+  internal.autopilot.self_heal.runSelfHealing
 );
 
 crons.daily(
@@ -103,89 +79,22 @@ crons.daily(
   internal.autopilot.cost_guard.resetDailyCounters
 );
 
-crons.interval(
-  "autopilot PM analysis",
-  { hours: 6 },
-  internal.autopilot.crons.runPMAnalysis
+crons.daily(
+  "autopilot inbox expiration",
+  { hourUTC: 1, minuteUTC: 0 },
+  internal.autopilot.maintenance.runInboxExpiration
 );
 
 crons.daily(
-  "autopilot intelligence scans",
-  { hourUTC: 6, minuteUTC: 0 },
-  internal.autopilot.intelligence.crons.runScheduledScans
-);
-
-crons.weekly(
-  "autopilot intelligence digest",
-  { dayOfWeek: "monday", hourUTC: 10, minuteUTC: 0 },
-  internal.autopilot.intelligence.notifications.sendAllIntelligenceDigests
-);
-
-// V5 Agent Crons
-// Support triage is event-driven (triggered on new conversation/message),
-// with a daily fallback to catch anything missed.
-crons.daily(
-  "autopilot support triage fallback",
-  { hourUTC: 10, minuteUTC: 0 },
-  internal.autopilot.crons.runSupportTriage
-);
-
-// Notify users when features they requested have shipped.
-crons.daily(
-  "autopilot support shipped notifications",
-  { hourUTC: 11, minuteUTC: 0 },
-  internal.autopilot.crons.runShippedNotifications
+  "autopilot note cleanup",
+  { hourUTC: 2, minuteUTC: 0 },
+  internal.autopilot.maintenance.runNoteCleanup
 );
 
 crons.daily(
-  "autopilot analytics snapshot",
-  { hourUTC: 7, minuteUTC: 30 },
-  internal.autopilot.crons.runAnalyticsSnapshot
-);
-
-crons.weekly(
-  "autopilot analytics brief",
-  { dayOfWeek: "monday", hourUTC: 8, minuteUTC: 0 },
-  internal.autopilot.crons.runAnalyticsBrief
-);
-
-crons.weekly(
-  "autopilot docs stale check",
-  { dayOfWeek: "wednesday", hourUTC: 6, minuteUTC: 0 },
-  internal.autopilot.crons.runDocsStaleCheck
-);
-
-crons.interval(
-  "autopilot ops monitoring",
-  { hours: 6 },
-  internal.autopilot.crons.runOpsMonitoring
-);
-
-crons.daily(
-  "autopilot ops snapshot",
-  { hourUTC: 23, minuteUTC: 0 },
-  internal.autopilot.crons.runOpsSnapshot
-);
-
-// V6 crons — sales follow-ups are on a 3-7 day cadence, daily check is sufficient.
-crons.daily(
-  "autopilot sales follow-up",
-  { hourUTC: 9, minuteUTC: 0 },
-  internal.autopilot.crons.runSalesFollowUp
-);
-
-// V7 crons
-crons.interval(
-  "autopilot CEO coordination",
-  { hours: 4 },
-  internal.autopilot.crons.runCEOCoordination
-);
-
-// V8 crons
-crons.interval(
-  "autopilot self-healing",
-  { minutes: 10 },
-  internal.autopilot.self_heal.runSelfHealing
+  "autopilot knowledge staleness check",
+  { hourUTC: 6, minuteUTC: 30 },
+  internal.autopilot.maintenance.runKnowledgeStalenessCheck
 );
 
 export default crons;

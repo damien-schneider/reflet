@@ -8,7 +8,7 @@
 
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
-import { agentThreadRole, assignedAgent } from "./tableFields";
+import { agentThreadRole, assignedAgent } from "./schema/validators";
 
 // ============================================
 // QUERIES

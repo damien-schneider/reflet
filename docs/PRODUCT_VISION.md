@@ -10,7 +10,7 @@ Software companies are human bottlenecks chained together. A user requests a fea
 
 Reflet eliminates the loop entirely. Not by automating a step — by replacing the entire company operation. Connect a GitHub repository. In five minutes, Reflet has analyzed the codebase, researched the market, drafted a product strategy, identified who the users are, and started building. The system doesn't wait for instructions. It doesn't wait for feedback. It discovers what needs to be done, decides the priority, executes the work, ships it, announces it, and finds the next prospect who needs it — all autonomously, all transparently, all with a hard stop button.
 
-This is not a coding assistant. This is not a CI/CD pipeline with AI sprinkled in. This is a company. It has a CEO who coordinates strategy. A PM who researches markets and writes product briefs. A CTO who architects solutions. Engineers who ship code. A growth team that finds distribution. A sales agent that discovers and converts prospects. A support agent that closes the loop with users. Every agent reads the company's shared knowledge, acts within its role, and contributes back — exactly like employees in a real organization.
+This is not a coding assistant. This is not a CI/CD pipeline with AI sprinkled in. This is a company. It has a CEO who coordinates strategy and relays the President's vision. A PM who thinks about use cases, features, and priorities based on market research from the Growth team. A CTO who architects solutions. Engineers who ship code. A growth team that researches the market and finds distribution. A sales agent that discovers and converts prospects. A support agent that closes the loop with users. Every agent reads the company's shared board, acts within its role, and contributes back — exactly like employees in a real organization.
 
 The reference point is NanoCorp — autonomous AI companies that build products from scratch. Reflet does the same thing, but for **existing products**. You already have a codebase, users, feedback, revenue. Reflet takes over the execution. The ambition is simple: connect a codebase, and the company builds the next Spotify — fully autonomously.
 
@@ -28,21 +28,19 @@ In the first five minutes, Reflet produces a **Company Brief** — a complete se
 - **Initial Roadmap** — 3-5 prioritized initiatives based on market gaps and codebase analysis
 - **Starter Goals** — Sensible OKRs seeded from product maturity level
 
-The user reviews the Company Brief, edits anything that's off, and approves. The company starts running.
+The user reviews the Company Brief, edits anything that's off, and approves. Meanwhile, agents have already started working — Growth is researching the market, Security is scanning the codebase. The brief approval unlocks the full pipeline: PM starts creating initiatives and stories, CTO starts writing specs, Dev starts building.
 
-From that moment, every agent reads the shared knowledge base before acting, produces work within its exclusive domain, and contributes signals that other agents consume. The system is proactive — agents don't wait to be told what to do. They research, discover, propose, and execute. When an agent notices something — a trending Reddit thread, a security vulnerability, a support pattern — it raises a signal. The PM triages signals into the roadmap. The cycle never stops.
+## The shared board
 
-## The three data layers
+There is no orchestrator. There is no dispatcher. Reflet works like a real company: agents communicate through a **shared board** — the same database that holds all the company's knowledge, work, and conversations. Like a Notion workspace that every employee can see.
 
-Reflet's agents communicate the way real company employees do — through shared knowledge, structured operational data, and informal signals. Not through hardcoded function calls.
+### Knowledge Base (company wiki)
 
-### Layer 1: Knowledge Base (company DNA)
-
-Living documents that capture who the company is, what it does, and where it's going. Auto-generated at onboarding, maintained by specific agents, read by all agents before every decision.
+Living documents that capture who the company is, what it does, and where it's going. Auto-generated at onboarding, maintained by owning agents, read by all agents before every decision.
 
 - **Product Definition** — maintained by PM
 - **User Personas & ICP** — maintained by PM
-- **Competitive Landscape** — maintained by PM
+- **Competitive Landscape** — maintained by PM (from Growth's research)
 - **Brand Voice & Guidelines** — maintained by Growth
 - **Technical Architecture** — maintained by CTO + Architect
 - **Goals & OKRs** — maintained by CEO
@@ -50,7 +48,7 @@ Living documents that capture who the company is, what it does, and where it's g
 
 Every agent reads the knowledge base. No agent acts without understanding the company context first. The user can edit any document at any time — user edits are protected for 72 hours, preventing agents from overwriting the President's decisions.
 
-### Layer 2: Structured Records (company tools)
+### Work Board (structured records)
 
 Operational data with strict schemas and exclusive ownership. Like a company's task board, CRM, and issue tracker — everyone can see everything, but only the owner writes.
 
@@ -59,7 +57,6 @@ Operational data with strict schemas and exclusive ownership. Like a company's t
 | Initiatives | PM | Strategic themes with timelines and success metrics |
 | User Stories | PM | "As a [persona], I want..." with acceptance criteria |
 | Technical Specs | CTO | Implementation plans, API contracts, DB changes |
-| Dev Tasks | CTO | Atomic work items linked to specs |
 | Pull Requests | Dev | Code changes with CI status |
 | Leads & Contacts | Sales | Prospects, pipeline stages, outreach history |
 | Security Findings | Security | Vulnerabilities with severity and remediation status |
@@ -68,58 +65,101 @@ Operational data with strict schemas and exclusive ownership. Like a company's t
 | Architecture Decisions | Architect | ADR-format records of technical choices |
 | Doc Pages | Docs | Documentation with staleness tracking |
 
-### Layer 3: Signals (company conversations)
+### Notes (informal communication)
 
-Ephemeral observations that bubble up from any agent — the equivalent of a Slack message saying "hey, I noticed something." Any agent can write signals. The PM triages them into the roadmap or dismisses them.
+Agents leave notes on the board — observations, findings, ideas. Like a shared Slack channel. But each agent can only write notes **within its own domain of expertise**, keeping the information clean and trustworthy.
 
-Signal types: `market_opportunity`, `feature_request_pattern`, `technical_debt`, `security_alert`, `competitive_move`, `user_sentiment_shift`, `growth_insight`, `initiative_proposal`.
+| Agent | Can write notes about |
+|-------|----------------------|
+| Growth | Market findings, competitor moves, distribution angles, content opportunities |
+| Sales | Prospect patterns, feature requests from prospects, pipeline observations |
+| Support | User patterns, repeated questions, sentiment shifts |
+| Security | Vulnerabilities, CVEs, security risks |
+| Architect | Tech debt, code health observations, pattern violations |
+| CTO | Technical risks, architecture concerns, migration needs |
+| Dev | Bugs found during coding, code quality observations |
+| CEO | Cross-agent observations, President directives relayed to team |
+| PM | Product priorities, roadmap decisions, triage outcomes |
+| Docs | Documentation gaps, stale content |
 
-This is how agents "dream." A Sales agent notices five prospects asking about the same missing feature. Support sees a pattern in user complaints. Growth spots a viral discussion about the problem space. Each raises a signal. The PM synthesizes them into product decisions. Bottom-up initiative, exactly like a real company where any employee can propose an idea.
+Examples:
+- Growth: "Found 12 Reddit threads about playlist sharing pain"
+- Support: "5 users asked about offline mode this week"
+- Security: "CVE-2026-1234 affects our auth dependency"
+- Sales: "3 prospects asked if we support SSO"
+
+PM reads all notes when it checks the board. High-priority notes (security critical, user-facing bugs) get acted on immediately. This is how agents communicate — each contributing observations from their domain, PM triaging them into product decisions.
 
 ## The agents
 
-### Always active (founders)
+### How agents work
 
-**CEO** — The strategic layer. Coordinates across all agents, detects bottlenecks and conflicts, relays President directives, generates daily and weekly reports. The CEO reads everything and ensures the company moves in a coherent direction. When the user says "focus on enterprise this quarter," the CEO translates that into updated goals and strategy memos that every agent respects. Runs a coordination loop every 4 hours to catch cross-agent issues.
+There is no cron telling agents when to run. Agents are **condition-driven** — they wake up when there's a reason to work, like real employees who check the board and act when something needs attention.
 
-**PM (Product Manager)** — The brain of the company. Proactively researches the market — scanning Reddit, Hacker News, GitHub trending, competitor repositories, community discussions — not waiting for feedback to arrive. Synthesizes all signals (market research, user feedback, support escalations, competitive moves) into a prioritized roadmap. Creates structured initiatives with user stories and acceptance criteria. Maintains the Product Definition, User Personas, and Competitive Landscape. The PM ensures the company always knows what to build next and why.
+A lightweight heartbeat (every few minutes) checks each agent's wake conditions. If conditions are met, the agent runs. If not, it sleeps. This means:
 
-**CTO (Chief Technology Officer)** — The technical authority. Converts PM's user stories into self-contained technical specifications detailed enough for autonomous code execution. Understands the codebase architecture, plans migrations, identifies technical risks, and creates dev tasks. Maintains the Technical Architecture document. When PM creates a story, CTO produces the spec. When Architect flags a code health issue, CTO plans the remediation.
+- PM wakes up when: planned stories are running low, OR new notes from other agents, OR roadmap is stale, OR the President asked for something
+- CTO wakes up when: user stories exist without specs
+- Dev wakes up when: specs exist without PRs
+- Growth wakes up when: shipped features lack content, OR market research is older than a few days
+- Sales wakes up when: new prospects discovered, OR follow-ups are due
+- Security wakes up when: daily scan is due, OR new dependency added
+- CEO wakes up when: coordination check is due, OR President sent a message
 
-**Dev (Developer)** — The builder. Executes technical specs by creating pull requests through the configured coding adapter (GitHub Copilot, OpenAI Codex, Claude Code, or built-in). Handles CI failures, responds to code review feedback, and picks up maintenance work when no specs are pending. Dev never idles — if there's no feature work, there's refactoring, dependency updates, or test improvements.
+No fixed timers. No "every 6 hours." Agents work when there's work to do and rest when there isn't — exactly like a well-run team.
 
-### Phased activation (hired when relevant)
+### Agent roles
 
-**Security** — Activates immediately for lightweight daily scans. Continuous vulnerability scanning: dependencies, secrets, OWASP patterns, auth coverage. Raises signals for findings, creates fix specs for critical issues. Distinct from Architect — Security finds vulnerabilities, Architect enforces code health.
+**CEO** — The strategic layer. Coordinates across all agents, detects bottlenecks and conflicts, relays President directives to the right employees. When the user says "focus on enterprise this quarter" in the CEO chat, the CEO immediately updates the Goals document and tells PM to reprioritize. Generates daily and weekly reports. The CEO is the President's relay to the team — and the team's relay to the President.
 
-**Architect** — Activates after 5+ PRs merged. Enforces codebase health: file size limits, function complexity, test coverage, pattern consistency. Reviews PRs against the Technical Architecture document. Creates architecture decision records and refactoring proposals.
+**PM (Product Manager)** — The brain of the company. Doesn't do market research — that's Growth's job. Instead, PM reads Growth's market research notes, user feedback, support patterns, and the knowledge base, then thinks about **what to build**: use cases, features, improvements, fixes. Creates well-structured initiatives with user stories and acceptance criteria. Maintains the roadmap. Ensures the pipeline never runs dry — when planned work is getting low, PM proactively fills it from the roadmap and Growth's latest findings.
 
-**Growth** — Activates when the first user-facing feature ships. Finds distribution channels. Creates platform-specific content — Reddit replies, LinkedIn posts, Twitter threads, Hacker News comments, blog articles, changelog announcements. Searches for relevant conversations where the product can add value. Maintains the Brand Voice document. Everything is pre-written and goes to the inbox for approval.
+**CTO (Chief Technology Officer)** — The technical authority. Checks the board for user stories that need specs. Converts them into self-contained technical specifications detailed enough for autonomous code execution. Understands the codebase architecture, plans migrations, identifies technical risks. When no stories need speccing, reviews architecture and checks for tech debt.
 
-**Sales** — Activates when ICP is defined and Growth has published at least one content item. Discovers prospects from GitHub activity (stargazers, forkers of related repos), social mentions, community discussions, and web searches. Manages a pipeline from discovered to converted. Adapts its mode based on product maturity — community building and beta user acquisition early, B2B pipeline management later.
+**Dev (Developer)** — The builder. Checks the board for specs ready to build. Creates pull requests through the configured coding adapter (GitHub Copilot, OpenAI Codex, Claude Code, or built-in). Handles CI failures, responds to code review feedback. When no specs are ready, picks up refactoring, dependency updates, or test improvements. Dev never idles.
 
-**Support** — Activates when support channels are configured. Triages inbound conversations, drafts responses, escalates bugs and feature requests as signals to PM. Closes the loop with users when their requested features ship. Connects the feedback cycle — users feel heard in minutes, not weeks.
+**Growth** — The market researcher and content creator. Proactively scans the market — Reddit, Hacker News, GitHub trending, competitor activity, community discussions. Leaves notes about what it finds for PM to consume. Also creates distribution content when features ship — posts, replies, articles, changelog announcements. Growth feeds PM with market intelligence and turns shipped work into reach.
 
-**Docs** — Activates after 3+ features shipped. Detects stale documentation, generates user guides from shipped features, maintains FAQ from support patterns. Creates documentation PRs through the coding adapter. Docs never lag behind the product.
+**Sales** — Discovers prospects from Growth's market findings, GitHub activity (stargazers, forkers of related repos), social mentions, and community discussions. Manages a pipeline from discovered to converted. Adapts mode based on product maturity — community building and beta user acquisition early, B2B pipeline management later.
+
+**Security** — Continuous vulnerability scanning: dependencies, secrets, OWASP patterns, auth coverage. Leaves notes about findings. Creates fix specs for critical issues. Distinct from Architect — Security finds vulnerabilities, Architect enforces code health.
+
+**Architect** — Enforces codebase health: file size limits, function complexity, test coverage, pattern consistency. Reviews PRs against the Technical Architecture document. Creates architecture decision records and refactoring proposals. Activates after the codebase has enough PRs to review.
+
+**Support** — Triages inbound conversations, drafts responses, escalates bugs and feature requests as notes to PM. Closes the loop with users when their requested features ship. Connects the feedback cycle.
+
+**Docs** — Detects stale documentation, generates user guides from shipped features, maintains FAQ from support patterns. Creates documentation PRs through the coding adapter.
+
+### Phased activation
+
+Not every agent runs from day 1. Like a startup that hires as it grows:
+
+- **Always active**: CEO, PM, CTO, Dev
+- **Immediate**: Security (lightweight scans)
+- **After 5+ PRs**: Architect
+- **After first feature ships**: Growth
+- **After ICP defined + content published**: Sales
+- **After support channel configured**: Support
+- **After 3+ features shipped**: Docs
+
+The user can manually activate any agent early via a "Hire" button.
 
 ## The feature lifecycle
 
-Every feature follows a clear path through the company, with specific handoffs and artifacts at each step:
+Every feature follows a clear path through the company:
 
 ```
-1. DISCOVER  (PM)        → Market signal or user feedback detected
-2. DEFINE    (PM)        → Initiative created with user stories and acceptance criteria
-3. SPEC      (CTO)       → Technical specification with implementation plan
-4. BUILD     (Dev)       → Pull request with code changes
+1. DISCOVER  (Growth)    → Market research finds opportunity, leaves note
+2. DEFINE    (PM)        → Reads note, creates initiative + user stories
+3. SPEC      (CTO)       → Writes technical specification
+4. BUILD     (Dev)       → Creates pull request
 5. REVIEW    (Architect) → Code quality review + Security scan
 6. SHIP      (Dev)       → Merged and deployed
 7. ANNOUNCE  (Growth)    → Distribution content across channels
 8. SELL      (Sales)     → Prospects contacted about new capability
 9. SUPPORT   (Support)   → User questions handled, feedback collected
-10. MEASURE  (PM)        → Success metrics evaluated, roadmap adjusted
+10. MEASURE  (PM)        → Reads impact, adjusts roadmap
 ```
-
-The UI shows this lifecycle visually. The user sees exactly where every initiative is, what's blocked, what's progressing, and what's next.
 
 ## The inbox
 
@@ -133,18 +173,10 @@ Every agent output that needs human attention flows to a central inbox:
 - Architecture violation flagged (Architect)
 - New initiative proposed (PM)
 - CEO weekly report (CEO)
-- Revenue alert (system)
 
-Each item supports approve / edit / reject / snooze. Batch actions for efficiency ("approve all Growth posts for Initiative X"). Smart auto-expire based on priority (5 days for low, 30 days for critical).
+Each item supports approve / edit / reject / snooze. Batch actions for efficiency. Smart auto-expire based on priority.
 
-### Inbox pressure management
-
-The system monitors inbox size and throttles agent output to prevent overwhelm:
-- \>20 pending: Agents reduce low-priority output by 50%
-- \>40 pending: Only critical items (security, bugs) get created
-- \>60 pending: CEO sends a summary with suggested bulk actions
-
-The system never floods the user. It degrades gracefully.
+The system monitors inbox size and throttles agent output to prevent overwhelm. The system never floods the user. It degrades gracefully.
 
 ## Autonomy modes
 
@@ -152,13 +184,18 @@ Three modes, configurable per organization:
 
 **Supervised (default)** — Agents work autonomously on analysis, research, planning, and drafting. Anything that affects the outside world — PRs, emails, outreach, published content — goes to the inbox for approval.
 
-**Full Auto** — Everything runs autonomously with a 15-minute delay on external actions (PRs, emails, content). The inbox exists for transparency, not gatekeeping. The user can cancel anything during the delay window.
+**Full Auto** — Everything runs autonomously with a delay on external actions. The inbox exists for transparency, not gatekeeping. The user can cancel anything during the delay window.
 
-**Stopped** — All agent activity paused immediately. Preserves all state for resume. The hard stop button.
+**Stopped** — All agent activity paused immediately. Preserves all state for resume.
 
-## Safeguards and limits
+## Safeguards
 
-The system is designed around the principle: **never block, always degrade.**
+Every agent execution passes through guards — lightweight middleware checks, not an orchestrator:
+
+- **Cost guard** — per-agent daily budgets, global daily cap, rate limiter (prevents runaway spending)
+- **Autonomy gate** — checks if the action needs inbox approval based on the current mode
+- **Rate limiter** — max calls per agent per hour (prevents loops)
+- **Circuit breaker** — if too many agents fail in a short window, pause everything and alert the President
 
 ### Hard limits
 
@@ -168,48 +205,26 @@ The system is designed around the principle: **never block, always degrade.**
 | User stories per initiative | 20 | Split if bigger |
 | Active stories per initiative (WIP) | 5 | Prevent overload |
 | Open PRs | 3 | Review bottleneck prevention |
-| Concurrent agent executions | 3 | Resource control |
 | Pending tasks per agent | 3 | No agent hogs the queue |
-| Pending tasks total | 15 | Bounded backlog |
-| Signals per agent per day | 20 | Prevent signal spam |
-| Signals total per day | 100 | Hard ceiling on noise |
 | Sales outreach per day | 10 | Reputation protection |
 | Content items per day | 5 | Quality over quantity |
-| LLM calls per agent per hour | 10 | Loop prevention |
 | Daily cost cap | $20 | Budget control |
-| 5-minute cost rate | $2 max | Runaway prevention |
-| Task retries | 3 | Exponential backoff: 1min, 5min, 30min |
-| Circuit breaker | 5 failures in 10min → pause 30min | Cascade prevention |
+| Task retries | 3 | Exponential backoff |
 
-### Priority and ordering
+### Self-cleaning
 
-Priorities follow a strict hierarchy:
-1. **President directives** — user commands override everything
-2. **Goal alignment** — tasks contributing to current OKRs rank higher
-3. **Urgency** — security critical > user-facing bug > feature > refactoring
-4. **Initiative completion** — tasks for nearly-done initiatives get a boost (+20% at >60% complete)
-5. **Age** — pending tasks gain +5% priority per day to prevent starvation
+Each agent cleans its own domain when it wakes up — cancels stale work, retries failed items, archives old completed work. The CEO coordination check detects system-wide issues: bottlenecks, starvation, conflicts between agents.
 
 ### Graceful degradation
 
-| Condition | System behavior |
-|-----------|----------------|
-| LLM provider down | Queue tasks, exponential backoff, switch to fallback model chain |
+The system never fully stops (except on explicit President stop or budget exhaustion):
+
+| Condition | Behavior |
+|-----------|----------|
 | Budget 80% used | Skip non-critical agents, keep PM + Dev + Security |
-| Budget 100% used | Stop all agents, CEO sends summary |
-| Inbox overflowing | Throttle agent output progressively |
-| Agent repeatedly failing | Disable after 3 consecutive failures, alert CEO |
-| CTO bottleneck detected | Dev picks up maintenance work |
-| No signals or feedback | PM shifts to proactive market research |
-| User inactive 7+ days | Reduce to essentials (security, cost tracking), CEO sends email digest |
-
-### Data integrity
-
-- Knowledge docs keep version history (max 10 versions per doc)
-- User edits are protected for 72 hours — agents can't overwrite
-- Authority hierarchy: President > CEO > PM > individual agents
-- Signals deduplicate by content similarity within 7-day windows
-- Initiatives deduplicate by title/description overlap >70%
+| Budget exhausted | Stop all, CEO sends summary |
+| Agent repeatedly failing | Disable that agent, alert CEO |
+| User inactive 7+ days | Essential mode only, CEO sends email digest |
 
 ## Provider-agnostic coding
 
@@ -220,47 +235,34 @@ The user chooses how code gets written:
 - **OpenAI Codex** — Dispatches workflow, OpenAI manages the container.
 - **Claude Code** — Creates issues with `@claude`, triggers GitHub Action.
 
-All adapters implement the same interface. The orchestrator doesn't care which one runs.
-
-## The orchestrator
-
-A Convex cron running every 2 minutes. Pure state machine, no LLM. Scans organizations with pending work, respects the task DAG, checks daily throttles, allocates the 3 concurrent execution slots by priority, and dispatches to the right agent. The PM refills the queue through market research and signal triage. The orchestrator drains it. The cycle never stops.
-
-### Bottleneck and starvation detection
-
-The CEO coordination loop (every 4 hours) monitors the full pipeline:
-- If any lifecycle stage has >3x items compared to the next stage, it's a bottleneck — alert generated
-- If any task has been pending >3 days, it's starving — priority boost applied
-- If any initiative hasn't progressed in 3 days, it's stuck — CEO investigates
+All adapters implement the same interface.
 
 ## Revenue and costs
 
 Stripe Connect integration captures daily revenue snapshots (MRR, ARR, churn, subscriptions). Revenue alerts fire on significant MRR changes.
 
-Every task and run tracks tokens used and estimated cost. The dashboard shows daily cost, per-agent cost, and trends. Per-agent daily budgets prevent any single agent from burning the global cap.
+Every agent execution tracks tokens used and estimated cost. The dashboard shows daily cost, per-agent cost, and trends. Per-agent daily budgets prevent any single agent from burning the global cap.
 
 ## The full loop
 
 This is what makes Reflet different from every AI coding tool. It's not a point solution. It's every function of a product company, connected and proactive:
 
 ```
-Market research discovers opportunity → PM creates initiative → CTO writes spec
-→ Dev builds PR → Architect reviews → Security scans → Merged and deployed
-→ Growth announces across channels → Sales contacts discovered prospects
-→ Support handles user questions → PM measures impact → Roadmap adjusts
-→ Agents raise new signals → PM synthesizes → Next cycle begins
+Growth researches the market → PM reads findings and creates use cases
+→ CTO specs them → Dev builds PRs → Architect reviews → Security scans
+→ Shipped → Growth announces → Sales contacts prospects
+→ Support handles users → PM reads impact → Roadmap adjusts
+→ Growth researches again → next cycle
 ```
 
-Meanwhile: CEO oversees everything, Docs stay in sync, revenue is tracked, knowledge base evolves, and the President steers from the inbox and CEO chat.
+Meanwhile: CEO coordinates, Docs stay in sync, revenue is tracked, knowledge base evolves, and the President steers from the inbox and CEO chat.
 
-Every agent is proactive. Every agent reads the company's shared knowledge. Every agent contributes back. Bottom-up signals flow from any agent to PM. Top-down directives flow from the President through CEO to everyone. The company runs itself — discovering, building, shipping, growing, selling — 24 hours a day, 7 days a week.
-
-NanoCorp creates businesses from scratch. Reflet runs existing ones. That's a larger market — every product with a GitHub repo is a potential customer. And because Reflet generates its own founding knowledge from the codebase, the company has real context from minute one.
-
-## Tech stack
-
-Next.js 16, React 19, Convex (real-time backend + orchestration), AI SDK v6 with OpenRouter (model fallback chains, free models first), Resend (email), Stripe (billing + revenue tracking), TailwindCSS + shadcn/ui, Turborepo + Bun, Better-Auth. Zero self-hosted infrastructure — everything runs on managed services.
+Every agent is proactive. Every agent reads the company's shared board. Every agent contributes back. Notes flow from any agent to PM. Directives flow from the President through CEO to everyone. The company runs itself — discovering, building, shipping, growing, selling — 24 hours a day, 7 days a week.
 
 ## Future: The Reflet SDK
 
-Today, agents that need production data (error tracking, analytics, performance monitoring) are deferred until the product matures. The long-term vision: a `@reflet/sdk` package that the CTO agent installs into the codebase via a normal PR. This SDK captures errors, user events, and performance metrics — sending them directly back to Convex where the Analytics and Ops agents consume them natively. No PostHog setup. No Sentry configuration. The company sets up its own monitoring infrastructure, the way a real engineering team would — except the CTO does it autonomously.
+Today, agents that need production data (error tracking, analytics, performance monitoring) are deferred until the product matures. The long-term vision: a `@reflet/sdk` package that the CTO agent installs into the codebase via a normal PR. This SDK captures errors, user events, and performance metrics — sending them directly back to Convex where future Analytics and Ops agents consume them natively. The company sets up its own monitoring infrastructure, the way a real engineering team would.
+
+## Tech stack
+
+Next.js 16, React 19, Convex (real-time backend), AI SDK v6 with OpenRouter (model fallback chains, free models first), Resend (email), Stripe (billing + revenue tracking), TailwindCSS + shadcn/ui, Turborepo + Bun, Better-Auth. Zero self-hosted infrastructure — everything runs on managed services.

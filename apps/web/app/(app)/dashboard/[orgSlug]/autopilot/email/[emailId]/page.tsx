@@ -26,9 +26,9 @@ const STATUS_STYLES = {
 
 function EmailDetail({ emailId }: { emailId: Id<"autopilotEmails"> }) {
   const { orgSlug } = useAutopilotContext();
-  const email = useQuery(api.autopilot.queries.getEmail, { emailId });
+  const email = useQuery(api.autopilot.queries.email.getEmail, { emailId });
   const thread = useQuery(
-    api.autopilot.queries.getEmailThread,
+    api.autopilot.queries.email.getEmailThread,
     email?.threadId ? { threadId: email.threadId } : "skip"
   );
 

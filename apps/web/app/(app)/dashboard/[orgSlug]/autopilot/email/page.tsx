@@ -34,7 +34,7 @@ export default function AutopilotEmailPage() {
   const [directionFilter, setDirectionFilter] =
     useState<DirectionFilter>("all");
 
-  const emails = useQuery(api.autopilot.queries.listEmails, {
+  const emails = useQuery(api.autopilot.queries.email.listEmails, {
     organizationId,
     direction:
       directionFilter === "all"

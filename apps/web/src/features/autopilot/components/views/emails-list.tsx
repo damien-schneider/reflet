@@ -24,7 +24,7 @@ export function EmailsList({
 }: {
   organizationId: Id<"organizations">;
 }) {
-  const emails = useQuery(api.autopilot.queries.listEmails, {
+  const emails = useQuery(api.autopilot.queries.email.listEmails, {
     organizationId,
     limit: 50,
   });

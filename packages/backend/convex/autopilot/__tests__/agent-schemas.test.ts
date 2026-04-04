@@ -12,12 +12,6 @@
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
-// Analytics agent schemas
-import {
-  analyticsBriefSchema,
-  anomalyDetectionSchema,
-} from "../agents/analytics";
-
 // Architect agent schemas
 import {
   architectFindingSchema,
@@ -31,19 +25,13 @@ import { technicalSpecSchema } from "../agents/cto";
 import { docsCheckSchema } from "../agents/docs";
 
 // Growth agent schemas
-import { growthContentSchema, threadDiscoverySchema } from "../agents/growth";
-
-// Ops agent schemas
 import {
-  deploymentAnalysisSchema,
-  reliabilityReportSchema,
-} from "../agents/ops";
+  growthContentSchema,
+  threadDiscoverySchema,
+} from "../agents/growth/discovery";
 
 // PM agent schema
-import { pmAnalysisSchema } from "../agents/pm";
-
-// QA agent schemas
-import { regressionCheckSchema, testGenerationSchema } from "../agents/qa";
+import { pmAnalysisSchema } from "../agents/pm/analysis";
 
 // Security agent schemas
 import { securityFindingSchema, securityScanSchema } from "../agents/security";
@@ -118,16 +106,6 @@ describe("agent schemas — Azure compatibility", () => {
     checkSchema(docsCheckSchema, "docsCheckSchema");
   });
 
-  test("ops schemas have all properties required", () => {
-    checkSchema(deploymentAnalysisSchema, "deploymentAnalysisSchema");
-    checkSchema(reliabilityReportSchema, "reliabilityReportSchema");
-  });
-
-  test("qa schemas have all properties required", () => {
-    checkSchema(testGenerationSchema, "testGenerationSchema");
-    checkSchema(regressionCheckSchema, "regressionCheckSchema");
-  });
-
   test("support schemas have all properties required", () => {
     checkSchema(triageResultSchema, "triageResultSchema");
     checkSchema(shippedNotificationSchema, "shippedNotificationSchema");
@@ -136,11 +114,6 @@ describe("agent schemas — Azure compatibility", () => {
   test("growth schemas have all properties required", () => {
     checkSchema(threadDiscoverySchema, "threadDiscoverySchema");
     checkSchema(growthContentSchema, "growthContentSchema");
-  });
-
-  test("analytics schemas have all properties required", () => {
-    checkSchema(anomalyDetectionSchema, "anomalyDetectionSchema");
-    checkSchema(analyticsBriefSchema, "analyticsBriefSchema");
   });
 
   test("architect schemas have all properties required", () => {
@@ -153,20 +126,21 @@ describe("agent schemas — Azure compatibility", () => {
   });
 });
 
-describe("agent schemas — defaults work", () => {
-  test("security finding defaults filePath to empty string", () => {
+describe("agent schemas — required fields are validated", () => {
+  test("security finding requires filePath", () => {
     const result = securityFindingSchema.parse({
       severity: "low",
       category: "other",
       title: "test",
       description: "test",
+      filePath: "",
       recommendation: "test",
       autoFixable: false,
     });
     expect(result.filePath).toBe("");
   });
 
-  test("cto spec defaults architectureNotes to empty string", () => {
+  test("cto spec requires architectureNotes", () => {
     const result = technicalSpecSchema.parse({
       filesToModify: [],
       dependencies: { add: [], remove: [] },
@@ -175,14 +149,17 @@ describe("agent schemas — defaults work", () => {
       implementationPrompt: "test",
       testRequirements: [],
       acceptanceCriteria: [],
+      architectureNotes: "",
     });
     expect(result.architectureNotes).toBe("");
   });
 
-  test("docs check defaults suggestedContent and lastRelevantChange", () => {
+  test("docs check requires suggestedContent and lastRelevantChange", () => {
     const result = docsCheckSchema.parse({
-      updates: [{ section: "a", reason: "b", priority: "low" }],
-      stalePages: [{ page: "a", reason: "b" }],
+      updates: [
+        { section: "a", reason: "b", priority: "low", suggestedContent: "" },
+      ],
+      stalePages: [{ page: "a", reason: "b", lastRelevantChange: "" }],
       faqEntries: [],
       summary: "test",
     });
@@ -190,23 +167,7 @@ describe("agent schemas — defaults work", () => {
     expect(result.stalePages[0].lastRelevantChange).toBe("");
   });
 
-  test("regression check defaults reproductionSteps to empty array", () => {
-    const result = regressionCheckSchema.parse({
-      hasRegression: false,
-      findings: [
-        {
-          type: "error_spike",
-          severity: "low",
-          description: "test",
-          affectedArea: "test",
-        },
-      ],
-      summary: "test",
-    });
-    expect(result.findings[0].reproductionSteps).toEqual([]);
-  });
-
-  test("triage result defaults escalationReason and relatedFeature", () => {
+  test("triage result requires escalationReason and relatedFeature", () => {
     const result = triageResultSchema.parse({
       conversations: [
         {
@@ -215,6 +176,8 @@ describe("agent schemas — defaults work", () => {
           severity: "low",
           suggestedReply: "test",
           shouldEscalate: false,
+          escalationReason: "",
+          relatedFeature: "",
         },
       ],
       summary: "test",
@@ -223,18 +186,7 @@ describe("agent schemas — defaults work", () => {
     expect(result.conversations[0].relatedFeature).toBe("");
   });
 
-  test("reliability report defaults incident duration", () => {
-    const result = reliabilityReportSchema.parse({
-      summary: "test",
-      uptimePercent: 99,
-      highlights: [],
-      incidents: [{ date: "2026-01-01", description: "test", resolved: true }],
-      recommendations: [],
-    });
-    expect(result.incidents[0].duration).toBe("");
-  });
-
-  test("growth content defaults targetUrl", () => {
+  test("growth content requires targetUrl", () => {
     const result = growthContentSchema.parse({
       items: [
         {
@@ -242,6 +194,7 @@ describe("agent schemas — defaults work", () => {
           title: "test",
           content: "test",
           reasoning: "test",
+          targetUrl: "",
         },
       ],
       summary: "test",

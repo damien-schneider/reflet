@@ -32,7 +32,7 @@ export function GrowthItemsList({
 }: {
   organizationId: Id<"organizations">;
 }) {
-  const items = useQuery(api.autopilot.queries.listGrowthItems, {
+  const items = useQuery(api.autopilot.queries.growth.listGrowthItems, {
     organizationId,
     limit: 50,
   });

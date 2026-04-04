@@ -7,7 +7,7 @@
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-import { inboxItemType } from "./tableFields";
+import { inboxItemType } from "./schema/validators";
 
 // ============================================
 // SIMILARITY THRESHOLD

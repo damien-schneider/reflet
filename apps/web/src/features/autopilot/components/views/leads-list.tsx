@@ -35,7 +35,7 @@ export function LeadsList({
 }: {
   organizationId: Id<"organizations">;
 }) {
-  const leads = useQuery(api.autopilot.queries.listLeads, {
+  const leads = useQuery(api.autopilot.queries.leads.listLeads, {
     organizationId,
     limit: 50,
   });

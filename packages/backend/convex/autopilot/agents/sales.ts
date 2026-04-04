@@ -7,13 +7,17 @@
  */
 
 import { v } from "convex/values";
+import { z } from "zod";
 import { internal } from "../../_generated/api";
 import {
   internalAction,
   internalMutation,
   internalQuery,
 } from "../../_generated/server";
-import { leadSource, leadStatus } from "../tableFields";
+import { leadSource, leadStatus } from "../schema/validators";
+import { MODELS } from "./models";
+import { buildAgentPrompt, SALES_SYSTEM_PROMPT } from "./prompts";
+import { generateObjectWithFallback } from "./shared";
 
 // ============================================
 // QUERIES
@@ -272,34 +276,6 @@ export const runSalesFollowUp = internalAction({
       return;
     }
 
-    // Check prerequisites — skip if no leads at all
-    const prereq = await ctx.runQuery(
-      internal.autopilot.prerequisites.checkSalesPrerequisites,
-      { organizationId: args.organizationId }
-    );
-
-    if (!prereq.ready) {
-      const recentSkipLog = await ctx.runQuery(
-        internal.autopilot.prerequisites.wasSkipLoggedRecently,
-        {
-          organizationId: args.organizationId,
-          agent: "sales",
-          windowHours: 24,
-        }
-      );
-      if (!recentSkipLog) {
-        await ctx.runMutation(
-          internal.autopilot.prerequisites.logPrerequisiteSkip,
-          {
-            organizationId: args.organizationId,
-            agent: "sales",
-            reason: prereq.reason ?? "Prerequisites not met",
-          }
-        );
-      }
-      return;
-    }
-
     const leads = await ctx.runQuery(
       internal.autopilot.agents.sales.getLeadsDueForFollowUp,
       { organizationId: args.organizationId }
@@ -358,5 +334,205 @@ export const updateLeadFollowUp = internalMutation({
       updatedAt: Date.now(),
     });
     return null;
+  },
+});
+
+// ============================================
+// PROSPECTING
+// ============================================
+
+const PROSPECTING_MODELS = [MODELS.SEARCH_FREE, MODELS.SEARCH_PAID] as const;
+
+const prospectingSchema = z.object({
+  leads: z.array(
+    z.object({
+      name: z.string().describe("Person or company name"),
+      company: z.string().describe("Company name"),
+      source: z
+        .enum([
+          "github_star",
+          "github_fork",
+          "product_hunt",
+          "hackernews",
+          "reddit",
+          "web_search",
+          "referral",
+          "manual",
+        ])
+        .describe("Where the lead was found"),
+      sourceUrl: z.string().describe("URL where the lead was discovered"),
+      notes: z
+        .string()
+        .describe("Why this is a good lead, context from the thread"),
+      priority: z
+        .enum(["high", "medium", "low"])
+        .describe("Lead quality/priority"),
+    })
+  ),
+  patterns: z.array(
+    z.object({
+      pattern: z.string().describe("Observed prospect pattern"),
+      description: z.string().describe("Details about this pattern"),
+      actionable: z
+        .boolean()
+        .describe("Whether this is immediately actionable"),
+    })
+  ),
+  summary: z.string().describe("Executive summary of prospecting findings"),
+});
+
+/**
+ * Run sales prospecting — reads market notes, discovers leads, creates prospect notes.
+ */
+export const runSalesProspecting = internalAction({
+  args: { organizationId: v.id("organizations") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    try {
+      const stopped = await ctx.runQuery(internal.autopilot.gate.isStopped, {
+        organizationId: args.organizationId,
+      });
+      if (stopped) {
+        return null;
+      }
+
+      const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
+        organizationId: args.organizationId,
+      });
+      if (!config?.salesEnabled) {
+        return null;
+      }
+
+      const marketNotes = await ctx.runQuery(
+        internal.autopilot.notes.getNotesByCategory,
+        { organizationId: args.organizationId, category: "market" }
+      );
+
+      const agentKnowledge = await ctx.runQuery(
+        internal.autopilot.agent_context.loadAgentContext,
+        { organizationId: args.organizationId, agent: "sales" }
+      );
+
+      const existingLeads = await ctx.runQuery(
+        internal.autopilot.agents.sales.getLeads,
+        { organizationId: args.organizationId }
+      );
+
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: args.organizationId,
+        agent: "sales",
+        level: "action",
+        message: "Starting sales prospecting",
+        details: `Market notes: ${marketNotes.length} | Existing leads: ${existingLeads.length}`,
+      });
+
+      const marketNotesContext = marketNotes
+        .map(
+          (n: { title: string; description: string; priority: string }) =>
+            `- ${n.title} (${n.priority}): ${n.description}`
+        )
+        .join("\n");
+
+      const existingLeadNames = existingLeads
+        .map(
+          (l: { name: string; company?: string; status: string }) =>
+            `- ${l.name}${l.company ? ` (${l.company})` : ""} — ${l.status}`
+        )
+        .join("\n");
+
+      const systemPrompt = buildAgentPrompt(
+        SALES_SYSTEM_PROMPT,
+        "",
+        "",
+        agentKnowledge
+      );
+
+      const prospectOutput = await generateObjectWithFallback({
+        models: PROSPECTING_MODELS,
+        schema: prospectingSchema,
+        systemPrompt,
+        prompt: `Analyze market intelligence and discover potential leads.
+
+MARKET NOTES FROM GROWTH AGENT:
+${marketNotesContext || "(none — Growth agent hasn't produced market research yet)"}
+
+EXISTING LEADS (avoid duplicates):
+${existingLeadNames || "(none)"}
+
+Based on the market notes and your knowledge of the product's ICP:
+1. Identify potential leads from community discussions
+2. Look for high-intent signals (people asking for solutions, comparing tools, etc.)
+3. Note patterns in who is interested and why
+4. Only return leads that are genuinely new (not already in the existing leads list)
+
+Focus on quality over quantity — 3-5 high-quality leads are better than 20 low-quality ones.`,
+      });
+
+      let createdLeadCount = 0;
+      for (const lead of prospectOutput.leads) {
+        const isDuplicate = existingLeads.some(
+          (existing: { name: string; company?: string }) =>
+            existing.name.toLowerCase() === lead.name.toLowerCase() ||
+            (existing.company &&
+              lead.company &&
+              existing.company.toLowerCase() === lead.company.toLowerCase())
+        );
+
+        if (isDuplicate) {
+          continue;
+        }
+
+        await ctx.runMutation(internal.autopilot.agents.sales.createLead, {
+          organizationId: args.organizationId,
+          name: lead.name,
+          company: lead.company,
+          source: lead.source,
+          sourceUrl: lead.sourceUrl,
+          notes: lead.notes,
+        });
+        createdLeadCount++;
+      }
+
+      // Write prospect notes about patterns for PM/CEO
+      for (const pattern of prospectOutput.patterns) {
+        await ctx.runMutation(internal.autopilot.notes.createNote, {
+          organizationId: args.organizationId,
+          type: pattern.actionable ? "recommendation" : "observation",
+          category: "prospect",
+          title: pattern.pattern,
+          description: pattern.description,
+          sourceAgent: "sales",
+          priority: pattern.actionable ? "high" : "medium",
+        });
+      }
+
+      // Complete any in_progress tasks assigned to sales
+      await ctx.runMutation(internal.autopilot.tasks.completeAgentTasks, {
+        organizationId: args.organizationId,
+        agent: "sales",
+      });
+
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: args.organizationId,
+        agent: "sales",
+        level: "success",
+        message: `Sales prospecting complete: ${createdLeadCount} new leads, ${prospectOutput.patterns.length} patterns noted`,
+        details: prospectOutput.summary,
+      });
+
+      return null;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: args.organizationId,
+        agent: "sales",
+        level: "error",
+        message: `Sales prospecting failed: ${errorMessage}`,
+      });
+
+      return null;
+    }
   },
 });

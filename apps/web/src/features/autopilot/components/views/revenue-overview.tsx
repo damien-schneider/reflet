@@ -25,11 +25,11 @@ export function RevenueOverview({
 }: {
   organizationId: Id<"organizations">;
 }) {
-  const history = useQuery(api.autopilot.queries.getRevenueHistory, {
+  const history = useQuery(api.autopilot.queries.revenue.getRevenueHistory, {
     organizationId,
     limit: 12,
   });
-  const latest = useQuery(api.autopilot.queries.getLatestRevenue, {
+  const latest = useQuery(api.autopilot.queries.revenue.getLatestRevenue, {
     organizationId,
   });
 

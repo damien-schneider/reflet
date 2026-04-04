@@ -25,7 +25,7 @@ const CI_STATUS_STYLES: Record<string, string> = {
 };
 
 export function TaskRunsList({ taskId }: { taskId: Id<"autopilotTasks"> }) {
-  const runs = useQuery(api.autopilot.queries.getTaskRuns, { taskId });
+  const runs = useQuery(api.autopilot.queries.tasks.getTaskRuns, { taskId });
 
   if (runs === undefined) {
     return (

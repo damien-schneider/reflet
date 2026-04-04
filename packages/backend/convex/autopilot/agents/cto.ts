@@ -165,8 +165,9 @@ export const createDevSubtask = internalMutation({
       organizationId: args.organizationId,
       taskId,
       agent: "cto",
+      targetAgent: "dev",
       level: "action",
-      message: `Created dev subtask: ${args.title}`,
+      message: `Technical spec ready: ${args.title}`,
       details: `Complexity: ${args.estimatedComplexity}`,
       createdAt: now,
     });

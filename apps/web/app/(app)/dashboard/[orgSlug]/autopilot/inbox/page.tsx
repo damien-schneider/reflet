@@ -14,16 +14,16 @@ import { InboxItemCard } from "@/features/autopilot/components/inbox-item-card";
 export default function AutopilotInboxPage() {
   const { organizationId } = useAutopilotContext();
 
-  const items = useQuery(api.autopilot.queries.listInboxItems, {
+  const items = useQuery(api.autopilot.queries.inbox.listInboxItems, {
     organizationId,
     limit: 50,
   });
 
-  const counts = useQuery(api.autopilot.queries.getInboxCounts, {
+  const counts = useQuery(api.autopilot.queries.inbox.getInboxCounts, {
     organizationId,
   });
 
-  const bulkUpdate = useMutation(api.autopilot.mutations.bulkUpdateInbox);
+  const bulkUpdate = useMutation(api.autopilot.mutations.inbox.bulkUpdateInbox);
 
   if (items === undefined) {
     return (

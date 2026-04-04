@@ -190,6 +190,12 @@ Analyze support conversations and:
       await processTriagedConversation(ctx, args.organizationId, conv);
     }
 
+    // Complete any in_progress tasks assigned to support
+    await ctx.runMutation(internal.autopilot.tasks.completeAgentTasks, {
+      organizationId: args.organizationId,
+      agent: "support",
+    });
+
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
       agent: "support",

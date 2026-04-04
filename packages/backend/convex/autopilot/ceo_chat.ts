@@ -19,7 +19,7 @@ import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { internalAction, mutation, query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
-import { ceoAgent } from "./agents/ceo";
+import { ceoAgent } from "./agents/ceo/agent";
 import { makeCeoToolsForOrg } from "./agents/ceo_tools";
 
 // ============================================
@@ -206,13 +206,13 @@ export const generateCEOResponseAsync = internalAction({
   handler: async (ctx, args) => {
     // Get aggregate context
     const ceoContext = await ctx.runQuery(
-      internal.autopilot.agents.ceo.getCEOContext,
+      internal.autopilot.agents.ceo.queries.getCEOContext,
       { organizationId: args.organizationId }
     );
 
     // Get detailed context with task titles, agent states, errors, inbox items
     const detailed = await ctx.runQuery(
-      internal.autopilot.agents.ceo.getDetailedCEOContext,
+      internal.autopilot.agents.ceo.queries.getDetailedCEOContext,
       { organizationId: args.organizationId }
     );
 

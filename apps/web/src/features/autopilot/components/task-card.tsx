@@ -86,12 +86,9 @@ const AGENT_LABELS: Record<string, string> = {
   architect: "Architect",
   growth: "Growth",
   support: "Support",
-  analytics: "Analytics",
   docs: "Docs",
-  qa: "QA",
-  ops: "Ops",
   sales: "Sales",
-  orchestrator: "System",
+  system: "System",
 };
 
 function TaskDetailDialog({
@@ -104,7 +101,7 @@ function TaskDetailDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const subtasks = useQuery(
-    api.autopilot.queries.getSubtasks,
+    api.autopilot.queries.tasks.getSubtasks,
     open ? { parentTaskId: task._id } : "skip"
   );
 
@@ -227,8 +224,8 @@ function TaskDetailDialog({
 
 export function TaskCard({ task }: { task: Doc<"autopilotTasks"> }) {
   const [detailOpen, setDetailOpen] = useState(false);
-  const cancelTask = useMutation(api.autopilot.mutations.cancelTask);
-  const retryTask = useMutation(api.autopilot.mutations.retryTask);
+  const cancelTask = useMutation(api.autopilot.mutations.tasks.cancelTask);
+  const retryTask = useMutation(api.autopilot.mutations.tasks.retryTask);
 
   const statusConfig =
     STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ??

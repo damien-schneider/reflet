@@ -42,7 +42,7 @@ export const generateObjectWithFallback = async <T extends z.ZodType>({
         prompt,
         system: `${systemPrompt}\n\nRespond in JSON format.`,
         temperature: temperature ?? 0,
-        maxTokens: maxOutputTokens,
+        maxTokens: maxOutputTokens ?? 16_384,
       });
 
       return result.object as z.infer<T>;

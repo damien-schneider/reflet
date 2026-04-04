@@ -8,7 +8,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
-import { activityLogAgent, inboxItemType } from "./tableFields";
+import { activityLogAgent, inboxItemType } from "./schema/validators";
 
 // ============================================
 // FEEDBACK TABLE FIELDS (to be added to tableFields.ts)

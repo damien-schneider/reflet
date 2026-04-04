@@ -277,7 +277,9 @@ export const retryTask = internalMutation({
 export const runSelfHealing = internalAction({
   args: {},
   handler: async (ctx) => {
-    const orgs = await ctx.runQuery(internal.autopilot.crons.getEnabledOrgs);
+    const orgs = await ctx.runQuery(
+      internal.autopilot.config.getEnabledConfigs
+    );
 
     for (const org of orgs) {
       try {

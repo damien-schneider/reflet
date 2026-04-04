@@ -4,25 +4,20 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   IconBrain,
-  IconChartBar,
-  IconChevronRight,
   IconCode,
   IconCoin,
   IconCrown,
   IconFileText,
   IconHeadset,
   IconRocket,
-  IconServer,
   IconShield,
-  IconTestPipe,
   IconTrendingUp,
   IconUsers,
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
+import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
-
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -65,19 +60,11 @@ const AGENTS = [
     configField: "supportEnabled",
   },
   {
-    id: "analytics",
-    label: "Analytics",
-    icon: IconChartBar,
-    configField: "analyticsEnabled",
-  },
-  {
     id: "docs",
     label: "Docs",
     icon: IconFileText,
     configField: "docsEnabled",
   },
-  { id: "qa", label: "QA", icon: IconTestPipe, configField: "qaEnabled" },
-  { id: "ops", label: "Ops", icon: IconServer, configField: "opsEnabled" },
   {
     id: "sales",
     label: "Sales",
@@ -93,15 +80,7 @@ const CORE_PIPELINE = ["pm", "cto", "dev"] as const;
 const PM_TEAM = ["growth", "support"] as const;
 
 /** Independent specialist agents */
-const SPECIALISTS = [
-  "security",
-  "architect",
-  "analytics",
-  "docs",
-  "qa",
-  "ops",
-  "sales",
-] as const;
+const SPECIALISTS = ["security", "architect", "docs", "sales"] as const;
 
 const ACTIVE_WINDOW = 5 * 60 * 1000;
 const RECENT_WINDOW = 30 * 60 * 1000;
@@ -133,36 +112,114 @@ function getAgentStatus(
   return "idle";
 }
 
-const STATUS_STYLES: Record<
+const STATUS_META: Record<
   AgentStatus,
-  { card: string; dot: string; label: string }
+  { color: string; glow: string; label: string; ring: string }
 > = {
   active: {
-    card: "bg-green-500/5",
-    dot: "bg-green-500 animate-pulse",
+    color: "text-emerald-400",
+    glow: "shadow-emerald-500/20",
     label: "Working",
+    ring: "stroke-emerald-400",
   },
   blocked: {
-    card: "bg-amber-500/5",
-    dot: "bg-amber-500",
+    color: "text-amber-400",
+    glow: "shadow-amber-500/20",
     label: "Blocked",
+    ring: "stroke-amber-400",
   },
   error: {
-    card: "bg-red-500/5",
-    dot: "bg-red-500",
+    color: "text-red-400",
+    glow: "shadow-red-500/20",
     label: "Error",
+    ring: "stroke-red-400",
   },
   idle: {
-    card: "bg-card",
-    dot: "bg-muted-foreground/30",
+    color: "text-muted-foreground/50",
+    glow: "",
     label: "Idle",
+    ring: "stroke-muted-foreground/20",
   },
   disabled: {
-    card: "bg-muted opacity-50",
-    dot: "bg-muted-foreground/20",
+    color: "text-muted-foreground/30",
+    glow: "",
     label: "Off",
+    ring: "stroke-muted-foreground/10",
   },
 };
+
+// ============================================
+// STATUS RING — animated SVG indicator
+// ============================================
+
+function StatusRing({
+  status,
+  size = 32,
+}: {
+  status: AgentStatus;
+  size?: number;
+}) {
+  const meta = STATUS_META[status];
+  const r = (size - 4) / 2;
+  const circumference = 2 * Math.PI * r;
+  const isActive = status === "active";
+  let fillRatio = 1;
+  if (status === "disabled") {
+    fillRatio = 0;
+  } else if (status === "idle") {
+    fillRatio = 0.25;
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="shrink-0 -rotate-90"
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      width={size}
+    >
+      <circle
+        className="stroke-muted-foreground/[0.06]"
+        cx={size / 2}
+        cy={size / 2}
+        fill="none"
+        r={r}
+        strokeWidth={2}
+      />
+      <motion.circle
+        animate={{
+          strokeDashoffset: circumference - fillRatio * circumference,
+          opacity: status === "disabled" ? 0.3 : 1,
+        }}
+        className={meta.ring}
+        cx={size / 2}
+        cy={size / 2}
+        fill="none"
+        initial={{ strokeDashoffset: circumference }}
+        r={r}
+        strokeDasharray={circumference}
+        strokeLinecap="round"
+        strokeWidth={2}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      />
+      {isActive && (
+        <motion.circle
+          animate={{ opacity: [0.6, 0.15, 0.6] }}
+          className={meta.ring}
+          cx={size / 2}
+          cy={size / 2}
+          fill="none"
+          r={r}
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference - fillRatio * circumference}
+          strokeLinecap="round"
+          strokeWidth={2}
+          transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+        />
+      )}
+    </svg>
+  );
+}
 
 // ============================================
 // AGENT CARD COMPONENT
@@ -176,6 +233,7 @@ function AgentCard({
   taskCount,
   blockedReason,
   onToggle,
+  index,
 }: {
   agent: (typeof AGENTS)[number];
   config: Record<string, unknown>;
@@ -184,68 +242,138 @@ function AgentCard({
   taskCount: number;
   blockedReason?: { reason: string; actionUrl?: string };
   onToggle: (field: string, value: boolean) => void;
+  index: number;
 }) {
   const enabled = (config[agent.configField] as boolean | undefined) !== false;
   const isBlocked = enabled && blockedReason !== undefined;
   const status = getAgentStatus(enabled, lastActivity, isBlocked);
-  const styles = STATUS_STYLES[status];
+  const meta = STATUS_META[status];
 
   return (
-    <div className={cn("rounded-lg p-3", styles.card)}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <agent.icon className="size-4 text-muted-foreground" />
-          <span className="font-medium text-sm">{agent.label}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          {taskCount > 0 && (
-            <Badge className="h-5 px-1.5 text-xs" variant="secondary">
-              {taskCount}
-            </Badge>
-          )}
-          <div className={cn("size-2 rounded-full", styles.dot)} />
-          <Switch
-            checked={enabled}
-            disabled={!isAdmin}
-            onCheckedChange={(v) => onToggle(agent.configField, v)}
-            size="sm"
+    <motion.div
+      animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        "group relative rounded-lg border border-border/50 bg-card/50 p-3 backdrop-blur-sm transition-shadow hover:border-border",
+        meta.glow && `hover:shadow-lg hover:${meta.glow}`,
+        status === "disabled" && "opacity-50"
+      )}
+      initial={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.35, delay: index * 0.05 }}
+    >
+      <div className="flex items-start gap-2.5">
+        <div className="relative">
+          <StatusRing size={36} status={status} />
+          <agent.icon
+            className={cn(
+              "absolute top-1/2 left-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2",
+              meta.color
+            )}
           />
         </div>
-      </div>
-      <div className="mt-1.5">
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground text-xs">{styles.label}</span>
-          {lastActivity && status !== "blocked" && (
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="text-muted-foreground/60 text-xs">
-                  {formatDistanceToNow(lastActivity.createdAt, {
-                    addSuffix: true,
-                  })}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>Last activity</TooltipContent>
-            </Tooltip>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-[13px] tracking-tight">
+              {agent.label}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <AnimatePresence>
+                {taskCount > 0 && (
+                  <motion.span
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex size-[18px] items-center justify-center rounded bg-primary/10 font-bold font-mono text-[9px] text-primary"
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                  >
+                    {taskCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              <Switch
+                checked={enabled}
+                disabled={!isAdmin}
+                onCheckedChange={(v) => onToggle(agent.configField, v)}
+                size="sm"
+              />
+            </div>
+          </div>
+
+          <div className="mt-0.5 flex items-center gap-1.5">
+            <span
+              className={cn(
+                "font-medium text-[10px] uppercase tracking-widest",
+                meta.color
+              )}
+            >
+              {meta.label}
+            </span>
+            {lastActivity && status !== "blocked" && status !== "disabled" && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <span className="text-[10px] text-muted-foreground/30">
+                    {formatDistanceToNow(lastActivity.createdAt, {
+                      addSuffix: true,
+                    })}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>Last activity</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+
+          {isBlocked && blockedReason && (
+            <p className="mt-1 text-[10px] text-amber-500/80 leading-tight">
+              {blockedReason.reason}
+            </p>
           )}
         </div>
-        {isBlocked && blockedReason && (
-          <p className="mt-1 text-amber-600 text-xs dark:text-amber-400">
-            {blockedReason.reason}
-          </p>
-        )}
       </div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// PIPELINE CONNECTOR — animated dashed line
+// ============================================
+
+function PipelineConnector() {
+  return (
+    <div className="flex shrink-0 items-center px-0.5">
+      <svg
+        aria-hidden="true"
+        className="overflow-visible"
+        height="2"
+        viewBox="0 0 20 2"
+        width="20"
+      >
+        <motion.line
+          animate={{ pathLength: 1, opacity: 0.3 }}
+          initial={{ pathLength: 0, opacity: 0 }}
+          stroke="currentColor"
+          strokeDasharray="3 3"
+          strokeWidth={1.5}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          x1="0"
+          x2="20"
+          y1="1"
+          y2="1"
+        />
+      </svg>
     </div>
   );
 }
 
 // ============================================
-// PIPELINE FLOW ARROW
+// SECTION LABEL
 // ============================================
 
-function FlowArrow() {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-center py-0.5">
-      <IconChevronRight className="size-3.5 text-muted-foreground/40" />
+    <div className="mb-2 flex items-center gap-2">
+      <span className="font-semibold text-[10px] text-muted-foreground/40 uppercase tracking-[0.2em]">
+        {children}
+      </span>
+      <div className="h-px flex-1 bg-border/30" />
     </div>
   );
 }
@@ -261,38 +389,41 @@ export function AgentStatusCards({
   organizationId: Id<"organizations">;
   isAdmin: boolean;
 }) {
-  const activity = useQuery(api.autopilot.queries.listActivity, {
+  const activity = useQuery(api.autopilot.queries.activity.listActivity, {
     organizationId,
     limit: 50,
   });
-  const config = useQuery(api.autopilot.queries.getConfig, {
+  const config = useQuery(api.autopilot.queries.config.getConfig, {
     organizationId,
   });
-  const tasks = useQuery(api.autopilot.queries.listTasks, {
+  const tasks = useQuery(api.autopilot.queries.tasks.listTasks, {
     organizationId,
     status: "in_progress",
   });
-  const readiness = useQuery(api.autopilot.queries.getAgentReadiness, {
-    organizationId,
-  });
-  const updateConfig = useMutation(api.autopilot.mutations.updateConfig);
+  const readiness = useQuery(
+    api.autopilot.queries.dashboard.getAgentReadiness,
+    {
+      organizationId,
+    }
+  );
+  const updateConfig = useMutation(api.autopilot.mutations.config.updateConfig);
 
   if (activity === undefined || config === undefined) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-20 w-full rounded-lg" />
+        <Skeleton className="h-16 w-full rounded-lg" />
         <div className="grid grid-cols-3 gap-2">
           {Array.from({ length: 3 }, (_, i) => (
             <Skeleton
-              className="h-20 w-full rounded-lg"
+              className="h-[72px] w-full rounded-lg"
               key={`skel-${String(i)}`}
             />
           ))}
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {Array.from({ length: 7 }, (_, i) => (
+          {Array.from({ length: 6 }, (_, i) => (
             <Skeleton
-              className="h-20 w-full rounded-lg"
+              className="h-[72px] w-full rounded-lg"
               key={`skel2-${String(i)}`}
             />
           ))}
@@ -341,7 +472,7 @@ export function AgentStatusCards({
 
   const getAgent = (id: string) => AGENTS.find((a) => a.id === id);
 
-  const renderCard = (agentId: string) => {
+  const renderCard = (agentId: string, index: number) => {
     const agent = getAgent(agentId);
     if (!agent) {
       return null;
@@ -362,6 +493,7 @@ export function AgentStatusCards({
         agent={agent}
         blockedReason={blockedReason}
         config={config as unknown as Record<string, unknown>}
+        index={index}
         isAdmin={isAdmin}
         key={agent.id}
         lastActivity={agentLastActivity.get(agent.id)}
@@ -374,36 +506,46 @@ export function AgentStatusCards({
   return (
     <div className="space-y-4">
       {/* CEO — always-on orchestrator */}
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
-        <div className="flex items-center gap-3">
-          <div className="rounded-full bg-amber-500/10 p-2">
-            <IconCrown className="size-5 text-amber-500" />
+      <motion.div
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-lg border border-amber-500/20 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-3"
+        initial={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,rgba(245,158,11,0.015)_4px,rgba(245,158,11,0.015)_5px)]" />
+        <div className="relative flex items-center gap-3">
+          <div className="relative">
+            <StatusRing size={40} status="active" />
+            <IconCrown className="absolute top-1/2 left-1/2 size-4 -translate-x-1/2 -translate-y-1/2 text-amber-400" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-sm">CEO</p>
-            <p className="text-muted-foreground text-xs">
-              Orchestrator — always active, coordinates all agents
-            </p>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm tracking-tight">CEO</span>
+              <span className="text-muted-foreground/40 text-xs">
+                Orchestrator
+              </span>
+            </div>
+            <span className="font-medium text-[10px] text-amber-400/70 uppercase tracking-[0.2em]">
+              Active
+            </span>
           </div>
-          <Badge
-            className="bg-amber-500/10 text-amber-500 text-xs"
-            variant="outline"
-          >
-            Always On
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-amber-400/50" />
+              <span className="relative inline-flex size-2 rounded-full bg-amber-400" />
+            </span>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Core Pipeline: PM → CTO → Dev */}
       <div>
-        <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-          Core Pipeline
-        </p>
-        <div className="flex items-stretch gap-1">
+        <SectionLabel>Core Pipeline</SectionLabel>
+        <div className="flex items-stretch gap-0">
           {CORE_PIPELINE.map((agentId, i) => (
             <div className="flex flex-1 items-center" key={agentId}>
-              <div className="w-full">{renderCard(agentId)}</div>
-              {i < CORE_PIPELINE.length - 1 && <FlowArrow />}
+              <div className="w-full">{renderCard(agentId, i + 1)}</div>
+              {i < CORE_PIPELINE.length - 1 && <PipelineConnector />}
             </div>
           ))}
         </div>
@@ -411,21 +553,17 @@ export function AgentStatusCards({
 
       {/* PM's Extended Team */}
       <div>
-        <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-          PM Team
-        </p>
+        <SectionLabel>PM Team</SectionLabel>
         <div className="grid grid-cols-2 gap-2">
-          {PM_TEAM.map((agentId) => renderCard(agentId))}
+          {PM_TEAM.map((agentId, i) => renderCard(agentId, i + 4))}
         </div>
       </div>
 
       {/* Specialist Agents */}
       <div>
-        <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-          Specialist Agents
-        </p>
+        <SectionLabel>Specialists</SectionLabel>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {SPECIALISTS.map((agentId) => renderCard(agentId))}
+          {SPECIALISTS.map((agentId, i) => renderCard(agentId, i + 6))}
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
-import { autonomyMode } from "./tableFields";
+import { autonomyMode } from "./schema/validators";
 
 // ============================================
 // ACTION CATEGORIES

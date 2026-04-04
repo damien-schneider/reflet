@@ -17,24 +17,22 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const TYPE_LABELS = {
-  analytics_anomaly: "Anomaly",
-  analytics_brief: "Analytics Brief",
-  analytics_insight: "Insight",
   architect_finding: "Architecture",
   ceo_report: "CEO Report",
+  company_brief_review: "Company Brief",
   docs_stale: "Stale Docs",
   docs_update: "Docs Update",
   email_draft: "Email Draft",
   email_received: "Email",
   growth_post: "Growth",
-  ops_deploy_failure: "Deploy Failure",
-  ops_error_spike: "Error Spike",
-  ops_reliability_report: "Reliability",
-  ops_rollback: "Rollback",
+  initiative_proposal: "Initiative",
+  knowledge_update: "Knowledge",
+  note_triage: "Note",
   pr_review: "PR Review",
-  qa_regression: "Regression",
-  qa_test_ready: "QA Test",
   revenue_alert: "Revenue",
+  sales_lead: "Lead",
+  sales_outreach_draft: "Outreach",
+  sales_pipeline_update: "Pipeline",
   security_alert: "Security",
   shipped_notification: "Shipped",
   support_escalation: "Escalation",
@@ -50,7 +48,9 @@ const PRIORITY_STYLES = {
 } as const;
 
 export function InboxItemCard({ item }: { item: Doc<"autopilotInboxItems"> }) {
-  const updateStatus = useMutation(api.autopilot.mutations.updateInboxItem);
+  const updateStatus = useMutation(
+    api.autopilot.mutations.inbox.updateInboxItem
+  );
 
   const handleAction = async (status: "approved" | "rejected" | "snoozed") => {
     try {

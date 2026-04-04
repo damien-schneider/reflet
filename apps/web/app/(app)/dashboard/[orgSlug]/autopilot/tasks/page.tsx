@@ -49,7 +49,7 @@ export default function AutopilotTasksPage() {
     "critical" | "high" | "medium" | "low"
   >("medium");
 
-  const tasks = useQuery(api.autopilot.queries.listTasks, {
+  const tasks = useQuery(api.autopilot.queries.tasks.listTasks, {
     organizationId,
     status:
       statusFilter === "all"
@@ -57,7 +57,7 @@ export default function AutopilotTasksPage() {
         : (statusFilter as "pending" | "in_progress" | "completed" | "failed"),
   });
 
-  const createTask = useMutation(api.autopilot.mutations.createTask);
+  const createTask = useMutation(api.autopilot.mutations.tasks.createTask);
 
   const handleCreate = async () => {
     if (!(newTitle.trim() && newDescription.trim())) {

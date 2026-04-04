@@ -7,7 +7,11 @@
 
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
-import { activityLogAgent, emailDirection, emailStatus } from "./tableFields";
+import {
+  activityLogAgent,
+  emailDirection,
+  emailStatus,
+} from "./schema/validators";
 
 // ============================================
 // INTERNAL QUERIES

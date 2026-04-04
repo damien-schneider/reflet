@@ -1,15 +1,14 @@
 "use client";
 
 import {
-  IconChartBar,
-  IconCurrencyDollar,
+  IconBook,
   IconDashboard,
   IconInbox,
   IconListDetails,
   IconMail,
+  IconMap2,
   IconMessageCircle,
   IconRocket,
-  IconServer,
   IconSettings,
   IconShield,
   IconUserSearch,
@@ -23,13 +22,11 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: IconDashboard, path: "" },
   { id: "inbox", label: "Inbox", icon: IconInbox, path: "/inbox" },
+  { id: "roadmap", label: "Roadmap", icon: IconMap2, path: "/roadmap" },
+  { id: "knowledge", label: "Knowledge", icon: IconBook, path: "/knowledge" },
   { id: "tasks", label: "Tasks", icon: IconListDetails, path: "/tasks" },
-  {
-    id: "growth",
-    label: "Growth & Intel",
-    icon: IconRocket,
-    path: "/growth",
-  },
+  { id: "growth", label: "Growth", icon: IconRocket, path: "/growth" },
+  { id: "sales", label: "Sales", icon: IconUserSearch, path: "/sales" },
   {
     id: "security",
     label: "Security",
@@ -42,16 +39,7 @@ const NAV_ITEMS = [
     icon: IconMessageCircle,
     path: "/support",
   },
-  {
-    id: "analytics",
-    label: "Analytics",
-    icon: IconChartBar,
-    path: "/analytics",
-  },
-  { id: "ops", label: "Ops", icon: IconServer, path: "/ops" },
-  { id: "sales", label: "Sales", icon: IconUserSearch, path: "/sales" },
   { id: "email", label: "Email", icon: IconMail, path: "/email" },
-  { id: "costs", label: "Costs", icon: IconCurrencyDollar, path: "/costs" },
   { id: "settings", label: "Settings", icon: IconSettings, path: "/settings" },
 ] as const;
 

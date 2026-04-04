@@ -51,10 +51,10 @@ type AutonomyModeValue = (typeof MODES)[number]["value"];
 
 export function AutonomyToggle() {
   const { organizationId, isAdmin } = useAutopilotContext();
-  const config = useQuery(api.autopilot.queries.getConfig, {
+  const config = useQuery(api.autopilot.queries.config.getConfig, {
     organizationId,
   });
-  const setMode = useMutation(api.autopilot.mutations.setAutonomyMode);
+  const setMode = useMutation(api.autopilot.mutations.config.setAutonomyMode);
 
   const currentMode: AutonomyModeValue =
     (config?.autonomyMode as AutonomyModeValue) ?? "supervised";

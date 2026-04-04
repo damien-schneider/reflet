@@ -222,7 +222,7 @@ export const processInboundEmail = internalAction({
         title: `Review incoming email: ${args.subject}`,
         description: `Review email from ${args.from}. Summary: ${summary}`,
         priority: "high",
-        assignedAgent: "orchestrator",
+        assignedAgent: "system",
         origin: "user_created",
         autonomyLevel: "review_required",
         maxRetries: 0,

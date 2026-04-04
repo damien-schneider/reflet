@@ -106,13 +106,15 @@ function SectionHeader({
 export default function AutopilotSettingsPage() {
   const { isAdmin, organizationId } = useAutopilotContext();
 
-  const config = useQuery(api.autopilot.queries.getConfig, {
+  const config = useQuery(api.autopilot.queries.config.getConfig, {
     organizationId,
   });
 
-  const initConfig = useMutation(api.autopilot.mutations.initConfig);
-  const updateConfig = useMutation(api.autopilot.mutations.updateConfig);
-  const upsertCreds = useMutation(api.autopilot.mutations.upsertCredentials);
+  const initConfig = useMutation(api.autopilot.mutations.config.initConfig);
+  const updateConfig = useMutation(api.autopilot.mutations.config.updateConfig);
+  const upsertCreds = useMutation(
+    api.autopilot.mutations.config.upsertCredentials
+  );
 
   const [credentialInput, setCredentialInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);

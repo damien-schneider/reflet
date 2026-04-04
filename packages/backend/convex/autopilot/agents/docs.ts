@@ -61,34 +61,6 @@ export const docsCheckSchema = z.object({
 export const runDocsCheck = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    // Check prerequisites — skip if no data to analyze
-    const prereq = await ctx.runQuery(
-      internal.autopilot.prerequisites.checkDocsPrerequisites,
-      { organizationId: args.organizationId }
-    );
-
-    if (!prereq.ready) {
-      const recentSkipLog = await ctx.runQuery(
-        internal.autopilot.prerequisites.wasSkipLoggedRecently,
-        {
-          organizationId: args.organizationId,
-          agent: "docs",
-          windowHours: 24,
-        }
-      );
-      if (!recentSkipLog) {
-        await ctx.runMutation(
-          internal.autopilot.prerequisites.logPrerequisiteSkip,
-          {
-            organizationId: args.organizationId,
-            agent: "docs",
-            reason: prereq.reason ?? "Prerequisites not met",
-          }
-        );
-      }
-      return;
-    }
-
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
       agent: "docs",
@@ -190,6 +162,12 @@ Identify: doc updates needed, stale pages, and FAQ entries to add.`,
         autonomyLevel: "review_required",
       });
     }
+
+    // Complete any in_progress tasks assigned to docs
+    await ctx.runMutation(internal.autopilot.tasks.completeAgentTasks, {
+      organizationId: args.organizationId,
+      agent: "docs",
+    });
 
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,

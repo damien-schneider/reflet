@@ -16,12 +16,9 @@ const AGENT_COLORS: Record<string, string> = {
   architect: "bg-amber-500/10 text-amber-500",
   growth: "bg-pink-500/10 text-pink-500",
   support: "bg-teal-500/10 text-teal-500",
-  analytics: "bg-indigo-500/10 text-indigo-500",
   docs: "bg-emerald-500/10 text-emerald-500",
-  qa: "bg-violet-500/10 text-violet-500",
-  ops: "bg-orange-500/10 text-orange-500",
   sales: "bg-rose-500/10 text-rose-500",
-  orchestrator: "bg-cyan-500/10 text-cyan-500",
+  system: "bg-cyan-500/10 text-cyan-500",
 };
 
 export function AgentThreadsList({
@@ -29,7 +26,7 @@ export function AgentThreadsList({
 }: {
   organizationId: Id<"organizations">;
 }) {
-  const threads = useQuery(api.autopilot.queries.listAgentThreads, {
+  const threads = useQuery(api.autopilot.queries.threads.listAgentThreads, {
     organizationId,
   });
 

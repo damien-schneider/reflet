@@ -13,7 +13,7 @@ import {
   autopilotTaskPriority,
   inboxItemStatus,
   inboxItemType,
-} from "./tableFields";
+} from "./schema/validators";
 
 // ============================================
 // INTERNAL QUERIES
@@ -105,6 +105,22 @@ export const getPendingInboxItems = internalQuery({
         priorityOrder[a.priority as keyof typeof priorityOrder] -
         priorityOrder[b.priority as keyof typeof priorityOrder]
     );
+  },
+});
+
+/**
+ * Get the count of pending inbox items for an org (used by orchestrator throttle).
+ */
+export const getPendingCount = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const items = await ctx.db
+      .query("autopilotInboxItems")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "pending")
+      )
+      .collect();
+    return items.length;
   },
 });
 
@@ -380,16 +396,10 @@ export const expireOldItems = internalMutation({
 
 /**
  * Auto-dismiss internal alerts that don't require human action.
- * CEO coordination alerts, ops no-data alerts, and other system-generated
+ * CEO coordination alerts and other system-generated
  * noise should be auto-approved so they don't clog the inbox.
  */
-const AUTO_DISMISS_TYPES = new Set([
-  "ceo_report",
-  "ops_error_spike",
-  "ops_deploy_failure",
-  "ops_rollback",
-  "ops_reliability_report",
-]) as ReadonlySet<string>;
+const AUTO_DISMISS_TYPES = new Set(["ceo_report"]) as ReadonlySet<string>;
 
 export const autoDismissInternalAlerts = internalMutation({
   args: { organizationId: v.id("organizations") },

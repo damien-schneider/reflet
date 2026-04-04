@@ -37,10 +37,7 @@ export interface ActivityLogEntry {
     | "orchestrator"
     | "system"
     | "support"
-    | "analytics"
     | "docs"
-    | "qa"
-    | "ops"
     | "sales";
   details?: string;
   level: "info" | "action" | "success" | "warning" | "error";

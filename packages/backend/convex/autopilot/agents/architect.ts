@@ -265,6 +265,12 @@ Provide findings in the specified schema. Include compliance scores.`;
         }
       }
 
+      // Complete any in_progress tasks assigned to architect
+      await ctx.runMutation(internal.autopilot.tasks.completeAgentTasks, {
+        organizationId: args.organizationId,
+        agent: "architect",
+      });
+
       // Log completion
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,

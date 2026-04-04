@@ -6,7 +6,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { type QueryCtx, query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
-import { leadStatus } from "./tableFields";
+import { leadStatus } from "./schema/validators";
 
 const requireOrgMembership = async (
   ctx: QueryCtx,

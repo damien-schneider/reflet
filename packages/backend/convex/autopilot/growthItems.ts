@@ -7,7 +7,7 @@
 
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
-import { growthItemStatus, growthItemType } from "./tableFields";
+import { growthItemStatus, growthItemType } from "./schema/validators";
 
 // ============================================
 // INTERNAL QUERIES

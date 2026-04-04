@@ -507,16 +507,6 @@ export const applySetupResults = mutation({
       });
     }
 
-    // Create keywords
-    for (const keyword of args.acceptedKeywords) {
-      await ctx.db.insert("intelligenceKeywords", {
-        organizationId: args.organizationId,
-        keyword: keyword.keyword,
-        source: keyword.source,
-        createdAt: now,
-      });
-    }
-
     // Create tags (check for existing slugs first)
     const existingTags = await ctx.db
       .query("tags")
@@ -550,28 +540,6 @@ export const applySetupResults = mutation({
       await ctx.db.patch(args.organizationId, {
         changelogSettings: args.changelogSettings,
       });
-    }
-
-    // Enable intelligence if keywords were added
-    if (args.acceptedKeywords.length > 0) {
-      const existingConfig = await ctx.db
-        .query("intelligenceConfig")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", args.organizationId)
-        )
-        .unique();
-
-      if (!existingConfig) {
-        await ctx.db.insert("intelligenceConfig", {
-          organizationId: args.organizationId,
-          scanFrequency: "weekly",
-          redditEnabled: true,
-          webSearchEnabled: true,
-          competitorTrackingEnabled: false,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
     }
 
     // Mark setup as completed

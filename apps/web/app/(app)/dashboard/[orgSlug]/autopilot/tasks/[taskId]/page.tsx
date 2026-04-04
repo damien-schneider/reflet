@@ -62,21 +62,21 @@ export default function TaskDetailPage({
 }) {
   const { taskId } = use(params);
 
-  const task = useQuery(api.autopilot.queries.getTask, {
+  const task = useQuery(api.autopilot.queries.tasks.getTask, {
     taskId: taskId as Id<"autopilotTasks">,
   });
 
   const subtasks = useQuery(
-    api.autopilot.queries.getSubtasks,
+    api.autopilot.queries.tasks.getSubtasks,
     task ? { parentTaskId: task._id } : "skip"
   );
 
   const runs = useQuery(
-    api.autopilot.queries.getTaskRuns,
+    api.autopilot.queries.tasks.getTaskRuns,
     task ? { taskId: task._id } : "skip"
   );
 
-  const cancelTask = useMutation(api.autopilot.mutations.cancelTask);
+  const cancelTask = useMutation(api.autopilot.mutations.tasks.cancelTask);
 
   if (task === undefined) {
     return (

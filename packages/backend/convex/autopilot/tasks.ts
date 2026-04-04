@@ -18,7 +18,7 @@ import {
   codingAdapterType,
   runStatus,
   taskOrigin,
-} from "./tableFields";
+} from "./schema/validators";
 
 // ============================================
 // INTERNAL QUERIES
@@ -341,6 +341,46 @@ export const updateTaskStatus = internalMutation({
 });
 
 /**
+ * Complete all in_progress tasks for a given agent.
+ * Called by agents after they finish their work so tasks don't stay stuck.
+ */
+export const completeAgentTasks = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    agent: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const tasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "in_progress")
+      )
+      .collect();
+
+    const agentTasks = tasks.filter((t) => t.assignedAgent === args.agent);
+    const now = Date.now();
+
+    for (const task of agentTasks) {
+      await ctx.db.patch(task._id, {
+        status: "completed",
+        completedAt: now,
+      });
+
+      await ctx.db.insert("autopilotActivityLog", {
+        organizationId: args.organizationId,
+        taskId: task._id,
+        agent: task.assignedAgent,
+        level: "success",
+        message: `Task completed: ${task.title}`,
+        createdAt: now,
+      });
+    }
+
+    return agentTasks.length;
+  },
+});
+
+/**
  * Update a task's priority (used by CEO coordination).
  */
 export const updateTaskPriority = internalMutation({
@@ -429,6 +469,7 @@ export const logActivity = internalMutation({
     taskId: v.optional(v.id("autopilotTasks")),
     runId: v.optional(v.id("autopilotRuns")),
     agent: activityLogAgent,
+    targetAgent: v.optional(activityLogAgent),
     level: activityLogLevel,
     message: v.string(),
     details: v.optional(v.string()),
@@ -439,6 +480,7 @@ export const logActivity = internalMutation({
       taskId: args.taskId,
       runId: args.runId,
       agent: args.agent,
+      targetAgent: args.targetAgent,
       level: args.level,
       message: args.message,
       details: args.details,

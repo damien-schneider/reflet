@@ -158,10 +158,7 @@ export const getAllAgentStatus = internalQuery({
       "architect",
       "growth",
       "support",
-      "analytics",
       "docs",
-      "qa",
-      "ops",
       "sales",
     ] as const;
 

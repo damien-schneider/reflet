@@ -8,7 +8,7 @@
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-import { activityLogAgent } from "./tableFields";
+import { activityLogAgent } from "./schema/validators";
 
 // ============================================
 // ACTION TYPES

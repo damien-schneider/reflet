@@ -30,10 +30,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
         | "architect"
         | "growth"
         | "support"
-        | "analytics"
         | "docs"
-        | "qa"
-        | "ops"
         | "sales";
     },
     string,
@@ -58,10 +55,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
           "architect",
           "growth",
           "support",
-          "analytics",
           "docs",
-          "qa",
-          "ops",
           "sales",
         ])
         .describe("Agent to assign this task to"),
@@ -150,7 +144,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
       "Trigger an immediate PM analysis to scan feedback and generate new tasks. Use when agents are idle or when tasks are needed.",
     inputSchema: z.object({}),
     execute: async (ctx) => {
-      await ctx.runAction(internal.autopilot.agents.pm.runPMAnalysis, {
+      await ctx.runAction(internal.autopilot.agents.pm.analysis.runPMAnalysis, {
         organizationId,
       });
       return "PM analysis triggered. New tasks will be created based on current feedback and intelligence data.";
@@ -226,10 +220,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
           "architect",
           "growth",
           "support",
-          "analytics",
           "docs",
-          "qa",
-          "ops",
           "sales",
         ])
         .describe("Agent to toggle"),

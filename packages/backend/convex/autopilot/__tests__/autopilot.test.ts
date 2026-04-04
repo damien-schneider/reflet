@@ -202,6 +202,28 @@ describe("autopilot tasks", () => {
     expect(activity).toHaveLength(1);
     expect(activity[0].message).toBe("Test activity");
     expect(activity[0].agent).toBe("pm");
+    expect(activity[0].targetAgent).toBeUndefined();
+  });
+
+  test("logActivity persists targetAgent when provided", async () => {
+    const t = convexTest(testSchema, modules);
+    const orgId = await createOrg(t);
+
+    await t.mutation(internal.autopilot.tasks.logActivity, {
+      organizationId: orgId,
+      agent: "orchestrator",
+      targetAgent: "pm",
+      level: "action",
+      message: "Launching PM analysis",
+    });
+
+    const activity = await t.run(async (ctx) =>
+      ctx.db.query("autopilotActivityLog").collect()
+    );
+
+    expect(activity).toHaveLength(1);
+    expect(activity[0].agent).toBe("orchestrator");
+    expect(activity[0].targetAgent).toBe("pm");
   });
 });
 

@@ -23,9 +23,12 @@ export function CredentialsStatus({
 }: {
   organizationId: Id<"organizations">;
 }) {
-  const credentials = useQuery(api.autopilot.queries.getCredentialStatus, {
-    organizationId,
-  });
+  const credentials = useQuery(
+    api.autopilot.queries.config.getCredentialStatus,
+    {
+      organizationId,
+    }
+  );
 
   if (credentials === undefined) {
     return (

@@ -16,7 +16,7 @@ import {
   internalMutation,
   internalQuery,
 } from "../_generated/server";
-import { codingAdapterType } from "./tableFields";
+import { codingAdapterType } from "./schema/validators";
 
 /**
  * Initialize autopilot for an org — creates config with V6 defaults.
@@ -96,289 +96,41 @@ export const analyzeRepo = internalAction({
 
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
-      agent: "orchestrator",
+      agent: "system",
       level: "action",
       message: `Analyzing repository: ${args.repoUrl}`,
     });
 
     // Step 1: Create repo analysis record
-    await ctx.runMutation(internal.autopilot.onboarding.createRepoAnalysis, {
+    await ctx.runMutation(internal.autopilot.repo_analysis.createRepoAnalysis, {
       organizationId: args.organizationId,
       repoUrl: args.repoUrl,
     });
 
-    // Step 2: Create primary onboarding tasks
+    // Step 2: Generate company brief (7 knowledge docs from repo data)
+    await ctx.scheduler.runAfter(
+      0,
+      internal.autopilot.company_brief.generateCompanyBrief,
+      { organizationId: args.organizationId }
+    );
+
+    // Step 3: Create initial PM analysis task
     await ctx.runMutation(
-      internal.autopilot.onboarding.createPrimaryOnboardingTasks,
+      internal.autopilot.onboarding_tasks.createAnalysisTask,
       {
         organizationId: args.organizationId,
         repoUrl: args.repoUrl,
+        createdAt: Date.now(),
       }
     );
 
-    // Step 3: Create initial PM analysis task (legacy compat)
-    await ctx.runMutation(internal.autopilot.onboarding.createAnalysisTask, {
-      organizationId: args.organizationId,
-      repoUrl: args.repoUrl,
-      createdAt: Date.now(),
-    });
-
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
-      agent: "orchestrator",
+      agent: "system",
       level: "success",
-      message: "V6 onboarding pipeline complete — primary tasks generated",
+      message:
+        "Onboarding pipeline complete — company brief generation scheduled",
     });
-  },
-});
-
-// ============================================
-// V6 REPO ANALYSIS
-// ============================================
-
-/**
- * Create repo analysis record.
- */
-export const createRepoAnalysis = internalMutation({
-  args: {
-    organizationId: v.id("organizations"),
-    repoUrl: v.string(),
-  },
-  returns: v.id("autopilotRepoAnalysis"),
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("autopilotRepoAnalysis", {
-      organizationId: args.organizationId,
-      repoUrl: args.repoUrl,
-      createdAt: Date.now(),
-    });
-  },
-});
-
-/**
- * Update repo analysis with findings.
- */
-export const updateRepoAnalysis = internalMutation({
-  args: {
-    analysisId: v.id("autopilotRepoAnalysis"),
-    techStack: v.optional(v.string()),
-    framework: v.optional(v.string()),
-    hasCI: v.optional(v.boolean()),
-    hasTests: v.optional(v.boolean()),
-    hasDocs: v.optional(v.boolean()),
-    hasLandingPage: v.optional(v.boolean()),
-    hasAnalytics: v.optional(v.boolean()),
-    hasMonitoring: v.optional(v.boolean()),
-    projectStructure: v.optional(v.string()),
-    maturityLevel: v.optional(
-      v.union(
-        v.literal("new"),
-        v.literal("early"),
-        v.literal("established"),
-        v.literal("mature")
-      )
-    ),
-    findings: v.optional(v.string()),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const { analysisId, ...updates } = args;
-    const filtered: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined) {
-        filtered[key] = value;
-      }
-    }
-    await ctx.db.patch(analysisId, filtered);
-    return null;
-  },
-});
-
-/**
- * Get repo analysis for an organization.
- */
-export const getRepoAnalysis = internalQuery({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("autopilotRepoAnalysis")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .first();
-  },
-});
-
-// ============================================
-// V6 PRIMARY ONBOARDING TASKS
-// ============================================
-
-/**
- * Create primary onboarding tasks — the first things a virtual CTO would do.
- *
- * Always creates: widget, changelog, market analysis, SEO, security, arch, docs.
- * Conditionally creates tasks based on what's missing from the repo.
- */
-export const createPrimaryOnboardingTasks = internalMutation({
-  args: {
-    organizationId: v.id("organizations"),
-    repoUrl: v.string(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const now = Date.now();
-
-    const createTask = async (task: {
-      title: string;
-      description: string;
-      assignedAgent:
-        | "dev"
-        | "security"
-        | "architect"
-        | "growth"
-        | "analytics"
-        | "docs"
-        | "pm"
-        | "qa"
-        | "ops";
-      priority: "critical" | "high" | "medium" | "low";
-      origin:
-        | "onboarding"
-        | "security_scan"
-        | "architect_review"
-        | "docs_update";
-    }) => {
-      await ctx.db.insert("autopilotTasks", {
-        organizationId: args.organizationId,
-        title: task.title,
-        description: task.description,
-        status: "pending",
-        priority: task.priority,
-        assignedAgent: task.assignedAgent,
-        origin: task.origin,
-        autonomyLevel: "review_required",
-        retryCount: 0,
-        maxRetries: 3,
-        createdAt: now,
-      });
-    };
-
-    // --- Always-created tasks ---
-
-    await createTask({
-      title: "Implement Reflet Feedback Widget",
-      description: `Add the Reflet feedback widget to the product at ${args.repoUrl}. Users can submit feedback directly from the app.`,
-      assignedAgent: "dev",
-      priority: "high",
-      origin: "onboarding",
-    });
-
-    await createTask({
-      title: "Implement Reflet Changelog",
-      description: `Add the Reflet changelog component to the product at ${args.repoUrl}. Users see what shipped without leaving the product.`,
-      assignedAgent: "dev",
-      priority: "high",
-      origin: "onboarding",
-    });
-
-    await createTask({
-      title: "Market Analysis",
-      description:
-        "Analyze the competitive landscape. Who are the competitors? What's the market size? What's the positioning?",
-      assignedAgent: "growth",
-      priority: "medium",
-      origin: "onboarding",
-    });
-
-    await createTask({
-      title: "SEO Analysis",
-      description:
-        "Audit the current SEO state. Meta tags, sitemap, robots.txt, page speed, content gaps.",
-      assignedAgent: "growth",
-      priority: "medium",
-      origin: "onboarding",
-    });
-
-    await createTask({
-      title: "Security Baseline Scan",
-      description:
-        "Full OWASP scan of the codebase. Dependency audit. Secret detection. Auth coverage check.",
-      assignedAgent: "security",
-      priority: "high",
-      origin: "security_scan",
-    });
-
-    await createTask({
-      title: "Architecture Review",
-      description:
-        "Code health assessment. File sizes, complexity, test coverage, patterns, tech debt.",
-      assignedAgent: "architect",
-      priority: "medium",
-      origin: "architect_review",
-    });
-
-    await createTask({
-      title: "Documentation Audit",
-      description:
-        "What docs exist? What's missing? What's stale? Create a docs roadmap.",
-      assignedAgent: "docs",
-      priority: "medium",
-      origin: "docs_update",
-    });
-
-    // Create a CEO welcome inbox item
-    await ctx.db.insert("autopilotInboxItems", {
-      organizationId: args.organizationId,
-      type: "ceo_report",
-      title: "Welcome to Reflet Autopilot",
-      summary: `I've started analyzing ${args.repoUrl}. 7 primary onboarding tasks have been created. I'll report back with findings from the security scan, architecture review, and market analysis shortly.`,
-      status: "auto_approved",
-      priority: "medium",
-      sourceAgent: "system",
-      createdAt: now,
-    });
-
-    return null;
-  },
-});
-
-/**
- * Create the initial PM analysis task for a new repo.
- */
-export const createAnalysisTask = internalMutation({
-  args: {
-    organizationId: v.id("organizations"),
-    repoUrl: v.string(),
-    createdAt: v.number(),
-  },
-  returns: v.id("autopilotTasks"),
-  handler: async (ctx, args) => {
-    const taskId = await ctx.db.insert("autopilotTasks", {
-      organizationId: args.organizationId,
-      title: "Initial repository analysis",
-      description: `Analyze the repository at ${args.repoUrl} to identify improvement opportunities, security issues, and growth potential.`,
-      status: "pending",
-      priority: "high",
-      assignedAgent: "pm",
-      origin: "pm_analysis",
-      autonomyLevel: "review_required",
-      retryCount: 0,
-      maxRetries: 3,
-      createdAt: args.createdAt,
-    });
-
-    await ctx.db.insert("autopilotInboxItems", {
-      organizationId: args.organizationId,
-      type: "task_approval",
-      title: "Repository analysis started",
-      summary: `Autopilot is analyzing ${args.repoUrl} to generate initial improvement tasks.`,
-      status: "auto_approved",
-      priority: "medium",
-      sourceAgent: "orchestrator",
-      relatedTaskId: taskId,
-      createdAt: args.createdAt,
-    });
-
-    return taskId;
   },
 });
 
@@ -394,23 +146,50 @@ export const createAnalysisTask = internalMutation({
 export const bootstrapAutopilot = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    // Check whether any active tasks exist
+    // Check if brief exists — if not, generate it in background
+    const briefApproved = await ctx.runQuery(
+      internal.autopilot.company_brief.isCompanyBriefApproved,
+      { organizationId: args.organizationId }
+    );
+
+    if (!briefApproved) {
+      const knowledgeDocs = await ctx.runQuery(
+        internal.autopilot.knowledge.getKnowledgeDocsByOrg,
+        { organizationId: args.organizationId, summaryOnly: true }
+      );
+
+      if (knowledgeDocs.length === 0) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.company_brief.generateCompanyBrief,
+          { organizationId: args.organizationId }
+        );
+
+        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+          organizationId: args.organizationId,
+          agent: "system",
+          level: "action",
+          message:
+            "Company brief not found — generating in background. Agents starting now.",
+        });
+      }
+    }
+
+    // Start agents regardless of brief status — they work with available data
     const activeTasks = await ctx.runQuery(
       internal.autopilot.onboarding.getActiveTaskCount,
       { organizationId: args.organizationId }
     );
 
-    // Find connected GitHub repo for onboarding tasks
     const repoUrl = await ctx.runQuery(
       internal.autopilot.onboarding.getConnectedRepoUrl,
       { organizationId: args.organizationId }
     );
 
-    // If no active tasks → create onboarding bootstrap tasks
     if (activeTasks === 0) {
       const bootstrapRepoUrl = repoUrl ?? "https://github.com/unknown/unknown";
       await ctx.runMutation(
-        internal.autopilot.onboarding.createPrimaryOnboardingTasks,
+        internal.autopilot.onboarding_tasks.createPrimaryOnboardingTasks,
         {
           organizationId: args.organizationId,
           repoUrl: bootstrapRepoUrl,
@@ -418,17 +197,15 @@ export const bootstrapAutopilot = internalAction({
       );
     }
 
-    // Immediately schedule PM analysis
     await ctx.scheduler.runAfter(
       0,
-      internal.autopilot.agents.pm.runPMAnalysis,
+      internal.autopilot.agents.pm.analysis.runPMAnalysis,
       { organizationId: args.organizationId }
     );
 
-    // Immediately schedule CEO daily report
     await ctx.scheduler.runAfter(
       0,
-      internal.autopilot.agents.ceo.generateCEOReport,
+      internal.autopilot.agents.ceo.reports.generateCEOReport,
       {
         organizationId: args.organizationId,
         reportType: "daily",
@@ -437,7 +214,7 @@ export const bootstrapAutopilot = internalAction({
 
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
-      agent: "orchestrator",
+      agent: "system",
       level: "success",
       message:
         activeTasks === 0

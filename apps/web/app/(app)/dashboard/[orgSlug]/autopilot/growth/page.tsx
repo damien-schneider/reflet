@@ -1,35 +1,24 @@
 "use client";
 
-import { CommunityTab } from "@app/(app)/dashboard/[orgSlug]/autopilot/intelligence/_components/community-tab";
-import { CompetitorsTab } from "@app/(app)/dashboard/[orgSlug]/autopilot/intelligence/_components/competitors-tab";
-import { InsightsTab } from "@app/(app)/dashboard/[orgSlug]/autopilot/intelligence/_components/insights-tab";
 import { api } from "@reflet/backend/convex/_generated/api";
 import {
   IconBrandLinkedin,
   IconBrandReddit,
   IconBrandX,
-  IconBulb,
   IconCopy,
   IconExternalLink,
   IconFileText,
   IconMail,
   IconNews,
-  IconRocket,
-  IconSettings,
-  IconUsers,
-  IconWorldSearch,
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H2 } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
-import { IntelligenceSettings } from "@/features/intelligence/components/intelligence-settings";
 import { cn } from "@/lib/utils";
 
 const TYPE_CONFIG = {
@@ -53,12 +42,14 @@ const STATUS_STYLES = {
 function GrowthContentTab() {
   const { organizationId } = useAutopilotContext();
 
-  const items = useQuery(api.autopilot.queries.listGrowthItems, {
+  const items = useQuery(api.autopilot.queries.growth.listGrowthItems, {
     organizationId,
     limit: 50,
   });
 
-  const updateItem = useMutation(api.autopilot.mutations.updateGrowthItem);
+  const updateItem = useMutation(
+    api.autopilot.mutations.growth.updateGrowthItem
+  );
 
   const handleCopy = async (content: string) => {
     await navigator.clipboard.writeText(content);
@@ -173,68 +164,10 @@ function GrowthContentTab() {
 }
 
 export default function AutopilotGrowthPage() {
-  const { orgSlug } = useAutopilotContext();
-  const [activeTab, setActiveTab] = useState("content");
-
-  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
-
-  if (!org) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full rounded-lg" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <H2 variant="card">Growth & Intelligence</H2>
-
-      <Tabs onValueChange={setActiveTab} value={activeTab}>
-        <TabsList>
-          <TabsTrigger value="content">
-            <IconRocket className="mr-1.5 size-4" />
-            Content
-          </TabsTrigger>
-          <TabsTrigger value="insights">
-            <IconBulb className="mr-1.5 size-4" />
-            Insights
-          </TabsTrigger>
-          <TabsTrigger value="community">
-            <IconWorldSearch className="mr-1.5 size-4" />
-            Community
-          </TabsTrigger>
-          <TabsTrigger value="competitors">
-            <IconUsers className="mr-1.5 size-4" />
-            Competitors
-          </TabsTrigger>
-          <TabsTrigger value="settings">
-            <IconSettings className="mr-1.5 size-4" />
-            Settings
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent className="mt-6" value="content">
-          <GrowthContentTab />
-        </TabsContent>
-
-        <TabsContent className="mt-6" value="insights">
-          <InsightsTab organizationId={org._id} orgSlug={orgSlug} />
-        </TabsContent>
-
-        <TabsContent className="mt-6" value="community">
-          <CommunityTab organizationId={org._id} />
-        </TabsContent>
-
-        <TabsContent className="mt-6" value="competitors">
-          <CompetitorsTab organizationId={org._id} orgSlug={orgSlug} />
-        </TabsContent>
-
-        <TabsContent className="mt-6" value="settings">
-          <IntelligenceSettings organizationId={org._id} />
-        </TabsContent>
-      </Tabs>
+      <H2 variant="card">Growth</H2>
+      <GrowthContentTab />
     </div>
   );
 }

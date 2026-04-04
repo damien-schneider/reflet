@@ -15,7 +15,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { H1, Muted, Text } from "@/components/ui/typography";
-import { IntelligenceCard } from "./intelligence-card";
 import { StatusCard } from "./status-card";
 import { TagsCard } from "./tags-card";
 
@@ -34,10 +33,6 @@ export function ProjectHubPage({
   );
 
   const aggregateStatus = useQuery(api.status.monitors.getAggregateStatus, {
-    organizationId,
-  });
-
-  const keywords = useQuery(api.autopilot.intelligence.keywords.list, {
     organizationId,
   });
 
@@ -90,7 +85,6 @@ export function ProjectHubPage({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <StatusCard aggregateStatus={aggregateStatus} basePath={basePath} />
-        <IntelligenceCard basePath={basePath} keywords={keywords} />
 
         <Link href={`${basePath}/changelog`}>
           <Card className="h-full transition-colors hover:bg-muted/30">

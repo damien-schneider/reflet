@@ -9,6 +9,7 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H1, H2, Muted } from "@/components/ui/typography";
+import { LiveTicker } from "@/features/autopilot/components/activity/live-ticker";
 import { AutonomyToggle } from "@/features/autopilot/components/autonomy-toggle";
 import { AutopilotContext } from "@/features/autopilot/components/autopilot-context";
 import { AutopilotNav } from "@/features/autopilot/components/autopilot-nav";
@@ -91,7 +92,7 @@ export default function AutopilotLayout({
   );
 
   const config = useQuery(
-    api.autopilot.queries.getConfig,
+    api.autopilot.queries.config.getConfig,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
@@ -185,6 +186,7 @@ export default function AutopilotLayout({
 
             <div className="min-w-0 flex-1">
               <HealthBanner />
+              {config?.enabled ? <LiveTicker organizationId={org._id} /> : null}
               {needsSetup && !isSettingsPage ? <SetupGate /> : children}
             </div>
           </div>
