@@ -150,17 +150,7 @@ export const getAllAgentStatus = internalQuery({
       return [];
     }
 
-    const agents = [
-      "pm",
-      "cto",
-      "dev",
-      "security",
-      "architect",
-      "growth",
-      "support",
-      "docs",
-      "sales",
-    ] as const;
+    const agents = ["pm", "cto", "dev", "growth", "support", "sales"] as const;
 
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
 

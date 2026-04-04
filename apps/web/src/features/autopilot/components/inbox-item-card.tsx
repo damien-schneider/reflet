@@ -17,11 +17,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const TYPE_LABELS = {
-  architect_finding: "Architecture",
   ceo_report: "CEO Report",
   company_brief_review: "Company Brief",
-  docs_stale: "Stale Docs",
-  docs_update: "Docs Update",
   email_draft: "Email Draft",
   email_received: "Email",
   growth_post: "Growth",
@@ -33,7 +30,6 @@ const TYPE_LABELS = {
   sales_lead: "Lead",
   sales_outreach_draft: "Outreach",
   sales_pipeline_update: "Pipeline",
-  security_alert: "Security",
   shipped_notification: "Shipped",
   support_escalation: "Escalation",
   support_reply: "Support Reply",

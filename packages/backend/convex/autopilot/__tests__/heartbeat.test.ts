@@ -1,14 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  shouldWakeArchitect,
   shouldWakeCEO,
   shouldWakeCTO,
   shouldWakeDev,
-  shouldWakeDocs,
   shouldWakeGrowth,
   shouldWakePM,
   shouldWakeSales,
-  shouldWakeSecurity,
   shouldWakeSupport,
 } from "../heartbeat";
 
@@ -16,17 +13,13 @@ const BASE_SUMMARY = {
   lastPMActivity: null,
   lastGrowthActivity: null,
   lastSalesActivity: null,
-  lastSecurityActivity: null,
   lastCEOActivity: null,
-  lastArchitectActivity: null,
   lastSupportActivity: null,
-  lastDocsActivity: null,
   readyStoryCount: 0,
   approvedSpecCount: 0,
   failedRunCount: 0,
   newNoteCount: 0,
   newSupportConversationCount: 0,
-  newPRCount: 0,
   shippedFeaturesWithoutContent: 0,
   now: Date.now(),
 } as const;
@@ -136,21 +129,6 @@ describe("shouldWakeSales", () => {
   });
 });
 
-describe("shouldWakeSecurity", () => {
-  it("wakes when no recent activity", () => {
-    expect(shouldWakeSecurity({ ...BASE_SUMMARY })).toBe(true);
-  });
-
-  it("does not wake when scanned today", () => {
-    expect(
-      shouldWakeSecurity({
-        ...BASE_SUMMARY,
-        lastSecurityActivity: Date.now() - 60 * 1000,
-      })
-    ).toBe(false);
-  });
-});
-
 describe("shouldWakeCEO", () => {
   it("wakes when inactive for 4+ hours", () => {
     expect(shouldWakeCEO({ ...BASE_SUMMARY })).toBe(true);
@@ -166,16 +144,6 @@ describe("shouldWakeCEO", () => {
   });
 });
 
-describe("shouldWakeArchitect", () => {
-  it("wakes when new PRs exist", () => {
-    expect(shouldWakeArchitect({ ...BASE_SUMMARY, newPRCount: 1 })).toBe(true);
-  });
-
-  it("wakes on weekly fallback", () => {
-    expect(shouldWakeArchitect({ ...BASE_SUMMARY })).toBe(true);
-  });
-});
-
 describe("shouldWakeSupport", () => {
   it("wakes when new conversations exist", () => {
     expect(
@@ -188,20 +156,5 @@ describe("shouldWakeSupport", () => {
 
   it("wakes on daily fallback", () => {
     expect(shouldWakeSupport({ ...BASE_SUMMARY })).toBe(true);
-  });
-});
-
-describe("shouldWakeDocs", () => {
-  it("wakes on weekly fallback", () => {
-    expect(shouldWakeDocs({ ...BASE_SUMMARY })).toBe(true);
-  });
-
-  it("does not wake when checked recently", () => {
-    expect(
-      shouldWakeDocs({
-        ...BASE_SUMMARY,
-        lastDocsActivity: Date.now() - 60 * 1000,
-      })
-    ).toBe(false);
   });
 });

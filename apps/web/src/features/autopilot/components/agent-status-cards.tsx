@@ -7,11 +7,8 @@ import {
   IconCode,
   IconCoin,
   IconCrown,
-  IconFileText,
   IconHeadset,
   IconRocket,
-  IconShield,
-  IconTrendingUp,
   IconUsers,
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
@@ -36,18 +33,6 @@ const AGENTS = [
   { id: "cto", label: "CTO", icon: IconBrain, configField: "ctoEnabled" },
   { id: "dev", label: "Dev", icon: IconCode, configField: "devEnabled" },
   {
-    id: "security",
-    label: "Security",
-    icon: IconShield,
-    configField: "securityEnabled",
-  },
-  {
-    id: "architect",
-    label: "Architect",
-    icon: IconTrendingUp,
-    configField: "architectEnabled",
-  },
-  {
     id: "growth",
     label: "Growth",
     icon: IconRocket,
@@ -58,12 +43,6 @@ const AGENTS = [
     label: "Support",
     icon: IconHeadset,
     configField: "supportEnabled",
-  },
-  {
-    id: "docs",
-    label: "Docs",
-    icon: IconFileText,
-    configField: "docsEnabled",
   },
   {
     id: "sales",
@@ -80,7 +59,7 @@ const CORE_PIPELINE = ["pm", "cto", "dev"] as const;
 const PM_TEAM = ["growth", "support"] as const;
 
 /** Independent specialist agents */
-const SPECIALISTS = ["security", "architect", "docs", "sales"] as const;
+const SPECIALISTS = ["sales"] as const;
 
 const ACTIVE_WINDOW = 5 * 60 * 1000;
 const RECENT_WINDOW = 30 * 60 * 1000;

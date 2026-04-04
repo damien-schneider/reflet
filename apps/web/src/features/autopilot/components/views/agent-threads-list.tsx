@@ -12,11 +12,8 @@ const AGENT_COLORS: Record<string, string> = {
   pm: "bg-blue-500/10 text-blue-500",
   cto: "bg-purple-500/10 text-purple-500",
   dev: "bg-green-500/10 text-green-500",
-  security: "bg-red-500/10 text-red-500",
-  architect: "bg-amber-500/10 text-amber-500",
   growth: "bg-pink-500/10 text-pink-500",
   support: "bg-teal-500/10 text-teal-500",
-  docs: "bg-emerald-500/10 text-emerald-500",
   sales: "bg-rose-500/10 text-rose-500",
   system: "bg-cyan-500/10 text-cyan-500",
 };

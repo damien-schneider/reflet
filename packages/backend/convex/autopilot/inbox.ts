@@ -1,8 +1,8 @@
 /**
  * Inbox CRUD operations — manage inbox items for approvals, alerts, and reviews.
  *
- * The inbox aggregates notifications from all agents: security alerts,
- * architect findings, CEO reports, email drafts, PR reviews, and task approvals.
+ * The inbox aggregates notifications from all agents: CEO reports,
+ * email drafts, PR reviews, and task approvals.
  */
 
 import { v } from "convex/values";

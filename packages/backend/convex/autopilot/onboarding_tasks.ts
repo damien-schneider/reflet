@@ -8,7 +8,7 @@ import { internalMutation } from "../_generated/server";
 /**
  * Create primary onboarding tasks — the first things a virtual CTO would do.
  *
- * Always creates: widget, changelog, market analysis, SEO, security, arch, docs.
+ * Always creates: widget, changelog, market analysis, SEO.
  */
 export const createPrimaryOnboardingTasks = internalMutation({
   args: {
@@ -22,19 +22,9 @@ export const createPrimaryOnboardingTasks = internalMutation({
     const createTask = async (task: {
       title: string;
       description: string;
-      assignedAgent:
-        | "dev"
-        | "security"
-        | "architect"
-        | "growth"
-        | "docs"
-        | "pm";
+      assignedAgent: "dev" | "growth" | "pm";
       priority: "critical" | "high" | "medium" | "low";
-      origin:
-        | "onboarding"
-        | "security_scan"
-        | "architect_review"
-        | "docs_update";
+      origin: "onboarding";
     }) => {
       await ctx.db.insert("autopilotTasks", {
         organizationId: args.organizationId,
@@ -85,38 +75,11 @@ export const createPrimaryOnboardingTasks = internalMutation({
       origin: "onboarding",
     });
 
-    await createTask({
-      title: "Security Baseline Scan",
-      description:
-        "Full OWASP scan of the codebase. Dependency audit. Secret detection. Auth coverage check.",
-      assignedAgent: "security",
-      priority: "high",
-      origin: "security_scan",
-    });
-
-    await createTask({
-      title: "Architecture Review",
-      description:
-        "Code health assessment. File sizes, complexity, test coverage, patterns, tech debt.",
-      assignedAgent: "architect",
-      priority: "medium",
-      origin: "architect_review",
-    });
-
-    await createTask({
-      title: "Documentation Audit",
-      description:
-        "What docs exist? What's missing? What's stale? Create a docs roadmap.",
-      assignedAgent: "docs",
-      priority: "medium",
-      origin: "docs_update",
-    });
-
     await ctx.db.insert("autopilotInboxItems", {
       organizationId: args.organizationId,
       type: "ceo_report",
       title: "Welcome to Reflet Autopilot",
-      summary: `I've started analyzing ${args.repoUrl}. 7 primary onboarding tasks have been created. I'll report back with findings from the security scan, architecture review, and market analysis shortly.`,
+      summary: `I've started analyzing ${args.repoUrl}. 4 primary onboarding tasks have been created. I'll report back with findings from the market analysis shortly.`,
       status: "auto_approved",
       priority: "medium",
       sourceAgent: "system",

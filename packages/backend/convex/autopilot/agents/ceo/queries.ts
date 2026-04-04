@@ -135,11 +135,8 @@ export const getDetailedCEOContext = internalQuery({
         "pm",
         "cto",
         "dev",
-        "security",
-        "architect",
         "growth",
         "support",
-        "docs",
         "sales",
       ] as const;
       for (const agent of agents) {

@@ -31,10 +31,7 @@ export const AGENT_CATEGORY_MAP: Record<string, string> = {
   dev: "engineering",
   growth: "market",
   sales: "prospect",
-  security: "security",
-  architect: "architecture",
   support: "support",
-  docs: "documentation",
   ceo: "coordination",
   system: "coordination",
 } as const;

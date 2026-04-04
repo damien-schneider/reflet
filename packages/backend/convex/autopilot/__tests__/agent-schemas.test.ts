@@ -12,17 +12,8 @@
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
-// Architect agent schemas
-import {
-  architectFindingSchema,
-  architectReviewSchema,
-} from "../agents/architect";
-
 // CTO agent schema
 import { technicalSpecSchema } from "../agents/cto";
-
-// Docs agent schema
-import { docsCheckSchema } from "../agents/docs";
 
 // Growth agent schemas
 import {
@@ -32,9 +23,6 @@ import {
 
 // PM agent schema
 import { pmAnalysisSchema } from "../agents/pm/analysis";
-
-// Security agent schemas
-import { securityFindingSchema, securityScanSchema } from "../agents/security";
 
 // Support agent schemas
 import {
@@ -93,17 +81,8 @@ const checkSchema = (schema: z.ZodType, name: string): void => {
 };
 
 describe("agent schemas — Azure compatibility", () => {
-  test("security schemas have all properties required", () => {
-    checkSchema(securityFindingSchema, "securityFindingSchema");
-    checkSchema(securityScanSchema, "securityScanSchema");
-  });
-
   test("cto schema has all properties required", () => {
     checkSchema(technicalSpecSchema, "technicalSpecSchema");
-  });
-
-  test("docs schema has all properties required", () => {
-    checkSchema(docsCheckSchema, "docsCheckSchema");
   });
 
   test("support schemas have all properties required", () => {
@@ -116,30 +95,12 @@ describe("agent schemas — Azure compatibility", () => {
     checkSchema(growthContentSchema, "growthContentSchema");
   });
 
-  test("architect schemas have all properties required", () => {
-    checkSchema(architectFindingSchema, "architectFindingSchema");
-    checkSchema(architectReviewSchema, "architectReviewSchema");
-  });
-
   test("pm schema has all properties required", () => {
     checkSchema(pmAnalysisSchema, "pmAnalysisSchema");
   });
 });
 
 describe("agent schemas — required fields are validated", () => {
-  test("security finding requires filePath", () => {
-    const result = securityFindingSchema.parse({
-      severity: "low",
-      category: "other",
-      title: "test",
-      description: "test",
-      filePath: "",
-      recommendation: "test",
-      autoFixable: false,
-    });
-    expect(result.filePath).toBe("");
-  });
-
   test("cto spec requires architectureNotes", () => {
     const result = technicalSpecSchema.parse({
       filesToModify: [],
@@ -152,19 +113,6 @@ describe("agent schemas — required fields are validated", () => {
       architectureNotes: "",
     });
     expect(result.architectureNotes).toBe("");
-  });
-
-  test("docs check requires suggestedContent and lastRelevantChange", () => {
-    const result = docsCheckSchema.parse({
-      updates: [
-        { section: "a", reason: "b", priority: "low", suggestedContent: "" },
-      ],
-      stalePages: [{ page: "a", reason: "b", lastRelevantChange: "" }],
-      faqEntries: [],
-      summary: "test",
-    });
-    expect(result.updates[0].suggestedContent).toBe("");
-    expect(result.stalePages[0].lastRelevantChange).toBe("");
   });
 
   test("triage result requires escalationReason and relatedFeature", () => {

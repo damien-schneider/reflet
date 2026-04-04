@@ -30,7 +30,7 @@ graph TB
         ICP["User Personas & ICP (PM)"]
         CL["Competitive Landscape (PM)"]
         BV["Brand Voice (Growth)"]
-        TA["Technical Architecture (CTO + Architect)"]
+        TA["Technical Architecture (CTO)"]
         GOALS["Goals & OKRs (CEO)"]
         ROAD["Product Roadmap (PM)"]
     end
@@ -42,17 +42,16 @@ graph TB
         PRS["Pull Requests (Dev)"]
         COMP["Competitors (Growth)"]
         LEADS["Leads (Sales)"]
-        FINDINGS["Security Findings (Security)"]
+        FINDINGS["Security Findings (CTO)"]
         CONTENT["Content Items (Growth)"]
         THREADS["Support Threads (Support)"]
-        ADRS["Architecture Decisions (Architect)"]
-        DOCPAGES["Doc Pages (Docs)"]
+        ADRS["Architecture Decisions (CTO)"]
     end
 
     subgraph "Documents (Notion-like — any agent creates)"
         D_MR["Market Research (Growth)"]
         D_BC["Battlecards (Sales)"]
-        D_AA["Architecture Analysis (Architect)"]
+        D_AA["Architecture Analysis (CTO)"]
         D_ANY["Any type — freeform"]
     end
 
@@ -84,7 +83,6 @@ graph TB
         C_DEV{"Dev: specs without PRs?<br/>CI fix needed?"}
         C_GROWTH{"Growth: research stale?<br/>Shipped features without content?"}
         C_SALES{"Sales: new prospect notes?<br/>Follow-ups due?"}
-        C_SEC{"Security: daily scan due?<br/>New dependency in PR?"}
         C_CEO{"CEO: President message?<br/>Coordination due? Report due?"}
     end
 
@@ -93,11 +91,10 @@ graph TB
     WAKE_DEV["Wake Dev"]
     WAKE_GROWTH["Wake Growth"]
     WAKE_SALES["Wake Sales"]
-    WAKE_SEC["Wake Security"]
     WAKE_CEO["Wake CEO"]
     SLEEP["Sleep (no conditions met)"]
 
-    HEARTBEAT --> C_PM & C_CTO & C_DEV & C_GROWTH & C_SALES & C_SEC & C_CEO
+    HEARTBEAT --> C_PM & C_CTO & C_DEV & C_GROWTH & C_SALES & C_CEO
 
     C_PM -->|"Yes"| WAKE_PM
     C_PM -->|"No"| SLEEP
@@ -109,8 +106,6 @@ graph TB
     C_GROWTH -->|"No"| SLEEP
     C_SALES -->|"Yes"| WAKE_SALES
     C_SALES -->|"No"| SLEEP
-    C_SEC -->|"Yes"| WAKE_SEC
-    C_SEC -->|"No"| SLEEP
     C_CEO -->|"Yes"| WAKE_CEO
     C_CEO -->|"No"| SLEEP
 ```
@@ -214,7 +209,6 @@ sequenceDiagram
     participant User as President
     participant System as Reflet
     participant Growth as Growth
-    participant Security as Security
     participant PM as PM
 
     User->>System: Connect GitHub repo
@@ -226,8 +220,6 @@ sequenceDiagram
     par Background work (brief pending)
         Growth->>Growth: Wake condition met → research market
         Growth->>System: Leave notes (stored for PM)
-        Security->>Security: Wake condition met → baseline scan
-        Security->>System: Leave findings
     end
 
     User->>System: Approve Company Brief
@@ -307,10 +299,7 @@ graph TB
         DEV_A["Dev"]
         GRO_A["Growth"]
         SAL_A["Sales"]
-        SEC_A["Security"]
-        ARC_A["Architect"]
         SUP_A["Support"]
-        DOC_A["Docs"]
     end
 
     subgraph "Work Board"
@@ -335,17 +324,15 @@ graph TB
 
     GRO_A -->|"market notes (own domain)"| NOTES_B
     SUP_A -->|"user pattern notes (own domain)"| NOTES_B
-    SEC_A -->|"vulnerability notes (own domain)"| NOTES_B
+    CTO_A -->|"security + architecture notes (own domain)"| NOTES_B
     SAL_A -->|"prospect notes (own domain)"| NOTES_B
-    ARC_A -->|"tech debt notes (own domain)"| NOTES_B
 
     NOTES_B --> PM_A
     PM_A --> INIT_B
     INIT_B --> CTO_A --> SPECS_B
     SPECS_B --> DEV_A
 
-    DEV_A -->|"shipped"| GRO_A & DOC_A & SAL_A
-    DEV_A --> ARC_A & SEC_A
+    DEV_A -->|"shipped"| GRO_A & SAL_A
 
     CEO_A --> INBOX_B & DASH
     DEV_A --> INBOX_B
@@ -375,12 +362,12 @@ graph TB
         GRO_RESP["Growth: archive stale research,<br/>re-run market scan"]
         PM_RESP["PM: re-evaluate initiatives,<br/>cancel outdated tasks"]
         SAL_RESP["Sales: re-evaluate prospect fit,<br/>update battlecards"]
-        DOC_RESP["Docs: flag stale docs<br/>for rewrite"]
+        CTO_RESP["CTO: flag stale docs<br/>for rewrite"]
     end
 
     CHANGE --> CASCADE
     CASCADE --> FLAG_DOCS & FLAG_RECORDS & FLAG_TASKS
-    FLAG_DOCS --> GRO_RESP & DOC_RESP
+    FLAG_DOCS --> GRO_RESP & CTO_RESP
     FLAG_RECORDS --> SAL_RESP
     FLAG_TASKS --> PM_RESP
 ```

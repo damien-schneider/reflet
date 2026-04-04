@@ -35,14 +35,12 @@ import type * as autopilot_adapters_registry from "../autopilot/adapters/registr
 import type * as autopilot_adapters_types from "../autopilot/adapters/types.js";
 import type * as autopilot_agent_context from "../autopilot/agent_context.js";
 import type * as autopilot_agent_threads from "../autopilot/agent_threads.js";
-import type * as autopilot_agents_architect from "../autopilot/agents/architect.js";
 import type * as autopilot_agents_ceo_agent from "../autopilot/agents/ceo/agent.js";
 import type * as autopilot_agents_ceo_coordination from "../autopilot/agents/ceo/coordination.js";
 import type * as autopilot_agents_ceo_queries from "../autopilot/agents/ceo/queries.js";
 import type * as autopilot_agents_ceo_reports from "../autopilot/agents/ceo/reports.js";
 import type * as autopilot_agents_ceo_tools from "../autopilot/agents/ceo_tools.js";
 import type * as autopilot_agents_cto from "../autopilot/agents/cto.js";
-import type * as autopilot_agents_docs from "../autopilot/agents/docs.js";
 import type * as autopilot_agents_growth_content from "../autopilot/agents/growth/content.js";
 import type * as autopilot_agents_growth_discovery from "../autopilot/agents/growth/discovery.js";
 import type * as autopilot_agents_models from "../autopilot/agents/models.js";
@@ -50,7 +48,6 @@ import type * as autopilot_agents_pm_analysis from "../autopilot/agents/pm/analy
 import type * as autopilot_agents_pm_queries from "../autopilot/agents/pm/queries.js";
 import type * as autopilot_agents_prompts from "../autopilot/agents/prompts.js";
 import type * as autopilot_agents_sales from "../autopilot/agents/sales.js";
-import type * as autopilot_agents_security from "../autopilot/agents/security.js";
 import type * as autopilot_agents_shared from "../autopilot/agents/shared.js";
 import type * as autopilot_agents_support from "../autopilot/agents/support.js";
 import type * as autopilot_autonomy from "../autopilot/autonomy.js";
@@ -293,14 +290,12 @@ declare const fullApi: ApiFromModules<{
   "autopilot/adapters/types": typeof autopilot_adapters_types;
   "autopilot/agent_context": typeof autopilot_agent_context;
   "autopilot/agent_threads": typeof autopilot_agent_threads;
-  "autopilot/agents/architect": typeof autopilot_agents_architect;
   "autopilot/agents/ceo/agent": typeof autopilot_agents_ceo_agent;
   "autopilot/agents/ceo/coordination": typeof autopilot_agents_ceo_coordination;
   "autopilot/agents/ceo/queries": typeof autopilot_agents_ceo_queries;
   "autopilot/agents/ceo/reports": typeof autopilot_agents_ceo_reports;
   "autopilot/agents/ceo_tools": typeof autopilot_agents_ceo_tools;
   "autopilot/agents/cto": typeof autopilot_agents_cto;
-  "autopilot/agents/docs": typeof autopilot_agents_docs;
   "autopilot/agents/growth/content": typeof autopilot_agents_growth_content;
   "autopilot/agents/growth/discovery": typeof autopilot_agents_growth_discovery;
   "autopilot/agents/models": typeof autopilot_agents_models;
@@ -308,7 +303,6 @@ declare const fullApi: ApiFromModules<{
   "autopilot/agents/pm/queries": typeof autopilot_agents_pm_queries;
   "autopilot/agents/prompts": typeof autopilot_agents_prompts;
   "autopilot/agents/sales": typeof autopilot_agents_sales;
-  "autopilot/agents/security": typeof autopilot_agents_security;
   "autopilot/agents/shared": typeof autopilot_agents_shared;
   "autopilot/agents/support": typeof autopilot_agents_support;
   "autopilot/autonomy": typeof autopilot_autonomy;

@@ -2,7 +2,7 @@
 
 ## One sentence
 
-Reflet is the world's first fully autonomous AI company — connect your GitHub repository and a team of specialized agents takes over product management, engineering, security, growth, sales, support, and documentation, running your product as a real company while you sleep.
+Reflet is the world's first fully autonomous AI company — connect your GitHub repository and a team of specialized agents takes over product management, engineering, growth, sales, and support, running your product as a real company while you sleep.
 
 ## The shift
 
@@ -28,7 +28,7 @@ In the first five minutes, Reflet produces a **Company Brief** — a complete se
 - **Initial Roadmap** — 3-5 prioritized initiatives based on market gaps and codebase analysis
 - **Starter Goals** — Sensible OKRs seeded from product maturity level
 
-The user reviews the Company Brief, edits anything that's off, and approves. Meanwhile, agents have already started working — Growth is researching the market, Security is scanning the codebase. The brief approval unlocks the full pipeline: PM starts creating initiatives and stories, CTO starts writing specs, Dev starts building.
+The user reviews the Company Brief, edits anything that's off, and approves. Meanwhile, agents have already started working — Growth is researching the market. The brief approval unlocks the full pipeline: PM starts creating initiatives and stories, CTO starts writing specs, Dev starts building.
 
 ## The shared board
 
@@ -42,7 +42,7 @@ Living documents that capture who the company is, what it does, and where it's g
 - **User Personas & ICP** — maintained by PM
 - **Competitive Landscape** — maintained by PM (from Growth's research)
 - **Brand Voice & Guidelines** — maintained by Growth
-- **Technical Architecture** — maintained by CTO + Architect
+- **Technical Architecture** — maintained by CTO
 - **Goals & OKRs** — maintained by CEO
 - **Product Roadmap** — maintained by PM
 
@@ -60,11 +60,10 @@ Operational data with strict schemas and exclusive ownership. Like a company's t
 | Pull Requests | Dev | Code changes with CI status |
 | Competitors | Growth | Structured CRM of competitors (name, URL, pricing, strengths, weaknesses) |
 | Leads & Contacts | Sales | Prospects, pipeline stages, outreach history |
-| Security Findings | Security | Vulnerabilities with severity and remediation status |
+| Security Findings | CTO | Vulnerabilities with severity and remediation status |
 | Support Threads | Support | User conversations with sentiment and escalation |
 | Content Items | Growth | Platform-specific drafts with publish status |
-| Architecture Decisions | Architect | ADR-format records of technical choices |
-| Doc Pages | Docs | Documentation with staleness tracking |
+| Architecture Decisions | CTO | ADR-format records of technical choices |
 
 ### Documents (Notion-like flexible content)
 
@@ -86,13 +85,10 @@ Agents leave notes on the board — quick observations, findings, ideas. Like dr
 | Growth | Market findings, competitor moves, distribution angles, content opportunities |
 | Sales | Prospect patterns, feature requests from prospects, pipeline observations |
 | Support | User patterns, repeated questions, sentiment shifts |
-| Security | Vulnerabilities, CVEs, security risks |
-| Architect | Tech debt, code health observations, pattern violations |
-| CTO | Technical risks, architecture concerns, migration needs |
+| CTO | Technical risks, architecture concerns, migration needs, vulnerabilities, CVEs, security risks, tech debt, code health, pattern violations |
 | Dev | Bugs found during coding, code quality observations |
 | CEO | Cross-agent observations, President directives relayed to team |
 | PM | Product priorities, roadmap decisions, triage outcomes |
-| Docs | Documentation gaps, stale content |
 
 Notes are ephemeral and lightweight — they feed into PM's triage cycle. For longer-form analysis, agents create Documents instead.
 
@@ -109,7 +105,6 @@ A lightweight heartbeat (every few minutes) checks each agent's wake conditions.
 - Dev wakes up when: specs exist without PRs
 - Growth wakes up when: shipped features lack content, OR market research is older than a few days
 - Sales wakes up when: new prospects discovered, OR follow-ups are due
-- Security wakes up when: daily scan is due, OR new dependency added
 - CEO wakes up when: coordination check is due, OR President sent a message
 
 No fixed timers. No "every 6 hours." Agents work when there's work to do and rest when there isn't — exactly like a well-run team.
@@ -120,7 +115,7 @@ No fixed timers. No "every 6 hours." Agents work when there's work to do and res
 
 **PM (Product Manager)** — The brain of the company. Doesn't do market research — that's Growth's job. Instead, PM reads Growth's market research notes, user feedback, support patterns, and the knowledge base, then thinks about **what to build**: use cases, features, improvements, fixes. Creates well-structured initiatives with user stories and acceptance criteria. Maintains the roadmap. Ensures the pipeline never runs dry — when planned work is getting low, PM proactively fills it from the roadmap and Growth's latest findings.
 
-**CTO (Chief Technology Officer)** — The technical authority. Checks the board for user stories that need specs. Converts them into self-contained technical specifications detailed enough for autonomous code execution. Understands the codebase architecture, plans migrations, identifies technical risks. When no stories need speccing, reviews architecture and checks for tech debt.
+**CTO (Chief Technology Officer)** — The technical authority. Checks the board for user stories that need specs. Converts them into self-contained technical specifications detailed enough for autonomous code execution. Understands the codebase architecture, plans migrations, identifies technical risks. Also owns architecture review (ADRs, coding standards, pattern enforcement), security review (OWASP patterns, dependency vulnerabilities, secrets scanning), and documentation requirements. When no stories need speccing, reviews architecture, checks for tech debt and security issues.
 
 **Dev (Developer)** — The builder. Checks the board for specs ready to build. Creates pull requests through the configured coding adapter (GitHub Copilot, OpenAI Codex, Claude Code, or built-in). Handles CI failures, responds to code review feedback. When no specs are ready, picks up refactoring, dependency updates, or test improvements. Dev never idles.
 
@@ -128,25 +123,16 @@ No fixed timers. No "every 6 hours." Agents work when there's work to do and res
 
 **Sales** — Discovers prospects from Growth's market findings, GitHub activity (stargazers, forkers of related repos), social mentions, and community discussions. Manages a pipeline from discovered to converted. Adapts mode based on product maturity — community building and beta user acquisition early, B2B pipeline management later.
 
-**Security** — Continuous vulnerability scanning: dependencies, secrets, OWASP patterns, auth coverage. Leaves notes about findings. Creates fix specs for critical issues. Distinct from Architect — Security finds vulnerabilities, Architect enforces code health.
-
-**Architect** — Enforces codebase health: file size limits, function complexity, test coverage, pattern consistency. Reviews PRs against the Technical Architecture document. Creates architecture decision records and refactoring proposals. Activates after the codebase has enough PRs to review.
-
 **Support** — Triages inbound conversations, drafts responses, escalates bugs and feature requests as notes to PM. Closes the loop with users when their requested features ship. Connects the feedback cycle.
-
-**Docs** — Detects stale documentation, generates user guides from shipped features, maintains FAQ from support patterns. Creates documentation PRs through the coding adapter.
 
 ### Phased activation
 
 Not every agent runs from day 1. Like a startup that hires as it grows:
 
 - **Always active**: CEO, PM, CTO, Dev
-- **Immediate**: Security (lightweight scans)
-- **After 5+ PRs**: Architect
 - **After first feature ships**: Growth
 - **After ICP defined + content published**: Sales
 - **After support channel configured**: Support
-- **After 3+ features shipped**: Docs
 
 The user can manually activate any agent early via a "Hire" button.
 
@@ -157,14 +143,13 @@ Every feature follows a clear path through the company:
 ```
 1. DISCOVER  (Growth)    → Market research finds opportunity, leaves note
 2. DEFINE    (PM)        → Reads note, creates initiative + user stories
-3. SPEC      (CTO)       → Writes technical specification
+3. SPEC      (CTO)       → Writes technical specification + architecture/security review
 4. BUILD     (Dev)       → Creates pull request
-5. REVIEW    (Architect) → Code quality review + Security scan
-6. SHIP      (Dev)       → Merged and deployed
-7. ANNOUNCE  (Growth)    → Distribution content across channels
-8. SELL      (Sales)     → Prospects contacted about new capability
-9. SUPPORT   (Support)   → User questions handled, feedback collected
-10. MEASURE  (PM)        → Reads impact, adjusts roadmap
+5. SHIP      (Dev)       → Merged and deployed
+6. ANNOUNCE  (Growth)    → Distribution content across channels
+7. SELL      (Sales)     → Prospects contacted about new capability
+8. SUPPORT   (Support)   → User questions handled, feedback collected
+9. MEASURE   (PM)        → Reads impact, adjusts roadmap
 ```
 
 ## The inbox
@@ -175,8 +160,6 @@ Every agent output that needs human attention flows to a central inbox:
 - Content ready to publish (Growth)
 - Outreach draft to approve (Sales)
 - Support reply to send (Support)
-- Security vulnerability found (Security)
-- Architecture violation flagged (Architect)
 - New initiative proposed (PM)
 - CEO weekly report (CEO)
 
@@ -250,7 +233,7 @@ The system never fully stops (except on explicit President stop or budget exhaus
 
 | Condition | Behavior |
 |-----------|----------|
-| Budget 80% used | Skip non-critical agents, keep PM + Dev + Security |
+| Budget 80% used | Skip non-critical agents, keep PM + Dev + CTO |
 | Budget exhausted | Stop all, CEO sends summary |
 | Agent repeatedly failing | Disable that agent, alert CEO |
 | User inactive 7+ days | Essential mode only, CEO sends email digest |
@@ -278,13 +261,13 @@ This is what makes Reflet different from every AI coding tool. It's not a point 
 
 ```
 Growth researches the market → PM reads findings and creates use cases
-→ CTO specs them → Dev builds PRs → Architect reviews → Security scans
+→ CTO specs them (with architecture + security review) → Dev builds PRs
 → Shipped → Growth announces → Sales contacts prospects
 → Support handles users → PM reads impact → Roadmap adjusts
 → Growth researches again → next cycle
 ```
 
-Meanwhile: CEO coordinates, Docs stay in sync, revenue is tracked, knowledge base evolves, and the President steers from the inbox and CEO chat.
+Meanwhile: CEO coordinates, revenue is tracked, knowledge base evolves, and the President steers from the inbox and CEO chat.
 
 Every agent is proactive. Every agent reads the company's shared board. Every agent contributes back. Notes flow from any agent to PM. Directives flow from the President through CEO to everyone. The company runs itself — discovering, building, shipping, growing, selling — 24 hours a day, 7 days a week.
 

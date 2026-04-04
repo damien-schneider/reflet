@@ -22,11 +22,8 @@ const VALID_AGENTS = [
   "pm",
   "cto",
   "dev",
-  "security",
-  "architect",
   "growth",
   "support",
-  "docs",
   "sales",
 ] as const;
 

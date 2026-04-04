@@ -39,11 +39,8 @@ export const getConfig = internalQuery({
       pmEnabled: v.optional(v.boolean()),
       ctoEnabled: v.optional(v.boolean()),
       devEnabled: v.optional(v.boolean()),
-      securityEnabled: v.optional(v.boolean()),
-      architectEnabled: v.optional(v.boolean()),
       growthEnabled: v.optional(v.boolean()),
       supportEnabled: v.optional(v.boolean()),
-      docsEnabled: v.optional(v.boolean()),
       salesEnabled: v.optional(v.boolean()),
       adapter: codingAdapterType,
       autonomyLevel,
@@ -158,16 +155,10 @@ export const isAgentEnabled = internalQuery({
         return config.ctoEnabled !== false;
       case "dev":
         return config.devEnabled !== false;
-      case "security":
-        return config.securityEnabled !== false;
-      case "architect":
-        return config.architectEnabled !== false;
       case "growth":
         return config.growthEnabled !== false;
       case "support":
         return config.supportEnabled !== false;
-      case "docs":
-        return config.docsEnabled !== false;
       case "sales":
         return config.salesEnabled !== false;
       default:
@@ -183,11 +174,8 @@ const AGENT_CONFIG_FIELDS = [
   { name: "pm", field: "pmEnabled" },
   { name: "cto", field: "ctoEnabled" },
   { name: "dev", field: "devEnabled" },
-  { name: "security", field: "securityEnabled" },
-  { name: "architect", field: "architectEnabled" },
   { name: "growth", field: "growthEnabled" },
   { name: "support", field: "supportEnabled" },
-  { name: "docs", field: "docsEnabled" },
   { name: "sales", field: "salesEnabled" },
 ] as const;
 
@@ -477,11 +465,8 @@ export const createDefaultConfig = internalMutation({
       pmEnabled: true,
       ctoEnabled: true,
       devEnabled: true,
-      securityEnabled: true,
-      architectEnabled: true,
       growthEnabled: false,
       supportEnabled: false,
-      docsEnabled: false,
       salesEnabled: false,
       adapter: "builtin",
       autonomyLevel: "review_required",
@@ -513,11 +498,8 @@ export const updateConfig = internalMutation({
     pmEnabled: v.optional(v.boolean()),
     ctoEnabled: v.optional(v.boolean()),
     devEnabled: v.optional(v.boolean()),
-    securityEnabled: v.optional(v.boolean()),
-    architectEnabled: v.optional(v.boolean()),
     growthEnabled: v.optional(v.boolean()),
     supportEnabled: v.optional(v.boolean()),
-    docsEnabled: v.optional(v.boolean()),
     salesEnabled: v.optional(v.boolean()),
     requireArchitectReview: v.optional(v.boolean()),
     autonomyMode: v.optional(autonomyMode),

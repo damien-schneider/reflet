@@ -53,43 +53,6 @@ export const handlePrMerged = internalMutation({
       }),
     });
 
-    // Create a security scan task
-    const now = Date.now();
-    await ctx.db.insert("autopilotTasks", {
-      organizationId: args.organizationId,
-      title: `Security scan: PR #${args.prNumber}`,
-      description: `Automated security review of merged PR "${args.prTitle}" (${args.headRef} → ${args.baseRef}).`,
-      status: "pending",
-      priority: "high",
-      assignedAgent: "security",
-      origin: "security_scan",
-      autonomyLevel: config.autonomyLevel,
-      retryCount: 0,
-      maxRetries: 2,
-      prUrl: args.prUrl,
-      prNumber: args.prNumber,
-      createdAt: now,
-    });
-
-    // Conditionally create an architect review task
-    if (config.requireArchitectReview) {
-      await ctx.db.insert("autopilotTasks", {
-        organizationId: args.organizationId,
-        title: `Architect review: PR #${args.prNumber}`,
-        description: `Automated architecture review of merged PR "${args.prTitle}" (${args.headRef} → ${args.baseRef}).`,
-        status: "pending",
-        priority: "medium",
-        assignedAgent: "architect",
-        origin: "architect_review",
-        autonomyLevel: config.autonomyLevel,
-        retryCount: 0,
-        maxRetries: 2,
-        prUrl: args.prUrl,
-        prNumber: args.prNumber,
-        createdAt: now,
-      });
-    }
-
     return null;
   },
 });

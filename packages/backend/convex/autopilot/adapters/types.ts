@@ -31,13 +31,10 @@ export interface ActivityLogEntry {
     | "pm"
     | "cto"
     | "dev"
-    | "security"
-    | "architect"
     | "growth"
     | "orchestrator"
     | "system"
     | "support"
-    | "docs"
     | "sales";
   details?: string;
   level: "info" | "action" | "success" | "warning" | "error";

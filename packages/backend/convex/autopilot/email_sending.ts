@@ -252,8 +252,6 @@ export const sendEmailAndCreateInboxItem = internalAction({
         v.literal("pm"),
         v.literal("cto"),
         v.literal("dev"),
-        v.literal("security"),
-        v.literal("architect"),
         v.literal("growth"),
         v.literal("orchestrator"),
         v.literal("system")

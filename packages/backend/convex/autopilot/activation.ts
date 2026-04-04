@@ -3,13 +3,7 @@ import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { internalQuery } from "../_generated/server";
 
-type AgentName =
-  | "security"
-  | "architect"
-  | "growth"
-  | "sales"
-  | "support"
-  | "docs";
+type AgentName = "growth" | "sales" | "support";
 
 interface ActivationResult {
   active: boolean;
@@ -35,39 +29,6 @@ const checkManualOverride = (
     // Invalid JSON — no override
   }
   return null;
-};
-
-const checkSecurityActivation = (): ActivationResult => ({
-  active: true,
-  reason: "Security is always active (lightweight scans)",
-});
-
-const checkArchitectActivation = async (
-  ctx: QueryCtx,
-  organizationId: Id<"organizations">
-): Promise<ActivationResult> => {
-  const MIN_COMPLETED_RUNS_WITH_PR = 5;
-
-  const completedRuns = await ctx.db
-    .query("autopilotRuns")
-    .withIndex("by_org_status", (q) =>
-      q.eq("organizationId", organizationId).eq("status", "completed")
-    )
-    .collect();
-
-  const runsWithPr = completedRuns.filter((r) => r.prUrl);
-
-  if (runsWithPr.length >= MIN_COMPLETED_RUNS_WITH_PR) {
-    return {
-      active: true,
-      reason: `${runsWithPr.length} PRs merged — architecture reviews enabled`,
-    };
-  }
-
-  return {
-    active: false,
-    reason: `Need ${MIN_COMPLETED_RUNS_WITH_PR}+ merged PRs (current: ${runsWithPr.length})`,
-  };
 };
 
 const checkGrowthActivation = async (
@@ -151,32 +112,6 @@ const checkSupportActivation = async (
   };
 };
 
-const checkDocsActivation = async (
-  ctx: QueryCtx,
-  organizationId: Id<"organizations">
-): Promise<ActivationResult> => {
-  const MIN_COMPLETED_INITIATIVES = 3;
-
-  const completedInitiatives = await ctx.db
-    .query("autopilotInitiatives")
-    .withIndex("by_org_status", (q) =>
-      q.eq("organizationId", organizationId).eq("status", "completed")
-    )
-    .collect();
-
-  if (completedInitiatives.length >= MIN_COMPLETED_INITIATIVES) {
-    return {
-      active: true,
-      reason: `${completedInitiatives.length} initiatives completed — docs enabled`,
-    };
-  }
-
-  return {
-    active: false,
-    reason: `Need ${MIN_COMPLETED_INITIATIVES}+ completed initiatives (current: ${completedInitiatives.length})`,
-  };
-};
-
 export const getActivationStatus = internalQuery({
   args: {
     organizationId: v.id("organizations"),
@@ -205,18 +140,12 @@ export const getActivationStatus = internalQuery({
     }
 
     switch (agent) {
-      case "security":
-        return checkSecurityActivation();
-      case "architect":
-        return checkArchitectActivation(ctx, args.organizationId);
       case "growth":
         return checkGrowthActivation(ctx, args.organizationId);
       case "sales":
         return checkSalesActivation(ctx, args.organizationId);
       case "support":
         return checkSupportActivation(ctx, args.organizationId);
-      case "docs":
-        return checkDocsActivation(ctx, args.organizationId);
       default:
         return { active: true, reason: "Core agent — always active" };
     }

@@ -24,16 +24,12 @@ const THREE_STORY_THRESHOLD = 3;
 interface ActivitySummary {
   approvedSpecCount: number;
   failedRunCount: number;
-  lastArchitectActivity: number | null;
   lastCEOActivity: number | null;
-  lastDocsActivity: number | null;
   lastGrowthActivity: number | null;
   lastPMActivity: number | null;
   lastSalesActivity: number | null;
-  lastSecurityActivity: number | null;
   lastSupportActivity: number | null;
   newNoteCount: number;
-  newPRCount: number;
   newSupportConversationCount: number;
   now: number;
   readyStoryCount: number;
@@ -87,28 +83,9 @@ export const shouldWakeSales = (summary: ActivitySummary): boolean => {
   return false;
 };
 
-export const shouldWakeSecurity = (summary: ActivitySummary): boolean => {
-  const { lastSecurityActivity, now } = summary;
-  if (!lastSecurityActivity || now - lastSecurityActivity > ONE_DAY_MS) {
-    return true;
-  }
-  return false;
-};
-
 export const shouldWakeCEO = (summary: ActivitySummary): boolean => {
   const { lastCEOActivity, now } = summary;
   if (!lastCEOActivity || now - lastCEOActivity > FOUR_HOURS_MS) {
-    return true;
-  }
-  return false;
-};
-
-export const shouldWakeArchitect = (summary: ActivitySummary): boolean => {
-  const { lastArchitectActivity, newPRCount, now } = summary;
-  if (newPRCount > 0) {
-    return true;
-  }
-  if (!lastArchitectActivity || now - lastArchitectActivity > ONE_WEEK_MS) {
     return true;
   }
   return false;
@@ -120,14 +97,6 @@ export const shouldWakeSupport = (summary: ActivitySummary): boolean => {
     return true;
   }
   if (!lastSupportActivity || now - lastSupportActivity > ONE_DAY_MS) {
-    return true;
-  }
-  return false;
-};
-
-export const shouldWakeDocs = (summary: ActivitySummary): boolean => {
-  const { lastDocsActivity, now } = summary;
-  if (!lastDocsActivity || now - lastDocsActivity > ONE_WEEK_MS) {
     return true;
   }
   return false;
@@ -146,11 +115,8 @@ export const checkWakeConditions = internalQuery({
       dev: v.boolean(),
       growth: v.boolean(),
       sales: v.boolean(),
-      security: v.boolean(),
       ceo: v.boolean(),
-      architect: v.boolean(),
       support: v.boolean(),
-      docs: v.boolean(),
     }),
   }),
   handler: async (ctx, args) => {
@@ -240,17 +206,13 @@ export const checkWakeConditions = internalQuery({
       lastPMActivity: getLastActivity("pm"),
       lastGrowthActivity: getLastActivity("growth"),
       lastSalesActivity: getLastActivity("sales"),
-      lastSecurityActivity: getLastActivity("security"),
       lastCEOActivity: getLastActivity("system"),
-      lastArchitectActivity: getLastActivity("architect"),
       lastSupportActivity: getLastActivity("support"),
-      lastDocsActivity: getLastActivity("docs"),
       readyStoryCount: readyStories.length,
       approvedSpecCount,
       failedRunCount: recentFailedRuns.length,
       newNoteCount: newNotes.length,
       newSupportConversationCount: newConversations.length,
-      newPRCount: 0,
       shippedFeaturesWithoutContent: Math.max(
         0,
         recentCompletedTasks.length - recentGrowthItems.length
@@ -265,11 +227,8 @@ export const checkWakeConditions = internalQuery({
         dev: shouldWakeDev(summary),
         growth: shouldWakeGrowth(summary),
         sales: shouldWakeSales(summary),
-        security: shouldWakeSecurity(summary),
         ceo: shouldWakeCEO(summary),
-        architect: shouldWakeArchitect(summary),
         support: shouldWakeSupport(summary),
-        docs: shouldWakeDocs(summary),
       },
     };
   },
@@ -343,13 +302,6 @@ const wakeAgent = async (
         { organizationId: orgId }
       );
       break;
-    case "security":
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.security.runSecurityScan,
-        { organizationId: orgId, triggerReason: "daily_scan" }
-      );
-      break;
     case "ceo":
       await ctx.scheduler.runAfter(
         0,
@@ -357,24 +309,10 @@ const wakeAgent = async (
         { organizationId: orgId }
       );
       break;
-    case "architect":
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.architect.runArchitectReview,
-        { organizationId: orgId, triggerReason: "weekly_scan" }
-      );
-      break;
     case "support":
       await ctx.scheduler.runAfter(
         0,
         internal.autopilot.agents.support.runSupportTriage,
-        { organizationId: orgId }
-      );
-      break;
-    case "docs":
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.docs.runDocsCheck,
         { organizationId: orgId }
       );
       break;
@@ -475,7 +413,7 @@ const dispatchPendingTasks = async (
           { organizationId: orgId, taskId: task._id }
         );
       } else {
-        // For other agents (growth, security, architect, docs, sales, support):
+        // For other agents (growth, sales, support):
         // Mark task as in_progress — the agent's proactive wake handles the work.
         await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
           taskId: task._id,

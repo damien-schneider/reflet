@@ -17,14 +17,11 @@ Living document — maintain whenever the architecture changes.
 President (User)
   └── CEO — Strategy, coordination, relays President directives
         ├── PM — Product decisions, roadmap, stories (consumes Growth's research)
-        │     └── CTO — Technical specs from PM's stories
+        │     └── CTO — Technical specs, architecture review, security review
         │           └── Dev — Code from CTO's specs
         ├── Growth — Market research + distribution (feeds PM with findings)
         ├── Sales — Prospecting + pipeline (reads Growth's findings + PM's ICP)
-        ├── Security — Vulnerability scanning
-        ├── Architect — Code health + PR review
-        ├── Support — User conversations + escalation
-        └── Docs — Documentation freshness
+        └── Support — User conversations + escalation
 ```
 
 ## The Shared Board
@@ -38,8 +35,8 @@ All agents read from and write to the same database. Three types of data:
 | Product Definition | PM | Everyone |
 | User Personas & ICP | PM | Sales, Growth, Support |
 | Competitive Landscape | PM (from Growth's research) | Growth, Sales, CEO |
-| Brand Voice | Growth | Support, Docs, Sales |
-| Technical Architecture | CTO + Architect | Dev, Security |
+| Brand Voice | Growth | Support, Sales |
+| Technical Architecture | CTO | Dev |
 | Goals & OKRs | CEO | PM, everyone |
 | Product Roadmap | PM | CEO, CTO, Growth |
 
@@ -58,14 +55,13 @@ All agents read from and write to the same database. Three types of data:
 | Initiatives | PM | CTO checks for stories to spec |
 | User Stories | PM | CTO checks for stories without specs |
 | Technical Specs | CTO | Dev checks for specs without PRs |
-| Pull Requests | Dev | Architect + Security review on creation |
+| Pull Requests | Dev | CTO reviews on creation |
 | Competitors | Growth | PM reads for product decisions, Sales for positioning |
 | Leads & Contacts | Sales | — |
-| Security Findings | Security | CTO/Dev when critical fixes needed |
+| Security Findings | CTO | Dev when critical fixes needed |
 | Support Threads | Support | PM reads for patterns |
 | Content Items | Growth | — (goes to inbox) |
-| Architecture Decisions | Architect | CTO, Dev reference |
-| Doc Pages | Docs | — |
+| Architecture Decisions | CTO | Dev reference |
 
 ### Documents (Notion-like flexible content)
 
@@ -89,13 +85,10 @@ Quick observations and findings. Each agent writes only in its domain.
 | Growth | Market findings, competitor moves, distribution angles |
 | Sales | Prospect patterns, feature requests from prospects |
 | Support | User patterns, repeated questions, sentiment shifts |
-| Security | Vulnerabilities, CVEs, security risks |
-| Architect | Tech debt, code health observations, pattern violations |
-| CTO | Technical risks, architecture concerns, migration needs |
+| CTO | Technical risks, architecture concerns, migration needs, vulnerabilities, CVEs, security risks, tech debt, code health, pattern violations |
 | Dev | Bugs found during coding, code quality observations |
 | CEO | Cross-agent observations, President directives to team |
 | PM | Product priorities, roadmap decisions, triage outcomes |
-| Docs | Documentation gaps, stale content |
 
 **Rules:**
 - Ephemeral — auto-archived after 30 days if not acted on
@@ -114,10 +107,7 @@ A lightweight heartbeat runs every few minutes. For each agent, it checks wake c
 | **Dev** | Technical specs exist without PRs, OR CI fix needed |
 | **Growth** | Shipped features without content, OR market research older than a few days |
 | **Sales** | New notes about prospects, OR follow-ups due, OR Growth found new leads |
-| **Security** | Daily scan due, OR new dependency added via PR |
-| **Architect** | New PR to review, OR weekly code health check due |
 | **Support** | New conversation received (event-driven), OR daily check for missed items |
-| **Docs** | PR merged with API changes, OR weekly staleness check due |
 
 **Key property:** No agent depends on another agent to "tell it" to work. Each checks its own conditions against the shared board.
 
@@ -207,7 +197,7 @@ Dev (wakes when specs without PRs exist):
 ```
 1. User connects GitHub repo
 2. System analyzes repo → generates Company Brief (7 knowledge docs)
-3. Agents start immediately (Growth researches, Security scans)
+3. Agents start immediately (Growth researches market)
 4. User reviews + edits + approves Company Brief
 5. Approval unlocks full pipeline (PM creates stories, CTO specs, Dev builds)
 ```
@@ -219,12 +209,9 @@ No hard gate. Agents do background work while waiting for approval.
 | Agent | Activates when | Manual override |
 |-------|---------------|-----------------|
 | CEO, PM, CTO, Dev | Always active | — |
-| Security | Immediately (lightweight) | — |
-| Architect | 5+ PRs merged | "Hire" button |
 | Growth | First feature shipped | "Hire" button |
 | Sales | ICP defined + content published | "Hire" button |
 | Support | Support channel configured | "Hire" button |
-| Docs | 3+ features shipped | "Hire" button |
 
 Dormant agents still READ the board (build context). Deactivation pauses, not deletes.
 
@@ -323,7 +310,7 @@ When `updateKnowledgeDoc` is called, it checks this map and flags all dependent 
 | Condition | Behavior |
 |-----------|----------|
 | LLM provider down | Queue, backoff, fallback model chain |
-| Budget 80% used | Skip Growth, Docs, Sales — keep PM + Dev + Security |
+| Budget 80% used | Skip Growth, Sales — keep PM + Dev + CTO |
 | Budget exhausted | Stop all, CEO sends summary |
 | Agent 3x consecutive fails | Disable agent, CEO alert |
 | User inactive 7+ days | Essential mode (Security + cost tracking), CEO email digest |
@@ -367,10 +354,7 @@ packages/backend/convex/autopilot/
 │   ├── cto/                  ← Spec generation, architecture
 │   ├── growth/               ← Market research → documents + competitors + content
 │   ├── sales/                ← Prospecting from market docs, pipeline, outreach
-│   ├── security.ts           ← Vulnerability scanning
-│   ├── architect.ts          ← Code health, ADRs
 │   ├── support.ts            ← Conversation triage
-│   ├── docs.ts               ← Documentation freshness
 │   ├── models.ts             ← LLM model definitions
 │   ├── prompts.ts            ← Agent system prompts
 │   └── shared.ts             ← generateObjectWithFallback (maxTokens: 4096)

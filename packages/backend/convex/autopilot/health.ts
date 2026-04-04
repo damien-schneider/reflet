@@ -38,11 +38,8 @@ const AGENT_FIELDS = [
   "pmEnabled",
   "ctoEnabled",
   "devEnabled",
-  "securityEnabled",
-  "architectEnabled",
   "growthEnabled",
   "supportEnabled",
-  "docsEnabled",
   "salesEnabled",
 ] as const;
 

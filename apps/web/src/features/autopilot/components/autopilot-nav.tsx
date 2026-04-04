@@ -11,7 +11,6 @@ import {
   IconMessageCircle,
   IconRocket,
   IconSettings,
-  IconShield,
   IconUserSearch,
 } from "@tabler/icons-react";
 import { LayoutGroup, motion } from "motion/react";
@@ -34,12 +33,6 @@ const NAV_ITEMS = [
   { id: "tasks", label: "Tasks", icon: IconListDetails, path: "/tasks" },
   { id: "growth", label: "Growth", icon: IconRocket, path: "/growth" },
   { id: "sales", label: "Sales", icon: IconUserSearch, path: "/sales" },
-  {
-    id: "security",
-    label: "Security",
-    icon: IconShield,
-    path: "/security",
-  },
   {
     id: "support",
     label: "Support",

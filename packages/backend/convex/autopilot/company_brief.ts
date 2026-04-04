@@ -101,7 +101,7 @@ export const generateCompanyBrief = internalAction({
       user_personas_icp: "pm",
       competitive_landscape: "growth",
       brand_voice: "growth",
-      technical_architecture: "architect",
+      technical_architecture: "cto",
       goals_okrs: "ceo",
       product_roadmap: "pm",
     };

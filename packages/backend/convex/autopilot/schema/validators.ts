@@ -47,25 +47,19 @@ export const assignedAgent = v.union(
   v.literal("pm"),
   v.literal("cto"),
   v.literal("dev"),
-  v.literal("security"),
-  v.literal("architect"),
   v.literal("growth"),
   v.literal("orchestrator"),
   v.literal("system"),
   v.literal("support"),
-  v.literal("docs"),
   v.literal("sales")
 );
 
 export const taskOrigin = v.union(
   v.literal("pm_analysis"),
-  v.literal("security_scan"),
-  v.literal("architect_review"),
   v.literal("growth_suggestion"),
   v.literal("user_created"),
   v.literal("cto_breakdown"),
   v.literal("support_escalation"),
-  v.literal("docs_update"),
   v.literal("sales_outreach"),
   v.literal("onboarding")
 );
@@ -97,13 +91,10 @@ export const activityLogAgent = v.union(
   v.literal("pm"),
   v.literal("cto"),
   v.literal("dev"),
-  v.literal("security"),
-  v.literal("architect"),
   v.literal("growth"),
   v.literal("orchestrator"),
   v.literal("system"),
   v.literal("support"),
-  v.literal("docs"),
   v.literal("sales")
 );
 
@@ -149,20 +140,16 @@ export const inboxItemStatus = v.union(
 );
 
 export const inboxItemType = v.union(
-  v.literal("architect_finding"),
   v.literal("ceo_report"),
   v.literal("email_draft"),
   v.literal("email_received"),
   v.literal("growth_post"),
   v.literal("pr_review"),
   v.literal("revenue_alert"),
-  v.literal("security_alert"),
   v.literal("task_approval"),
   v.literal("support_reply"),
   v.literal("support_escalation"),
   v.literal("shipped_notification"),
-  v.literal("docs_update"),
-  v.literal("docs_stale"),
   v.literal("sales_lead"),
   v.literal("sales_outreach_draft"),
   v.literal("sales_pipeline_update"),

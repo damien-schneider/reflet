@@ -287,10 +287,10 @@ describe("autopilot inbox", () => {
 
     const itemId = await t.mutation(internal.autopilot.inbox.createInboxItem, {
       organizationId: orgId,
-      type: "security_alert",
-      title: "Security alert",
-      summary: "A vulnerability found",
-      sourceAgent: "security",
+      type: "task_approval",
+      title: "Task approval needed",
+      summary: "A task needs approval",
+      sourceAgent: "pm",
       priority: "high",
     });
 
@@ -324,10 +324,10 @@ describe("autopilot inbox", () => {
 
     await t.mutation(internal.autopilot.inbox.createInboxItem, {
       organizationId: orgId,
-      type: "security_alert",
+      type: "revenue_alert",
       title: "Item 2",
       summary: "Summary 2",
-      sourceAgent: "security",
+      sourceAgent: "sales",
       priority: "high",
     });
 
