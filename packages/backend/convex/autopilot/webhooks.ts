@@ -35,7 +35,7 @@ export const handlePrMerged = internalMutation({
       )
       .unique();
 
-    if (!config?.enabled) {
+    if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
       return null;
     }
 

@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useAtomValue } from "jotai";
-import { usePathname } from "next/navigation";
+
 import { use, useCallback, useEffect, useRef, useState } from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,7 +16,6 @@ import { AutopilotNav } from "@/features/autopilot/components/autopilot-nav";
 import { CeoChatPanel } from "@/features/autopilot/components/ceo-chat/ceo-chat-panel";
 import { CeoChatToggle } from "@/features/autopilot/components/ceo-chat/ceo-chat-toggle";
 import { HealthBanner } from "@/features/autopilot/components/health-banner";
-import { SetupGate } from "@/features/autopilot/components/setup-gate";
 import { ceoChatOpenAtom } from "@/store/ui";
 
 export default function AutopilotLayout({
@@ -28,7 +27,6 @@ export default function AutopilotLayout({
 }) {
   const { orgSlug } = use(params);
   const isChatOpen = useAtomValue(ceoChatOpenAtom);
-  const pathname = usePathname();
 
   const panelRef = useRef<HTMLElement>(null);
   const isResizing = useRef(false);
@@ -147,8 +145,6 @@ export default function AutopilotLayout({
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
   const baseUrl = `/dashboard/${orgSlug}/autopilot`;
-  const isSettingsPage = pathname.endsWith("/settings");
-  const needsSetup = config !== undefined && !config?.enabled;
 
   const chatWidthStyle = panelWidth ? `${String(panelWidth)}px` : undefined;
 
@@ -186,8 +182,10 @@ export default function AutopilotLayout({
 
             <div className="min-w-0 flex-1">
               <HealthBanner />
-              {config?.enabled ? <LiveTicker organizationId={org._id} /> : null}
-              {needsSetup && !isSettingsPage ? <SetupGate /> : children}
+              {config?.autonomyMode && config.autonomyMode !== "stopped" ? (
+                <LiveTicker organizationId={org._id} />
+              ) : null}
+              {children}
             </div>
           </div>
         </div>

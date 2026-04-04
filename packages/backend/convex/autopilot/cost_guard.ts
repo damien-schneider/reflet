@@ -25,7 +25,7 @@ export const canExecute = internalQuery({
       )
       .unique();
 
-    if (!config?.enabled) {
+    if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
       return false;
     }
 

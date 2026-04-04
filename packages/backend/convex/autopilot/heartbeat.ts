@@ -280,6 +280,32 @@ export const checkWakeConditions = internalQuery({
 // ============================================
 
 /**
+ * Check if a "Dev task paused" message was logged in the last 24h.
+ * Used to deduplicate the noisy "no credentials" log.
+ */
+export const hasRecentDevPauseLog = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const cutoff = Date.now() - ONE_DAY_MS;
+    const recentLogs = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_org_created", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .take(100);
+
+    return recentLogs.some(
+      (log) =>
+        log.agent === "dev" &&
+        log.createdAt > cutoff &&
+        log.message.includes("Dev task paused")
+    );
+  },
+});
+
+/**
  * Schedule an agent to run asynchronously.
  * Uses ctx.scheduler.runAfter(0) so the heartbeat returns immediately.
  * Agents run in parallel, not blocking the heartbeat.
@@ -363,12 +389,54 @@ const wakeAgent = async (
  * it picks up pending tasks and routes them to execution.
  * Max 2 tasks per heartbeat tick to avoid overwhelming.
  */
+
+interface HeartbeatCtx {
+  runMutation: ActionCtx["runMutation"];
+  runQuery: ActionCtx["runQuery"];
+  scheduler: ActionCtx["scheduler"];
+}
+
+const dispatchDevTask = async (
+  ctx: HeartbeatCtx,
+  orgId: Id<"organizations">,
+  task: { _id: Id<"autopilotTasks">; title: string; assignedAgent: string }
+): Promise<boolean> => {
+  const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
+    organizationId: orgId,
+  });
+  if (!config) {
+    return false;
+  }
+  const creds = await ctx.runQuery(
+    internal.autopilot.config.getAdapterCredentials,
+    { organizationId: orgId, adapter: config.adapter }
+  );
+  if (!creds?.isValid) {
+    const recentDevPauseLogs = await ctx.runQuery(
+      internal.autopilot.heartbeat.hasRecentDevPauseLog,
+      { organizationId: orgId }
+    );
+    if (!recentDevPauseLogs) {
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: orgId,
+        taskId: task._id,
+        agent: "dev",
+        level: "info",
+        message:
+          "Dev task paused — no coding adapter credentials. Configure in Settings to enable code execution.",
+      });
+    }
+    return false;
+  }
+  await ctx.scheduler.runAfter(0, internal.autopilot.execution.executeTask, {
+    organizationId: orgId,
+    taskId: task._id,
+  });
+  return true;
+};
+
 const dispatchPendingTasks = async (
-  ctx: {
-    runQuery: ActionCtx["runQuery"];
-    runMutation: ActionCtx["runMutation"];
-    scheduler: ActionCtx["scheduler"];
-  },
+  ctx: HeartbeatCtx,
   orgId: Id<"organizations">
 ): Promise<void> => {
   const pendingTasks = await ctx.runQuery(
@@ -395,34 +463,10 @@ const dispatchPendingTasks = async (
 
     try {
       if (task.assignedAgent === "dev") {
-        // Dev tasks need coding adapter credentials — check before dispatching
-        const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
-          organizationId: orgId,
-        });
-        if (!config) {
+        const dispatcedDev = await dispatchDevTask(ctx, orgId, task);
+        if (!dispatcedDev) {
           continue;
         }
-        const creds = await ctx.runQuery(
-          internal.autopilot.config.getAdapterCredentials,
-          { organizationId: orgId, adapter: config.adapter }
-        );
-        if (!creds?.isValid) {
-          // No credentials — skip dev task silently (once per day max via activity log dedup)
-          await ctx.runMutation(internal.autopilot.tasks.logActivity, {
-            organizationId: orgId,
-            taskId: task._id,
-            agent: "dev",
-            level: "info",
-            message:
-              "Dev task paused — no coding adapter credentials. Configure in Settings to enable code execution.",
-          });
-          continue;
-        }
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.execution.executeTask,
-          { organizationId: orgId, taskId: task._id }
-        );
       } else if (task.assignedAgent === "cto") {
         // CTO tasks need the taskId to generate specs for specific stories
         await ctx.scheduler.runAfter(

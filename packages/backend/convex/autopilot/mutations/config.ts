@@ -38,7 +38,7 @@ export const initConfig = mutation({
       enabled: false,
       adapter: "builtin",
       autonomyLevel: "review_required",
-      autonomyMode: "supervised",
+      autonomyMode: "stopped",
       autoMergeThreshold: 80,
       fullAutoDelay: 15 * 60 * 1000,
       maxTasksPerDay: 10,
@@ -55,7 +55,6 @@ export const initConfig = mutation({
 export const updateConfig = mutation({
   args: {
     configId: v.id("autopilotConfig"),
-    enabled: v.optional(v.boolean()),
     adapter: v.optional(codingAdapterType),
     autonomyLevel: v.optional(autonomyLevel),
     maxTasksPerDay: v.optional(v.number()),
@@ -98,16 +97,6 @@ export const updateConfig = mutation({
       ...filtered,
       updatedAt: Date.now(),
     });
-
-    const wasEnabled = config.enabled;
-    const isNowEnabled = args.enabled;
-    if (!wasEnabled && isNowEnabled) {
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.onboarding.bootstrapAutopilot,
-        { organizationId: config.organizationId }
-      );
-    }
   },
 });
 
@@ -149,7 +138,6 @@ export const setAutonomyMode = mutation({
       }
 
       await ctx.db.patch(config._id, {
-        enabled: false,
         autonomyMode: "stopped",
         stoppedAt: now,
         updatedAt: now,
@@ -178,7 +166,6 @@ export const setAutonomyMode = mutation({
       }
 
       await ctx.db.patch(config._id, {
-        enabled: true,
         autonomyMode: args.mode,
         stoppedAt: undefined,
         updatedAt: now,
@@ -191,6 +178,13 @@ export const setAutonomyMode = mutation({
         message: `Autopilot resumed in ${args.mode} mode — ${pausedTasks.length} tasks resumed`,
         organizationId: args.organizationId,
       });
+
+      // Trigger bootstrap when resuming from stopped
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.onboarding.bootstrapAutopilot,
+        { organizationId: config.organizationId }
+      );
       return;
     }
 

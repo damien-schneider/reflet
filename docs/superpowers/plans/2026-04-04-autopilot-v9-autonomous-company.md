@@ -11,7 +11,7 @@
 **Spec docs:**
 - `docs/PRODUCT_VISION.md` — Full product vision
 - `docs/AUTOPILOT_ARCHITECTURE.md` — Technical architecture
-- `docs/new_autopilot_arch_graph.md` — Mermaid architecture graphs
+- `docs/autopilot_arch_graph.md` — Mermaid architecture graphs
 
 ---
 

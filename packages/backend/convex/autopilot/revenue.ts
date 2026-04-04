@@ -344,7 +344,7 @@ export const getEnabledOrgIds = internalQuery({
   handler: async (ctx) => {
     const configs = await ctx.db.query("autopilotConfig").collect();
     return configs
-      .filter((config) => config.enabled)
+      .filter((config) => (config.autonomyMode ?? "supervised") !== "stopped")
       .map((config) => config.organizationId);
   },
 });

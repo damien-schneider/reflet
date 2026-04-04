@@ -140,17 +140,37 @@ export const runGrowthGeneration = internalAction({
         return;
       }
 
+      // Read product context from Knowledge Base first (accurate),
+      // fall back to repo analysis if knowledge docs don't exist yet.
+      const productDef = await ctx.runQuery(
+        internal.autopilot.knowledge.getKnowledgeDocByType,
+        { organizationId: args.organizationId, docType: "product_definition" }
+      );
+      const techArchDoc = await ctx.runQuery(
+        internal.autopilot.knowledge.getKnowledgeDocByType,
+        {
+          organizationId: args.organizationId,
+          docType: "technical_architecture",
+        }
+      );
       const repoAnalysis = await ctx.runQuery(
         internal.autopilot.agents.cto.getRepoAnalysisForCto,
         { organizationId: args.organizationId }
       );
+      const repoUrl = await ctx.runQuery(
+        internal.autopilot.onboarding.getConnectedRepoUrl,
+        { organizationId: args.organizationId }
+      );
 
-      const productName = repoAnalysis?.summary
-        ? repoAnalysis.summary.split(" ")[0]
+      const productName = repoUrl
+        ? (repoUrl.split("/").pop() ?? "Our Product")
         : "Our Product";
       const productDescription =
-        repoAnalysis?.summary ?? "Software product with AI-powered features";
-      const techStack = repoAnalysis?.techStack ?? "TypeScript, React";
+        productDef?.contentFull ?? repoAnalysis?.summary ?? "Software product";
+      const techStack =
+        techArchDoc?.contentSummary ??
+        repoAnalysis?.techStack ??
+        "TypeScript, React";
       const competitorContext = repoAnalysis?.features ?? "";
 
       const agentKnowledge = await ctx.runQuery(
@@ -329,17 +349,37 @@ export const runGrowthMarketResearch = internalAction({
         { organizationId: args.organizationId, agent: "growth" }
       );
 
+      // Read product context from Knowledge Base first (accurate),
+      // fall back to repo analysis if knowledge docs don't exist yet.
+      const productDef = await ctx.runQuery(
+        internal.autopilot.knowledge.getKnowledgeDocByType,
+        { organizationId: args.organizationId, docType: "product_definition" }
+      );
+      const techArchDoc = await ctx.runQuery(
+        internal.autopilot.knowledge.getKnowledgeDocByType,
+        {
+          organizationId: args.organizationId,
+          docType: "technical_architecture",
+        }
+      );
       const repoAnalysis = await ctx.runQuery(
         internal.autopilot.agents.cto.getRepoAnalysisForCto,
         { organizationId: args.organizationId }
       );
+      const repoUrl = await ctx.runQuery(
+        internal.autopilot.onboarding.getConnectedRepoUrl,
+        { organizationId: args.organizationId }
+      );
 
-      const productName = repoAnalysis?.summary
-        ? repoAnalysis.summary.split(" ")[0]
+      const productName = repoUrl
+        ? (repoUrl.split("/").pop() ?? "Our Product")
         : "Our Product";
       const productDescription =
-        repoAnalysis?.summary ?? "Software product with AI-powered features";
-      const techStack = repoAnalysis?.techStack ?? "TypeScript, React";
+        productDef?.contentFull ?? repoAnalysis?.summary ?? "Software product";
+      const techStack =
+        techArchDoc?.contentSummary ??
+        repoAnalysis?.techStack ??
+        "TypeScript, React";
 
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
@@ -400,6 +440,16 @@ Provide actionable findings that PM and Sales agents can use.`,
           sourceAgent: "growth",
           priority: finding.relevance === "high" ? "high" : "medium",
         });
+
+        // Also create a document for full research visibility
+        await ctx.runMutation(internal.autopilot.documents.createDocument, {
+          organizationId: args.organizationId,
+          type: "market_research",
+          title: finding.topic,
+          content: `## ${finding.topic}\n\n${finding.summary}\n\n**Source:** ${finding.source}\n**Relevance:** ${finding.relevance}\n**Opportunity:** ${finding.opportunity}`,
+          tags: ["market-research", finding.relevance],
+          sourceAgent: "growth",
+        });
       }
 
       for (const move of researchOutput.competitorMoves) {
@@ -412,6 +462,61 @@ Provide actionable findings that PM and Sales agents can use.`,
           sourceAgent: "growth",
           priority: "high",
         });
+
+        // Create/update competitor record
+        const existingCompetitor = await ctx.runQuery(
+          internal.autopilot.competitors.findCompetitorByName,
+          { organizationId: args.organizationId, name: move.competitor }
+        );
+
+        let competitorId: string;
+        if (existingCompetitor) {
+          competitorId = existingCompetitor._id;
+          await ctx.runMutation(
+            internal.autopilot.competitors.updateCompetitor,
+            {
+              competitorId: existingCompetitor._id,
+              description: move.action,
+            }
+          );
+        } else {
+          competitorId = await ctx.runMutation(
+            internal.autopilot.competitors.createCompetitor,
+            {
+              organizationId: args.organizationId,
+              name: move.competitor,
+              description: move.action,
+            }
+          );
+        }
+
+        // Link a document to the competitor
+        await ctx.runMutation(internal.autopilot.documents.createDocument, {
+          organizationId: args.organizationId,
+          type: "competitor_intel",
+          title: `${move.competitor}: ${move.action}`,
+          content: `## ${move.competitor}\n\n**Action:** ${move.action}\n**Impact:** ${move.impact}`,
+          tags: ["competitor", move.competitor.toLowerCase()],
+          sourceAgent: "growth",
+          linkedTable: "autopilotCompetitors",
+          linkedId: competitorId,
+        });
+      }
+
+      // Create growth items for content pieces so Growth page shows them
+      for (const finding of researchOutput.findings) {
+        if (finding.relevance === "high") {
+          await ctx.runMutation(
+            internal.autopilot.growthItems.createGrowthItem,
+            {
+              organizationId: args.organizationId,
+              type: "blog_post",
+              title: `Market Insight: ${finding.topic}`,
+              content: `${finding.summary}\n\nOpportunity: ${finding.opportunity}`,
+              status: "draft",
+            }
+          );
+        }
       }
 
       // Complete any in_progress tasks assigned to growth

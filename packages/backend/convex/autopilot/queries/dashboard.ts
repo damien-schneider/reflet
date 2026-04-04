@@ -49,7 +49,7 @@ export const getDashboardStats = query({
       .collect();
 
     return {
-      enabled: config?.enabled ?? false,
+      enabled: (config?.autonomyMode ?? "supervised") !== "stopped",
       adapter: config?.adapter ?? "builtin",
       autonomyLevel: config?.autonomyLevel ?? "review_required",
       autonomyMode: config?.autonomyMode ?? "supervised",

@@ -58,6 +58,7 @@ Operational data with strict schemas and exclusive ownership. Like a company's t
 | User Stories | PM | "As a [persona], I want..." with acceptance criteria |
 | Technical Specs | CTO | Implementation plans, API contracts, DB changes |
 | Pull Requests | Dev | Code changes with CI status |
+| Competitors | Growth | Structured CRM of competitors (name, URL, pricing, strengths, weaknesses) |
 | Leads & Contacts | Sales | Prospects, pipeline stages, outreach history |
 | Security Findings | Security | Vulnerabilities with severity and remediation status |
 | Support Threads | Support | User conversations with sentiment and escalation |
@@ -65,9 +66,20 @@ Operational data with strict schemas and exclusive ownership. Like a company's t
 | Architecture Decisions | Architect | ADR-format records of technical choices |
 | Doc Pages | Docs | Documentation with staleness tracking |
 
+### Documents (Notion-like flexible content)
+
+Any agent can create documents of any type — research reports, analysis, proposals, battlecards, briefs. Like Notion pages that can be tagged, searched, and linked to structured records.
+
+- **Type** is freeform (agents choose or create: "market_research", "prospect_brief", "sales_battlecard", "architecture_analysis", etc.)
+- **Tags** are freeform (agents create tags as needed)
+- **Linked** to any structured record (a market research doc linked to a competitor, a prospect brief linked to a lead)
+- **Status**: draft → published → archived
+
+This is where Growth's market research reports live, Sales' battlecards, PM's analysis notes, and anything else agents produce that doesn't fit a structured table. The Documents page in the UI provides a Notion-like browsing experience with filtering by type, tags, and source agent.
+
 ### Notes (informal communication)
 
-Agents leave notes on the board — observations, findings, ideas. Like a shared Slack channel. But each agent can only write notes **within its own domain of expertise**, keeping the information clean and trustworthy.
+Agents leave notes on the board — quick observations, findings, ideas. Like dropping a message in a shared Slack channel. Each agent can only write notes **within its own domain of expertise**, keeping the information clean and trustworthy.
 
 | Agent | Can write notes about |
 |-------|----------------------|
@@ -82,13 +94,7 @@ Agents leave notes on the board — observations, findings, ideas. Like a shared
 | PM | Product priorities, roadmap decisions, triage outcomes |
 | Docs | Documentation gaps, stale content |
 
-Examples:
-- Growth: "Found 12 Reddit threads about playlist sharing pain"
-- Support: "5 users asked about offline mode this week"
-- Security: "CVE-2026-1234 affects our auth dependency"
-- Sales: "3 prospects asked if we support SSO"
-
-PM reads all notes when it checks the board. High-priority notes (security critical, user-facing bugs) get acted on immediately. This is how agents communicate — each contributing observations from their domain, PM triaging them into product decisions.
+Notes are ephemeral and lightweight — they feed into PM's triage cycle. For longer-form analysis, agents create Documents instead.
 
 ## The agents
 
@@ -211,7 +217,30 @@ Every agent execution passes through guards — lightweight middleware checks, n
 | Daily cost cap | $20 | Budget control |
 | Task retries | 3 | Exponential backoff |
 
-### Self-cleaning
+### Self-correcting company (no manual cleanup needed)
+
+The company corrects itself when things change — like real employees who notice when the product pivots and adjust their work accordingly. No one needs to manually archive old research or cancel outdated tasks.
+
+**Fail loud, never guess.** If an agent can't find the Product Definition or any critical knowledge doc, it stops and alerts the CEO — it doesn't fall back to generic text. Missing knowledge means the company doesn't know what it's building. That's a CEO-level problem, not a "use default" situation. No silent fallbacks anywhere.
+
+**Knowledge change cascading.** Every knowledge doc tracks what depends on it. When the Product Definition changes (user edits it, or PM updates it based on new research), all downstream data gets automatically flagged as stale:
+- Product Definition changes → Competitive Landscape, ICP, Brand Voice, Roadmap all flagged
+- Competitive Landscape changes → Growth content items reviewed, Sales battlecards flagged
+- Goals/OKRs change → PM reprioritizes roadmap, existing initiatives re-evaluated
+
+Agents see the staleness flags on their next wake and act: re-research competitors, re-evaluate initiatives, archive content that's off-brand. The company naturally realigns without anyone telling it to.
+
+**Bottom-up change propagation.** When an agent discovers something that contradicts the knowledge base — Growth finds the market has shifted, Sales discovers users want something different, Support sees a pattern that doesn't match the ICP — the agent doesn't just leave a note. It proposes a knowledge doc update. PM or CEO reviews and approves the change, which then cascades downstream. The company evolves from both top-down (President directives) and bottom-up (agent discoveries).
+
+**Automatic archival.** When a knowledge doc changes significantly (> threshold of content change), agents automatically:
+- Archive documents that reference the old version (market research, battlecards)
+- Cancel pending tasks that were based on outdated context
+- Flag in_progress work for review ("the Product Definition changed — does this task still make sense?")
+- Re-queue discovery work (Growth researches the new market position, Sales re-evaluates prospects)
+
+The result: the President can say "we're pivoting from recording to live streaming" in the CEO chat, CEO updates the Product Definition, and within hours every agent has realigned — old competitors archived, new market research running, existing tasks reviewed, new initiatives created. No manual cleanup.
+
+### Self-cleaning (per-agent hygiene)
 
 Each agent cleans its own domain when it wakes up — cancels stale work, retries failed items, archives old completed work. The CEO coordination check detects system-wide issues: bottlenecks, starvation, conflicts between agents.
 

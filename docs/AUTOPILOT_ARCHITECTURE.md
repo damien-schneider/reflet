@@ -48,6 +48,8 @@ All agents read from and write to the same database. Three types of data:
 - User edits protected 72h — agents can't overwrite
 - Authority: President > CEO > PM > individual agents
 - Staleness alerts when docs aren't updated within threshold
+- **Change cascading**: when a doc changes, all dependent data (downstream docs, records, documents) gets flagged as stale. Agents respond automatically on their next wake.
+- **No silent fallbacks**: if a required knowledge doc is missing, agents halt and alert CEO — they never use generic placeholder text
 
 ### Work Board (structured records — active work)
 
@@ -57,6 +59,7 @@ All agents read from and write to the same database. Three types of data:
 | User Stories | PM | CTO checks for stories without specs |
 | Technical Specs | CTO | Dev checks for specs without PRs |
 | Pull Requests | Dev | Architect + Security review on creation |
+| Competitors | Growth | PM reads for product decisions, Sales for positioning |
 | Leads & Contacts | Sales | — |
 | Security Findings | Security | CTO/Dev when critical fixes needed |
 | Support Threads | Support | PM reads for patterns |
@@ -64,9 +67,22 @@ All agents read from and write to the same database. Three types of data:
 | Architecture Decisions | Architect | CTO, Dev reference |
 | Doc Pages | Docs | — |
 
+### Documents (Notion-like flexible content)
+
+Any agent can create freeform documents — research reports, analysis, proposals, battlecards. Like Notion pages linked to structured records.
+
+| Field | Description |
+|-------|-------------|
+| type | Freeform string (e.g. "market_research", "sales_battlecard", "architecture_analysis") |
+| tags | Freeform array (agents create tags as needed) |
+| linkedTable + linkedId | Optional link to any structured record (competitor, lead, initiative) |
+| status | draft → published → archived |
+
+Documents are the primary output of Growth's market research (full reports), Sales' battlecards, PM's analysis. The UI provides Notion-like browsing with filters by type, tags, and source agent.
+
 ### Notes (domain-restricted agent communication)
 
-Agents leave notes on the board, but **each agent can only write notes within its domain of expertise**. This keeps data clean — you'll never get a Dev agent writing market research that PM mistakenly acts on.
+Quick observations and findings. Each agent writes only in its domain.
 
 | Agent | Can write notes about |
 |-------|----------------------|
@@ -82,11 +98,9 @@ Agents leave notes on the board, but **each agent can only write notes within it
 | Docs | Documentation gaps, stale content |
 
 **Rules:**
-- Schema: author, title, content, priority, noteCategory (matches agent domain), timestamp
 - Ephemeral — auto-archived after 30 days if not acted on
-- Deduplicated by content similarity (same observation from multiple agents merges)
-- PM reads ALL notes as input for product decisions
-- Every agent reads all notes for context, but only writes in its own domain
+- Deduplicated by content similarity
+- For longer-form analysis, agents create Documents instead of notes
 
 ## How Agents Wake Up (Condition-Driven)
 
@@ -113,11 +127,13 @@ Every agent execution follows the same pattern:
 
 ```
 1. GUARDS     — Cost check → Autonomy check → Rate limit → Circuit breaker
-2. CLEAN      — Cancel own stale tasks, retry own failed items, archive old work
-3. CONTEXT    — Load knowledge base summaries + domain-specific records + recent notes
-4. WORK       — Check domain conditions → decide what to do → execute via LLM
-5. OUTPUT     — Write records/notes/inbox items to the shared board
-6. LOG        — Record activity + cost
+2. KNOWLEDGE  — Load required knowledge docs. If missing → HALT + alert CEO. Never guess.
+3. STALENESS  — Check if own domain data is flagged stale (knowledge changed). If so → archive stale data, re-process.
+4. CLEAN      — Cancel own stale tasks, retry own failed items, archive old work
+5. CONTEXT    — Load knowledge base summaries + domain-specific records + recent notes/documents
+6. WORK       — Check domain conditions → decide what to do → execute via LLM
+7. OUTPUT     — Write records/notes/documents/inbox items to the shared board
+8. LOG        — Record activity + cost
 ```
 
 ## Guards (Middleware)
@@ -243,17 +259,63 @@ When multiple items compete for an agent's attention:
 5. **Age boost** — +5% per day pending (prevent starvation)
 6. **Note strength** — multiple agents noted the same thing = higher priority
 
-## Self-Cleaning
+## Self-Correcting Company
 
-**Per-agent (every wake cycle):**
+The company automatically adapts when context changes. No manual cleanup needed.
+
+### Principle: Fail loud, never guess
+
+If an agent can't load the Product Definition or any required knowledge doc, it **stops and alerts the CEO**. It never falls back to generic text. There are zero hardcoded fallback strings in agent code — if knowledge is missing, execution halts with a clear error.
+
+This prevents the worst failure mode: an agent confidently doing the wrong thing because it guessed.
+
+### Knowledge change cascading
+
+Each knowledge doc has a `lastUpdatedAt` timestamp. When a doc is updated:
+
+1. **Staleness propagation**: downstream data gets flagged
+   - Product Definition changes → flag Competitive Landscape, ICP, Brand Voice, Roadmap
+   - Competitive Landscape changes → flag Growth content, Sales battlecards
+   - Goals changes → flag Roadmap, existing initiatives
+2. **Agent response on next wake**: agents see stale flags and act
+   - Growth: re-research competitors, archive stale market research docs
+   - PM: re-evaluate initiatives, cancel tasks based on outdated context
+   - Sales: re-evaluate prospect fit, update battlecards
+3. **Automatic archival**: documents/competitors/content linked to outdated knowledge get archived with reason "knowledge base changed"
+
+### Bottom-up change propagation
+
+Agents can propose knowledge doc updates — not just leave notes:
+- Growth discovers market has shifted → proposes Product Definition update
+- Sales sees users want something different → proposes ICP update  
+- Support detects sentiment shift → proposes Brand Voice adjustment
+
+Proposals go to PM (for product docs) or CEO (for strategy docs) for approval. Approved changes cascade downstream automatically.
+
+### Implementation: `knowledgeDependencies` map
+
+```
+product_definition → [competitive_landscape, user_personas_icp, brand_voice, product_roadmap]
+competitive_landscape → [growth content, sales battlecards, competitor records]  
+goals_okrs → [product_roadmap, initiatives]
+technical_architecture → [technical specs, architecture decisions]
+```
+
+When `updateKnowledgeDoc` is called, it checks this map and flags all dependent data as needing review. Agents process these flags during their normal wake cycle.
+
+### Per-agent self-cleaning (every wake cycle)
+
 - Cancel own tasks pending > 7 days
 - Retry own failed tasks (if < max retries)
 - Archive completed work older than 30 days
+- **Check staleness flags** on own domain data — re-process if knowledge changed
 
-**CEO coordination (every ~4h):**
+### CEO coordination (every ~4h)
+
 - Detect bottlenecks (stage X has 3x items vs. stage Y)
 - Detect starvation (agent has 0 work for 3+ days)
 - Detect conflicts (contradictory knowledge docs)
+- **Detect knowledge drift** (knowledge doc updated but downstream agents haven't responded)
 - Circuit breaker (cascade failure detection)
 
 ## Graceful Degradation
@@ -275,12 +337,16 @@ packages/backend/convex/autopilot/
 │   ├── config.tables.ts      ← Config + credentials
 │   ├── knowledge.tables.ts   ← Knowledge docs + versions
 │   ├── records.tables.ts     ← Initiatives, stories, specs, etc.
-│   ├── notes.tables.ts       ← Agent notes (was "signals")
+│   ├── documents.tables.ts   ← Flexible documents (Notion-like)
+│   ├── competitors.tables.ts ← Structured competitor CRM
+│   ├── notes.tables.ts       ← Agent notes (quick observations)
 │   ├── agents.tables.ts      ← Threads, messages, metrics
 │   ├── comms.tables.ts       ← Emails, growth items, inbox
 │   ├── data.tables.ts        ← Revenue, repo analysis, leads, findings
 │   └── index.ts              ← Re-export merged tables
 ├── knowledge.ts              ← Knowledge doc CRUD, versioning, staleness
+├── documents.ts              ← Flexible document CRUD (Notion-like)
+├── competitors.ts            ← Competitor CRM CRUD
 ├── notes.ts                  ← Note creation, dedup, cleanup
 ├── initiatives.ts            ← Initiative CRUD, WIP limits
 ├── user_stories.ts           ← Story CRUD, status transitions
@@ -290,25 +356,32 @@ packages/backend/convex/autopilot/
 ├── onboarding.ts             ← Repo analysis → Company Brief
 ├── company_brief.ts          ← Generate 7 knowledge docs
 ├── inbox.ts                  ← Inbox management, pressure tracking
-├── tasks.ts                  ← Task lifecycle, priorities
+├── tasks.ts                  ← Task lifecycle, completeAgentTasks helper
 ├── cost_guard.ts             ← Per-agent budgets, rate limits
 ├── self_heal.ts              ← CEO-level system health checks
+├── maintenance.ts            ← Inbox expiry, note cleanup, staleness checks
 ├── execution.ts              ← Coding adapter dispatch
 ├── agents/
 │   ├── ceo/                  ← Reports, coordination, chat relay
-│   ├── pm/                   ← Story creation, roadmap, note triage
+│   ├── pm/                   ← Initiative creation, roadmap, note triage
 │   ├── cto/                  ← Spec generation, architecture
-│   ├── dev/                  ← PR creation via adapters
-│   ├── growth/               ← Market research, content creation
-│   ├── sales/                ← Prospecting, pipeline, outreach
+│   ├── growth/               ← Market research → documents + competitors + content
+│   ├── sales/                ← Prospecting from market docs, pipeline, outreach
 │   ├── security.ts           ← Vulnerability scanning
 │   ├── architect.ts          ← Code health, ADRs
 │   ├── support.ts            ← Conversation triage
 │   ├── docs.ts               ← Documentation freshness
 │   ├── models.ts             ← LLM model definitions
-│   ├── prompts/              ← Per-agent system prompts
-│   └── shared.ts             ← generateObjectWithFallback, context loader
+│   ├── prompts.ts            ← Agent system prompts
+│   └── shared.ts             ← generateObjectWithFallback (maxTokens: 4096)
 ├── queries/                  ← Frontend-facing queries
+│   ├── documents.ts          ← List/filter documents
+│   ├── competitors.ts        ← List competitors
+│   ├── initiatives.ts        ← List initiatives + stories
+│   ├── knowledge.ts          ← List knowledge docs
+│   └── ...                   ← tasks, inbox, growth, email, etc.
 ├── mutations/                ← Frontend-facing mutations
+│   ├── documents.ts          ← Create/update documents (user + agent)
+│   └── ...                   ← config, inbox, tasks, etc.
 └── adapters/                 ← Coding adapter implementations
 ```

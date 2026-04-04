@@ -2,6 +2,7 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import {
+  IconFileText,
   IconMail,
   IconTrendingUp,
   IconUserSearch,
@@ -9,6 +10,7 @@ import {
 } from "@tabler/icons-react";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -53,6 +55,114 @@ const SOURCE_LABELS = {
 } as const;
 
 export default function SalesPipelinePage() {
+  const [activeTab, setActiveTab] = useState<string>("pipeline");
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <H2 variant="card">Sales Pipeline</H2>
+      </div>
+
+      <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
+        <button
+          className={cn(
+            "flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium text-sm transition-colors",
+            activeTab === "pipeline"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+          onClick={() => setActiveTab("pipeline")}
+          type="button"
+        >
+          <IconTrendingUp className="size-4" />
+          Pipeline
+        </button>
+        <button
+          className={cn(
+            "flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium text-sm transition-colors",
+            activeTab === "insights"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+          onClick={() => setActiveTab("insights")}
+          type="button"
+        >
+          <IconFileText className="size-4" />
+          Insights
+        </button>
+      </div>
+
+      {activeTab === "pipeline" && <SalesPipelineTab />}
+      {activeTab === "insights" && <SalesInsightsTab />}
+    </div>
+  );
+}
+
+function SalesInsightsTab() {
+  const { organizationId } = useAutopilotContext();
+
+  const docs = useQuery(api.autopilot.queries.documents.listDocuments, {
+    organizationId,
+    type: "prospect_brief",
+    limit: 50,
+  });
+
+  if (docs === undefined) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 2 }, (_, i) => (
+          <Skeleton
+            className="h-24 w-full rounded-lg"
+            key={`skel-${String(i)}`}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (docs.length === 0) {
+    return (
+      <div className="flex h-40 items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm">
+        <div className="text-center">
+          <IconFileText className="mx-auto mb-2 size-8" />
+          <p>
+            No prospect insights yet. The Sales Agent will create briefs during
+            prospecting.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {docs.map((doc) => (
+        <Card key={doc._id}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">{doc.title}</CardTitle>
+            <CardDescription className="flex items-center gap-2">
+              {doc.tags.map((tag) => (
+                <Badge className="text-xs" key={tag} variant="outline">
+                  {tag}
+                </Badge>
+              ))}
+              <span className="text-xs">
+                {formatDistanceToNow(doc.createdAt, { addSuffix: true })}
+              </span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="whitespace-pre-wrap text-muted-foreground text-sm">
+              {doc.content}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function SalesPipelineTab() {
   const { organizationId } = useAutopilotContext();
 
   const stats = useQuery(api.autopilot.sales_queries.getSalesStats, {
@@ -80,10 +190,6 @@ export default function SalesPipelinePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <H2 variant="card">Sales Pipeline</H2>
-      </div>
-
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>

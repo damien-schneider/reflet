@@ -185,7 +185,7 @@ export const executeTask = internalAction({
       organizationId: args.organizationId,
     });
 
-    if (!config?.enabled) {
+    if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
         taskId: args.taskId,

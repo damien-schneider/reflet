@@ -278,7 +278,7 @@ export const getSystemHealth = query({
       };
     }
 
-    if (!config.enabled) {
+    if ((config.autonomyMode ?? "supervised") === "stopped") {
       return {
         status: "stopped" as const,
         issues: [

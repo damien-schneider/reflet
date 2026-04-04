@@ -100,12 +100,11 @@ const gateResultValidator = v.object({
  * Universal gate check. Every agent calls this before any action.
  *
  * Checks in order:
- * 1. Is autopilot enabled?
- * 2. Is autonomy mode "stopped"?
- * 3. Is the specific agent enabled?
- * 4. Rate limit check
- * 5. Cost limit check
- * 6. Action-type-specific permissions
+ * 1. Is autonomy mode active (not "stopped")?
+ * 2. Is the specific agent enabled?
+ * 3. Rate limit check
+ * 4. Cost limit check
+ * 5. Action-type-specific permissions
  */
 export const checkGate = internalQuery({
   args: {
@@ -123,13 +122,9 @@ export const checkGate = internalQuery({
       )
       .unique();
 
-    if (!config?.enabled) {
-      return { proceed: false, reason: "stopped" as const };
-    }
-
-    // 2. Check autonomy mode
-    const mode = config.autonomyMode ?? "supervised";
-    if (mode === "stopped") {
+    // 1b. Check autonomy mode (stopped = disabled)
+    const mode = config?.autonomyMode ?? "supervised";
+    if (!config || mode === "stopped") {
       return { proceed: false, reason: "stopped" as const };
     }
 
@@ -222,12 +217,7 @@ export const isAgentActive = internalQuery({
       )
       .unique();
 
-    if (!config?.enabled) {
-      return false;
-    }
-
-    const mode = config.autonomyMode ?? "supervised";
-    if (mode === "stopped") {
+    if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
       return false;
     }
 
@@ -254,10 +244,6 @@ export const isStopped = internalQuery({
       )
       .unique();
 
-    if (!config?.enabled) {
-      return true;
-    }
-
-    return (config.autonomyMode ?? "supervised") === "stopped";
+    return !config || (config.autonomyMode ?? "supervised") === "stopped";
   },
 });

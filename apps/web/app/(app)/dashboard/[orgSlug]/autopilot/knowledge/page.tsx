@@ -1,7 +1,14 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import { IconEdit, IconFileText } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconChevronRight,
+  IconClock,
+  IconEdit,
+  IconFileText,
+  IconX,
+} from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
@@ -9,13 +16,6 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,6 +33,16 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   product_roadmap: "Product Roadmap",
 };
 
+const DOC_TYPE_ICONS: Record<string, string> = {
+  product_definition: "📦",
+  user_personas_icp: "👥",
+  competitive_landscape: "🏆",
+  brand_voice: "🎨",
+  technical_architecture: "🏗️",
+  goals_okrs: "🎯",
+  product_roadmap: "🗺️",
+};
+
 const STALENESS_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 
 export default function KnowledgePage() {
@@ -47,6 +57,7 @@ export default function KnowledgePage() {
   );
 
   const [editingDocId, setEditingDocId] = useState<string | null>(null);
+  const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editSummary, setEditSummary] = useState("");
 
@@ -54,10 +65,10 @@ export default function KnowledgePage() {
     return (
       <div className="space-y-6">
         <H2 variant="card">Knowledge Base</H2>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-3">
           {Array.from({ length: 4 }, (_, i) => (
             <Skeleton
-              className="h-48 w-full rounded-lg"
+              className="h-20 w-full rounded-lg"
               key={`skel-${String(i)}`}
             />
           ))}
@@ -71,8 +82,13 @@ export default function KnowledgePage() {
       <div className="space-y-6">
         <H2 variant="card">Knowledge Base</H2>
         <div className="flex h-40 items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm">
-          No knowledge docs yet. They&apos;ll be generated when agents start
-          working.
+          <div className="text-center">
+            <IconFileText className="mx-auto mb-2 size-8" />
+            <p>
+              No knowledge docs yet. They&apos;ll be generated when agents start
+              working.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -80,6 +96,7 @@ export default function KnowledgePage() {
 
   const handleEdit = (doc: (typeof docs)[number]) => {
     setEditingDocId(doc._id);
+    setExpandedDocId(doc._id);
     setEditContent(doc.contentFull);
     setEditSummary(doc.contentSummary);
   };
@@ -106,111 +123,170 @@ export default function KnowledgePage() {
     }
   };
 
+  const toggleExpand = (docId: string) => {
+    if (editingDocId === docId) {
+      return;
+    }
+    setExpandedDocId(expandedDocId === docId ? null : docId);
+  };
+
   return (
     <div className="space-y-6">
-      <H2 variant="card">Knowledge Base</H2>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="flex items-center justify-between">
+        <H2 variant="card">Knowledge Base</H2>
+        <p className="text-muted-foreground text-sm">
+          {docs.length} document{docs.length === 1 ? "" : "s"}
+        </p>
+      </div>
+
+      <div className="space-y-2">
         {docs.map((doc) => {
           const isStale =
             Date.now() - doc.lastUpdatedAt > STALENESS_THRESHOLD_MS;
           const isEditing = editingDocId === doc._id;
+          const isExpanded = expandedDocId === doc._id;
+          const icon = DOC_TYPE_ICONS[doc.docType] ?? "📄";
 
           return (
-            <Card key={doc._id}>
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
+            <div
+              className={cn(
+                "rounded-lg border transition-colors",
+                isExpanded ? "bg-card" : "hover:bg-muted/30",
+                isStale && !isExpanded && "border-amber-500/30"
+              )}
+              key={doc._id}
+            >
+              {/* Header row — click to expand */}
+              <button
+                className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                onClick={() => toggleExpand(doc._id)}
+                type="button"
+              >
+                <IconChevronRight
+                  className={cn(
+                    "size-4 shrink-0 text-muted-foreground transition-transform",
+                    isExpanded && "rotate-90"
+                  )}
+                />
+                <span className="text-lg">{icon}</span>
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <IconFileText className="size-4 text-muted-foreground" />
-                    <CardTitle className="text-base">
-                      {isEditing ? (
-                        <Input
-                          className="h-7"
-                          defaultValue={doc.title}
-                          readOnly
-                        />
-                      ) : (
-                        doc.title
-                      )}
-                    </CardTitle>
-                  </div>
-                  {!isEditing && (
-                    <Button
-                      onClick={() => handleEdit(doc)}
-                      size="icon"
-                      title="Edit document"
-                      variant="ghost"
-                    >
-                      <IconEdit className="size-4" />
-                    </Button>
-                  )}
-                </div>
-                <CardDescription className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">
-                    {DOC_TYPE_LABELS[doc.docType] ?? doc.docType}
-                  </Badge>
-                  {doc.userEdited && (
-                    <Badge
-                      className="bg-blue-500/10 text-blue-500"
-                      variant="outline"
-                    >
-                      User edited
+                    <span className="truncate font-medium text-sm">
+                      {doc.title}
+                    </span>
+                    <Badge className="shrink-0 text-xs" variant="secondary">
+                      {DOC_TYPE_LABELS[doc.docType] ?? doc.docType}
                     </Badge>
-                  )}
-                  {isStale && (
-                    <Badge
-                      className="bg-amber-500/10 text-amber-500"
-                      variant="outline"
-                    >
-                      Stale
-                    </Badge>
-                  )}
-                  <span className="text-muted-foreground text-xs">
-                    v{doc.version} &middot; updated{" "}
-                    {formatDistanceToNow(doc.lastUpdatedAt, {
-                      addSuffix: true,
-                    })}
-                  </span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isEditing ? (
-                  <div className="space-y-3">
-                    <Textarea
-                      className="min-h-32"
-                      onChange={(e) => setEditContent(e.target.value)}
-                      placeholder="Full content..."
-                      value={editContent}
-                    />
-                    <Input
-                      onChange={(e) => setEditSummary(e.target.value)}
-                      placeholder="Summary..."
-                      value={editSummary}
-                    />
-                    <div className="flex gap-2">
-                      <Button onClick={() => handleSave(doc._id)} size="sm">
-                        Save
-                      </Button>
-                      <Button
-                        onClick={handleCancel}
-                        size="sm"
+                    {doc.userEdited && (
+                      <Badge
+                        className="shrink-0 bg-blue-500/10 text-blue-500 text-xs"
                         variant="outline"
                       >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p
-                    className={cn(
-                      "line-clamp-4 text-muted-foreground text-sm",
-                      isStale && "opacity-70"
+                        Edited
+                      </Badge>
                     )}
-                  >
-                    {doc.contentSummary}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                    {isStale && (
+                      <Badge
+                        className="shrink-0 bg-amber-500/10 text-amber-500 text-xs"
+                        variant="outline"
+                      >
+                        <IconClock className="mr-1 size-3" />
+                        Stale
+                      </Badge>
+                    )}
+                  </div>
+                  {!isExpanded && (
+                    <p className="mt-0.5 truncate text-muted-foreground text-xs">
+                      {doc.contentSummary}
+                    </p>
+                  )}
+                </div>
+                <span className="shrink-0 text-muted-foreground text-xs">
+                  v{doc.version} &middot;{" "}
+                  {formatDistanceToNow(doc.lastUpdatedAt, {
+                    addSuffix: true,
+                  })}
+                </span>
+              </button>
+
+              {/* Expanded content */}
+              {isExpanded && (
+                <div className="border-t px-4 py-4">
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <div>
+                        <label
+                          className="mb-1 block font-medium text-sm"
+                          htmlFor={`summary-${doc._id}`}
+                        >
+                          Summary
+                        </label>
+                        <Input
+                          id={`summary-${doc._id}`}
+                          onChange={(e) => setEditSummary(e.target.value)}
+                          placeholder="Brief summary..."
+                          value={editSummary}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="mb-1 block font-medium text-sm"
+                          htmlFor={`content-${doc._id}`}
+                        >
+                          Full Content
+                        </label>
+                        <Textarea
+                          className="min-h-64 font-mono text-sm"
+                          id={`content-${doc._id}`}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          placeholder="Full content..."
+                          value={editContent}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={() => handleSave(doc._id)} size="sm">
+                          <IconCheck className="mr-1 size-4" />
+                          Save
+                        </Button>
+                        <Button
+                          onClick={handleCancel}
+                          size="sm"
+                          variant="outline"
+                        >
+                          <IconX className="mr-1 size-4" />
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                          Summary
+                        </p>
+                        <Button
+                          onClick={() => handleEdit(doc)}
+                          size="sm"
+                          variant="ghost"
+                        >
+                          <IconEdit className="mr-1 size-4" />
+                          Edit
+                        </Button>
+                      </div>
+                      <p className="text-sm">{doc.contentSummary}</p>
+                      <div className="border-t pt-3">
+                        <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                          Full Content
+                        </p>
+                        <div className="whitespace-pre-wrap rounded-md bg-muted/50 p-4 text-sm">
+                          {doc.contentFull}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>

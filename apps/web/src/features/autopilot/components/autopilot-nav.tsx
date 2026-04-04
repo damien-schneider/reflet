@@ -3,6 +3,7 @@
 import {
   IconBook,
   IconDashboard,
+  IconFileText,
   IconInbox,
   IconListDetails,
   IconMail,
@@ -24,6 +25,12 @@ const NAV_ITEMS = [
   { id: "inbox", label: "Inbox", icon: IconInbox, path: "/inbox" },
   { id: "roadmap", label: "Roadmap", icon: IconMap2, path: "/roadmap" },
   { id: "knowledge", label: "Knowledge", icon: IconBook, path: "/knowledge" },
+  {
+    id: "documents",
+    label: "Documents",
+    icon: IconFileText,
+    path: "/documents",
+  },
   { id: "tasks", label: "Tasks", icon: IconListDetails, path: "/tasks" },
   { id: "growth", label: "Growth", icon: IconRocket, path: "/growth" },
   { id: "sales", label: "Sales", icon: IconUserSearch, path: "/sales" },

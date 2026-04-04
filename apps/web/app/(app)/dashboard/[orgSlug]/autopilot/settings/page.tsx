@@ -40,7 +40,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { H2, Muted } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
-import { cn } from "@/lib/utils";
 
 const ADAPTER_OPTIONS = [
   {
@@ -242,35 +241,6 @@ export default function AutopilotSettingsPage() {
 
         <Card>
           <CardContent className="divide-y">
-            {/* Enable Autopilot */}
-            <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "rounded-lg p-2",
-                    config.enabled
-                      ? "bg-green-500/10 text-green-500"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  <IconPower className="size-4" />
-                </div>
-                <div>
-                  <Label className="font-medium text-sm">
-                    Enable Autopilot
-                  </Label>
-                  <p className="text-muted-foreground text-xs">
-                    Start the AI product team
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={config.enabled}
-                disabled={!isAdmin}
-                onCheckedChange={(v) => handleToggle("enabled", v)}
-              />
-            </div>
-
             {/* Auto-merge PRs */}
             <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
               <div className="flex items-center gap-3">

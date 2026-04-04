@@ -108,19 +108,10 @@ export const shouldExecuteAction = internalQuery({
       )
       .unique();
 
-    if (!config?.enabled) {
-      return {
-        allowed: false,
-        reason: "Autopilot is disabled",
-        requiresInbox: false,
-        delayMs: 0,
-      };
-    }
+    const mode = config?.autonomyMode ?? "supervised";
 
-    const mode = config.autonomyMode ?? "full_auto";
-
-    // Stopped mode — block everything
-    if (mode === "stopped") {
+    // No config or stopped mode — block everything
+    if (!config || mode === "stopped") {
       return {
         allowed: false,
         reason: "Autopilot is stopped",
@@ -187,11 +178,7 @@ export const isStopped = internalQuery({
       )
       .unique();
 
-    if (!config?.enabled) {
-      return true;
-    }
-
-    return (config.autonomyMode ?? "supervised") === "stopped";
+    return !config || (config.autonomyMode ?? "supervised") === "stopped";
   },
 });
 

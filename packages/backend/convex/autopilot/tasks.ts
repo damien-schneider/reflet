@@ -193,6 +193,9 @@ export const createTask = internalMutation({
       config?.maxPendingTasksPerAgent ?? DEFAULT_MAX_PENDING_PER_AGENT;
     const totalCap = config?.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
 
+    // Count ALL active tasks (pending + in_progress) to prevent pile-up.
+    // Only counting "pending" allowed tasks to move to in_progress and
+    // then PM would create more, causing the queue to grow unbounded.
     const pendingTasks = await ctx.db
       .query("autopilotTasks")
       .withIndex("by_org_status", (q) =>
@@ -200,29 +203,38 @@ export const createTask = internalMutation({
       )
       .collect();
 
-    // Check total pending cap
-    if (pendingTasks.length >= totalCap) {
+    const inProgressTasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "in_progress")
+      )
+      .collect();
+
+    const allActiveTasks = [...pendingTasks, ...inProgressTasks];
+
+    // Check total active cap
+    if (allActiveTasks.length >= totalCap) {
       await ctx.db.insert("autopilotActivityLog", {
         organizationId: args.organizationId,
         agent: args.assignedAgent,
         level: "info",
-        message: `Skipped creating task "${args.title}" — total pending tasks at cap (${pendingTasks.length}/${totalCap})`,
+        message: `Skipped creating task "${args.title}" — active tasks at cap (${allActiveTasks.length}/${totalCap})`,
         createdAt: now,
       });
       return null;
     }
 
-    // Check per-agent pending cap
-    const agentPending = pendingTasks.filter(
+    // Check per-agent active cap
+    const agentActive = allActiveTasks.filter(
       (t) => t.assignedAgent === args.assignedAgent
     ).length;
 
-    if (agentPending >= perAgentCap) {
+    if (agentActive >= perAgentCap) {
       await ctx.db.insert("autopilotActivityLog", {
         organizationId: args.organizationId,
         agent: args.assignedAgent,
         level: "info",
-        message: `Skipped creating task "${args.title}" — agent "${args.assignedAgent}" at cap (${agentPending}/${perAgentCap})`,
+        message: `Skipped creating task "${args.title}" — agent "${args.assignedAgent}" at cap (${agentActive}/${perAgentCap})`,
         createdAt: now,
       });
       return null;

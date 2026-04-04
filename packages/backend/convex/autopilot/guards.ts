@@ -1,7 +1,7 @@
 /**
  * Guards — middleware checks wrapping every agent execution.
  *
- * Checks: enabled, not stopped, cost budget, rate limit, circuit breaker.
+ * Checks: autonomy mode, cost budget, rate limit, circuit breaker.
  */
 
 import { v } from "convex/values";
@@ -34,12 +34,7 @@ export const checkGuards = internalQuery({
       return { allowed: false, reason: "No autopilot config found" };
     }
 
-    // Check enabled
-    if (!config.enabled) {
-      return { allowed: false, reason: "Autopilot is disabled" };
-    }
-
-    // Check stopped mode
+    // Check autonomy mode (stopped = disabled)
     const autonomyMode = config.autonomyMode ?? "supervised";
     if (autonomyMode === "stopped") {
       return {

@@ -114,7 +114,7 @@ export const canDispatchTask = internalQuery({
       )
       .unique();
 
-    if (!config?.enabled) {
+    if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
       return false;
     }
 
@@ -147,7 +147,7 @@ export const isAgentEnabled = internalQuery({
       )
       .unique();
 
-    if (!config?.enabled) {
+    if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
       return false;
     }
 
@@ -200,7 +200,7 @@ async function fetchEnabledAgents(
     .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
     .unique();
 
-  if (!config?.enabled) {
+  if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
     return [];
   }
 
@@ -236,7 +236,7 @@ export const getEnabledConfigs = internalQuery({
   handler: async (ctx) => {
     const configs = await ctx.db.query("autopilotConfig").collect();
     return configs
-      .filter((c) => c.enabled && c.autonomyMode !== "stopped")
+      .filter((c) => (c.autonomyMode ?? "supervised") !== "stopped")
       .map((c) => ({
         organizationId: c.organizationId,
         autonomyMode: c.autonomyMode,
@@ -358,6 +358,7 @@ export const getTaskCapUsage = internalQuery({
       config?.maxPendingTasksPerAgent ?? DEFAULT_MAX_PENDING_PER_AGENT;
     const totalCap = config?.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
 
+    // Count ALL active tasks (pending + in_progress) to prevent pile-up
     const pendingTasks = await ctx.db
       .query("autopilotTasks")
       .withIndex("by_org_status", (q) =>
@@ -365,10 +366,19 @@ export const getTaskCapUsage = internalQuery({
       )
       .collect();
 
+    const inProgressTasks = await ctx.db
+      .query("autopilotTasks")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "in_progress")
+      )
+      .collect();
+
+    const allActiveTasks = [...pendingTasks, ...inProgressTasks];
+
     const enabledAgents = await fetchEnabledAgents(ctx, args.organizationId);
     const agentCounts = new Map<string, number>();
 
-    for (const task of pendingTasks) {
+    for (const task of allActiveTasks) {
       agentCounts.set(
         task.assignedAgent,
         (agentCounts.get(task.assignedAgent) ?? 0) + 1
@@ -384,7 +394,7 @@ export const getTaskCapUsage = internalQuery({
     return {
       perAgentCap,
       totalCap,
-      totalPending: pendingTasks.length,
+      totalPending: allActiveTasks.length,
       agentUsage,
     };
   },
@@ -475,7 +485,7 @@ export const createDefaultConfig = internalMutation({
       salesEnabled: false,
       adapter: "builtin",
       autonomyLevel: "review_required",
-      autonomyMode: "full_auto",
+      autonomyMode: "stopped",
       autoMergeThreshold: 80,
       fullAutoDelay: 5 * 60 * 1000,
       maxTasksPerDay: 10,
@@ -495,7 +505,6 @@ export const createDefaultConfig = internalMutation({
 export const updateConfig = internalMutation({
   args: {
     configId: v.id("autopilotConfig"),
-    enabled: v.optional(v.boolean()),
     adapter: v.optional(codingAdapterType),
     autonomyLevel: v.optional(autonomyLevel),
     maxTasksPerDay: v.optional(v.number()),

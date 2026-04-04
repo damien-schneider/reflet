@@ -10,12 +10,22 @@ import {
   IconFileText,
   IconMail,
   IconNews,
+  IconSearch,
+  IconTarget,
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H2 } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
@@ -163,11 +173,193 @@ function GrowthContentTab() {
   );
 }
 
+function GrowthResearchTab() {
+  const { organizationId } = useAutopilotContext();
+
+  const docs = useQuery(api.autopilot.queries.documents.listDocuments, {
+    organizationId,
+    type: "market_research",
+    limit: 50,
+  });
+
+  if (docs === undefined) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 3 }, (_, i) => (
+          <Skeleton
+            className="h-24 w-full rounded-lg"
+            key={`skel-${String(i)}`}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (docs.length === 0) {
+    return (
+      <div className="flex h-40 items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm">
+        <div className="text-center">
+          <IconSearch className="mx-auto mb-2 size-8" />
+          <p>
+            No market research yet. The Growth Agent will produce research when
+            it runs.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {docs.map((doc) => (
+        <Card key={doc._id}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">{doc.title}</CardTitle>
+            <CardDescription className="flex items-center gap-2">
+              {doc.tags.map((tag) => (
+                <Badge className="text-xs" key={tag} variant="outline">
+                  {tag}
+                </Badge>
+              ))}
+              <span className="text-xs">
+                {formatDistanceToNow(doc.createdAt, { addSuffix: true })}
+              </span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-wrap text-muted-foreground text-sm">
+              {doc.content}
+            </p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function GrowthCompetitorsTab() {
+  const { organizationId } = useAutopilotContext();
+
+  const competitors = useQuery(
+    api.autopilot.queries.competitors.listCompetitors,
+    { organizationId }
+  );
+
+  if (competitors === undefined) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 2 }, (_, i) => (
+          <Skeleton
+            className="h-24 w-full rounded-lg"
+            key={`skel-${String(i)}`}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (competitors.length === 0) {
+    return (
+      <div className="flex h-40 items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm">
+        <div className="text-center">
+          <IconTarget className="mx-auto mb-2 size-8" />
+          <p>
+            No competitors tracked yet. The Growth Agent will discover them
+            during market research.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {competitors.map((comp) => (
+        <Card key={comp._id}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">{comp.name}</CardTitle>
+              {comp.url && (
+                <a
+                  className="text-muted-foreground hover:text-foreground"
+                  href={comp.url}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <IconExternalLink className="size-4" />
+                </a>
+              )}
+            </div>
+            {comp.pricingTier && (
+              <CardDescription>Pricing: {comp.pricingTier}</CardDescription>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {comp.description && (
+              <p className="text-muted-foreground">{comp.description}</p>
+            )}
+            {comp.strengths && (
+              <div>
+                <span className="font-medium text-green-500">Strengths:</span>{" "}
+                {comp.strengths}
+              </div>
+            )}
+            {comp.weaknesses && (
+              <div>
+                <span className="font-medium text-red-500">Weaknesses:</span>{" "}
+                {comp.weaknesses}
+              </div>
+            )}
+            {comp.lastResearchedAt && (
+              <p className="text-muted-foreground text-xs">
+                Last researched:{" "}
+                {formatDistanceToNow(comp.lastResearchedAt, {
+                  addSuffix: true,
+                })}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+const GROWTH_TABS = [
+  { id: "content", label: "Content", icon: IconFileText },
+  { id: "research", label: "Research", icon: IconSearch },
+  { id: "competitors", label: "Competitors", icon: IconTarget },
+] as const;
+
 export default function AutopilotGrowthPage() {
+  const [activeTab, setActiveTab] = useState<string>("content");
+
   return (
     <div className="space-y-6">
       <H2 variant="card">Growth</H2>
-      <GrowthContentTab />
+
+      <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
+        {GROWTH_TABS.map((tab) => (
+          <button
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium text-sm transition-colors",
+              activeTab === tab.id
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            type="button"
+          >
+            <tab.icon className="size-4" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "content" && <GrowthContentTab />}
+      {activeTab === "research" && <GrowthResearchTab />}
+      {activeTab === "competitors" && <GrowthCompetitorsTab />}
     </div>
   );
 }

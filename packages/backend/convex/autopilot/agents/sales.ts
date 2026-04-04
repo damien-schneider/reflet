@@ -408,6 +408,12 @@ export const runSalesProspecting = internalAction({
         { organizationId: args.organizationId, category: "market" }
       );
 
+      // Also read market research documents for richer context
+      const marketDocs = await ctx.runQuery(
+        internal.autopilot.documents.getDocumentsByOrg,
+        { organizationId: args.organizationId, type: "market_research" }
+      );
+
       const agentKnowledge = await ctx.runQuery(
         internal.autopilot.agent_context.loadAgentContext,
         { organizationId: args.organizationId, agent: "sales" }
@@ -423,13 +429,20 @@ export const runSalesProspecting = internalAction({
         agent: "sales",
         level: "action",
         message: "Starting sales prospecting",
-        details: `Market notes: ${marketNotes.length} | Existing leads: ${existingLeads.length}`,
+        details: `Market notes: ${marketNotes.length} | Market docs: ${marketDocs.length} | Existing leads: ${existingLeads.length}`,
       });
 
       const marketNotesContext = marketNotes
         .map(
           (n: { title: string; description: string; priority: string }) =>
             `- ${n.title} (${n.priority}): ${n.description}`
+        )
+        .join("\n");
+
+      const marketDocsContext = marketDocs
+        .map(
+          (d: { title: string; content: string }) =>
+            `- ${d.title}: ${d.content.slice(0, 300)}`
         )
         .join("\n");
 
@@ -455,6 +468,9 @@ export const runSalesProspecting = internalAction({
 
 MARKET NOTES FROM GROWTH AGENT:
 ${marketNotesContext || "(none — Growth agent hasn't produced market research yet)"}
+
+MARKET RESEARCH DOCUMENTS:
+${marketDocsContext || "(none)"}
 
 EXISTING LEADS (avoid duplicates):
 ${existingLeadNames || "(none)"}
@@ -503,6 +519,34 @@ Focus on quality over quantity — 3-5 high-quality leads are better than 20 low
           description: pattern.description,
           sourceAgent: "sales",
           priority: pattern.actionable ? "high" : "medium",
+        });
+      }
+
+      // Create a prospect brief document summarizing the prospecting round
+      if (
+        prospectOutput.leads.length > 0 ||
+        prospectOutput.patterns.length > 0
+      ) {
+        const briefContent = [
+          "## Sales Prospecting Summary",
+          "",
+          `**New Leads Found:** ${createdLeadCount}`,
+          `**Patterns Identified:** ${prospectOutput.patterns.length}`,
+          "",
+          prospectOutput.summary,
+          "",
+          ...prospectOutput.patterns.map(
+            (p) => `### ${p.pattern}\n${p.description}\n`
+          ),
+        ].join("\n");
+
+        await ctx.runMutation(internal.autopilot.documents.createDocument, {
+          organizationId: args.organizationId,
+          type: "prospect_brief",
+          title: `Prospecting: ${createdLeadCount} leads, ${prospectOutput.patterns.length} patterns`,
+          content: briefContent,
+          tags: ["sales", "prospecting"],
+          sourceAgent: "sales",
         });
       }
 
