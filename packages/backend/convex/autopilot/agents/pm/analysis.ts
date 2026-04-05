@@ -10,7 +10,7 @@ import { internal } from "../../../_generated/api";
 import type { Id } from "../../../_generated/dataModel";
 import type { ActionCtx } from "../../../_generated/server";
 import { internalAction } from "../../../_generated/server";
-import { MODELS } from "../models";
+import { AGENT_MODELS } from "../models";
 import { buildAgentPrompt, PM_SYSTEM_PROMPT } from "../prompts";
 import { generateObjectWithFallback } from "../shared";
 
@@ -69,7 +69,7 @@ const initiativeBootstrapSchema = z.object({
   ),
 });
 
-const PM_MODELS = [MODELS.FREE, MODELS.FAST] as const;
+const PM_MODELS = AGENT_MODELS;
 
 // ============================================
 // ACTION

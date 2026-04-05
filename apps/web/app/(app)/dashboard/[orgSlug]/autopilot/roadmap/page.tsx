@@ -1,12 +1,7 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import {
-  IconChecklist,
-  IconFlag,
-  IconLayoutKanban,
-  IconPlus,
-} from "@tabler/icons-react";
+import { IconChecklist, IconLayoutKanban, IconPlus } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -32,13 +27,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { H2 } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
-import { GoalTree } from "@/features/autopilot/components/goal-tree";
 import { TaskCard } from "@/features/autopilot/components/task-card";
 import { InitiativesBoard } from "@/features/autopilot/components/views/initiatives-board";
 import { cn } from "@/lib/utils";
 
 const ROADMAP_TABS = [
-  { id: "goals", label: "Goals", icon: IconFlag },
   { id: "initiatives", label: "Initiatives", icon: IconLayoutKanban },
   { id: "tasks", label: "Active Tasks", icon: IconChecklist },
 ] as const;
@@ -242,7 +235,7 @@ function ActiveTasksTab() {
 
 export default function RoadmapPage() {
   const { organizationId } = useAutopilotContext();
-  const [activeTab, setActiveTab] = useState<string>("goals");
+  const [activeTab, setActiveTab] = useState<string>("initiatives");
 
   return (
     <div className="space-y-6">
@@ -267,7 +260,6 @@ export default function RoadmapPage() {
         ))}
       </div>
 
-      {activeTab === "goals" && <GoalTree organizationId={organizationId} />}
       {activeTab === "initiatives" && (
         <InitiativesBoard organizationId={organizationId} />
       )}

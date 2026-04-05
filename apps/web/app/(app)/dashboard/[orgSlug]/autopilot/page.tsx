@@ -12,6 +12,7 @@ import Link from "next/link";
 import { ActivityFeed } from "@/features/autopilot/components/activity-feed";
 import { AgentStatusCards } from "@/features/autopilot/components/agent-status-cards";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
+import { DashboardCharts } from "@/features/autopilot/components/dashboard-charts";
 import { DashboardStats } from "@/features/autopilot/components/dashboard-stats";
 import { OnboardingChecklist } from "@/features/autopilot/components/onboarding-checklist";
 
@@ -48,6 +49,8 @@ export default function AutopilotDashboardPage() {
           ))}
         </div>
       </section>
+
+      <DashboardCharts organizationId={organizationId} />
 
       <section>
         <div className="mb-3 flex items-center gap-2">

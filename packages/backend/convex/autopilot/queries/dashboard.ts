@@ -79,6 +79,110 @@ export const getDashboardStats = query({
   },
 });
 
+/**
+ * Chart data — activity over the last 7 days, task breakdown by type/status,
+ * and cost over time.
+ */
+export const getChartData = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgMembership(ctx, args.organizationId, user._id);
+
+    const now = Date.now();
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+
+    // Activity over last 7 days
+    const recentActivity = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_org_created", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .gte("createdAt", sevenDaysAgo)
+      )
+      .collect();
+
+    // Bucket activity by day
+    const activityByDay: Record<
+      string,
+      { actions: number; errors: number; successes: number }
+    > = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now - i * 24 * 60 * 60 * 1000);
+      const key = d.toISOString().slice(0, 10);
+      activityByDay[key] = { actions: 0, errors: 0, successes: 0 };
+    }
+    for (const entry of recentActivity) {
+      const key = new Date(entry.createdAt).toISOString().slice(0, 10);
+      if (activityByDay[key]) {
+        activityByDay[key].actions++;
+        if (entry.level === "error") {
+          activityByDay[key].errors++;
+        }
+        if (entry.level === "success") {
+          activityByDay[key].successes++;
+        }
+      }
+    }
+    const activityTimeline = Object.entries(activityByDay).map(
+      ([date, data]) => ({
+        date,
+        ...data,
+      })
+    );
+
+    // Work items by status
+    const allItems = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    const statusCounts: Record<string, number> = {};
+    const typeCounts: Record<string, number> = {};
+    const agentCounts: Record<string, number> = {};
+    for (const item of allItems) {
+      statusCounts[item.status] = (statusCounts[item.status] ?? 0) + 1;
+      typeCounts[item.type] = (typeCounts[item.type] ?? 0) + 1;
+      const agent = item.assignedAgent ?? "unassigned";
+      agentCounts[agent] = (agentCounts[agent] ?? 0) + 1;
+    }
+
+    // Runs cost over last 7 days
+    const recentRuns = await ctx.db
+      .query("autopilotRuns")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    const costByDay: Record<string, number> = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now - i * 24 * 60 * 60 * 1000);
+      costByDay[d.toISOString().slice(0, 10)] = 0;
+    }
+    for (const run of recentRuns) {
+      const key = new Date(run.startedAt).toISOString().slice(0, 10);
+      if (costByDay[key] !== undefined) {
+        costByDay[key] += run.estimatedCostUsd;
+      }
+    }
+    const costTimeline = Object.entries(costByDay).map(([date, cost]) => ({
+      date,
+      cost: Math.round(cost * 100) / 100,
+    }));
+
+    return {
+      activityTimeline,
+      costTimeline,
+      statusCounts,
+      typeCounts,
+      agentCounts,
+    };
+  },
+});
+
 export const getAgentReadiness = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {

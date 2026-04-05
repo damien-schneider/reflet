@@ -9,7 +9,7 @@ import { tool } from "ai";
 import { z } from "zod";
 
 const GITHUB_API_URL = "https://api.github.com";
-const MAX_FILE_CONTENT_LENGTH = 15_000;
+const MAX_FILE_CONTENT_LENGTH = 4000;
 const MAX_SEARCH_RESULTS = 10;
 const RATE_LIMIT_RETRY_MS = 10_000;
 

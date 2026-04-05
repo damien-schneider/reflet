@@ -3,14 +3,11 @@
  */
 
 import { z } from "zod";
-import { MODELS } from "../models";
+import { AGENT_MODELS, SEARCH_MODEL_FALLBACKS } from "../models";
 import { generateObjectWithFallback } from "../shared";
 
-export const GROWTH_SEARCH_MODELS = [
-  MODELS.SEARCH_FREE,
-  MODELS.SEARCH_PAID,
-] as const;
-export const GROWTH_CONTENT_MODELS = [MODELS.FREE, MODELS.FAST] as const;
+export const GROWTH_SEARCH_MODELS = SEARCH_MODEL_FALLBACKS;
+export const GROWTH_CONTENT_MODELS = AGENT_MODELS;
 
 // ============================================
 // SCHEMAS

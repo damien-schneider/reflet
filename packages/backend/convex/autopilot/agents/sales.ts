@@ -15,7 +15,7 @@ import {
   internalQuery,
 } from "../../_generated/server";
 import { leadSource, leadStatus } from "../schema/validators";
-import { MODELS } from "./models";
+import { SEARCH_MODEL_FALLBACKS } from "./models";
 import { buildAgentPrompt, SALES_SYSTEM_PROMPT } from "./prompts";
 import { generateObjectWithFallback } from "./shared";
 
@@ -348,7 +348,7 @@ export const updateLeadFollowUp = internalMutation({
 // PROSPECTING
 // ============================================
 
-const PROSPECTING_MODELS = [MODELS.SEARCH_FREE, MODELS.SEARCH_PAID] as const;
+const PROSPECTING_MODELS = SEARCH_MODEL_FALLBACKS;
 
 const prospectingSchema = z.object({
   leads: z.array(

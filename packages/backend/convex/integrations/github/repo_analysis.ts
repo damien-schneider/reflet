@@ -7,9 +7,7 @@ import {
   mutation,
   query,
 } from "../../_generated/server";
-import { repoAnalysisAgent } from "../../ai/agent";
 import { getAuthUser } from "../../shared/utils";
-import { fetchRepoData } from "./github_helpers";
 
 // ============================================
 // QUERIES
@@ -204,6 +202,62 @@ export const startAnalysis = mutation({
 });
 
 /**
+ * Start analysis internally (no auth check) — used by regeneration flow.
+ */
+export const startAnalysisInternal = internalMutation({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const connection = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+
+    if (!connection?.repositoryId) {
+      throw new Error("No GitHub repository connected");
+    }
+
+    const existingAnalysis = await ctx.db
+      .query("repoAnalysis")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .first();
+
+    if (
+      existingAnalysis &&
+      (existingAnalysis.status === "pending" ||
+        existingAnalysis.status === "in_progress")
+    ) {
+      throw new Error("An analysis is already in progress");
+    }
+
+    const now = Date.now();
+
+    const analysisId = await ctx.db.insert("repoAnalysis", {
+      organizationId: args.organizationId,
+      githubConnectionId: connection._id,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.integrations.github.repo_analysis.runAnalysis,
+      {
+        analysisId,
+        organizationId: args.organizationId,
+      }
+    );
+
+    return analysisId;
+  },
+});
+
+/**
  * Internal mutation to update analysis status
  */
 export const updateAnalysisStatus = internalMutation({
@@ -277,139 +331,15 @@ export const runAnalysis = internalAction({
       }
     );
 
-    try {
-      // Get connection info
-      const connection = await ctx.runQuery(
-        internal.integrations.github.repo_analysis.getConnectionForAnalysis,
-        { organizationId: args.organizationId }
-      );
-
-      if (!connection) {
-        throw new Error("No GitHub connection found");
+    // Launch the product exploration — it handles its own status updates
+    // and triggers company brief generation when done.
+    await ctx.scheduler.runAfter(
+      0,
+      internal.integrations.github.product_exploration.runProductExploration,
+      {
+        organizationId: args.organizationId,
+        analysisId: args.analysisId,
       }
-
-      const { repositoryFullName } = connection;
-
-      // Launch product exploration in parallel (saves result independently)
-      await ctx.scheduler.runAfter(
-        0,
-        internal.integrations.github.product_exploration.runProductExploration,
-        {
-          organizationId: args.organizationId,
-          analysisId: args.analysisId,
-        }
-      );
-
-      // Fetch repo data first
-      const repoData = await fetchRepoData(repositoryFullName);
-
-      // Generate analysis using the agent
-      const result = await repoAnalysisAgent.generateText(
-        ctx,
-        { userId: "system" },
-        {
-          prompt: `Please analyze the following GitHub repository: ${repositoryFullName}
-
-Here is the repository data:
-
-## Root Directory Contents
-${repoData.rootContents}
-
-## Repository Structure (files and folders)
-${repoData.fileTree}
-
-## README Content
-${repoData.readme || "No README found"}
-
-## Package/Config Files
-${repoData.packageJson || "No package.json found"}
-
-Based on this information, provide a comprehensive analysis with:
-
-**Summary**: A brief overview of what this project does (2-3 sentences)
-
-**Tech Stack**: List the main technologies, frameworks, and libraries used
-
-**Architecture**: Describe the overall structure and design patterns
-
-**Features**: Key features and capabilities of the project
-
-**Repository Structure**: A brief description of how the codebase is organized
-
-Format each section clearly with the headers above.`,
-        }
-      );
-
-      // Parse the response into sections
-      const sections = parseAnalysisResponse(result.text);
-
-      // Save the analysis results
-      await ctx.runMutation(
-        internal.integrations.github.repo_analysis.updateAnalysisStatus,
-        {
-          analysisId: args.analysisId,
-          status: "completed",
-          summary: sections.summary,
-          techStack: sections.techStack,
-          architecture: sections.architecture,
-          features: sections.features,
-          repoStructure: sections.repoStructure,
-        }
-      );
-    } catch (error) {
-      await ctx.runMutation(
-        internal.integrations.github.repo_analysis.updateAnalysisStatus,
-        {
-          analysisId: args.analysisId,
-          status: "error",
-          error: error instanceof Error ? error.message : "Unknown error",
-        }
-      );
-    }
+    );
   },
 });
-
-// Top-level regex patterns for parsing analysis response
-const ANALYSIS_PATTERNS = [
-  /\*\*Summary\*\*:?\s*([\s\S]*?)(?=\*\*Tech Stack\*\*|\*\*Architecture\*\*|\*\*Features\*\*|\*\*Repository Structure\*\*|##|\n\n\*\*|$)/i,
-  /\*\*Tech Stack\*\*:?\s*([\s\S]*?)(?=\*\*Summary\*\*|\*\*Architecture\*\*|\*\*Features\*\*|\*\*Repository Structure\*\*|##|\n\n\*\*|$)/i,
-  /\*\*Architecture\*\*:?\s*([\s\S]*?)(?=\*\*Summary\*\*|\*\*Tech Stack\*\*|\*\*Features\*\*|\*\*Repository Structure\*\*|##|\n\n\*\*|$)/i,
-  /\*\*Features\*\*:?\s*([\s\S]*?)(?=\*\*Summary\*\*|\*\*Tech Stack\*\*|\*\*Architecture\*\*|\*\*Repository Structure\*\*|##|\n\n\*\*|$)/i,
-  /\*\*Repository Structure\*\*:?\s*([\s\S]*?)(?=\*\*Summary\*\*|\*\*Tech Stack\*\*|\*\*Architecture\*\*|\*\*Features\*\*|##|\n\n\*\*|$)/i,
-];
-
-const ANALYSIS_KEYS = [
-  "summary",
-  "techStack",
-  "architecture",
-  "features",
-  "repoStructure",
-];
-
-/**
- * Parse the analysis response into sections
- */
-function parseAnalysisResponse(response: string): {
-  summary?: string;
-  techStack?: string;
-  architecture?: string;
-  features?: string;
-  repoStructure?: string;
-} {
-  const sections: Record<string, string> = {};
-
-  for (const [index, pattern] of ANALYSIS_PATTERNS.entries()) {
-    const match = response.match(pattern);
-    const key = ANALYSIS_KEYS[index];
-    if (match?.[1] && key) {
-      sections[key] = match[1].trim();
-    }
-  }
-
-  // If parsing failed, store the whole response as summary
-  if (Object.keys(sections).length === 0) {
-    sections.summary = response.trim();
-  }
-
-  return sections;
-}

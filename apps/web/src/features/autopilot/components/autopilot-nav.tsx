@@ -6,8 +6,8 @@ import {
   IconFileText,
   IconInbox,
   IconMap2,
-  IconRocket,
   IconSettings,
+  IconTarget,
   IconUserSearch,
 } from "@tabler/icons-react";
 import { LayoutGroup, motion } from "motion/react";
@@ -27,7 +27,7 @@ const NAV_ITEMS = [
     icon: IconFileText,
     path: "/documents",
   },
-  { id: "growth", label: "Growth", icon: IconRocket, path: "/growth" },
+  { id: "growth", label: "Competitors", icon: IconTarget, path: "/growth" },
   { id: "sales", label: "Sales", icon: IconUserSearch, path: "/sales" },
   { id: "settings", label: "Settings", icon: IconSettings, path: "/settings" },
 ] as const;

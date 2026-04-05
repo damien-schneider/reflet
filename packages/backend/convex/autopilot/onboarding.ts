@@ -107,12 +107,9 @@ export const analyzeRepo = internalAction({
       repoUrl: args.repoUrl,
     });
 
-    // Step 2: Generate company brief (7 knowledge docs from repo data)
-    await ctx.scheduler.runAfter(
-      0,
-      internal.autopilot.company_brief.generateCompanyBrief,
-      { organizationId: args.organizationId }
-    );
+    // Step 2: Company brief is now generated automatically after the product
+    // exploration completes (triggered by product_exploration.ts).
+    // No need to schedule it here — it would race and produce sparse results.
 
     // Step 3: Create initial PM analysis task
     await ctx.runMutation(

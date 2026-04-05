@@ -18,10 +18,8 @@ import {
   internalAction,
   internalQuery,
 } from "../../_generated/server";
-import { MODELS } from "./models";
+import { AGENT_MODELS } from "./models";
 import { generateObjectWithFallback } from "./shared";
-
-const SUPPORT_MODELS = [MODELS.FREE, MODELS.FAST] as const;
 
 // ============================================
 // ZOD SCHEMAS
@@ -165,7 +163,7 @@ export const runSupportTriage = internalAction({
       .join("\n");
 
     const triage = await generateObjectWithFallback({
-      models: SUPPORT_MODELS,
+      models: AGENT_MODELS,
       schema: triageResultSchema,
       systemPrompt: `You are a support triage agent for ${org?.name ?? "the product"}. 
 Analyze support conversations and:
@@ -219,7 +217,7 @@ export const notifyFeatureShipped = internalAction({
       .join("\n");
 
     const notifications = await generateObjectWithFallback({
-      models: SUPPORT_MODELS,
+      models: AGENT_MODELS,
       schema: shippedNotificationSchema,
       systemPrompt:
         "You draft brief, friendly 'shipped' notifications to inform users about features they requested.",

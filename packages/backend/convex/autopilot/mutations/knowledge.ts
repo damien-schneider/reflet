@@ -3,7 +3,8 @@
  */
 
 import { v } from "convex/values";
-import { mutation } from "../../_generated/server";
+import { api, internal } from "../../_generated/api";
+import { action, mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
 import { requireOrgAdmin } from "./auth";
 
@@ -114,5 +115,66 @@ export const updateKnowledgeDoc = mutation({
       editedBy: "user",
       createdAt: now,
     });
+  },
+});
+
+/**
+ * Delete the product_definition doc and its versions, with admin auth check.
+ * Returns true if a doc was deleted, false if none existed.
+ */
+export const deleteProductDefinitionAndRegenerate = mutation({
+  args: { organizationId: v.id("organizations") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, user._id);
+
+    const doc = await ctx.db
+      .query("autopilotKnowledgeDocs")
+      .withIndex("by_org_docType", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("docType", "product_definition")
+      )
+      .unique();
+
+    if (doc) {
+      const versions = await ctx.db
+        .query("autopilotKnowledgeDocVersions")
+        .withIndex("by_doc", (q) => q.eq("docId", doc._id))
+        .collect();
+
+      for (const version of versions) {
+        await ctx.db.delete(version._id);
+      }
+
+      await ctx.db.delete(doc._id);
+    }
+
+    return null;
+  },
+});
+
+/**
+ * Regenerate the product definition by re-running deep product exploration.
+ * Deletes the existing doc, triggers a new analysis → exploration → brief pipeline.
+ */
+export const regenerateProductDefinition = action({
+  args: { organizationId: v.id("organizations") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Auth-gated mutation: deletes existing doc
+    await ctx.runMutation(
+      api.autopilot.mutations.knowledge.deleteProductDefinitionAndRegenerate,
+      { organizationId: args.organizationId }
+    );
+
+    // Trigger a new repo analysis which will run the product exploration
+    await ctx.runMutation(
+      internal.integrations.github.repo_analysis.startAnalysisInternal,
+      { organizationId: args.organizationId }
+    );
+
+    return null;
   },
 });

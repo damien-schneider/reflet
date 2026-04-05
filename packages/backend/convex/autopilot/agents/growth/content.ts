@@ -6,8 +6,9 @@ import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../../_generated/api";
 import type { Doc, Id } from "../../../_generated/dataModel";
+import type { ActionCtx } from "../../../_generated/server";
 import { internalAction } from "../../../_generated/server";
-import { MODELS } from "../models";
+import { SEARCH_MODEL_FALLBACKS } from "../models";
 import { buildAgentPrompt, GROWTH_SYSTEM_PROMPT } from "../prompts";
 import { generateObjectWithFallback } from "../shared";
 import {
@@ -257,10 +258,7 @@ export const runGrowthGeneration = internalAction({
 // MARKET RESEARCH ACTION
 // ============================================
 
-const MARKET_RESEARCH_MODELS = [
-  MODELS.SEARCH_FREE,
-  MODELS.SEARCH_PAID,
-] as const;
+const MARKET_RESEARCH_MODELS = SEARCH_MODEL_FALLBACKS;
 
 const marketResearchSchema = z.object({
   findings: z.array(
@@ -268,6 +266,11 @@ const marketResearchSchema = z.object({
       topic: z.string().describe("Market topic or trend"),
       summary: z.string().describe("Summary of the finding"),
       source: z.string().describe("Where this was found (Reddit, HN, etc.)"),
+      sourceUrl: z
+        .string()
+        .describe(
+          "Direct URL to the thread or page where this was found. Must be a full URL starting with https://. Empty string if no specific URL."
+        ),
       relevance: z
         .enum(["high", "medium", "low"])
         .describe("Relevance to the product"),
@@ -279,10 +282,63 @@ const marketResearchSchema = z.object({
       competitor: z.string().describe("Competitor name"),
       action: z.string().describe("What they did"),
       impact: z.string().describe("How this affects us"),
+      sourceUrl: z
+        .string()
+        .describe("Direct URL to the source. Empty string if no specific URL."),
     })
   ),
   summary: z.string().describe("Executive summary of market research"),
 });
+
+const processCompetitorMoves = async (
+  ctx: {
+    runQuery: ActionCtx["runQuery"];
+    runMutation: ActionCtx["runMutation"];
+  },
+  organizationId: Id<"organizations">,
+  moves: z.infer<typeof marketResearchSchema>["competitorMoves"]
+) => {
+  for (const move of moves) {
+    const existingCompetitor = await ctx.runQuery(
+      internal.autopilot.competitors.findCompetitorByName,
+      { organizationId, name: move.competitor }
+    );
+
+    let competitorId: string;
+    if (existingCompetitor) {
+      competitorId = existingCompetitor._id;
+      await ctx.runMutation(internal.autopilot.competitors.updateCompetitor, {
+        competitorId: existingCompetitor._id,
+        description: move.action,
+      });
+    } else {
+      competitorId = await ctx.runMutation(
+        internal.autopilot.competitors.createCompetitor,
+        {
+          organizationId,
+          name: move.competitor,
+          description: move.action,
+        }
+      );
+    }
+
+    const moveSourceUrls = move.sourceUrl ? [move.sourceUrl] : undefined;
+    const moveSourceLabel = move.sourceUrl
+      ? `\n**Source:** [Link](${move.sourceUrl})`
+      : "";
+
+    await ctx.runMutation(internal.autopilot.documents.createDocument, {
+      organizationId,
+      type: "battlecard",
+      title: `${move.competitor}: ${move.action}`,
+      content: `## ${move.competitor}\n\n**Action:** ${move.action}\n**Impact:** ${move.impact}${moveSourceLabel}`,
+      tags: ["competitor", move.competitor.toLowerCase()],
+      sourceAgent: "growth",
+      sourceUrls: moveSourceUrls,
+      linkedCompetitorId: competitorId as Id<"autopilotCompetitors">,
+    });
+  }
+};
 
 /**
  * Run market research — scans communities, creates market notes for PM/Sales.
@@ -365,61 +421,35 @@ Identify:
 3. Opportunities for growth or positioning
 4. Community pain points the product can address
 
+IMPORTANT: For each finding, include the sourceUrl — the direct URL to the thread or page where you found it. Use the URLs from the discovered threads above. If a finding comes from a specific thread, use that thread's URL. Only leave sourceUrl empty if there is truly no specific URL.
+
 Provide actionable findings that PM and Sales agents can use.`,
       });
 
       for (const finding of researchOutput.findings) {
+        const sourceLabel = finding.sourceUrl
+          ? `[${finding.source}](${finding.sourceUrl})`
+          : finding.source;
+        const sourceUrls = finding.sourceUrl ? [finding.sourceUrl] : undefined;
+
         await ctx.runMutation(internal.autopilot.documents.createDocument, {
           organizationId: args.organizationId,
           type: "market_research",
           title: finding.topic,
-          content: `## ${finding.topic}\n\n${finding.summary}\n\n**Source:** ${finding.source}\n**Relevance:** ${finding.relevance}\n**Opportunity:** ${finding.opportunity}`,
+          content: `## ${finding.topic}\n\n${finding.summary}\n\n**Source:** ${sourceLabel}\n**Relevance:** ${finding.relevance}\n**Opportunity:** ${finding.opportunity}`,
           tags: ["market-research", finding.relevance],
           sourceAgent: "growth",
+          sourceUrls,
           needsReview: finding.relevance === "high",
           reviewType: "market_research",
         });
       }
 
-      for (const move of researchOutput.competitorMoves) {
-        // Create/update competitor record
-        const existingCompetitor = await ctx.runQuery(
-          internal.autopilot.competitors.findCompetitorByName,
-          { organizationId: args.organizationId, name: move.competitor }
-        );
-
-        let competitorId: string;
-        if (existingCompetitor) {
-          competitorId = existingCompetitor._id;
-          await ctx.runMutation(
-            internal.autopilot.competitors.updateCompetitor,
-            {
-              competitorId: existingCompetitor._id,
-              description: move.action,
-            }
-          );
-        } else {
-          competitorId = await ctx.runMutation(
-            internal.autopilot.competitors.createCompetitor,
-            {
-              organizationId: args.organizationId,
-              name: move.competitor,
-              description: move.action,
-            }
-          );
-        }
-
-        // Link a document to the competitor
-        await ctx.runMutation(internal.autopilot.documents.createDocument, {
-          organizationId: args.organizationId,
-          type: "battlecard",
-          title: `${move.competitor}: ${move.action}`,
-          content: `## ${move.competitor}\n\n**Action:** ${move.action}\n**Impact:** ${move.impact}`,
-          tags: ["competitor", move.competitor.toLowerCase()],
-          sourceAgent: "growth",
-          linkedCompetitorId: competitorId as Id<"autopilotCompetitors">,
-        });
-      }
+      await processCompetitorMoves(
+        ctx,
+        args.organizationId,
+        researchOutput.competitorMoves
+      );
 
       // Create documents for high-relevance findings for Growth page
       for (const finding of researchOutput.findings) {
