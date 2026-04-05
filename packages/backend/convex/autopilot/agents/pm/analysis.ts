@@ -12,7 +12,11 @@ import type { ActionCtx } from "../../../_generated/server";
 import { internalAction } from "../../../_generated/server";
 import { AGENT_MODELS } from "../models";
 import { buildAgentPrompt, PM_SYSTEM_PROMPT } from "../prompts";
-import { generateObjectWithFallback } from "../shared";
+import {
+  generateObjectWithFallback,
+  getUsageTracker,
+  resetUsageTracker,
+} from "../shared";
 
 // ============================================
 // SCHEMA
@@ -86,6 +90,17 @@ export const runPMAnalysis = internalAction({
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
+      // Guard check: ensure budget/rate limits allow execution
+      const guardResult = await ctx.runQuery(
+        internal.autopilot.guards.checkGuards,
+        { organizationId: args.organizationId, agent: "pm" }
+      );
+      if (!guardResult.allowed) {
+        return null;
+      }
+
+      resetUsageTracker();
+
       const enabledAgents = await ctx.runQuery(
         internal.autopilot.config.getEnabledAgents,
         { organizationId: args.organizationId }
@@ -306,12 +321,13 @@ For each task, provide:
         agentKnowledge
       );
 
+      const usage = getUsageTracker();
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
         agent: "pm",
         level: "success",
         message: "PM analysis complete",
-        details: `Created ${createdCount} tasks | Skipped ${pmOutput.skippedCount} items | Summary: ${pmOutput.summary}`,
+        details: `Created ${createdCount} tasks | Skipped ${pmOutput.skippedCount} items | Summary: ${pmOutput.summary} | LLM: ${usage.calls} calls, ~$${usage.estimatedCostUsd.toFixed(4)}`,
       });
     } catch (error) {
       const errorMessage =

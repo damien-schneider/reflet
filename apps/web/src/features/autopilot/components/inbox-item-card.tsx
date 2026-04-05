@@ -17,9 +17,11 @@ const TYPE_LABELS = {
   company_brief_review: "Company Brief",
   email_draft: "Email Draft",
   email_received: "Email",
+  growth_content: "Growth",
   growth_post: "Growth",
   initiative_proposal: "Initiative",
   knowledge_update: "Knowledge",
+  market_research: "Research",
   note_triage: "Note",
   pr_review: "PR Review",
   revenue_alert: "Revenue",
@@ -39,6 +41,23 @@ const PRIORITY_STYLES = {
   low: "bg-muted text-muted-foreground border-border",
 } as const;
 
+const PLATFORM_LABELS: Record<string, string> = {
+  "linkedin.com": "LinkedIn",
+  "news.ycombinator.com": "HN",
+  "reddit.com": "Reddit",
+  "twitter.com": "X",
+  "x.com": "X",
+};
+
+function formatTargetLabel(url: string): string {
+  try {
+    const hostname = new URL(url).hostname.replace("www.", "");
+    return PLATFORM_LABELS[hostname] ?? hostname;
+  } catch {
+    return "Link";
+  }
+}
+
 interface UnifiedInboxItem {
   _id: string;
   _source: "work" | "document";
@@ -54,6 +73,7 @@ interface UnifiedInboxItem {
   reviewType?: string;
   sourceAgent?: string;
   status: string;
+  targetUrl?: string;
   title: string;
   type?: string;
   updatedAt: number;
@@ -61,10 +81,12 @@ interface UnifiedInboxItem {
 
 export function InboxItemCard({
   item,
+  onClick,
   selected = false,
   onMarkRead: _onMarkRead,
 }: {
   item: UnifiedInboxItem;
+  onClick?: () => void;
   selected?: boolean;
   onMarkRead?: () => void;
 }) {
@@ -95,6 +117,7 @@ export function InboxItemCard({
   };
 
   const typeLabel =
+    TYPE_LABELS[(item.reviewType ?? item.type) as keyof typeof TYPE_LABELS] ??
     TYPE_LABELS[item.type as keyof typeof TYPE_LABELS] ??
     item.type ??
     item._source;
@@ -106,14 +129,17 @@ export function InboxItemCard({
     item._source === "work" ? item.assignedAgent : item.sourceAgent;
 
   return (
-    <div
+    <button
       className={cn(
-        "group relative border-border border-b px-3 py-3 transition-colors last:border-b-0",
+        "group relative flex w-full border-border border-b px-3 py-3 text-left transition-colors last:border-b-0",
         selected && "bg-primary/5",
-        !selected && "hover:bg-muted/40"
+        !selected && "hover:bg-muted/40",
+        onClick && "cursor-pointer"
       )}
+      onClick={onClick}
+      type="button"
     >
-      <div className="flex items-start gap-3">
+      <div className="flex w-full items-start gap-3">
         {/* Review indicator */}
         <span className="mt-1.5 flex size-4 shrink-0 items-center justify-center">
           {isPending ? (
@@ -149,6 +175,21 @@ export function InboxItemCard({
           <p className="mt-0.5 line-clamp-1 text-muted-foreground text-xs">
             {item.description ?? item.content ?? ""}
           </p>
+          {/* Target URL chip for Growth content (shows what thread is being replied to) */}
+          {item.targetUrl && (
+            <div className="mt-1 flex items-center gap-1">
+              <a
+                className="inline-flex items-center gap-1 rounded border bg-muted/50 px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                href={item.targetUrl}
+                onClick={(e) => e.stopPropagation()}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <IconExternalLink className="size-2.5" />
+                Replying to {formatTargetLabel(item.targetUrl)}
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Trailing: timestamp + actions */}
@@ -202,6 +243,6 @@ export function InboxItemCard({
           )}
         </div>
       </div>
-    </div>
+    </button>
   );
 }

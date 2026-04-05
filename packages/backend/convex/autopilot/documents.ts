@@ -109,8 +109,10 @@ export const getDocumentsByOrg = internalQuery({
   args: {
     organizationId: v.id("organizations"),
     type: v.optional(documentType),
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const take = args.limit ?? 200;
     if (args.type) {
       const { type } = args;
       return await ctx.db
@@ -118,7 +120,7 @@ export const getDocumentsByOrg = internalQuery({
         .withIndex("by_org_type", (q) =>
           q.eq("organizationId", args.organizationId).eq("type", type)
         )
-        .collect();
+        .take(take);
     }
 
     return await ctx.db
@@ -126,6 +128,44 @@ export const getDocumentsByOrg = internalQuery({
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
-      .collect();
+      .take(take);
+  },
+});
+
+/**
+ * Get documents filtered by tags (e.g., "growth-followup").
+ * Fetches all org docs and filters in-memory since tags are arrays.
+ */
+export const getDocumentsByTags = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    tags: v.array(v.string()),
+    status: v.optional(documentStatus),
+  },
+  handler: async (ctx, args) => {
+    const docs = args.status
+      ? await ctx.db
+          .query("autopilotDocuments")
+          .withIndex("by_org_status", (q) =>
+            q
+              .eq("organizationId", args.organizationId)
+              .eq(
+                "status",
+                args.status as
+                  | "draft"
+                  | "pending_review"
+                  | "published"
+                  | "archived"
+              )
+          )
+          .take(200)
+      : await ctx.db
+          .query("autopilotDocuments")
+          .withIndex("by_organization", (q) =>
+            q.eq("organizationId", args.organizationId)
+          )
+          .take(200);
+
+    return docs.filter((d) => args.tags.every((tag) => d.tags.includes(tag)));
   },
 });

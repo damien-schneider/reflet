@@ -91,4 +91,16 @@ crons.daily(
   internal.autopilot.maintenance.runKnowledgeStalenessCheck
 );
 
+crons.daily(
+  "autopilot activity log cleanup",
+  { hourUTC: 2, minuteUTC: 0 },
+  internal.autopilot.maintenance.cleanupOldActivityLogs
+);
+
+crons.daily(
+  "autopilot document archival",
+  { hourUTC: 2, minuteUTC: 15 },
+  internal.autopilot.maintenance.archiveStaleDocuments
+);
+
 export default crons;

@@ -187,6 +187,15 @@ export const runCEOCoordination = internalAction({
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
+      // Guard check: ensure budget/rate limits allow execution
+      const guardResult = await ctx.runQuery(
+        internal.autopilot.guards.checkGuards,
+        { organizationId: args.organizationId, agent: "system" }
+      );
+      if (!guardResult.allowed) {
+        return null;
+      }
+
       const ceoContext = await ctx.runQuery(
         internal.autopilot.agents.ceo.queries.getCEOContext,
         { organizationId: args.organizationId }

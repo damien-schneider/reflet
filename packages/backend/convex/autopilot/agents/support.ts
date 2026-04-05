@@ -129,6 +129,15 @@ async function processTriagedConversation(
 export const runSupportTriage = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
+    // Guard check: ensure budget/rate limits allow execution
+    const guardResult = await ctx.runQuery(
+      internal.autopilot.guards.checkGuards,
+      { organizationId: args.organizationId, agent: "support" }
+    );
+    if (!guardResult.allowed) {
+      return;
+    }
+
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
       agent: "support",

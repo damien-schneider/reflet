@@ -23,6 +23,7 @@ import { internalAction, internalQuery } from "../_generated/server";
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const THREE_STORY_THRESHOLD = 3;
+const QUERY_LIMIT = 200;
 
 // ============================================
 // PURE WAKE CONDITION FUNCTIONS (for testing)
@@ -32,6 +33,7 @@ interface ActivitySummary {
   approvedSpecCount: number;
   discoveredLeadCount: number;
   failedRunCount: number;
+  growthFollowUpNoteCount: number;
   hasInitiatives: boolean;
   hasResearchDocs: boolean;
   leadsNeedingFollowUp: number;
@@ -83,12 +85,16 @@ export const shouldWakeDev = (summary: ActivitySummary): boolean => {
  * Growth wakes when there's content or research work:
  * - No research docs exist (bootstrap — prime the pipeline)
  * - Shipped features need content/announcements
+ * - Growth has unprocessed follow-up notes (self-driven curiosity)
  */
 export const shouldWakeGrowth = (summary: ActivitySummary): boolean => {
   if (!summary.hasResearchDocs) {
     return true;
   }
   if (summary.shippedFeaturesWithoutContent > 0) {
+    return true;
+  }
+  if (summary.growthFollowUpNoteCount > 0) {
     return true;
   }
   return false;
@@ -159,7 +165,7 @@ export const checkWakeConditions = internalQuery({
       .withIndex("by_org_type", (q) =>
         q.eq("organizationId", args.organizationId).eq("type", "story")
       )
-      .collect();
+      .take(QUERY_LIMIT);
     const readyStoryCount = readyStories.filter(
       (s) => s.status === "todo"
     ).length;
@@ -169,7 +175,7 @@ export const checkWakeConditions = internalQuery({
       .withIndex("by_org_type", (q) =>
         q.eq("organizationId", args.organizationId).eq("type", "spec")
       )
-      .collect();
+      .take(QUERY_LIMIT);
     const approvedSpecCount = specItems.filter(
       (s) => s.status === "in_review" || s.status === "done"
     ).length;
@@ -190,7 +196,7 @@ export const checkWakeConditions = internalQuery({
       .withIndex("by_org_status", (q) =>
         q.eq("organizationId", args.organizationId).eq("status", "failed")
       )
-      .collect();
+      .take(QUERY_LIMIT);
     const recentFailedRuns = failedRuns.filter(
       (r) => now - r.startedAt < ONE_DAY_MS
     );
@@ -202,8 +208,13 @@ export const checkWakeConditions = internalQuery({
       .withIndex("by_org_status", (q) =>
         q.eq("organizationId", args.organizationId).eq("status", "draft")
       )
-      .collect();
-    const newNoteCount = draftDocs.filter((d) => d.type === "note").length;
+      .take(QUERY_LIMIT);
+    const newNoteCount = draftDocs.filter(
+      (d) =>
+        d.type === "note" &&
+        !d.tags.includes("coordination") &&
+        !d.tags.includes("growth-followup")
+    ).length;
     const newSupportConversationCount = draftDocs.filter(
       (d) => d.type === "support_thread"
     ).length;
@@ -219,6 +230,15 @@ export const checkWakeConditions = internalQuery({
       .take(1);
     const hasResearchDocs = researchDocs.length > 0;
 
+    // Growth self-driven curiosity: check for unprocessed follow-up notes
+    const growthFollowUpNotes = draftDocs.filter(
+      (d) =>
+        d.type === "note" &&
+        d.sourceAgent === "growth" &&
+        d.tags.includes("growth-followup")
+    );
+    const growthFollowUpNoteCount = growthFollowUpNotes.length;
+
     // ---- Shipped features without content (Growth signal) ----
 
     const doneItems = await ctx.db
@@ -226,19 +246,22 @@ export const checkWakeConditions = internalQuery({
       .withIndex("by_org_status", (q) =>
         q.eq("organizationId", args.organizationId).eq("status", "done")
       )
-      .collect();
+      .take(QUERY_LIMIT);
     const recentDoneItems = doneItems.filter(
       (t) => now - t.updatedAt < ONE_WEEK_MS
     );
-    const allDocs = await ctx.db
-      .query("autopilotDocuments")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-    const recentContentDocs = allDocs.filter(
-      (g) => now - g.createdAt < ONE_WEEK_MS
-    );
+
+    // Check which done items have linked content documents
+    let shippedWithoutContent = 0;
+    for (const item of recentDoneItems.slice(0, 20)) {
+      const linkedDocs = await ctx.db
+        .query("autopilotDocuments")
+        .withIndex("by_linked_work", (q) => q.eq("linkedWorkItemId", item._id))
+        .take(1);
+      if (linkedDocs.length === 0) {
+        shippedWithoutContent++;
+      }
+    }
 
     // ---- Sales signals ----
 
@@ -247,7 +270,7 @@ export const checkWakeConditions = internalQuery({
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
-      .collect();
+      .take(QUERY_LIMIT);
     const discoveredLeadCount = leads.filter(
       (l) => l.status === "discovered"
     ).length;
@@ -267,7 +290,7 @@ export const checkWakeConditions = internalQuery({
       .withIndex("by_org_review", (q) =>
         q.eq("organizationId", args.organizationId).eq("needsReview", true)
       )
-      .collect();
+      .take(QUERY_LIMIT);
     const stuckReviewCount = reviewItems.filter(
       (item) => now - item.updatedAt > ONE_DAY_MS
     ).length;
@@ -289,12 +312,10 @@ export const checkWakeConditions = internalQuery({
       readyStoryCount,
       approvedSpecCount,
       failedRunCount: recentFailedRuns.length,
+      growthFollowUpNoteCount,
       newNoteCount,
       newSupportConversationCount,
-      shippedFeaturesWithoutContent: Math.max(
-        0,
-        recentDoneItems.length - recentContentDocs.length
-      ),
+      shippedFeaturesWithoutContent: shippedWithoutContent,
       hasInitiatives,
       hasResearchDocs,
       discoveredLeadCount,
@@ -344,6 +365,37 @@ export const hasRecentDevPauseLog = internalQuery({
         log.agent === "dev" &&
         log.createdAt > cutoff &&
         log.message.includes("Dev task paused")
+    );
+  },
+});
+
+/**
+ * Check if an agent was recently woken (has an "action" log within the cooldown window).
+ * Prevents the heartbeat from scheduling duplicate runs of the same agent.
+ */
+const AGENT_WAKE_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
+export const isAgentRecentlyWoken = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    agent: v.string(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const cutoff = Date.now() - AGENT_WAKE_COOLDOWN_MS;
+    const recentLogs = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_org_created", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .take(50);
+
+    return recentLogs.some(
+      (log) =>
+        log.agent === args.agent &&
+        log.level === "action" &&
+        log.createdAt > cutoff
     );
   },
 });
@@ -578,6 +630,14 @@ export const runHeartbeat = internalAction({
         }
         // Don't wake PM if pipeline is full — it can't create tasks anyway
         if (agent === "pm" && pipelineFull) {
+          continue;
+        }
+        // Concurrency guard: skip if agent was recently woken
+        const recentlyWoken = await ctx.runQuery(
+          internal.autopilot.heartbeat.isAgentRecentlyWoken,
+          { organizationId: orgId, agent }
+        );
+        if (recentlyWoken) {
           continue;
         }
         await wakeAgent(ctx, orgId, agent);

@@ -65,36 +65,43 @@ export function ActivityFeed({
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-0.5 overflow-hidden rounded-2xl">
       {activity.map((entry: (typeof activity)[number]) => {
         const LevelIcon = LEVEL_ICONS[entry.level];
         const agentColor = ACTIVITY_AGENT_BADGE_STYLES[entry.agent];
 
         return (
           <div
-            className="relative rounded-xl border bg-card px-4 py-3"
+            className="relative rounded-md bg-card px-3 py-3"
             key={entry._id}
           >
             <div className="flex items-center gap-2">
-              <div className={cn("inline-flex rounded-full p-1", agentColor)}>
+              <div
+                className={cn(
+                  "inline-flex items-center justify-center rounded-full p-1",
+                  agentColor
+                )}
+              >
                 <LevelIcon className="size-3" />
               </div>
+
+              <span className="absolute right-1 bottom-px inline-flex gap-1 text-[11px] text-muted-foreground/50">
+                {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
+              </span>
               <Badge
                 className={cn(
-                  "absolute top-2.5 right-3 text-[10px]",
+                  "absolute top-1 right-1 inline-flex gap-1 rounded-full border-none text-[10px]",
                   agentColor
                 )}
                 variant="outline"
               >
                 {getActivityAgentLabel(entry.agent)}
               </Badge>
-              <span className="text-[11px] text-muted-foreground/50">
-                {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
-              </span>
+
+              <p className="truncate font-medium text-foreground/80 text-xs leading-relaxed">
+                {entry.message}
+              </p>
             </div>
-            <p className="mt-1 text-[13px] text-foreground/80 leading-relaxed">
-              {entry.message}
-            </p>
             {entry.details && (
               <p className="mt-0.5 text-muted-foreground/60 text-xs">
                 {entry.details}

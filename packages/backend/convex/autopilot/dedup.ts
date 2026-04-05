@@ -68,7 +68,7 @@ export const findSimilarTask = internalQuery({
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
-      .collect();
+      .take(500);
 
     const activeItems = existingItems.filter(
       (t) => t.status !== "done" && t.status !== "cancelled"
@@ -102,7 +102,7 @@ export const findSimilarInboxItem = internalQuery({
       .withIndex("by_org_type", (q) =>
         q.eq("organizationId", args.organizationId).eq("type", args.type)
       )
-      .collect();
+      .take(500);
 
     const activeDocs = existingDocs.filter(
       (doc) => doc.status === "draft" || doc.status === "pending_review"
@@ -134,7 +134,7 @@ export const findSimilarGrowthItem = internalQuery({
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
-      .collect();
+      .take(500);
 
     const activeDocs = existingDocs.filter((doc) => doc.status !== "archived");
 

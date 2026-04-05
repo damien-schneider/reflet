@@ -224,6 +224,15 @@ export const runCTOSpecGeneration = internalAction({
     taskId: v.id("autopilotWorkItems"),
   },
   handler: async (ctx, args) => {
+    // Guard check: ensure budget/rate limits allow execution
+    const guardResult = await ctx.runQuery(
+      internal.autopilot.guards.checkGuards,
+      { organizationId: args.organizationId, agent: "cto" }
+    );
+    if (!guardResult.allowed) {
+      return;
+    }
+
     // Load the PM task
     const task = await ctx.runQuery(internal.autopilot.tasks.getTask, {
       taskId: args.taskId,

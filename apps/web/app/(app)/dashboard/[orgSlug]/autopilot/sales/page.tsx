@@ -92,7 +92,7 @@ export default function SalesPipelinePage() {
           type="button"
         >
           <IconFileText className="size-4" />
-          Insights
+          Prospect Briefs
         </button>
       </div>
 

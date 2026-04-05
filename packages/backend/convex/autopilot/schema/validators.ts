@@ -159,6 +159,12 @@ export const leadSource = v.union(
 // Knowledge
 // ============================================
 
-export const knowledgeDocType = v.literal("product_definition");
+export const knowledgeDocType = v.union(
+  v.literal("product_definition"),
+  v.literal("roadmap"),
+  v.literal("brand_voice"),
+  v.literal("team_processes"),
+  v.literal("target_audience")
+);
 
 export const knowledgeEditedBy = v.union(v.literal("agent"), v.literal("user"));

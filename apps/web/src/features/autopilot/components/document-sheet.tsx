@@ -2,7 +2,14 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
-import { IconExternalLink } from "@tabler/icons-react";
+import {
+  IconBrandLinkedin,
+  IconBrandReddit,
+  IconBrandX,
+  IconCopy,
+  IconExternalLink,
+  IconNews,
+} from "@tabler/icons-react";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
@@ -42,6 +49,26 @@ import {
 import { cn } from "@/lib/utils";
 
 type DocumentType = Doc<"autopilotDocuments">["type"];
+
+const SOCIAL_TYPES = new Set<DocumentType>([
+  "reddit_reply",
+  "hn_comment",
+  "linkedin_post",
+  "twitter_post",
+]);
+
+const RESEARCH_TYPES = new Set<DocumentType>([
+  "market_research",
+  "report",
+  "battlecard",
+]);
+
+const SOCIAL_ICONS: Partial<Record<DocumentType, typeof IconBrandReddit>> = {
+  reddit_reply: IconBrandReddit,
+  hn_comment: IconNews,
+  linkedin_post: IconBrandLinkedin,
+  twitter_post: IconBrandX,
+};
 
 const STATUS_DOT_COLORS = {
   draft: "bg-muted-foreground",
@@ -310,12 +337,38 @@ function ViewMode({
   onStatusTransition: () => void;
 }) {
   const { orgSlug } = useAutopilotContext();
+  const updateDoc = useMutation(
+    api.autopilot.mutations.documents.updateDocument
+  );
+  const [editedContent, setEditedContent] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Allow editing for pending_review documents so the president can
+  // tweak content (e.g., Growth posts) before approving.
+  const isEditable = document.status === "pending_review";
+  const hasEdits = editedContent !== null && editedContent !== document.content;
+
+  const handleSaveEdits = async () => {
+    if (!hasEdits || editedContent === null) {
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await updateDoc({ documentId: document._id, content: editedContent });
+      setEditedContent(null);
+      toast.success("Content updated");
+    } catch {
+      toast.error("Failed to save edits");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   let statusAction: string | null = null;
   if (document.status === "draft") {
     statusAction = "Submit for Review";
   } else if (document.status === "pending_review") {
-    statusAction = "Publish";
+    statusAction = "Approve & Publish";
   }
 
   return (
@@ -331,6 +384,11 @@ function ViewMode({
           <Badge color={TYPE_COLOR_MAP[document.type]}>
             {TYPE_LABELS[document.type]}
           </Badge>
+          {isEditable && (
+            <Badge color="blue" variant="outline">
+              Editable
+            </Badge>
+          )}
           <span className="text-muted-foreground text-xs">
             {formatDistanceToNow(document.createdAt, { addSuffix: true })}
           </span>
@@ -343,21 +401,245 @@ function ViewMode({
       <ScrollArea className="flex-1" classNameViewport="px-4">
         <PropertyGrid document={document} orgSlug={orgSlug} />
         <Separator className="my-4" />
-        <TiptapMarkdownEditor
-          editable={false}
-          minimal
-          value={document.content}
+        <DocumentContent
+          document={document}
+          editedContent={editedContent}
+          isEditable={isEditable}
+          onContentChange={isEditable ? setEditedContent : undefined}
         />
       </ScrollArea>
       <SheetFooter className="flex-row justify-between gap-2">
         <Button onClick={onArchive} variant="outline">
           Archive
         </Button>
-        {statusAction && (
-          <Button onClick={onStatusTransition}>{statusAction}</Button>
-        )}
+        <div className="flex gap-2">
+          {hasEdits && (
+            <Button
+              disabled={isSaving}
+              onClick={handleSaveEdits}
+              variant="secondary"
+            >
+              {isSaving ? "Saving..." : "Save Edits"}
+            </Button>
+          )}
+          {statusAction && (
+            <Button onClick={onStatusTransition}>{statusAction}</Button>
+          )}
+        </div>
       </SheetFooter>
     </>
+  );
+}
+
+function DocumentContent({
+  document,
+  editedContent,
+  isEditable,
+  onContentChange,
+}: {
+  document: Doc<"autopilotDocuments">;
+  editedContent: string | null;
+  isEditable: boolean;
+  onContentChange?: (value: string) => void;
+}) {
+  if (SOCIAL_TYPES.has(document.type)) {
+    return (
+      <SocialDraftContent
+        content={editedContent ?? document.content}
+        isEditable={isEditable}
+        onContentChange={onContentChange}
+        targetUrl={document.targetUrl}
+        type={document.type}
+      />
+    );
+  }
+
+  if (RESEARCH_TYPES.has(document.type)) {
+    return (
+      <ResearchContent
+        content={editedContent ?? document.content}
+        isEditable={isEditable}
+        keyFindings={document.keyFindings}
+        onContentChange={onContentChange}
+        relevanceScore={document.relevanceScore}
+        sourceUrls={document.sourceUrls}
+      />
+    );
+  }
+
+  return (
+    <TiptapMarkdownEditor
+      editable={isEditable}
+      minimal={!isEditable}
+      onChange={onContentChange}
+      placeholder={isEditable ? "Edit content before approving..." : undefined}
+      value={editedContent ?? document.content}
+    />
+  );
+}
+
+function SocialDraftContent({
+  content,
+  isEditable,
+  onContentChange,
+  targetUrl,
+  type,
+}: {
+  content: string;
+  isEditable: boolean;
+  onContentChange?: (value: string) => void;
+  targetUrl?: string;
+  type: DocumentType;
+}) {
+  const PlatformIcon = SOCIAL_ICONS[type] ?? IconExternalLink;
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(content);
+    toast.success("Copied to clipboard");
+  };
+
+  return (
+    <div className="space-y-3">
+      {targetUrl && (
+        <a
+          className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm transition-colors hover:bg-muted/60"
+          href={targetUrl}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          <PlatformIcon className="size-4 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1 truncate text-muted-foreground">
+            {targetUrl}
+          </span>
+          <IconExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
+        </a>
+      )}
+
+      <div className="rounded-lg border-2 border-primary/30 border-dashed p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+            Draft Reply
+          </span>
+          <div className="flex gap-1">
+            <Button onClick={handleCopy} size="icon-sm" variant="ghost">
+              <IconCopy className="size-3.5" />
+            </Button>
+            {targetUrl && (
+              <Button asChild size="sm" variant="outline">
+                <a href={targetUrl} rel="noopener noreferrer" target="_blank">
+                  <PlatformIcon className="mr-1 size-3.5" />
+                  Open & Reply
+                </a>
+              </Button>
+            )}
+          </div>
+        </div>
+        <TiptapMarkdownEditor
+          editable={isEditable}
+          minimal={!isEditable}
+          onChange={onContentChange}
+          placeholder={
+            isEditable ? "Edit your reply before posting..." : undefined
+          }
+          value={content}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ResearchContent({
+  content,
+  isEditable,
+  keyFindings,
+  onContentChange,
+  relevanceScore,
+  sourceUrls,
+}: {
+  content: string;
+  isEditable: boolean;
+  keyFindings?: string[];
+  onContentChange?: (value: string) => void;
+  relevanceScore?: number;
+  sourceUrls?: string[];
+}) {
+  return (
+    <div className="space-y-4">
+      {relevanceScore !== undefined && (
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground text-xs">Relevance</span>
+          <RelevanceScoreBadge score={relevanceScore} />
+        </div>
+      )}
+
+      {keyFindings && keyFindings.length > 0 && (
+        <div>
+          <span className="font-medium text-xs uppercase tracking-wider">
+            Key Findings
+          </span>
+          <ul className="mt-2 space-y-1.5">
+            {keyFindings.map((finding) => (
+              <li className="flex items-start gap-2 text-sm" key={finding}>
+                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+                {finding}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {sourceUrls && sourceUrls.length > 0 && (
+        <div>
+          <span className="font-medium text-xs uppercase tracking-wider">
+            Sources
+          </span>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {sourceUrls.map((url) => (
+              <SourceLink key={url} url={url} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Separator />
+
+      <TiptapMarkdownEditor
+        editable={isEditable}
+        minimal={!isEditable}
+        onChange={onContentChange}
+        placeholder={
+          isEditable ? "Edit content before approving..." : undefined
+        }
+        value={content}
+      />
+    </div>
+  );
+}
+
+function getScoreColor(score: number): string {
+  const HIGH_THRESHOLD = 8;
+  const MED_THRESHOLD = 5;
+  if (score >= HIGH_THRESHOLD) {
+    return "bg-green-500 text-white";
+  }
+  if (score >= MED_THRESHOLD) {
+    return "bg-amber-500 text-white";
+  }
+  return "bg-muted text-muted-foreground";
+}
+
+function RelevanceScoreBadge({ score }: { score: number }) {
+  const color = getScoreColor(score);
+
+  return (
+    <span
+      className={cn(
+        "inline-flex size-7 items-center justify-center rounded-full font-bold text-xs",
+        color
+      )}
+    >
+      {score}
+    </span>
   );
 }
 
@@ -456,7 +738,7 @@ function PropertyGrid({
         </PropertyRow>
       )}
 
-      {document.targetUrl && (
+      {document.targetUrl && !SOCIAL_TYPES.has(document.type) && (
         <PropertyRow label="Target URL">
           <a
             className="truncate text-primary hover:underline"
@@ -490,31 +772,36 @@ function PropertyGrid({
         </PropertyRow>
       )}
 
-      {document.sourceUrls && document.sourceUrls.length > 0 && (
-        <PropertyRow label="Sources">
-          <div className="flex flex-wrap gap-1.5">
-            {document.sourceUrls.map((url) => (
-              <SourceLink key={url} url={url} />
-            ))}
-          </div>
-        </PropertyRow>
-      )}
+      {document.sourceUrls &&
+        document.sourceUrls.length > 0 &&
+        !RESEARCH_TYPES.has(document.type) && (
+          <PropertyRow label="Sources">
+            <div className="flex flex-wrap gap-1.5">
+              {document.sourceUrls.map((url) => (
+                <SourceLink key={url} url={url} />
+              ))}
+            </div>
+          </PropertyRow>
+        )}
 
-      {document.keyFindings && document.keyFindings.length > 0 && (
-        <PropertyRow label="Key Findings">
-          <ul className="list-inside list-disc space-y-0.5 text-sm">
-            {document.keyFindings.map((finding) => (
-              <li key={finding}>{finding}</li>
-            ))}
-          </ul>
-        </PropertyRow>
-      )}
+      {document.keyFindings &&
+        document.keyFindings.length > 0 &&
+        !RESEARCH_TYPES.has(document.type) && (
+          <PropertyRow label="Key Findings">
+            <ul className="list-inside list-disc space-y-0.5 text-sm">
+              {document.keyFindings.map((finding) => (
+                <li key={finding}>{finding}</li>
+              ))}
+            </ul>
+          </PropertyRow>
+        )}
 
-      {document.relevanceScore !== undefined && (
-        <PropertyRow label="Relevance">
-          <span>{String(document.relevanceScore)}/10</span>
-        </PropertyRow>
-      )}
+      {document.relevanceScore !== undefined &&
+        !RESEARCH_TYPES.has(document.type) && (
+          <PropertyRow label="Relevance">
+            <span>{String(document.relevanceScore)}/10</span>
+          </PropertyRow>
+        )}
 
       {document.linkedWorkItemId && (
         <PropertyRow label="Work Item">
@@ -531,7 +818,7 @@ function PropertyGrid({
         <PropertyRow label="Competitor">
           <Link
             className="text-primary hover:underline"
-            href={`/dashboard/${orgSlug}/autopilot/knowledge`}
+            href={`/dashboard/${orgSlug}/autopilot/growth`}
           >
             View linked competitor
           </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H2 } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
+import { DocumentSheet } from "@/features/autopilot/components/document-sheet";
 import { InboxItemCard } from "@/features/autopilot/components/inbox-item-card";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +34,7 @@ interface InboxItem {
   reviewType?: string;
   sourceAgent?: string;
   status: string;
+  targetUrl?: string;
   title: string;
   type?: string;
   updatedAt: number;
@@ -56,7 +59,8 @@ function handleInboxAction(
     itemId: InboxItem["_id"];
     status: "approved" | "rejected";
   }) => Promise<unknown>,
-  markRead: (args: { itemId: InboxItem["_id"] }) => Promise<unknown>
+  markRead: (args: { itemId: InboxItem["_id"] }) => Promise<unknown>,
+  openDetail: (item: InboxItem) => void
 ): boolean {
   const item = items[selectedIndex];
   switch (key) {
@@ -69,7 +73,7 @@ function handleInboxAction(
       return true;
     }
     case "a": {
-      if (item?.status === "pending") {
+      if (item?.needsReview) {
         updateStatus({ itemId: item._id, status: "approved" })
           .then(() => toast.success("Approved"))
           .catch(() => toast.error("Failed"));
@@ -77,7 +81,7 @@ function handleInboxAction(
       return true;
     }
     case "y": {
-      if (item?.status === "pending") {
+      if (item?.needsReview) {
         updateStatus({ itemId: item._id, status: "rejected" })
           .then(() => toast.success("Dismissed"))
           .catch(() => toast.error("Failed"));
@@ -93,8 +97,8 @@ function handleInboxAction(
       return true;
     }
     case "Enter": {
-      if (item?.prUrl) {
-        window.open(item.prUrl, "_blank", "noopener,noreferrer");
+      if (item) {
+        openDetail(item);
       }
       return true;
     }
@@ -111,7 +115,8 @@ function useInboxKeyboard(
     itemId: InboxItem["_id"];
     status: "approved" | "rejected";
   }) => Promise<unknown>,
-  markRead: (args: { itemId: InboxItem["_id"] }) => Promise<unknown>
+  markRead: (args: { itemId: InboxItem["_id"] }) => Promise<unknown>,
+  openDetail: (item: InboxItem) => void
 ) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -128,13 +133,21 @@ function useInboxKeyboard(
         selectedIndex,
         setSelectedIndex,
         updateStatus,
-        markRead
+        markRead,
+        openDetail
       );
       if (handled) {
         e.preventDefault();
       }
     },
-    [filteredItems, selectedIndex, setSelectedIndex, updateStatus, markRead]
+    [
+      filteredItems,
+      selectedIndex,
+      setSelectedIndex,
+      updateStatus,
+      markRead,
+      openDetail,
+    ]
   );
 
   useEffect(
@@ -151,6 +164,7 @@ export default function AutopilotInboxPage() {
   const [activeTab, setActiveTab] = useState<Tab>("pending");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [detailDocId, setDetailDocId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const items = useQuery(api.autopilot.queries.inbox.listInboxItems, {
@@ -161,6 +175,14 @@ export default function AutopilotInboxPage() {
   const counts = useQuery(api.autopilot.queries.inbox.getInboxCounts, {
     organizationId,
   });
+
+  // Fetch the full document when detail panel is open
+  const detailDocument = useQuery(
+    api.autopilot.queries.documents.getDocument,
+    detailDocId
+      ? { documentId: detailDocId as Id<"autopilotDocuments"> }
+      : "skip"
+  );
 
   const approveWork = useMutation(
     api.autopilot.mutations.inbox.approveWorkItem
@@ -185,7 +207,7 @@ export default function AutopilotInboxPage() {
     }
   };
 
-  // Adapter for keyboard hooks — wraps approve/reject into the old interface shape
+  // Adapter for keyboard hooks
   const updateStatus = async (args: {
     itemId: string;
     status: "approved" | "rejected";
@@ -201,10 +223,17 @@ export default function AutopilotInboxPage() {
     }
   };
 
-  // markRead is a no-op (unified items don't have readAt yet)
   const markRead = async (_args: { itemId: string }) => {
     // no-op
   };
+
+  const openDetail = useCallback((item: InboxItem) => {
+    if (item._source === "document") {
+      setDetailDocId(item._id);
+    } else if (item.prUrl) {
+      window.open(item.prUrl, "_blank", "noopener,noreferrer");
+    }
+  }, []);
 
   const filteredItems = items?.filter((item) => {
     const matchesTab =
@@ -225,7 +254,8 @@ export default function AutopilotInboxPage() {
     selectedIndex,
     setSelectedIndex,
     updateStatus,
-    markRead
+    markRead,
+    openDetail
   );
 
   if (items === undefined) {
@@ -330,10 +360,6 @@ export default function AutopilotInboxPage() {
           </kbd>{" "}
           dismiss{" "}
           <kbd className="ml-1 rounded border px-1 font-mono text-[10px]">
-            r
-          </kbd>{" "}
-          read{" "}
-          <kbd className="ml-1 rounded border px-1 font-mono text-[10px]">
             ↵
           </kbd>{" "}
           open
@@ -369,6 +395,7 @@ export default function AutopilotInboxPage() {
                 )}
                 <InboxItemCard
                   item={item}
+                  onClick={() => openDetail(item)}
                   onMarkRead={() => markRead({ itemId: item._id })}
                   selected={index === selectedIndex}
                 />
@@ -377,6 +404,19 @@ export default function AutopilotInboxPage() {
           })}
         </div>
       )}
+
+      {/* Document detail sheet — opens when clicking a document inbox item */}
+      <DocumentSheet
+        document={detailDocument ?? null}
+        mode="view"
+        onOpenChange={(open) => {
+          if (!open) {
+            setDetailDocId(null);
+          }
+        }}
+        open={detailDocId !== null}
+        organizationId={organizationId}
+      />
     </div>
   );
 }

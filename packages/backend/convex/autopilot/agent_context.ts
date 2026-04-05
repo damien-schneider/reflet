@@ -35,17 +35,17 @@ export const loadAgentContext = internalQuery({
       sections.push(`KNOWLEDGE BASE:\n${docSummaries}`);
     }
 
-    // 2. Recent documents (last 48h)
-    const twoDaysAgo = Date.now() - 48 * 60 * 60 * 1000;
-    const documents = await ctx.db
-      .query("autopilotDocuments")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    const recentDocs = documents
-      .filter((d) => d.createdAt > twoDaysAgo)
+    // 2. Recent documents (last 48h) — fetch newest first, take limited set
+    const recentDocs = (
+      await ctx.db
+        .query("autopilotDocuments")
+        .withIndex("by_organization", (q) =>
+          q.eq("organizationId", args.organizationId)
+        )
+        .order("desc")
+        .take(50)
+    )
+      .filter((d) => d.createdAt > Date.now() - 48 * 60 * 60 * 1000)
       .slice(0, 10);
 
     if (recentDocs.length > 0) {

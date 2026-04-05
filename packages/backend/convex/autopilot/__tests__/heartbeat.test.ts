@@ -13,6 +13,7 @@ const BASE_SUMMARY = {
   approvedSpecCount: 0,
   discoveredLeadCount: 0,
   failedRunCount: 0,
+  growthFollowUpNoteCount: 0,
   hasInitiatives: true,
   hasResearchDocs: true,
   leadsNeedingFollowUp: 0,
@@ -80,7 +81,13 @@ describe("shouldWakeGrowth", () => {
     ).toBe(true);
   });
 
-  it("does not wake when research exists and no content gap", () => {
+  it("wakes when growth follow-up notes exist", () => {
+    expect(
+      shouldWakeGrowth({ ...BASE_SUMMARY, growthFollowUpNoteCount: 2 })
+    ).toBe(true);
+  });
+
+  it("does not wake when research exists and no content gap or follow-ups", () => {
     expect(shouldWakeGrowth({ ...BASE_SUMMARY })).toBe(false);
   });
 });

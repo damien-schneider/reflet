@@ -12,9 +12,15 @@ export const MODELS = {
   FAST: "openai/gpt-5.4-mini",
   /** Smartest model — defaults to free, falls back to paid */
   SMART: "qwen/qwen3.6-plus:free",
-  /** Free model with online search capability */
+  /**
+   * @deprecated Use WEB_SEARCH_MODELS with generateTextWithWebSearch instead.
+   * The :online plugin is deprecated by OpenRouter in favor of the
+   * openrouter:web_search server tool.
+   */
   SEARCH_FREE: "qwen/qwen3.6-plus:free:online",
-  /** Paid model with online search capability */
+  /**
+   * @deprecated Use WEB_SEARCH_MODELS with generateTextWithWebSearch instead.
+   */
   SEARCH_PAID: "openai/gpt-5.4-mini:online",
 } as const;
 
@@ -30,10 +36,23 @@ export const FREE_MODEL_FALLBACKS = [
   "qwen/qwen3-coder:free",
 ] as const;
 
-/** Free model fallback chain with web search — tried in order when rate-limited */
+/**
+ * @deprecated Use WEB_SEARCH_MODELS with generateTextWithWebSearch instead.
+ * The :online plugin suffix is deprecated by OpenRouter. Use the
+ * openrouter:web_search server tool via generateTextWithWebSearch.
+ */
 export const SEARCH_MODEL_FALLBACKS = [
   "qwen/qwen3.6-plus:free:online",
   "openai/gpt-5.4-mini:online",
+] as const;
+
+/**
+ * Models for use with generateTextWithWebSearch (openrouter:web_search server tool).
+ * These are regular models — web search is injected via the server tool, not the model suffix.
+ */
+export const WEB_SEARCH_MODELS = [
+  "qwen/qwen3.6-plus:free",
+  "openai/gpt-5.4-mini",
 ] as const;
 
 /** Standard agent model chain: all free fallbacks, then paid */
