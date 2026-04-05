@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Reflet — Autonomous AI Company Platform",
     short_name: "Reflet",
     description:
-      "10 AI agents that autonomously run your product — from market research to shipped code to sales outreach.",
+      "7 AI agents that autonomously run your product — from market research to shipped code to sales outreach.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

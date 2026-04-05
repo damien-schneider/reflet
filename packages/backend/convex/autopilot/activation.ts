@@ -63,17 +63,17 @@ const checkSalesActivation = async (
   ctx: QueryCtx,
   organizationId: Id<"organizations">
 ): Promise<ActivationResult> => {
-  const icpDoc = await ctx.db
+  const productDef = await ctx.db
     .query("autopilotKnowledgeDocs")
     .withIndex("by_org_docType", (q) =>
-      q.eq("organizationId", organizationId).eq("docType", "user_personas_icp")
+      q.eq("organizationId", organizationId).eq("docType", "product_definition")
     )
     .unique();
 
-  if (!icpDoc) {
+  if (!productDef) {
     return {
       active: false,
-      reason: "Need ICP knowledge doc before sales can start",
+      reason: "Need product definition before sales can start",
     };
   }
 

@@ -139,6 +139,7 @@ export const githubTables = {
     architecture: v.optional(v.string()),
     features: v.optional(v.string()),
     repoStructure: v.optional(v.string()),
+    productAnalysis: v.optional(v.string()),
     error: v.optional(v.string()),
     threadId: v.optional(v.string()),
     createdAt: v.number(),

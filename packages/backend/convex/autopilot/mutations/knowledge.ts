@@ -9,6 +9,76 @@ import { requireOrgAdmin } from "./auth";
 
 const USER_EDIT_PROTECTION_MS = 72 * 60 * 60 * 1000;
 
+export const upsertProductDefinition = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    content: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, user._id);
+
+    const now = Date.now();
+    const summary = args.content.slice(0, 200).trimEnd();
+
+    const existing = await ctx.db
+      .query("autopilotKnowledgeDocs")
+      .withIndex("by_org_docType", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("docType", "product_definition")
+      )
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        contentFull: args.content,
+        contentSummary: summary,
+        userEdited: true,
+        userEditedAt: now,
+        userEditProtectedUntil: now + USER_EDIT_PROTECTION_MS,
+        version: existing.version + 1,
+        lastUpdatedAt: now,
+      });
+
+      await ctx.db.insert("autopilotKnowledgeDocVersions", {
+        docId: existing._id,
+        version: existing.version + 1,
+        content: args.content,
+        editedBy: "user",
+        createdAt: now,
+      });
+    } else {
+      const docId = await ctx.db.insert("autopilotKnowledgeDocs", {
+        organizationId: args.organizationId,
+        docType: "product_definition",
+        ownerAgent: "pm",
+        title: "Product Definition",
+        contentFull: args.content,
+        contentSummary: summary,
+        version: 1,
+        userEdited: true,
+        userEditedAt: now,
+        userEditProtectedUntil: now + USER_EDIT_PROTECTION_MS,
+        stalenessAlertDays: 30,
+        lastUpdatedAt: now,
+        createdAt: now,
+      });
+
+      await ctx.db.insert("autopilotKnowledgeDocVersions", {
+        docId,
+        version: 1,
+        content: args.content,
+        editedBy: "user",
+        createdAt: now,
+      });
+    }
+
+    return null;
+  },
+});
+
 export const updateKnowledgeDoc = mutation({
   args: {
     docId: v.id("autopilotKnowledgeDocs"),

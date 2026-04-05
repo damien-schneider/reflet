@@ -180,10 +180,12 @@ import type * as integrations_github_actions from "../integrations/github/action
 import type * as integrations_github_actions_node from "../integrations/github/actions_node.js";
 import type * as integrations_github_client_actions from "../integrations/github/client_actions.js";
 import type * as integrations_github_code_search from "../integrations/github/code_search.js";
+import type * as integrations_github_exploration_tools from "../integrations/github/exploration_tools.js";
 import type * as integrations_github_github_helpers from "../integrations/github/github_helpers.js";
 import type * as integrations_github_issues from "../integrations/github/issues.js";
 import type * as integrations_github_mutations from "../integrations/github/mutations.js";
 import type * as integrations_github_node_actions from "../integrations/github/node_actions.js";
+import type * as integrations_github_product_exploration from "../integrations/github/product_exploration.js";
 import type * as integrations_github_project_setup from "../integrations/github/project_setup.js";
 import type * as integrations_github_queries from "../integrations/github/queries.js";
 import type * as integrations_github_release_actions from "../integrations/github/release_actions.js";
@@ -419,10 +421,12 @@ declare const fullApi: ApiFromModules<{
   "integrations/github/actions_node": typeof integrations_github_actions_node;
   "integrations/github/client_actions": typeof integrations_github_client_actions;
   "integrations/github/code_search": typeof integrations_github_code_search;
+  "integrations/github/exploration_tools": typeof integrations_github_exploration_tools;
   "integrations/github/github_helpers": typeof integrations_github_github_helpers;
   "integrations/github/issues": typeof integrations_github_issues;
   "integrations/github/mutations": typeof integrations_github_mutations;
   "integrations/github/node_actions": typeof integrations_github_node_actions;
+  "integrations/github/product_exploration": typeof integrations_github_product_exploration;
   "integrations/github/project_setup": typeof integrations_github_project_setup;
   "integrations/github/queries": typeof integrations_github_queries;
   "integrations/github/release_actions": typeof integrations_github_release_actions;

@@ -6,7 +6,7 @@ export const SITE_NAME = "Reflet";
 const DEFAULT_TITLE =
   "Reflet — The Autonomous AI Company That Runs Your Product";
 export const DEFAULT_DESCRIPTION =
-  "10 AI agents — CEO, PM, CTO, Dev, Growth, Sales, Security, Architect, Support, Docs — autonomously discover opportunities, build features, ship code, find leads, and handle support. Connect your GitHub repo. Your AI company starts in 5 minutes.";
+  "7 AI agents — CEO, PM, CTO, Dev, Growth, Sales, Support — autonomously discover opportunities, build features, ship code, find leads, and handle support. Connect your GitHub repo. Your AI company starts in 5 minutes.";
 
 const DEFAULT_KEYWORDS = [
   "autonomous AI company",

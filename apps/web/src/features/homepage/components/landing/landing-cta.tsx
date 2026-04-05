@@ -20,7 +20,7 @@ export default function LandingCTA() {
             Your AI company never sleeps.
           </h2>
           <p className="mb-10 text-[17px] text-olive-300/80 leading-relaxed sm:text-[19px]">
-            10 agents working 24/7 — discovering opportunities, shipping code,
+            7 agents working 24/7 — discovering opportunities, shipping code,
             finding leads, handling support. Connect your repo and start in 5
             minutes. Free tier available, open source forever.
           </p>

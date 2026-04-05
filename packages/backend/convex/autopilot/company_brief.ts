@@ -1,9 +1,8 @@
 /**
- * Company Brief — generates 7 knowledge docs from repo analysis via LLM.
+ * Company Brief — seeds the product_definition knowledge doc from repo analysis.
  *
  * When a user connects a repo, this analyzes the available data and
- * bootstraps the knowledge base with Product Definition, ICP, Competitive
- * Landscape, Brand Voice, Technical Architecture, Goals/OKRs, and Roadmap.
+ * bootstraps the product definition as a starting point for manual editing.
  */
 
 import { v } from "convex/values";
@@ -15,50 +14,28 @@ import { generateObjectWithFallback } from "./agents/shared";
 
 const BRIEF_MODELS = [MODELS.SMART, MODELS.FAST] as const;
 
-const KNOWLEDGE_DOC_TYPES = [
-  "product_definition",
-  "user_personas_icp",
-  "competitive_landscape",
-  "brand_voice",
-  "technical_architecture",
-  "goals_okrs",
-  "product_roadmap",
-] as const;
-
-type KnowledgeDocType = (typeof KNOWLEDGE_DOC_TYPES)[number];
-
 const briefSchema = z.object({
-  docs: z.array(
-    z.object({
-      docType: z.enum(KNOWLEDGE_DOC_TYPES),
-      title: z.string(),
-      contentFull: z.string(),
-      contentSummary: z.string(),
-    })
-  ),
+  title: z.string(),
+  contentFull: z.string(),
+  contentSummary: z.string(),
 });
 
-const BRIEF_SYSTEM_PROMPT = `You are a senior product strategist bootstrapping a knowledge base for a software company.
+const BRIEF_SYSTEM_PROMPT = `You are a senior product strategist bootstrapping a product definition for a software company.
 
-Given repository data (tech stack, architecture, features, structure), generate exactly 7 knowledge documents:
-
-1. **product_definition** — What the product is, who it's for, core value prop
-2. **user_personas_icp** — Ideal Customer Profile + 2-3 user personas
-3. **competitive_landscape** — Key competitors, differentiators, market position
-4. **brand_voice** — Tone, style, key messaging themes
-5. **technical_architecture** — Stack overview, patterns, key decisions
-6. **goals_okrs** — 3-5 quarterly objectives with key results
-7. **product_roadmap** — Near-term (this quarter), mid-term (next quarter), long-term priorities
+Given a detailed product analysis, generate a concise product definition:
+- What the product is, who it's for, and the core value proposition
+- Key features and differentiators grounded in what the product actually does for users
+- Target audience and use cases based on observed product functionality
 
 Rules:
-- Be specific and grounded in the actual repo data, not generic
-- contentSummary should be a concise 1-2 sentence overview
-- contentFull should be 200-500 words of actionable detail
-- If data is sparse, make reasonable inferences and flag assumptions
-- Use Markdown formatting in contentFull`;
+- Be specific and grounded in the actual product analysis, not generic
+- contentSummary should be a concise 1-2 sentence overview of the product's value
+- contentFull should be 200-500 words describing the product from a user perspective
+- Emphasize user-facing features and value, not technical implementation
+- If data is sparse, make reasonable inferences and flag assumptions`;
 
 /**
- * Generate the company brief — 7 knowledge docs from repo analysis.
+ * Generate the product definition from repo analysis — seeds the knowledge doc.
  */
 export const generateCompanyBrief = internalAction({
   args: { organizationId: v.id("organizations") },
@@ -73,21 +50,29 @@ export const generateCompanyBrief = internalAction({
       { organizationId: args.organizationId }
     );
 
-    const repoContext = [
-      repoAnalysis?.summary && `Summary: ${repoAnalysis.summary}`,
-      repoAnalysis?.techStack && `Tech Stack: ${repoAnalysis.techStack}`,
-      repoAnalysis?.architecture &&
-        `Architecture: ${repoAnalysis.architecture}`,
-      repoAnalysis?.features && `Features: ${repoAnalysis.features}`,
-      repoAnalysis?.repoStructure && `Structure: ${repoAnalysis.repoStructure}`,
-      repoUrl && `Repository: ${repoUrl}`,
-    ]
-      .filter(Boolean)
-      .join("\n\n");
+    const repoContext = repoAnalysis?.productAnalysis
+      ? [
+          `Product Analysis:\n${repoAnalysis.productAnalysis}`,
+          repoUrl && `Repository: ${repoUrl}`,
+        ]
+          .filter(Boolean)
+          .join("\n\n")
+      : [
+          repoAnalysis?.summary && `Summary: ${repoAnalysis.summary}`,
+          repoAnalysis?.techStack && `Tech Stack: ${repoAnalysis.techStack}`,
+          repoAnalysis?.architecture &&
+            `Architecture: ${repoAnalysis.architecture}`,
+          repoAnalysis?.features && `Features: ${repoAnalysis.features}`,
+          repoAnalysis?.repoStructure &&
+            `Structure: ${repoAnalysis.repoStructure}`,
+          repoUrl && `Repository: ${repoUrl}`,
+        ]
+          .filter(Boolean)
+          .join("\n\n");
 
     const prompt = repoContext
-      ? `Analyze this repository and generate 7 knowledge documents:\n\n${repoContext}`
-      : "Generate 7 knowledge documents for a software product. Use placeholder content and flag that real data is needed.";
+      ? `Analyze this repository and generate a product definition:\n\n${repoContext}`
+      : "Generate a product definition for a software product. Use placeholder content and flag that real data is needed.";
 
     const brief = await generateObjectWithFallback({
       models: BRIEF_MODELS,
@@ -96,92 +81,41 @@ export const generateCompanyBrief = internalAction({
       systemPrompt: BRIEF_SYSTEM_PROMPT,
     });
 
-    const ownerMap: Record<KnowledgeDocType, string> = {
-      product_definition: "pm",
-      user_personas_icp: "pm",
-      competitive_landscape: "growth",
-      brand_voice: "growth",
-      technical_architecture: "cto",
-      goals_okrs: "ceo",
-      product_roadmap: "pm",
-    };
-
-    for (const doc of brief.docs) {
-      await ctx.runMutation(internal.autopilot.knowledge.createKnowledgeDoc, {
-        organizationId: args.organizationId,
-        docType: doc.docType,
-        ownerAgent: ownerMap[doc.docType] ?? "pm",
-        title: doc.title,
-        contentFull: doc.contentFull,
-        contentSummary: doc.contentSummary,
-      });
-    }
-
-    await ctx.runMutation(internal.autopilot.documents.createDocument, {
+    await ctx.runMutation(internal.autopilot.knowledge.createKnowledgeDoc, {
       organizationId: args.organizationId,
-      type: "report",
-      title: "Review Your Company Brief",
-      content:
-        "Reflet has generated 7 knowledge documents about your product. Review and edit them before agents start working.",
-      tags: ["onboarding", "company-brief"],
-      sourceAgent: "system",
-      needsReview: true,
-      reviewType: "company_brief_review",
+      docType: "product_definition",
+      ownerAgent: "pm",
+      title: brief.title,
+      contentFull: brief.contentFull,
+      contentSummary: brief.contentSummary,
     });
 
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
       agent: "system",
       level: "success",
-      message: `Company brief generated: ${brief.docs.length} knowledge documents created`,
+      message:
+        "Product definition generated — review and edit it in the Product tab",
     });
   },
 });
 
 /**
- * Check if the company brief is approved — all 7 knowledge docs exist
- * and the review inbox item has been approved.
+ * Check if the product definition exists.
  */
 export const isCompanyBriefApproved = internalQuery({
   args: { organizationId: v.id("organizations") },
   returns: v.boolean(),
   handler: async (ctx, args) => {
-    const docs = await ctx.db
+    const doc = await ctx.db
       .query("autopilotKnowledgeDocs")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
+      .withIndex("by_org_docType", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("docType", "product_definition")
       )
-      .collect();
+      .unique();
 
-    const expectedDocCount = KNOWLEDGE_DOC_TYPES.length;
-    if (docs.length < expectedDocCount) {
-      return false;
-    }
-
-    const existingTypes = new Set(docs.map((d) => d.docType));
-    const allTypesPresent = KNOWLEDGE_DOC_TYPES.every((t) =>
-      existingTypes.has(t)
-    );
-
-    if (!allTypesPresent) {
-      return false;
-    }
-
-    const reviewDoc = await ctx.db
-      .query("autopilotDocuments")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    const briefReview = reviewDoc.find(
-      (d) => d.reviewType === "company_brief_review"
-    );
-
-    if (!briefReview) {
-      return false;
-    }
-
-    return !briefReview.needsReview;
+    return doc !== null;
   },
 });

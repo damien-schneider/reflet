@@ -221,6 +221,7 @@ export const updateAnalysisStatus = internalMutation({
     architecture: v.optional(v.string()),
     features: v.optional(v.string()),
     repoStructure: v.optional(v.string()),
+    productAnalysis: v.optional(v.string()),
     threadId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -234,6 +235,22 @@ export const updateAnalysisStatus = internalMutation({
       ...(status === "completed" || status === "error"
         ? { completedAt: now }
         : {}),
+    });
+  },
+});
+
+/**
+ * Save the product analysis result without touching the main analysis status.
+ */
+export const saveProductAnalysis = internalMutation({
+  args: {
+    analysisId: v.id("repoAnalysis"),
+    productAnalysis: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.analysisId, {
+      productAnalysis: args.productAnalysis,
+      updatedAt: Date.now(),
     });
   },
 });
@@ -272,6 +289,16 @@ export const runAnalysis = internalAction({
       }
 
       const { repositoryFullName } = connection;
+
+      // Launch product exploration in parallel (saves result independently)
+      await ctx.scheduler.runAfter(
+        0,
+        internal.integrations.github.product_exploration.runProductExploration,
+        {
+          organizationId: args.organizationId,
+          analysisId: args.analysisId,
+        }
+      );
 
       // Fetch repo data first
       const repoData = await fetchRepoData(repositoryFullName);

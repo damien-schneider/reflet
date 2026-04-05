@@ -5,9 +5,6 @@ import {
   Code,
   Headset,
   MegaphoneSimple,
-  Robot,
-  Shield,
-  Sparkle,
   Target,
   Users,
   Wrench,
@@ -19,9 +16,9 @@ import { generatePageMetadata } from "@/lib/seo-config";
 import { cn } from "@/lib/utils";
 
 export const metadata = generatePageMetadata({
-  title: "Reflet Autopilot — 10 AI Agents That Run Your Company",
+  title: "Reflet Autopilot — 7 AI Agents That Run Your Company",
   description:
-    "Connect your GitHub repo. 10 autonomous AI agents — CEO, PM, CTO, Dev, Growth, Sales, Security, Architect, Support, Docs — start running your product in 5 minutes.",
+    "Connect your GitHub repo. 7 autonomous AI agents — CEO, PM, CTO, Dev, Growth, Sales, Support — start running your product in 5 minutes.",
   path: "/autopilot",
   keywords: [
     "autonomous AI company",
@@ -40,7 +37,7 @@ const AGENTS = [
     role: "CEO",
     icon: Target,
     description:
-      "Strategic oversight. Generates Company Brief. Sets product direction.",
+      "Strategic coordination. Relays President's vision. Detects bottlenecks.",
     color: "text-violet-500",
     bg: "bg-violet-500/10 dark:bg-violet-500/15",
   },
@@ -48,7 +45,7 @@ const AGENTS = [
     role: "PM",
     icon: Brain,
     description:
-      "Market research. Initiative creation. Roadmap prioritization.",
+      "Reads Growth's market findings. Creates initiatives. Prioritizes roadmap.",
     color: "text-blue-500",
     bg: "bg-blue-500/10 dark:bg-blue-500/15",
   },
@@ -82,32 +79,11 @@ const AGENTS = [
     bg: "bg-rose-500/10 dark:bg-rose-500/15",
   },
   {
-    role: "Security",
-    icon: Shield,
-    description: "Vulnerability scanning. Dependency checks. Compliance.",
-    color: "text-red-500",
-    bg: "bg-red-500/10 dark:bg-red-500/15",
-  },
-  {
-    role: "Architect",
-    icon: Sparkle,
-    description: "Code review. Quality standards. Architecture enforcement.",
-    color: "text-indigo-500",
-    bg: "bg-indigo-500/10 dark:bg-indigo-500/15",
-  },
-  {
     role: "Support",
     icon: Headset,
     description: "Issue triage. Response generation. Escalation to PM.",
     color: "text-teal-500",
     bg: "bg-teal-500/10 dark:bg-teal-500/15",
-  },
-  {
-    role: "Docs",
-    icon: Robot,
-    description: "Documentation generation. Knowledge base maintenance.",
-    color: "text-orange-500",
-    bg: "bg-orange-500/10 dark:bg-orange-500/15",
   },
 ] as const;
 
@@ -122,7 +98,7 @@ const LIFECYCLE_STEPS = [
     step: 2,
     title: "Discover",
     description:
-      "The CEO agent generates your Company Brief — product definition, ideal customer, competitive landscape, and initial roadmap.",
+      "Reflet generates your Company Brief — product definition, ideal customer, competitive landscape, and initial roadmap.",
   },
   {
     step: 3,
@@ -170,11 +146,11 @@ export default function AutopilotPage() {
               Autopilot
             </span>
             <h1 className="mx-auto mb-6 max-w-180 font-display text-[clamp(2rem,5vw,3.5rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
-              10 AI agents. Your entire company.
+              7 AI agents. Your entire company.
             </h1>
             <p className="mx-auto mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
               Connect your GitHub repo and Reflet generates your Company Brief
-              in 5 minutes. Then 10 AI agents start running your product —
+              in 5 minutes. Then 7 AI agents start running your product —
               discovering opportunities, shipping code, finding leads, and
               handling support.
             </p>
@@ -204,7 +180,7 @@ export default function AutopilotPage() {
             <h2 className="mb-12 text-center font-display text-[clamp(1.4rem,3vw,2rem)] text-olive-950 leading-[1.15] tracking-[-0.01em] dark:text-olive-100">
               Your AI team
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {AGENTS.map((agent) => {
                 const Icon = agent.icon;
                 return (
@@ -289,7 +265,7 @@ export default function AutopilotPage() {
               Your AI company starts here.
             </h2>
             <p className="mx-auto mb-8 max-w-120 text-[15px] text-olive-300/80 leading-relaxed sm:text-[17px]">
-              Connect your GitHub repo. Get a Company Brief in 5 minutes. Let 10
+              Connect your GitHub repo. Get a Company Brief in 5 minutes. Let 7
               agents run your product.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">

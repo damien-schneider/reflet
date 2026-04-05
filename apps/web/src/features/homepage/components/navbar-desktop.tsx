@@ -61,7 +61,7 @@ interface ResourceItem {
 const RESOURCE_ITEMS: ResourceItem[] = [
   {
     label: "How Autopilot Works",
-    description: "Learn how 10 AI agents run your product",
+    description: "Learn how 7 AI agents run your product",
     href: "/autopilot",
   },
   {

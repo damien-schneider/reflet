@@ -2,6 +2,7 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import {
+  IconAlertTriangle,
   IconBolt,
   IconBrain,
   IconCode,
@@ -13,11 +14,24 @@ import {
   IconRobot,
   IconSettings,
   IconShieldCheck,
+  IconTrash,
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -119,9 +133,11 @@ export default function AutopilotSettingsPage() {
   const upsertCreds = useMutation(
     api.autopilot.mutations.config.upsertCredentials
   );
+  const resetAll = useMutation(api.autopilot.mutations.config.resetAllData);
 
   const [credentialInput, setCredentialInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   if (config === undefined) {
     return (
@@ -490,6 +506,72 @@ export default function AutopilotSettingsPage() {
           onSave={(json) => handleUpdate("perAgentDailyCapUsd", json)}
         />
       </section>
+
+      {/* ── Danger Zone ────────────────────────────── */}
+      {isAdmin && (
+        <section className="space-y-5">
+          <SectionHeader
+            description="Irreversible actions — proceed with caution"
+            icon={IconAlertTriangle}
+            title="Danger Zone"
+          />
+
+          <Card className="border-destructive/30">
+            <CardContent className="flex items-center justify-between py-4">
+              <div>
+                <p className="font-medium text-sm">Reset Autopilot</p>
+                <p className="text-muted-foreground text-xs">
+                  Delete all autopilot data — work items, runs, knowledge,
+                  documents, activity logs, and config. This cannot be undone.
+                </p>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={
+                    <Button disabled={isResetting} variant="destructive">
+                      <IconTrash className="mr-1.5 size-4" />
+                      {isResetting ? "Resetting…" : "Reset All Data"}
+                    </Button>
+                  }
+                />
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogMedia className="bg-destructive/10 text-destructive">
+                      <IconAlertTriangle />
+                    </AlertDialogMedia>
+                    <AlertDialogTitle>Reset Autopilot?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete all autopilot data for this
+                      organization. You will need to re-initialize Autopilot
+                      from scratch.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      disabled={isResetting}
+                      onClick={async () => {
+                        setIsResetting(true);
+                        try {
+                          await resetAll({ organizationId });
+                          toast.success("Autopilot data has been reset");
+                        } catch {
+                          toast.error("Failed to reset autopilot data");
+                        } finally {
+                          setIsResetting(false);
+                        }
+                      }}
+                      variant="destructive"
+                    >
+                      {isResetting ? "Resetting…" : "Reset Everything"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
+        </section>
+      )}
     </div>
   );
 }

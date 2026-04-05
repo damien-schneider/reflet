@@ -1,35 +1,38 @@
 import {
   ArrowsClockwise,
-  Bell,
   ChatTeardrop,
   Code,
+  CreditCard,
   DiscordLogo,
-  EnvelopeSimple,
   GithubLogo,
   Kanban,
   Layout,
   Lightning,
   Robot,
   TerminalWindow,
+  Wrench,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 import { H1, H2, H3, Lead } from "@/components/ui/typography";
+import Footer from "@/features/homepage/components/footer";
+import Navbar from "@/features/homepage/components/navbar";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   title: "Integrations",
   description:
-    "Connect Reflet to your workflow with native integrations, a public API, and embeddable SDK. Sync feedback with GitHub, Slack, and other tools your team uses.",
+    "Connect Reflet to your stack. GitHub for code and PRs, Stripe for revenue tracking, coding adapters for AI-powered development, SDK, REST API, MCP Server, and embeddable widgets.",
   path: "/integrations",
   keywords: [
     "integrations",
+    "github",
+    "stripe",
+    "coding adapters",
     "api",
     "sdk",
-    "github",
-    "slack",
-    "linear",
+    "mcp server",
     "webhooks",
     "widgets",
   ],
@@ -49,15 +52,30 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     icon: GithubLogo,
     title: "GitHub",
     description:
-      "Sync issues and releases bi-directionally. Import GitHub issues as feedback, auto-publish releases as changelog entries.",
+      "Connect your repo. Agents read code, create PRs, sync issues, and auto-close them when work ships.",
     href: "/docs",
+  },
+  {
+    id: "coding-adapters",
+    icon: Wrench,
+    title: "Coding Adapters",
+    description:
+      "Built-in, GitHub Copilot, OpenAI Codex, or Claude Code. Switch providers without changing your workflow.",
+    href: "/docs/coding",
+  },
+  {
+    id: "stripe",
+    icon: CreditCard,
+    title: "Stripe Connect",
+    description:
+      "Revenue tracking with MRR, ARR, and churn metrics. Sales agent uses live Stripe data to prioritize prospects.",
   },
   {
     id: "sdk",
     icon: Code,
     title: "SDK & React Hooks",
     description:
-      "First-class TypeScript SDK with React hooks. useFeedbackList(), useVote(), useChangelog() - embed feedback natively in your app.",
+      "First-class TypeScript SDK with React hooks. useFeedbackList(), useVote(), useChangelog() — embed feedback natively in your app.",
     href: "/docs/sdk",
   },
   {
@@ -69,34 +87,20 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     href: "/docs/api",
   },
   {
-    id: "widgets",
-    icon: Layout,
-    title: "Embeddable Widgets",
-    description:
-      "Drop-in feedback and changelog widgets. One script tag, works on any site.",
-    href: "/docs/widget",
-  },
-  {
-    id: "email",
-    icon: EnvelopeSimple,
-    title: "Email Notifications",
-    description:
-      "Automatic email notifications for new feedback, status changes, and changelog updates via Resend.",
-  },
-  {
-    id: "push",
-    icon: Bell,
-    title: "Web Push",
-    description:
-      "Browser push notifications to keep your team and users informed in real-time.",
-  },
-  {
     id: "mcp",
     icon: Robot,
     title: "MCP Server",
     description:
       "Let AI coding assistants like Cursor, Claude Code and VS Code Copilot read and manage your feedback directly via the Model Context Protocol.",
     href: "/docs/mcp",
+  },
+  {
+    id: "widgets",
+    icon: Layout,
+    title: "Embeddable Widgets",
+    description:
+      "Drop-in feedback and changelog widgets. One script tag, works on any site.",
+    href: "/docs/widget",
   },
 ] as const;
 
@@ -190,66 +194,72 @@ function ComingSoonCard({ integration }: { integration: Integration }) {
 
 export default function IntegrationsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <section className="mx-auto max-w-7xl px-4 pt-16 pb-12 sm:px-6 lg:px-8">
-        <div className="mb-4">
-          <span className="font-semibold text-muted-foreground text-sm uppercase tracking-wide">
-            Integrations
-          </span>
-        </div>
-        <H1 className="mb-6 max-w-3xl" variant="page">
-          Connect Reflet to your workflow
-        </H1>
-        <Lead className="max-w-2xl">
-          Native integrations, a public API, and an SDK so you can embed
-          feedback anywhere.
-        </Lead>
-      </section>
+    <div className="flex min-h-screen flex-col bg-background">
+      <Navbar />
 
-      {/* Available Now */}
-      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <H2 className="mb-8" variant="default">
-          Available Now
-        </H2>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {AVAILABLE_INTEGRATIONS.map((integration) => (
-            <AvailableCard integration={integration} key={integration.id} />
-          ))}
-        </div>
-      </section>
+      <main className="flex-1">
+        {/* Header */}
+        <section className="mx-auto max-w-7xl px-4 pt-16 pb-12 sm:px-6 lg:px-8">
+          <div className="mb-4">
+            <span className="font-semibold text-muted-foreground text-sm uppercase tracking-wide">
+              Integrations
+            </span>
+          </div>
+          <H1 className="mb-6 max-w-3xl" variant="page">
+            Connect Reflet to your stack
+          </H1>
+          <Lead className="max-w-2xl">
+            GitHub for code, Stripe for revenue, coding adapters for AI
+            development, plus SDK, REST API, MCP Server, and embeddable widgets.
+          </Lead>
+        </section>
 
-      {/* Coming Soon */}
-      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <H2 className="mb-8" variant="default">
-          Coming Soon
-        </H2>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {COMING_SOON_INTEGRATIONS.map((integration) => (
-            <ComingSoonCard integration={integration} key={integration.id} />
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-border bg-card p-12 text-center">
-          <H2 className="mb-4" variant="default">
-            Need a specific integration?
+        {/* Available Now */}
+        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+          <H2 className="mb-8" variant="default">
+            Available Now
           </H2>
-          <p className="mb-8 text-base text-muted-foreground sm:text-lg">
-            Request it on our public feedback board.
-          </p>
-          <a
-            className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 font-medium text-primary-foreground text-sm transition-opacity hover:opacity-90"
-            href="https://www.reflet.app/reflet"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Request an integration
-          </a>
-        </div>
-      </section>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {AVAILABLE_INTEGRATIONS.map((integration) => (
+              <AvailableCard integration={integration} key={integration.id} />
+            ))}
+          </div>
+        </section>
+
+        {/* Coming Soon */}
+        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+          <H2 className="mb-8" variant="default">
+            Coming Soon
+          </H2>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {COMING_SOON_INTEGRATIONS.map((integration) => (
+              <ComingSoonCard integration={integration} key={integration.id} />
+            ))}
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
+          <div className="rounded-2xl border border-border bg-card p-12 text-center">
+            <H2 className="mb-4" variant="default">
+              Need a specific integration?
+            </H2>
+            <p className="mb-8 text-base text-muted-foreground sm:text-lg">
+              Request it on our public feedback board.
+            </p>
+            <a
+              className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 font-medium text-primary-foreground text-sm transition-opacity hover:opacity-90"
+              href="https://www.reflet.app/reflet"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Request an integration
+            </a>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
     </div>
   );
 }

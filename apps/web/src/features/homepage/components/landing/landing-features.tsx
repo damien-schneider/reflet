@@ -30,15 +30,12 @@ const AGENT_ROLES = [
   { name: "Dev", color: "bg-emerald-500" },
   { name: "Growth", color: "bg-amber-500" },
   { name: "Sales", color: "bg-rose-500" },
-  { name: "Security", color: "bg-red-500" },
-  { name: "Architect", color: "bg-indigo-500" },
   { name: "Support", color: "bg-teal-500" },
-  { name: "Docs", color: "bg-orange-500" },
 ] as const;
 
 function MiniAgentGrid() {
   return (
-    <div className="grid grid-cols-5 gap-1.5">
+    <div className="grid grid-cols-4 gap-1.5">
       {AGENT_ROLES.map((agent, i) => (
         <div
           className="group/agent flex flex-col items-center gap-1 rounded-lg bg-muted/40 px-1 py-1.5 transition-all duration-300 hover:bg-muted/60 dark:bg-sidebar/50 dark:hover:bg-sidebar/70"
@@ -202,7 +199,7 @@ const FEATURES = [
     icon: Robot,
     accent: "text-violet-500",
     accentBg: "bg-violet-500/10 dark:bg-violet-500/15",
-    title: "10 AI Agents",
+    title: "7 AI Agents",
     span: "sm:col-span-2",
   },
   {
@@ -267,7 +264,7 @@ export default function LandingFeatures() {
             Your autonomous AI company
           </Text>
           <H2 className="mb-4" variant="landing">
-            10 agents.{" "}
+            7 agents.{" "}
             <span className="text-muted-foreground">
               Zero employees needed.
             </span>

@@ -5,9 +5,6 @@ import {
   Code,
   Headset,
   MegaphoneSimple,
-  Robot,
-  Shield,
-  Sparkle,
   Target,
   Users,
   Wrench,
@@ -19,9 +16,9 @@ import { generatePageMetadata } from "@/lib/seo-config";
 import { cn } from "@/lib/utils";
 
 export const metadata = generatePageMetadata({
-  title: "Meet Your AI Team — 10 Autonomous Agents | Reflet",
+  title: "Meet Your AI Team — 7 Autonomous Agents | Reflet",
   description:
-    "Detailed breakdown of Reflet's 10 autonomous AI agents: CEO, PM, CTO, Dev, Growth, Sales, Security, Architect, Support, and Docs. Learn what each agent does, when it wakes, and what it reads and writes.",
+    "Detailed breakdown of Reflet's 7 autonomous AI agents: CEO, PM, CTO, Dev, Growth, Sales, and Support. Learn what each agent does, when it wakes, and what it reads and writes.",
   path: "/agents",
   keywords: [
     "AI agents",
@@ -42,11 +39,11 @@ const AGENT_DETAILS = [
     color: "text-violet-500",
     bg: "bg-violet-500/10 dark:bg-violet-500/15",
     description:
-      "Sets strategic direction for your product. Generates the Company Brief from your GitHub repo — product definition, ideal customer profile, competitive landscape, and initial roadmap.",
+      "Coordinates across all agents, detects bottlenecks, relays President directives. Generates daily and weekly reports.",
     wakes:
       "On repo connection, quarterly strategy reviews, major milestone completions",
     reads: "GitHub repo, market data, competitive intelligence",
-    writes: "Company Brief, strategic direction, product positioning",
+    writes: "Strategic direction, coordination reports, goal updates",
   },
   {
     role: "PM",
@@ -54,10 +51,11 @@ const AGENT_DETAILS = [
     color: "text-blue-500",
     bg: "bg-blue-500/10 dark:bg-blue-500/15",
     description:
-      "Transforms market research and user feedback into actionable initiatives. Prioritizes the roadmap based on impact, effort, and strategic alignment.",
+      "Reads Growth's market findings and user feedback to create actionable initiatives. Prioritizes the roadmap based on impact, effort, and strategic alignment.",
     wakes:
       "New feedback received, market research completed, initiative review cycles",
-    reads: "Feedback board, market research, Company Brief, user analytics",
+    reads:
+      "Feedback board, Growth's market reports, Company Brief, user analytics",
     writes: "Initiatives, roadmap priorities, acceptance criteria",
   },
   {
@@ -107,29 +105,6 @@ const AGENT_DETAILS = [
     writes: "Outreach messages, lead profiles, pipeline updates",
   },
   {
-    role: "Security",
-    icon: Shield,
-    color: "text-red-500",
-    bg: "bg-red-500/10 dark:bg-red-500/15",
-    description:
-      "Scans code for vulnerabilities, checks dependencies for known CVEs, and ensures compliance with security best practices.",
-    wakes: "New PR opened, dependency update, scheduled security scan",
-    reads: "Codebase, dependency manifests, CVE databases",
-    writes: "Security reports, vulnerability alerts, compliance status",
-  },
-  {
-    role: "Architect",
-    icon: Sparkle,
-    color: "text-indigo-500",
-    bg: "bg-indigo-500/10 dark:bg-indigo-500/15",
-    description:
-      "Reviews code quality, enforces architecture standards, and provides detailed code review on pull requests.",
-    wakes:
-      "PR opened for review, architecture drift detected, quality threshold breach",
-    reads: "Pull requests, codebase patterns, architecture guidelines",
-    writes: "Code reviews, architecture recommendations, quality reports",
-  },
-  {
     role: "Support",
     icon: Headset,
     color: "text-teal-500",
@@ -139,17 +114,6 @@ const AGENT_DETAILS = [
     wakes: "New support ticket, user issue reported, escalation trigger",
     reads: "Support tickets, knowledge base, product docs, user history",
     writes: "Support responses, escalation notes, FAQ updates",
-  },
-  {
-    role: "Docs",
-    icon: Robot,
-    color: "text-orange-500",
-    bg: "bg-orange-500/10 dark:bg-orange-500/15",
-    description:
-      "Generates and maintains documentation. Keeps the knowledge base current as features ship and APIs change.",
-    wakes: "Feature shipped, API changed, documentation gap detected",
-    reads: "Codebase, shipped features, API definitions, existing docs",
-    writes: "Documentation pages, API references, knowledge base articles",
   },
 ] as const;
 
@@ -170,9 +134,9 @@ export default function AgentsPage() {
               Meet your AI team
             </h1>
             <p className="mx-auto mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
-              10 autonomous agents that handle strategy, development, growth,
-              sales, security, and support. Each agent has a clear role, defined
-              triggers, and specific inputs and outputs.
+              7 autonomous agents that handle strategy, development, growth,
+              sales, and support. Each agent has a clear role, defined triggers,
+              and specific inputs and outputs.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">
@@ -262,7 +226,7 @@ export default function AgentsPage() {
               Put your AI team to work.
             </h2>
             <p className="mx-auto mb-8 max-w-120 text-[15px] text-olive-300/80 leading-relaxed sm:text-[17px]">
-              Connect your repo. Get a Company Brief. Let 10 agents run your
+              Connect your repo. Get a Company Brief. Let 7 agents run your
               product.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">

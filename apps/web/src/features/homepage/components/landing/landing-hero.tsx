@@ -35,7 +35,7 @@ export default function LandingHero() {
           </span>
           <span className="h-3 w-px bg-border" />
           <span className="flex items-center gap-0.5 text-[13px] text-muted-foreground transition-colors group-hover:text-foreground">
-            10 AI agents for your product
+            7 AI agents for your product
             <CaretRight
               className="transition-transform group-hover:translate-x-0.5"
               size={12}
@@ -69,9 +69,9 @@ export default function LandingHero() {
 
         {/* Subheadline */}
         <Lead className="mb-10 max-w-140" size="lg">
-          10 AI agents — CEO, PM, CTO, Dev, Growth, Sales, Security, Architect,
-          Support, Docs — that autonomously run your product. From market
-          research to shipped code to paying customers.
+          7 AI agents — CEO, PM, CTO, Dev, Growth, Sales, Support — that
+          autonomously run your product. From market research to shipped code to
+          paying customers.
         </Lead>
 
         {/* CTAs */}

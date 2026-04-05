@@ -20,7 +20,7 @@ const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: IconDashboard, path: "" },
   { id: "inbox", label: "Inbox", icon: IconInbox, path: "/inbox" },
   { id: "roadmap", label: "Board", icon: IconMap2, path: "/roadmap" },
-  { id: "knowledge", label: "Knowledge", icon: IconBook, path: "/knowledge" },
+  { id: "knowledge", label: "Product", icon: IconBook, path: "/knowledge" },
   {
     id: "documents",
     label: "Documents",

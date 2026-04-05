@@ -137,13 +137,6 @@ export const runGrowthGeneration = internalAction({
         internal.autopilot.knowledge.getKnowledgeDocByType,
         { organizationId: args.organizationId, docType: "product_definition" }
       );
-      const techArchDoc = await ctx.runQuery(
-        internal.autopilot.knowledge.getKnowledgeDocByType,
-        {
-          organizationId: args.organizationId,
-          docType: "technical_architecture",
-        }
-      );
       const repoAnalysis = await ctx.runQuery(
         internal.autopilot.agents.cto.getRepoAnalysisForCto,
         { organizationId: args.organizationId }
@@ -158,10 +151,7 @@ export const runGrowthGeneration = internalAction({
         : "Our Product";
       const productDescription =
         productDef?.contentFull ?? repoAnalysis?.summary ?? "Software product";
-      const techStack =
-        techArchDoc?.contentSummary ??
-        repoAnalysis?.techStack ??
-        "TypeScript, React";
+      const techStack = repoAnalysis?.techStack ?? "TypeScript, React";
       const competitorContext = repoAnalysis?.features ?? "";
 
       const agentKnowledge = await ctx.runQuery(
@@ -313,13 +303,6 @@ export const runGrowthMarketResearch = internalAction({
         internal.autopilot.knowledge.getKnowledgeDocByType,
         { organizationId: args.organizationId, docType: "product_definition" }
       );
-      const techArchDoc = await ctx.runQuery(
-        internal.autopilot.knowledge.getKnowledgeDocByType,
-        {
-          organizationId: args.organizationId,
-          docType: "technical_architecture",
-        }
-      );
       const repoAnalysis = await ctx.runQuery(
         internal.autopilot.agents.cto.getRepoAnalysisForCto,
         { organizationId: args.organizationId }
@@ -334,10 +317,7 @@ export const runGrowthMarketResearch = internalAction({
         : "Our Product";
       const productDescription =
         productDef?.contentFull ?? repoAnalysis?.summary ?? "Software product";
-      const techStack =
-        techArchDoc?.contentSummary ??
-        repoAnalysis?.techStack ??
-        "TypeScript, React";
+      const techStack = repoAnalysis?.techStack ?? "TypeScript, React";
 
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
