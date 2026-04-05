@@ -202,16 +202,16 @@ const TOUR_SECTIONS = [
     badge: "Developer Experience",
     title: "Embed feedback anywhere with two lines",
     description:
-      "Drop-in widget via script tag, or go deep with React hooks. TypeScript-first SDK with useFeedbackList(), useVote(), and more.",
+      "Drop-in widget via script tag, or go deep with React hooks. User feedback flows directly into Autopilot — Support triages, PM reads patterns.",
     reverse: false,
     mockup: "widget" as const,
   },
   {
     id: "ai-features",
-    badge: "AI-Powered Intelligence",
-    title: "Let AI handle the busywork",
+    badge: "Autonomous AI Company",
+    title: "10 agents that run your product",
     description:
-      "Automatic tagging, priority estimation, complexity scoring, and duplicate detection. Your team triages in minutes, not hours.",
+      "CEO sets strategy, PM creates initiatives, CTO writes specs, Dev ships code, Growth finds leads, Sales contacts prospects, Support handles users — all autonomous.",
     reverse: true,
     mockup: "ai" as const,
   },
@@ -232,14 +232,14 @@ export default function LandingProductTour() {
           transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
         >
           <Text as="span" className="mb-3 block" variant="eyebrow">
-            Product Tour
+            Deep Dive
           </Text>
           <H2 className="mb-4" variant="landing">
-            See how Reflet works
+            How your AI company operates
           </H2>
           <Lead className="mx-auto max-w-120" size="sm">
-            From collecting feedback to shipping features your users actually
-            want.
+            From connecting your repo to autonomous product development, sales,
+            and support.
           </Lead>
         </motion.div>
 

@@ -12,24 +12,24 @@ import { internalQuery } from "../../../_generated/server";
 export const getCEOContext = internalQuery({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const allTasks = await ctx.db
-      .query("autopilotTasks")
+    const allItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .collect();
 
     const taskStats = {
-      total: allTasks.length,
-      pending: allTasks.filter((t) => t.status === "pending").length,
-      inProgress: allTasks.filter((t) => t.status === "in_progress").length,
-      completed: allTasks.filter((t) => t.status === "completed").length,
-      failed: allTasks.filter((t) => t.status === "failed").length,
+      total: allItems.length,
+      todo: allItems.filter((w) => w.status === "todo").length,
+      inProgress: allItems.filter((w) => w.status === "in_progress").length,
+      done: allItems.filter((w) => w.status === "done").length,
+      cancelled: allItems.filter((w) => w.status === "cancelled").length,
       byPriority: {
-        critical: allTasks.filter((t) => t.priority === "critical").length,
-        high: allTasks.filter((t) => t.priority === "high").length,
-        medium: allTasks.filter((t) => t.priority === "medium").length,
-        low: allTasks.filter((t) => t.priority === "low").length,
+        critical: allItems.filter((w) => w.priority === "critical").length,
+        high: allItems.filter((w) => w.priority === "high").length,
+        medium: allItems.filter((w) => w.priority === "medium").length,
+        low: allItems.filter((w) => w.priority === "low").length,
       },
     };
 
@@ -72,30 +72,29 @@ export const getCEOContext = internalQuery({
         (feedbackStats.byStatus[status] ?? 0) + 1;
     }
 
-    const inboxItems = await ctx.db
-      .query("autopilotInboxItems")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
+    // Count items needing review (replaces autopilotInboxItems)
+    const reviewWorkItems = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
       )
       .collect();
 
-    const pendingInboxItems = inboxItems.filter(
-      (item) => item.status === "pending"
-    );
+    const reviewDocuments = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
+      )
+      .collect();
+
+    const pendingReviewCount = reviewWorkItems.length + reviewDocuments.length;
 
     return {
       taskStats,
       activityByAgent,
       recentActivityCount: activityInRange.length,
       feedbackStats,
-      pendingInboxCount: pendingInboxItems.length,
-      inboxItemsByType: inboxItems.reduce(
-        (acc, item) => {
-          acc[item.type] = (acc[item.type] ?? 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>
-      ),
+      pendingReviewCount,
     };
   },
 });
@@ -107,19 +106,20 @@ export const getCEOContext = internalQuery({
 export const getDetailedCEOContext = internalQuery({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const recentTasks = await ctx.db
-      .query("autopilotTasks")
+    const recentItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .order("desc")
       .take(20);
 
-    const taskSummaries = recentTasks.map((t) => ({
-      title: t.title,
-      status: t.status,
-      priority: t.priority,
-      agent: t.assignedAgent,
+    const taskSummaries = recentItems.map((w) => ({
+      title: w.title,
+      status: w.status,
+      priority: w.priority,
+      agent: w.assignedAgent,
+      type: w.type,
     }));
 
     const config = await ctx.db
@@ -162,25 +162,39 @@ export const getDetailedCEOContext = internalQuery({
         ago: Math.round((Date.now() - a.createdAt) / 60_000),
       }));
 
-    const pendingInbox = await ctx.db
-      .query("autopilotInboxItems")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+    // Review items replace inbox items
+    const reviewWorkItems = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
       )
-      .order("desc")
       .take(10);
 
-    const inboxSummaries = pendingInbox.map((item) => ({
-      title: item.title,
-      type: item.type,
-      priority: item.priority,
-    }));
+    const reviewDocs = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
+      )
+      .take(10);
+
+    const reviewSummaries = [
+      ...reviewWorkItems.map((w) => ({
+        title: w.title,
+        type: w.reviewType ?? w.type,
+        priority: w.priority,
+      })),
+      ...reviewDocs.map((d) => ({
+        title: d.title,
+        type: d.reviewType ?? d.type,
+        priority: "medium" as const,
+      })),
+    ];
 
     return {
       taskSummaries,
       agentStates,
       recentErrors,
-      inboxSummaries,
+      reviewSummaries,
       autonomyMode: config?.autonomyMode ?? "supervised",
     };
   },

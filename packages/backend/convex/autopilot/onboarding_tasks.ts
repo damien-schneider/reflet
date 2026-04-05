@@ -1,12 +1,12 @@
 /**
- * Onboarding task creation — initial tasks generated when a new org is bootstrapped.
+ * Onboarding task creation — initial work items generated when a new org is bootstrapped.
  */
 
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
 
 /**
- * Create primary onboarding tasks — the first things a virtual CTO would do.
+ * Create primary onboarding work items — the first things a virtual CTO would do.
  *
  * Always creates: widget, changelog, market analysis, SEO.
  */
@@ -19,71 +19,69 @@ export const createPrimaryOnboardingTasks = internalMutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    const createTask = async (task: {
+    const createWorkItem = async (item: {
       title: string;
       description: string;
       assignedAgent: "dev" | "growth" | "pm";
       priority: "critical" | "high" | "medium" | "low";
-      origin: "onboarding";
     }) => {
-      await ctx.db.insert("autopilotTasks", {
+      await ctx.db.insert("autopilotWorkItems", {
         organizationId: args.organizationId,
-        title: task.title,
-        description: task.description,
-        status: "pending",
-        priority: task.priority,
-        assignedAgent: task.assignedAgent,
-        origin: task.origin,
-        autonomyLevel: "review_required",
-        retryCount: 0,
-        maxRetries: 3,
+        type: "task",
+        title: item.title,
+        description: item.description,
+        status: "todo",
+        priority: item.priority,
+        assignedAgent: item.assignedAgent,
+        needsReview: true,
+        reviewType: "task_approval",
+        createdBy: "onboarding",
         createdAt: now,
+        updatedAt: now,
       });
     };
 
-    await createTask({
+    await createWorkItem({
       title: "Implement Reflet Feedback Widget",
       description: `Add the Reflet feedback widget to the product at ${args.repoUrl}. Users can submit feedback directly from the app.`,
       assignedAgent: "dev",
       priority: "high",
-      origin: "onboarding",
     });
 
-    await createTask({
+    await createWorkItem({
       title: "Implement Reflet Changelog",
       description: `Add the Reflet changelog component to the product at ${args.repoUrl}. Users see what shipped without leaving the product.`,
       assignedAgent: "dev",
       priority: "high",
-      origin: "onboarding",
     });
 
-    await createTask({
+    await createWorkItem({
       title: "Market Analysis",
       description:
         "Analyze the competitive landscape. Who are the competitors? What's the market size? What's the positioning?",
       assignedAgent: "growth",
       priority: "medium",
-      origin: "onboarding",
     });
 
-    await createTask({
+    await createWorkItem({
       title: "SEO Analysis",
       description:
         "Audit the current SEO state. Meta tags, sitemap, robots.txt, page speed, content gaps.",
       assignedAgent: "growth",
       priority: "medium",
-      origin: "onboarding",
     });
 
-    await ctx.db.insert("autopilotInboxItems", {
+    await ctx.db.insert("autopilotDocuments", {
       organizationId: args.organizationId,
-      type: "ceo_report",
+      type: "report",
       title: "Welcome to Reflet Autopilot",
-      summary: `I've started analyzing ${args.repoUrl}. 4 primary onboarding tasks have been created. I'll report back with findings from the market analysis shortly.`,
-      status: "auto_approved",
-      priority: "medium",
+      content: `I've started analyzing ${args.repoUrl}. 4 primary onboarding tasks have been created. I'll report back with findings from the market analysis shortly.`,
+      tags: ["onboarding"],
       sourceAgent: "system",
+      status: "published",
+      needsReview: false,
       createdAt: now,
+      updatedAt: now,
     });
 
     return null;
@@ -91,7 +89,7 @@ export const createPrimaryOnboardingTasks = internalMutation({
 });
 
 /**
- * Create the initial PM analysis task for a new repo.
+ * Create the initial PM analysis work item for a new repo.
  */
 export const createAnalysisTask = internalMutation({
   args: {
@@ -99,34 +97,37 @@ export const createAnalysisTask = internalMutation({
     repoUrl: v.string(),
     createdAt: v.number(),
   },
-  returns: v.id("autopilotTasks"),
+  returns: v.id("autopilotWorkItems"),
   handler: async (ctx, args) => {
-    const taskId = await ctx.db.insert("autopilotTasks", {
+    const workItemId = await ctx.db.insert("autopilotWorkItems", {
       organizationId: args.organizationId,
+      type: "task",
       title: "Initial repository analysis",
       description: `Analyze the repository at ${args.repoUrl} to identify improvement opportunities, security issues, and growth potential.`,
-      status: "pending",
+      status: "todo",
       priority: "high",
       assignedAgent: "pm",
-      origin: "pm_analysis",
-      autonomyLevel: "review_required",
-      retryCount: 0,
-      maxRetries: 3,
+      needsReview: true,
+      reviewType: "task_approval",
+      createdBy: "system",
       createdAt: args.createdAt,
+      updatedAt: args.createdAt,
     });
 
-    await ctx.db.insert("autopilotInboxItems", {
+    await ctx.db.insert("autopilotDocuments", {
       organizationId: args.organizationId,
-      type: "task_approval",
+      type: "report",
       title: "Repository analysis started",
-      summary: `Autopilot is analyzing ${args.repoUrl} to generate initial improvement tasks.`,
-      status: "auto_approved",
-      priority: "medium",
+      content: `Autopilot is analyzing ${args.repoUrl} to generate initial improvement tasks.`,
+      tags: ["onboarding", "analysis"],
       sourceAgent: "system",
-      relatedTaskId: taskId,
+      status: "published",
+      needsReview: false,
+      linkedWorkItemId: workItemId,
       createdAt: args.createdAt,
+      updatedAt: args.createdAt,
     });
 
-    return taskId;
+    return workItemId;
   },
 });

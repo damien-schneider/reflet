@@ -62,17 +62,17 @@ interface TaskStats {
     medium: number;
     low: number;
   };
-  completed: number;
-  failed: number;
+  cancelled: number;
+  done: number;
   inProgress: number;
-  pending: number;
+  todo: number;
   total: number;
 }
 
 export const formatTaskStats = (stats: TaskStats): string => {
   return `
 - Total Tasks: ${stats.total}
-- Pending: ${stats.pending} | In Progress: ${stats.inProgress} | Completed: ${stats.completed} | Failed: ${stats.failed}
+- Todo: ${stats.todo} | In Progress: ${stats.inProgress} | Done: ${stats.done} | Cancelled: ${stats.cancelled}
 - By Priority: Critical (${stats.byPriority.critical}) | High (${stats.byPriority.high}) | Medium (${stats.byPriority.medium}) | Low (${stats.byPriority.low})
   `.trim();
 };
@@ -144,11 +144,7 @@ By status: ${Object.entries(ceoContext.feedbackStats.byStatus)
         .map(([cat, count]) => `${cat} (${count})`)
         .join(", ")}
 
-INBOX SUMMARY:
-Pending items: ${ceoContext.pendingInboxCount}
-By type: ${Object.entries(ceoContext.inboxItemsByType)
-        .map(([type, count]) => `${type} (${count})`)
-        .join(", ")}
+PENDING REVIEW ITEMS: ${ceoContext.pendingReviewCount}
 
 Generate a report that synthesizes this data into actionable insights.`;
 
@@ -169,19 +165,19 @@ Generate a report that synthesizes this data into actionable insights.`;
         reportType: args.reportType,
       });
 
-      await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+      await ctx.runMutation(internal.autopilot.documents.createDocument, {
         organizationId: args.organizationId,
-        type: "ceo_report",
+        type: "report",
         title: reportOutput.title,
-        summary: reportOutput.executiveSummary,
         content: reportContent,
-        sourceAgent: "system" as const,
-        priority: "high" as const,
+        sourceAgent: "system",
+        needsReview: true,
+        reviewType: "ceo_report",
+        tags: ["report", args.reportType],
         metadata: JSON.stringify({
           reportType: args.reportType,
           healthScore: reportOutput.overallHealthScore,
         }),
-        autoApproved: true,
       });
 
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {

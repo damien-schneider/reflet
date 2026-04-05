@@ -1,19 +1,17 @@
 /**
- * Inbox queries — list items and get counts.
+ * Inbox queries — unified view of work items + documents needing review.
  */
 
 import { v } from "convex/values";
 import { query } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
-import { inboxItemStatus, inboxItemType } from "../schema/validators";
 import { requireOrgMembership } from "./auth";
 
 export const listInboxItems = query({
   args: {
     organizationId: v.id("organizations"),
     limit: v.optional(v.number()),
-    status: v.optional(inboxItemStatus),
-    type: v.optional(inboxItemType),
+    source: v.optional(v.union(v.literal("work"), v.literal("document"))),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -21,35 +19,44 @@ export const listInboxItems = query({
 
     const limit = args.limit ?? 50;
 
-    if (args.status) {
-      const { status } = args;
-      return ctx.db
-        .query("autopilotInboxItems")
-        .withIndex("by_org_status", (q) =>
-          q.eq("organizationId", args.organizationId).eq("status", status)
-        )
-        .order("desc")
-        .take(limit);
-    }
+    const workItems =
+      args.source === "document"
+        ? []
+        : await ctx.db
+            .query("autopilotWorkItems")
+            .withIndex("by_org_review", (q) =>
+              q
+                .eq("organizationId", args.organizationId)
+                .eq("needsReview", true)
+            )
+            .order("desc")
+            .take(limit);
 
-    if (args.type) {
-      const { type } = args;
-      return ctx.db
-        .query("autopilotInboxItems")
-        .withIndex("by_org_type", (q) =>
-          q.eq("organizationId", args.organizationId).eq("type", type)
-        )
-        .order("desc")
-        .take(limit);
-    }
+    const documents =
+      args.source === "work"
+        ? []
+        : await ctx.db
+            .query("autopilotDocuments")
+            .withIndex("by_org_review", (q) =>
+              q
+                .eq("organizationId", args.organizationId)
+                .eq("needsReview", true)
+            )
+            .order("desc")
+            .take(limit);
 
-    return ctx.db
-      .query("autopilotInboxItems")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .order("desc")
-      .take(limit);
+    const unified = [
+      ...workItems.map((item) => ({
+        ...item,
+        _source: "work" as const,
+      })),
+      ...documents.map((doc) => ({
+        ...doc,
+        _source: "document" as const,
+      })),
+    ].sort((a, b) => b.updatedAt - a.updatedAt);
+
+    return unified.slice(0, limit);
   },
 });
 
@@ -59,21 +66,24 @@ export const getInboxCounts = query({
     const user = await getAuthUser(ctx);
     await requireOrgMembership(ctx, args.organizationId, user._id);
 
-    const items = await ctx.db
-      .query("autopilotInboxItems")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+    const workItems = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
       )
       .collect();
 
-    const counts: Record<string, number> = {};
-    let total = 0;
+    const documents = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
+      )
+      .collect();
 
-    for (const item of items) {
-      counts[item.type] = (counts[item.type] ?? 0) + 1;
-      total += 1;
-    }
-
-    return { counts, total };
+    return {
+      workItemCount: workItems.length,
+      documentCount: documents.length,
+      total: workItems.length + documents.length,
+    };
   },
 });

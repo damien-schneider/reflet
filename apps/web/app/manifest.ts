@@ -2,16 +2,16 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Reflet - Product Feedback & Roadmap Platform",
+    name: "Reflet — Autonomous AI Company Platform",
     short_name: "Reflet",
     description:
-      "Collect user feedback, prioritize features with voting, and share transparent roadmaps. Build products your users love.",
+      "10 AI agents that autonomously run your product — from market research to shipped code to sales outreach.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#ffffff",
     orientation: "portrait-primary",
-    categories: ["business", "productivity"],
+    categories: ["business", "productivity", "developer_tools"],
     icons: [
       {
         src: "/web-app-manifest-192x192.png",

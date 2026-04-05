@@ -219,11 +219,12 @@ export const generateCEOResponseAsync = internalAction({
     const taskLines = detailed.taskSummaries
       .map(
         (t: {
-          agent: string;
+          agent?: string;
           priority: string;
           status: string;
           title: string;
-        }) => `  - [${t.status}] ${t.title} (${t.priority}, ${t.agent})`
+        }) =>
+          `  - [${t.status}] ${t.title} (${t.priority}, ${t.agent ?? "unassigned"})`
       )
       .join("\n");
 
@@ -241,9 +242,9 @@ export const generateCEOResponseAsync = internalAction({
             .join("\n")
         : "  None";
 
-    const inboxLines =
-      detailed.inboxSummaries.length > 0
-        ? detailed.inboxSummaries
+    const reviewLines =
+      detailed.reviewSummaries.length > 0
+        ? detailed.reviewSummaries
             .map(
               (i: { priority: string; title: string; type: string }) =>
                 `  - [${i.type}] ${i.title} (${i.priority})`
@@ -255,7 +256,7 @@ export const generateCEOResponseAsync = internalAction({
 Autonomy mode: ${detailed.autonomyMode}
 
 TASK OVERVIEW:
-Total: ${ceoContext.taskStats.total} | Pending: ${ceoContext.taskStats.pending} | In Progress: ${ceoContext.taskStats.inProgress} | Completed: ${ceoContext.taskStats.completed} | Failed: ${ceoContext.taskStats.failed}
+Total: ${ceoContext.taskStats.total} | Todo: ${ceoContext.taskStats.todo} | In Progress: ${ceoContext.taskStats.inProgress} | Done: ${ceoContext.taskStats.done} | Cancelled: ${ceoContext.taskStats.cancelled}
 Priority: Critical (${ceoContext.taskStats.byPriority.critical}), High (${ceoContext.taskStats.byPriority.high}), Medium (${ceoContext.taskStats.byPriority.medium}), Low (${ceoContext.taskStats.byPriority.low})
 
 RECENT TASKS:
@@ -267,8 +268,8 @@ ${agentLines}
 RECENT ERRORS:
 ${errorLines}
 
-PENDING INBOX (${ceoContext.pendingInboxCount} total):
-${inboxLines}
+PENDING REVIEW (${ceoContext.pendingReviewCount} total):
+${reviewLines}
 
 ACTIVITY: ${ceoContext.recentActivityCount} actions in last 7 days
 FEEDBACK: ${ceoContext.feedbackStats.total} active items

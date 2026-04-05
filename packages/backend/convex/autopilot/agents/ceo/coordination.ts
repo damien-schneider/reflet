@@ -57,7 +57,7 @@ const coordinationSchema = z.object({
 });
 
 type CoordinationOutput = z.infer<typeof coordinationSchema>;
-type CoordinationTask = Doc<"autopilotTasks">;
+type CoordinationTask = Doc<"autopilotWorkItems">;
 
 // ============================================
 // HELPERS
@@ -66,14 +66,16 @@ type CoordinationTask = Doc<"autopilotTasks">;
 function countTasksByAgent(tasks: CoordinationTask[]): Record<string, number> {
   const taskCountsByAgent: Record<string, number> = {};
   for (const task of tasks) {
-    taskCountsByAgent[task.assignedAgent] =
-      (taskCountsByAgent[task.assignedAgent] ?? 0) + 1;
+    if (task.assignedAgent) {
+      taskCountsByAgent[task.assignedAgent] =
+        (taskCountsByAgent[task.assignedAgent] ?? 0) + 1;
+    }
   }
   return taskCountsByAgent;
 }
 
 function buildPriorityOverrideCandidates(tasks: CoordinationTask[]) {
-  const validTaskIds = new Map<string, Id<"autopilotTasks">>();
+  const validTaskIds = new Map<string, Id<"autopilotWorkItems">>();
   for (const task of tasks) {
     validTaskIds.set(task._id, task._id);
   }
@@ -90,7 +92,7 @@ async function applyPriorityOverrides(
   ctx: ActionCtx,
   organizationId: Id<"organizations">,
   overrides: CoordinationOutput["priorityOverrides"],
-  validTaskIds: Map<string, Id<"autopilotTasks">>
+  validTaskIds: Map<string, Id<"autopilotWorkItems">>
 ) {
   for (const override of overrides) {
     const taskId = validTaskIds.get(override.taskId);
@@ -197,7 +199,7 @@ export const runCEOCoordination = internalAction({
 
       const pendingTasks = await ctx.runQuery(
         internal.autopilot.tasks.getTasksByOrg,
-        { organizationId: args.organizationId, status: "pending" }
+        { organizationId: args.organizationId, status: "todo" }
       );
       const inProgressTasks = await ctx.runQuery(
         internal.autopilot.tasks.getTasksByOrg,
@@ -247,7 +249,7 @@ ${
 TASK STATS:
 ${formatTaskStats(ceoContext.taskStats)}
 
-PENDING INBOX ITEMS: ${ceoContext.pendingInboxCount}
+PENDING REVIEW ITEMS: ${ceoContext.pendingReviewCount}
 
 VALID TASK IDS FOR PRIORITY OVERRIDES:
 ${priorityOverrideCandidates.summary || "None"}
@@ -287,28 +289,30 @@ Assess each agent, identify conflicts, suggest priority changes, and raise alert
         enabledAgents
       );
       if (starvedAgents.length > 0) {
-        await ctx.runMutation(internal.autopilot.notes.createNote, {
+        await ctx.runMutation(internal.autopilot.documents.createDocument, {
           organizationId: args.organizationId,
-          type: "alert",
-          category: "coordination",
+          type: "note",
           title: `Starvation detected: ${starvedAgents.join(", ")}`,
-          description: `These agents have 0 activity in the last 7 days: ${starvedAgents.join(", ")}. They may need work assigned or may be stuck.`,
+          content: `These agents have 0 activity in the last 7 days: ${starvedAgents.join(", ")}. They may need work assigned or may be stuck.`,
           sourceAgent: "system",
-          priority: "high",
+          needsReview: true,
+          reviewType: "coordination_alert",
+          tags: ["coordination", "starvation"],
         });
       }
 
       // Detect bottlenecks (many pending, 0 in-progress)
       const bottlenecks = detectBottlenecks(pendingByAgent, inProgressByAgent);
       for (const bottleneck of bottlenecks) {
-        await ctx.runMutation(internal.autopilot.notes.createNote, {
+        await ctx.runMutation(internal.autopilot.documents.createDocument, {
           organizationId: args.organizationId,
-          type: "alert",
-          category: "coordination",
+          type: "note",
           title: `Bottleneck: ${bottleneck.agent} has ${bottleneck.pending} pending tasks, 0 in progress`,
-          description: `Agent "${bottleneck.agent}" has ${bottleneck.pending} tasks waiting but none being worked on. This agent may be blocked or needs attention.`,
+          content: `Agent "${bottleneck.agent}" has ${bottleneck.pending} tasks waiting but none being worked on. This agent may be blocked or needs attention.`,
           sourceAgent: "system",
-          priority: "high",
+          needsReview: true,
+          reviewType: "coordination_alert",
+          tags: ["coordination", "bottleneck"],
         });
       }
 

@@ -48,49 +48,44 @@ Living documents that capture who the company is, what it does, and where it's g
 
 Every agent reads the knowledge base. No agent acts without understanding the company context first. The user can edit any document at any time — user edits are protected for 72 hours, preventing agents from overwriting the President's decisions.
 
-### Work Board (structured records)
+### Work Board (unified work items)
 
-Operational data with strict schemas and exclusive ownership. Like a company's task board, CRM, and issue tracker — everyone can see everything, but only the owner writes.
+All work — from strategic initiatives down to individual dev tasks — lives in one table (`autopilotWorkItems`) with parent/child relationships. Like a Linear board where initiatives contain stories, stories contain specs, and specs become tasks.
 
-| Data | Owned by | Purpose |
-|------|----------|---------|
-| Initiatives | PM | Strategic themes with timelines and success metrics |
-| User Stories | PM | "As a [persona], I want..." with acceptance criteria |
-| Technical Specs | CTO | Implementation plans, API contracts, DB changes |
-| Pull Requests | Dev | Code changes with CI status |
-| Competitors | Growth | Structured CRM of competitors (name, URL, pricing, strengths, weaknesses) |
-| Leads & Contacts | Sales | Prospects, pipeline stages, outreach history |
-| Security Findings | CTO | Vulnerabilities with severity and remediation status |
-| Support Threads | Support | User conversations with sentiment and escalation |
-| Content Items | Growth | Platform-specific drafts with publish status |
-| Architecture Decisions | CTO | ADR-format records of technical choices |
+| Type | Created by | Parent | Purpose |
+|------|-----------|--------|---------|
+| Initiative | PM | — | Strategic themes with timelines and success metrics |
+| Story | PM | Initiative | "As a [persona], I want..." with acceptance criteria |
+| Spec | CTO | Story | Implementation plans, API contracts, DB changes |
+| Task | Dev / PM / User | Story or Spec | Code changes, executed via coding adapter |
+| Bug | CTO / Support | — | Defects with severity and fix status |
 
-### Documents (Notion-like flexible content)
+Every work item has a status (`backlog` → `todo` → `in_progress` → `in_review` → `done`), a priority, and an assigned agent. When an agent needs the President's approval, it sets `needsReview: true` — the item appears in the Inbox.
 
-Any agent can create documents of any type — research reports, analysis, proposals, battlecards, briefs. Like Notion pages that can be tagged, searched, and linked to structured records.
+### Documents (unified content)
 
-- **Type** is freeform (agents choose or create: "market_research", "prospect_brief", "sales_battlecard", "architecture_analysis", etc.)
-- **Tags** are freeform (agents create tags as needed)
-- **Linked** to any structured record (a market research doc linked to a competitor, a prospect brief linked to a lead)
-- **Status**: draft → published → archived
+All content — research, notes, blog posts, emails, support threads, battlecards — lives in one table (`autopilotDocuments`) with type/tag filtering. Like a company's shared drive where every document is typed and tagged.
 
-This is where Growth's market research reports live, Sales' battlecards, PM's analysis notes, and anything else agents produce that doesn't fit a structured table. The Documents page in the UI provides a Notion-like browsing experience with filtering by type, tags, and source agent.
+| Type | Created by | Purpose |
+|------|-----------|---------|
+| Market Research | Growth | Analysis with relevance scores, source links, key findings |
+| Blog Post / Social Content | Growth | Platform-specific drafts (Reddit, LinkedIn, Twitter, HN) |
+| Note | Any agent | Quick observations and findings (replaces the old notes system) |
+| Email | Sales / Support | Outreach drafts and received emails |
+| Support Thread | Support | User conversations with draft/approved replies |
+| Battlecard | Sales | Competitor positioning documents |
+| Report | CEO | Status and coordination reports |
+| ADR | CTO | Architecture decision records |
 
-### Notes (informal communication)
+Documents have tags for filtering, optional links to work items/competitors/leads, and a `needsReview` flag for inbox integration. Growth content includes platform metadata (target URL, publish status) and research includes relevance scores.
 
-Agents leave notes on the board — quick observations, findings, ideas. Like dropping a message in a shared Slack channel. Each agent can only write notes **within its own domain of expertise**, keeping the information clean and trustworthy.
+### Specialized data
 
-| Agent | Can write notes about |
-|-------|----------------------|
-| Growth | Market findings, competitor moves, distribution angles, content opportunities |
-| Sales | Prospect patterns, feature requests from prospects, pipeline observations |
-| Support | User patterns, repeated questions, sentiment shifts |
-| CTO | Technical risks, architecture concerns, migration needs, vulnerabilities, CVEs, security risks, tech debt, code health, pattern violations |
-| Dev | Bugs found during coding, code quality observations |
-| CEO | Cross-agent observations, President directives relayed to team |
-| PM | Product priorities, roadmap decisions, triage outcomes |
+Some data is genuinely distinct from generic work items or documents:
 
-Notes are ephemeral and lightweight — they feed into PM's triage cycle. For longer-form analysis, agents create Documents instead.
+- **Competitors** — Structured CRM (name, URL, pricing, features, strengths, weaknesses). Discovered by Growth, consumed by Sales and PM.
+- **Leads & Contacts** — Sales pipeline with stages (discovered → contacted → replied → demo → converted), follow-up scheduling, and scoring. Managed by Sales.
+- **Revenue Snapshots** — Stripe MRR/ARR/churn metrics captured daily.
 
 ## The agents
 

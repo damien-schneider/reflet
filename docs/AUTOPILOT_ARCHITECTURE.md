@@ -8,8 +8,8 @@ Living document — maintain whenever the architecture changes.
 2. **Condition-driven, not cron-driven.** Agents wake up when there's a reason to work, not on fixed timers. A lightweight heartbeat checks conditions and wakes agents when needed.
 3. **Shared board, not function calls.** Agents communicate through data on a shared board (the database). No agent calls another agent directly.
 4. **Guards, not gatekeepers.** Cost limits, autonomy checks, and rate limits are middleware that wraps every execution — not a centralized dispatcher.
-5. **Self-cleaning by default.** Each agent tidies its own domain when it wakes up. CEO handles system-wide health.
-6. **Never block, always degrade.** The system always has a next action. When resources are constrained, it does less — never nothing.
+5. **Two unified models.** All work is in `autopilotWorkItems` (with parent/child hierarchy). All content is in `autopilotDocuments` (with type/tag filtering). No redundant tables.
+6. **Inbox as a view, not a table.** Items needing the President's review are flagged with `needsReview: true` on work items and documents — not stored in a separate inbox table.
 
 ## Agent Hierarchy
 
@@ -17,7 +17,7 @@ Living document — maintain whenever the architecture changes.
 President (User)
   └── CEO — Strategy, coordination, relays President directives
         ├── PM — Product decisions, roadmap, stories (consumes Growth's research)
-        │     └── CTO — Technical specs, architecture review, security review
+        │     └── CTO — Technical specs from PM's stories
         │           └── Dev — Code from CTO's specs
         ├── Growth — Market research + distribution (feeds PM with findings)
         ├── Sales — Prospecting + pipeline (reads Growth's findings + PM's ICP)
@@ -26,9 +26,11 @@ President (User)
 
 ## The Shared Board
 
-All agents read from and write to the same database. Three types of data:
+All agents read from and write to the same database. Two unified models + specialized tables:
 
-### Knowledge Base (company wiki — slow-changing)
+### Knowledge Base — `autopilotKnowledgeDocs` + `autopilotKnowledgeDocVersions`
+
+7 living documents that capture who the company is. Auto-generated at onboarding, maintained by owning agents.
 
 | Document | Owner | Read by |
 |----------|-------|---------|
@@ -40,332 +42,181 @@ All agents read from and write to the same database. Three types of data:
 | Goals & OKRs | CEO | PM, everyone |
 | Product Roadmap | PM | CEO, CTO, Growth |
 
-**Rules:**
-- Versioned (max 10 versions per doc)
-- User edits protected 72h — agents can't overwrite
-- Authority: President > CEO > PM > individual agents
-- Staleness alerts when docs aren't updated within threshold
-- **Change cascading**: when a doc changes, all dependent data (downstream docs, records, documents) gets flagged as stale. Agents respond automatically on their next wake.
-- **No silent fallbacks**: if a required knowledge doc is missing, agents halt and alert CEO — they never use generic placeholder text
+**Rules:** Versioned (max 10). User edits protected 72h. Change cascading flags downstream data as stale. No silent fallbacks — agents halt if missing.
 
-### Work Board (structured records — active work)
+### Work Board — `autopilotWorkItems` (unified)
 
-| Record | Owner (write) | Wake condition for consumers |
-|--------|--------------|------------------------------|
-| Initiatives | PM | CTO checks for stories to spec |
-| User Stories | PM | CTO checks for stories without specs |
-| Technical Specs | CTO | Dev checks for specs without PRs |
-| Pull Requests | Dev | CTO reviews on creation |
-| Competitors | Growth | PM reads for product decisions, Sales for positioning |
-| Leads & Contacts | Sales | — |
-| Security Findings | CTO | Dev when critical fixes needed |
-| Support Threads | Support | PM reads for patterns |
-| Content Items | Growth | — (goes to inbox) |
-| Architecture Decisions | CTO | Dev reference |
+All work lives in one table with parent/child relationships via `parentId`.
 
-### Documents (Notion-like flexible content)
+| Type | Created by | Parent | Consumed by |
+|------|-----------|--------|-------------|
+| `initiative` | PM | — | CTO looks for child stories |
+| `story` | PM | initiative | CTO creates spec from it |
+| `spec` | CTO | story | Dev builds from it |
+| `task` | Dev / PM / User | story or spec | Dev executes via coding adapter |
+| `bug` | CTO / Support | — | Dev fixes |
 
-Any agent can create freeform documents — research reports, analysis, proposals, battlecards. Like Notion pages linked to structured records.
+**Status flow:** `backlog` → `todo` → `in_progress` → `in_review` → `done` / `cancelled`
 
-| Field | Description |
-|-------|-------------|
-| type | Freeform string (e.g. "market_research", "sales_battlecard", "architecture_analysis") |
-| tags | Freeform array (agents create tags as needed) |
-| linkedTable + linkedId | Optional link to any structured record (competitor, lead, initiative) |
-| status | draft → published → archived |
+**Review:** When `needsReview: true`, item appears in the President's Inbox.
 
-Documents are the primary output of Growth's market research (full reports), Sales' battlecards, PM's analysis. The UI provides Notion-like browsing with filters by type, tags, and source agent.
+### Documents — `autopilotDocuments` (unified)
 
-### Notes (domain-restricted agent communication)
+All content lives in one table with type/tag filtering.
 
-Quick observations and findings. Each agent writes only in its domain.
+| Type | Created by | Purpose |
+|------|-----------|---------|
+| `market_research` | Growth | Analysis with relevance score + source links |
+| `blog_post` / `reddit_reply` / `linkedin_post` / `twitter_post` / `hn_comment` / `changelog` | Growth | Distribution content |
+| `note` | Any agent | Quick observations |
+| `email` | Sales / Support | Email drafts and received emails |
+| `support_thread` | Support | Support conversations (messages in metadata) |
+| `battlecard` | Sales | Competitor positioning |
+| `report` | CEO | Status/coordination reports |
+| `adr` | CTO | Architecture decision records |
 
-| Agent | Can write notes about |
-|-------|----------------------|
-| Growth | Market findings, competitor moves, distribution angles |
-| Sales | Prospect patterns, feature requests from prospects |
-| Support | User patterns, repeated questions, sentiment shifts |
-| CTO | Technical risks, architecture concerns, migration needs, vulnerabilities, CVEs, security risks, tech debt, code health, pattern violations |
-| Dev | Bugs found during coding, code quality observations |
-| CEO | Cross-agent observations, President directives to team |
-| PM | Product priorities, roadmap decisions, triage outcomes |
+**Review:** When `needsReview: true`, item appears in the President's Inbox.
 
-**Rules:**
-- Ephemeral — auto-archived after 30 days if not acted on
-- Deduplicated by content similarity
-- For longer-form analysis, agents create Documents instead of notes
+### Specialized Tables
 
-## How Agents Wake Up (Condition-Driven)
+| Table | Purpose |
+|-------|---------|
+| `autopilotCompetitors` | Competitor CRM (name, URL, pricing, features, strengths, weaknesses) |
+| `autopilotLeads` | Sales pipeline (name, email, company, score, stage, follow-ups) |
+| `autopilotRevenueSnapshots` | Stripe MRR/ARR/churn |
+| `autopilotRepoAnalysis` | Onboarding repo analysis |
+| `autopilotActivityLog` | Unified event log |
+| `autopilotRuns` | Code execution runs (linked to work items) |
+| `autopilotAgentThreads` + `autopilotAgentMessages` | CEO chat |
+| `autopilotConfig` + `autopilotAdapterCredentials` | Org configuration |
+| `autopilotRoutines` | User-defined scheduled tasks |
 
-A lightweight heartbeat runs every few minutes. For each agent, it checks wake conditions. If met, the agent runs. If not, it sleeps.
+## How Agents Wake Up
 
-| Agent | Wakes up when |
+**Purely work-driven.** A heartbeat runs every 3 minutes. For each agent, it checks board state — never time-based fallbacks. Agents wake ONLY when there is actual work on the shared board.
+
+The pipeline is self-sustaining: Growth → documents → PM → stories → CTO → specs → Dev → ships → Growth (content about shipped features).
+
+The company stops ONLY when:
+1. Waiting for President approval (items with `needsReview: true`)
+2. Plan limits or credits exhausted (guards block execution)
+3. Pipeline is full (cap reached, waiting for existing work to complete)
+
+| Agent | Wakes up when (board state) |
 |-------|---------------|
-| **CEO** | President sent a message, OR coordination check due (every ~4h), OR report due |
-| **PM** | Planned stories running low (< threshold), OR new notes from agents, OR roadmap stale, OR President directive via CEO |
-| **CTO** | User stories exist without technical specs |
-| **Dev** | Technical specs exist without PRs, OR CI fix needed |
-| **Growth** | Shipped features without content, OR market research older than a few days |
-| **Sales** | New notes about prospects, OR follow-ups due, OR Growth found new leads |
-| **Support** | New conversation received (event-driven), OR daily check for missed items |
+| **PM** | No initiatives exist (bootstrap), OR new draft notes from other agents, OR story count below threshold |
+| **CTO** | Stories in "todo" status (need specs) |
+| **Dev** | Approved specs, OR failed runs to retry |
+| **Growth** | No research docs exist (bootstrap), OR shipped features without content |
+| **Sales** | Leads in "discovered" status (need outreach), OR leads with overdue follow-ups |
+| **CEO** | Items stuck in review > 24h (bottleneck), OR recent agent errors (coordination needed) |
+| **Support** | New support_thread documents in draft status |
 
-**Key property:** No agent depends on another agent to "tell it" to work. Each checks its own conditions against the shared board.
+**Anti-loop protection:** PM checks pipeline capacity before creating work. If the pipeline is full (todo + in_progress >= cap), PM does not wake. Each agent marks its inputs as processed (e.g., PM marks notes as "published") so they don't re-trigger.
 
 ## Agent Execution Flow
 
-Every agent execution follows the same pattern:
-
 ```
-1. GUARDS     — Cost check → Autonomy check → Rate limit → Circuit breaker
-2. KNOWLEDGE  — Load required knowledge docs. If missing → HALT + alert CEO. Never guess.
-3. STALENESS  — Check if own domain data is flagged stale (knowledge changed). If so → archive stale data, re-process.
-4. CLEAN      — Cancel own stale tasks, retry own failed items, archive old work
-5. CONTEXT    — Load knowledge base summaries + domain-specific records + recent notes/documents
-6. WORK       — Check domain conditions → decide what to do → execute via LLM
-7. OUTPUT     — Write records/notes/documents/inbox items to the shared board
-8. LOG        — Record activity + cost
+1. GUARDS     — Cost → Autonomy → Rate limit → Circuit breaker
+2. KNOWLEDGE  — Load required knowledge docs. If missing → HALT.
+3. CONTEXT    — Knowledge summaries + domain work items + recent documents
+4. WORK       — LLM call → produce output
+5. OUTPUT     — Write work items / documents (with needsReview if needed)
+6. LOG        — Record in autopilotActivityLog
 ```
 
-## Guards (Middleware)
+## Inbox = Filtered View
 
-Guards wrap every agent execution. They are NOT an orchestrator — they're checks, like building security badges.
+The inbox queries `autopilotWorkItems` + `autopilotDocuments` where `needsReview === true`. Approving patches `needsReview: false` on the source record. No separate inbox table.
 
-| Guard | What it checks | On failure |
-|-------|---------------|------------|
-| Cost Guard | Agent budget remaining? Global budget? | Skip + log |
-| Autonomy Gate | Mode = stopped? Action needs approval? | Skip or route to inbox |
-| Rate Limiter | Max LLM calls/hour exceeded? | Backoff + retry later |
-| Circuit Breaker | 5+ agent failures in 10 min? | Pause all 30 min + alert President |
-
-## Agent Context Loading
-
-Every agent loads company context before its LLM call:
-
-| Context tier | ~Tokens | Contents |
-|-------------|---------|----------|
-| Always loaded | 2K | Product Definition (summary), Goals, President directives |
-| Domain-specific | 4K | Agent's own knowledge docs (full), relevant records |
-| Situational | 3K | Recent notes (relevant to domain), active initiatives |
-| Task-specific | 4K | The specific work item being processed |
-| **Total ceiling** | **~13K** | Before the agent's own system prompt |
-
-## CEO: The Relay + Coordinator
-
-The CEO has two modes:
-
-**Event-driven (President interaction):**
-When the President sends a message via CEO chat, the CEO:
-1. Interprets the directive
-2. Updates Goals/strategy docs if needed
-3. Creates notes or stories directed at specific agents
-4. Responds to the President with what actions were taken
-
-**Periodic (coordination check):**
-Every ~4 hours, the CEO:
-1. Checks for bottlenecks (stories piling up without specs?)
-2. Checks for starvation (any agent with 0 work for 3+ days?)
-3. Checks for conflicts (contradictory knowledge docs?)
-4. Generates reports for the President
-
-## PM + Growth Collaboration
-
-PM doesn't do market research. Growth does. PM consumes Growth's findings to make product decisions.
+## PM + Growth Pipeline
 
 ```
-Growth (wakes when research is stale):
-  1. Searches Reddit, HN, GitHub trending, competitor repos
-  2. Leaves notes: "market_opportunity", "competitive_move", etc.
-  3. Creates content for shipped features → inbox
-
-PM (wakes when stories are low or new notes exist):
-  1. Reads Growth's notes + user feedback + support patterns
-  2. Thinks: what use cases / features / improvements / fixes?
-  3. Creates initiatives + user stories with priorities
-  4. Updates roadmap
-
-CTO (wakes when stories without specs exist):
-  1. Reads PM's user stories
-  2. Writes technical specs
-  
-Dev (wakes when specs without PRs exist):
-  1. Reads CTO's specs
-  2. Builds PRs via coding adapter
+Growth → documents (type: "note", "market_research") → PM reads them
+PM → work items (type: "initiative", "story") → CTO reads them
+CTO → work items (type: "spec", parent: story) → Dev reads them
+Dev → executes code via adapter → updates work item with prUrl
 ```
 
-## Onboarding
+## Navigation (8 items)
 
-```
-1. User connects GitHub repo
-2. System analyzes repo → generates Company Brief (7 knowledge docs)
-3. Agents start immediately (Growth researches market)
-4. User reviews + edits + approves Company Brief
-5. Approval unlocks full pipeline (PM creates stories, CTO specs, Dev builds)
-```
+| Page | Purpose |
+|------|---------|
+| Dashboard | Stats, agent cards, activity feed, quick actions |
+| Board | Unified work items — list/kanban views |
+| Documents | All content — research, notes, emails, blog posts, support |
+| Knowledge | 7 company wiki docs |
+| Inbox | Filtered view of items needing review |
+| Growth | Market research + competitors (domain lens on Documents) |
+| Sales | Leads pipeline + CRM |
+| Settings | Config, adapters, limits, billing |
 
-No hard gate. Agents do background work while waiting for approval.
+## Guards
 
-## Phased Activation
-
-| Agent | Activates when | Manual override |
-|-------|---------------|-----------------|
-| CEO, PM, CTO, Dev | Always active | — |
-| Growth | First feature shipped | "Hire" button |
-| Sales | ICP defined + content published | "Hire" button |
-| Support | Support channel configured | "Hire" button |
-
-Dormant agents still READ the board (build context). Deactivation pauses, not deletes.
+| Guard | Checks | On failure |
+|-------|--------|------------|
+| Cost Guard | Daily cap remaining? | Skip + log |
+| Autonomy Gate | Mode = stopped? | Skip |
+| Rate Limiter | Max calls/hour? | Backoff |
+| Circuit Breaker | 5+ fails in 10min? | Pause 30min + alert |
 
 ## Hard Limits
 
-| Limit | Default | Configurable | Purpose |
-|-------|---------|-------------|---------|
-| Active initiatives | 3 | Yes (1-10) | Focus — finish before starting |
-| Stories per initiative | 20 | No | Split if larger |
-| Active stories per initiative | 5 | Yes (3-10) | WIP control |
-| Open PRs | 3 | Yes (1-10) | Review bottleneck prevention |
-| Pending tasks per agent | 3 | Yes (1-10) | Anti-hogging |
-| Sales outreach per day | 10 | Yes (0-50) | Reputation |
-| Content items per day | 5 | Yes (0-20) | Quality > quantity |
-| LLM calls per agent per hour | 10 | No | Loop prevention |
-| Daily cost cap | $20 | Yes (by plan) | Budget |
-| Agent cost rate (5 min) | $2 max | No | Runaway prevention |
-| Task retries | 3 | No | Backoff: 1min, 5min, 30min |
-| Circuit breaker | 5 fails / 10min | No | Cascade prevention |
-| Note retention (unacted) | 30 days | No | Hygiene |
-| Knowledge doc versions | 10 | No | Storage |
-| User edit protection | 72 hours | No | Respect user changes |
-
-## Priority System
-
-When multiple items compete for an agent's attention:
-
-1. **President directives** — always first
-2. **Goal alignment** — contributes to active OKRs
-3. **Urgency** — critical > bug > feature > refactor
-4. **Initiative completion boost** — +20% at >60% done (finish what you started)
-5. **Age boost** — +5% per day pending (prevent starvation)
-6. **Note strength** — multiple agents noted the same thing = higher priority
-
-## Self-Correcting Company
-
-The company automatically adapts when context changes. No manual cleanup needed.
-
-### Principle: Fail loud, never guess
-
-If an agent can't load the Product Definition or any required knowledge doc, it **stops and alerts the CEO**. It never falls back to generic text. There are zero hardcoded fallback strings in agent code — if knowledge is missing, execution halts with a clear error.
-
-This prevents the worst failure mode: an agent confidently doing the wrong thing because it guessed.
-
-### Knowledge change cascading
-
-Each knowledge doc has a `lastUpdatedAt` timestamp. When a doc is updated:
-
-1. **Staleness propagation**: downstream data gets flagged
-   - Product Definition changes → flag Competitive Landscape, ICP, Brand Voice, Roadmap
-   - Competitive Landscape changes → flag Growth content, Sales battlecards
-   - Goals changes → flag Roadmap, existing initiatives
-2. **Agent response on next wake**: agents see stale flags and act
-   - Growth: re-research competitors, archive stale market research docs
-   - PM: re-evaluate initiatives, cancel tasks based on outdated context
-   - Sales: re-evaluate prospect fit, update battlecards
-3. **Automatic archival**: documents/competitors/content linked to outdated knowledge get archived with reason "knowledge base changed"
-
-### Bottom-up change propagation
-
-Agents can propose knowledge doc updates — not just leave notes:
-- Growth discovers market has shifted → proposes Product Definition update
-- Sales sees users want something different → proposes ICP update  
-- Support detects sentiment shift → proposes Brand Voice adjustment
-
-Proposals go to PM (for product docs) or CEO (for strategy docs) for approval. Approved changes cascade downstream automatically.
-
-### Implementation: `knowledgeDependencies` map
-
-```
-product_definition → [competitive_landscape, user_personas_icp, brand_voice, product_roadmap]
-competitive_landscape → [growth content, sales battlecards, competitor records]  
-goals_okrs → [product_roadmap, initiatives]
-technical_architecture → [technical specs, architecture decisions]
-```
-
-When `updateKnowledgeDoc` is called, it checks this map and flags all dependent data as needing review. Agents process these flags during their normal wake cycle.
-
-### Per-agent self-cleaning (every wake cycle)
-
-- Cancel own tasks pending > 7 days
-- Retry own failed tasks (if < max retries)
-- Archive completed work older than 30 days
-- **Check staleness flags** on own domain data — re-process if knowledge changed
-
-### CEO coordination (every ~4h)
-
-- Detect bottlenecks (stage X has 3x items vs. stage Y)
-- Detect starvation (agent has 0 work for 3+ days)
-- Detect conflicts (contradictory knowledge docs)
-- **Detect knowledge drift** (knowledge doc updated but downstream agents haven't responded)
-- Circuit breaker (cascade failure detection)
-
-## Graceful Degradation
-
-| Condition | Behavior |
-|-----------|----------|
-| LLM provider down | Queue, backoff, fallback model chain |
-| Budget 80% used | Skip Growth, Sales — keep PM + Dev + CTO |
-| Budget exhausted | Stop all, CEO sends summary |
-| Agent 3x consecutive fails | Disable agent, CEO alert |
-| User inactive 7+ days | Essential mode (Security + cost tracking), CEO email digest |
+| Limit | Default | Purpose |
+|-------|---------|---------|
+| Tasks per day | 10 | Prevent runaway |
+| Daily cost cap | $20 | Budget control |
+| LLM calls/agent/hour | 10 | Loop prevention |
+| Circuit breaker | 5 fails / 10min | Cascade prevention |
+| Knowledge versions | 10 | Storage |
+| User edit protection | 72h | Respect edits |
 
 ## File Structure
 
 ```
 packages/backend/convex/autopilot/
-├── schema/                   ← Table definitions split by domain
-│   ├── validators.ts         ← Shared validators (unions, enums)
-│   ├── config.tables.ts      ← Config + credentials
+├── schema/
+│   ├── validators.ts         ← workItemType, workItemStatus, documentType, etc.
+│   ├── config.tables.ts      ← Config + credentials + routines
 │   ├── knowledge.tables.ts   ← Knowledge docs + versions
-│   ├── records.tables.ts     ← Initiatives, stories, specs, etc.
-│   ├── documents.tables.ts   ← Flexible documents (Notion-like)
-│   ├── competitors.tables.ts ← Structured competitor CRM
-│   ├── notes.tables.ts       ← Agent notes (quick observations)
-│   ├── agents.tables.ts      ← Threads, messages, metrics
-│   ├── comms.tables.ts       ← Emails, growth items, inbox
-│   ├── data.tables.ts        ← Revenue, repo analysis, leads, findings
-│   └── index.ts              ← Re-export merged tables
-├── knowledge.ts              ← Knowledge doc CRUD, versioning, staleness
-├── documents.ts              ← Flexible document CRUD (Notion-like)
-├── competitors.ts            ← Competitor CRM CRUD
-├── notes.ts                  ← Note creation, dedup, cleanup
-├── initiatives.ts            ← Initiative CRUD, WIP limits
-├── user_stories.ts           ← Story CRUD, status transitions
-├── guards.ts                 ← Cost, autonomy, rate limit, circuit breaker
-├── heartbeat.ts              ← Condition checker — wakes agents when needed
-├── config.ts                 ← Org configuration
-├── onboarding.ts             ← Repo analysis → Company Brief
-├── company_brief.ts          ← Generate 7 knowledge docs
-├── inbox.ts                  ← Inbox management, pressure tracking
-├── tasks.ts                  ← Task lifecycle, completeAgentTasks helper
-├── cost_guard.ts             ← Per-agent budgets, rate limits
-├── self_heal.ts              ← CEO-level system health checks
-├── maintenance.ts            ← Inbox expiry, note cleanup, staleness checks
-├── execution.ts              ← Coding adapter dispatch
+│   ├── work.tables.ts        ← autopilotWorkItems (unified work)
+│   ├── documents.tables.ts   ← autopilotDocuments (unified content)
+│   ├── competitors.tables.ts ← Competitor CRM
+│   ├── activity.tables.ts    ← Activity log + runs
+│   ├── agents.tables.ts      ← CEO chat threads + messages
+│   ├── data.tables.ts        ← Revenue, repo analysis, leads
+│   └── index.ts              ← Re-export all tables
+├── queries/
+│   ├── work.ts               ← listWorkItems, getWorkItem, getChildren
+│   ├── documents.ts          ← listDocuments (type/tag/status filters)
+│   ├── inbox.ts              ← Unified inbox (needsReview items)
+│   ├── knowledge.ts          ← Knowledge docs
+│   ├── competitors.ts        ← Competitors
+│   ├── leads.ts              ← Leads + sales stats
+│   ├── dashboard.ts          ← Dashboard stats
+│   ├── activity.ts           ← Activity log with filters
+│   ├── config.ts, revenue.ts, threads.ts
+│   └── auth.ts               ← Auth helpers
+├── mutations/
+│   ├── work.ts               ← CRUD work items + inline field updates
+│   ├── documents.ts          ← CRUD documents
+│   ├── inbox.ts              ← Approve/reject (patches source item)
+│   ├── knowledge.ts          ← Update knowledge docs
+│   └── config.ts             ← Config + credentials
 ├── agents/
-│   ├── ceo/                  ← Reports, coordination, chat relay
-│   ├── pm/                   ← Initiative creation, roadmap, note triage
-│   ├── cto/                  ← Spec generation, architecture
-│   ├── growth/               ← Market research → documents + competitors + content
-│   ├── sales/                ← Prospecting from market docs, pipeline, outreach
-│   ├── support.ts            ← Conversation triage
-│   ├── models.ts             ← LLM model definitions
-│   ├── prompts.ts            ← Agent system prompts
-│   └── shared.ts             ← generateObjectWithFallback (maxTokens: 4096)
-├── queries/                  ← Frontend-facing queries
-│   ├── documents.ts          ← List/filter documents
-│   ├── competitors.ts        ← List competitors
-│   ├── initiatives.ts        ← List initiatives + stories
-│   ├── knowledge.ts          ← List knowledge docs
-│   └── ...                   ← tasks, inbox, growth, email, etc.
-├── mutations/                ← Frontend-facing mutations
-│   ├── documents.ts          ← Create/update documents (user + agent)
-│   └── ...                   ← config, inbox, tasks, etc.
-└── adapters/                 ← Coding adapter implementations
+│   ├── ceo/                  ← Reports, coordination, chat
+│   ├── pm/                   ← Work items: initiatives + stories
+│   ├── cto.ts                ← Work items: specs
+│   ├── growth/               ← Documents + competitors
+│   ├── sales.ts              ← Leads + outreach documents
+│   ├── support.ts            ← Support thread documents
+│   ├── models.ts, prompts.ts, shared.ts
+│   └── ceo_tools.ts
+├── guards.ts, heartbeat.ts, cost_guard.ts
+├── execution.ts, gate.ts, autonomy.ts
+├── knowledge.ts, company_brief.ts, onboarding.ts
+├── config.ts, revenue.ts, billing_gate.ts
+├── health.ts, self_heal.ts, maintenance.ts
+├── sales_mutations.ts, routines.ts
+└── context.ts, agent_context.ts, priorities.ts
 ```

@@ -211,10 +211,10 @@ export const setAutonomyMode = internalMutation({
     const previousMode = config.autonomyMode ?? "supervised";
     const now = Date.now();
 
-    // Transitioning TO stopped — pause in-progress tasks
+    // Transitioning TO stopped — pause in-progress work items
     if (args.mode === "stopped" && previousMode !== "stopped") {
-      const inProgressTasks = await ctx.db
-        .query("autopilotTasks")
+      const inProgressItems = await ctx.db
+        .query("autopilotWorkItems")
         .withIndex("by_org_status", (q) =>
           q
             .eq("organizationId", args.organizationId)
@@ -222,8 +222,8 @@ export const setAutonomyMode = internalMutation({
         )
         .collect();
 
-      for (const task of inProgressTasks) {
-        await ctx.db.patch(task._id, { status: "paused" });
+      for (const item of inProgressItems) {
+        await ctx.db.patch(item._id, { status: "backlog", updatedAt: now });
       }
 
       await ctx.db.patch(config._id, {
@@ -236,23 +236,23 @@ export const setAutonomyMode = internalMutation({
         organizationId: args.organizationId,
         agent: "system",
         level: "warning",
-        message: `Autopilot stopped — ${inProgressTasks.length} tasks paused`,
+        message: `Autopilot stopped — ${inProgressItems.length} work items paused`,
       });
 
       return null;
     }
 
-    // Transitioning FROM stopped — resume paused tasks
+    // Transitioning FROM stopped — resume backlog work items
     if (previousMode === "stopped" && args.mode !== "stopped") {
-      const pausedTasks = await ctx.db
-        .query("autopilotTasks")
+      const backlogItems = await ctx.db
+        .query("autopilotWorkItems")
         .withIndex("by_org_status", (q) =>
-          q.eq("organizationId", args.organizationId).eq("status", "paused")
+          q.eq("organizationId", args.organizationId).eq("status", "backlog")
         )
         .collect();
 
-      for (const task of pausedTasks) {
-        await ctx.db.patch(task._id, { status: "in_progress" });
+      for (const item of backlogItems) {
+        await ctx.db.patch(item._id, { status: "in_progress", updatedAt: now });
       }
 
       await ctx.db.patch(config._id, {
@@ -265,7 +265,7 @@ export const setAutonomyMode = internalMutation({
         organizationId: args.organizationId,
         agent: "system",
         level: "success",
-        message: `Autopilot resumed in ${args.mode} mode — ${pausedTasks.length} tasks resumed`,
+        message: `Autopilot resumed in ${args.mode} mode — ${backlogItems.length} work items resumed`,
       });
 
       return null;

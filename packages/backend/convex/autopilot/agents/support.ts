@@ -23,18 +23,6 @@ import { generateObjectWithFallback } from "./shared";
 
 const SUPPORT_MODELS = [MODELS.FREE, MODELS.FAST] as const;
 
-const severityToPriority = (
-  severity: string
-): "critical" | "high" | "medium" => {
-  if (severity === "critical") {
-    return "critical";
-  }
-  if (severity === "high") {
-    return "high";
-  }
-  return "medium";
-};
-
 // ============================================
 // ZOD SCHEMAS
 // ============================================
@@ -87,14 +75,15 @@ async function processTriagedConversation(
   organizationId: Id<"organizations">,
   conv: TriagedConversation
 ) {
-  await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+  await ctx.runMutation(internal.autopilot.documents.createDocument, {
     organizationId,
-    type: "support_reply",
+    type: "support_thread",
     title: `Reply draft: ${conv.conversationId}`,
-    summary: conv.suggestedReply.slice(0, 200),
     content: conv.suggestedReply,
     sourceAgent: "support",
-    priority: conv.severity === "critical" ? "critical" : "medium",
+    needsReview: true,
+    reviewType: "support_reply",
+    tags: ["support", conv.severity],
     metadata: JSON.stringify({
       conversationId: conv.conversationId,
       intent: conv.intent,
@@ -106,14 +95,16 @@ async function processTriagedConversation(
     return;
   }
 
-  await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+  await ctx.runMutation(internal.autopilot.documents.createDocument, {
     organizationId,
-    type: "support_escalation",
+    type: "support_thread",
     title: `Escalation: ${conv.intent} — ${conv.escalationReason || "Needs attention"}`,
-    summary:
+    content:
       conv.escalationReason || "Support conversation requires escalation",
     sourceAgent: "support",
-    priority: severityToPriority(conv.severity),
+    needsReview: true,
+    reviewType: "support_escalation",
+    tags: ["support", "escalation"],
     metadata: JSON.stringify({
       conversationId: conv.conversationId,
       intent: conv.intent,
@@ -133,8 +124,7 @@ async function processTriagedConversation(
     description: conv.escalationReason ?? conv.suggestedReply,
     priority: conv.severity === "critical" ? "critical" : "high",
     assignedAgent: "pm",
-    origin: "support_escalation",
-    autonomyLevel: "review_required",
+    createdBy: "support_escalation",
   });
 }
 
@@ -237,14 +227,13 @@ export const notifyFeatureShipped = internalAction({
     });
 
     for (const notification of notifications.notifications) {
-      await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+      await ctx.runMutation(internal.autopilot.documents.createDocument, {
         organizationId: args.organizationId,
-        type: "shipped_notification",
+        type: "note",
         title: `Shipped: ${notification.taskTitle}`,
-        summary: notification.message,
+        content: notification.message,
         sourceAgent: "support",
-        priority: "low",
-        autoApproved: true,
+        tags: ["shipped"],
       });
     }
 
@@ -312,26 +301,26 @@ export const getRecentlyCompletedTasks = internalQuery({
   args: { organizationId: v.id("organizations") },
   returns: v.array(
     v.object({
-      _id: v.id("autopilotTasks"),
+      _id: v.id("autopilotWorkItems"),
       title: v.string(),
       description: v.string(),
     })
   ),
   handler: async (ctx, args) => {
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    const tasks = await ctx.db
-      .query("autopilotTasks")
+    const items = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "completed")
+        q.eq("organizationId", args.organizationId).eq("status", "done")
       )
       .collect();
 
-    return tasks
-      .filter((t) => t.completedAt && t.completedAt > oneDayAgo)
-      .map((t) => ({
-        _id: t._id,
-        title: t.title,
-        description: t.description,
+    return items
+      .filter((w) => w.updatedAt > oneDayAgo)
+      .map((w) => ({
+        _id: w._id,
+        title: w.title,
+        description: w.description,
       }));
   },
 });

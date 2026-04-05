@@ -8,7 +8,7 @@
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-import { activityLogAgent } from "./schema/validators";
+import { assignedAgent } from "./schema/validators";
 
 // ============================================
 // ACTION TYPES
@@ -110,7 +110,7 @@ export const checkGate = internalQuery({
   args: {
     organizationId: v.id("organizations"),
     action: gateActionType,
-    agent: activityLogAgent,
+    agent: assignedAgent,
   },
   returns: gateResultValidator,
   handler: async (ctx, args) => {
@@ -206,7 +206,7 @@ export const checkGate = internalQuery({
 export const isAgentActive = internalQuery({
   args: {
     organizationId: v.id("organizations"),
-    agent: activityLogAgent,
+    agent: assignedAgent,
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {

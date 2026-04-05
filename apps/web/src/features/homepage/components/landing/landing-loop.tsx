@@ -6,7 +6,12 @@
  * Interactive hover-to-expand with icon animations.
  */
 
-import { Brain, Code, MegaphoneSimple, Tray } from "@phosphor-icons/react";
+import {
+  Brain,
+  Code,
+  LinkSimple,
+  MegaphoneSimple,
+} from "@phosphor-icons/react";
 import { motion, useInView } from "motion/react";
 import type { ReactNode } from "react";
 import { useRef, useState } from "react";
@@ -19,7 +24,7 @@ import { LOOP_STEPS } from "./landing-data";
 const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 const ICON_MAP: Record<string, ReactNode> = {
-  inbox: <Tray size={22} weight="duotone" />,
+  link: <LinkSimple size={22} weight="duotone" />,
   brain: <Brain size={22} weight="duotone" />,
   code: <Code size={22} weight="duotone" />,
   megaphone: <MegaphoneSimple size={22} weight="duotone" />,
@@ -41,14 +46,13 @@ export default function LandingLoop() {
           transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
         >
           <Text as="span" className="mb-3 block" variant="eyebrow">
-            How it works
+            How Autopilot works
           </Text>
           <H2 className="mb-4" variant="landing">
-            From noise to <span className="italic">shipped features</span>
+            The Autopilot lifecycle
           </H2>
           <Lead size="sm">
-            Four steps. Fully automated where it matters, transparent where it
-            counts.
+            From connecting your repo to autonomous growth — in 4 steps.
           </Lead>
         </motion.div>
 

@@ -1,23 +1,21 @@
 /**
- * Task management — create, update, query autopilot tasks.
+ * Work item management — create, update, query autopilot work items.
  *
- * Tasks form a DAG: PM creates tasks → CTO breaks them into subtasks →
- * Dev agent executes → Architect reviews.
+ * Work items form a DAG: PM creates initiatives → CTO breaks them into
+ * stories/specs → Dev agent executes tasks → Architect reviews.
  */
 
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
 import {
-  activityLogAgent,
   activityLogLevel,
   assignedAgent,
-  autonomyLevel,
-  autopilotTaskPriority,
-  autopilotTaskStatus,
   codingAdapterType,
+  priority,
   runStatus,
-  taskOrigin,
+  workItemStatus,
+  workItemType,
 } from "./schema/validators";
 
 // ============================================
@@ -35,21 +33,25 @@ export const getOrganization = internalQuery({
 });
 
 /**
- * Get all pending tasks for an org, ordered by priority.
+ * Get all todo work items for an org, ordered by priority.
  */
 export const getPendingTasks = internalQuery({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const tasks = await ctx.db
-      .query("autopilotTasks")
+    const items = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+        q.eq("organizationId", args.organizationId).eq("status", "todo")
       )
       .collect();
 
-    // Sort by priority: critical > high > medium > low
-    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 } as const;
-    return tasks.sort(
+    const priorityOrder = {
+      critical: 0,
+      high: 1,
+      medium: 2,
+      low: 3,
+    } as const;
+    return items.sort(
       (a, b) =>
         priorityOrder[a.priority as keyof typeof priorityOrder] -
         priorityOrder[b.priority as keyof typeof priorityOrder]
@@ -58,33 +60,36 @@ export const getPendingTasks = internalQuery({
 });
 
 /**
- * Get tasks that are ready to dispatch (pending + not blocked).
+ * Get work items that are ready to dispatch (todo + not blocked by parent).
  */
 export const getDispatchableTasks = internalQuery({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const pending = await ctx.db
-      .query("autopilotTasks")
+    const todoItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+        q.eq("organizationId", args.organizationId).eq("status", "todo")
       )
       .collect();
 
-    const dispatchable: Doc<"autopilotTasks">[] = [];
+    const dispatchable: Doc<"autopilotWorkItems">[] = [];
 
-    for (const task of pending) {
-      // If task has a blocker, check if it's resolved
-      if (task.blockedByTaskId) {
-        const blocker = await ctx.db.get(task.blockedByTaskId);
-        if (blocker && blocker.status !== "completed") {
-          continue; // Still blocked
+    for (const item of todoItems) {
+      if (item.parentId) {
+        const parent = await ctx.db.get(item.parentId);
+        if (parent && parent.status !== "done") {
+          continue;
         }
       }
-      dispatchable.push(task);
+      dispatchable.push(item);
     }
 
-    // Sort by priority
-    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 } as const;
+    const priorityOrder = {
+      critical: 0,
+      high: 1,
+      medium: 2,
+      low: 3,
+    } as const;
     return dispatchable.sort(
       (a, b) =>
         priorityOrder[a.priority as keyof typeof priorityOrder] -
@@ -94,38 +99,38 @@ export const getDispatchableTasks = internalQuery({
 });
 
 /**
- * Get a task by ID.
+ * Get a work item by ID.
  */
 export const getTask = internalQuery({
-  args: { taskId: v.id("autopilotTasks") },
+  args: { taskId: v.id("autopilotWorkItems") },
   handler: async (ctx, args) => ctx.db.get(args.taskId),
 });
 
 /**
- * Get subtasks for a parent task.
+ * Get children for a parent work item.
  */
 export const getSubtasks = internalQuery({
-  args: { parentTaskId: v.id("autopilotTasks") },
+  args: { parentTaskId: v.id("autopilotWorkItems") },
   handler: async (ctx, args) =>
     ctx.db
-      .query("autopilotTasks")
-      .withIndex("by_parent", (q) => q.eq("parentTaskId", args.parentTaskId))
+      .query("autopilotWorkItems")
+      .withIndex("by_parent", (q) => q.eq("parentId", args.parentTaskId))
       .collect(),
 });
 
 /**
- * Get all tasks for an org (for the dashboard).
+ * Get all work items for an org (for the dashboard).
  */
 export const getTasksByOrg = internalQuery({
   args: {
     organizationId: v.id("organizations"),
-    status: v.optional(autopilotTaskStatus),
+    status: v.optional(workItemStatus),
   },
   handler: async (ctx, args) => {
     if (args.status) {
       const { status } = args;
       return await ctx.db
-        .query("autopilotTasks")
+        .query("autopilotWorkItems")
         .withIndex("by_org_status", (q) =>
           q.eq("organizationId", args.organizationId).eq("status", status)
         )
@@ -133,7 +138,7 @@ export const getTasksByOrg = internalQuery({
     }
 
     return await ctx.db
-      .query("autopilotTasks")
+      .query("autopilotWorkItems")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
@@ -142,14 +147,14 @@ export const getTasksByOrg = internalQuery({
 });
 
 /**
- * Get active runs for a task.
+ * Get active runs for a work item.
  */
 export const getRunsForTask = internalQuery({
-  args: { taskId: v.id("autopilotTasks") },
+  args: { taskId: v.id("autopilotWorkItems") },
   handler: async (ctx, args) =>
     ctx.db
       .query("autopilotRuns")
-      .withIndex("by_task", (q) => q.eq("taskId", args.taskId))
+      .withIndex("by_work_item", (q) => q.eq("workItemId", args.taskId))
       .collect(),
 });
 
@@ -158,28 +163,27 @@ export const getRunsForTask = internalQuery({
 // ============================================
 
 /**
- * Create a new autopilot task.
- * Enforces per-agent and total pending task caps before insertion.
+ * Create a new autopilot work item.
+ * Enforces per-agent and total active caps before insertion.
  */
 export const createTask = internalMutation({
   args: {
     organizationId: v.id("organizations"),
     title: v.string(),
     description: v.string(),
-    priority: autopilotTaskPriority,
+    type: v.optional(workItemType),
+    priority,
     assignedAgent,
-    origin: taskOrigin,
-    autonomyLevel,
-    parentTaskId: v.optional(v.id("autopilotTasks")),
-    blockedByTaskId: v.optional(v.id("autopilotTasks")),
-    technicalSpec: v.optional(v.string()),
+    parentId: v.optional(v.id("autopilotWorkItems")),
     acceptanceCriteria: v.optional(v.array(v.string())),
-    maxRetries: v.optional(v.number()),
+    tags: v.optional(v.array(v.string())),
+    needsReview: v.optional(v.boolean()),
+    reviewType: v.optional(v.string()),
+    createdBy: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    // Check task caps before creating
     const config = await ctx.db
       .query("autopilotConfig")
       .withIndex("by_organization", (q) =>
@@ -193,39 +197,34 @@ export const createTask = internalMutation({
       config?.maxPendingTasksPerAgent ?? DEFAULT_MAX_PENDING_PER_AGENT;
     const totalCap = config?.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
 
-    // Count ALL active tasks (pending + in_progress) to prevent pile-up.
-    // Only counting "pending" allowed tasks to move to in_progress and
-    // then PM would create more, causing the queue to grow unbounded.
-    const pendingTasks = await ctx.db
-      .query("autopilotTasks")
+    const todoItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+        q.eq("organizationId", args.organizationId).eq("status", "todo")
       )
       .collect();
 
-    const inProgressTasks = await ctx.db
-      .query("autopilotTasks")
+    const inProgressItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
         q.eq("organizationId", args.organizationId).eq("status", "in_progress")
       )
       .collect();
 
-    const allActiveTasks = [...pendingTasks, ...inProgressTasks];
+    const allActiveItems = [...todoItems, ...inProgressItems];
 
-    // Check total active cap
-    if (allActiveTasks.length >= totalCap) {
+    if (allActiveItems.length >= totalCap) {
       await ctx.db.insert("autopilotActivityLog", {
         organizationId: args.organizationId,
         agent: args.assignedAgent,
         level: "info",
-        message: `Skipped creating task "${args.title}" — active tasks at cap (${allActiveTasks.length}/${totalCap})`,
+        message: `Skipped creating work item "${args.title}" — active items at cap (${allActiveItems.length}/${totalCap})`,
         createdAt: now,
       });
       return null;
     }
 
-    // Check per-agent active cap
-    const agentActive = allActiveTasks.filter(
+    const agentActive = allActiveItems.filter(
       (t) => t.assignedAgent === args.assignedAgent
     ).length;
 
@@ -234,118 +233,103 @@ export const createTask = internalMutation({
         organizationId: args.organizationId,
         agent: args.assignedAgent,
         level: "info",
-        message: `Skipped creating task "${args.title}" — agent "${args.assignedAgent}" at cap (${agentActive}/${perAgentCap})`,
+        message: `Skipped creating work item "${args.title}" — agent "${args.assignedAgent}" at cap (${agentActive}/${perAgentCap})`,
         createdAt: now,
       });
       return null;
     }
 
-    const taskId = await ctx.db.insert("autopilotTasks", {
+    const workItemId = await ctx.db.insert("autopilotWorkItems", {
       organizationId: args.organizationId,
+      type: args.type ?? "task",
       title: args.title,
       description: args.description,
-      status: "pending",
+      status: "todo",
       priority: args.priority,
       assignedAgent: args.assignedAgent,
-      origin: args.origin,
-      autonomyLevel: args.autonomyLevel,
-      parentTaskId: args.parentTaskId,
-      blockedByTaskId: args.blockedByTaskId,
-      technicalSpec: args.technicalSpec,
+      parentId: args.parentId,
       acceptanceCriteria: args.acceptanceCriteria,
-      retryCount: 0,
-      maxRetries: args.maxRetries ?? 3,
+      tags: args.tags,
+      needsReview: args.needsReview ?? false,
+      reviewType: args.reviewType,
+      createdBy: args.createdBy,
       createdAt: now,
+      updatedAt: now,
     });
 
-    // Log the creation
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: args.organizationId,
-      taskId,
+      workItemId,
       agent: args.assignedAgent,
       level: "info",
-      message: `Task created: ${args.title}`,
-      details: `Priority: ${args.priority} | Origin: ${args.origin}`,
+      message: `Work item created: ${args.title}`,
+      details: `Priority: ${args.priority} | Type: ${args.type ?? "task"}`,
       createdAt: now,
     });
 
-    return taskId;
+    return workItemId;
   },
 });
 
 /**
- * Update a task's status.
+ * Update a work item's status.
  */
 export const updateTaskStatus = internalMutation({
   args: {
-    taskId: v.id("autopilotTasks"),
-    status: autopilotTaskStatus,
+    taskId: v.id("autopilotWorkItems"),
+    status: workItemStatus,
     errorMessage: v.optional(v.string()),
     prUrl: v.optional(v.string()),
     prNumber: v.optional(v.number()),
+    branch: v.optional(v.string()),
     tokensUsed: v.optional(v.number()),
     estimatedCostUsd: v.optional(v.number()),
-    retryCount: v.optional(v.number()),
+    needsReview: v.optional(v.boolean()),
+    reviewType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const task = await ctx.db.get(args.taskId);
-    if (!task) {
-      throw new Error(`Task not found: ${args.taskId}`);
+    const item = await ctx.db.get(args.taskId);
+    if (!item) {
+      throw new Error(`Work item not found: ${args.taskId}`);
     }
 
     const now = Date.now();
     const updates: Record<string, unknown> = {
       status: args.status,
+      updatedAt: now,
     };
 
-    if (args.retryCount !== undefined) {
-      updates.retryCount = args.retryCount;
-    }
-
-    if (args.status === "in_progress" && !task.startedAt) {
-      updates.startedAt = now;
-    }
-
-    if (
-      args.status === "completed" ||
-      args.status === "failed" ||
-      args.status === "cancelled"
-    ) {
-      updates.completedAt = now;
-    }
-
-    if (args.errorMessage !== undefined) {
-      updates.errorMessage = args.errorMessage;
-    }
     if (args.prUrl !== undefined) {
       updates.prUrl = args.prUrl;
     }
     if (args.prNumber !== undefined) {
       updates.prNumber = args.prNumber;
     }
-    if (args.tokensUsed !== undefined) {
-      updates.tokensUsed = args.tokensUsed;
+    if (args.branch !== undefined) {
+      updates.branch = args.branch;
     }
-    if (args.estimatedCostUsd !== undefined) {
-      updates.estimatedCostUsd = args.estimatedCostUsd;
+    if (args.needsReview !== undefined) {
+      updates.needsReview = args.needsReview;
+    }
+    if (args.reviewType !== undefined) {
+      updates.reviewType = args.reviewType;
     }
 
     await ctx.db.patch(args.taskId, updates);
 
     let logLevel: "error" | "success" | "action" = "action";
-    if (args.status === "failed") {
+    if (args.status === "cancelled") {
       logLevel = "error";
-    } else if (args.status === "completed") {
+    } else if (args.status === "done") {
       logLevel = "success";
     }
 
-    // Log the status change
     await ctx.db.insert("autopilotActivityLog", {
-      organizationId: task.organizationId,
-      taskId: args.taskId,
-      agent: task.assignedAgent,
+      organizationId: item.organizationId,
+      workItemId: args.taskId,
+      agent: item.assignedAgent ?? "system",
       level: logLevel,
-      message: `Task ${args.status}: ${task.title}`,
+      message: `Work item ${args.status}: ${item.title}`,
       details: args.errorMessage,
       createdAt: now,
     });
@@ -353,8 +337,7 @@ export const updateTaskStatus = internalMutation({
 });
 
 /**
- * Complete all in_progress tasks for a given agent.
- * Called by agents after they finish their work so tasks don't stay stuck.
+ * Complete all in_progress work items for a given agent.
  */
 export const completeAgentTasks = internalMutation({
   args: {
@@ -362,50 +345,53 @@ export const completeAgentTasks = internalMutation({
     agent: v.string(),
   },
   handler: async (ctx, args) => {
-    const tasks = await ctx.db
-      .query("autopilotTasks")
+    const items = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
         q.eq("organizationId", args.organizationId).eq("status", "in_progress")
       )
       .collect();
 
-    const agentTasks = tasks.filter((t) => t.assignedAgent === args.agent);
+    const agentItems = items.filter((t) => t.assignedAgent === args.agent);
     const now = Date.now();
 
-    for (const task of agentTasks) {
-      await ctx.db.patch(task._id, {
-        status: "completed",
-        completedAt: now,
+    for (const item of agentItems) {
+      await ctx.db.patch(item._id, {
+        status: "done",
+        updatedAt: now,
       });
 
       await ctx.db.insert("autopilotActivityLog", {
         organizationId: args.organizationId,
-        taskId: task._id,
-        agent: task.assignedAgent,
+        workItemId: item._id,
+        agent: item.assignedAgent ?? "system",
         level: "success",
-        message: `Task completed: ${task.title}`,
+        message: `Work item completed: ${item.title}`,
         createdAt: now,
       });
     }
 
-    return agentTasks.length;
+    return agentItems.length;
   },
 });
 
 /**
- * Update a task's priority (used by CEO coordination).
+ * Update a work item's priority (used by CEO coordination).
  */
 export const updateTaskPriority = internalMutation({
   args: {
-    taskId: v.id("autopilotTasks"),
-    priority: autopilotTaskPriority,
+    taskId: v.id("autopilotWorkItems"),
+    priority,
   },
   handler: async (ctx, args) => {
-    const task = await ctx.db.get(args.taskId);
-    if (!task) {
+    const item = await ctx.db.get(args.taskId);
+    if (!item) {
       return;
     }
-    await ctx.db.patch(args.taskId, { priority: args.priority });
+    await ctx.db.patch(args.taskId, {
+      priority: args.priority,
+      updatedAt: Date.now(),
+    });
   },
 });
 
@@ -415,21 +401,19 @@ export const updateTaskPriority = internalMutation({
 export const createRun = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    taskId: v.id("autopilotTasks"),
+    taskId: v.id("autopilotWorkItems"),
     adapter: codingAdapterType,
   },
   handler: async (ctx, args) => {
-    const runId = await ctx.db.insert("autopilotRuns", {
+    return await ctx.db.insert("autopilotRuns", {
       organizationId: args.organizationId,
-      taskId: args.taskId,
+      workItemId: args.taskId,
       adapter: args.adapter,
       status: "queued",
       tokensUsed: 0,
       estimatedCostUsd: 0,
       startedAt: Date.now(),
     });
-
-    return runId;
   },
 });
 
@@ -478,24 +462,40 @@ export const updateRun = internalMutation({
 export const logActivity = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    taskId: v.optional(v.id("autopilotTasks")),
+    taskId: v.optional(v.id("autopilotWorkItems")),
+    workItemId: v.optional(v.id("autopilotWorkItems")),
     runId: v.optional(v.id("autopilotRuns")),
-    agent: activityLogAgent,
-    targetAgent: v.optional(activityLogAgent),
+    agent: assignedAgent,
+    targetAgent: v.optional(assignedAgent),
     level: activityLogLevel,
     message: v.string(),
     details: v.optional(v.string()),
+    action: v.optional(v.string()),
+    entityType: v.optional(
+      v.union(
+        v.literal("work_item"),
+        v.literal("document"),
+        v.literal("knowledge_doc"),
+        v.literal("run"),
+        v.literal("lead"),
+        v.literal("competitor")
+      )
+    ),
+    entityId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: args.organizationId,
-      taskId: args.taskId,
+      workItemId: args.workItemId ?? args.taskId,
       runId: args.runId,
       agent: args.agent,
       targetAgent: args.targetAgent,
       level: args.level,
       message: args.message,
       details: args.details,
+      action: args.action,
+      entityType: args.entityType,
+      entityId: args.entityId,
       createdAt: Date.now(),
     });
   },
@@ -510,14 +510,12 @@ export const getRecentActivity = internalQuery({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const entries = await ctx.db
+    return await ctx.db
       .query("autopilotActivityLog")
       .withIndex("by_org_created", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .order("desc")
       .take(args.limit ?? 50);
-
-    return entries;
   },
 });

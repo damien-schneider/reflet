@@ -9,11 +9,7 @@
  */
 
 import Link from "next/link";
-import {
-  ArrowRight,
-  CaretRight,
-  GithubLogo,
-} from "@/components/phosphor-icons";
+import { ArrowRight, CaretRight, Sparkle } from "@/components/phosphor-icons";
 import { Button } from "@/components/ui/button";
 import { H1, Lead } from "@/components/ui/typography";
 
@@ -29,31 +25,29 @@ export default function LandingHero() {
 
       <div className="relative mx-auto max-w-300 px-5 pt-32 pb-20 sm:px-8 sm:pt-40 sm:pb-28">
         {/* Open source pill */}
-        <a
+        <Link
           className="hero-animate hero-fade-up hero-delay-0 group mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3.5 py-1.5 backdrop-blur-sm transition-colors hover:border-olive-600/30 dark:hover:border-olive-400/30"
-          href="https://github.com/damien-schneider/reflet"
-          rel="noopener noreferrer"
-          target="_blank"
+          href="/autopilot"
         >
-          <GithubLogo className="text-foreground" size={14} weight="fill" />
+          <Sparkle className="text-violet-500" size={14} weight="fill" />
           <span className="font-medium text-[13px] text-foreground">
-            Open Source
+            Introducing Autopilot
           </span>
           <span className="h-3 w-px bg-border" />
           <span className="flex items-center gap-0.5 text-[13px] text-muted-foreground transition-colors group-hover:text-foreground">
-            Star on GitHub
+            10 AI agents for your product
             <CaretRight
               className="transition-transform group-hover:translate-x-0.5"
               size={12}
             />
           </span>
-        </a>
+        </Link>
 
         {/* Main headline — editorial serif + sans-serif mix */}
         <H1 className="mb-6 max-w-205" variant="landing">
-          Your users are{" "}
+          Your AI company is{" "}
           <span className="relative">
-            talking
+            ready
             <svg
               aria-hidden="true"
               className="absolute -bottom-1 left-0 w-full text-olive-600/30 dark:text-olive-400/30"
@@ -70,14 +64,14 @@ export default function LandingHero() {
             </svg>
           </span>
           .<br />
-          <span className="text-muted-foreground">Are you listening?</span>
+          <span className="text-muted-foreground">Just connect your repo.</span>
         </H1>
 
         {/* Subheadline */}
         <Lead className="mb-10 max-w-140" size="lg">
-          Reflet captures every feature request, auto-triages with AI, and
-          closes the loop when you ship. The feedback platform built for
-          developer-led SaaS teams.
+          10 AI agents — CEO, PM, CTO, Dev, Growth, Sales, Security, Architect,
+          Support, Docs — that autonomously run your product. From market
+          research to shipped code to paying customers.
         </Lead>
 
         {/* CTAs */}
@@ -88,17 +82,17 @@ export default function LandingHero() {
               size="lg"
               variant="default"
             >
-              See your feedback board
+              Start your AI company
               <ArrowRight className="ml-1" size={16} />
             </Button>
           </Link>
-          <a
+          <Link
             className="flex items-center gap-1.5 font-medium text-[14px] text-foreground transition-opacity hover:opacity-70"
-            href="/docs"
+            href="/autopilot"
           >
-            Read the docs
+            See how it works
             <CaretRight size={14} />
-          </a>
+          </Link>
         </div>
 
         {/* Metrics bar — social proof woven into hero */}

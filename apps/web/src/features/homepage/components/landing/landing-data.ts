@@ -197,38 +197,38 @@ export const CHANGELOG_ITEMS_DATA = [
 ] as const;
 
 export const METRICS = [
-  { value: "3.2x", label: "faster feature prioritization" },
-  { value: "91%", label: "AI triage accuracy" },
-  { value: "47%", label: "fewer duplicate reports" },
+  { value: "10", label: "autonomous AI agents" },
+  { value: "5 min", label: "to first Company Brief" },
+  { value: "24/7", label: "agents never sleep" },
 ] as const;
 
 export const LOOP_STEPS = [
   {
     step: 1,
-    title: "Collect",
+    title: "Connect",
     description:
-      "Feedback flows in from your widget, public board, or API — every voice captured in one place.",
-    icon: "inbox" as const,
+      "Paste your GitHub repo URL. In 5 minutes, Reflet generates your Company Brief — product definition, ICP, competitive landscape, and roadmap.",
+    icon: "link" as const,
   },
   {
     step: 2,
-    title: "Understand",
+    title: "Discover",
     description:
-      "AI triages, tags, and scores each request. Duplicates merge automatically. Priorities surface.",
+      "Growth researches Reddit, HN, and competitors. PM reads findings and creates initiatives. The roadmap fills itself.",
     icon: "brain" as const,
   },
   {
     step: 3,
     title: "Build",
     description:
-      "Drag prioritized items onto your roadmap. Sync with GitHub issues. Ship what matters most.",
+      "CTO writes specs. Dev creates PRs. Architect reviews code quality. Security scans for vulnerabilities. All autonomous.",
     icon: "code" as const,
   },
   {
     step: 4,
-    title: "Close the loop",
+    title: "Grow",
     description:
-      "Publish a changelog entry, notify voters automatically, and watch satisfaction climb.",
+      "Growth announces shipped features. Sales finds and contacts prospects. Support handles users. Revenue tracked via Stripe.",
     icon: "megaphone" as const,
   },
 ] as const;

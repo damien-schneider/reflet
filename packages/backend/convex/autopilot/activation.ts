@@ -35,12 +35,16 @@ const checkGrowthActivation = async (
   ctx: QueryCtx,
   organizationId: Id<"organizations">
 ): Promise<ActivationResult> => {
-  const completedInitiatives = await ctx.db
-    .query("autopilotInitiatives")
+  const doneWorkItems = await ctx.db
+    .query("autopilotWorkItems")
     .withIndex("by_org_status", (q) =>
-      q.eq("organizationId", organizationId).eq("status", "completed")
+      q.eq("organizationId", organizationId).eq("status", "done")
     )
     .collect();
+
+  const completedInitiatives = doneWorkItems.filter(
+    (w) => w.type === "initiative"
+  );
 
   if (completedInitiatives.length > 0) {
     return {
@@ -74,13 +78,13 @@ const checkSalesActivation = async (
   }
 
   const publishedContent = await ctx.db
-    .query("autopilotGrowthItems")
-    .withIndex("by_org_status", (q) =>
-      q.eq("organizationId", organizationId).eq("status", "published")
-    )
-    .first();
+    .query("autopilotDocuments")
+    .withIndex("by_org_type", (q) => q.eq("organizationId", organizationId))
+    .collect();
 
-  if (!publishedContent) {
+  const hasPublished = publishedContent.some((d) => d.status === "published");
+
+  if (!hasPublished) {
     return {
       active: false,
       reason: "Need at least 1 published content item",

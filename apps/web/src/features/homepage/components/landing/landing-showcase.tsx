@@ -25,21 +25,21 @@ const SHOWCASE_TABS = [
     label: "Feedback Board",
     icon: ChatCircleDots,
     description:
-      "Collect and prioritize user requests with voting, AI triage, and duplicate detection.",
+      "See what your AI agents have discovered. Feedback from users and market research — all triaged and prioritized automatically.",
   },
   {
     id: "roadmap",
     label: "Roadmap",
     icon: Kanban,
     description:
-      "Drag prioritized items into columns. Sync with GitHub issues and track progress visually.",
+      "Watch initiatives flow from discovery to shipped. PM creates, CTO specs, Dev builds — all visible on your board.",
   },
   {
     id: "changelog",
     label: "Changelog",
     icon: MegaphoneSimple,
     description:
-      "Publish releases, link resolved feedback, and automatically notify every voter.",
+      "Every shipped feature auto-documented. Growth announces to users and prospects. The loop closes itself.",
   },
 ] as const;
 
@@ -69,15 +69,15 @@ export default function LandingShowcase() {
           transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
         >
           <Text as="span" className="mb-3 block" variant="eyebrow">
-            The complete feedback loop
+            See Autopilot in action
           </Text>
           <H2 className="mb-4" variant="landing">
-            Three tools.{" "}
-            <span className="text-muted-foreground">One cycle.</span>
+            Three views.{" "}
+            <span className="text-muted-foreground">One AI company.</span>
           </H2>
           <Lead size="sm">
-            Feedback flows in, gets triaged, lands on your roadmap, and ships as
-            a changelog — every voter notified automatically.
+            Watch your AI agents discover opportunities, plan initiatives, ship
+            code, and announce releases — all through familiar views.
           </Lead>
         </motion.div>
 

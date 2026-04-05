@@ -117,14 +117,16 @@ export const generateCompanyBrief = internalAction({
       });
     }
 
-    await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+    await ctx.runMutation(internal.autopilot.documents.createDocument, {
       organizationId: args.organizationId,
-      type: "company_brief_review",
+      type: "report",
       title: "Review Your Company Brief",
-      summary:
+      content:
         "Reflet has generated 7 knowledge documents about your product. Review and edit them before agents start working.",
+      tags: ["onboarding", "company-brief"],
       sourceAgent: "system",
-      priority: "high",
+      needsReview: true,
+      reviewType: "company_brief_review",
     });
 
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
@@ -165,21 +167,21 @@ export const isCompanyBriefApproved = internalQuery({
       return false;
     }
 
-    const reviewItem = await ctx.db
-      .query("autopilotInboxItems")
+    const reviewDoc = await ctx.db
+      .query("autopilotDocuments")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
-      .filter((q) => q.eq(q.field("type"), "company_brief_review"))
-      .order("desc")
-      .first();
+      .collect();
 
-    if (!reviewItem) {
+    const briefReview = reviewDoc.find(
+      (d) => d.reviewType === "company_brief_review"
+    );
+
+    if (!briefReview) {
       return false;
     }
 
-    return (
-      reviewItem.status === "approved" || reviewItem.status === "auto_approved"
-    );
+    return !briefReview.needsReview;
   },
 });

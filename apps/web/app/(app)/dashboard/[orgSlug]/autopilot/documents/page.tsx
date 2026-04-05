@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
+import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   IconArchive,
   IconFileText,
@@ -35,15 +36,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { H2 } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
+import { MarkdownContent } from "@/features/autopilot/components/markdown-content";
 import { cn } from "@/lib/utils";
 
-const TYPE_STYLES: Record<string, string> = {
-  market_research: "bg-blue-500/10 text-blue-500",
-  competitor_intel: "bg-red-500/10 text-red-500",
-  prospect_brief: "bg-purple-500/10 text-purple-500",
-  sales_battlecard: "bg-orange-500/10 text-orange-500",
-  user_created: "bg-green-500/10 text-green-500",
-};
+const TYPE_STYLES: Partial<Record<Doc<"autopilotDocuments">["type"], string>> =
+  {
+    market_research: "bg-blue-500/10 text-blue-500",
+    report: "bg-red-500/10 text-red-500",
+    prospect_brief: "bg-purple-500/10 text-purple-500",
+    battlecard: "bg-orange-500/10 text-orange-500",
+    note: "bg-green-500/10 text-green-500",
+  };
 
 const AGENT_LABELS: Record<string, string> = {
   pm: "PM",
@@ -76,7 +79,8 @@ export default function DocumentsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
-  const [newType, setNewType] = useState("user_created");
+  const [newType, setNewType] =
+    useState<Doc<"autopilotDocuments">["type"]>("note");
   const [filterType, setFilterType] = useState<string>("all");
   const [expandedDocId, setExpandedDocId] = useState<string | null>(null);
 
@@ -100,9 +104,7 @@ export default function DocumentsPage() {
     }
   };
 
-  const handleArchive = async (
-    docId: (typeof documents extends (infer T)[] | undefined ? T : never)["_id"]
-  ) => {
+  const handleArchive = async (docId: Id<"autopilotDocuments">) => {
     try {
       await archiveDoc({ documentId: docId });
       toast.success("Document archived");
@@ -160,7 +162,7 @@ export default function DocumentsPage() {
             <Select
               onValueChange={(v) => {
                 if (v) {
-                  setNewType(v);
+                  setNewType(v as Doc<"autopilotDocuments">["type"]);
                 }
               }}
               value={newType}
@@ -169,15 +171,11 @@ export default function DocumentsPage() {
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="user_created">User Created</SelectItem>
+                <SelectItem value="note">Note</SelectItem>
                 <SelectItem value="market_research">Market Research</SelectItem>
-                <SelectItem value="competitor_intel">
-                  Competitor Intel
-                </SelectItem>
+                <SelectItem value="report">Report</SelectItem>
                 <SelectItem value="prospect_brief">Prospect Brief</SelectItem>
-                <SelectItem value="sales_battlecard">
-                  Sales Battlecard
-                </SelectItem>
+                <SelectItem value="battlecard">Battlecard</SelectItem>
               </SelectContent>
             </Select>
             <Textarea
@@ -304,8 +302,8 @@ export default function DocumentsPage() {
                 </CardHeader>
                 {isExpanded && (
                   <CardContent>
-                    <div className="whitespace-pre-wrap rounded-md bg-muted/50 p-4 text-sm">
-                      {doc.content}
+                    <div className="rounded-md bg-muted/50 p-4">
+                      <MarkdownContent>{doc.content}</MarkdownContent>
                     </div>
                   </CardContent>
                 )}

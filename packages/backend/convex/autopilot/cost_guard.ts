@@ -56,7 +56,7 @@ export const recordCost = internalMutation({
   args: {
     organizationId: v.id("organizations"),
     costUsd: v.number(),
-    taskId: v.id("autopilotTasks"),
+    taskId: v.id("autopilotWorkItems"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -84,22 +84,67 @@ export const recordCost = internalMutation({
     if (dailyCap > 0 && newCost >= dailyCap) {
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
-        taskId: args.taskId,
+        workItemId: args.taskId,
         agent: "system",
         level: "warning",
         message: `Daily cost cap reached ($${newCost.toFixed(2)} / $${dailyCap.toFixed(2)}). Pausing task execution until tomorrow.`,
       });
+    }
 
-      // Create inbox alert
-      await ctx.db.insert("autopilotInboxItems", {
+    return null;
+  },
+});
+
+/**
+ * Evaluate budget thresholds after a cost record.
+ *
+ * Checks soft (warn) and hard (stop) thresholds. Logs warnings via activity log.
+ */
+export const evaluateBudget = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    agent: v.string(),
+    costUsd: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    if (!config) {
+      return null;
+    }
+
+    const dailyCap = config.dailyCostCapUsd ?? 0;
+    if (dailyCap <= 0) {
+      return null;
+    }
+
+    const costUsed = config.costUsedTodayUsd ?? 0;
+    const warnPercent = config.budgetWarnPercent ?? 80;
+    const warnThreshold = dailyCap * (warnPercent / 100);
+
+    if (costUsed >= warnThreshold && costUsed < dailyCap) {
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
-        type: "revenue_alert",
-        title: "Daily cost cap reached",
-        summary: `Autopilot has spent $${newCost.toFixed(2)} today, reaching the $${dailyCap.toFixed(2)} daily cap. New tasks will be paused until the counter resets.`,
-        status: "pending",
-        priority: "high",
-        sourceAgent: "system",
-        createdAt: Date.now(),
+        agent: "system",
+        level: "warning",
+        message: `Budget warning: ${warnPercent}% of daily cap used ($${costUsed.toFixed(2)} / $${dailyCap.toFixed(2)})`,
+        action: "budget.warn_threshold",
+      });
+    }
+
+    if (costUsed >= dailyCap) {
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: args.organizationId,
+        agent: "system",
+        level: "error",
+        message: `Budget cap reached ($${costUsed.toFixed(2)} / $${dailyCap.toFixed(2)}). Agents paused until counter resets.`,
+        action: "budget.cap_reached",
       });
     }
 

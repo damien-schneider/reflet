@@ -18,13 +18,10 @@ export const ACTIVITY_AGENT_LABELS = {
   pm: "PM",
   cto: "CTO",
   dev: "Dev",
-  security: "Security",
-  architect: "Architect",
   growth: "Growth",
   orchestrator: "CEO",
   system: "System",
   support: "Support",
-  docs: "Docs",
   sales: "Sales",
 } satisfies Record<ActivityAgent, string>;
 
@@ -32,13 +29,10 @@ export const ACTIVITY_AGENT_BADGE_STYLES = {
   pm: "border-blue-500/30 bg-blue-500/10 text-blue-500",
   cto: "border-purple-500/30 bg-purple-500/10 text-purple-500",
   dev: "border-green-500/30 bg-green-500/10 text-green-500",
-  security: "border-red-500/30 bg-red-500/10 text-red-500",
-  architect: "border-amber-500/30 bg-amber-500/10 text-amber-500",
   growth: "border-pink-500/30 bg-pink-500/10 text-pink-500",
   orchestrator: "border-cyan-500/30 bg-cyan-500/10 text-cyan-500",
   system: "border-border bg-muted text-muted-foreground",
   support: "border-teal-500/30 bg-teal-500/10 text-teal-500",
-  docs: "border-emerald-500/30 bg-emerald-500/10 text-emerald-500",
   sales: "border-rose-500/30 bg-rose-500/10 text-rose-500",
 } satisfies Record<ActivityAgent, string>;
 

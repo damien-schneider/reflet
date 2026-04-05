@@ -263,15 +263,15 @@ export const checkAgentTaskCap = internalQuery({
     const cap =
       config?.maxPendingTasksPerAgent ?? DEFAULT_MAX_PENDING_PER_AGENT;
 
-    const pendingTasks = await ctx.db
-      .query("autopilotTasks")
+    const todoItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+        q.eq("organizationId", args.organizationId).eq("status", "todo")
       )
       .collect();
 
-    const agentPending = pendingTasks.filter(
-      (t) => t.assignedAgent === args.agent
+    const agentPending = todoItems.filter(
+      (w) => w.assignedAgent === args.agent
     ).length;
 
     return {
@@ -283,7 +283,7 @@ export const checkAgentTaskCap = internalQuery({
 });
 
 /**
- * Check if creating a new task would exceed the total pending cap.
+ * Check if creating a new work item would exceed the total pending cap.
  */
 export const checkTotalTaskCap = internalQuery({
   args: { organizationId: v.id("organizations") },
@@ -302,23 +302,23 @@ export const checkTotalTaskCap = internalQuery({
 
     const cap = config?.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
 
-    const pendingTasks = await ctx.db
-      .query("autopilotTasks")
+    const todoItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+        q.eq("organizationId", args.organizationId).eq("status", "todo")
       )
       .collect();
 
     return {
-      allowed: pendingTasks.length < cap,
-      current: pendingTasks.length,
+      allowed: todoItems.length < cap,
+      current: todoItems.length,
       cap,
     };
   },
 });
 
 /**
- * Get task cap usage per agent (for dashboard display).
+ * Get work item cap usage per agent (for dashboard display).
  */
 export const getTaskCapUsage = internalQuery({
   args: { organizationId: v.id("organizations") },
@@ -346,31 +346,33 @@ export const getTaskCapUsage = internalQuery({
       config?.maxPendingTasksPerAgent ?? DEFAULT_MAX_PENDING_PER_AGENT;
     const totalCap = config?.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
 
-    // Count ALL active tasks (pending + in_progress) to prevent pile-up
-    const pendingTasks = await ctx.db
-      .query("autopilotTasks")
+    // Count ALL active work items (todo + in_progress) to prevent pile-up
+    const todoItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+        q.eq("organizationId", args.organizationId).eq("status", "todo")
       )
       .collect();
 
-    const inProgressTasks = await ctx.db
-      .query("autopilotTasks")
+    const inProgressItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
         q.eq("organizationId", args.organizationId).eq("status", "in_progress")
       )
       .collect();
 
-    const allActiveTasks = [...pendingTasks, ...inProgressTasks];
+    const allActiveItems = [...todoItems, ...inProgressItems];
 
     const enabledAgents = await fetchEnabledAgents(ctx, args.organizationId);
     const agentCounts = new Map<string, number>();
 
-    for (const task of allActiveTasks) {
-      agentCounts.set(
-        task.assignedAgent,
-        (agentCounts.get(task.assignedAgent) ?? 0) + 1
-      );
+    for (const item of allActiveItems) {
+      if (item.assignedAgent) {
+        agentCounts.set(
+          item.assignedAgent,
+          (agentCounts.get(item.assignedAgent) ?? 0) + 1
+        );
+      }
     }
 
     const agentUsage = enabledAgents.map((agent) => ({
@@ -382,22 +384,22 @@ export const getTaskCapUsage = internalQuery({
     return {
       perAgentCap,
       totalCap,
-      totalPending: allActiveTasks.length,
+      totalPending: allActiveItems.length,
       agentUsage,
     };
   },
 });
 
 /**
- * Get orphaned tasks — tasks assigned to currently disabled agents.
+ * Get orphaned work items — items assigned to currently disabled agents.
  */
 export const getOrphanedTasks = internalQuery({
   args: { organizationId: v.id("organizations") },
   returns: v.array(
     v.object({
-      _id: v.id("autopilotTasks"),
+      _id: v.id("autopilotWorkItems"),
       title: v.string(),
-      assignedAgent: v.string(),
+      assignedAgent: v.optional(v.string()),
       status: v.string(),
       createdAt: v.number(),
     })
@@ -405,31 +407,31 @@ export const getOrphanedTasks = internalQuery({
   handler: async (ctx, args) => {
     const enabledAgents = await fetchEnabledAgents(ctx, args.organizationId);
 
-    const pendingTasks = await ctx.db
-      .query("autopilotTasks")
+    const todoItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+        q.eq("organizationId", args.organizationId).eq("status", "todo")
       )
       .collect();
 
-    const inProgressTasks = await ctx.db
-      .query("autopilotTasks")
+    const inProgressItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
         q.eq("organizationId", args.organizationId).eq("status", "in_progress")
       )
       .collect();
 
-    const allActiveTasks = [...pendingTasks, ...inProgressTasks];
+    const allActiveItems = [...todoItems, ...inProgressItems];
     const enabledSet = new Set(enabledAgents);
 
-    return allActiveTasks
-      .filter((t) => !enabledSet.has(t.assignedAgent))
-      .map((t) => ({
-        _id: t._id,
-        title: t.title,
-        assignedAgent: t.assignedAgent,
-        status: t.status,
-        createdAt: t.createdAt,
+    return allActiveItems
+      .filter((w) => w.assignedAgent && !enabledSet.has(w.assignedAgent))
+      .map((w) => ({
+        _id: w._id,
+        title: w.title,
+        assignedAgent: w.assignedAgent,
+        status: w.status,
+        createdAt: w.createdAt,
       }));
   },
 });

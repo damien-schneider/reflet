@@ -49,27 +49,27 @@ export const getFeedbackForOrganization = internalQuery({
 });
 
 /**
- * Get all existing autopilot tasks for the organization to avoid duplicates.
+ * Get all existing autopilot work items for the organization to avoid duplicates.
  */
 export const getExistingTasksForOrganization = internalQuery({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const tasks = await ctx.db
-      .query("autopilotTasks")
+    const items = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .collect();
 
-    const activeTasks = tasks.filter(
-      (t) => t.status !== "completed" && t.status !== "cancelled"
+    const activeItems = items.filter(
+      (w) => w.status !== "done" && w.status !== "cancelled"
     );
 
-    return activeTasks.map((t) => ({
-      _id: t._id,
-      title: t.title,
-      status: t.status,
-      origin: t.origin,
+    return activeItems.map((w) => ({
+      _id: w._id,
+      title: w.title,
+      status: w.status,
+      type: w.type,
     }));
   },
 });

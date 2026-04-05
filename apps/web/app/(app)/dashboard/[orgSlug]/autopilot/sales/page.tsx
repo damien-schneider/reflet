@@ -2,17 +2,20 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import {
+  IconBrandGithub,
   IconFileText,
   IconMail,
+  IconSparkles,
   IconTrendingUp,
   IconUserSearch,
   IconUsers,
 } from "@tabler/icons-react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -23,6 +26,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { H2 } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
+import { MarkdownContent } from "@/features/autopilot/components/markdown-content";
 import { cn } from "@/lib/utils";
 
 const PIPELINE_STAGES = [
@@ -152,9 +156,9 @@ function SalesInsightsTab() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="whitespace-pre-wrap text-muted-foreground text-sm">
+            <MarkdownContent className="text-muted-foreground">
               {doc.content}
-            </div>
+            </MarkdownContent>
           </CardContent>
         </Card>
       ))}
@@ -165,11 +169,11 @@ function SalesInsightsTab() {
 function SalesPipelineTab() {
   const { organizationId } = useAutopilotContext();
 
-  const stats = useQuery(api.autopilot.sales_queries.getSalesStats, {
+  const stats = useQuery(api.autopilot.queries.leads.getSalesStats, {
     organizationId,
   });
 
-  const leads = useQuery(api.autopilot.sales_queries.listLeads, {
+  const leads = useQuery(api.autopilot.queries.leads.listLeads, {
     organizationId,
     limit: 100,
   });
@@ -266,11 +270,12 @@ function SalesPipelineTab() {
 
       {/* Leads List */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
             <IconUsers className="size-5" />
             Leads ({leads.length})
           </CardTitle>
+          <DiscoverLeadsButton />
         </CardHeader>
         <CardContent>
           {leads.length === 0 ? (
@@ -285,68 +290,160 @@ function SalesPipelineTab() {
           ) : (
             <div className="space-y-3">
               {leads.map((lead) => (
-                <div
-                  className="flex items-start gap-3 rounded-lg border p-3"
-                  key={lead._id}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{lead.name}</span>
-                      <Badge
-                        className={cn(
-                          "text-xs",
-                          STATUS_STYLES[
-                            lead.status as keyof typeof STATUS_STYLES
-                          ]
-                        )}
-                        variant="outline"
-                      >
-                        {lead.status}
-                      </Badge>
-                      <Badge className="text-xs" variant="secondary">
-                        {SOURCE_LABELS[
-                          lead.source as keyof typeof SOURCE_LABELS
-                        ] ?? lead.source}
-                      </Badge>
-                    </div>
-                    {lead.company && (
-                      <p className="mt-0.5 text-muted-foreground text-xs">
-                        {lead.company}
-                      </p>
-                    )}
-                    {lead.email && (
-                      <p className="flex items-center gap-1 text-muted-foreground text-xs">
-                        <IconMail className="size-3" />
-                        {lead.email}
-                      </p>
-                    )}
-                    {lead.notes && (
-                      <p className="mt-1 line-clamp-1 text-muted-foreground text-xs">
-                        {lead.notes}
-                      </p>
-                    )}
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <span className="text-muted-foreground text-xs">
-                      {formatDistanceToNow(lead.createdAt, {
-                        addSuffix: true,
-                      })}
-                    </span>
-                    {lead.nextFollowUpAt && (
-                      <p className="text-blue-500 text-xs">
-                        Follow-up:{" "}
-                        {formatDistanceToNow(lead.nextFollowUpAt, {
-                          addSuffix: true,
-                        })}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <LeadCard key={lead._id} lead={lead} />
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function DiscoverLeadsButton() {
+  const { organizationId, isAdmin } = useAutopilotContext();
+  const triggerDiscovery = useMutation(
+    api.autopilot.sales_mutations.triggerLeadDiscovery
+  );
+  const [loading, setLoading] = useState(false);
+
+  if (!isAdmin) {
+    return null;
+  }
+
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      await triggerDiscovery({ organizationId });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button
+      disabled={loading}
+      onClick={handleClick}
+      size="sm"
+      variant="outline"
+    >
+      <IconSparkles className="size-4" />
+      {loading ? "Discovering…" : "Discover Leads"}
+    </Button>
+  );
+}
+
+const SCORE_STYLES = {
+  high: "bg-green-500/10 text-green-600",
+  medium: "bg-yellow-500/10 text-yellow-600",
+  low: "bg-muted text-muted-foreground",
+} as const;
+
+function getScoreTier(score: number): keyof typeof SCORE_STYLES {
+  const HIGH_THRESHOLD = 70;
+  const MEDIUM_THRESHOLD = 40;
+  if (score >= HIGH_THRESHOLD) {
+    return "high";
+  }
+  return score >= MEDIUM_THRESHOLD ? "medium" : "low";
+}
+
+function LeadCard({
+  lead,
+}: {
+  lead: {
+    _id: string;
+    name: string;
+    status: string;
+    source: string;
+    company?: string;
+    email?: string;
+    notes?: string;
+    score?: number;
+    githubUsername?: string;
+    githubProfileUrl?: string;
+    bio?: string;
+    createdAt: number;
+    nextFollowUpAt?: number;
+  };
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border p-3">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm">{lead.name}</span>
+          {lead.score !== undefined && (
+            <Badge
+              className={cn("text-xs", SCORE_STYLES[getScoreTier(lead.score)])}
+              variant="outline"
+            >
+              {lead.score}
+            </Badge>
+          )}
+          <Badge
+            className={cn(
+              "text-xs",
+              STATUS_STYLES[lead.status as keyof typeof STATUS_STYLES]
+            )}
+            variant="outline"
+          >
+            {lead.status}
+          </Badge>
+          <Badge className="text-xs" variant="secondary">
+            {SOURCE_LABELS[lead.source as keyof typeof SOURCE_LABELS] ??
+              lead.source}
+          </Badge>
+        </div>
+        {lead.company && (
+          <p className="mt-0.5 text-muted-foreground text-xs">{lead.company}</p>
+        )}
+        {lead.bio && (
+          <p className="mt-0.5 line-clamp-1 text-muted-foreground text-xs">
+            {lead.bio}
+          </p>
+        )}
+        <div className="mt-1 flex items-center gap-3">
+          {lead.email && (
+            <a
+              className="flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground"
+              href={`mailto:${lead.email}`}
+            >
+              <IconMail className="size-3" />
+              {lead.email}
+            </a>
+          )}
+          {lead.githubUsername && (
+            <a
+              className="flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground"
+              href={
+                lead.githubProfileUrl ??
+                `https://github.com/${lead.githubUsername}`
+              }
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <IconBrandGithub className="size-3" />
+              {lead.githubUsername}
+            </a>
+          )}
+        </div>
+        {lead.notes && (
+          <p className="mt-1 line-clamp-1 text-muted-foreground text-xs">
+            {lead.notes}
+          </p>
+        )}
+      </div>
+      <div className="shrink-0 text-right">
+        <span className="text-muted-foreground text-xs">
+          {formatDistanceToNow(lead.createdAt, { addSuffix: true })}
+        </span>
+        {lead.nextFollowUpAt && (
+          <p className="text-blue-500 text-xs">
+            Follow-up:{" "}
+            {formatDistanceToNow(lead.nextFollowUpAt, { addSuffix: true })}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

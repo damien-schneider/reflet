@@ -5,7 +5,7 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../../_generated/api";
-import type { Doc } from "../../../_generated/dataModel";
+import type { Doc, Id } from "../../../_generated/dataModel";
 import { internalAction } from "../../../_generated/server";
 import { MODELS } from "../models";
 import { buildAgentPrompt, GROWTH_SYSTEM_PROMPT } from "../prompts";
@@ -100,42 +100,33 @@ export const runGrowthGeneration = internalAction({
     const now = Date.now();
 
     try {
-      await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
-        type: "growth_post",
-        title: "Growth Agent Started",
-        summary: `Growth generation triggered by: ${args.triggerReason}`,
-        sourceAgent: "growth",
-        priority: "medium",
-        content:
-          "Growth Agent is analyzing recent work to generate distribution content.",
-        autoApproved: true,
+        agent: "growth",
+        level: "action",
+        message: `Growth generation triggered by: ${args.triggerReason}`,
       });
 
-      const recentTasks = await ctx.runQuery(
+      const recentItems = await ctx.runQuery(
         internal.autopilot.tasks.getTasksByOrg,
-        { organizationId: args.organizationId, status: "completed" }
+        { organizationId: args.organizationId, status: "done" }
       );
 
       const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
-      const relevantTasks = recentTasks
+      const relevantTasks = recentItems
         .filter(
-          (task: Doc<"autopilotTasks">) =>
-            task.completedAt && task.completedAt > sevenDaysAgo
+          (item: Doc<"autopilotWorkItems">) => item.updatedAt > sevenDaysAgo
         )
         .slice(0, 5)
-        .map((task: Doc<"autopilotTasks">) => task.title);
+        .map((item: Doc<"autopilotWorkItems">) => item.title);
 
       if (relevantTasks.length === 0) {
-        await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
           organizationId: args.organizationId,
-          type: "growth_post",
-          title: "Growth Agent: No Recent Work",
-          summary:
-            "No completed tasks in the past 7 days to generate content from",
-          sourceAgent: "growth",
-          priority: "low",
-          autoApproved: true,
+          agent: "growth",
+          level: "info",
+          message:
+            "No completed work items in the past 7 days to generate content from",
         });
         return;
       }
@@ -188,15 +179,11 @@ export const runGrowthGeneration = internalAction({
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
           organizationId: args.organizationId,
-          type: "growth_post",
-          title: "Growth Agent: Thread Discovery Failed",
-          summary: `Failed to discover relevant threads: ${errorMessage}`,
-          sourceAgent: "growth",
-          priority: "low",
-          content: errorMessage,
-          autoApproved: true,
+          agent: "growth",
+          level: "warning",
+          message: `Growth Agent: Thread Discovery Failed — ${errorMessage}`,
         });
         return;
       }
@@ -214,58 +201,40 @@ export const runGrowthGeneration = internalAction({
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
           organizationId: args.organizationId,
-          type: "growth_post",
-          title: "Growth Agent: Content Generation Failed",
-          summary: `Failed to generate content: ${errorMessage}`,
-          sourceAgent: "growth",
-          priority: "low",
-          content: errorMessage,
-          autoApproved: true,
+          agent: "growth",
+          level: "warning",
+          message: `Growth Agent: Content Generation Failed — ${errorMessage}`,
         });
         return;
       }
 
       for (const item of generatedContent.items) {
-        const growthItemId = await ctx.runMutation(
-          internal.autopilot.growthItems.createGrowthItem,
-          {
-            organizationId: args.organizationId,
-            type: item.type,
-            title: item.title,
-            content: item.content,
-            targetUrl: item.targetUrl,
-            status: "pending_review" as const,
-          }
-        );
-
-        await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+        await ctx.runMutation(internal.autopilot.documents.createDocument, {
           organizationId: args.organizationId,
-          type: "growth_post",
-          title: `Review: ${item.type} - ${item.title}`,
-          summary: item.reasoning,
+          type: item.type as
+            | "blog_post"
+            | "reddit_reply"
+            | "linkedin_post"
+            | "twitter_post"
+            | "hn_comment",
+          title: item.title,
           content: item.content,
+          targetUrl: item.targetUrl,
+          status: "pending_review",
           sourceAgent: "growth",
-          priority: "medium",
-          actionUrl: item.targetUrl,
-          metadata: JSON.stringify({
-            growthItemId,
-            contentType: item.type,
-            platformUrl: item.targetUrl,
-          }),
+          needsReview: true,
+          reviewType: "growth_content",
+          tags: ["growth", item.type],
         });
       }
 
-      await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
-        type: "growth_post",
-        title: "Growth Agent Completed",
-        summary: `Generated ${generatedContent.items.length} content pieces from ${relevantTasks.length} recent tasks`,
-        content: generatedContent.summary,
-        sourceAgent: "growth",
-        priority: "low",
-        autoApproved: true,
+        agent: "growth",
+        level: "action",
+        message: `Growth Agent Completed: ${generatedContent.items.length} content pieces from ${relevantTasks.length} recent tasks`,
       });
 
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
@@ -289,17 +258,6 @@ export const runGrowthGeneration = internalAction({
         agent: "growth",
         level: "error",
         message: `Growth generation failed: ${errorMessage}`,
-      });
-
-      await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
-        organizationId: args.organizationId,
-        type: "growth_post",
-        title: "Growth Agent Error",
-        summary: `Growth generation failed: ${errorMessage}`,
-        sourceAgent: "growth",
-        priority: "high",
-        content: errorMessage,
-        autoApproved: true,
       });
     }
   },
@@ -431,17 +389,6 @@ Provide actionable findings that PM and Sales agents can use.`,
       });
 
       for (const finding of researchOutput.findings) {
-        await ctx.runMutation(internal.autopilot.notes.createNote, {
-          organizationId: args.organizationId,
-          type: "research",
-          category: "market",
-          title: finding.topic,
-          description: `${finding.summary}\n\nSource: ${finding.source}\nOpportunity: ${finding.opportunity}`,
-          sourceAgent: "growth",
-          priority: finding.relevance === "high" ? "high" : "medium",
-        });
-
-        // Also create a document for full research visibility
         await ctx.runMutation(internal.autopilot.documents.createDocument, {
           organizationId: args.organizationId,
           type: "market_research",
@@ -449,20 +396,12 @@ Provide actionable findings that PM and Sales agents can use.`,
           content: `## ${finding.topic}\n\n${finding.summary}\n\n**Source:** ${finding.source}\n**Relevance:** ${finding.relevance}\n**Opportunity:** ${finding.opportunity}`,
           tags: ["market-research", finding.relevance],
           sourceAgent: "growth",
+          needsReview: finding.relevance === "high",
+          reviewType: "market_research",
         });
       }
 
       for (const move of researchOutput.competitorMoves) {
-        await ctx.runMutation(internal.autopilot.notes.createNote, {
-          organizationId: args.organizationId,
-          type: "alert",
-          category: "market",
-          title: `Competitor: ${move.competitor} — ${move.action}`,
-          description: `Impact: ${move.impact}`,
-          sourceAgent: "growth",
-          priority: "high",
-        });
-
         // Create/update competitor record
         const existingCompetitor = await ctx.runQuery(
           internal.autopilot.competitors.findCompetitorByName,
@@ -493,29 +432,27 @@ Provide actionable findings that PM and Sales agents can use.`,
         // Link a document to the competitor
         await ctx.runMutation(internal.autopilot.documents.createDocument, {
           organizationId: args.organizationId,
-          type: "competitor_intel",
+          type: "battlecard",
           title: `${move.competitor}: ${move.action}`,
           content: `## ${move.competitor}\n\n**Action:** ${move.action}\n**Impact:** ${move.impact}`,
           tags: ["competitor", move.competitor.toLowerCase()],
           sourceAgent: "growth",
-          linkedTable: "autopilotCompetitors",
-          linkedId: competitorId,
+          linkedCompetitorId: competitorId as Id<"autopilotCompetitors">,
         });
       }
 
-      // Create growth items for content pieces so Growth page shows them
+      // Create documents for high-relevance findings for Growth page
       for (const finding of researchOutput.findings) {
         if (finding.relevance === "high") {
-          await ctx.runMutation(
-            internal.autopilot.growthItems.createGrowthItem,
-            {
-              organizationId: args.organizationId,
-              type: "blog_post",
-              title: `Market Insight: ${finding.topic}`,
-              content: `${finding.summary}\n\nOpportunity: ${finding.opportunity}`,
-              status: "draft",
-            }
-          );
+          await ctx.runMutation(internal.autopilot.documents.createDocument, {
+            organizationId: args.organizationId,
+            type: "blog_post",
+            title: `Market Insight: ${finding.topic}`,
+            content: `${finding.summary}\n\nOpportunity: ${finding.opportunity}`,
+            status: "draft",
+            sourceAgent: "growth",
+            tags: ["market-insight"],
+          });
         }
       }
 

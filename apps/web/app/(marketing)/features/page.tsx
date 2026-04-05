@@ -14,19 +14,21 @@ import { generatePageMetadata } from "@/lib/seo-config";
 import { cn } from "@/lib/utils";
 
 export const metadata = generatePageMetadata({
-  title: "Features | Reflet - Built for Developer-Led SaaS Teams",
+  title: "Features | Reflet — Autonomous AI Company + Feedback Platform",
   description:
-    "AI-powered triage, embeddable widget, two-way GitHub sync, real-time collaboration, and REST API. Everything developer-led SaaS teams need to close the feedback loop.",
+    "10 AI agents that autonomously run your product — CEO, PM, CTO, Dev, Growth, Sales, Security, Architect, Support, Docs. Plus a full feedback platform with AI triage, voting, roadmaps, and changelogs.",
   path: "/features",
   keywords: [
+    "autonomous AI agents",
+    "AI company platform",
+    "AI employees",
+    "AI product management",
+    "AI developer",
     "feedback widget",
     "AI triage",
     "GitHub sync",
     "real-time collaboration",
     "REST API",
-    "developer feedback tool",
-    "SaaS feedback platform",
-    "product roadmap features",
   ],
 });
 
@@ -124,15 +126,16 @@ export default function FeaturesPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(120,113,80,0.08),transparent)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(120,113,80,0.15),transparent)]" />
           <div className="relative mx-auto max-w-300 px-5 text-center sm:px-8">
             <span className="mb-3 block font-semibold text-[11px] text-olive-600 uppercase tracking-[0.15em] dark:text-olive-400">
-              Built for developer-led SaaS teams
+              Autonomous AI company + Feedback platform
             </span>
             <h1 className="mx-auto mb-6 max-w-180 font-display text-[clamp(2rem,5vw,3.5rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
-              Everything you need to ship what users actually want.
+              10 AI agents plus everything you need to ship.
             </h1>
             <p className="mx-auto mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
-              From collecting raw feedback to publishing changelogs — Reflet
-              handles the full loop with AI triage, real-time sync, and
-              developer-friendly tools. Built for teams that ship fast.
+              Reflet Autopilot provides 10 autonomous AI agents that run your
+              product — from market research to shipped code. Plus a complete
+              feedback platform with AI triage, real-time sync, and
+              developer-friendly tools.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">
@@ -215,15 +218,16 @@ export default function FeaturesPage() {
         <section className="bg-olive-950 py-20 dark:bg-[#0f0e0b]">
           <div className="mx-auto max-w-300 px-5 text-center sm:px-8">
             <h2 className="mb-4 font-display text-[clamp(1.8rem,4vw,2.5rem)] text-olive-100 leading-[1.1]">
-              Ready to close the feedback loop?
+              Ready to start your AI company?
             </h2>
             <p className="mx-auto mb-8 max-w-120 text-[15px] text-olive-300/80 leading-relaxed sm:text-[17px]">
-              Start free. No credit card required. Upgrade when you need more.
+              Connect your repo. 10 AI agents start in 5 minutes. Free tier
+              available.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">
                 <Button className="h-12 rounded-full bg-olive-100 px-7 text-[15px] text-olive-950 hover:bg-white">
-                  See your feedback board
+                  Start your AI company
                 </Button>
               </Link>
               <Link

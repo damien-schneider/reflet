@@ -121,8 +121,8 @@ export const setAutonomyMode = mutation({
     const now = Date.now();
 
     if (args.mode === "stopped" && previousMode !== "stopped") {
-      const inProgressTasks = await ctx.db
-        .query("autopilotTasks")
+      const inProgressItems = await ctx.db
+        .query("autopilotWorkItems")
         .withIndex("by_org_status", (q) =>
           q
             .eq("organizationId", args.organizationId)
@@ -130,8 +130,11 @@ export const setAutonomyMode = mutation({
         )
         .collect();
 
-      for (const task of inProgressTasks) {
-        await ctx.db.patch(task._id, { status: "paused" });
+      for (const item of inProgressItems) {
+        await ctx.db.patch(item._id, {
+          status: "backlog",
+          updatedAt: now,
+        });
       }
 
       await ctx.db.patch(config._id, {
@@ -144,22 +147,25 @@ export const setAutonomyMode = mutation({
         agent: "system",
         createdAt: now,
         level: "warning",
-        message: `Autopilot stopped — ${inProgressTasks.length} tasks paused`,
+        message: `Autopilot stopped — ${inProgressItems.length} work items paused`,
         organizationId: args.organizationId,
       });
       return;
     }
 
     if (previousMode === "stopped" && args.mode !== "stopped") {
-      const pausedTasks = await ctx.db
-        .query("autopilotTasks")
+      const backlogItems = await ctx.db
+        .query("autopilotWorkItems")
         .withIndex("by_org_status", (q) =>
-          q.eq("organizationId", args.organizationId).eq("status", "paused")
+          q.eq("organizationId", args.organizationId).eq("status", "backlog")
         )
         .collect();
 
-      for (const task of pausedTasks) {
-        await ctx.db.patch(task._id, { status: "in_progress" });
+      for (const item of backlogItems) {
+        await ctx.db.patch(item._id, {
+          status: "in_progress",
+          updatedAt: now,
+        });
       }
 
       await ctx.db.patch(config._id, {
@@ -172,7 +178,7 @@ export const setAutonomyMode = mutation({
         agent: "system",
         createdAt: now,
         level: "success",
-        message: `Autopilot resumed in ${args.mode} mode — ${pausedTasks.length} tasks resumed`,
+        message: `Autopilot resumed in ${args.mode} mode — ${backlogItems.length} work items resumed`,
         organizationId: args.organizationId,
       });
 
@@ -236,5 +242,136 @@ export const upsertCredentials = mutation({
       createdAt: now,
       updatedAt: now,
     });
+  },
+});
+
+// ============================================
+// A2: Budget cap management
+// ============================================
+
+export const raiseBudgetCap = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    newCapUsd: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, user._id);
+
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    if (!config) {
+      throw new Error("Autopilot not configured");
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(config._id, {
+      dailyCostCapUsd: args.newCapUsd,
+      updatedAt: now,
+    });
+
+    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      organizationId: args.organizationId,
+      agent: "system",
+      level: "success",
+      message: `Budget cap raised to $${args.newCapUsd.toFixed(2)}`,
+      action: "budget.raised",
+    });
+  },
+});
+
+// ============================================
+// A6: Routine CRUD
+// ============================================
+
+export const createRoutine = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    agent: v.union(
+      v.literal("pm"),
+      v.literal("cto"),
+      v.literal("dev"),
+      v.literal("growth"),
+      v.literal("orchestrator"),
+      v.literal("system"),
+      v.literal("support"),
+      v.literal("sales")
+    ),
+    cronExpression: v.string(),
+    timezone: v.optional(v.string()),
+    taskTemplate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, user._id);
+
+    const now = Date.now();
+
+    return ctx.db.insert("autopilotRoutines", {
+      organizationId: args.organizationId,
+      title: args.title,
+      description: args.description,
+      agent: args.agent,
+      cronExpression: args.cronExpression,
+      timezone: args.timezone,
+      taskTemplate: args.taskTemplate,
+      enabled: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+export const updateRoutine = mutation({
+  args: {
+    routineId: v.id("autopilotRoutines"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    cronExpression: v.optional(v.string()),
+    timezone: v.optional(v.string()),
+    taskTemplate: v.optional(v.string()),
+    enabled: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    const routine = await ctx.db.get(args.routineId);
+    if (!routine) {
+      throw new Error("Routine not found");
+    }
+    await requireOrgAdmin(ctx, routine.organizationId, user._id);
+
+    const { routineId, ...updates } = args;
+    const cleanUpdates: Record<string, unknown> = { updatedAt: Date.now() };
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (value !== undefined) {
+        cleanUpdates[key] = value;
+      }
+    }
+
+    await ctx.db.patch(routineId, cleanUpdates);
+  },
+});
+
+export const deleteRoutine = mutation({
+  args: {
+    routineId: v.id("autopilotRoutines"),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    const routine = await ctx.db.get(args.routineId);
+    if (!routine) {
+      throw new Error("Routine not found");
+    }
+    await requireOrgAdmin(ctx, routine.organizationId, user._id);
+
+    await ctx.db.delete(args.routineId);
   },
 });

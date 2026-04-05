@@ -213,6 +213,7 @@ function AgentCard({
   blockedReason,
   onToggle,
   index,
+  currentTaskTitle,
 }: {
   agent: (typeof AGENTS)[number];
   config: Record<string, unknown>;
@@ -222,6 +223,7 @@ function AgentCard({
   blockedReason?: { reason: string; actionUrl?: string };
   onToggle: (field: string, value: boolean) => void;
   index: number;
+  currentTaskTitle?: string;
 }) {
   const enabled = (config[agent.configField] as boolean | undefined) !== false;
   const isBlocked = enabled && blockedReason !== undefined;
@@ -305,6 +307,24 @@ function AgentCard({
               {blockedReason.reason}
             </p>
           )}
+
+          {currentTaskTitle && !isBlocked && status === "active" && (
+            <p className="mt-1 truncate text-[10px] text-muted-foreground/60 leading-tight">
+              {currentTaskTitle}
+            </p>
+          )}
+
+          {/* Cost + task stats when available */}
+          {status !== "disabled" &&
+            (taskCount > 0 || (lastActivity && status === "active")) && (
+              <div className="mt-1.5 flex items-center gap-2">
+                {taskCount > 0 && (
+                  <span className="text-[10px] text-muted-foreground/40">
+                    {taskCount} task{taskCount === 1 ? "" : "s"}
+                  </span>
+                )}
+              </div>
+            )}
         </div>
       </div>
     </motion.div>
@@ -375,7 +395,7 @@ export function AgentStatusCards({
   const config = useQuery(api.autopilot.queries.config.getConfig, {
     organizationId,
   });
-  const tasks = useQuery(api.autopilot.queries.tasks.listTasks, {
+  const tasks = useQuery(api.autopilot.queries.work.listWorkItems, {
     organizationId,
     status: "in_progress",
   });
@@ -433,10 +453,8 @@ export function AgentStatusCards({
   const agentTaskCount = new Map<string, number>();
   if (tasks) {
     for (const task of tasks) {
-      agentTaskCount.set(
-        task.assignedAgent,
-        (agentTaskCount.get(task.assignedAgent) ?? 0) + 1
-      );
+      const agent = task.assignedAgent ?? "unassigned";
+      agentTaskCount.set(agent, (agentTaskCount.get(agent) ?? 0) + 1);
     }
   }
 
@@ -467,11 +485,17 @@ export function AgentStatusCards({
           }
         : undefined;
 
+    // Derive current task from in-progress work items
+    const currentTask = tasks?.find(
+      (t) => t.assignedAgent === agentId && t.status === "in_progress"
+    );
+
     return (
       <AgentCard
         agent={agent}
         blockedReason={blockedReason}
         config={config as unknown as Record<string, unknown>}
+        currentTaskTitle={currentTask?.title}
         index={index}
         isAdmin={isAdmin}
         key={agent.id}

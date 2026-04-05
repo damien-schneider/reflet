@@ -49,7 +49,7 @@ export default function LandingLiveDemo() {
           transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
         >
           <Text as="span" className="mb-3 block" variant="eyebrow">
-            No demo video needed
+            See the real product
           </Text>
           <H2 className="mx-auto mb-4 max-w-135" variant="landing">
             Try the{" "}
@@ -59,8 +59,8 @@ export default function LandingLiveDemo() {
             product
           </H2>
           <p className="mx-auto max-w-100 text-[15px] text-muted-foreground leading-relaxed sm:text-[17px]">
-            This isn&apos;t a mockup. Click through Reflet&apos;s live public
-            board, roadmap, and changelog.
+            This isn&apos;t a mockup. Click through Reflet&apos;s live board
+            where AI agents and users collaborate in real time.
           </p>
         </motion.div>
 
@@ -94,8 +94,8 @@ export default function LandingLiveDemo() {
               </div>
 
               <p className="mb-6 max-w-80 text-[14px] text-muted-foreground leading-relaxed sm:text-[15px]">
-                Browse real feature requests from our community. Upvote ideas,
-                explore priorities, and see AI triage in action.
+                Browse real feature requests and AI-discovered opportunities.
+                Upvote ideas, see agent activity, and watch AI triage in action.
               </p>
 
               <span className="inline-flex items-center gap-2 rounded-full bg-olive-600 px-5 py-2.5 font-medium text-[14px] text-olive-100 shadow-[0_2px_12px_rgba(120,113,80,0.25)] transition-all group-hover:bg-olive-700 group-hover:shadow-[0_4px_20px_rgba(120,113,80,0.35)]">

@@ -1,20 +1,24 @@
 /**
  * Maintenance — periodic cleanup routines for the autopilot system.
  *
- * Handles inbox expiration, note cleanup, and knowledge staleness checks.
+ * Handles document review expiration, stale document cleanup,
+ * and knowledge staleness checks.
  */
 
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { internalAction, internalMutation } from "../_generated/server";
+import { internalMutation } from "../_generated/server";
 
-const INBOX_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
+const REVIEW_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 // ============================================
-// INBOX EXPIRATION
+// REVIEW EXPIRATION
 // ============================================
 
-export const runInboxExpiration = internalMutation({
+/**
+ * Expire documents and work items that have been waiting for review too long.
+ */
+export const runReviewExpiration = internalMutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
@@ -22,45 +26,43 @@ export const runInboxExpiration = internalMutation({
     const configs = await ctx.db.query("autopilotConfig").collect();
 
     for (const config of configs) {
-      const pendingItems = await ctx.db
-        .query("autopilotInboxItems")
-        .withIndex("by_org_status", (q) =>
-          q.eq("organizationId", config.organizationId).eq("status", "pending")
+      // Expire work items pending review
+      const reviewWorkItems = await ctx.db
+        .query("autopilotWorkItems")
+        .withIndex("by_org_review", (q) =>
+          q.eq("organizationId", config.organizationId).eq("needsReview", true)
         )
         .collect();
 
-      for (const item of pendingItems) {
-        const expiresAt = item.expiresAt ?? item.createdAt + INBOX_EXPIRY_MS;
+      for (const item of reviewWorkItems) {
+        const expiresAt = item.createdAt + REVIEW_EXPIRY_MS;
         if (now > expiresAt) {
           await ctx.db.patch(item._id, {
-            status: "expired",
+            needsReview: false,
             reviewedAt: now,
+            updatedAt: now,
           });
         }
       }
-    }
 
-    return null;
-  },
-});
+      // Expire documents pending review
+      const reviewDocs = await ctx.db
+        .query("autopilotDocuments")
+        .withIndex("by_org_review", (q) =>
+          q.eq("organizationId", config.organizationId).eq("needsReview", true)
+        )
+        .collect();
 
-// ============================================
-// NOTE CLEANUP
-// ============================================
-
-export const runNoteCleanup = internalAction({
-  args: {},
-  returns: v.null(),
-  handler: async (ctx) => {
-    const configs = await ctx.runQuery(
-      internal.autopilot.config.getEnabledConfigs,
-      {}
-    );
-
-    for (const config of configs) {
-      await ctx.runMutation(internal.autopilot.notes.cleanupNotes, {
-        organizationId: config.organizationId,
-      });
+      for (const doc of reviewDocs) {
+        const expiresAt = doc.createdAt + REVIEW_EXPIRY_MS;
+        if (now > expiresAt) {
+          await ctx.db.patch(doc._id, {
+            needsReview: false,
+            reviewedAt: now,
+            updatedAt: now,
+          });
+        }
+      }
     }
 
     return null;
@@ -95,34 +97,13 @@ export const runKnowledgeStalenessCheck = internalMutation({
         const isStale = now - doc.lastUpdatedAt > staleThresholdMs;
 
         if (isStale) {
-          // Check if we already have a pending inbox item for this doc
-          const existingAlert = await ctx.db
-            .query("autopilotInboxItems")
-            .withIndex("by_org_status", (q) =>
-              q
-                .eq("organizationId", config.organizationId)
-                .eq("status", "pending")
-            )
-            .collect();
-
-          const alreadyAlerted = existingAlert.some(
-            (item) =>
-              item.type === "knowledge_update" &&
-              item.title.includes(doc.docType)
-          );
-
-          if (!alreadyAlerted) {
-            await ctx.db.insert("autopilotInboxItems", {
-              organizationId: config.organizationId,
-              type: "knowledge_update",
-              title: `Knowledge doc "${doc.title}" is stale`,
-              summary: `The ${doc.docType} doc hasn't been updated in ${doc.stalenessAlertDays}+ days. Last updated: ${new Date(doc.lastUpdatedAt).toISOString()}`,
-              status: "pending",
-              priority: "low",
-              sourceAgent: "system",
-              createdAt: now,
-            });
-          }
+          await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+            organizationId: config.organizationId,
+            agent: "system",
+            level: "warning",
+            message: `Knowledge doc "${doc.title}" (${doc.docType}) is stale — last updated ${doc.stalenessAlertDays}+ days ago`,
+            action: "knowledge.stale",
+          });
         }
       }
     }

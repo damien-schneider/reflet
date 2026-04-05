@@ -48,28 +48,26 @@ export const gatherConcurrentContext = internalQuery({
       (a) => a.createdAt >= sevenDaysAgo
     );
 
-    // 2. Search pending/recent inbox items
-    const inboxItems = await ctx.db
-      .query("autopilotInboxItems")
+    // 2. Search recent documents
+    const documents = await ctx.db
+      .query("autopilotDocuments")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .collect();
 
-    const recentInbox = inboxItems.filter(
-      (item) => item.createdAt >= sevenDaysAgo
-    );
+    const recentDocs = documents.filter((doc) => doc.createdAt >= sevenDaysAgo);
 
-    // 3. Search active tasks
-    const tasks = await ctx.db
-      .query("autopilotTasks")
+    // 3. Search active work items
+    const workItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .collect();
 
-    const activeTasks = tasks.filter(
-      (t) => t.status !== "completed" && t.status !== "cancelled"
+    const activeItems = workItems.filter(
+      (t) => t.status !== "done" && t.status !== "cancelled"
     );
 
     // Build agent context map
@@ -94,19 +92,22 @@ export const gatherConcurrentContext = internalQuery({
       }
     }
 
-    // Match inbox items
-    for (const item of recentInbox) {
-      const searchable = `${item.title} ${item.summary} ${item.content ?? ""}`;
+    // Match documents
+    for (const doc of recentDocs) {
+      const searchable = `${doc.title} ${doc.content ?? ""}`;
       if (matchesKeyword(searchable)) {
-        addFinding(item.sourceAgent, `[Inbox] ${item.title}: ${item.summary}`);
+        addFinding(doc.sourceAgent ?? "system", `[Doc] ${doc.title}`);
       }
     }
 
-    // Match tasks
-    for (const task of activeTasks) {
-      const searchable = `${task.title} ${task.description}`;
+    // Match work items
+    for (const item of activeItems) {
+      const searchable = `${item.title} ${item.description}`;
       if (matchesKeyword(searchable)) {
-        addFinding(task.assignedAgent, `[Task:${task.status}] ${task.title}`);
+        addFinding(
+          item.assignedAgent ?? "system",
+          `[WorkItem:${item.status}] ${item.title}`
+        );
       }
     }
 
@@ -161,15 +162,15 @@ export const getAllAgentStatus = internalQuery({
       )
       .collect();
 
-    const inboxItems = await ctx.db
-      .query("autopilotInboxItems")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+    const reviewItems = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
       )
       .collect();
 
-    const tasks = await ctx.db
-      .query("autopilotTasks")
+    const workItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
@@ -186,14 +187,14 @@ export const getAllAgentStatus = internalQuery({
         (a) => a.agent === agent && a.createdAt >= oneHourAgo
       ).length;
 
-      const pendingInboxCount = inboxItems.filter(
-        (item) => item.sourceAgent === agent
+      const pendingInboxCount = reviewItems.filter(
+        (item) => item.assignedAgent === agent
       ).length;
 
-      const activeTaskCount = tasks.filter(
+      const activeTaskCount = workItems.filter(
         (t) =>
           t.assignedAgent === agent &&
-          t.status !== "completed" &&
+          t.status !== "done" &&
           t.status !== "cancelled"
       ).length;
 

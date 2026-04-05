@@ -9,7 +9,6 @@ import {
   IconDots,
   IconExternalLink,
   IconLoader2,
-  IconPlayerPause,
   IconRefresh,
   IconX,
 } from "@tabler/icons-react";
@@ -34,36 +33,36 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AgentIdentity } from "@/features/autopilot/components/agent-identity";
 import { TaskRunsList } from "@/features/autopilot/components/views/task-runs-list";
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
-  pending: {
+  backlog: {
     icon: IconCircleDashed,
     color: "text-muted-foreground",
-    label: "Pending",
+    label: "Backlog",
+  },
+  todo: {
+    icon: IconCircleDashed,
+    color: "text-blue-400",
+    label: "To Do",
   },
   in_progress: {
     icon: IconLoader2,
     color: "text-blue-500",
     label: "In Progress",
   },
-  blocked: {
-    icon: IconPlayerPause,
-    color: "text-yellow-500",
-    label: "Blocked",
-  },
-  waiting_review: {
+  in_review: {
     icon: IconCircleDashed,
     color: "text-purple-500",
-    label: "Review",
+    label: "In Review",
   },
-  completed: {
+  done: {
     icon: IconCircleCheck,
     color: "text-green-500",
-    label: "Completed",
+    label: "Done",
   },
-  failed: { icon: IconCircleX, color: "text-red-500", label: "Failed" },
   cancelled: {
     icon: IconCircleX,
     color: "text-muted-foreground",
@@ -78,33 +77,23 @@ const PRIORITY_STYLES = {
   low: "bg-muted text-muted-foreground border-border",
 } as const;
 
-const AGENT_LABELS: Record<string, string> = {
-  pm: "PM",
-  cto: "CTO",
-  dev: "Dev",
-  growth: "Growth",
-  support: "Support",
-  sales: "Sales",
-  system: "System",
-};
-
 function TaskDetailDialog({
   task,
   open,
   onOpenChange,
 }: {
-  task: Doc<"autopilotTasks">;
+  task: Doc<"autopilotWorkItems">;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const subtasks = useQuery(
-    api.autopilot.queries.tasks.getSubtasks,
-    open ? { parentTaskId: task._id } : "skip"
+    api.autopilot.queries.work.getChildren,
+    open ? { parentId: task._id } : "skip"
   );
 
   const statusConfig =
     STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ??
-    STATUS_CONFIG.pending;
+    STATUS_CONFIG.backlog;
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -122,9 +111,7 @@ function TaskDetailDialog({
             >
               {task.priority}
             </Badge>
-            <Badge variant="secondary">
-              {AGENT_LABELS[task.assignedAgent] ?? task.assignedAgent}
-            </Badge>
+            <AgentIdentity agent={task.assignedAgent ?? "system"} />
             <Badge
               className={cn("text-xs", statusConfig.color)}
               variant="outline"
@@ -142,31 +129,10 @@ function TaskDetailDialog({
             <span>
               Created {formatDistanceToNow(task.createdAt, { addSuffix: true })}
             </span>
-            {task.startedAt && (
-              <span>
-                Started{" "}
-                {formatDistanceToNow(task.startedAt, { addSuffix: true })}
-              </span>
-            )}
-            {task.completedAt && (
-              <span>
-                Finished{" "}
-                {formatDistanceToNow(task.completedAt, { addSuffix: true })}
-              </span>
-            )}
-            {task.estimatedCostUsd !== undefined &&
-              task.estimatedCostUsd > 0 && (
-                <span>${task.estimatedCostUsd.toFixed(3)}</span>
-              )}
+            <span>
+              Updated {formatDistanceToNow(task.updatedAt, { addSuffix: true })}
+            </span>
           </div>
-
-          {/* Error message */}
-          {task.errorMessage && (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
-              <p className="font-medium text-red-500 text-xs">Error</p>
-              <p className="mt-1 text-red-400 text-sm">{task.errorMessage}</p>
-            </div>
-          )}
 
           {/* PR link */}
           {task.prUrl && (
@@ -189,7 +155,7 @@ function TaskDetailDialog({
                 {subtasks.map((sub) => {
                   const subStatus =
                     STATUS_CONFIG[sub.status as keyof typeof STATUS_CONFIG] ??
-                    STATUS_CONFIG.pending;
+                    STATUS_CONFIG.backlog;
                   const SubIcon = subStatus.icon;
                   return (
                     <div
@@ -219,29 +185,28 @@ function TaskDetailDialog({
   );
 }
 
-export function TaskCard({ task }: { task: Doc<"autopilotTasks"> }) {
+export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
   const [detailOpen, setDetailOpen] = useState(false);
-  const cancelTask = useMutation(api.autopilot.mutations.tasks.cancelTask);
-  const retryTask = useMutation(api.autopilot.mutations.tasks.retryTask);
+  const cancelTask = useMutation(api.autopilot.mutations.work.updateWorkItem);
+  const retryTask = useMutation(api.autopilot.mutations.work.updateWorkItem);
 
   const statusConfig =
     STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ??
-    STATUS_CONFIG.pending;
+    STATUS_CONFIG.backlog;
   const StatusIcon = statusConfig.icon;
   const priorityStyle =
     PRIORITY_STYLES[task.priority as keyof typeof PRIORITY_STYLES] ??
     PRIORITY_STYLES.low;
-  const agentLabel = AGENT_LABELS[task.assignedAgent] ?? task.assignedAgent;
 
   const canCancel =
-    task.status === "pending" ||
-    task.status === "in_progress" ||
-    task.status === "blocked";
-  const canRetry = task.status === "failed" || task.status === "cancelled";
+    task.status === "backlog" ||
+    task.status === "todo" ||
+    task.status === "in_progress";
+  const canRetry = task.status === "cancelled";
 
   const handleCancel = async () => {
     try {
-      await cancelTask({ taskId: task._id });
+      await cancelTask({ workItemId: task._id, status: "cancelled" });
       toast.success("Task cancelled");
     } catch {
       toast.error("Failed to cancel task");
@@ -250,7 +215,7 @@ export function TaskCard({ task }: { task: Doc<"autopilotTasks"> }) {
 
   const handleRetry = async () => {
     try {
-      await retryTask({ taskId: task._id });
+      await retryTask({ workItemId: task._id, status: "backlog" });
       toast.success("Task re-queued");
     } catch {
       toast.error("Failed to retry task");
@@ -273,31 +238,19 @@ export function TaskCard({ task }: { task: Doc<"autopilotTasks"> }) {
               <Badge className={cn("text-xs", priorityStyle)} variant="outline">
                 {task.priority}
               </Badge>
-              <Badge variant="secondary">{agentLabel}</Badge>
+              <AgentIdentity agent={task.assignedAgent ?? "system"} />
               {task.prUrl && <Badge variant="outline">PR</Badge>}
             </div>
             <h3 className="mt-1.5 font-medium">{task.title}</h3>
             <p className="mt-1 line-clamp-2 text-muted-foreground text-sm">
               {task.description}
             </p>
-            {task.errorMessage && (
-              <p className="mt-1 line-clamp-1 text-red-500 text-xs">
-                {task.errorMessage}
-              </p>
-            )}
             <div className="mt-2 flex items-center gap-3 text-muted-foreground text-xs">
               <span>{statusConfig.label}</span>
               <span>·</span>
               <span>
                 {formatDistanceToNow(task.createdAt, { addSuffix: true })}
               </span>
-              {task.estimatedCostUsd !== undefined &&
-                task.estimatedCostUsd > 0 && (
-                  <>
-                    <span>·</span>
-                    <span>${task.estimatedCostUsd.toFixed(3)}</span>
-                  </>
-                )}
             </div>
           </div>
         </button>

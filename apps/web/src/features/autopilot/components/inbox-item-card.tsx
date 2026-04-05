@@ -1,22 +1,18 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
-import {
-  IconCheck,
-  IconClock,
-  IconExternalLink,
-  IconX,
-} from "@tabler/icons-react";
+import { IconCheck, IconExternalLink, IconX } from "@tabler/icons-react";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AgentIdentity } from "@/features/autopilot/components/agent-identity";
 import { cn } from "@/lib/utils";
 
 const TYPE_LABELS = {
+  budget_override: "Budget",
   ceo_report: "CEO Report",
   company_brief_review: "Company Brief",
   email_draft: "Email Draft",
@@ -43,82 +39,168 @@ const PRIORITY_STYLES = {
   low: "bg-muted text-muted-foreground border-border",
 } as const;
 
-export function InboxItemCard({ item }: { item: Doc<"autopilotInboxItems"> }) {
-  const updateStatus = useMutation(
-    api.autopilot.mutations.inbox.updateInboxItem
-  );
+interface UnifiedInboxItem {
+  _id: string;
+  _source: "work" | "document";
+  actionUrl?: string;
+  assignedAgent?: string;
+  content?: string;
+  createdAt: number;
+  description?: string;
+  needsReview: boolean;
+  platform?: string;
+  priority?: string;
+  prUrl?: string;
+  reviewType?: string;
+  sourceAgent?: string;
+  status: string;
+  title: string;
+  type?: string;
+  updatedAt: number;
+}
 
-  const handleAction = async (status: "approved" | "rejected" | "snoozed") => {
+export function InboxItemCard({
+  item,
+  selected = false,
+  onMarkRead: _onMarkRead,
+}: {
+  item: UnifiedInboxItem;
+  selected?: boolean;
+  onMarkRead?: () => void;
+}) {
+  const approveWork = useMutation(
+    api.autopilot.mutations.inbox.approveWorkItem
+  );
+  const rejectWork = useMutation(api.autopilot.mutations.inbox.rejectWorkItem);
+  const approveDoc = useMutation(api.autopilot.mutations.inbox.approveDocument);
+  const rejectDoc = useMutation(api.autopilot.mutations.inbox.rejectDocument);
+
+  const handleAction = async (action: "approved" | "rejected") => {
     try {
-      await updateStatus({ itemId: item._id, status });
-      toast.success(`Item ${status}`);
+      if (action === "approved") {
+        if (item._source === "work") {
+          await approveWork({ workItemId: item._id as never });
+        } else {
+          await approveDoc({ documentId: item._id as never });
+        }
+      } else if (item._source === "work") {
+        await rejectWork({ workItemId: item._id as never });
+      } else {
+        await rejectDoc({ documentId: item._id as never });
+      }
+      toast.success(`Item ${action}`);
     } catch {
       toast.error("Failed to update item");
     }
   };
 
   const typeLabel =
-    TYPE_LABELS[item.type as keyof typeof TYPE_LABELS] ?? item.type;
+    TYPE_LABELS[item.type as keyof typeof TYPE_LABELS] ??
+    item.type ??
+    item._source;
   const priorityStyle =
     PRIORITY_STYLES[item.priority as keyof typeof PRIORITY_STYLES] ??
     PRIORITY_STYLES.low;
-  const isPending = item.status === "pending";
+  const isPending = item.needsReview;
+  const agentName =
+    item._source === "work" ? item.assignedAgent : item.sourceAgent;
 
   return (
-    <div className="rounded-lg border p-4">
-      <div className="flex items-start justify-between gap-3">
+    <div
+      className={cn(
+        "group relative border-border border-b px-3 py-3 transition-colors last:border-b-0",
+        selected && "bg-primary/5",
+        !selected && "hover:bg-muted/40"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        {/* Review indicator */}
+        <span className="mt-1.5 flex size-4 shrink-0 items-center justify-center">
+          {isPending ? (
+            <span className="block size-2 rounded-full bg-blue-600 dark:bg-blue-400" />
+          ) : (
+            <span aria-hidden="true" className="size-4" />
+          )}
+        </span>
+
+        {/* Source agent */}
+        <div className="mt-1 shrink-0">
+          <AgentIdentity
+            agent={agentName ?? "system"}
+            showLabel={false}
+            size="sm"
+          />
+        </div>
+
+        {/* Content */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <Badge className={cn("text-xs", priorityStyle)} variant="outline">
+            <span className="truncate font-medium text-sm">{item.title}</span>
+            <Badge
+              className={cn("shrink-0 text-[10px]", priorityStyle)}
+              variant="outline"
+            >
               {item.priority}
             </Badge>
-            <Badge variant="secondary">{typeLabel}</Badge>
-            <span className="text-muted-foreground text-xs">
-              {formatDistanceToNow(item.createdAt, { addSuffix: true })}
-            </span>
+            <Badge className="shrink-0 text-[10px]" variant="secondary">
+              {typeLabel}
+            </Badge>
           </div>
-          <h3 className="mt-2 font-medium">{item.title}</h3>
-          <p className="mt-1 text-muted-foreground text-sm">{item.summary}</p>
+          <p className="mt-0.5 line-clamp-1 text-muted-foreground text-xs">
+            {item.description ?? item.content ?? ""}
+          </p>
+        </div>
+
+        {/* Trailing: timestamp + actions */}
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">
+            {formatDistanceToNow(item.createdAt, { addSuffix: true })}
+          </span>
+          {isPending && (
+            <div className="flex gap-0.5">
+              <Button
+                className="size-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction("approved");
+                }}
+                size="icon"
+                title="Approve"
+                variant="ghost"
+              >
+                <IconCheck className="size-3.5 text-green-500" />
+              </Button>
+              <Button
+                className="size-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction("rejected");
+                }}
+                size="icon"
+                title="Reject"
+                variant="ghost"
+              >
+                <IconX className="size-3.5 text-red-500" />
+              </Button>
+            </div>
+          )}
+          {!isPending && (
+            <Badge className="text-[10px]" variant="outline">
+              {item.status}
+            </Badge>
+          )}
           {item.actionUrl && (
             <a
-              className="mt-2 inline-flex items-center gap-1 text-primary text-sm hover:underline"
+              className="text-muted-foreground transition-colors hover:text-foreground"
               href={item.actionUrl}
+              onClick={(e) => e.stopPropagation()}
               rel="noopener noreferrer"
               target="_blank"
             >
-              View <IconExternalLink className="size-3" />
+              <IconExternalLink className="size-3.5" />
             </a>
           )}
         </div>
-        {isPending && (
-          <div className="flex shrink-0 gap-1">
-            <Button
-              onClick={() => handleAction("approved")}
-              size="icon"
-              title="Approve"
-              variant="ghost"
-            >
-              <IconCheck className="size-4 text-green-500" />
-            </Button>
-            <Button
-              onClick={() => handleAction("snoozed")}
-              size="icon"
-              title="Snooze"
-              variant="ghost"
-            >
-              <IconClock className="size-4 text-yellow-500" />
-            </Button>
-            <Button
-              onClick={() => handleAction("rejected")}
-              size="icon"
-              title="Reject"
-              variant="ghost"
-            >
-              <IconX className="size-4 text-red-500" />
-            </Button>
-          </div>
-        )}
-        {!isPending && <Badge variant="outline">{item.status}</Badge>}
       </div>
     </div>
   );

@@ -19,35 +19,35 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H2, Muted } from "@/components/ui/typography";
+import { MarkdownContent } from "@/features/autopilot/components/markdown-content";
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
-  pending: {
+  backlog: {
     icon: IconCircleDashed,
     color: "text-muted-foreground",
-    label: "Pending",
+    label: "Backlog",
+  },
+  todo: {
+    icon: IconCircleDashed,
+    color: "text-muted-foreground",
+    label: "To Do",
   },
   in_progress: {
     icon: IconLoader2,
     color: "text-blue-500",
     label: "In Progress",
   },
-  blocked: {
+  in_review: {
     icon: IconPlayerPause,
-    color: "text-yellow-500",
-    label: "Blocked",
-  },
-  waiting_review: {
-    icon: IconCircleDashed,
     color: "text-purple-500",
-    label: "Review",
+    label: "In Review",
   },
-  completed: {
+  done: {
     icon: IconCircleCheck,
     color: "text-green-500",
-    label: "Completed",
+    label: "Done",
   },
-  failed: { icon: IconCircleX, color: "text-red-500", label: "Failed" },
   cancelled: {
     icon: IconCircleX,
     color: "text-muted-foreground",
@@ -62,21 +62,21 @@ export default function TaskDetailPage({
 }) {
   const { taskId } = use(params);
 
-  const task = useQuery(api.autopilot.queries.tasks.getTask, {
-    taskId: taskId as Id<"autopilotTasks">,
+  const task = useQuery(api.autopilot.queries.work.getWorkItem, {
+    workItemId: taskId as Id<"autopilotWorkItems">,
   });
 
   const subtasks = useQuery(
-    api.autopilot.queries.tasks.getSubtasks,
-    task ? { parentTaskId: task._id } : "skip"
+    api.autopilot.queries.work.getChildren,
+    task ? { parentId: task._id } : "skip"
   );
 
   const runs = useQuery(
-    api.autopilot.queries.tasks.getTaskRuns,
-    task ? { taskId: task._id } : "skip"
+    api.autopilot.queries.work.getWorkItemRuns,
+    task ? { workItemId: task._id } : "skip"
   );
 
-  const cancelTask = useMutation(api.autopilot.mutations.tasks.cancelTask);
+  const cancelTask = useMutation(api.autopilot.mutations.work.updateWorkItem);
 
   if (task === undefined) {
     return (
@@ -98,17 +98,17 @@ export default function TaskDetailPage({
 
   const statusConfig =
     STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ??
-    STATUS_CONFIG.pending;
+    STATUS_CONFIG.backlog;
   const StatusIcon = statusConfig.icon;
 
   const canCancel =
-    task.status === "pending" ||
-    task.status === "in_progress" ||
-    task.status === "blocked";
+    task.status === "backlog" ||
+    task.status === "todo" ||
+    task.status === "in_progress";
 
   const handleCancel = async () => {
     try {
-      await cancelTask({ taskId: task._id });
+      await cancelTask({ workItemId: task._id, status: "cancelled" });
       toast.success("Task cancelled");
     } catch {
       toast.error("Failed to cancel task");
@@ -161,19 +161,8 @@ export default function TaskDetailPage({
         <H2 className="mb-2" variant="card">
           Description
         </H2>
-        <p className="whitespace-pre-wrap text-sm">{task.description}</p>
+        <MarkdownContent>{task.description}</MarkdownContent>
       </section>
-
-      {task.technicalSpec && (
-        <section>
-          <H2 className="mb-2" variant="card">
-            Technical Spec
-          </H2>
-          <pre className="overflow-auto rounded-lg bg-muted p-4 text-sm">
-            {task.technicalSpec}
-          </pre>
-        </section>
-      )}
 
       {task.acceptanceCriteria && task.acceptanceCriteria.length > 0 && (
         <section>
@@ -188,36 +177,13 @@ export default function TaskDetailPage({
         </section>
       )}
 
-      {task.errorMessage && (
+      {task.completionPercent !== undefined && task.completionPercent > 0 && (
         <section>
-          <H2 className="mb-2" variant="card">
-            Error
-          </H2>
-          <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4 text-red-500 text-sm">
-            {task.errorMessage}
+          <div className="mb-3 flex items-center gap-2 text-muted-foreground text-sm">
+            <span>Progress: {task.completionPercent}%</span>
           </div>
         </section>
       )}
-
-      <section>
-        <div className="mb-3 flex items-center gap-2 text-muted-foreground text-sm">
-          <span>
-            Retries: {task.retryCount}/{task.maxRetries}
-          </span>
-          {task.estimatedCostUsd !== undefined && task.estimatedCostUsd > 0 && (
-            <>
-              <span>·</span>
-              <span>Cost: ${task.estimatedCostUsd.toFixed(3)}</span>
-            </>
-          )}
-          {task.tokensUsed !== undefined && task.tokensUsed > 0 && (
-            <>
-              <span>·</span>
-              <span>Tokens: {task.tokensUsed.toLocaleString()}</span>
-            </>
-          )}
-        </div>
-      </section>
 
       {subtasks && subtasks.length > 0 && (
         <section>
@@ -228,7 +194,7 @@ export default function TaskDetailPage({
             {subtasks.map((sub) => {
               const subStatus =
                 STATUS_CONFIG[sub.status as keyof typeof STATUS_CONFIG] ??
-                STATUS_CONFIG.pending;
+                STATUS_CONFIG.backlog;
               const SubIcon = subStatus.icon;
               return (
                 <div

@@ -1,19 +1,31 @@
 /**
- * Document mutations — public, auth-gated.
+ * Document mutations — create, update, archive, approve.
  */
 
 import { v } from "convex/values";
 import { mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
+import {
+  documentStatus,
+  documentType,
+  impactLevel,
+} from "../schema/validators";
 import { requireOrgAdmin } from "./auth";
 
 export const createDocument = mutation({
   args: {
     organizationId: v.id("organizations"),
-    type: v.string(),
+    type: documentType,
     title: v.string(),
     content: v.string(),
     tags: v.optional(v.array(v.string())),
+    platform: v.optional(v.string()),
+    targetUrl: v.optional(v.string()),
+    linkedWorkItemId: v.optional(v.id("autopilotWorkItems")),
+    linkedCompetitorId: v.optional(v.id("autopilotCompetitors")),
+    linkedLeadId: v.optional(v.id("autopilotLeads")),
+    needsReview: v.optional(v.boolean()),
+    reviewType: v.optional(v.string()),
   },
   returns: v.id("autopilotDocuments"),
   handler: async (ctx, args) => {
@@ -27,7 +39,14 @@ export const createDocument = mutation({
       title: args.title,
       content: args.content,
       tags: args.tags ?? [],
-      status: "published",
+      status: "draft",
+      needsReview: args.needsReview ?? false,
+      reviewType: args.reviewType,
+      platform: args.platform,
+      targetUrl: args.targetUrl,
+      linkedWorkItemId: args.linkedWorkItemId,
+      linkedCompetitorId: args.linkedCompetitorId,
+      linkedLeadId: args.linkedLeadId,
       createdAt: now,
       updatedAt: now,
     });
@@ -40,9 +59,16 @@ export const updateDocument = mutation({
     title: v.optional(v.string()),
     content: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
-    status: v.optional(
-      v.union(v.literal("draft"), v.literal("published"), v.literal("archived"))
-    ),
+    status: v.optional(documentStatus),
+    needsReview: v.optional(v.boolean()),
+    platform: v.optional(v.string()),
+    targetUrl: v.optional(v.string()),
+    publishedUrl: v.optional(v.string()),
+    relevanceScore: v.optional(v.number()),
+    impactLevel: v.optional(impactLevel),
+    sourceUrls: v.optional(v.array(v.string())),
+    keyFindings: v.optional(v.array(v.string())),
+    metadata: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -54,21 +80,24 @@ export const updateDocument = mutation({
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, doc.organizationId, user._id);
 
+    const { documentId, ...fields } = args;
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
-    if (args.title !== undefined) {
-      updates.title = args.title;
-    }
-    if (args.content !== undefined) {
-      updates.content = args.content;
-    }
-    if (args.tags !== undefined) {
-      updates.tags = args.tags;
-    }
-    if (args.status !== undefined) {
-      updates.status = args.status;
+
+    for (const [key, value] of Object.entries(fields)) {
+      if (value !== undefined) {
+        updates[key] = value;
+      }
     }
 
-    await ctx.db.patch(args.documentId, updates);
+    if (args.needsReview === false && doc.needsReview) {
+      updates.reviewedAt = Date.now();
+    }
+
+    if (args.publishedUrl && !doc.publishedAt) {
+      updates.publishedAt = Date.now();
+    }
+
+    await ctx.db.patch(documentId, updates);
     return null;
   },
 });

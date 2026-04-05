@@ -1,5 +1,5 @@
 /**
- * Task execution — dispatches tasks to the selected coding adapter.
+ * Task execution — dispatches work items to the selected coding adapter.
  *
  * This is the bridge between the heartbeat scheduler and the
  * provider-agnostic adapter layer.
@@ -9,7 +9,8 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
-import { internalAction } from "../_generated/server";
+import { internalAction, internalMutation } from "../_generated/server";
+import { assignedAgent } from "./schema/validators";
 
 const GITHUB_REPO_URL_REGEX = /github\.com[/:](?<owner>[^/]+)\/(?<repo>[^/.]+)/;
 
@@ -27,8 +28,8 @@ const resolveRunStatus = (
 
 const resolveCompletionStatus = (
   autonomyLevel: string
-): "completed" | "waiting_review" =>
-  autonomyLevel === "full_auto" ? "completed" : "waiting_review";
+): "done" | "in_review" =>
+  autonomyLevel === "full_auto" ? "done" : "in_review";
 
 const resolveCompletedAt = (resultStatus: string): number | undefined =>
   resultStatus === "success" || resultStatus === "failed"
@@ -84,7 +85,7 @@ const handleTaskResult = async (
       estimatedCostUsd?: number;
       errorMessage?: string;
     };
-    taskId: Id<"autopilotTasks">;
+    taskId: Id<"autopilotWorkItems">;
     organizationId: Id<"organizations">;
     runId: Id<"autopilotRuns">;
     adapter: string;
@@ -105,13 +106,14 @@ const handleTaskResult = async (
   } = params;
 
   if (result.status === "success") {
+    const status = resolveCompletionStatus(autonomyLevel);
     await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId,
-      status: resolveCompletionStatus(autonomyLevel),
+      status,
       prUrl: result.prUrl,
       prNumber: result.prNumber,
-      tokensUsed: result.tokensUsed,
-      estimatedCostUsd: result.estimatedCostUsd,
+      needsReview: status === "in_review",
+      reviewType: status === "in_review" ? "pr_review" : undefined,
     });
     return;
   }
@@ -131,18 +133,14 @@ const handleTaskResult = async (
   }
 
   if (result.status === "failed" && retryCount < maxRetries) {
-    // Exponential backoff: 5min, 10min, 20min, 40min...
     const RETRY_BASE_DELAY_MS = 5 * 60 * 1000;
     const retryDelay = RETRY_BASE_DELAY_MS * 2 ** retryCount;
 
     await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId,
-      status: "paused",
-      retryCount: retryCount + 1,
-      errorMessage: `Retry ${retryCount + 1}/${maxRetries}: ${result.errorMessage}`,
+      status: "backlog",
     });
 
-    // Schedule retry with backoff instead of immediate re-queue
     await ctx.scheduler.runAfter(
       retryDelay,
       internal.autopilot.execution.retryTask,
@@ -154,33 +152,20 @@ const handleTaskResult = async (
   if (result.status === "failed") {
     await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId,
-      status: "failed",
-      errorMessage: result.errorMessage,
-      tokensUsed: result.tokensUsed,
-      estimatedCostUsd: result.estimatedCostUsd,
+      status: "cancelled",
     });
   }
 };
 
 /**
  * Execute a coding task using the org's configured adapter.
- *
- * Flow:
- *   1. Load org config + adapter credentials
- *   2. Resolve the adapter
- *   3. Build the task input from the autopilot task record
- *   4. Call adapter.executeTask()
- *   5. Store results in the run record
- *   6. Update task status
- *   7. Log all activity
  */
 export const executeTask = internalAction({
   args: {
     organizationId: v.id("organizations"),
-    taskId: v.id("autopilotTasks"),
+    taskId: v.id("autopilotWorkItems"),
   },
   handler: async (ctx, args) => {
-    // Step 1: Load config
     const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
       organizationId: args.organizationId,
     });
@@ -188,7 +173,7 @@ export const executeTask = internalAction({
     if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
-        taskId: args.taskId,
+        workItemId: args.taskId,
         agent: "system",
         level: "warning",
         message: "Autopilot is disabled — task not executed",
@@ -196,16 +181,14 @@ export const executeTask = internalAction({
       return;
     }
 
-    // Step 2: Load task
     const task = await ctx.runQuery(internal.autopilot.tasks.getTask, {
       taskId: args.taskId,
     });
 
     if (!task) {
-      throw new Error(`Task not found: ${args.taskId}`);
+      throw new Error(`Work item not found: ${args.taskId}`);
     }
 
-    // Step 3: Load adapter credentials
     const creds = await ctx.runQuery(
       internal.autopilot.config.getAdapterCredentials,
       { organizationId: args.organizationId, adapter: config.adapter }
@@ -214,32 +197,27 @@ export const executeTask = internalAction({
     if (!creds) {
       await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
         taskId: args.taskId,
-        status: "failed",
-        errorMessage: `No credentials configured for adapter: ${config.adapter}`,
+        status: "cancelled",
       });
       return;
     }
 
-    // Step 4: Create a run record
     const runId = await ctx.runMutation(internal.autopilot.tasks.createRun, {
       organizationId: args.organizationId,
       taskId: args.taskId,
       adapter: config.adapter,
     });
 
-    // Step 5: Mark task as in progress
     await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId: args.taskId,
       status: "in_progress",
     });
 
-    // Step 6: Increment daily counter
     await ctx.runMutation(internal.autopilot.config.incrementTaskCounter, {
       organizationId: args.organizationId,
     });
 
     try {
-      // Step 7: Resolve adapter and execute
       const { getAdapter } = await import("./adapters/registry");
       const adapter = getAdapter(config.adapter);
       const credentials = JSON.parse(creds.credentials) as Record<
@@ -247,13 +225,11 @@ export const executeTask = internalAction({
         string
       >;
 
-      // Step 7b: Pre-validate credentials
       const credentialsValid = await adapter.validateCredentials(credentials);
       if (!credentialsValid) {
         await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
           taskId: args.taskId,
-          status: "failed",
-          errorMessage: `Invalid credentials for adapter: ${config.adapter} — update in Settings`,
+          status: "cancelled",
         });
         await ctx.runMutation(internal.autopilot.tasks.updateRun, {
           runId,
@@ -264,7 +240,6 @@ export const executeTask = internalAction({
         return;
       }
 
-      // Load AGENTS.md from the repo for coding conventions
       const agentsMdContent = await fetchAgentsMd(credentials);
       const repoUrl = credentials.repoUrl ?? "";
 
@@ -273,7 +248,7 @@ export const executeTask = internalAction({
           repoUrl,
           baseBranch: credentials.baseBranch ?? "main",
           title: task.title,
-          technicalSpec: task.technicalSpec ?? task.description,
+          technicalSpec: task.description,
           acceptanceCriteria: task.acceptanceCriteria ?? [],
           agentsMdContent,
           featureBranch: `autopilot/${task._id}`,
@@ -281,11 +256,10 @@ export const executeTask = internalAction({
         credentials
       );
 
-      // Step 8: Store activity logs
       for (const logEntry of result.activityLogs) {
         await ctx.runMutation(internal.autopilot.tasks.logActivity, {
           organizationId: args.organizationId,
-          taskId: args.taskId,
+          workItemId: args.taskId,
           runId,
           agent: logEntry.agent,
           level: logEntry.level,
@@ -294,7 +268,6 @@ export const executeTask = internalAction({
         });
       }
 
-      // Step 9: Update run record
       await ctx.runMutation(internal.autopilot.tasks.updateRun, {
         runId,
         status: resolveRunStatus(result.status),
@@ -308,7 +281,6 @@ export const executeTask = internalAction({
         completedAt: resolveCompletedAt(result.status),
       });
 
-      // Step 10: Update task status based on result
       await handleTaskResult(ctx, {
         result,
         taskId: args.taskId,
@@ -316,8 +288,8 @@ export const executeTask = internalAction({
         runId,
         adapter: config.adapter,
         autonomyLevel: config.autonomyLevel,
-        retryCount: task.retryCount,
-        maxRetries: task.maxRetries,
+        retryCount: 0,
+        maxRetries: 3,
       });
     } catch (error) {
       const errorMessage =
@@ -332,8 +304,7 @@ export const executeTask = internalAction({
 
       await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
         taskId: args.taskId,
-        status: "failed",
-        errorMessage,
+        status: "cancelled",
       });
     }
   },
@@ -341,35 +312,31 @@ export const executeTask = internalAction({
 
 /**
  * Poll for async task completion (Copilot, Codex, Claude Code).
- *
- * Called via ctx.scheduler.runAfter for async adapters.
- * Re-schedules itself until the task completes or fails.
  */
 export const pollTaskStatus = internalAction({
   args: {
     organizationId: v.id("organizations"),
-    taskId: v.id("autopilotTasks"),
+    taskId: v.id("autopilotWorkItems"),
     runId: v.id("autopilotRuns"),
     externalRef: v.string(),
   },
   handler: async (ctx, args) => {
-    const MAX_POLL_DURATION = 30 * 60 * 1000; // 30 minutes max
-    const POLL_INTERVAL = 60_000; // 1 minute between polls
+    const MAX_POLL_DURATION = 30 * 60 * 1000;
+    const POLL_INTERVAL = 60_000;
 
     const task = await ctx.runQuery(internal.autopilot.tasks.getTask, {
       taskId: args.taskId,
     });
 
     if (!task || task.status === "cancelled") {
-      return; // Task was cancelled — stop polling
+      return;
     }
 
-    // Check if we've been polling too long
-    if (task.startedAt && Date.now() - task.startedAt > MAX_POLL_DURATION) {
+    const startedAt = task.updatedAt;
+    if (startedAt && Date.now() - startedAt > MAX_POLL_DURATION) {
       await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
         taskId: args.taskId,
-        status: "failed",
-        errorMessage: "Timed out waiting for async adapter to complete",
+        status: "cancelled",
       });
       await ctx.runMutation(internal.autopilot.tasks.updateRun, {
         runId: args.runId,
@@ -380,7 +347,6 @@ export const pollTaskStatus = internalAction({
       return;
     }
 
-    // Load config + credentials
     const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
       organizationId: args.organizationId,
     });
@@ -406,11 +372,10 @@ export const pollTaskStatus = internalAction({
 
       const status = await adapter.getStatus(args.externalRef, credentials);
 
-      // Log any new activity
       for (const logEntry of status.activityLogs) {
         await ctx.runMutation(internal.autopilot.tasks.logActivity, {
           organizationId: args.organizationId,
-          taskId: args.taskId,
+          workItemId: args.taskId,
           runId: args.runId,
           agent: logEntry.agent,
           level: logEntry.level,
@@ -419,7 +384,6 @@ export const pollTaskStatus = internalAction({
         });
       }
 
-      // Update run
       await ctx.runMutation(internal.autopilot.tasks.updateRun, {
         runId: args.runId,
         prUrl: status.prUrl,
@@ -436,18 +400,18 @@ export const pollTaskStatus = internalAction({
           status: "completed",
           completedAt: Date.now(),
         });
+        const completionStatus =
+          config.autonomyLevel === "full_auto" ? "done" : "in_review";
         await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
           taskId: args.taskId,
-          status:
-            config.autonomyLevel === "full_auto"
-              ? "completed"
-              : "waiting_review",
+          status: completionStatus as "done" | "in_review",
           prUrl: status.prUrl,
           prNumber: status.prNumber,
-          tokensUsed: status.tokensUsed,
-          estimatedCostUsd: status.estimatedCostUsd,
+          needsReview: completionStatus === "in_review",
+          reviewType:
+            completionStatus === "in_review" ? "pr_review" : undefined,
         });
-        return; // Done
+        return;
       }
 
       if (status.status === "failed") {
@@ -458,13 +422,11 @@ export const pollTaskStatus = internalAction({
         });
         await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
           taskId: args.taskId,
-          status: "failed",
-          errorMessage: status.ciFailureLog ?? "Adapter reported failure",
+          status: "cancelled",
         });
-        return; // Done
+        return;
       }
 
-      // Still running — schedule next poll
       await ctx.scheduler.runAfter(
         POLL_INTERVAL,
         internal.autopilot.execution.pollTaskStatus,
@@ -473,17 +435,15 @@ export const pollTaskStatus = internalAction({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Poll error";
-      // Log error but keep polling
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
-        taskId: args.taskId,
+        workItemId: args.taskId,
         runId: args.runId,
         agent: "system",
         level: "warning",
         message: `Poll error: ${errorMessage}`,
       });
 
-      // Re-schedule despite error
       await ctx.scheduler.runAfter(
         POLL_INTERVAL,
         internal.autopilot.execution.pollTaskStatus,
@@ -494,12 +454,12 @@ export const pollTaskStatus = internalAction({
 });
 
 /**
- * Cancel a running task. Calls the adapter's cancel and updates status.
+ * Cancel a running task.
  */
 export const cancelTask = internalAction({
   args: {
     organizationId: v.id("organizations"),
-    taskId: v.id("autopilotTasks"),
+    taskId: v.id("autopilotWorkItems"),
   },
   handler: async (ctx, args) => {
     const task = await ctx.runQuery(internal.autopilot.tasks.getTask, {
@@ -516,7 +476,6 @@ export const cancelTask = internalAction({
       return;
     }
 
-    // Find active run
     const runs = await ctx.runQuery(internal.autopilot.tasks.getRunsForTask, {
       taskId: args.taskId,
     });
@@ -561,13 +520,12 @@ export const cancelTask = internalAction({
 });
 
 /**
- * Retry a paused task after backoff delay.
- * Sets status back to pending so the heartbeat picks it up.
+ * Retry a work item after backoff delay.
  */
 export const retryTask = internalAction({
   args: {
     organizationId: v.id("organizations"),
-    taskId: v.id("autopilotTasks"),
+    taskId: v.id("autopilotWorkItems"),
   },
   handler: async (ctx, args) => {
     const task = await ctx.runQuery(internal.autopilot.tasks.getTask, {
@@ -580,15 +538,73 @@ export const retryTask = internalAction({
 
     await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId: args.taskId,
-      status: "pending",
+      status: "todo",
     });
 
     await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: args.organizationId,
-      taskId: args.taskId,
+      workItemId: args.taskId,
       agent: "system",
       level: "info",
-      message: `Retry ${task.retryCount}/${task.maxRetries}: re-queued after backoff`,
+      message: "Re-queued after backoff",
     });
+  },
+});
+
+// ============================================
+// Work item checkout / locking
+// ============================================
+
+/**
+ * Atomically lock a work item for an agent.
+ */
+export const checkoutTask = internalMutation({
+  args: {
+    taskId: v.id("autopilotWorkItems"),
+    agent: assignedAgent,
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const item = await ctx.db.get(args.taskId);
+    if (!item) {
+      return false;
+    }
+
+    // Work items don't have lock fields in the new schema,
+    // so we use status as the lock: only "todo" items can be checked out
+    if (item.status !== "todo") {
+      return false;
+    }
+
+    await ctx.db.patch(args.taskId, {
+      status: "in_progress",
+      assignedAgent: args.agent,
+      updatedAt: Date.now(),
+    });
+
+    return true;
+  },
+});
+
+/**
+ * Release a work item (set back to todo).
+ */
+export const releaseTask = internalMutation({
+  args: {
+    taskId: v.id("autopilotWorkItems"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const item = await ctx.db.get(args.taskId);
+    if (!item) {
+      return null;
+    }
+
+    await ctx.db.patch(args.taskId, {
+      status: "todo",
+      updatedAt: Date.now(),
+    });
+
+    return null;
   },
 });

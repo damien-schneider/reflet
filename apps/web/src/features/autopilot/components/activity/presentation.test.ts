@@ -16,14 +16,14 @@ describe("autopilot activity presentation", () => {
   it("formats undirected activity updates for the ticker", () => {
     expect(
       formatTickerEntry({
-        agent: "security",
+        agent: "system",
         message: "Dependency audit queued",
       })
-    ).toBe("Security: Dependency audit queued");
+    ).toBe("System: Dependency audit queued");
   });
 
   it("returns the compact display label for an activity agent", () => {
     expect(getActivityAgentLabel("orchestrator")).toBe("CEO");
-    expect(getActivityAgentLabel("docs")).toBe("Docs");
+    expect(getActivityAgentLabel("support")).toBe("Support");
   });
 });

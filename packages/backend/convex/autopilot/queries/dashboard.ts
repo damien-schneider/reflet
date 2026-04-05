@@ -20,31 +20,38 @@ export const getDashboardStats = query({
       )
       .unique();
 
-    const pendingTasks = await ctx.db
-      .query("autopilotTasks")
+    const todoItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+        q.eq("organizationId", args.organizationId).eq("status", "todo")
       )
       .collect();
 
-    const inProgressTasks = await ctx.db
-      .query("autopilotTasks")
+    const inProgressItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
         q.eq("organizationId", args.organizationId).eq("status", "in_progress")
       )
       .collect();
 
-    const completedTasks = await ctx.db
-      .query("autopilotTasks")
+    const doneItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "completed")
+        q.eq("organizationId", args.organizationId).eq("status", "done")
       )
       .collect();
 
-    const pendingInbox = await ctx.db
-      .query("autopilotInboxItems")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+    const pendingReviewItems = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
+      )
+      .collect();
+
+    const pendingReviewDocs = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
       )
       .collect();
 
@@ -57,15 +64,14 @@ export const getDashboardStats = query({
       maxTasksPerDay: config?.maxTasksPerDay ?? 10,
       costUsedTodayUsd: config?.costUsedTodayUsd ?? 0,
       dailyCostCapUsd: config?.dailyCostCapUsd,
-      pendingTaskCount: pendingTasks.length,
-      inProgressTaskCount: inProgressTasks.length,
-      completedTaskCount: completedTasks.length,
-      pendingInboxCount: pendingInbox.length,
-      maxPendingTasksPerAgent: config?.maxPendingTasksPerAgent ?? 2,
-      maxPendingTasksTotal: config?.maxPendingTasksTotal ?? 5,
-      pendingTasksByAgent: Object.fromEntries(
-        pendingTasks.reduce((acc, t) => {
-          acc.set(t.assignedAgent, (acc.get(t.assignedAgent) ?? 0) + 1);
+      todoCount: todoItems.length,
+      inProgressCount: inProgressItems.length,
+      doneCount: doneItems.length,
+      pendingReviewCount: pendingReviewItems.length + pendingReviewDocs.length,
+      itemsByAgent: Object.fromEntries(
+        [...todoItems, ...inProgressItems].reduce((acc, item) => {
+          const agent = item.assignedAgent ?? "unassigned";
+          acc.set(agent, (acc.get(agent) ?? 0) + 1);
           return acc;
         }, new Map<string, number>())
       ),
@@ -120,12 +126,6 @@ export const getAgentReadiness = query({
         actionUrl: "settings",
       };
     }
-
-    // In the new architecture, agents are proactive:
-    // - Growth does market research from day 1 (no prerequisites)
-    // - Sales discovers prospects proactively (no need for existing leads)
-    // - Only Dev needs credentials to function
-    // Readiness now reflects actual blockers, not old prerequisites.
 
     return readiness;
   },

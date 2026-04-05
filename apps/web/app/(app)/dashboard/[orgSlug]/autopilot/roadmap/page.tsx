@@ -1,257 +1,277 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
-  IconChevronDown,
-  IconChevronRight,
-  IconTargetArrow,
+  IconChecklist,
+  IconFlag,
+  IconLayoutKanban,
+  IconPlus,
 } from "@tabler/icons-react";
-import { useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { H2 } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
+import { GoalTree } from "@/features/autopilot/components/goal-tree";
+import { TaskCard } from "@/features/autopilot/components/task-card";
+import { InitiativesBoard } from "@/features/autopilot/components/views/initiatives-board";
 import { cn } from "@/lib/utils";
 
-const STATUS_ORDER = [
-  "discovery",
-  "definition",
-  "active",
-  "completed",
+const ROADMAP_TABS = [
+  { id: "goals", label: "Goals", icon: IconFlag },
+  { id: "initiatives", label: "Initiatives", icon: IconLayoutKanban },
+  { id: "tasks", label: "Active Tasks", icon: IconChecklist },
 ] as const;
 
-const STATUS_LABELS: Record<string, string> = {
-  discovery: "Discovery",
-  definition: "Definition",
-  active: "Active",
-  completed: "Completed",
-  paused: "Paused",
-  cancelled: "Cancelled",
-};
+type StatusFilter =
+  | "all"
+  | "backlog"
+  | "todo"
+  | "in_progress"
+  | "in_review"
+  | "done"
+  | "cancelled";
 
-const STATUS_STYLES: Record<string, string> = {
-  discovery: "bg-blue-500/10 text-blue-500",
-  definition: "bg-purple-500/10 text-purple-500",
-  active: "bg-green-500/10 text-green-500",
-  completed: "bg-emerald-500/10 text-emerald-500",
-  paused: "bg-muted text-muted-foreground",
-  cancelled: "bg-red-500/10 text-red-500",
-};
+const STATUS_OPTIONS = [
+  { label: "All", value: "all" },
+  { label: "Backlog", value: "backlog" },
+  { label: "To Do", value: "todo" },
+  { label: "In Progress", value: "in_progress" },
+  { label: "In Review", value: "in_review" },
+  { label: "Done", value: "done" },
+  { label: "Cancelled", value: "cancelled" },
+] as const;
 
-const PRIORITY_STYLES: Record<string, string> = {
-  critical: "bg-red-500/10 text-red-500",
-  high: "bg-orange-500/10 text-orange-500",
-  medium: "bg-yellow-500/10 text-yellow-500",
-  low: "bg-muted text-muted-foreground",
-};
+function ActiveTasksTab() {
+  const { isAdmin, organizationId } = useAutopilotContext();
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newPriority, setNewPriority] = useState<
+    "critical" | "high" | "medium" | "low"
+  >("medium");
 
-const STORY_STATUS_STYLES: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
-  ready: "bg-blue-500/10 text-blue-500",
-  in_spec: "bg-purple-500/10 text-purple-500",
-  in_dev: "bg-amber-500/10 text-amber-500",
-  in_review: "bg-cyan-500/10 text-cyan-500",
-  shipped: "bg-green-500/10 text-green-500",
-  cancelled: "bg-red-500/10 text-red-500",
-};
+  const tasks = useQuery(api.autopilot.queries.work.listWorkItems, {
+    organizationId,
+    type: "task",
+    status:
+      statusFilter === "all"
+        ? undefined
+        : (statusFilter as
+            | "backlog"
+            | "todo"
+            | "in_progress"
+            | "in_review"
+            | "done"
+            | "cancelled"),
+  });
 
-function InitiativeCard({
-  initiative,
-}: {
-  initiative: {
-    _id: Id<"autopilotInitiatives">;
-    title: string;
-    description: string;
-    priority: string;
-    completionPercent: number;
-    targetDate?: number;
-    status: string;
+  const createTask = useMutation(api.autopilot.mutations.work.createWorkItem);
+
+  const handleCreate = async () => {
+    if (!(newTitle.trim() && newDescription.trim())) {
+      toast.error("Title and description are required");
+      return;
+    }
+
+    try {
+      await createTask({
+        organizationId,
+        type: "task",
+        title: newTitle.trim(),
+        description: newDescription.trim(),
+        priority: newPriority,
+      });
+      toast.success("Task created");
+      setNewTitle("");
+      setNewDescription("");
+      setNewPriority("medium");
+      setIsDialogOpen(false);
+    } catch {
+      toast.error("Failed to create task");
+    }
   };
-}) {
-  const [expanded, setExpanded] = useState(false);
 
-  const stories = useQuery(
-    api.autopilot.queries.initiatives.listStoriesByInitiative,
-    expanded ? { initiativeId: initiative._id } : "skip"
-  );
-
-  const ChevronIcon = expanded ? IconChevronDown : IconChevronRight;
+  if (tasks === undefined) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 5 }, (_, i) => (
+          <Skeleton
+            className="h-24 w-full rounded-lg"
+            key={`skel-${String(i)}`}
+          />
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader
-        className="cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <ChevronIcon className="size-4 shrink-0 text-muted-foreground" />
-            <CardTitle className="text-base">{initiative.title}</CardTitle>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Badge
-              className={cn(
-                "text-xs",
-                PRIORITY_STYLES[initiative.priority] ?? PRIORITY_STYLES.medium
-              )}
-              variant="outline"
-            >
-              {initiative.priority}
-            </Badge>
-            <Badge
-              className={cn(
-                "text-xs",
-                STATUS_STYLES[initiative.status] ?? STATUS_STYLES.discovery
-              )}
-              variant="outline"
-            >
-              {STATUS_LABELS[initiative.status] ?? initiative.status}
-            </Badge>
-          </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Badge variant="secondary">{tasks.length} tasks</Badge>
         </div>
-        <CardDescription className="ml-6">
-          <span className="line-clamp-2">{initiative.description}</span>
-          <span className="mt-1 flex items-center gap-3 text-xs">
-            <span>{initiative.completionPercent}% complete</span>
-            {initiative.targetDate && (
-              <span className="flex items-center gap-1">
-                <IconTargetArrow className="size-3" />
-                {formatDistanceToNow(initiative.targetDate, {
-                  addSuffix: true,
-                })}
-              </span>
-            )}
-          </span>
-        </CardDescription>
-      </CardHeader>
+        <div className="flex items-center gap-3">
+          <Select
+            onValueChange={(val) => setStatusFilter(val as StatusFilter)}
+            value={statusFilter}
+          >
+            <SelectTrigger className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-      {expanded && (
-        <CardContent>
-          <div className="ml-6 border-l pl-4">
-            {stories === undefined && (
-              <div className="space-y-2">
-                {Array.from({ length: 2 }, (_, i) => (
-                  <Skeleton
-                    className="h-8 w-full rounded"
-                    key={`story-skel-${String(i)}`}
-                  />
-                ))}
-              </div>
-            )}
-            {stories !== undefined && stories.length === 0 && (
-              <p className="py-2 text-muted-foreground text-sm">
-                No user stories yet
-              </p>
-            )}
-            {stories !== undefined && stories.length > 0 && (
-              <div className="space-y-2">
-                {stories.map((story) => (
-                  <div
-                    className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2"
-                    key={story._id}
-                  >
-                    <span className="text-sm">{story.title}</span>
-                    <Badge
-                      className={cn(
-                        "text-xs",
-                        STORY_STATUS_STYLES[story.status] ??
-                          STORY_STATUS_STYLES.draft
-                      )}
-                      variant="outline"
-                    >
-                      {story.status.replace("_", " ")}
-                    </Badge>
+          {isAdmin && (
+            <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
+              <DialogTrigger>
+                <Button className="gap-2" size="sm">
+                  <IconPlus className="size-4" />
+                  New Task
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create Task</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="font-medium text-sm" htmlFor="task-title">
+                      Title
+                    </label>
+                    <Input
+                      id="task-title"
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      placeholder="What needs to be done?"
+                      value={newTitle}
+                    />
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </CardContent>
+                  <div>
+                    <label
+                      className="font-medium text-sm"
+                      htmlFor="task-description"
+                    >
+                      Description
+                    </label>
+                    <Textarea
+                      id="task-description"
+                      onChange={(e) => setNewDescription(e.target.value)}
+                      placeholder="Describe the task in detail..."
+                      rows={4}
+                      value={newDescription}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      className="font-medium text-sm"
+                      htmlFor="task-priority"
+                    >
+                      Priority
+                    </label>
+                    <Select
+                      onValueChange={(val) =>
+                        setNewPriority(
+                          val as "critical" | "high" | "medium" | "low"
+                        )
+                      }
+                      value={newPriority}
+                    >
+                      <SelectTrigger id="task-priority">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="critical">Critical</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full" onClick={handleCreate}>
+                    Create Task
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+      </div>
+
+      {tasks.length === 0 ? (
+        <div className="flex h-40 items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm">
+          No tasks
+          {statusFilter === "all" ? "" : ` with status "${statusFilter}"`}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {tasks.map((task) => (
+            <TaskCard key={task._id} task={task} />
+          ))}
+        </div>
       )}
-    </Card>
+    </div>
   );
 }
 
 export default function RoadmapPage() {
   const { organizationId } = useAutopilotContext();
-
-  const initiatives = useQuery(
-    api.autopilot.queries.initiatives.listInitiatives,
-    { organizationId }
-  );
-
-  if (initiatives === undefined) {
-    return (
-      <div className="space-y-6">
-        <H2 variant="card">Roadmap</H2>
-        <div className="space-y-4">
-          {Array.from({ length: 3 }, (_, i) => (
-            <Skeleton
-              className="h-32 w-full rounded-lg"
-              key={`skel-${String(i)}`}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (initiatives.length === 0) {
-    return (
-      <div className="space-y-6">
-        <H2 variant="card">Roadmap</H2>
-        <div className="flex h-40 items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm">
-          No initiatives yet
-        </div>
-      </div>
-    );
-  }
+  const [activeTab, setActiveTab] = useState<string>("goals");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <H2 variant="card">Roadmap</H2>
 
-      {STATUS_ORDER.map((status) => {
-        const filtered = initiatives.filter((i) => i.status === status);
-        if (filtered.length === 0) {
-          return null;
-        }
+      <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
+        {ROADMAP_TABS.map((tab) => (
+          <button
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium text-sm transition-colors",
+              activeTab === tab.id
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            type="button"
+          >
+            <tab.icon className="size-4" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-        return (
-          <section key={status}>
-            <div className="mb-3 flex items-center gap-2">
-              <Badge
-                className={cn(
-                  "text-xs",
-                  STATUS_STYLES[status] ?? STATUS_STYLES.discovery
-                )}
-                variant="outline"
-              >
-                {STATUS_LABELS[status]}
-              </Badge>
-              <span className="text-muted-foreground text-xs">
-                {filtered.length} initiative{filtered.length === 1 ? "" : "s"}
-              </span>
-            </div>
-            <div className="space-y-3">
-              {filtered.map((initiative) => (
-                <InitiativeCard initiative={initiative} key={initiative._id} />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      {activeTab === "goals" && <GoalTree organizationId={organizationId} />}
+      {activeTab === "initiatives" && (
+        <InitiativesBoard organizationId={organizationId} />
+      )}
+      {activeTab === "tasks" && <ActiveTasksTab />}
     </div>
   );
 }

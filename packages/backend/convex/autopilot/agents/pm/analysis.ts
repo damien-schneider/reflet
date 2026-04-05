@@ -114,8 +114,8 @@ export const runPMAnalysis = internalAction({
       );
 
       const recentNotes = await ctx.runQuery(
-        internal.autopilot.notes.getRecentNotes,
-        { organizationId: args.organizationId }
+        internal.autopilot.documents.getDocumentsByOrg,
+        { organizationId: args.organizationId, type: "note" }
       );
 
       const taskCapUsage = await ctx.runQuery(
@@ -139,12 +139,12 @@ export const runPMAnalysis = internalAction({
         return null;
       }
 
-      // Mark notes as triaged so they don't re-trigger PM wake
+      // Mark note documents as reviewed so they don't re-trigger PM wake
       for (const note of recentNotes) {
-        if (note.status === "new") {
-          await ctx.runMutation(internal.autopilot.notes.triageNote, {
-            noteId: note._id,
-            status: "triaged",
+        if (note.status === "draft") {
+          await ctx.runMutation(internal.autopilot.documents.updateDocument, {
+            documentId: note._id,
+            status: "published",
           });
         }
       }
@@ -179,22 +179,18 @@ export const runPMAnalysis = internalAction({
       const notesContext = recentNotes
         .map(
           (n: {
-            category: string;
-            sourceAgent: string;
+            type: string;
+            sourceAgent?: string;
             title: string;
-            description: string;
-            priority: string;
+            content: string;
           }) =>
-            `- [${n.category}/${n.sourceAgent}] ${n.title} (${n.priority}): ${n.description}`
+            `- [${n.type}/${n.sourceAgent ?? "system"}] ${n.title}: ${n.content.slice(0, 200)}`
         )
         .join("\n");
 
       const systemPrompt = buildAgentPrompt(
         PM_SYSTEM_PROMPT,
-        await ctx.runQuery(
-          internal.autopilot.feedback.buildFeedbackPromptContext,
-          { organizationId: args.organizationId, agent: "pm" }
-        ),
+        "",
         "",
         agentKnowledge
       );
@@ -276,8 +272,7 @@ For each task, provide:
             description: task.description,
             priority: task.priority,
             assignedAgent: task.assignedAgent,
-            origin: "pm_analysis",
-            autonomyLevel: "review_required",
+            createdBy: "pm_analysis",
             acceptanceCriteria: task.acceptanceCriteria,
           }
         );
@@ -352,9 +347,11 @@ const bootstrapInitiativesIfNeeded = async (
   organizationId: Id<"organizations">,
   agentKnowledge?: string
 ): Promise<void> => {
-  const existingInitiatives = await ctx.runQuery(
-    internal.autopilot.initiatives.getInitiativesByOrg,
-    { organizationId }
+  const allItems = await ctx.runQuery(internal.autopilot.tasks.getTasksByOrg, {
+    organizationId,
+  });
+  const existingInitiatives = allItems.filter(
+    (item: { type: string }) => item.type === "initiative"
   );
 
   if (existingInitiatives.length > 0) {
@@ -386,13 +383,15 @@ Base your initiatives on context from the knowledge base. If no context is avail
     });
 
     for (const initiative of result.initiatives) {
-      await ctx.runMutation(internal.autopilot.initiatives.createInitiative, {
+      await ctx.runMutation(internal.autopilot.tasks.createTask, {
         organizationId,
         title: initiative.title,
         description: initiative.description,
         priority: initiative.priority,
-        successMetrics: initiative.successMetrics,
+        assignedAgent: "pm",
+        type: "initiative",
         createdBy: "pm",
+        tags: [initiative.successMetrics],
       });
     }
 

@@ -9,15 +9,15 @@ import { cn } from "@/lib/utils";
 
 const REFLET_BASE = "https://www.reflet.app/reflet";
 
-const DEMO_LINKS = [
+const PRODUCT_LINKS = [
+  { label: "Autopilot Dashboard", href: "/autopilot", internal: true },
   { label: "Feedback Board", href: REFLET_BASE },
   { label: "Roadmap", href: `${REFLET_BASE}?view=roadmap` },
-  { label: "Milestones", href: `${REFLET_BASE}?view=milestones` },
   { label: "Changelog", href: `${REFLET_BASE}/changelog` },
-  { label: "Support", href: `${REFLET_BASE}/support` },
 ] as const;
 
 const RESOURCE_LINKS = [
+  { label: "How Autopilot Works", href: "/autopilot", internal: true },
   { label: "Documentation", href: "/docs", internal: true },
   { label: "Blog", href: "/blog", internal: true },
 ] as const;
@@ -73,38 +73,49 @@ export default function MobileMenuDialog() {
             <div className="flex flex-col gap-1">
               <Link
                 className={menuLinkClassName}
+                href="/autopilot"
+                onClick={close}
+              >
+                Autopilot
+              </Link>
+              <Link
+                className={menuLinkClassName}
                 href="/pricing"
                 onClick={close}
               >
                 Pricing
               </Link>
-              <Link
-                className={menuLinkClassName}
-                href="/features"
-                onClick={close}
-              >
-                Features
-              </Link>
             </div>
 
-            {/* Demo section */}
+            {/* Product section */}
             <div>
               <p className="mb-2 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                Demo
+                Product
               </p>
               <div className="flex flex-col gap-1">
-                {DEMO_LINKS.map((link) => (
-                  <a
-                    className={menuLinkClassName}
-                    href={link.href}
-                    key={link.label}
-                    onClick={close}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    {link.label}
-                  </a>
-                ))}
+                {PRODUCT_LINKS.map((link) =>
+                  "internal" in link && link.internal ? (
+                    <Link
+                      className={menuLinkClassName}
+                      href={link.href}
+                      key={link.label}
+                      onClick={close}
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <a
+                      className={menuLinkClassName}
+                      href={link.href}
+                      key={link.label}
+                      onClick={close}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {link.label}
+                    </a>
+                  )
+                )}
               </div>
             </div>
 

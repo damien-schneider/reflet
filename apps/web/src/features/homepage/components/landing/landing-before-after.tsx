@@ -15,38 +15,43 @@ const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 const BEFORE_ITEMS = [
   {
-    label: "Feedback scattered across Slack, email, and Intercom",
-    icon: "😵",
+    label: "Hiring 6 people costs $600K+/year — and takes 3+ months to ramp",
+    icon: "💸",
   },
-  { label: "No way to know which features users want most", icon: "🤷" },
-  { label: "Same requests reported 5 times by different people", icon: "🔁" },
-  { label: "Users never know if their request was heard", icon: "📢" },
   {
-    label: "Roadmap decisions made on gut, not data",
-    icon: "🎲",
+    label: "PM, dev, sales, support — all competing for your attention",
+    icon: "🤹",
+  },
+  { label: "You're the bottleneck for every decision and review", icon: "🔁" },
+  { label: "Nights and weekends just to keep up with competitors", icon: "😵" },
+  {
+    label: "Great ideas die because there's no one to execute them",
+    icon: "💠",
   },
 ];
 
 const AFTER_ITEMS = [
   {
-    label: "Every request in one board — widget, API, or public portal",
-    icon: "📥",
+    label: "10 AI agents cost a fraction of one hire — and start in 5 minutes",
+    icon: "⚡",
   },
   {
-    label: "Vote counts surface the most-wanted features instantly",
-    icon: "📊",
-  },
-  {
-    label: "AI detects and merges duplicates automatically (91% accuracy)",
+    label:
+      "PM creates initiatives, CTO writes specs, Dev ships PRs — all autonomous",
     icon: "🤖",
   },
   {
-    label: "Voters get notified the moment you ship their request",
-    icon: "🔔",
+    label: "You're the President — set strategy, approve key decisions",
+    icon: "👑",
   },
   {
-    label: "Roadmap backed by real demand, visible to your whole team",
-    icon: "🗺️",
+    label: "Agents work 24/7 — your product improves while you sleep",
+    icon: "🌙",
+  },
+  {
+    label:
+      "Every opportunity discovered, every lead contacted, every user supported",
+    icon: "🚀",
   },
 ];
 
@@ -76,17 +81,15 @@ export default function LandingBeforeAfter() {
             <H2 className="mb-6" variant="landing">
               {isAfter ? (
                 <>
-                  Every voice heard.{" "}
+                  10 agents.{" "}
                   <span className="text-olive-600 dark:text-olive-400">
-                    Every ship celebrated.
+                    Zero employees.
                   </span>
                 </>
               ) : (
                 <>
-                  Feedback gets lost.{" "}
-                  <span className="text-muted-foreground">
-                    Users feel ignored.
-                  </span>
+                  6 hires. 3 months.{" "}
+                  <span className="text-muted-foreground">$600K.</span>
                 </>
               )}
             </H2>
@@ -103,7 +106,7 @@ export default function LandingBeforeAfter() {
                 onClick={() => setIsAfter(false)}
                 type="button"
               >
-                Without Reflet
+                Without Autopilot
               </button>
               <button
                 className={cn(
@@ -115,7 +118,7 @@ export default function LandingBeforeAfter() {
                 onClick={() => setIsAfter(true)}
                 type="button"
               >
-                With Reflet
+                With Autopilot
               </button>
             </div>
 
@@ -128,8 +131,8 @@ export default function LandingBeforeAfter() {
               transition={{ duration: 0.3 }}
             >
               {isAfter
-                ? "Reflet transforms scattered feedback into a prioritized, AI-triaged pipeline that closes the loop every time you ship."
-                : "Without a feedback system, teams rely on memory, spreadsheets, and guesswork. Critical signals fall through the cracks."}
+                ? "Reflet Autopilot provides 10 AI agents that run your product autonomously — from market research to shipped code to sales outreach. You stay in control as President."
+                : "Building a product alone means wearing every hat. Hiring a team costs $600K+ and takes months. Most founders burn out before finding product-market fit."}
             </motion.p>
           </motion.div>
 

@@ -32,8 +32,7 @@ describe("autopilot tasks", () => {
       description: "A test description",
       priority: "medium",
       assignedAgent: "pm",
-      origin: "user_created",
-      autonomyLevel: "review_required",
+      createdBy: "test",
     });
 
     expect(taskId).not.toBeNull();
@@ -47,9 +46,7 @@ describe("autopilot tasks", () => {
 
     expect(task).not.toBeNull();
     expect(task?.title).toBe("Test task");
-    expect(task?.status).toBe("pending");
-    expect(task?.retryCount).toBe(0);
-    expect(task?.maxRetries).toBe(3);
+    expect(task?.status).toBe("todo");
   });
 
   test("getOrganization returns org by ID", async () => {
@@ -90,8 +87,7 @@ describe("autopilot tasks", () => {
       description: "Test status updates",
       priority: "high",
       assignedAgent: "dev",
-      origin: "pm_analysis",
-      autonomyLevel: "full_auto",
+      createdBy: "test",
     });
     if (!taskId) {
       return;
@@ -107,10 +103,10 @@ describe("autopilot tasks", () => {
     });
 
     expect(task?.status).toBe("in_progress");
-    expect(task?.startedAt).toBeDefined();
+    expect(task?.updatedAt).toBeDefined();
   });
 
-  test("updateTaskStatus sets completedAt on terminal statuses", async () => {
+  test("updateTaskStatus sets terminal status correctly", async () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
@@ -120,8 +116,7 @@ describe("autopilot tasks", () => {
       description: "Test completion",
       priority: "medium",
       assignedAgent: "dev",
-      origin: "pm_analysis",
-      autonomyLevel: "full_auto",
+      createdBy: "test",
     });
     if (!taskId) {
       return;
@@ -129,15 +124,15 @@ describe("autopilot tasks", () => {
 
     await t.mutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId,
-      status: "completed",
+      status: "done",
     });
 
     const task = await t.query(internal.autopilot.tasks.getTask, {
       taskId,
     });
 
-    expect(task?.status).toBe("completed");
-    expect(task?.completedAt).toBeDefined();
+    expect(task?.status).toBe("done");
+    expect(task?.updatedAt).toBeDefined();
   });
 
   test("getPendingTasks returns only pending tasks", async () => {
@@ -150,8 +145,7 @@ describe("autopilot tasks", () => {
       description: "Should appear",
       priority: "medium",
       assignedAgent: "pm",
-      origin: "user_created",
-      autonomyLevel: "review_required",
+      createdBy: "test",
     });
 
     const completedTaskId = await t.mutation(
@@ -162,8 +156,7 @@ describe("autopilot tasks", () => {
         description: "Should not appear",
         priority: "low",
         assignedAgent: "dev",
-        origin: "pm_analysis",
-        autonomyLevel: "full_auto",
+        createdBy: "test",
       }
     );
     if (!completedTaskId) {
@@ -172,7 +165,7 @@ describe("autopilot tasks", () => {
 
     await t.mutation(internal.autopilot.tasks.updateTaskStatus, {
       taskId: completedTaskId,
-      status: "completed",
+      status: "done",
     });
 
     const pending = await t.query(internal.autopilot.tasks.getPendingTasks, {
@@ -227,118 +220,52 @@ describe("autopilot tasks", () => {
   });
 });
 
-describe("autopilot inbox", () => {
-  test("createInboxItem creates item with pending status", async () => {
+describe("autopilot review items", () => {
+  test("createTask with needsReview creates a reviewable item", async () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    const itemId = await t.mutation(internal.autopilot.inbox.createInboxItem, {
+    const taskId = await t.mutation(internal.autopilot.tasks.createTask, {
       organizationId: orgId,
-      type: "task_approval",
-      title: "Test inbox item",
-      summary: "A test summary",
-      sourceAgent: "pm",
+      title: "Review me",
+      description: "Needs review",
       priority: "medium",
+      assignedAgent: "pm",
+      needsReview: true,
+      reviewType: "task_approval",
     });
 
-    expect(itemId).toBeDefined();
-    expect(itemId).not.toBeNull();
+    expect(taskId).not.toBeNull();
+    if (!taskId) {
+      return;
+    }
 
-    // itemId is guaranteed non-null for unique items (dedup only triggers on duplicates)
-    const validItemId = itemId!;
-
-    const item = await t.query(internal.autopilot.inbox.getInboxItem, {
-      itemId: validItemId,
+    const task = await t.query(internal.autopilot.tasks.getTask, {
+      taskId,
     });
 
-    expect(item).not.toBeNull();
-    expect(item?.status).toBe("pending");
-    expect(item?.title).toBe("Test inbox item");
+    expect(task).not.toBeNull();
+    expect(task?.needsReview).toBe(true);
+    expect(task?.reviewType).toBe("task_approval");
   });
 
-  test("createInboxItem with autoApproved creates item with auto_approved status", async () => {
+  test("createDocument creates a reviewable document", async () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    const itemId = await t.mutation(internal.autopilot.inbox.createInboxItem, {
-      organizationId: orgId,
-      type: "growth_post",
-      title: "Growth Agent Started",
-      summary: "Informational status update",
-      sourceAgent: "growth",
-      priority: "low",
-      autoApproved: true,
-    });
-
-    expect(itemId).not.toBeNull();
-    const validItemId = itemId!;
-
-    const item = await t.query(internal.autopilot.inbox.getInboxItem, {
-      itemId: validItemId,
-    });
-
-    expect(item).not.toBeNull();
-    expect(item?.status).toBe("auto_approved");
-  });
-
-  test("updateInboxItemStatus changes status", async () => {
-    const t = convexTest(testSchema, modules);
-    const orgId = await createOrg(t);
-
-    const itemId = await t.mutation(internal.autopilot.inbox.createInboxItem, {
-      organizationId: orgId,
-      type: "task_approval",
-      title: "Task approval needed",
-      summary: "A task needs approval",
-      sourceAgent: "pm",
-      priority: "high",
-    });
-
-    expect(itemId).not.toBeNull();
-    const validItemId = itemId!;
-
-    await t.mutation(internal.autopilot.inbox.updateInboxItemStatus, {
-      itemId: validItemId,
-      status: "approved",
-    });
-
-    const item = await t.query(internal.autopilot.inbox.getInboxItem, {
-      itemId: validItemId,
-    });
-
-    expect(item?.status).toBe("approved");
-  });
-
-  test("getInboxCountsByType returns correct counts", async () => {
-    const t = convexTest(testSchema, modules);
-    const orgId = await createOrg(t);
-
-    await t.mutation(internal.autopilot.inbox.createInboxItem, {
-      organizationId: orgId,
-      type: "task_approval",
-      title: "Item 1",
-      summary: "Summary 1",
-      sourceAgent: "pm",
-      priority: "medium",
-    });
-
-    await t.mutation(internal.autopilot.inbox.createInboxItem, {
-      organizationId: orgId,
-      type: "revenue_alert",
-      title: "Item 2",
-      summary: "Summary 2",
-      sourceAgent: "sales",
-      priority: "high",
-    });
-
-    const counts = await t.query(
-      internal.autopilot.inbox.getInboxCountsByType,
+    const docId = await t.mutation(
+      internal.autopilot.documents.createDocument,
       {
         organizationId: orgId,
+        type: "note",
+        title: "Test note",
+        content: "Test content",
+        needsReview: true,
+        reviewType: "content_review",
       }
     );
 
-    expect(counts).toBeDefined();
+    expect(docId).toBeDefined();
   });
 });
 

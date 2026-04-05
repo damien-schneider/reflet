@@ -5,7 +5,7 @@
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-import { activityLogAgent } from "./schema/validators";
+import { assignedAgent } from "./schema/validators";
 
 /**
  * Load contextual data for an agent: knowledge docs, recent signals,
@@ -14,7 +14,7 @@ import { activityLogAgent } from "./schema/validators";
 export const loadAgentContext = internalQuery({
   args: {
     organizationId: v.id("organizations"),
-    agent: activityLogAgent,
+    agent: assignedAgent,
   },
   returns: v.string(),
   handler: async (ctx, args) => {
@@ -35,42 +35,46 @@ export const loadAgentContext = internalQuery({
       sections.push(`KNOWLEDGE BASE:\n${docSummaries}`);
     }
 
-    // 2. Recent notes (last 48h)
+    // 2. Recent documents (last 48h)
     const twoDaysAgo = Date.now() - 48 * 60 * 60 * 1000;
-    const notes = await ctx.db
-      .query("autopilotNotes")
-      .withIndex("by_org_created", (q) =>
+    const documents = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .collect();
 
-    const recentNotes = notes
-      .filter((n) => n.createdAt > twoDaysAgo)
+    const recentDocs = documents
+      .filter((d) => d.createdAt > twoDaysAgo)
       .slice(0, 10);
 
-    if (recentNotes.length > 0) {
-      const noteSummaries = recentNotes
+    if (recentDocs.length > 0) {
+      const docSummaries = recentDocs
         .map(
-          (n) =>
-            `- [${n.category}/${n.status}] ${n.title} (strength: ${n.strength}, by: ${n.sourceAgent})`
+          (d) =>
+            `- [${d.type}/${d.status}] ${d.title} (by: ${d.sourceAgent ?? "unknown"})`
         )
         .join("\n");
-      sections.push(`RECENT NOTES:\n${noteSummaries}`);
+      sections.push(`RECENT DOCUMENTS:\n${docSummaries}`);
     }
 
-    // 3. Active initiatives
+    // 3. Active initiatives (work items with type=initiative)
     const initiatives = await ctx.db
-      .query("autopilotInitiatives")
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "active")
+        q.eq("organizationId", args.organizationId).eq("status", "in_progress")
       )
       .collect();
 
-    if (initiatives.length > 0) {
-      const initiativeSummaries = initiatives
+    const activeInitiatives = initiatives.filter(
+      (i) => i.type === "initiative"
+    );
+
+    if (activeInitiatives.length > 0) {
+      const initiativeSummaries = activeInitiatives
         .map(
           (i) =>
-            `- ${i.title} (${i.completionPercent}% complete, priority: ${i.priority})`
+            `- ${i.title} (${i.completionPercent ?? 0}% complete, priority: ${i.priority})`
         )
         .join("\n");
       sections.push(`ACTIVE INITIATIVES:\n${initiativeSummaries}`);

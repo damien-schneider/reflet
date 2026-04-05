@@ -1,9 +1,10 @@
 import { v } from "convex/values";
 
 // ============================================
-// AUTOPILOT VALIDATORS
+// AUTOPILOT VALIDATORS — V11 Simplified
 // ============================================
 
+// Coding adapters
 export const codingAdapterType = v.union(
   v.literal("builtin"),
   v.literal("copilot"),
@@ -13,6 +14,7 @@ export const codingAdapterType = v.union(
   v.literal("openclaw")
 );
 
+// Autonomy
 export const autonomyLevel = v.union(
   v.literal("full_auto"),
   v.literal("review_required"),
@@ -25,24 +27,7 @@ export const autonomyMode = v.union(
   v.literal("stopped")
 );
 
-export const autopilotTaskStatus = v.union(
-  v.literal("pending"),
-  v.literal("in_progress"),
-  v.literal("blocked"),
-  v.literal("waiting_review"),
-  v.literal("paused"),
-  v.literal("completed"),
-  v.literal("failed"),
-  v.literal("cancelled")
-);
-
-export const autopilotTaskPriority = v.union(
-  v.literal("critical"),
-  v.literal("high"),
-  v.literal("medium"),
-  v.literal("low")
-);
-
+// Agents
 export const assignedAgent = v.union(
   v.literal("pm"),
   v.literal("cto"),
@@ -54,15 +39,73 @@ export const assignedAgent = v.union(
   v.literal("sales")
 );
 
-export const taskOrigin = v.union(
-  v.literal("pm_analysis"),
-  v.literal("growth_suggestion"),
-  v.literal("user_created"),
-  v.literal("cto_breakdown"),
-  v.literal("support_escalation"),
-  v.literal("sales_outreach"),
-  v.literal("onboarding")
+export const agentThreadRole = v.union(v.literal("user"), v.literal("agent"));
+
+// ============================================
+// Work Items (replaces tasks, initiatives, stories, specs)
+// ============================================
+
+export const workItemType = v.union(
+  v.literal("initiative"),
+  v.literal("story"),
+  v.literal("task"),
+  v.literal("spec"),
+  v.literal("bug")
 );
+
+export const workItemStatus = v.union(
+  v.literal("backlog"),
+  v.literal("todo"),
+  v.literal("in_progress"),
+  v.literal("in_review"),
+  v.literal("done"),
+  v.literal("cancelled")
+);
+
+export const priority = v.union(
+  v.literal("critical"),
+  v.literal("high"),
+  v.literal("medium"),
+  v.literal("low")
+);
+
+// ============================================
+// Documents (unified content)
+// ============================================
+
+export const documentType = v.union(
+  v.literal("blog_post"),
+  v.literal("market_research"),
+  v.literal("note"),
+  v.literal("email"),
+  v.literal("support_thread"),
+  v.literal("battlecard"),
+  v.literal("changelog"),
+  v.literal("reddit_reply"),
+  v.literal("linkedin_post"),
+  v.literal("twitter_post"),
+  v.literal("hn_comment"),
+  v.literal("report"),
+  v.literal("adr"),
+  v.literal("prospect_brief")
+);
+
+export const documentStatus = v.union(
+  v.literal("draft"),
+  v.literal("pending_review"),
+  v.literal("published"),
+  v.literal("archived")
+);
+
+export const impactLevel = v.union(
+  v.literal("high"),
+  v.literal("medium"),
+  v.literal("low")
+);
+
+// ============================================
+// Runs & Activity
+// ============================================
 
 export const runStatus = v.union(
   v.literal("queued"),
@@ -87,77 +130,9 @@ export const activityLogLevel = v.union(
   v.literal("error")
 );
 
-export const activityLogAgent = v.union(
-  v.literal("pm"),
-  v.literal("cto"),
-  v.literal("dev"),
-  v.literal("growth"),
-  v.literal("orchestrator"),
-  v.literal("system"),
-  v.literal("support"),
-  v.literal("sales")
-);
-
-export const emailDirection = v.union(
-  v.literal("inbound"),
-  v.literal("outbound")
-);
-
-export const emailStatus = v.union(
-  v.literal("approved"),
-  v.literal("draft"),
-  v.literal("pending_review"),
-  v.literal("received"),
-  v.literal("rejected"),
-  v.literal("sent")
-);
-
-export const growthItemStatus = v.union(
-  v.literal("approved"),
-  v.literal("draft"),
-  v.literal("pending_review"),
-  v.literal("published"),
-  v.literal("rejected")
-);
-
-export const growthItemType = v.union(
-  v.literal("blog_post"),
-  v.literal("changelog_announce"),
-  v.literal("email_campaign"),
-  v.literal("hn_comment"),
-  v.literal("linkedin_post"),
-  v.literal("reddit_reply"),
-  v.literal("twitter_post")
-);
-
-export const inboxItemStatus = v.union(
-  v.literal("approved"),
-  v.literal("auto_approved"),
-  v.literal("expired"),
-  v.literal("pending"),
-  v.literal("rejected"),
-  v.literal("snoozed")
-);
-
-export const inboxItemType = v.union(
-  v.literal("ceo_report"),
-  v.literal("email_draft"),
-  v.literal("email_received"),
-  v.literal("growth_post"),
-  v.literal("pr_review"),
-  v.literal("revenue_alert"),
-  v.literal("task_approval"),
-  v.literal("support_reply"),
-  v.literal("support_escalation"),
-  v.literal("shipped_notification"),
-  v.literal("sales_lead"),
-  v.literal("sales_outreach_draft"),
-  v.literal("sales_pipeline_update"),
-  v.literal("note_triage"),
-  v.literal("initiative_proposal"),
-  v.literal("knowledge_update"),
-  v.literal("company_brief_review")
-);
+// ============================================
+// Leads
+// ============================================
 
 export const leadStatus = v.union(
   v.literal("discovered"),
@@ -180,10 +155,8 @@ export const leadSource = v.union(
   v.literal("manual")
 );
 
-export const agentThreadRole = v.union(v.literal("user"), v.literal("agent"));
-
 // ============================================
-// NEW VALIDATORS (Knowledge / Signals / Initiatives)
+// Knowledge
 // ============================================
 
 export const knowledgeDocType = v.union(
@@ -197,75 +170,3 @@ export const knowledgeDocType = v.union(
 );
 
 export const knowledgeEditedBy = v.union(v.literal("agent"), v.literal("user"));
-
-export const initiativeStatus = v.union(
-  v.literal("discovery"),
-  v.literal("definition"),
-  v.literal("active"),
-  v.literal("completed"),
-  v.literal("paused"),
-  v.literal("cancelled")
-);
-
-export const userStoryStatus = v.union(
-  v.literal("draft"),
-  v.literal("ready"),
-  v.literal("in_spec"),
-  v.literal("in_dev"),
-  v.literal("in_review"),
-  v.literal("shipped"),
-  v.literal("cancelled")
-);
-
-export const technicalSpecComplexity = v.union(
-  v.literal("small"),
-  v.literal("medium"),
-  v.literal("large")
-);
-
-export const technicalSpecStatus = v.union(
-  v.literal("draft"),
-  v.literal("approved"),
-  v.literal("in_dev"),
-  v.literal("completed")
-);
-
-export const architectureDecisionStatus = v.union(
-  v.literal("proposed"),
-  v.literal("accepted"),
-  v.literal("deprecated"),
-  v.literal("superseded")
-);
-
-export const noteType = v.union(
-  v.literal("observation"),
-  v.literal("recommendation"),
-  v.literal("alert"),
-  v.literal("research"),
-  v.literal("status_update")
-);
-
-export const noteStatus = v.union(
-  v.literal("new"),
-  v.literal("triaged"),
-  v.literal("acted_on"),
-  v.literal("dismissed")
-);
-
-export const noteCategory = v.union(
-  v.literal("product"),
-  v.literal("engineering"),
-  v.literal("market"),
-  v.literal("prospect"),
-  v.literal("security"),
-  v.literal("architecture"),
-  v.literal("support"),
-  v.literal("documentation"),
-  v.literal("coordination")
-);
-
-export const initiativeCreatedBy = v.union(
-  v.literal("pm"),
-  v.literal("ceo"),
-  v.literal("user")
-);

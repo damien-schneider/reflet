@@ -233,16 +233,12 @@ export const updateLeadStatus = internalMutation({
 
     await ctx.db.patch(args.leadId, updates);
 
-    // Create inbox item for pipeline update
-    await ctx.db.insert("autopilotInboxItems", {
+    // Log pipeline update via activity log
+    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
       organizationId: lead.organizationId,
-      type: "sales_pipeline_update",
-      title: `Lead "${lead.name}" moved to ${args.status}`,
-      summary: `${lead.name}${lead.company ? ` (${lead.company})` : ""} is now in ${args.status} stage.`,
-      status: "auto_approved",
-      priority: args.status === "converted" ? "high" : "low",
-      sourceAgent: "sales",
-      createdAt: now,
+      agent: "sales",
+      level: "info",
+      message: `Lead "${lead.name}" moved to ${args.status}`,
     });
 
     return null;
@@ -289,14 +285,25 @@ export const runSalesFollowUp = internalAction({
     const leadsToProcess = leads.slice(0, MAX_DAILY_OUTREACH);
 
     for (const lead of leadsToProcess) {
-      // Create an outreach draft inbox item for each lead
-      await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+      // Build contextual outreach summary
+      const contextParts = [
+        `Follow-up outreach due for ${lead.name}${lead.company ? ` at ${lead.company}` : ""}.`,
+        `Contact: ${lead.email ?? "no email"}.`,
+        `Status: ${lead.status}. Outreach count: ${lead.outreachCount}.`,
+      ];
+      if (lead.bio) {
+        contextParts.push(`Bio: ${lead.bio}`);
+      }
+      if (lead.notes) {
+        contextParts.push(`Notes: ${lead.notes}`);
+      }
+
+      // Log outreach draft for each lead
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: args.organizationId,
-        type: "sales_outreach_draft",
-        title: `Follow-up: ${lead.name}`,
-        summary: `Follow-up outreach due for ${lead.name}${lead.company ? ` at ${lead.company}` : ""}. Contact: ${lead.email ?? "no email"}. Status: ${lead.status}. Outreach count: ${lead.outreachCount}.`,
-        priority: "medium",
-        sourceAgent: "sales",
+        agent: "sales",
+        level: "action",
+        message: `Follow-up: ${lead.name} — ${contextParts.join(" ")}`,
       });
 
       // Schedule next follow-up (7 days from now)
@@ -404,8 +411,8 @@ export const runSalesProspecting = internalAction({
       }
 
       const marketNotes = await ctx.runQuery(
-        internal.autopilot.notes.getNotesByCategory,
-        { organizationId: args.organizationId, category: "market" }
+        internal.autopilot.documents.getDocumentsByOrg,
+        { organizationId: args.organizationId, type: "note" }
       );
 
       // Also read market research documents for richer context
@@ -434,8 +441,8 @@ export const runSalesProspecting = internalAction({
 
       const marketNotesContext = marketNotes
         .map(
-          (n: { title: string; description: string; priority: string }) =>
-            `- ${n.title} (${n.priority}): ${n.description}`
+          (n: { title: string; content: string }) =>
+            `- ${n.title}: ${n.content.slice(0, 200)}`
         )
         .join("\n");
 
@@ -509,16 +516,17 @@ Focus on quality over quantity — 3-5 high-quality leads are better than 20 low
         createdLeadCount++;
       }
 
-      // Write prospect notes about patterns for PM/CEO
+      // Write prospect documents about patterns for PM/CEO
       for (const pattern of prospectOutput.patterns) {
-        await ctx.runMutation(internal.autopilot.notes.createNote, {
+        await ctx.runMutation(internal.autopilot.documents.createDocument, {
           organizationId: args.organizationId,
-          type: pattern.actionable ? "recommendation" : "observation",
-          category: "prospect",
+          type: "note",
           title: pattern.pattern,
-          description: pattern.description,
+          content: pattern.description,
           sourceAgent: "sales",
-          priority: pattern.actionable ? "high" : "medium",
+          needsReview: pattern.actionable,
+          reviewType: "prospect_pattern",
+          tags: ["prospect", pattern.actionable ? "actionable" : "observation"],
         });
       }
 
@@ -542,7 +550,7 @@ Focus on quality over quantity — 3-5 high-quality leads are better than 20 low
 
         await ctx.runMutation(internal.autopilot.documents.createDocument, {
           organizationId: args.organizationId,
-          type: "prospect_brief",
+          type: "report",
           title: `Prospecting: ${createdLeadCount} leads, ${prospectOutput.patterns.length} patterns`,
           content: briefContent,
           tags: ["sales", "prospecting"],

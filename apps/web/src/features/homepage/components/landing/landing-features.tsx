@@ -2,16 +2,15 @@
 
 /*
  * Features bento grid — visual-first, interaction-rich cards.
- * Minimal text with animated mini-UI mockups and hover micro-interactions.
+ * Showcasing Autopilot's autonomous AI agent capabilities.
  */
 
 import {
   Brain,
-  ChatCircleDots,
-  Code,
-  GithubLogo,
-  Lightning,
-  Sparkle,
+  GitBranch,
+  Robot,
+  Shield,
+  Sliders,
 } from "@phosphor-icons/react";
 import { motion, useInView } from "motion/react";
 import type { JSX } from "react";
@@ -22,182 +21,175 @@ import { cn } from "@/lib/utils";
 
 const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
-// ─── Mini UI: AI Triage ──────────────────────────────────────────────────────
+// ─── Mini UI: Agent Grid ─────────────────────────────────────────────────────
 
-function MiniAiTriage() {
+const AGENT_ROLES = [
+  { name: "CEO", color: "bg-violet-500" },
+  { name: "PM", color: "bg-blue-500" },
+  { name: "CTO", color: "bg-sky-500" },
+  { name: "Dev", color: "bg-emerald-500" },
+  { name: "Growth", color: "bg-amber-500" },
+  { name: "Sales", color: "bg-rose-500" },
+  { name: "Security", color: "bg-red-500" },
+  { name: "Architect", color: "bg-indigo-500" },
+  { name: "Support", color: "bg-teal-500" },
+  { name: "Docs", color: "bg-orange-500" },
+] as const;
+
+function MiniAgentGrid() {
   return (
-    <div className="space-y-2.5">
-      <div className="rounded-xl bg-muted/40 px-3 py-2.5 dark:bg-sidebar/50">
-        <span className="font-medium text-[11px] text-foreground">
-          &quot;Add keyboard shortcuts&quot;
-        </span>
-      </div>
-      <div className="flex items-center gap-2">
-        <Sparkle
-          className="shrink-0 text-violet-500 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110"
-          size={12}
-          weight="fill"
-        />
-        <div className="flex gap-1">
-          {[
-            {
-              label: "UX",
-              style:
-                "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
-            },
-            {
-              label: "Productivity",
-              style:
-                "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-            },
-            {
-              label: "High",
-              style:
-                "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-            },
-          ].map((tag, i) => (
+    <div className="grid grid-cols-5 gap-1.5">
+      {AGENT_ROLES.map((agent, i) => (
+        <div
+          className="group/agent flex flex-col items-center gap-1 rounded-lg bg-muted/40 px-1 py-1.5 transition-all duration-300 hover:bg-muted/60 dark:bg-sidebar/50 dark:hover:bg-sidebar/70"
+          key={agent.name}
+          style={{ transitionDelay: `${i * 30}ms` }}
+        >
+          <div
+            className={cn(
+              "size-2 rounded-full transition-transform duration-500 group-hover:scale-110",
+              agent.color
+            )}
+          />
+          <span className="font-medium text-[7px] text-muted-foreground transition-colors group-hover/agent:text-foreground">
+            {agent.name}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Mini UI: Shared Board ───────────────────────────────────────────────────
+
+function MiniSharedBoard() {
+  return (
+    <div className="space-y-2">
+      {[
+        { agent: "PM", action: "Created initiative", color: "bg-blue-500" },
+        { agent: "CTO", action: "Wrote spec", color: "bg-sky-500" },
+        { agent: "Dev", action: "Opened PR #42", color: "bg-emerald-500" },
+      ].map((item, i) => (
+        <div
+          className="flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-1.5 transition-transform duration-300 group-hover:translate-x-0.5 dark:bg-sidebar/50"
+          key={item.agent}
+          style={{ transitionDelay: `${i * 60}ms` }}
+        >
+          <div className={cn("size-1.5 rounded-full", item.color)} />
+          <span className="font-medium text-[9px] text-foreground">
+            {item.agent}
+          </span>
+          <span className="text-[9px] text-muted-foreground">
+            {item.action}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Mini UI: Autonomy Modes ─────────────────────────────────────────────────
+
+function MiniAutonomyModes() {
+  return (
+    <div className="space-y-2">
+      {[
+        { mode: "Supervised", status: "Propose → Approve", active: false },
+        { mode: "Full Auto", status: "Autonomous", active: true },
+        { mode: "Stopped", status: "Paused", active: false },
+      ].map((item) => (
+        <div
+          className={cn(
+            "flex items-center justify-between rounded-lg px-2.5 py-1.5 transition-colors duration-300",
+            item.active
+              ? "bg-emerald-50 dark:bg-emerald-500/10"
+              : "bg-muted/40 dark:bg-sidebar/50"
+          )}
+          key={item.mode}
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                "size-1.5 rounded-full",
+                item.active ? "bg-emerald-500" : "bg-muted-foreground/30"
+              )}
+            />
             <span
               className={cn(
-                "translate-y-px rounded-full px-1.5 py-px font-semibold text-[8px] transition-all duration-500 group-hover:translate-y-0",
-                tag.style
+                "font-medium text-[9px]",
+                item.active
+                  ? "text-emerald-700 dark:text-emerald-300"
+                  : "text-muted-foreground"
               )}
-              key={tag.label}
-              style={{ transitionDelay: `${i * 75}ms` }}
             >
-              {tag.label}
+              {item.mode}
             </span>
-          ))}
+          </div>
+          <span className="text-[8px] text-muted-foreground">
+            {item.status}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Mini UI: Knowledge Base ─────────────────────────────────────────────────
+
+function MiniKnowledgeBase() {
+  return (
+    <div className="space-y-2">
+      <div className="rounded-lg bg-muted/40 p-2.5 dark:bg-sidebar/50">
+        <div className="mb-1.5 flex items-center gap-1.5">
+          <div className="size-2 rounded bg-violet-500/60" />
+          <span className="font-medium text-[9px] text-foreground">
+            Company Brief v3
+          </span>
+        </div>
+        <div className="space-y-1">
+          <div className="h-1 w-4/5 rounded bg-border/40 dark:bg-muted/40" />
+          <div className="h-1 w-3/5 rounded bg-border/40 dark:bg-muted/40" />
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <div className="h-1 flex-1 overflow-hidden rounded-full bg-border/60 dark:bg-muted">
-          <div className="h-full w-3/4 origin-left scale-x-[0.3] rounded-full bg-amber-500 transition-transform duration-700 ease-out group-hover:scale-x-100" />
-        </div>
-        <span className="font-medium text-[8px] text-amber-600 opacity-0 transition-opacity delay-300 duration-500 group-hover:opacity-100 dark:text-amber-400">
-          High
+      <div className="flex items-center gap-1.5 rounded-lg border border-emerald-200/50 bg-emerald-50/50 px-2.5 py-1.5 dark:border-emerald-500/10 dark:bg-emerald-500/5">
+        <span className="text-[8px] text-emerald-600 dark:text-emerald-400">
+          ↻ Change cascaded to 4 agents
         </span>
       </div>
     </div>
   );
 }
 
-// ─── Mini UI: Widget ─────────────────────────────────────────────────────────
+// ─── Mini UI: Cost Guards ────────────────────────────────────────────────────
 
-function MiniWidget() {
+function MiniCostGuards() {
   return (
-    <div className="overflow-hidden rounded-lg border border-border/40">
-      <div className="flex items-center gap-1 border-border/40 border-b px-2 py-1.5">
-        <div className="size-1.5 rounded-full bg-rose-400/40" />
-        <div className="size-1.5 rounded-full bg-amber-400/40" />
-        <div className="size-1.5 rounded-full bg-emerald-400/40" />
-      </div>
-      <div className="relative bg-muted/20 p-4 dark:bg-sidebar/20">
-        <div className="space-y-1.5">
-          <div className="h-1.5 w-3/5 rounded bg-border/40 dark:bg-muted/40" />
-          <div className="h-1.5 w-2/5 rounded bg-border/40 dark:bg-muted/40" />
-          <div className="h-1.5 w-1/2 rounded bg-border/40 dark:bg-muted/40" />
-        </div>
-        <div className="absolute right-2.5 bottom-2.5 flex items-center gap-1 rounded-full bg-olive-600 px-2 py-0.5 shadow-lg transition-transform duration-500 group-hover:scale-110 dark:bg-olive-500">
-          <ChatCircleDots className="text-white" size={8} weight="fill" />
-          <span className="font-semibold text-[7px] text-white">Feedback</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Mini UI: GitHub Sync ────────────────────────────────────────────────────
-
-function MiniGithubSync() {
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="w-full rounded-lg bg-muted/40 p-2.5 dark:bg-sidebar/50">
-        <div className="flex items-center gap-1.5">
-          <GithubLogo className="text-foreground" size={10} weight="fill" />
-          <span className="font-medium text-[10px] text-foreground">
-            PR #142 merged
-          </span>
-        </div>
-      </div>
-      <div className="h-3 w-px bg-olive-600/20 transition-all duration-500 group-hover:h-4 group-hover:bg-olive-600/40 dark:bg-olive-400/20 dark:group-hover:bg-olive-400/40" />
-      <div className="w-full rounded-lg border border-emerald-200/50 bg-emerald-50/50 p-2.5 transition-colors duration-500 group-hover:border-emerald-300 group-hover:bg-emerald-50 dark:border-emerald-500/10 dark:bg-emerald-500/5 dark:group-hover:border-emerald-500/20">
-        <div className="flex items-center gap-1.5">
-          <div className="flex size-2.5 items-center justify-center rounded-full bg-emerald-500 transition-transform duration-500 group-hover:scale-110">
-            <span className="text-[5px] text-white">&#10003;</span>
-          </div>
-          <span className="font-medium text-[10px] text-emerald-700 dark:text-emerald-300">
-            Shipped
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Mini UI: Real-time ──────────────────────────────────────────────────────
-
-function MiniRealtime() {
-  return (
-    <div className="space-y-2.5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <div className="relative size-1.5">
-            <div className="absolute inset-0 animate-ping rounded-full bg-emerald-500/60" />
-            <div className="size-1.5 rounded-full bg-emerald-500" />
-          </div>
-          <span className="font-medium text-[10px] text-emerald-600 dark:text-emerald-400">
-            Live
-          </span>
-        </div>
-        <div className="flex -space-x-1.5">
-          <div className="size-4 rounded-full border border-card bg-violet-400 transition-transform duration-300 group-hover:-translate-x-0.5" />
-          <div className="size-4 rounded-full border border-card bg-sky-400" />
-          <div className="size-4 rounded-full border border-card bg-rose-400 transition-transform duration-300 group-hover:translate-x-0.5" />
-        </div>
-      </div>
-      <div className="space-y-1 rounded-lg bg-muted/30 p-2 dark:bg-sidebar/40">
-        {[
-          { color: "bg-violet-400", text: "Sarah voted" },
-          { color: "bg-sky-400", text: "Mike commented" },
-          { color: "bg-rose-400", text: "Priya updated" },
-        ].map((item, i) => (
-          <div
-            className="flex items-center gap-1.5 transition-transform duration-300 group-hover:translate-x-0.5"
-            key={item.text}
-            style={{ transitionDelay: `${i * 50}ms` }}
-          >
-            <span className={cn("size-1 rounded-full", item.color)} />
-            <span className="text-[9px] text-muted-foreground">
-              {item.text}
+    <div className="space-y-2">
+      {[
+        { agent: "Dev", used: 75, limit: "$50/day" },
+        { agent: "Growth", used: 30, limit: "$20/day" },
+        { agent: "Sales", used: 90, limit: "$30/day" },
+      ].map((item) => (
+        <div className="space-y-1" key={item.agent}>
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-[9px] text-foreground">
+              {item.agent}
+            </span>
+            <span className="text-[8px] text-muted-foreground">
+              {item.limit}
             </span>
           </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Mini UI: API ────────────────────────────────────────────────────────────
-
-function MiniApi() {
-  return (
-    <div className="overflow-hidden rounded-lg bg-olive-950 p-2.5 dark:bg-[#0d0d0b]">
-      <pre className="font-mono text-[9px] leading-5">
-        {[
-          { method: "GET ", color: "text-emerald-400", path: "/api/feedback" },
-          { method: "POST", color: "text-sky-400", path: " /api/feedback" },
-          { method: "HOOK", color: "text-amber-400", path: " status.changed" },
-        ].map((line, i) => (
-          <div
-            className="transition-transform duration-300 group-hover:translate-x-0.5"
-            key={line.method}
-            style={{ transitionDelay: `${i * 50}ms` }}
-          >
-            <span className={line.color}>{line.method}</span>
-            <span className="text-olive-300/70">{line.path}</span>
+          <div className="h-1 overflow-hidden rounded-full bg-border/60 dark:bg-muted">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all duration-700 group-hover:opacity-100",
+                item.used > 80 ? "bg-amber-500" : "bg-emerald-500"
+              )}
+              style={{ width: `${item.used}%` }}
+            />
           </div>
-        ))}
-      </pre>
+        </div>
+      ))}
     </div>
   );
 }
@@ -206,53 +198,53 @@ function MiniApi() {
 
 const FEATURES = [
   {
-    id: "ai",
-    icon: Brain,
+    id: "agents",
+    icon: Robot,
     accent: "text-violet-500",
     accentBg: "bg-violet-500/10 dark:bg-violet-500/15",
-    title: "AI-Powered Triage",
+    title: "10 AI Agents",
     span: "sm:col-span-2",
   },
   {
-    id: "widget",
-    icon: ChatCircleDots,
+    id: "board",
+    icon: GitBranch,
     accent: "text-emerald-500",
     accentBg: "bg-emerald-500/10 dark:bg-emerald-500/15",
-    title: "Embeddable Widget",
+    title: "Shared Board",
     span: "",
   },
   {
-    id: "github",
-    icon: GithubLogo,
-    accent: "text-foreground",
-    accentBg: "bg-muted dark:bg-muted",
-    title: "Two-Way GitHub Sync",
-    span: "",
-  },
-  {
-    id: "realtime",
-    icon: Lightning,
+    id: "autonomy",
+    icon: Sliders,
     accent: "text-amber-500",
     accentBg: "bg-amber-500/10 dark:bg-amber-500/15",
-    title: "Real-Time Everything",
+    title: "Autonomy Modes",
     span: "",
   },
   {
-    id: "api",
-    icon: Code,
+    id: "knowledge",
+    icon: Brain,
     accent: "text-sky-500",
     accentBg: "bg-sky-500/10 dark:bg-sky-500/15",
-    title: "REST API & Webhooks",
+    title: "Knowledge Base",
+    span: "",
+  },
+  {
+    id: "cost",
+    icon: Shield,
+    accent: "text-rose-500",
+    accentBg: "bg-rose-500/10 dark:bg-rose-500/15",
+    title: "Cost Guards",
     span: "",
   },
 ] as const;
 
 const MINI_UI_MAP: Record<string, () => JSX.Element> = {
-  ai: MiniAiTriage,
-  widget: MiniWidget,
-  github: MiniGithubSync,
-  realtime: MiniRealtime,
-  api: MiniApi,
+  agents: MiniAgentGrid,
+  board: MiniSharedBoard,
+  autonomy: MiniAutonomyModes,
+  knowledge: MiniKnowledgeBase,
+  cost: MiniCostGuards,
 };
 
 // ─── Main Component ──────────────────────────────────────────────────────────
@@ -272,12 +264,12 @@ export default function LandingFeatures() {
           transition={{ duration: 0.8, ease: EASE_OUT_EXPO }}
         >
           <Text as="span" className="mb-3 block" variant="eyebrow">
-            Built for product teams
+            Your autonomous AI company
           </Text>
           <H2 className="mb-4" variant="landing">
-            Everything you need.{" "}
+            10 agents.{" "}
             <span className="text-muted-foreground">
-              Nothing you don&apos;t.
+              Zero employees needed.
             </span>
           </H2>
         </motion.div>

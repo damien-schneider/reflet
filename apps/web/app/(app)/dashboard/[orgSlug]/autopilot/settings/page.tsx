@@ -40,6 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { H2, Muted } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
+import { UpgradeBanner } from "@/features/autopilot/components/upgrade-banner";
 
 const ADAPTER_OPTIONS = [
   {
@@ -103,9 +104,13 @@ function SectionHeader({
 }
 
 export default function AutopilotSettingsPage() {
-  const { isAdmin, organizationId } = useAutopilotContext();
+  const { isAdmin, organizationId, orgSlug } = useAutopilotContext();
 
   const config = useQuery(api.autopilot.queries.config.getConfig, {
+    organizationId,
+  });
+
+  const billing = useQuery(api.billing.queries.getStatus, {
     organizationId,
   });
 
@@ -231,6 +236,47 @@ export default function AutopilotSettingsPage() {
         </Muted>
       </div>
 
+      {/* ── Plan & Billing ─────────────────────────── */}
+      {billing && (
+        <section className="space-y-5">
+          <SectionHeader
+            badge={billing.tier}
+            description="Your current plan and usage limits"
+            icon={IconCurrencyDollar}
+            title="Plan"
+          />
+          <UpgradeBanner
+            billingUrl={`/dashboard/${orgSlug}/settings/billing`}
+            tier={billing.tier as "free" | "pro"}
+          />
+          <Card>
+            <CardContent className="flex items-center justify-between py-4">
+              <div>
+                <p className="font-medium text-sm capitalize">
+                  {billing.tier} Plan
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {billing.tier === "pro"
+                    ? "Full access to all Autopilot features and agents."
+                    : "Limited access. Upgrade for higher limits and all agents."}
+                </p>
+              </div>
+              <Button
+                onClick={() =>
+                  window.location.assign(
+                    `/dashboard/${orgSlug}/settings/billing`
+                  )
+                }
+                size="sm"
+                variant={billing.tier === "pro" ? "outline" : "default"}
+              >
+                {billing.tier === "pro" ? "Manage Billing" : "Upgrade to Pro"}
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
       {/* ── General ─────────────────────────────────── */}
       <section className="space-y-5">
         <SectionHeader
@@ -258,30 +304,6 @@ export default function AutopilotSettingsPage() {
                 checked={config.autoMergePRs}
                 disabled={!isAdmin}
                 onCheckedChange={(v) => handleToggle("autoMergePRs", v)}
-              />
-            </div>
-
-            {/* Require Architect Review */}
-            <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-muted p-2 text-muted-foreground">
-                  <IconShieldCheck className="size-4" />
-                </div>
-                <div>
-                  <Label className="font-medium text-sm">
-                    Require Architect Review
-                  </Label>
-                  <p className="text-muted-foreground text-xs">
-                    Architect agent reviews every PR
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={config.requireArchitectReview}
-                disabled={!isAdmin}
-                onCheckedChange={(v) =>
-                  handleToggle("requireArchitectReview", v)
-                }
               />
             </div>
           </CardContent>
@@ -453,6 +475,107 @@ export default function AutopilotSettingsPage() {
           </Card>
         </div>
       </section>
+
+      {/* ── Per-Agent Budgets ───────────────────────── */}
+      <section className="space-y-5">
+        <SectionHeader
+          description="Set individual daily cost caps per agent"
+          icon={IconCurrencyDollar}
+          title="Per-Agent Budgets"
+        />
+
+        <PerAgentBudgets
+          config={config}
+          disabled={!isAdmin}
+          onSave={(json) => handleUpdate("perAgentDailyCapUsd", json)}
+        />
+      </section>
     </div>
+  );
+}
+
+const BUDGET_AGENTS = [
+  { id: "pm", label: "PM" },
+  { id: "cto", label: "CTO" },
+  { id: "dev", label: "Dev" },
+  { id: "growth", label: "Growth" },
+  { id: "support", label: "Support" },
+  { id: "sales", label: "Sales" },
+] as const;
+
+function PerAgentBudgets({
+  config,
+  disabled,
+  onSave,
+}: {
+  config: { perAgentDailyCapUsd?: string };
+  disabled: boolean;
+  onSave: (json: string) => void;
+}) {
+  const parsed: Record<string, number> = (() => {
+    try {
+      return config.perAgentDailyCapUsd
+        ? JSON.parse(config.perAgentDailyCapUsd)
+        : {};
+    } catch {
+      return {};
+    }
+  })();
+
+  const [values, setValues] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    for (const agent of BUDGET_AGENTS) {
+      initial[agent.id] =
+        parsed[agent.id] === undefined ? "" : String(parsed[agent.id]);
+    }
+    return initial;
+  });
+
+  const handleBlur = () => {
+    const result: Record<string, number> = {};
+    for (const [key, val] of Object.entries(values)) {
+      const num = Number.parseFloat(val);
+      if (!Number.isNaN(num) && num > 0) {
+        result[key] = num;
+      }
+    }
+    onSave(JSON.stringify(result));
+  };
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 pt-4">
+        {BUDGET_AGENTS.map((agent) => (
+          <div className="flex items-center gap-3" key={agent.id}>
+            <Label className="w-20 font-medium text-sm">{agent.label}</Label>
+            <div className="relative flex-1">
+              <span className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground text-sm">
+                $
+              </span>
+              <Input
+                className="pl-7 font-mono text-sm"
+                disabled={disabled}
+                min={0}
+                onBlur={handleBlur}
+                onChange={(e) =>
+                  setValues((prev) => ({
+                    ...prev,
+                    [agent.id]: e.target.value,
+                  }))
+                }
+                placeholder="No limit"
+                step="0.01"
+                type="number"
+                value={values[agent.id]}
+              />
+            </div>
+            <span className="text-muted-foreground text-xs">/day</span>
+          </div>
+        ))}
+        <p className="text-muted-foreground text-xs">
+          Leave blank for no per-agent limit. Total daily cap still applies.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

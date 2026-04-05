@@ -1,115 +1,137 @@
 /**
- * Inbox mutations — approve, reject, snooze, bulk update.
+ * Inbox mutations — approve/reject work items or documents that need review.
  */
 
 import { v } from "convex/values";
 import { mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
-import { inboxItemStatus } from "../schema/validators";
 import { requireOrgAdmin } from "./auth";
 
-export const updateInboxItem = mutation({
-  args: {
-    itemId: v.id("autopilotInboxItems"),
-    status: inboxItemStatus,
-  },
+export const approveWorkItem = mutation({
+  args: { workItemId: v.id("autopilotWorkItems") },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
-    const item = await ctx.db.get(args.itemId);
+    const item = await ctx.db.get(args.workItemId);
     if (!item) {
-      throw new Error("Inbox item not found");
+      throw new Error("Work item not found");
     }
 
     await requireOrgAdmin(ctx, item.organizationId, user._id);
 
     const now = Date.now();
-    const updates: Record<string, unknown> = {
-      status: args.status,
-    };
-
-    if (
-      item.status === "pending" &&
-      (args.status === "approved" ||
-        args.status === "rejected" ||
-        args.status === "snoozed")
-    ) {
-      updates.reviewedAt = now;
-    }
-
-    await ctx.db.patch(args.itemId, updates);
-
-    let logLevel: "success" | "warning" | "action" = "action";
-    if (args.status === "approved") {
-      logLevel = "success";
-    } else if (args.status === "rejected") {
-      logLevel = "warning";
-    }
-
-    await ctx.db.insert("autopilotActivityLog", {
-      agent: "system",
-      createdAt: now,
-      level: logLevel,
-      message: `Inbox item ${args.status}: ${item.title}`,
-      organizationId: item.organizationId,
+    await ctx.db.patch(args.workItemId, {
+      needsReview: false,
+      reviewedAt: now,
+      updatedAt: now,
     });
 
-    if (args.status === "approved" || args.status === "rejected") {
-      await ctx.db.insert("autopilotFeedbackLog", {
-        organizationId: item.organizationId,
-        inboxItemId: args.itemId,
-        agent: item.sourceAgent,
-        itemType: item.type,
-        decision: args.status,
-        createdAt: now,
-      });
-    }
+    await ctx.db.insert("autopilotActivityLog", {
+      organizationId: item.organizationId,
+      workItemId: args.workItemId,
+      agent: "system",
+      level: "success",
+      message: `Approved ${item.type}: ${item.title}`,
+      createdAt: now,
+    });
+
+    return null;
   },
 });
 
-export const bulkUpdateInbox = mutation({
-  args: {
-    itemIds: v.array(v.id("autopilotInboxItems")),
-    status: inboxItemStatus,
-  },
+export const rejectWorkItem = mutation({
+  args: { workItemId: v.id("autopilotWorkItems") },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
-
-    if (args.itemIds.length === 0) {
-      return;
+    const item = await ctx.db.get(args.workItemId);
+    if (!item) {
+      throw new Error("Work item not found");
     }
 
-    const firstItem = await ctx.db.get(args.itemIds[0]);
-    if (!firstItem) {
-      throw new Error("Inbox item not found");
-    }
-
-    await requireOrgAdmin(ctx, firstItem.organizationId, user._id);
+    await requireOrgAdmin(ctx, item.organizationId, user._id);
 
     const now = Date.now();
-
-    for (const itemId of args.itemIds) {
-      const item = await ctx.db.get(itemId);
-      if (!item) {
-        continue;
-      }
-
-      const updates: Record<string, unknown> = {
-        status: args.status,
-      };
-
-      if (item.status === "pending") {
-        updates.reviewedAt = now;
-      }
-
-      await ctx.db.patch(itemId, updates);
-    }
+    await ctx.db.patch(args.workItemId, {
+      needsReview: false,
+      reviewedAt: now,
+      status: "cancelled",
+      updatedAt: now,
+    });
 
     await ctx.db.insert("autopilotActivityLog", {
+      organizationId: item.organizationId,
+      workItemId: args.workItemId,
       agent: "system",
+      level: "warning",
+      message: `Rejected ${item.type}: ${item.title}`,
       createdAt: now,
-      level: "action",
-      message: `Bulk updated ${args.itemIds.length} inbox items to ${args.status}`,
-      organizationId: firstItem.organizationId,
     });
+
+    return null;
+  },
+});
+
+export const approveDocument = mutation({
+  args: { documentId: v.id("autopilotDocuments") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    const doc = await ctx.db.get(args.documentId);
+    if (!doc) {
+      throw new Error("Document not found");
+    }
+
+    await requireOrgAdmin(ctx, doc.organizationId, user._id);
+
+    const now = Date.now();
+    await ctx.db.patch(args.documentId, {
+      needsReview: false,
+      reviewedAt: now,
+      status: "published",
+      updatedAt: now,
+    });
+
+    await ctx.db.insert("autopilotActivityLog", {
+      organizationId: doc.organizationId,
+      agent: "system",
+      level: "success",
+      message: `Approved document: ${doc.title}`,
+      createdAt: now,
+    });
+
+    return null;
+  },
+});
+
+export const rejectDocument = mutation({
+  args: { documentId: v.id("autopilotDocuments") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    const doc = await ctx.db.get(args.documentId);
+    if (!doc) {
+      throw new Error("Document not found");
+    }
+
+    await requireOrgAdmin(ctx, doc.organizationId, user._id);
+
+    const now = Date.now();
+    await ctx.db.patch(args.documentId, {
+      needsReview: false,
+      reviewedAt: now,
+      status: "archived",
+      updatedAt: now,
+    });
+
+    await ctx.db.insert("autopilotActivityLog", {
+      organizationId: doc.organizationId,
+      agent: "system",
+      level: "warning",
+      message: `Rejected document: ${doc.title}`,
+      createdAt: now,
+    });
+
+    return null;
   },
 });

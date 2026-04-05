@@ -24,8 +24,10 @@ const CI_STATUS_STYLES: Record<string, string> = {
   failed: "text-red-500",
 };
 
-export function TaskRunsList({ taskId }: { taskId: Id<"autopilotTasks"> }) {
-  const runs = useQuery(api.autopilot.queries.tasks.getTaskRuns, { taskId });
+export function TaskRunsList({ taskId }: { taskId: Id<"autopilotWorkItems"> }) {
+  const runs = useQuery(api.autopilot.queries.work.getWorkItemRuns, {
+    workItemId: taskId,
+  });
 
   if (runs === undefined) {
     return (

@@ -113,13 +113,12 @@ function checkActivity(
   }
 
   if (Date.now() - lastActivity > ONE_HOUR) {
-    degradeTo(state, "degraded");
     state.issues.push({
       id: "stale_activity",
-      severity: "warning",
+      severity: "info",
       message: "No agent activity in the last hour",
       resolution:
-        "Check if tasks are available. Agents need pending tasks to work.",
+        "Agents are work-driven — they wake only when there's work on the board. This is normal when all tasks are complete.",
     });
   }
 }
@@ -212,6 +211,37 @@ function checkOrphanedTasks(orphanedCount: number, state: HealthState): void {
       resolution: "Self-healing will auto-cancel these, or enable the agents",
       actionUrl: "tasks",
       actionLabel: "View Tasks",
+    });
+  }
+}
+
+function checkPendingApprovals(count: number, state: HealthState): void {
+  if (count > 0) {
+    state.issues.push({
+      id: "pending_approvals",
+      severity: count >= 5 ? "warning" : "info",
+      message: `${count} item${count > 1 ? "s" : ""} waiting for your approval`,
+      resolution: "Review and approve or reject in Inbox to unblock agents",
+      actionUrl: "inbox",
+      actionLabel: "Review Inbox",
+    });
+  }
+}
+
+function checkPipelineCapacity(
+  activeCount: number,
+  totalCap: number,
+  state: HealthState
+): void {
+  if (activeCount >= totalCap) {
+    state.issues.push({
+      id: "pipeline_full",
+      severity: "info",
+      message: `Pipeline full (${activeCount}/${totalCap}) — PM is paused`,
+      resolution:
+        "Complete or cancel existing tasks to free capacity for new work",
+      actionUrl: "roadmap",
+      actionLabel: "View Board",
     });
   }
 }
@@ -312,15 +342,15 @@ export const getSystemHealth = query({
     const lastActivity = lastActivityEntry?.createdAt ?? null;
     checkActivity(lastActivity, state.status === "stopped", state);
 
-    const inProgressTasks = await ctx.db
-      .query("autopilotTasks")
+    const inProgressItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
         q.eq("organizationId", args.organizationId).eq("status", "in_progress")
       )
       .collect();
 
-    const stuckCount = inProgressTasks.filter(
-      (t) => t.startedAt && Date.now() - t.startedAt > ONE_HOUR
+    const stuckCount = inProgressItems.filter(
+      (w) => Date.now() - w.updatedAt > ONE_HOUR
     ).length;
     checkStuckTasks(stuckCount, state);
 
@@ -336,21 +366,21 @@ export const getSystemHealth = query({
     checkCostCap(config, state);
     checkTaskThrottle(config, state);
 
-    // Check for orphaned tasks (assigned to disabled agents)
+    // Check for orphaned work items (assigned to disabled agents)
     const enabledAgentNames = AGENT_FIELDS.filter(
       (field) => (config as unknown as Record<string, unknown>)[field] !== false
     ).map((field) => field.replace("Enabled", ""));
     const enabledSet = new Set(enabledAgentNames);
 
-    const pendingTasks = await ctx.db
-      .query("autopilotTasks")
+    const todoItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+        q.eq("organizationId", args.organizationId).eq("status", "todo")
       )
       .collect();
 
-    const orphanedCount = pendingTasks.filter(
-      (t) => !enabledSet.has(t.assignedAgent)
+    const orphanedCount = todoItems.filter(
+      (w) => w.assignedAgent && !enabledSet.has(w.assignedAgent)
     ).length;
     checkOrphanedTasks(orphanedCount, state);
 
@@ -370,12 +400,34 @@ export const getSystemHealth = query({
     }
     checkCredentials(credentialStatus, config.adapter, state);
 
+    // Check items waiting for president approval
+    const reviewWorkItems = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
+      )
+      .collect();
+    const reviewDocs = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
+      )
+      .collect();
+    const pendingApprovalCount = reviewWorkItems.length + reviewDocs.length;
+    checkPendingApprovals(pendingApprovalCount, state);
+
+    // Check pipeline capacity
+    const totalCap = (config.maxPendingTasksTotal as number | undefined) ?? 5;
+    const activeCount = todoItems.length + inProgressItems.length;
+    checkPipelineCapacity(activeCount, totalCap, state);
+
     return {
       status: state.status,
       issues: state.issues,
       lastActivity,
       enabledAgentCount: enabledCount,
       totalAgentCount: TOTAL_AGENTS,
+      pendingApprovalCount,
     };
   },
 });

@@ -1,10 +1,9 @@
 /**
- * Self-Healing — automatically cleans up stuck, orphaned, and unrecoverable tasks.
+ * Self-Healing — automatically cleans up stuck and orphaned work items.
  *
  * Runs every 10 minutes via cron. Handles:
- *   1. Tasks stuck in_progress > 1 hour with no activity → mark failed
- *   2. Tasks assigned to disabled agents in pending > 1 hour → cancel
- *   3. Tasks with unrecoverable errors → cancel
+ *   1. Work items stuck in_progress > 1 hour with no activity → cancel
+ *   2. Work items assigned to disabled agents in todo > 1 hour → cancel
  */
 
 import { v } from "convex/values";
@@ -17,22 +16,12 @@ import {
 
 const ONE_HOUR = 60 * 60 * 1000;
 
-/**
- * Unrecoverable error patterns — tasks with these errors will never succeed.
- */
-const UNRECOVERABLE_PATTERNS = [
-  "No credentials configured for adapter:",
-  "Task not found:",
-  "Organization not found:",
-  "Autopilot is disabled",
-] as const;
-
 // ============================================
 // QUERIES
 // ============================================
 
 /**
- * Find tasks stuck in_progress for longer than the threshold.
+ * Find work items stuck in_progress for longer than the threshold.
  */
 export const getStuckInProgressTasks = internalQuery({
   args: {
@@ -41,38 +30,35 @@ export const getStuckInProgressTasks = internalQuery({
   },
   returns: v.array(
     v.object({
-      _id: v.id("autopilotTasks"),
+      _id: v.id("autopilotWorkItems"),
       title: v.string(),
-      assignedAgent: v.string(),
-      startedAt: v.optional(v.number()),
+      assignedAgent: v.optional(v.string()),
+      updatedAt: v.number(),
     })
   ),
   handler: async (ctx, args) => {
     const cutoff = Date.now() - args.thresholdMs;
 
-    const inProgressTasks = await ctx.db
-      .query("autopilotTasks")
+    const inProgressItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
         q.eq("organizationId", args.organizationId).eq("status", "in_progress")
       )
       .collect();
 
-    return inProgressTasks
-      .filter((t) => {
-        const startTime = t.startedAt ?? t.createdAt;
-        return startTime < cutoff;
-      })
+    return inProgressItems
+      .filter((t) => t.updatedAt < cutoff)
       .map((t) => ({
         _id: t._id,
         title: t.title,
         assignedAgent: t.assignedAgent,
-        startedAt: t.startedAt,
+        updatedAt: t.updatedAt,
       }));
   },
 });
 
 /**
- * Find pending tasks assigned to disabled agents that have been waiting > threshold.
+ * Find todo work items assigned to disabled agents that have been waiting > threshold.
  */
 export const getOrphanedPendingTasks = internalQuery({
   args: {
@@ -81,9 +67,9 @@ export const getOrphanedPendingTasks = internalQuery({
   },
   returns: v.array(
     v.object({
-      _id: v.id("autopilotTasks"),
+      _id: v.id("autopilotWorkItems"),
       title: v.string(),
-      assignedAgent: v.string(),
+      assignedAgent: v.optional(v.string()),
     })
   ),
   handler: async (ctx, args) => {
@@ -95,56 +81,24 @@ export const getOrphanedPendingTasks = internalQuery({
     );
     const enabledSet = new Set<string>(enabledAgents);
 
-    const pendingTasks = await ctx.db
-      .query("autopilotTasks")
+    const todoItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "pending")
+        q.eq("organizationId", args.organizationId).eq("status", "todo")
       )
       .collect();
 
-    return pendingTasks
-      .filter((t) => !enabledSet.has(t.assignedAgent) && t.createdAt < cutoff)
+    return todoItems
+      .filter(
+        (t) =>
+          t.assignedAgent &&
+          !enabledSet.has(t.assignedAgent) &&
+          t.createdAt < cutoff
+      )
       .map((t) => ({
         _id: t._id,
         title: t.title,
         assignedAgent: t.assignedAgent,
-      }));
-  },
-});
-
-/**
- * Find failed tasks with unrecoverable error messages.
- */
-export const getUnrecoverableTasks = internalQuery({
-  args: { organizationId: v.id("organizations") },
-  returns: v.array(
-    v.object({
-      _id: v.id("autopilotTasks"),
-      title: v.string(),
-      errorMessage: v.optional(v.string()),
-    })
-  ),
-  handler: async (ctx, args) => {
-    const failedTasks = await ctx.db
-      .query("autopilotTasks")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "failed")
-      )
-      .collect();
-
-    return failedTasks
-      .filter((t) => {
-        if (!t.errorMessage) {
-          return false;
-        }
-        return UNRECOVERABLE_PATTERNS.some((pattern) =>
-          t.errorMessage?.includes(pattern)
-        );
-      })
-      .map((t) => ({
-        _id: t._id,
-        title: t.title,
-        errorMessage: t.errorMessage,
       }));
   },
 });
@@ -154,114 +108,43 @@ export const getUnrecoverableTasks = internalQuery({
 // ============================================
 
 /**
- * Cancel a task with a reason (used by self-healing).
+ * Cancel a work item with a reason (used by self-healing).
  */
 export const cancelTaskWithReason = internalMutation({
   args: {
-    taskId: v.id("autopilotTasks"),
+    taskId: v.id("autopilotWorkItems"),
     reason: v.string(),
   },
   handler: async (ctx, args) => {
-    const task = await ctx.db.get(args.taskId);
-    if (!task) {
+    const item = await ctx.db.get(args.taskId);
+    if (!item) {
       return;
     }
 
     await ctx.db.patch(args.taskId, {
       status: "cancelled",
-      errorMessage: args.reason,
-      completedAt: Date.now(),
+      updatedAt: Date.now(),
     });
   },
 });
 
 /**
- * Fail a task with a reason (used by self-healing for stuck tasks).
+ * Fail a work item (alias for cancel in new schema).
  */
 export const failTaskWithReason = internalMutation({
   args: {
-    taskId: v.id("autopilotTasks"),
+    taskId: v.id("autopilotWorkItems"),
     reason: v.string(),
   },
   handler: async (ctx, args) => {
-    const task = await ctx.db.get(args.taskId);
-    if (!task) {
+    const item = await ctx.db.get(args.taskId);
+    if (!item) {
       return;
     }
 
     await ctx.db.patch(args.taskId, {
-      status: "failed",
-      errorMessage: args.reason,
-      completedAt: Date.now(),
-    });
-  },
-});
-
-/**
- * Find failed tasks that can be retried (retryCount < maxRetries).
- * Excludes tasks with unrecoverable errors.
- */
-export const getRetryableTasks = internalQuery({
-  args: { organizationId: v.id("organizations") },
-  returns: v.array(
-    v.object({
-      _id: v.id("autopilotTasks"),
-      title: v.string(),
-      assignedAgent: v.string(),
-      retryCount: v.number(),
-      maxRetries: v.number(),
-    })
-  ),
-  handler: async (ctx, args) => {
-    const failedTasks = await ctx.db
-      .query("autopilotTasks")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "failed")
-      )
-      .collect();
-
-    return failedTasks
-      .filter((t) => {
-        const retryCount = t.retryCount ?? 0;
-        const maxRetries = t.maxRetries ?? 3;
-        if (retryCount >= maxRetries) {
-          return false;
-        }
-        // Skip tasks with unrecoverable errors
-        if (t.errorMessage) {
-          return !UNRECOVERABLE_PATTERNS.some((p) =>
-            t.errorMessage?.includes(p)
-          );
-        }
-        return true;
-      })
-      .map((t) => ({
-        _id: t._id,
-        title: t.title,
-        assignedAgent: t.assignedAgent,
-        retryCount: t.retryCount ?? 0,
-        maxRetries: t.maxRetries ?? 3,
-      }));
-  },
-});
-
-/**
- * Reset a failed task to pending and increment retry count.
- */
-export const retryTask = internalMutation({
-  args: { taskId: v.id("autopilotTasks") },
-  handler: async (ctx, args) => {
-    const task = await ctx.db.get(args.taskId);
-    if (!task || task.status !== "failed") {
-      return;
-    }
-
-    await ctx.db.patch(args.taskId, {
-      status: "pending",
-      errorMessage: undefined,
-      completedAt: undefined,
-      startedAt: undefined,
-      retryCount: (task.retryCount ?? 0) + 1,
+      status: "cancelled",
+      updatedAt: Date.now(),
     });
   },
 });
@@ -285,8 +168,8 @@ export const runSelfHealing = internalAction({
       try {
         let healed = 0;
 
-        // 1. Tasks stuck in_progress > 1 hour with no activity → mark failed
-        const stuckTasks = await ctx.runQuery(
+        // 1. Work items stuck in_progress > 1 hour → cancel
+        const stuckItems = await ctx.runQuery(
           internal.autopilot.self_heal.getStuckInProgressTasks,
           {
             organizationId: org.organizationId,
@@ -294,19 +177,19 @@ export const runSelfHealing = internalAction({
           }
         );
 
-        for (const task of stuckTasks) {
+        for (const item of stuckItems) {
           await ctx.runMutation(
             internal.autopilot.self_heal.failTaskWithReason,
             {
-              taskId: task._id,
-              reason: "Auto-failed: no progress for 1 hour",
+              taskId: item._id,
+              reason: "Auto-cancelled: no progress for 1 hour",
             }
           );
           healed++;
         }
 
-        // 2. Tasks assigned to disabled agents in pending > 1 hour → cancel
-        const orphanedTasks = await ctx.runQuery(
+        // 2. Work items assigned to disabled agents in todo > 1 hour → cancel
+        const orphanedItems = await ctx.runQuery(
           internal.autopilot.self_heal.getOrphanedPendingTasks,
           {
             organizationId: org.organizationId,
@@ -314,72 +197,27 @@ export const runSelfHealing = internalAction({
           }
         );
 
-        for (const task of orphanedTasks) {
+        for (const item of orphanedItems) {
           await ctx.runMutation(
             internal.autopilot.self_heal.cancelTaskWithReason,
             {
-              taskId: task._id,
-              reason: `Auto-cancelled: ${task.assignedAgent} agent is disabled`,
+              taskId: item._id,
+              reason: `Auto-cancelled: ${item.assignedAgent ?? "unknown"} agent is disabled`,
             }
           );
           healed++;
         }
 
-        // 3. Tasks with unrecoverable errors → cancel
-        const unrecoverableTasks = await ctx.runQuery(
-          internal.autopilot.self_heal.getUnrecoverableTasks,
-          { organizationId: org.organizationId }
-        );
-
-        for (const task of unrecoverableTasks) {
-          await ctx.runMutation(
-            internal.autopilot.self_heal.cancelTaskWithReason,
-            {
-              taskId: task._id,
-              reason: `Auto-cancelled: unrecoverable error — ${task.errorMessage ?? "unknown"}`,
-            }
-          );
-          healed++;
-        }
-
-        // 4. Retry failed tasks that haven't exhausted retries
-        const retryableTasks = await ctx.runQuery(
-          internal.autopilot.self_heal.getRetryableTasks,
-          { organizationId: org.organizationId }
-        );
-
-        let retried = 0;
-        for (const task of retryableTasks) {
-          await ctx.runMutation(internal.autopilot.self_heal.retryTask, {
-            taskId: task._id,
-          });
-          await ctx.runMutation(internal.autopilot.tasks.logActivity, {
-            organizationId: org.organizationId,
-            taskId: task._id,
-            agent: "system",
-            level: "action",
-            message: `Auto-retry: ${task.title} (attempt ${task.retryCount + 1}/${task.maxRetries})`,
-          });
-          retried++;
-          healed++;
-        }
-
-        // 5. Log ONE summary if anything was healed
+        // 3. Log ONE summary if anything was healed
         if (healed > 0) {
           await ctx.runMutation(internal.autopilot.tasks.logActivity, {
             organizationId: org.organizationId,
             agent: "system",
             level: "success",
-            message: `Self-healing: cleaned up ${healed} tasks`,
-            details: `Stuck: ${stuckTasks.length}, Orphaned: ${orphanedTasks.length}, Unrecoverable: ${unrecoverableTasks.length}, Retried: ${retried}`,
+            message: `Self-healing: cleaned up ${healed} work items`,
+            details: `Stuck: ${stuckItems.length}, Orphaned: ${orphanedItems.length}`,
           });
         }
-
-        // 6. Auto-dismiss internal alerts clogging the inbox
-        await ctx.runMutation(
-          internal.autopilot.inbox.autoDismissInternalAlerts,
-          { organizationId: org.organizationId }
-        );
       } catch {
         // Best effort — continue with other orgs
       }

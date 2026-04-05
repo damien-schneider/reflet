@@ -7,12 +7,14 @@ import {
   ArrowRightIcon,
   CheckCircle2Icon,
   ChevronDownIcon,
+  InboxIcon,
   OctagonXIcon,
   PauseCircleIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
 import { cn } from "@/lib/utils";
@@ -57,7 +59,53 @@ export function HealthBanner() {
   });
   const [expanded, setExpanded] = useState(false);
 
-  if (!health || health.status === "healthy") {
+  if (!health) {
+    return null;
+  }
+
+  const baseUrl = `/dashboard/${orgSlug}/autopilot`;
+  const pendingApprovalCount =
+    "pendingApprovalCount" in health
+      ? (health.pendingApprovalCount as number)
+      : 0;
+
+  // When healthy: show pending approvals if any, otherwise hide
+  if (health.status === "healthy") {
+    if (pendingApprovalCount > 0) {
+      return (
+        <div className="mb-4 rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <InboxIcon className="size-5 shrink-0 text-blue-600 dark:text-blue-400" />
+              <div>
+                <p className="font-semibold text-blue-700 text-sm dark:text-blue-300">
+                  {pendingApprovalCount} item
+                  {pendingApprovalCount > 1 ? "s" : ""} waiting for your
+                  approval
+                </p>
+                <p className="text-blue-600/80 text-xs dark:text-blue-400/70">
+                  Agents are blocked until you review — approve or reject to
+                  keep the pipeline flowing
+                </p>
+              </div>
+            </div>
+            <Link
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "shrink-0 gap-1.5 border-blue-500/30 text-blue-700 text-xs hover:bg-blue-500/10 dark:text-blue-300"
+              )}
+              href={`${baseUrl}/inbox`}
+            >
+              <Badge className="bg-blue-500 text-white" variant="default">
+                {pendingApprovalCount}
+              </Badge>
+              Review Inbox
+              <ArrowRightIcon className="size-3" />
+            </Link>
+          </div>
+        </div>
+      );
+    }
     return null;
   }
 
@@ -69,8 +117,6 @@ export function HealthBanner() {
   // Show all issues when critical, first only when degraded (unless expanded)
   const visibleIssues =
     isCritical || expanded ? health.issues : health.issues.slice(0, 1);
-
-  const baseUrl = `/dashboard/${orgSlug}/autopilot`;
 
   return (
     <div className={cn("mb-4 rounded-lg border p-4", config.bg)}>

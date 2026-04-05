@@ -225,25 +225,25 @@ export const bootstrapAutopilot = internalAction({
 });
 
 /**
- * Count active (pending/in_progress/blocked/paused) tasks for the org.
+ * Count active (todo/in_progress/in_review/backlog) work items for the org.
  */
 export const getActiveTaskCount = internalQuery({
   args: { organizationId: v.id("organizations") },
   returns: v.number(),
   handler: async (ctx, args) => {
-    const tasks = await ctx.db
-      .query("autopilotTasks")
+    const items = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .collect();
 
-    return tasks.filter(
-      (t) =>
-        t.status === "pending" ||
-        t.status === "in_progress" ||
-        t.status === "blocked" ||
-        t.status === "paused"
+    return items.filter(
+      (w) =>
+        w.status === "todo" ||
+        w.status === "in_progress" ||
+        w.status === "in_review" ||
+        w.status === "backlog"
     ).length;
   },
 });

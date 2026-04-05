@@ -7,7 +7,7 @@
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-import { inboxItemType } from "./schema/validators";
+import { documentType } from "./schema/validators";
 
 // ============================================
 // SIMILARITY THRESHOLD
@@ -61,53 +61,17 @@ export const findSimilarTask = internalQuery({
     title: v.string(),
     agent: v.optional(v.string()),
   },
-  returns: v.union(v.id("autopilotTasks"), v.null()),
+  returns: v.union(v.id("autopilotWorkItems"), v.null()),
   handler: async (ctx, args) => {
-    const existingTasks = await ctx.db
-      .query("autopilotTasks")
+    const existingItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .collect();
 
-    // Only check against active tasks (not completed/cancelled)
-    const activeTasks = existingTasks.filter(
-      (t) => t.status !== "completed" && t.status !== "cancelled"
-    );
-
-    for (const task of activeTasks) {
-      const similarity = jaccardSimilarity(args.title, task.title);
-      if (similarity >= TITLE_SIMILARITY_THRESHOLD) {
-        return task._id;
-      }
-    }
-
-    return null;
-  },
-});
-
-/**
- * Check if a similar inbox item already exists (pending/snoozed).
- * Returns the existing inbox item ID if found, null if safe to create.
- */
-export const findSimilarInboxItem = internalQuery({
-  args: {
-    organizationId: v.id("organizations"),
-    title: v.string(),
-    type: inboxItemType,
-  },
-  returns: v.union(v.id("autopilotInboxItems"), v.null()),
-  handler: async (ctx, args) => {
-    const existingItems = await ctx.db
-      .query("autopilotInboxItems")
-      .withIndex("by_org_type", (q) =>
-        q.eq("organizationId", args.organizationId).eq("type", args.type)
-      )
-      .collect();
-
-    // Only check pending/snoozed items — already reviewed items are fine to recreate
     const activeItems = existingItems.filter(
-      (item) => item.status === "pending" || item.status === "snoozed"
+      (t) => t.status !== "done" && t.status !== "cancelled"
     );
 
     for (const item of activeItems) {
@@ -122,30 +86,62 @@ export const findSimilarInboxItem = internalQuery({
 });
 
 /**
- * Check if a growth item with similar title already exists.
+ * Check if a similar document already exists (draft/pending_review).
+ * Returns the existing document ID if found, null if safe to create.
+ */
+export const findSimilarInboxItem = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    title: v.string(),
+    type: documentType,
+  },
+  returns: v.union(v.id("autopilotDocuments"), v.null()),
+  handler: async (ctx, args) => {
+    const existingDocs = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_org_type", (q) =>
+        q.eq("organizationId", args.organizationId).eq("type", args.type)
+      )
+      .collect();
+
+    const activeDocs = existingDocs.filter(
+      (doc) => doc.status === "draft" || doc.status === "pending_review"
+    );
+
+    for (const doc of activeDocs) {
+      const similarity = jaccardSimilarity(args.title, doc.title);
+      if (similarity >= TITLE_SIMILARITY_THRESHOLD) {
+        return doc._id;
+      }
+    }
+
+    return null;
+  },
+});
+
+/**
+ * Check if a document with similar title already exists.
  */
 export const findSimilarGrowthItem = internalQuery({
   args: {
     organizationId: v.id("organizations"),
     title: v.string(),
   },
-  returns: v.union(v.id("autopilotGrowthItems"), v.null()),
+  returns: v.union(v.id("autopilotDocuments"), v.null()),
   handler: async (ctx, args) => {
-    const existingItems = await ctx.db
-      .query("autopilotGrowthItems")
+    const existingDocs = await ctx.db
+      .query("autopilotDocuments")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .collect();
 
-    const activeItems = existingItems.filter(
-      (item) => item.status !== "rejected"
-    );
+    const activeDocs = existingDocs.filter((doc) => doc.status !== "archived");
 
-    for (const item of activeItems) {
-      const similarity = jaccardSimilarity(args.title, item.title);
+    for (const doc of activeDocs) {
+      const similarity = jaccardSimilarity(args.title, doc.title);
       if (similarity >= TITLE_SIMILARITY_THRESHOLD) {
-        return item._id;
+        return doc._id;
       }
     }
 

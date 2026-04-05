@@ -2,6 +2,11 @@ import Link from "next/link";
 
 const PRODUCT_LINKS = [
   {
+    label: "Autopilot",
+    href: "/autopilot",
+    internal: true,
+  },
+  {
     label: "Feedback Board",
     href: "https://www.reflet.app/reflet",
   },
@@ -10,21 +15,14 @@ const PRODUCT_LINKS = [
     href: "https://www.reflet.app/reflet?view=roadmap",
   },
   {
-    label: "Milestones",
-    href: "https://www.reflet.app/reflet?view=milestones",
-  },
-  {
     label: "Changelog",
     href: "https://www.reflet.app/reflet?view=changelog",
-  },
-  {
-    label: "Support",
-    href: "https://www.reflet.app/reflet?view=support",
   },
 ] as const;
 
 const COMPANY_LINKS = [
   { label: "Features", href: "/features", internal: true },
+  { label: "Agents", href: "/agents", internal: true },
   { label: "Pricing", href: "/pricing", internal: true },
   { label: "Integrations", href: "/integrations", internal: true },
   { label: "Security", href: "/security", internal: true },
@@ -37,6 +35,9 @@ const COMPANY_LINKS = [
 ] as const;
 
 const COMPARE_LINKS = [
+  { label: "Reflet vs Devin", href: "/blog/reflet-vs-devin" },
+  { label: "Reflet vs Artisan", href: "/blog/reflet-vs-artisan" },
+  { label: "Reflet vs Sintra AI", href: "/blog/reflet-vs-sintra-ai" },
   { label: "Reflet vs Canny", href: "/blog/reflet-vs-canny" },
   { label: "Reflet vs Featurebase", href: "/blog/reflet-vs-featurebase" },
   { label: "Reflet vs Productboard", href: "/blog/reflet-vs-productboard" },
@@ -64,7 +65,7 @@ export default function Footer() {
               Reflet.
             </span>
             <p className="mt-3 text-muted-foreground text-sm">
-              A modern product feedback and roadmap platform.
+              The autonomous AI company platform.
             </p>
           </div>
 
@@ -76,14 +77,23 @@ export default function Footer() {
             <ul className="space-y-2">
               {PRODUCT_LINKS.map((link) => (
                 <li key={link.label}>
-                  <a
-                    className="text-muted-foreground text-sm hover:text-foreground"
-                    href={link.href}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    {link.label}
-                  </a>
+                  {"internal" in link && link.internal ? (
+                    <Link
+                      className="text-muted-foreground text-sm hover:text-foreground"
+                      href={link.href}
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <a
+                      className="text-muted-foreground text-sm hover:text-foreground"
+                      href={link.href}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

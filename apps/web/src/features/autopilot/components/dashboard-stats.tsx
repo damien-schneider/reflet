@@ -3,15 +3,18 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
+  IconAlertTriangle,
   IconArrowUp,
   IconChecks,
   IconClock,
+  IconCrown,
   IconCurrencyDollar,
   IconInbox,
   IconLoader2,
   IconStack2,
 } from "@tabler/icons-react";
 import { useQuery } from "convex/react";
+import Link from "next/link";
 import type { ComponentType } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -70,11 +73,17 @@ interface StatCard {
 }
 
 export function DashboardStats({
+  baseUrl,
   organizationId,
 }: {
+  baseUrl?: string;
   organizationId: Id<"organizations">;
 }) {
   const stats = useQuery(api.autopilot.queries.dashboard.getDashboardStats, {
+    organizationId,
+  });
+
+  const billing = useQuery(api.billing.queries.getStatus, {
     organizationId,
   });
 
@@ -96,9 +105,8 @@ export function DashboardStats({
     : 0;
   const taskRatio =
     stats.maxTasksPerDay > 0 ? stats.tasksUsedToday / stats.maxTasksPerDay : 0;
-  const totalPending = stats.pendingTaskCount;
-  const totalCap = stats.maxPendingTasksTotal ?? 5;
-  const totalCapRatio = totalCap > 0 ? totalPending / totalCap : 0;
+  const totalPending = stats.todoCount + stats.inProgressCount;
+  const totalCapRatio = 0;
 
   const cards: StatCard[] = [
     {
@@ -122,40 +130,60 @@ export function DashboardStats({
     {
       label: "Pending",
       value: String(totalPending),
-      caption: `of ${String(totalCap)} slots`,
+      caption: "queued",
       icon: IconClock,
       ratio: totalCapRatio,
       warn: totalCapRatio > 0.8,
     },
     {
       label: "In Progress",
-      value: String(stats.inProgressTaskCount),
+      value: String(stats.inProgressCount),
       icon: IconLoader2,
       warn: false,
-      accent: stats.inProgressTaskCount > 0 ? "text-blue-500" : undefined,
+      accent: stats.inProgressCount > 0 ? "text-blue-500" : undefined,
     },
     {
       label: "Completed",
-      value: String(stats.completedTaskCount),
+      value: String(stats.doneCount),
       icon: IconChecks,
       warn: false,
-      accent: stats.completedTaskCount > 0 ? "text-emerald-500" : undefined,
+      accent: stats.doneCount > 0 ? "text-emerald-500" : undefined,
     },
     {
       label: "Inbox",
-      value: String(stats.pendingInboxCount),
+      value: String(stats.pendingReviewCount),
       icon: IconInbox,
-      warn: stats.pendingInboxCount > 0,
-      accent: stats.pendingInboxCount > 0 ? "text-amber-500" : undefined,
+      warn: stats.pendingReviewCount > 0,
+      accent: stats.pendingReviewCount > 0 ? "text-amber-500" : undefined,
     },
   ];
 
-  const pendingTasksByAgent = stats.pendingTasksByAgent ?? {};
+  const pendingTasksByAgent = stats.itemsByAgent ?? {};
   const agentEntries = Object.entries(pendingTasksByAgent);
-  const perAgentCap = stats.maxPendingTasksPerAgent ?? 2;
+  const perAgentCap = 2;
 
   return (
     <div className="space-y-3">
+      {/* Plan indicator */}
+      {billing && (
+        <div className="flex items-center justify-between rounded-xl border bg-card px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <IconCrown className="size-4 text-amber-500" />
+            <span className="font-medium text-sm capitalize">
+              {billing.tier} Plan
+            </span>
+          </div>
+          {baseUrl && (
+            <Link
+              className="text-muted-foreground text-xs hover:text-foreground"
+              href={baseUrl.replace("/autopilot", "/settings/billing")}
+            >
+              Manage billing
+            </Link>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {cards.map((card) => (
           <div
@@ -200,13 +228,59 @@ export function DashboardStats({
         ))}
       </div>
 
+      {/* Limit warning banners */}
+      {taskRatio >= 1 && (
+        <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/[0.05] px-4 py-3">
+          <IconAlertTriangle className="size-4 shrink-0 text-red-500" />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-red-600 text-sm dark:text-red-400">
+              Daily task limit reached — agents paused until tomorrow
+            </p>
+            <p className="text-muted-foreground text-xs">
+              {stats.tasksUsedToday} / {stats.maxTasksPerDay} tasks used today
+            </p>
+          </div>
+          {baseUrl && (
+            <Link
+              className="shrink-0 font-medium text-red-600 text-xs underline underline-offset-4 dark:text-red-400"
+              href={`${baseUrl}/settings`}
+            >
+              Adjust limits
+            </Link>
+          )}
+        </div>
+      )}
+      {costRatio >= 1 && (
+        <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/[0.05] px-4 py-3">
+          <IconAlertTriangle className="size-4 shrink-0 text-red-500" />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-red-600 text-sm dark:text-red-400">
+              Daily cost cap reached — agents paused until tomorrow
+            </p>
+            <p className="text-muted-foreground text-xs">
+              {formatCost(stats.costUsedTodayUsd)} /{" "}
+              {formatCost(stats.dailyCostCapUsd ?? 0)} used today
+            </p>
+          </div>
+          {baseUrl && (
+            <Link
+              className="shrink-0 font-medium text-red-600 text-xs underline underline-offset-4 dark:text-red-400"
+              href={`${baseUrl}/settings`}
+            >
+              Adjust limits
+            </Link>
+          )}
+        </div>
+      )}
+
       {agentEntries.length > 0 && (
         <div className="rounded-xl border bg-card p-4">
           <p className="mb-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
             Queue by Agent
           </p>
           <div className="space-y-2.5">
-            {agentEntries.map(([agent, count]) => {
+            {agentEntries.map(([agent, rawCount]) => {
+              const count = typeof rawCount === "number" ? rawCount : 0;
               const ratio = perAgentCap > 0 ? count / perAgentCap : 0;
               const atCap = ratio >= 1;
               const nearCap = ratio > 0.5 && !atCap;

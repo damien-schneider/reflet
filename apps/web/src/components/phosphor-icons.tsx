@@ -11,13 +11,21 @@
  */
 export {
   ArrowRightIcon as ArrowRight,
+  BookOpenTextIcon as BookOpenText,
   BrainIcon as Brain,
   CaretRightIcon as CaretRight,
   ChatCircleDotsIcon as ChatCircleDots,
   CodeIcon as Code,
   GithubLogoIcon as GithubLogo,
   GitMergeIcon as GitMerge,
+  HeadsetIcon as Headset,
   LightningIcon as Lightning,
+  MegaphoneSimpleIcon as MegaphoneSimple,
+  RobotIcon as Robot,
+  ShieldIcon as Shield,
   SparkleIcon as Sparkle,
   TagIcon as Tag,
+  TargetIcon as Target,
+  UsersIcon as Users,
+  WrenchIcon as Wrench,
 } from "@phosphor-icons/react";

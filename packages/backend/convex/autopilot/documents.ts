@@ -1,27 +1,40 @@
 /**
- * Documents — flexible document storage for all agents.
+ * Documents — internal mutations/queries for the unified documents table.
  *
- * Supports freeform types, tags, and linking to other records
- * (competitors, leads, initiatives, etc.).
+ * Supports all document types (notes, growth content, support threads, etc.)
+ * with optional linking to work items, competitors, and leads.
  */
 
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
-import { assignedAgent } from "./schema/validators";
+import {
+  assignedAgent,
+  documentStatus,
+  documentType,
+  impactLevel,
+} from "./schema/validators";
 
 export const createDocument = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    type: v.string(),
+    type: documentType,
     title: v.string(),
     content: v.string(),
     tags: v.optional(v.array(v.string())),
     sourceAgent: v.optional(assignedAgent),
-    linkedTable: v.optional(v.string()),
-    linkedId: v.optional(v.string()),
-    status: v.optional(
-      v.union(v.literal("draft"), v.literal("published"), v.literal("archived"))
-    ),
+    status: v.optional(documentStatus),
+    needsReview: v.optional(v.boolean()),
+    reviewType: v.optional(v.string()),
+    linkedWorkItemId: v.optional(v.id("autopilotWorkItems")),
+    linkedCompetitorId: v.optional(v.id("autopilotCompetitors")),
+    linkedLeadId: v.optional(v.id("autopilotLeads")),
+    relevanceScore: v.optional(v.number()),
+    impactLevel: v.optional(impactLevel),
+    sourceUrls: v.optional(v.array(v.string())),
+    keyFindings: v.optional(v.array(v.string())),
+    platform: v.optional(v.string()),
+    targetUrl: v.optional(v.string()),
+    metadata: v.optional(v.string()),
   },
   returns: v.id("autopilotDocuments"),
   handler: async (ctx, args) => {
@@ -33,9 +46,19 @@ export const createDocument = internalMutation({
       content: args.content,
       tags: args.tags ?? [],
       sourceAgent: args.sourceAgent,
-      linkedTable: args.linkedTable,
-      linkedId: args.linkedId,
-      status: args.status ?? "published",
+      status: args.status ?? "draft",
+      needsReview: args.needsReview ?? false,
+      reviewType: args.reviewType,
+      linkedWorkItemId: args.linkedWorkItemId,
+      linkedCompetitorId: args.linkedCompetitorId,
+      linkedLeadId: args.linkedLeadId,
+      relevanceScore: args.relevanceScore,
+      impactLevel: args.impactLevel,
+      sourceUrls: args.sourceUrls,
+      keyFindings: args.keyFindings,
+      platform: args.platform,
+      targetUrl: args.targetUrl,
+      metadata: args.metadata,
       createdAt: now,
       updatedAt: now,
     });
@@ -48,11 +71,18 @@ export const updateDocument = internalMutation({
     title: v.optional(v.string()),
     content: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
-    status: v.optional(
-      v.union(v.literal("draft"), v.literal("published"), v.literal("archived"))
-    ),
-    linkedTable: v.optional(v.string()),
-    linkedId: v.optional(v.string()),
+    status: v.optional(documentStatus),
+    needsReview: v.optional(v.boolean()),
+    reviewType: v.optional(v.string()),
+    reviewedAt: v.optional(v.number()),
+    linkedWorkItemId: v.optional(v.id("autopilotWorkItems")),
+    linkedCompetitorId: v.optional(v.id("autopilotCompetitors")),
+    linkedLeadId: v.optional(v.id("autopilotLeads")),
+    platform: v.optional(v.string()),
+    targetUrl: v.optional(v.string()),
+    publishedAt: v.optional(v.number()),
+    publishedUrl: v.optional(v.string()),
+    metadata: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -61,27 +91,16 @@ export const updateDocument = internalMutation({
       return null;
     }
 
+    const { documentId, ...rest } = args;
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
-    if (args.title !== undefined) {
-      updates.title = args.title;
-    }
-    if (args.content !== undefined) {
-      updates.content = args.content;
-    }
-    if (args.tags !== undefined) {
-      updates.tags = args.tags;
-    }
-    if (args.status !== undefined) {
-      updates.status = args.status;
-    }
-    if (args.linkedTable !== undefined) {
-      updates.linkedTable = args.linkedTable;
-    }
-    if (args.linkedId !== undefined) {
-      updates.linkedId = args.linkedId;
+
+    for (const [key, value] of Object.entries(rest)) {
+      if (value !== undefined) {
+        updates[key] = value;
+      }
     }
 
-    await ctx.db.patch(args.documentId, updates);
+    await ctx.db.patch(documentId, updates);
     return null;
   },
 });
@@ -89,7 +108,7 @@ export const updateDocument = internalMutation({
 export const getDocumentsByOrg = internalQuery({
   args: {
     organizationId: v.id("organizations"),
-    type: v.optional(v.string()),
+    type: v.optional(documentType),
   },
   handler: async (ctx, args) => {
     if (args.type) {
@@ -106,21 +125,6 @@ export const getDocumentsByOrg = internalQuery({
       .query("autopilotDocuments")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-  },
-});
-
-export const getDocumentsByLinked = internalQuery({
-  args: {
-    linkedTable: v.string(),
-    linkedId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("autopilotDocuments")
-      .withIndex("by_linked", (q) =>
-        q.eq("linkedTable", args.linkedTable).eq("linkedId", args.linkedId)
       )
       .collect();
   },

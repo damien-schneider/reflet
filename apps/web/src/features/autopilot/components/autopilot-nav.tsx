@@ -5,10 +5,7 @@ import {
   IconDashboard,
   IconFileText,
   IconInbox,
-  IconListDetails,
-  IconMail,
   IconMap2,
-  IconMessageCircle,
   IconRocket,
   IconSettings,
   IconUserSearch,
@@ -22,7 +19,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: IconDashboard, path: "" },
   { id: "inbox", label: "Inbox", icon: IconInbox, path: "/inbox" },
-  { id: "roadmap", label: "Roadmap", icon: IconMap2, path: "/roadmap" },
+  { id: "roadmap", label: "Board", icon: IconMap2, path: "/roadmap" },
   { id: "knowledge", label: "Knowledge", icon: IconBook, path: "/knowledge" },
   {
     id: "documents",
@@ -30,16 +27,8 @@ const NAV_ITEMS = [
     icon: IconFileText,
     path: "/documents",
   },
-  { id: "tasks", label: "Tasks", icon: IconListDetails, path: "/tasks" },
   { id: "growth", label: "Growth", icon: IconRocket, path: "/growth" },
   { id: "sales", label: "Sales", icon: IconUserSearch, path: "/sales" },
-  {
-    id: "support",
-    label: "Support",
-    icon: IconMessageCircle,
-    path: "/support",
-  },
-  { id: "email", label: "Email", icon: IconMail, path: "/email" },
   { id: "settings", label: "Settings", icon: IconSettings, path: "/settings" },
 ] as const;
 

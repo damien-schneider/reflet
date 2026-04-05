@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { H2 } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
+import { MarkdownContent } from "@/features/autopilot/components/markdown-content";
 import { cn } from "@/lib/utils";
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -278,8 +279,8 @@ export default function KnowledgePage() {
                         <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wider">
                           Full Content
                         </p>
-                        <div className="whitespace-pre-wrap rounded-md bg-muted/50 p-4 text-sm">
-                          {doc.contentFull}
+                        <div className="rounded-md bg-muted/50 p-4">
+                          <MarkdownContent>{doc.contentFull}</MarkdownContent>
                         </div>
                       </div>
                     </div>

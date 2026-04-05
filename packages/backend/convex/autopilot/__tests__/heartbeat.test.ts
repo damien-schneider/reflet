@@ -10,51 +10,36 @@ import {
 } from "../heartbeat";
 
 const BASE_SUMMARY = {
-  lastPMActivity: null,
-  lastGrowthActivity: null,
-  lastSalesActivity: null,
-  lastCEOActivity: null,
-  lastSupportActivity: null,
-  readyStoryCount: 0,
   approvedSpecCount: 0,
+  discoveredLeadCount: 0,
   failedRunCount: 0,
+  hasInitiatives: true,
+  hasResearchDocs: true,
+  leadsNeedingFollowUp: 0,
   newNoteCount: 0,
   newSupportConversationCount: 0,
-  shippedFeaturesWithoutContent: 0,
   now: Date.now(),
+  readyStoryCount: 5,
+  recentErrorCount: 0,
+  shippedFeaturesWithoutContent: 0,
+  stuckReviewCount: 0,
 } as const;
 
 describe("shouldWakePM", () => {
+  it("wakes when no initiatives exist (bootstrap)", () => {
+    expect(shouldWakePM({ ...BASE_SUMMARY, hasInitiatives: false })).toBe(true);
+  });
+
+  it("wakes when new notes exist", () => {
+    expect(shouldWakePM({ ...BASE_SUMMARY, newNoteCount: 2 })).toBe(true);
+  });
+
   it("wakes when stories below threshold", () => {
     expect(shouldWakePM({ ...BASE_SUMMARY, readyStoryCount: 1 })).toBe(true);
   });
 
-  it("wakes when new notes exist", () => {
-    expect(
-      shouldWakePM({ ...BASE_SUMMARY, readyStoryCount: 5, newNoteCount: 2 })
-    ).toBe(true);
-  });
-
-  it("wakes when PM has been inactive for 4+ hours", () => {
-    const fourHoursAgo = Date.now() - 5 * 60 * 60 * 1000;
-    expect(
-      shouldWakePM({
-        ...BASE_SUMMARY,
-        readyStoryCount: 5,
-        lastPMActivity: fourHoursAgo,
-      })
-    ).toBe(true);
-  });
-
-  it("does not wake when stories sufficient and recent activity", () => {
-    const recentActivity = Date.now() - 60 * 1000;
-    expect(
-      shouldWakePM({
-        ...BASE_SUMMARY,
-        readyStoryCount: 5,
-        lastPMActivity: recentActivity,
-      })
-    ).toBe(false);
+  it("does not wake when stories sufficient and no new input", () => {
+    expect(shouldWakePM({ ...BASE_SUMMARY })).toBe(false);
   });
 });
 
@@ -64,7 +49,7 @@ describe("shouldWakeCTO", () => {
   });
 
   it("does not wake when no ready stories", () => {
-    expect(shouldWakeCTO({ ...BASE_SUMMARY })).toBe(false);
+    expect(shouldWakeCTO({ ...BASE_SUMMARY, readyStoryCount: 0 })).toBe(false);
   });
 });
 
@@ -83,78 +68,63 @@ describe("shouldWakeDev", () => {
 });
 
 describe("shouldWakeGrowth", () => {
+  it("wakes when no research docs exist (bootstrap)", () => {
+    expect(shouldWakeGrowth({ ...BASE_SUMMARY, hasResearchDocs: false })).toBe(
+      true
+    );
+  });
+
   it("wakes when shipped features without content", () => {
     expect(
-      shouldWakeGrowth({
-        ...BASE_SUMMARY,
-        shippedFeaturesWithoutContent: 3,
-        lastGrowthActivity: Date.now(),
-      })
+      shouldWakeGrowth({ ...BASE_SUMMARY, shippedFeaturesWithoutContent: 3 })
     ).toBe(true);
   });
 
-  it("wakes when research is stale (3+ days)", () => {
-    const fourDaysAgo = Date.now() - 4 * 24 * 60 * 60 * 1000;
-    expect(
-      shouldWakeGrowth({ ...BASE_SUMMARY, lastGrowthActivity: fourDaysAgo })
-    ).toBe(true);
-  });
-
-  it("does not wake when recent activity and no content gap", () => {
-    expect(
-      shouldWakeGrowth({
-        ...BASE_SUMMARY,
-        lastGrowthActivity: Date.now() - 60 * 1000,
-      })
-    ).toBe(false);
+  it("does not wake when research exists and no content gap", () => {
+    expect(shouldWakeGrowth({ ...BASE_SUMMARY })).toBe(false);
   });
 });
 
 describe("shouldWakeSales", () => {
-  it("wakes when new notes exist", () => {
-    expect(shouldWakeSales({ ...BASE_SUMMARY, newNoteCount: 1 })).toBe(true);
+  it("wakes when discovered leads exist", () => {
+    expect(shouldWakeSales({ ...BASE_SUMMARY, discoveredLeadCount: 3 })).toBe(
+      true
+    );
   });
 
-  it("wakes on daily fallback when no recent activity", () => {
-    expect(shouldWakeSales({ ...BASE_SUMMARY })).toBe(true);
+  it("wakes when leads need follow-up", () => {
+    expect(shouldWakeSales({ ...BASE_SUMMARY, leadsNeedingFollowUp: 1 })).toBe(
+      true
+    );
   });
 
-  it("does not wake when recent activity and no notes", () => {
-    expect(
-      shouldWakeSales({
-        ...BASE_SUMMARY,
-        lastSalesActivity: Date.now() - 60 * 1000,
-      })
-    ).toBe(false);
+  it("does not wake when no sales work exists", () => {
+    expect(shouldWakeSales({ ...BASE_SUMMARY })).toBe(false);
   });
 });
 
 describe("shouldWakeCEO", () => {
-  it("wakes when inactive for 4+ hours", () => {
-    expect(shouldWakeCEO({ ...BASE_SUMMARY })).toBe(true);
+  it("wakes when items stuck in review", () => {
+    expect(shouldWakeCEO({ ...BASE_SUMMARY, stuckReviewCount: 2 })).toBe(true);
   });
 
-  it("does not wake when recent coordination", () => {
-    expect(
-      shouldWakeCEO({
-        ...BASE_SUMMARY,
-        lastCEOActivity: Date.now() - 60 * 1000,
-      })
-    ).toBe(false);
+  it("wakes when recent errors exist", () => {
+    expect(shouldWakeCEO({ ...BASE_SUMMARY, recentErrorCount: 3 })).toBe(true);
+  });
+
+  it("does not wake when no coordination needed", () => {
+    expect(shouldWakeCEO({ ...BASE_SUMMARY })).toBe(false);
   });
 });
 
 describe("shouldWakeSupport", () => {
   it("wakes when new conversations exist", () => {
     expect(
-      shouldWakeSupport({
-        ...BASE_SUMMARY,
-        newSupportConversationCount: 1,
-      })
+      shouldWakeSupport({ ...BASE_SUMMARY, newSupportConversationCount: 1 })
     ).toBe(true);
   });
 
-  it("wakes on daily fallback", () => {
-    expect(shouldWakeSupport({ ...BASE_SUMMARY })).toBe(true);
+  it("does not wake when no conversations", () => {
+    expect(shouldWakeSupport({ ...BASE_SUMMARY })).toBe(false);
   });
 });

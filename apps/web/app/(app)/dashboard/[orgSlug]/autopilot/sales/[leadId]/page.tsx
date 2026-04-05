@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H2 } from "@/components/ui/typography";
+import { MarkdownContent } from "@/features/autopilot/components/markdown-content";
 
 const STATUS_STYLES = {
   discovered: "bg-blue-500/10 text-blue-500",
@@ -30,7 +31,7 @@ export default function LeadDetailPage({
 }) {
   const { orgSlug, leadId } = use(params);
 
-  const lead = useQuery(api.autopilot.sales_queries.getLead, {
+  const lead = useQuery(api.autopilot.queries.leads.getLead, {
     leadId: leadId as Id<"autopilotLeads">,
   });
 
@@ -149,7 +150,7 @@ export default function LeadDetailPage({
             <CardTitle className="text-base">Notes</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap text-sm">{lead.notes}</p>
+            <MarkdownContent>{lead.notes}</MarkdownContent>
           </CardContent>
         </Card>
       )}

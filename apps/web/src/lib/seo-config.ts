@@ -4,36 +4,41 @@ export const BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.reflet.app";
 export const SITE_NAME = "Reflet";
 const DEFAULT_TITLE =
-  "Reflet - The Feedback Platform for Developer-Led SaaS Teams";
+  "Reflet — The Autonomous AI Company That Runs Your Product";
 export const DEFAULT_DESCRIPTION =
-  "Ship what users actually want. Reflet helps developer-led SaaS teams collect feedback, prioritize with voting, auto-triage with AI, and close the loop with changelogs — from first request to shipped feature.";
+  "10 AI agents — CEO, PM, CTO, Dev, Growth, Sales, Security, Architect, Support, Docs — autonomously discover opportunities, build features, ship code, find leads, and handle support. Connect your GitHub repo. Your AI company starts in 5 minutes.";
 
 const DEFAULT_KEYWORDS = [
-  "product feedback",
-  "feature requests",
-  "roadmap",
-  "user feedback",
-  "feedback management",
-  "product management",
-  "changelog",
-  "feature voting",
-  "customer feedback",
-  "product roadmap",
-  "SaaS feedback",
-  "user suggestions",
-  "feedback board",
-  "canny alternative",
-  "productboard alternative",
-  "featurebase alternative",
-  "uservoice alternative",
-  "nolt alternative",
-  "frill alternative",
-  "upvoty alternative",
-  "open source feedback tool",
-  "self-hosted feedback",
-  "feature request tool",
-  "feedback widget",
+  "autonomous AI company",
+  "AI employees",
+  "AI agents",
+  "AI workforce",
+  "AI digital workers",
+  "agentic AI",
+  "AI run company",
+  "autonomous AI agents",
+  "AI company in a box",
+  "zero employee company",
+  "AI CEO",
+  "AI product manager",
+  "AI developer",
+  "AI sales agent",
+  "AI growth agent",
+  "AI support agent",
+  "AI CTO",
+  "autonomous product development",
+  "AI team automation",
+  "AI SaaS operations",
+  "Devin alternative",
+  "Artisan alternative",
+  "Sintra AI alternative",
+  "Relevance AI alternative",
+  "Lindy AI alternative",
   "product feedback platform",
+  "canny alternative",
+  "featurebase alternative",
+  "product roadmap tool",
+  "open source feedback tool",
 ];
 
 export const siteConfig = {
@@ -88,7 +93,7 @@ export const defaultMetadata: Metadata = {
         url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: "Reflet - Product Feedback & Roadmap Platform",
+        alt: "Reflet — Autonomous AI Company Platform",
         type: "image/png",
       },
     ],
@@ -129,7 +134,7 @@ export const defaultMetadata: Metadata = {
     statusBarStyle: "default",
   },
   category: "technology",
-  classification: "Business Software",
+  classification: "Artificial Intelligence Software",
 };
 
 /**

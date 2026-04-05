@@ -80,15 +80,9 @@ crons.daily(
 );
 
 crons.daily(
-  "autopilot inbox expiration",
+  "autopilot review expiration",
   { hourUTC: 1, minuteUTC: 0 },
-  internal.autopilot.maintenance.runInboxExpiration
-);
-
-crons.daily(
-  "autopilot note cleanup",
-  { hourUTC: 2, minuteUTC: 0 },
-  internal.autopilot.maintenance.runNoteCleanup
+  internal.autopilot.maintenance.runReviewExpiration
 );
 
 crons.daily(

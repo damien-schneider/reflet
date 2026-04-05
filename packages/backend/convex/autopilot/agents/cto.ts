@@ -108,18 +108,18 @@ export const getAgentsMd = internalQuery({
 // ============================================
 
 /**
- * Update task with technical specification
+ * Update work item with technical specification
  */
 export const updateTaskWithSpec = internalMutation({
   args: {
-    taskId: v.id("autopilotTasks"),
+    taskId: v.id("autopilotWorkItems"),
     technicalSpec: v.string(),
     acceptanceCriteria: v.array(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.taskId, {
-      technicalSpec: args.technicalSpec,
       acceptanceCriteria: args.acceptanceCriteria,
+      updatedAt: Date.now(),
     });
   },
 });
@@ -130,7 +130,7 @@ export const updateTaskWithSpec = internalMutation({
 export const createDevSubtask = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    parentTaskId: v.id("autopilotTasks"),
+    parentTaskId: v.id("autopilotWorkItems"),
     title: v.string(),
     description: v.string(),
     implementationPrompt: v.string(),
@@ -144,26 +144,25 @@ export const createDevSubtask = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const taskId = await ctx.db.insert("autopilotTasks", {
+    const workItemId = await ctx.db.insert("autopilotWorkItems", {
       organizationId: args.organizationId,
+      type: "task",
       title: args.title,
       description: args.implementationPrompt,
-      status: "pending",
+      status: "todo",
       priority: args.priority,
       assignedAgent: "dev",
-      origin: "cto_breakdown",
-      autonomyLevel: "full_auto",
-      parentTaskId: args.parentTaskId,
-      blockedByTaskId: args.parentTaskId,
-      retryCount: 0,
-      maxRetries: 3,
+      parentId: args.parentTaskId,
+      needsReview: false,
+      createdBy: "cto",
       createdAt: now,
+      updatedAt: now,
     });
 
     // Log subtask creation
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: args.organizationId,
-      taskId,
+      workItemId,
       agent: "cto",
       targetAgent: "dev",
       level: "action",
@@ -172,7 +171,7 @@ export const createDevSubtask = internalMutation({
       createdAt: now,
     });
 
-    return taskId;
+    return workItemId;
   },
 });
 
@@ -182,7 +181,7 @@ export const createDevSubtask = internalMutation({
 export const logCtoActivity = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    taskId: v.id("autopilotTasks"),
+    taskId: v.id("autopilotWorkItems"),
     level: v.string(),
     message: v.string(),
     details: v.optional(v.string()),
@@ -190,7 +189,7 @@ export const logCtoActivity = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: args.organizationId,
-      taskId: args.taskId,
+      workItemId: args.taskId,
       agent: "cto",
       level: args.level as "info" | "action" | "success" | "warning" | "error",
       message: args.message,
@@ -222,7 +221,7 @@ const CTO_MODELS = [MODELS.SMART, MODELS.FAST] as const;
 export const runCTOSpecGeneration = internalAction({
   args: {
     organizationId: v.id("organizations"),
-    taskId: v.id("autopilotTasks"),
+    taskId: v.id("autopilotWorkItems"),
   },
   handler: async (ctx, args) => {
     // Load the PM task
@@ -279,13 +278,9 @@ ${repoAnalysis.repoStructure || "No structure information"}
         : "Use standard best practices and modern TypeScript patterns.";
 
       // Build the system prompt for CTO using centralized prompt
-      const feedbackContext = await ctx.runQuery(
-        internal.autopilot.feedback.buildFeedbackPromptContext,
-        { organizationId: args.organizationId, agent: "cto" }
-      );
       const systemPrompt = buildAgentPrompt(
         CTO_SYSTEM_PROMPT,
-        feedbackContext,
+        "",
         `${repoContext}\n\n${codingGuidelines}`
       );
 
@@ -343,7 +338,7 @@ Create a specification that a developer can execute without asking clarifying qu
       // Mark CTO task as completed
       await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
         taskId: args.taskId,
-        status: "completed",
+        status: "done",
       });
 
       // Log success
@@ -361,7 +356,7 @@ Create a specification that a developer can execute without asking clarifying qu
       // Mark task as failed
       await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
         taskId: args.taskId,
-        status: "failed",
+        status: "cancelled",
         errorMessage,
       });
 

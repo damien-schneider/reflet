@@ -3,6 +3,15 @@
  *
  * Replaces 20+ individual crons with a single 3-minute interval.
  * Pure functions exported for testability.
+ *
+ * WORK-DRIVEN ARCHITECTURE: Agents wake ONLY when there's actual work
+ * on the shared board. No time-based fallbacks. The pipeline is self-sustaining:
+ *   Growth → documents → PM → stories → CTO → specs → Dev → ships → Growth
+ *
+ * The only reasons the company stops:
+ *   1. Waiting for President approval (items in needsReview)
+ *   2. Plan limits / credits exhausted (guards block execution)
+ *   3. Pipeline is full (cap reached, waiting for work to complete)
  */
 
 import { v } from "convex/values";
@@ -11,8 +20,6 @@ import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { internalAction, internalQuery } from "../_generated/server";
 
-const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
-const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const THREE_STORY_THRESHOLD = 3;
@@ -23,83 +30,106 @@ const THREE_STORY_THRESHOLD = 3;
 
 interface ActivitySummary {
   approvedSpecCount: number;
+  discoveredLeadCount: number;
   failedRunCount: number;
-  lastCEOActivity: number | null;
-  lastGrowthActivity: number | null;
-  lastPMActivity: number | null;
-  lastSalesActivity: number | null;
-  lastSupportActivity: number | null;
+  hasInitiatives: boolean;
+  hasResearchDocs: boolean;
+  leadsNeedingFollowUp: number;
   newNoteCount: number;
   newSupportConversationCount: number;
   now: number;
   readyStoryCount: number;
+  recentErrorCount: number;
   shippedFeaturesWithoutContent: number;
+  stuckReviewCount: number;
 }
 
+/**
+ * PM wakes when there's planning work to do:
+ * - No initiatives exist (bootstrap the roadmap)
+ * - New notes from other agents need processing
+ * - Story pipeline is running low (agents need more work)
+ */
 export const shouldWakePM = (summary: ActivitySummary): boolean => {
-  const { lastPMActivity, readyStoryCount, newNoteCount, now } = summary;
-  if (readyStoryCount < THREE_STORY_THRESHOLD) {
+  if (!summary.hasInitiatives) {
     return true;
   }
-  if (newNoteCount > 0) {
+  if (summary.newNoteCount > 0) {
     return true;
   }
-  if (!lastPMActivity || now - lastPMActivity > FOUR_HOURS_MS) {
+  if (summary.readyStoryCount < THREE_STORY_THRESHOLD) {
     return true;
   }
   return false;
 };
 
+/**
+ * CTO wakes when stories need technical specs.
+ * Purely work-driven — only when stories are ready.
+ */
 export const shouldWakeCTO = (summary: ActivitySummary): boolean => {
   return summary.readyStoryCount > 0;
 };
 
+/**
+ * Dev wakes when specs are approved or runs need retrying.
+ * Purely work-driven — only when code work exists.
+ */
 export const shouldWakeDev = (summary: ActivitySummary): boolean => {
   return summary.approvedSpecCount > 0 || summary.failedRunCount > 0;
 };
 
+/**
+ * Growth wakes when there's content or research work:
+ * - No research docs exist (bootstrap — prime the pipeline)
+ * - Shipped features need content/announcements
+ */
 export const shouldWakeGrowth = (summary: ActivitySummary): boolean => {
-  const { lastGrowthActivity, shippedFeaturesWithoutContent, now } = summary;
-  if (shippedFeaturesWithoutContent > 0) {
+  if (!summary.hasResearchDocs) {
     return true;
   }
-  if (!lastGrowthActivity || now - lastGrowthActivity > THREE_DAYS_MS) {
+  if (summary.shippedFeaturesWithoutContent > 0) {
     return true;
   }
   return false;
 };
 
+/**
+ * Sales wakes when there's pipeline work:
+ * - Discovered leads need initial outreach
+ * - Leads have overdue follow-ups
+ */
 export const shouldWakeSales = (summary: ActivitySummary): boolean => {
-  if (summary.newNoteCount > 0) {
+  if (summary.discoveredLeadCount > 0) {
     return true;
   }
-  // Daily check for follow-ups
-  if (
-    !summary.lastSalesActivity ||
-    summary.now - summary.lastSalesActivity > ONE_DAY_MS
-  ) {
+  if (summary.leadsNeedingFollowUp > 0) {
     return true;
   }
   return false;
 };
 
+/**
+ * CEO wakes when coordination is needed:
+ * - Items stuck in review (bottleneck)
+ * - Recent errors need attention (agent issues)
+ */
 export const shouldWakeCEO = (summary: ActivitySummary): boolean => {
-  const { lastCEOActivity, now } = summary;
-  if (!lastCEOActivity || now - lastCEOActivity > FOUR_HOURS_MS) {
+  if (summary.stuckReviewCount > 0) {
+    return true;
+  }
+  if (summary.recentErrorCount > 0) {
     return true;
   }
   return false;
 };
 
+/**
+ * Support wakes when new conversations arrive.
+ * Purely work-driven — only when support threads exist.
+ */
 export const shouldWakeSupport = (summary: ActivitySummary): boolean => {
-  const { lastSupportActivity, newSupportConversationCount, now } = summary;
-  if (newSupportConversationCount > 0) {
-    return true;
-  }
-  if (!lastSupportActivity || now - lastSupportActivity > ONE_DAY_MS) {
-    return true;
-  }
-  return false;
+  return summary.newSupportConversationCount > 0;
 };
 
 // ============================================
@@ -122,40 +152,39 @@ export const checkWakeConditions = internalQuery({
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    // Collect activity log ONCE, reuse across all agents
-    const recentActivity = await ctx.db
-      .query("autopilotActivityLog")
-      .withIndex("by_org_created", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .order("desc")
-      .take(200);
+    // ---- Work items by type/status ----
 
-    const getLastActivity = (agent: string): number | null => {
-      const entry = recentActivity.find((a) => a.agent === agent);
-      return entry?.createdAt ?? null;
-    };
-
-    // Count stories in "ready" status
     const readyStories = await ctx.db
-      .query("autopilotUserStories")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "ready")
+      .query("autopilotWorkItems")
+      .withIndex("by_org_type", (q) =>
+        q.eq("organizationId", args.organizationId).eq("type", "story")
       )
       .collect();
-
-    // Count approved specs
-    const approvedSpecs = await ctx.db
-      .query("autopilotTechnicalSpecs")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-    const approvedSpecCount = approvedSpecs.filter(
-      (s) => s.status === "approved"
+    const readyStoryCount = readyStories.filter(
+      (s) => s.status === "todo"
     ).length;
 
-    // Count failed runs (last 24h)
+    const specItems = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_org_type", (q) =>
+        q.eq("organizationId", args.organizationId).eq("type", "spec")
+      )
+      .collect();
+    const approvedSpecCount = specItems.filter(
+      (s) => s.status === "in_review" || s.status === "done"
+    ).length;
+
+    // Bootstrap: check if initiatives exist
+    const initiatives = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_org_type", (q) =>
+        q.eq("organizationId", args.organizationId).eq("type", "initiative")
+      )
+      .take(1);
+    const hasInitiatives = initiatives.length > 0;
+
+    // ---- Failed runs (last 24h) ----
+
     const failedRuns = await ctx.db
       .query("autopilotRuns")
       .withIndex("by_org_status", (q) =>
@@ -166,57 +195,112 @@ export const checkWakeConditions = internalQuery({
       (r) => now - r.startedAt < ONE_DAY_MS
     );
 
-    // Count new notes
-    const newNotes = await ctx.db
-      .query("autopilotNotes")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "new")
-      )
-      .collect();
+    // ---- Documents (notes, support, research) ----
 
-    // Count new support conversations
-    const newConversations = await ctx.db
-      .query("autopilotSupportConversations")
+    const draftDocs = await ctx.db
+      .query("autopilotDocuments")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "new")
+        q.eq("organizationId", args.organizationId).eq("status", "draft")
       )
       .collect();
+    const newNoteCount = draftDocs.filter((d) => d.type === "note").length;
+    const newSupportConversationCount = draftDocs.filter(
+      (d) => d.type === "support_thread"
+    ).length;
 
-    // Shipped features without content (simple heuristic)
-    const completedTasks = await ctx.db
-      .query("autopilotTasks")
+    // Bootstrap: check if any research docs exist
+    const researchDocs = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_org_type", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("type", "market_research")
+      )
+      .take(1);
+    const hasResearchDocs = researchDocs.length > 0;
+
+    // ---- Shipped features without content (Growth signal) ----
+
+    const doneItems = await ctx.db
+      .query("autopilotWorkItems")
       .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "completed")
+        q.eq("organizationId", args.organizationId).eq("status", "done")
       )
       .collect();
-    const recentCompletedTasks = completedTasks.filter(
-      (t) => t.completedAt && now - t.completedAt < ONE_WEEK_MS
+    const recentDoneItems = doneItems.filter(
+      (t) => now - t.updatedAt < ONE_WEEK_MS
     );
-    const growthItems = await ctx.db
-      .query("autopilotGrowthItems")
+    const allDocs = await ctx.db
+      .query("autopilotDocuments")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .collect();
-    const recentGrowthItems = growthItems.filter(
+    const recentContentDocs = allDocs.filter(
       (g) => now - g.createdAt < ONE_WEEK_MS
     );
 
+    // ---- Sales signals ----
+
+    const leads = await ctx.db
+      .query("autopilotLeads")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+    const discoveredLeadCount = leads.filter(
+      (l) => l.status === "discovered"
+    ).length;
+    const leadsNeedingFollowUp = leads.filter(
+      (l) =>
+        l.nextFollowUpAt !== undefined &&
+        l.nextFollowUpAt <= now &&
+        l.status !== "converted" &&
+        l.status !== "churned" &&
+        l.status !== "disqualified"
+    ).length;
+
+    // ---- CEO coordination signals ----
+
+    const reviewItems = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
+      )
+      .collect();
+    const stuckReviewCount = reviewItems.filter(
+      (item) => now - item.updatedAt > ONE_DAY_MS
+    ).length;
+
+    const recentActivity = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_org_created", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .take(100);
+    const recentErrorCount = recentActivity.filter(
+      (a) => a.level === "error" && now - a.createdAt < ONE_DAY_MS
+    ).length;
+
+    // ---- Build summary ----
+
     const summary: ActivitySummary = {
-      lastPMActivity: getLastActivity("pm"),
-      lastGrowthActivity: getLastActivity("growth"),
-      lastSalesActivity: getLastActivity("sales"),
-      lastCEOActivity: getLastActivity("system"),
-      lastSupportActivity: getLastActivity("support"),
-      readyStoryCount: readyStories.length,
+      readyStoryCount,
       approvedSpecCount,
       failedRunCount: recentFailedRuns.length,
-      newNoteCount: newNotes.length,
-      newSupportConversationCount: newConversations.length,
+      newNoteCount,
+      newSupportConversationCount,
       shippedFeaturesWithoutContent: Math.max(
         0,
-        recentCompletedTasks.length - recentGrowthItems.length
+        recentDoneItems.length - recentContentDocs.length
       ),
+      hasInitiatives,
+      hasResearchDocs,
+      discoveredLeadCount,
+      leadsNeedingFollowUp,
+      stuckReviewCount,
+      recentErrorCount,
       now,
     };
 
@@ -337,7 +421,11 @@ interface HeartbeatCtx {
 const dispatchDevTask = async (
   ctx: HeartbeatCtx,
   orgId: Id<"organizations">,
-  task: { _id: Id<"autopilotTasks">; title: string; assignedAgent: string }
+  task: {
+    _id: Id<"autopilotWorkItems">;
+    title: string;
+    assignedAgent?: string | undefined;
+  }
 ): Promise<boolean> => {
   const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
     organizationId: orgId,
@@ -390,31 +478,33 @@ const dispatchPendingTasks = async (
       break;
     }
 
+    const agent = task.assignedAgent;
+    if (!agent) {
+      continue;
+    }
+
     // Check if agent is enabled
     const agentEnabled = await ctx.runQuery(
       internal.autopilot.config.isAgentEnabled,
-      { organizationId: orgId, agent: task.assignedAgent }
+      { organizationId: orgId, agent }
     );
     if (!agentEnabled) {
       continue;
     }
 
     try {
-      if (task.assignedAgent === "dev") {
+      if (agent === "dev") {
         const dispatcedDev = await dispatchDevTask(ctx, orgId, task);
         if (!dispatcedDev) {
           continue;
         }
-      } else if (task.assignedAgent === "cto") {
-        // CTO tasks need the taskId to generate specs for specific stories
+      } else if (agent === "cto") {
         await ctx.scheduler.runAfter(
           0,
           internal.autopilot.agents.cto.runCTOSpecGeneration,
           { organizationId: orgId, taskId: task._id }
         );
       } else {
-        // For other agents (growth, sales, support):
-        // Mark task as in_progress — the agent's proactive wake handles the work.
         await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
           taskId: task._id,
           status: "in_progress",
@@ -423,7 +513,7 @@ const dispatchPendingTasks = async (
         await ctx.runMutation(internal.autopilot.tasks.logActivity, {
           organizationId: orgId,
           taskId: task._id,
-          agent: task.assignedAgent,
+          agent,
           level: "action",
           message: `Task picked up: ${task.title}`,
         });
@@ -437,7 +527,7 @@ const dispatchPendingTasks = async (
         taskId: task._id,
         agent: "system",
         level: "error",
-        message: `Failed to dispatch task to ${task.assignedAgent}: ${msg}`,
+        message: `Failed to dispatch task to ${agent}: ${msg}`,
       });
     }
   }

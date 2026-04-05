@@ -18,37 +18,36 @@ import { cn } from "@/lib/utils";
 
 const REFLET_BASE_URL = "https://www.reflet.app/reflet";
 
-interface DemoItem {
+interface ProductItem {
   description: string;
+  external?: boolean;
   href: string;
   label: string;
 }
 
-const DEMO_ITEMS: DemoItem[] = [
+const PRODUCT_ITEMS: ProductItem[] = [
+  {
+    label: "Autopilot Dashboard",
+    description: "See your AI agents at work",
+    href: "/autopilot",
+  },
   {
     label: "Feedback Board",
     description: "Collect and organize user feedback with voting",
     href: REFLET_BASE_URL,
+    external: true,
   },
   {
     label: "Roadmap",
     description: "Kanban-style board to plan and track progress",
     href: `${REFLET_BASE_URL}?view=roadmap`,
-  },
-  {
-    label: "Milestones",
-    description: "Track feature milestones and release goals",
-    href: `${REFLET_BASE_URL}?view=milestones`,
+    external: true,
   },
   {
     label: "Changelog",
     description: "Beautiful release notes linked to features",
     href: `${REFLET_BASE_URL}/changelog`,
-  },
-  {
-    label: "Support",
-    description: "Help center with real-time conversations",
-    href: `${REFLET_BASE_URL}/support`,
+    external: true,
   },
 ];
 
@@ -60,6 +59,11 @@ interface ResourceItem {
 }
 
 const RESOURCE_ITEMS: ResourceItem[] = [
+  {
+    label: "How Autopilot Works",
+    description: "Learn how 10 AI agents run your product",
+    href: "/autopilot",
+  },
   {
     label: "Documentation",
     description: "Guides, SDK reference and API docs",
@@ -115,6 +119,15 @@ export default function NavbarDesktop() {
                   <NavigationListItem>
                     <NavigationListLink
                       className={navigationListTriggerStyle()}
+                      href="/autopilot"
+                    >
+                      Autopilot
+                    </NavigationListLink>
+                  </NavigationListItem>
+
+                  <NavigationListItem>
+                    <NavigationListLink
+                      className={navigationListTriggerStyle()}
                       href="/pricing"
                     >
                       Pricing
@@ -122,24 +135,19 @@ export default function NavbarDesktop() {
                   </NavigationListItem>
 
                   <NavigationListItem>
-                    <NavigationListLink
-                      className={navigationListTriggerStyle()}
-                      href="/features"
-                    >
-                      Features
-                    </NavigationListLink>
-                  </NavigationListItem>
-
-                  <NavigationListItem>
-                    <NavigationListTrigger>Demo</NavigationListTrigger>
+                    <NavigationListTrigger>Product</NavigationListTrigger>
                     <NavigationListContent className="w-[300px]">
                       <ul className="grid gap-1 p-1">
-                        {DEMO_ITEMS.map((item) => (
+                        {PRODUCT_ITEMS.map((item) => (
                           <li key={item.label}>
                             <NavigationListLink
                               href={item.href}
-                              rel="noopener noreferrer"
-                              target="_blank"
+                              {...(item.external
+                                ? {
+                                    rel: "noopener noreferrer",
+                                    target: "_blank",
+                                  }
+                                : {})}
                             >
                               <div>
                                 <div className="font-medium text-sm leading-none">

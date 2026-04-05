@@ -1,47 +1,99 @@
 # Reflet
 
-> A modern product feedback and roadmap platform that helps you collect feedback, prioritize features, and keep your users in the loop.
+> The world's first fully autonomous AI company. 10 AI agents that run your product 24/7.
 
-## Overview
+## Autopilot — The Core Product
 
-Reflet transforms chaotic feedback into actionable product insights. Build products your users actually love through transparent collaboration.
+Reflet Autopilot is an autonomous AI company platform. Connect your GitHub repo and 10 AI agents start running your product — from market research to shipped code to paying customers.
 
-## Core Features
+### How It Works
+1. Paste your GitHub repo URL
+2. Reflet generates a Company Brief in 5 minutes (product definition, ICP, competitive landscape, roadmap)
+3. 10 AI agents start working autonomously
+4. You act as President — set strategy, approve key decisions
+
+### Shared Board Architecture
+Agents communicate through data on shared boards, not function calls. Every agent reads from and writes to boards (feedback, roadmap, changelog, knowledge base). This mirrors how real employees collaborate — through shared artifacts, not direct messages.
+
+### Autonomy Modes
+- **Supervised**: Agents propose actions, you approve
+- **Full Auto**: Agents act autonomously within budgets and guardrails
+- **Stopped**: Agent paused, no actions taken
+
+### Cost Guards
+Per-agent budgets, rate limits, and circuit breakers ensure costs stay predictable.
+
+## AI Agents
+
+### CEO Agent
+Strategic oversight. Generates the Company Brief from your repo. Sets product direction and competitive positioning.
+
+### PM Agent (Product Manager)
+Reads market research, user feedback, and competitive intel. Creates initiatives and prioritizes the roadmap.
+
+### CTO Agent
+Writes technical specifications from PM initiatives. Makes architecture decisions and defines implementation plans.
+
+### Dev Agent (Developer)
+Generates code and ships pull requests to GitHub. Implements features based on CTO specs.
+
+### Growth Agent
+Creates content, announces shipped features, researches market opportunities on Reddit, Hacker News, and competitor sites.
+
+### Sales Agent
+Discovers leads, researches prospects, and generates outreach messages. Tracks revenue via Stripe integration.
+
+### Security Agent
+Scans code for vulnerabilities, checks dependencies, and ensures compliance with security best practices.
+
+### Architect Agent
+Reviews code quality, enforces architecture standards, and provides code review on pull requests.
+
+### Support Agent
+Triages incoming user issues, generates responses, and escalates critical problems to the PM agent.
+
+### Docs Agent
+Generates and maintains documentation. Keeps knowledge base current as features ship and APIs change.
+
+## Feedback Platform
+
+Reflet also includes a complete product feedback platform:
 
 ### Feedback Management
-Collect and organize user feedback with upvoting, comments, and tags. Prioritize what matters most to your users with intuitive filtering and search.
+Collect and organize user feedback with upvoting, comments, and tags. Prioritize what matters most with intelligent filtering and AI-powered triage.
 
 ### Roadmap Planning
-Visualize your product roadmap with a beautiful kanban-style board. Drag-and-drop items between stages: Backlog → Planned → In Progress → Done.
+Visualize your product roadmap with kanban-style boards. Drag-and-drop items between stages: Backlog → Planned → In Progress → Done.
 
 ### Changelog & Releases
-Keep users informed with beautiful release notes. Link updates directly to the features they requested, creating a virtuous feedback loop.
+Keep users informed with release notes. Link updates directly to features they requested, closing the feedback loop.
 
 ### Real-Time Collaboration
-Multiple users can work simultaneously without conflicts. Every change syncs across all connected devices in milliseconds.
+Multiple users work simultaneously without conflicts. Every change syncs across devices in milliseconds via Convex.
 
-### Team Management
-Multi-tenant architecture with organizations, team invitations, and role-based access control (Owner, Admin, Member).
+### Embeddable Widget
+Drop-in feedback widget for any web app. Themeable, configurable, with anonymous submissions.
 
-### Branding & Customization
-Customize your public-facing pages with your brand colors, custom CSS, and domain.
+### Two-Way GitHub Sync
+Link feedback to issues. When a PR merges, the linked request moves to Shipped automatically.
 
-### Flexible Privacy
-Choose what's public and what's private. Create private boards for internal discussions while keeping public feedback transparent.
+## Alternatives & Comparisons
 
-### Smart Notifications
-Get notified about status changes, new comments, and vote milestones. Stay in the loop without drowning in noise.
+### AI Company Alternatives
+- **Devin**: AI developer only. Reflet provides the full company — 10 agents covering every role.
+- **Artisan**: AI sales BDR only. Reflet includes sales plus 9 other agents.
+- **Sintra AI**: Individual AI workers without coordination. Reflet is an integrated AI company with shared board communication.
+- **Relevance AI**: AI workforce platform. Reflet provides pre-built agents with domain expertise, not generic agent builders.
+- **Lindy AI**: AI employees for individual tasks. Reflet offers a complete company with inter-agent collaboration.
 
-### Powerful Search
-Full-text search across all feedback items with intelligent filtering by status, tags, and more.
-
-## Use Cases
-
-- **Startups**: Get early feedback and build features users actually want
-- **SaaS Companies**: Transparent roadmap builds trust and reduces churn
-- **Open Source Projects**: Community-driven feature requests with voting
-- **Agencies**: Client collaboration boards with private workspaces
-- **Enterprise**: Role-based access, SSO, and private boards
+### Feedback Platform Alternatives
+- **Canny**: Reflet offers similar features at 60-80% lower cost with open-source transparency
+- **Featurebase**: Reflet focuses on feedback while Featurebase bundles customer support
+- **Productboard**: Reflet is simpler and more affordable ($15-49/mo vs $75/maker/mo)
+- **UserVoice**: Reflet is modern and accessible (free tier) vs UserVoice's $799/mo+ enterprise pricing
+- **Fider**: Both are open-source; Reflet uses a modern TypeScript stack with AI triage
+- **Nolt**: Reflet adds changelogs, AI triage, and a free tier that Nolt lacks
+- **Frill**: Reflet adds real-time sync and AI features to similar developer-friendly tools
 
 ## Tech Stack
 
@@ -49,6 +101,7 @@ Full-text search across all feedback items with intelligent filtering by status,
 - **Backend**: Convex (real-time reactive backend)
 - **UI**: TailwindCSS, shadcn/ui
 - **Auth**: Better-Auth
+- **AI**: Multi-model (OpenRouter), autonomous agent orchestration
 - **Build**: Turborepo, Bun
 
 ## Getting Started
@@ -67,25 +120,6 @@ bun run dev:setup
 bun run dev
 ```
 
-## Alternatives & Comparisons
-
-Reflet is an open-source alternative to the following product feedback tools:
-
-- **Canny**: Reflet offers similar features at 60-80% lower cost with open-source transparency
-- **Featurebase**: Reflet focuses on feedback while Featurebase bundles customer support
-- **Productboard**: Reflet is simpler and more affordable ($15-49/mo vs $75/maker/mo)
-- **UserVoice**: Reflet is modern and accessible (free tier) vs UserVoice's $799/mo+ enterprise pricing
-- **Fider**: Both are open-source; Reflet uses a modern TypeScript stack with AI triage
-- **Nolt**: Reflet adds changelogs, AI triage, and a free tier that Nolt lacks
-- **Frill**: Reflet adds real-time sync and AI features to similar developer-friendly tools
-- **Upvoty**: Reflet offers a modern UI and active development vs Upvoty's dated interface
-- **Sleekplan**: Reflet provides real-time sync and AI vs Sleekplan's built-in surveys
-- **FeatureOS**: Reflet offers transparent pricing and open source vs FeatureOS's frequent price changes
-- **ProductLift**: Reflet adds AI triage and GitHub integration vs ProductLift's multi-language focus
-- **Rapidr**: Reflet costs 70%+ less than Rapidr with comparable features
-- **Savio**: Reflet focuses on public feedback boards while Savio centralizes B2B internal feedback
-- **FeedBear**: Reflet offers significantly more features (changelogs, API, AI) at a lower price
-
 ## Links
 
 - Website: https://www.reflet.app
@@ -93,6 +127,7 @@ Reflet is an open-source alternative to the following product feedback tools:
 - Documentation: https://www.reflet.app/docs
 - Blog: https://www.reflet.app/blog
 - Pricing: https://www.reflet.app/pricing
+- Autopilot: https://www.reflet.app/autopilot
 
 ## License
 

@@ -17,18 +17,18 @@ export default function LandingCTA() {
       <div className="relative mx-auto max-w-300 px-5 sm:px-8">
         <AnimateOnView className="max-w-160">
           <h2 className="mb-6 font-display text-[clamp(2rem,5vw,3.5rem)] text-olive-100 leading-[1.1] tracking-[-0.02em]">
-            Stop guessing what to build next.
+            Your AI company never sleeps.
           </h2>
           <p className="mb-10 text-[17px] text-olive-300/80 leading-relaxed sm:text-[19px]">
-            Your users already know. Reflet collects their voice, triages with
-            AI, and notifies them the moment you ship. Free to start, open
-            source forever.
+            10 agents working 24/7 — discovering opportunities, shipping code,
+            finding leads, handling support. Connect your repo and start in 5
+            minutes. Free tier available, open source forever.
           </p>
 
           <div className="flex flex-wrap items-center gap-4">
             <Link href="/dashboard">
               <Button className="h-12 rounded-full bg-olive-100 px-7 text-[15px] text-olive-950 hover:bg-olive-50">
-                See your feedback board
+                Start your AI company
                 <ArrowRight className="ml-1.5" size={16} />
               </Button>
             </Link>

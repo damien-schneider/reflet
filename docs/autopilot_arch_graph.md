@@ -1,140 +1,175 @@
 # Autopilot Architecture — Graphs
 
-No orchestrator. Agents own their work, wake on conditions, communicate through a shared board. Guards ensure safety as middleware, not gatekeepers.
+No orchestrator. Agents own their work, wake on conditions, communicate through a shared board. Two unified data models: WorkItems (hierarchy) + Documents (content). Guards ensure safety as middleware.
 
 ---
 
-## 1. Core Model — Self-Directed Agents
+## 1. Core Model — Self-Directed Agents + Unified Data
 
 ```mermaid
 graph LR
     subgraph "Agents check the board themselves"
-        AG1["PM<br/>(wakes on conditions)"] <-->|"read / write"| BOARD["Shared Board<br/>(database)"]
-        AG2["CTO<br/>(wakes on conditions)"] <-->|"read / write"| BOARD
-        AG3["Dev<br/>(wakes on conditions)"] <-->|"read / write"| BOARD
+        AG1["PM"] <-->|"read / write"| BOARD["Shared Board"]
+        AG2["CTO"] <-->|"read / write"| BOARD
+        AG3["Dev"] <-->|"read / write"| BOARD
+        AG4["Growth"] <-->|"read / write"| BOARD
+        AG5["Sales"] <-->|"read / write"| BOARD
+        AG6["Support"] <-->|"read / write"| BOARD
     end
-```
 
-No orchestrator. No dispatcher. Each agent owns its schedule, checks the shared board, and does its work — like employees in a real company.
+    subgraph "Two Unified Models"
+        WI["autopilotWorkItems<br/>initiative → story → spec → task"]
+        DOCS["autopilotDocuments<br/>research, notes, content, emails"]
+    end
+
+    BOARD --- WI
+    BOARD --- DOCS
+```
 
 ---
 
-## 2. The Shared Board — Read Everything, Write Your Domain
-
-Every agent reads the entire board. But writing is restricted — each agent can only write to its own domain, for both records and notes.
+## 2. The Shared Board — Unified Data Models
 
 ```mermaid
 graph TB
-    subgraph "Knowledge Base (wiki — exclusive owner writes)"
-        PD["Product Definition (PM)"]
-        ICP["User Personas & ICP (PM)"]
-        CL["Competitive Landscape (PM)"]
-        BV["Brand Voice (Growth)"]
-        TA["Technical Architecture (CTO)"]
-        GOALS["Goals & OKRs (CEO)"]
-        ROAD["Product Roadmap (PM)"]
+    subgraph "Knowledge Base (7 versioned docs)"
+        PD["Product Definition"]
+        ICP["User Personas & ICP"]
+        CL["Competitive Landscape"]
+        BV["Brand Voice"]
+        TA["Technical Architecture"]
+        GOALS["Goals & OKRs"]
+        ROAD["Product Roadmap"]
     end
 
-    subgraph "Work Board (structured records — exclusive owner writes)"
-        INIT["Initiatives (PM)"]
-        STORIES["User Stories (PM)"]
-        SPECS["Technical Specs (CTO)"]
-        PRS["Pull Requests (Dev)"]
-        COMP["Competitors (Growth)"]
-        LEADS["Leads (Sales)"]
-        FINDINGS["Security Findings (CTO)"]
-        CONTENT["Content Items (Growth)"]
-        THREADS["Support Threads (Support)"]
-        ADRS["Architecture Decisions (CTO)"]
+    subgraph "Work Items (one table, parent/child)"
+        INIT["type: initiative"]
+        STORY["type: story"]
+        SPEC["type: spec"]
+        TASK["type: task"]
+        BUG["type: bug"]
+        INIT -->|parentId| STORY
+        STORY -->|parentId| SPEC
+        SPEC -->|parentId| TASK
     end
 
-    subgraph "Documents (Notion-like — any agent creates)"
-        D_MR["Market Research (Growth)"]
-        D_BC["Battlecards (Sales)"]
-        D_AA["Architecture Analysis (CTO)"]
-        D_ANY["Any type — freeform"]
+    subgraph "Documents (one table, type/tag)"
+        D_MR["type: market_research"]
+        D_BP["type: blog_post"]
+        D_NOTE["type: note"]
+        D_EMAIL["type: email"]
+        D_SUPPORT["type: support_thread"]
     end
 
-    subgraph "Notes (quick observations — domain-restricted)"
-        NOTES["Each agent writes in its domain"]
+    subgraph "Specialized"
+        COMP["Competitors"]
+        LEADS["Leads"]
+        REVENUE["Revenue"]
     end
 
-    subgraph "Inbox (user approvals)"
-        INB["PRs, content, outreach, reports"]
+    subgraph "Inbox (filtered view)"
+        INB["WorkItems + Documents<br/>where needsReview = true"]
     end
-
-    ALL["All agents READ everything"]
-    ALL -.-> PD & INIT & D_MR & NOTES & INB
 ```
 
 ---
 
-## 3. Condition-Driven Agent Wake
+## 3. Work Item Hierarchy
 
-No crons. A heartbeat checks conditions and wakes agents when there's a reason.
+```mermaid
+graph TD
+    I["Initiative<br/>(PM creates)"]
+    S1["Story 1<br/>(PM creates)"]
+    S2["Story 2<br/>(PM creates)"]
+    SP1["Spec<br/>(CTO creates)"]
+    SP2["Spec<br/>(CTO creates)"]
+    T1["Task<br/>(Dev executes)"]
+    T2["Task<br/>(Dev executes)"]
+
+    I -->|parentId| S1
+    I -->|parentId| S2
+    S1 -->|parentId| SP1
+    S2 -->|parentId| SP2
+    SP1 -->|parentId| T1
+    SP2 -->|parentId| T2
+
+    style I fill:#818cf8,color:#fff
+    style S1 fill:#60a5fa,color:#fff
+    style S2 fill:#60a5fa,color:#fff
+    style SP1 fill:#a78bfa,color:#fff
+    style SP2 fill:#a78bfa,color:#fff
+    style T1 fill:#34d399,color:#fff
+    style T2 fill:#34d399,color:#fff
+```
+
+---
+
+## 4. Work-Driven Agent Wake (No Time Fallbacks)
 
 ```mermaid
 graph TB
-    HEARTBEAT["Heartbeat<br/>(every few minutes)"]
+    HEARTBEAT["Heartbeat<br/>(every 3 minutes)"]
+    GUARDS{"Guards OK?<br/>Cost / Autonomy / Rate"}
 
-    subgraph "Check conditions for each agent"
-        C_PM{"PM: stories < threshold?<br/>New notes? Roadmap stale?<br/>President directive?"}
-        C_CTO{"CTO: stories without specs?"}
-        C_DEV{"Dev: specs without PRs?<br/>CI fix needed?"}
-        C_GROWTH{"Growth: research stale?<br/>Shipped features without content?"}
-        C_SALES{"Sales: new prospect notes?<br/>Follow-ups due?"}
-        C_CEO{"CEO: President message?<br/>Coordination due? Report due?"}
+    subgraph "Check BOARD STATE for each agent"
+        C_PM{"PM: no initiatives?<br/>New notes? Stories low?"}
+        C_CTO{"CTO: stories in todo?"}
+        C_DEV{"Dev: approved specs?<br/>Failed runs?"}
+        C_GROWTH{"Growth: no research?<br/>Shipped without content?"}
+        C_SALES{"Sales: discovered leads?<br/>Follow-ups overdue?"}
+        C_CEO{"CEO: stuck reviews?<br/>Agent errors?"}
+        C_SUPPORT{"Support: draft threads?"}
     end
 
-    WAKE_PM["Wake PM"]
-    WAKE_CTO["Wake CTO"]
-    WAKE_DEV["Wake Dev"]
-    WAKE_GROWTH["Wake Growth"]
-    WAKE_SALES["Wake Sales"]
-    WAKE_CEO["Wake CEO"]
-    SLEEP["Sleep (no conditions met)"]
+    CAP{"Pipeline full?"}
+    WAKE["Wake agent"]
+    SLEEP["Sleep — no work"]
 
-    HEARTBEAT --> C_PM & C_CTO & C_DEV & C_GROWTH & C_SALES & C_CEO
+    HEARTBEAT --> GUARDS
+    GUARDS -->|"Blocked"| SLEEP
+    GUARDS -->|"OK"| C_PM & C_CTO & C_DEV & C_GROWTH & C_SALES & C_CEO & C_SUPPORT
 
-    C_PM -->|"Yes"| WAKE_PM
-    C_PM -->|"No"| SLEEP
-    C_CTO -->|"Yes"| WAKE_CTO
-    C_CTO -->|"No"| SLEEP
-    C_DEV -->|"Yes"| WAKE_DEV
-    C_DEV -->|"No"| SLEEP
-    C_GROWTH -->|"Yes"| WAKE_GROWTH
-    C_GROWTH -->|"No"| SLEEP
-    C_SALES -->|"Yes"| WAKE_SALES
-    C_SALES -->|"No"| SLEEP
-    C_CEO -->|"Yes"| WAKE_CEO
-    C_CEO -->|"No"| SLEEP
+    C_PM -->|"Work exists"| CAP
+    CAP -->|"Full"| SLEEP
+    CAP -->|"Capacity"| WAKE
+    C_CTO -->|"Work exists"| WAKE
+    C_DEV -->|"Work exists"| WAKE
+    C_GROWTH -->|"Work exists"| WAKE
+    C_SALES -->|"Work exists"| WAKE
+    C_CEO -->|"Work exists"| WAKE
+    C_SUPPORT -->|"Work exists"| WAKE
+
+    C_PM -->|"No work"| SLEEP
+    C_CTO -->|"No work"| SLEEP
+    C_DEV -->|"No work"| SLEEP
+    C_GROWTH -->|"No work"| SLEEP
+    C_SALES -->|"No work"| SLEEP
+    C_CEO -->|"No work"| SLEEP
+    C_SUPPORT -->|"No work"| SLEEP
 ```
 
 ---
 
-## 4. Agent Execution Flow (Every Agent, Every Time)
+## 5. Agent Execution Flow
 
 ```mermaid
 graph LR
     WAKE["Agent wakes"]
     GUARDS["Guards<br/>Cost? Autonomy? Rate? Circuit?"]
-    CLEAN["Self-clean<br/>Cancel stale, retry failed"]
-    CONTEXT["Load context<br/>Knowledge + records + notes"]
-    WORK["Do work<br/>LLM call → produce output"]
-    OUTPUT["Write to board<br/>Records, notes, inbox items"]
-    LOG["Log activity + cost"]
-    DONE["Done"]
+    KNOWLEDGE["Load knowledge<br/>7 wiki docs"]
+    CONTEXT["Load context<br/>Work items + documents"]
+    WORK["LLM call<br/>Produce output"]
+    OUTPUT["Write to board<br/>Work items + documents"]
+    LOG["Log activity"]
 
     WAKE --> GUARDS
     GUARDS -->|"Blocked"| LOG
-    GUARDS -->|"OK"| CLEAN --> CONTEXT --> WORK --> OUTPUT --> LOG --> DONE
+    GUARDS -->|"OK"| KNOWLEDGE --> CONTEXT --> WORK --> OUTPUT --> LOG
 ```
 
 ---
 
-## 5. PM + Growth Collaboration
-
-Growth researches the market. PM makes product decisions from Growth's findings. Like a real company.
+## 6. PM + Growth Pipeline
 
 ```mermaid
 sequenceDiagram
@@ -144,34 +179,23 @@ sequenceDiagram
     participant CTO as CTO
     participant Dev as Dev
 
-    Note over Growth: Wakes: market research is stale
+    Growth->>Board: Create document (type: note)<br/>"12 threads about playlist sharing"
+    Growth->>Board: Create document (type: market_research)<br/>with relevance score + sources
 
-    Growth->>Board: Search Reddit, HN, GitHub, competitors
-    Growth->>Board: Leave notes: "12 threads about playlist sharing"
-    Growth->>Board: Leave notes: "Competitor X launched offline mode"
+    PM->>Board: Read Growth's documents + knowledge base
+    PM->>Board: Create work item (type: initiative)
+    PM->>Board: Create work items (type: story, parent: initiative)
 
-    Note over PM: Wakes: new notes from Growth
-
-    PM->>Board: Read notes + feedback + knowledge base
-    PM->>PM: Think: what use cases / features / fixes?
-    PM->>Board: Create Initiative: "Social Sharing Features"
-    PM->>Board: Create User Stories with acceptance criteria
-    PM->>Board: Update Roadmap doc
-
-    Note over CTO: Wakes: stories without specs
-
-    CTO->>Board: Read top-priority user story
-    CTO->>Board: Write technical spec
-
-    Note over Dev: Wakes: specs without PRs
+    CTO->>Board: Read stories without specs
+    CTO->>Board: Create work item (type: spec, parent: story)
 
     Dev->>Board: Read spec
-    Dev->>Board: Create PR via coding adapter
+    Dev->>Board: Execute via adapter → update work item with prUrl
 ```
 
 ---
 
-## 6. CEO Relay — President Commands Flow to Agents
+## 7. CEO Relay
 
 ```mermaid
 sequenceDiagram
@@ -179,82 +203,32 @@ sequenceDiagram
     participant CEO as CEO
     participant Board as Shared Board
     participant PM as PM
-    participant Growth as Growth
 
-    President->>CEO: "Focus on enterprise features this quarter"
-
-    CEO->>Board: Update Goals doc: "Q2 focus: enterprise"
-    CEO->>Board: Leave note to PM: "President wants enterprise focus"
-    CEO->>Board: Leave note to Growth: "Shift research to enterprise market"
-    CEO->>President: "Done. Updated goals, notified PM and Growth."
-
-    Note over PM: Wakes: President directive via CEO note
+    President->>CEO: "Focus on enterprise this quarter"
+    CEO->>Board: Update Goals knowledge doc
+    CEO->>Board: Create document (type: note) for PM
+    CEO->>President: "Updated goals, notified PM."
 
     PM->>Board: Read CEO's note + updated Goals
-    PM->>Board: Reprioritize roadmap toward enterprise stories
-    PM->>Board: Create enterprise-focused user stories
-
-    Note over Growth: Wakes: CEO note about enterprise
-
-    Growth->>Board: Research enterprise market segments
-    Growth->>Board: Leave notes about enterprise opportunities
+    PM->>Board: Reprioritize work items toward enterprise
 ```
 
 ---
 
-## 7. Onboarding — No Hard Gate
+## 8. Inbox Flow (needsReview flag)
 
 ```mermaid
 sequenceDiagram
-    participant User as President
-    participant System as Reflet
-    participant Growth as Growth
-    participant PM as PM
+    participant Agent as Any Agent
+    participant Board as Shared Board
+    participant President as President
 
-    User->>System: Connect GitHub repo
-    System->>System: Analyze repo → Company Brief (7 docs)
-    System->>User: Present Company Brief
+    Agent->>Board: Create work item/document<br/>needsReview: true
 
-    Note over System: Agents start immediately — no gate
-
-    par Background work (brief pending)
-        Growth->>Growth: Wake condition met → research market
-        Growth->>System: Leave notes (stored for PM)
-    end
-
-    User->>System: Approve Company Brief
-
-    Note over PM: Wakes: new notes from Growth + approved brief
-
-    PM->>PM: Read Growth's research + knowledge base
-    PM->>System: Create first initiatives + stories
-
-    Note over System: Full pipeline flowing
-```
-
----
-
-## 8. Self-Cleaning
-
-```mermaid
-graph TB
-    subgraph "Every Agent (on wake)"
-        A_CLEAN1["Cancel own tasks pending > 7 days"]
-        A_CLEAN2["Retry own failed tasks (< max retries)"]
-        A_CLEAN3["Archive own completed work > 30 days"]
-    end
-
-    subgraph "CEO Coordination (~4h)"
-        CEO_1["Bottleneck? Stories piling up<br/>with no specs?"]
-        CEO_2["Starvation? Agent with 0 work<br/>for 3+ days?"]
-        CEO_3["Conflict? Contradictory<br/>knowledge docs?"]
-        CEO_4["Cascade? 5+ failures<br/>in 10 min?"]
-
-        CEO_1 -->|"Yes"| FIX1["Leave note for CTO: backlog growing"]
-        CEO_2 -->|"Yes"| FIX2["Leave note for idle agent:<br/>suggested work"]
-        CEO_3 -->|"Yes"| FIX3["Flag to President"]
-        CEO_4 -->|"Yes"| FIX4["Pause all + alert President"]
-    end
+    President->>Board: View Inbox (query needsReview = true)
+    President->>Board: Approve → patches needsReview: false
+    
+    Note over Board: No separate inbox table.<br/>The item itself tracks review state.
 ```
 
 ---
@@ -264,14 +238,13 @@ graph TB
 ```mermaid
 graph LR
     WAKE["Agent wakes"] --> COST{"Budget?"}
-    COST -->|"Exhausted"| STOP["Skip"]
-    COST -->|"OK"| AUTO{"Autonomy?"}
+    COST -->|"Exhausted"| STOP["Skip + log"]
+    COST -->|"OK"| AUTO{"Autonomy mode?"}
     AUTO -->|"Stopped"| STOP
-    AUTO -->|"Supervised + external action"| INBOX["Route to inbox"]
     AUTO -->|"OK"| RATE{"Rate limit?"}
     RATE -->|"Exceeded"| BACK["Backoff"]
     RATE -->|"OK"| CIRCUIT{"Circuit breaker?"}
-    CIRCUIT -->|"Tripped"| WAIT["Wait for reset"]
+    CIRCUIT -->|"Tripped"| WAIT["Pause 30min"]
     CIRCUIT -->|"OK"| RUN["Execute"]
 ```
 
@@ -283,7 +256,6 @@ graph LR
 graph TB
     subgraph "Inputs"
         REPO["GitHub Repo"]
-        USERS["User Feedback"]
         MARKET["Market"]
         PRESIDENT["President"]
     end
@@ -292,7 +264,7 @@ graph TB
         KB["7 Living Docs"]
     end
 
-    subgraph "Agents (self-directed)"
+    subgraph "Agents"
         CEO_A["CEO"]
         PM_A["PM"]
         CTO_A["CTO"]
@@ -302,112 +274,60 @@ graph TB
         SUP_A["Support"]
     end
 
-    subgraph "Work Board"
-        INIT_B["Initiatives + Stories"]
-        SPECS_B["Specs + PRs"]
-        NOTES_B["Notes"]
-        LEADS_B["Leads + Content"]
+    subgraph "Unified Data"
+        WI["Work Items<br/>initiative → story → spec → task"]
+        DOCS["Documents<br/>research, notes, content, emails"]
+        LEADS_B["Leads"]
+        COMP_B["Competitors"]
     end
 
     subgraph "User Interface"
-        INBOX_B["Inbox"]
+        INBOX_B["Inbox<br/>(needsReview view)"]
         DASH["Dashboard"]
         CHAT["CEO Chat"]
     end
 
     REPO --> KB
-    USERS --> NOTES_B
     MARKET --> GRO_A
     PRESIDENT --> CEO_A
 
     KB --> PM_A & CTO_A & GRO_A & SAL_A
 
-    GRO_A -->|"market notes (own domain)"| NOTES_B
-    SUP_A -->|"user pattern notes (own domain)"| NOTES_B
-    CTO_A -->|"security + architecture notes (own domain)"| NOTES_B
-    SAL_A -->|"prospect notes (own domain)"| NOTES_B
+    GRO_A -->|"documents (notes, research)"| DOCS
+    GRO_A -->|"competitors"| COMP_B
+    SUP_A -->|"documents (support_thread)"| DOCS
+    SAL_A -->|"leads"| LEADS_B
+    SAL_A -->|"documents (email drafts)"| DOCS
 
-    NOTES_B --> PM_A
-    PM_A --> INIT_B
-    INIT_B --> CTO_A --> SPECS_B
-    SPECS_B --> DEV_A
+    DOCS --> PM_A
+    PM_A --> WI
+    WI --> CTO_A --> WI
+    WI --> DEV_A
 
     DEV_A -->|"shipped"| GRO_A & SAL_A
 
-    CEO_A --> INBOX_B & DASH
-    DEV_A --> INBOX_B
-    GRO_A --> INBOX_B
-    SAL_A --> INBOX_B
+    WI & DOCS -->|"needsReview"| INBOX_B
+    CEO_A --> DASH
 
     PRESIDENT --> CHAT --> CEO_A
 ```
 
 ---
 
-## 11. Self-Correcting Company — Knowledge Change Cascade
-
-When the Product Definition changes (pivot, new feature focus, scope change), everything downstream adapts automatically.
+## 11. Knowledge Change Cascade
 
 ```mermaid
 graph TB
-    CHANGE["Knowledge Doc Updated<br/>(by user or agent)"]
-
-    CASCADE["Check dependency map:<br/>What depends on this doc?"]
-
-    FLAG_DOCS["Flag dependent docs as STALE"]
-    FLAG_RECORDS["Flag linked records for REVIEW"]
-    FLAG_TASKS["Flag related tasks for RE-EVAL"]
+    CHANGE["Knowledge Doc Updated"]
+    CASCADE["Check dependency map"]
+    FLAG["Flag downstream data as STALE"]
 
     subgraph "Agents respond on next wake"
-        GRO_RESP["Growth: archive stale research,<br/>re-run market scan"]
-        PM_RESP["PM: re-evaluate initiatives,<br/>cancel outdated tasks"]
-        SAL_RESP["Sales: re-evaluate prospect fit,<br/>update battlecards"]
-        CTO_RESP["CTO: flag stale docs<br/>for rewrite"]
+        GRO["Growth: re-research"]
+        PM["PM: re-evaluate initiatives"]
+        SAL["Sales: re-evaluate prospects"]
     end
 
-    CHANGE --> CASCADE
-    CASCADE --> FLAG_DOCS & FLAG_RECORDS & FLAG_TASKS
-    FLAG_DOCS --> GRO_RESP & CTO_RESP
-    FLAG_RECORDS --> SAL_RESP
-    FLAG_TASKS --> PM_RESP
+    CHANGE --> CASCADE --> FLAG
+    FLAG --> GRO & PM & SAL
 ```
-
-## 12. Bottom-Up Change Propagation
-
-Agents can propose changes to the Knowledge Base, not just leave notes.
-
-```mermaid
-sequenceDiagram
-    participant Growth as Growth
-    participant Board as Shared Board
-    participant PM as PM
-    participant CEO as CEO
-
-    Growth->>Board: Discovers market has shifted
-    Growth->>Board: Proposes update to Product Definition
-    Growth->>Board: Creates inbox item: "Product Definition update proposed"
-
-    PM->>Board: Reviews proposal
-    PM->>Board: Approves + updates Product Definition
-
-    Note over Board: Change cascades automatically
-
-    Board-->>Growth: Competitive Landscape flagged stale
-    Board-->>PM: Roadmap flagged for re-evaluation
-    Board-->>CEO: Knowledge drift detected in coordination check
-```
-
-## 13. Why This Can't Stop
-
-| Failure mode | Why it can't happen |
-|---|---|
-| PM finds nothing → 0 tasks | PM reads Growth's notes + Knowledge Base. Growth researches daily. Pipeline never empty. |
-| No orchestrator → nothing runs | Each agent owns its schedule via heartbeat conditions. No central point of failure. |
-| Company Brief not approved → blocked | No hard gate. Agents work in background. Brief approval unlocks full pipeline. |
-| Task caps full with stale work | Each agent cleans own stale tasks on every wake. Caps count pending + in_progress. |
-| One agent fails → cascade | Agents are independent. One failing doesn't affect others. CEO detects patterns. |
-| No market research → no leads | Growth researches market independently. Sales also discovers its own leads from GitHub/community. |
-| President goes silent | Company keeps running on its own strategy. CEO sends weekly digest to re-engage. |
-| Product pivots → old work invalid | Knowledge change cascade automatically flags stale data. Agents archive old work and re-align. |
-| Agent uses wrong product context | No silent fallbacks — agents halt if knowledge is missing. No generic placeholder text anywhere. |
-| Bottom-up insight contradicts strategy | Agents propose knowledge doc updates. PM/CEO approves. Cascade realigns the company. |

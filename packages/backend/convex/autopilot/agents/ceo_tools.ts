@@ -50,8 +50,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
           description: input.description,
           priority: input.priority,
           assignedAgent: input.assignedAgent,
-          origin: "user_created",
-          autonomyLevel: "review_required",
+          createdBy: "ceo_chat",
         }
       );
       return `Task created: "${input.title}" (${input.priority} priority, assigned to ${input.assignedAgent}). ID: ${taskId}`;
@@ -86,12 +85,12 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
     inputSchema: z.object({
       status: z
         .enum([
-          "pending",
+          "backlog",
+          "todo",
           "in_progress",
-          "completed",
-          "failed",
+          "in_review",
+          "done",
           "cancelled",
-          "paused",
         ])
         .optional()
         .describe("Filter by task status"),
@@ -113,8 +112,9 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
             status: string;
             title: string;
             priority: string;
-            assignedAgent: string;
-          }) => `- [${t.status}] ${t.title} (${t.priority}, ${t.assignedAgent})`
+            assignedAgent?: string;
+          }) =>
+            `- [${t.status}] ${t.title} (${t.priority}, ${t.assignedAgent ?? "unassigned"})`
         );
       return `Tasks (${tasks.length} total):\n${lines.join("\n")}`;
     },
@@ -168,24 +168,44 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
   }),
 
   approveInboxItem: createTool<
-    { itemId: string; decision: "approved" | "rejected" },
+    {
+      itemId: string;
+      itemType: "work_item" | "document";
+      decision: "approved" | "rejected";
+    },
     string,
     CeoCtx
   >({
     description:
-      "Approve or reject a pending inbox item. Use when items need human decision.",
+      "Approve or reject a pending review item (work item or document). Use when items need human decision.",
     inputSchema: z.object({
-      itemId: z.string().describe("The inbox item ID to act on"),
+      itemId: z.string().describe("The work item or document ID to act on"),
+      itemType: z
+        .enum(["work_item", "document"])
+        .describe("Whether this is a work item or document"),
       decision: z
         .enum(["approved", "rejected"])
         .describe("Approve or reject the item"),
     }),
     execute: async (ctx, input) => {
-      await ctx.runMutation(internal.autopilot.inbox.updateInboxItemStatus, {
-        itemId: input.itemId as Id<"autopilotInboxItems">,
-        status: input.decision,
-      });
-      return `Inbox item ${input.decision}.`;
+      if (input.itemType === "work_item") {
+        const status =
+          input.decision === "rejected" ? ("cancelled" as const) : undefined;
+        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
+          taskId: input.itemId as Id<"autopilotWorkItems">,
+          status: status ?? "todo",
+          needsReview: false,
+          reviewType: undefined,
+        });
+      } else {
+        await ctx.runMutation(internal.autopilot.documents.updateDocument, {
+          documentId: input.itemId as Id<"autopilotDocuments">,
+          needsReview: false,
+          reviewedAt: Date.now(),
+          status: input.decision === "rejected" ? "archived" : undefined,
+        });
+      }
+      return `Review item ${input.decision}.`;
     },
   }),
 
@@ -236,30 +256,21 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
 
   getPendingInbox: createTool<Record<string, never>, string, CeoCtx>({
     description:
-      "Get pending inbox items that need approval. Shows items waiting for human review.",
+      "Get pending review items that need approval. Shows items waiting for human review.",
     inputSchema: z.object({}),
     execute: async (ctx) => {
-      const items = await ctx.runQuery(
-        internal.autopilot.inbox.getPendingInboxItems,
+      const detailed = await ctx.runQuery(
+        internal.autopilot.agents.ceo.queries.getDetailedCEOContext,
         { organizationId }
       );
-      if (items.length === 0) {
-        return "No pending inbox items.";
+      if (detailed.reviewSummaries.length === 0) {
+        return "No pending review items.";
       }
-      const lines = items.map(
-        (item: {
-          type: string;
-          title: string;
-          priority: string;
-          sourceAgent: string;
-          createdAt: number;
-          _id: string;
-        }) => {
-          const ago = Math.round((Date.now() - item.createdAt) / 60_000);
-          return `- [${item.priority}] ${item.title} (${item.type}, from ${item.sourceAgent}, ${ago}m ago) ID: ${item._id}`;
-        }
+      const lines = detailed.reviewSummaries.map(
+        (item: { title: string; type: string; priority: string }) =>
+          `- [${item.priority}] ${item.title} (${item.type})`
       );
-      return `Pending Inbox (${items.length}):\n${lines.join("\n")}`;
+      return `Pending Review (${detailed.reviewSummaries.length}):\n${lines.join("\n")}`;
     },
   }),
 

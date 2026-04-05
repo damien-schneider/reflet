@@ -354,7 +354,6 @@ export const getEnabledOrgIds = internalQuery({
 // ============================================
 
 const SIGNIFICANT_CHANGE_THRESHOLD = 10;
-const CRITICAL_CHANGE_THRESHOLD = 20;
 
 const detectRevenueAlerts = async (
   ctx: ActionCtx,
@@ -372,15 +371,15 @@ const detectRevenueAlerts = async (
   const direction = metrics.mrr > prev.mrr ? "increase" : "decrease";
   const changeAmount = Math.round(Math.abs(metrics.mrr - prev.mrr) * 100) / 100;
 
-  await ctx.runMutation(internal.autopilot.inbox.createInboxItem, {
+  await ctx.runMutation(internal.autopilot.documents.createDocument, {
     organizationId,
-    type: "revenue_alert",
+    type: "report",
     title: `Revenue ${direction}: ${direction === "increase" ? "+" : "-"}$${changeAmount}`,
-    summary: `MRR changed from $${prev.mrr} to $${metrics.mrr} (${Math.round(mrrChangePercent * 10) / 10}% ${direction})`,
     content: `Daily revenue snapshot detected a significant change in MRR. Previous: $${prev.mrr}, Current: $${metrics.mrr}. Active subscriptions: ${metrics.activeSubscriptions}. Churn rate: ${metrics.churnRate}%.`,
-    priority:
-      mrrChangePercent > CRITICAL_CHANGE_THRESHOLD ? "critical" : "high",
     sourceAgent: "system",
+    needsReview: true,
+    reviewType: "revenue_alert",
+    tags: ["revenue"],
   });
 
   await ctx.runMutation(internal.autopilot.tasks.logActivity, {
