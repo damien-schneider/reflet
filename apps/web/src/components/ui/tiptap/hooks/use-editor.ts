@@ -20,7 +20,7 @@ interface UseTiptapMarkdownEditorOptions {
   editable?: boolean;
   maxLength?: number;
   minimal?: boolean;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
   onSubmit?: () => void;
   placeholder?: string;
   value: string;
@@ -73,10 +73,12 @@ export function useTiptapMarkdownEditor(
     onSubmitRef.current = onSubmit;
   }, [onSubmit]);
 
-  const debouncedOnChange = useDebouncedCallback(onChange, {
+  const noop = useCallback((_v: string) => {}, []);
+  const onChangeStable = onChange ?? noop;
+  const debouncedOnChange = useDebouncedCallback(onChangeStable, {
     wait: debounceMs,
   });
-  const effectiveOnChange = debounceMs > 0 ? debouncedOnChange : onChange;
+  const effectiveOnChange = debounceMs > 0 ? debouncedOnChange : onChangeStable;
 
   const { uploadMedia, isUploading, uploadProgress } = useMediaUpload({
     onSuccess: (result: MediaUploadResult) => {

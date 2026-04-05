@@ -27,7 +27,7 @@ import {
   DropdownListSeparator,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MarkdownRenderer } from "@/components/ui/tiptap/markdown-renderer";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { cn } from "@/lib/utils";
 
 interface LinkedFeedback {
@@ -180,7 +180,11 @@ export function ReleaseItem({
         </h2>
 
         {release.description && (
-          <MarkdownRenderer content={release.description} />
+          <TiptapMarkdownEditor
+            editable={false}
+            minimal
+            value={release.description}
+          />
         )}
 
         {/* Shipped features */}

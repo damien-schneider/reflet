@@ -34,9 +34,9 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { H2 } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
-import { MarkdownContent } from "@/features/autopilot/components/markdown-content";
 import { cn } from "@/lib/utils";
 
 const TYPE_STYLES: Partial<Record<Doc<"autopilotDocuments">["type"], string>> =
@@ -303,7 +303,11 @@ export default function DocumentsPage() {
                 {isExpanded && (
                   <CardContent>
                     <div className="rounded-md bg-muted/50 p-4">
-                      <MarkdownContent>{doc.content}</MarkdownContent>
+                      <TiptapMarkdownEditor
+                        editable={false}
+                        minimal
+                        value={doc.content}
+                      />
                     </div>
                   </CardContent>
                 )}

@@ -18,8 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { H2, Muted } from "@/components/ui/typography";
-import { MarkdownContent } from "@/features/autopilot/components/markdown-content";
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
@@ -161,7 +161,11 @@ export default function TaskDetailPage({
         <H2 className="mb-2" variant="card">
           Description
         </H2>
-        <MarkdownContent>{task.description}</MarkdownContent>
+        <TiptapMarkdownEditor
+          editable={false}
+          minimal
+          value={task.description}
+        />
       </section>
 
       {task.acceptanceCriteria && task.acceptanceCriteria.length > 0 && (

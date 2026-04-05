@@ -386,8 +386,8 @@ export function createEditorProps(
   return {
     attributes: {
       class: minimal
-        ? "outline-none w-full tiptap-minimal-editor min-h-24"
-        : "outline-none w-full tiptap-markdown-editor min-h-32",
+        ? "outline-none w-full markdown-content tiptap-minimal-editor min-h-24"
+        : "outline-none w-full markdown-content tiptap-markdown-editor min-h-32",
     },
     handlePaste: (_view: unknown, event: ClipboardEvent) => {
       const items = event.clipboardData?.items;

@@ -24,9 +24,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { H2 } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
-import { MarkdownContent } from "@/features/autopilot/components/markdown-content";
 import { cn } from "@/lib/utils";
 
 const PIPELINE_STAGES = [
@@ -156,9 +156,12 @@ function SalesInsightsTab() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <MarkdownContent className="text-muted-foreground">
-              {doc.content}
-            </MarkdownContent>
+            <TiptapMarkdownEditor
+              className="text-muted-foreground"
+              editable={false}
+              minimal
+              value={doc.content}
+            />
           </CardContent>
         </Card>
       ))}

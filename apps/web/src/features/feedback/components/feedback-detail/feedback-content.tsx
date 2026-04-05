@@ -107,7 +107,7 @@ export function FeedbackContent({
       />
 
       {/* Description */}
-      <div className="prose prose-sm dark:prose-invert max-w-none">
+      <div className="markdown-content max-w-none">
         <TiptapMarkdownEditor
           className="min-h-[60px]"
           editable={isAdmin}

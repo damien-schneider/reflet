@@ -213,7 +213,7 @@ export function ReleaseEditor({
         {/* Description area - takes up remaining space */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {isStreaming ? (
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="markdown-content max-w-none">
               <Streamdown caret="block" isAnimating mode="streaming">
                 {streamedContent}
               </Streamdown>

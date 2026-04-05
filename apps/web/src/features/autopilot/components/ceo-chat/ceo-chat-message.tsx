@@ -5,6 +5,7 @@ import { useSmoothText } from "@convex-dev/agent/react";
 import { IconSparkles, IconUser } from "@tabler/icons-react";
 import { Streamdown } from "streamdown";
 
+import "@/components/ui/tiptap/styles.css";
 import { cn } from "@/lib/utils";
 
 export function CeoChatMessage({ message }: { message: UIMessage }) {
@@ -45,7 +46,7 @@ export function CeoChatMessage({ message }: { message: UIMessage }) {
           )}
         >
           {displayText ? (
-            <div className="ceo-chat-markdown wrap-break-word max-w-none leading-relaxed">
+            <div className="markdown-content wrap-break-word max-w-none">
               <Streamdown
                 caret={isStreaming ? "block" : undefined}
                 isAnimating={isStreaming}

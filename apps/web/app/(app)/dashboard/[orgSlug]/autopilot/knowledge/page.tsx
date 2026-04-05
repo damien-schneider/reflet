@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { Muted } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
 
@@ -65,9 +65,9 @@ export default function ProductPage() {
           {isSaving ? "Saving…" : "Save"}
         </Button>
       </div>
-      <Textarea
-        className="min-h-96 resize-y font-sans text-sm"
-        onChange={(e) => setPendingContent(e.target.value)}
+      <TiptapMarkdownEditor
+        className="min-h-96"
+        onChange={(value) => setPendingContent(value)}
         placeholder="Describe your product: what it does, who it's for, the core value proposition, and anything else that helps agents understand your context…"
         value={displayContent}
       />

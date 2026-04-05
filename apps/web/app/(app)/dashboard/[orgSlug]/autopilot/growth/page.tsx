@@ -35,9 +35,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { H2 } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
-import { MarkdownContent } from "@/features/autopilot/components/markdown-content";
 import { cn } from "@/lib/utils";
 
 const TYPE_CONFIG = {
@@ -227,7 +227,11 @@ function GrowthContentTab() {
                   </div>
                   <h3 className="mt-2 font-medium">{item.title}</h3>
                   <div className="mt-1 line-clamp-3 text-muted-foreground text-sm">
-                    <MarkdownContent>{item.content}</MarkdownContent>
+                    <TiptapMarkdownEditor
+                      editable={false}
+                      minimal
+                      value={item.content}
+                    />
                   </div>
                 </div>
 
@@ -406,9 +410,12 @@ function GrowthResearchTab() {
               {/* Expandable full content */}
               {isExpanded && (
                 <div className="border-t pt-3">
-                  <MarkdownContent className="text-muted-foreground">
-                    {doc.content}
-                  </MarkdownContent>
+                  <TiptapMarkdownEditor
+                    className="text-muted-foreground"
+                    editable={false}
+                    minimal
+                    value={doc.content}
+                  />
                 </div>
               )}
 

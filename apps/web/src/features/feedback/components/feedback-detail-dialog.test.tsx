@@ -418,9 +418,9 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 // Mock tiptap components to avoid hooks issues
-vi.mock("@/components/ui/tiptap/markdown-renderer", () => ({
-  MarkdownRenderer: ({ content }: { content: string }) => (
-    <div data-testid="markdown-renderer">{content}</div>
+vi.mock("@/components/ui/tiptap/markdown-editor", () => ({
+  TiptapMarkdownEditor: ({ value }: { value: string }) => (
+    <div data-testid="markdown-editor">{value}</div>
   ),
 }));
 

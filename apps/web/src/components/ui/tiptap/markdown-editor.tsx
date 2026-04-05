@@ -15,7 +15,7 @@ interface TiptapMarkdownEditorProps {
   editable?: boolean;
   maxLength?: number;
   minimal?: boolean;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
   onSubmit?: () => void;
   placeholder?: string;
   value: string;

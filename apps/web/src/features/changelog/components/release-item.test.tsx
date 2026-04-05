@@ -103,9 +103,9 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   }) => <>{render({})}</>,
 }));
 
-vi.mock("@/components/ui/tiptap/markdown-renderer", () => ({
-  MarkdownRenderer: ({ content }: { content: string }) => (
-    <div data-testid="markdown-renderer">{content}</div>
+vi.mock("@/components/ui/tiptap/markdown-editor", () => ({
+  TiptapMarkdownEditor: ({ value }: { value: string }) => (
+    <div data-testid="markdown-editor">{value}</div>
   ),
 }));
 
@@ -163,7 +163,7 @@ describe("ReleaseItem", () => {
 
   it("renders markdown description", () => {
     render(<ReleaseItem {...defaultProps} />);
-    expect(screen.getByTestId("markdown-renderer")).toHaveTextContent(
+    expect(screen.getByTestId("markdown-editor")).toHaveTextContent(
       /Changes.*Fixed bugs/
     );
   });
@@ -171,7 +171,7 @@ describe("ReleaseItem", () => {
   it("does not render markdown when no description", () => {
     const release = makeRelease({ publishedAt: 1_700_000_000_000 });
     render(<ReleaseItem orgSlug="test-org" release={release} />);
-    expect(screen.queryByTestId("markdown-renderer")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("markdown-editor")).not.toBeInTheDocument();
   });
 
   it("does not show version badge when no version", () => {

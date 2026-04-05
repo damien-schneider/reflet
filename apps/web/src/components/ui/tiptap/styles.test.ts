@@ -7,55 +7,47 @@ const cssPath = join(import.meta.dirname, "styles.css");
 const cssContent = readFileSync(cssPath, "utf-8");
 
 describe("Tiptap Styles", () => {
-  describe("heading styles", () => {
-    it("has h1 styles for tiptap-markdown-editor", () => {
-      expect(cssContent).toContain(".tiptap-markdown-editor h1");
+  describe("shared markdown-content typography", () => {
+    it("has h1 styles", () => {
+      expect(cssContent).toContain(".markdown-content h1");
     });
 
-    it("has h2 styles for tiptap-markdown-editor", () => {
-      expect(cssContent).toContain(".tiptap-markdown-editor h2");
+    it("has h2 styles", () => {
+      expect(cssContent).toContain(".markdown-content h2");
     });
 
-    it("has h3 styles for tiptap-markdown-editor", () => {
-      expect(cssContent).toContain(".tiptap-markdown-editor h3");
+    it("has h3 styles", () => {
+      expect(cssContent).toContain(".markdown-content h3");
     });
 
-    it("has h1 styles for tiptap-minimal-editor", () => {
-      expect(cssContent).toContain(".tiptap-minimal-editor h1");
+    it("has ul styles", () => {
+      expect(cssContent).toContain(".markdown-content ul");
     });
 
-    it("has h2 styles for tiptap-minimal-editor", () => {
-      expect(cssContent).toContain(".tiptap-minimal-editor h2");
+    it("has ol styles", () => {
+      expect(cssContent).toContain(".markdown-content ol");
     });
 
-    it("has h3 styles for tiptap-minimal-editor", () => {
-      expect(cssContent).toContain(".tiptap-minimal-editor h3");
-    });
-  });
-
-  describe("list styles", () => {
-    it("has ul styles for tiptap-minimal-editor", () => {
-      expect(cssContent).toContain(".tiptap-minimal-editor ul");
+    it("has blockquote styles", () => {
+      expect(cssContent).toContain(".markdown-content blockquote");
     });
 
-    it("has ol styles for tiptap-minimal-editor", () => {
-      expect(cssContent).toContain(".tiptap-minimal-editor ol");
+    it("has code styles", () => {
+      expect(cssContent).toContain(".markdown-content code");
+    });
+
+    it("has pre styles", () => {
+      expect(cssContent).toContain(".markdown-content pre");
     });
   });
 
-  describe("blockquote styles", () => {
-    it("has blockquote styles for tiptap-minimal-editor", () => {
-      expect(cssContent).toContain(".tiptap-minimal-editor blockquote");
-    });
-  });
-
-  describe("code styles", () => {
-    it("has code styles for tiptap-minimal-editor", () => {
-      expect(cssContent).toContain(".tiptap-minimal-editor code");
+  describe("editor variants", () => {
+    it("has tiptap-minimal-editor styles", () => {
+      expect(cssContent).toContain(".tiptap-minimal-editor");
     });
 
-    it("has pre styles for tiptap-minimal-editor", () => {
-      expect(cssContent).toContain(".tiptap-minimal-editor pre");
+    it("has tiptap-markdown-editor focus styles", () => {
+      expect(cssContent).toContain(".tiptap-markdown-editor");
     });
   });
 

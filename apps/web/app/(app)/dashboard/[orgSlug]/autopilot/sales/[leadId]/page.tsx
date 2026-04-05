@@ -11,8 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { H2 } from "@/components/ui/typography";
-import { MarkdownContent } from "@/features/autopilot/components/markdown-content";
 
 const STATUS_STYLES = {
   discovered: "bg-blue-500/10 text-blue-500",
@@ -150,7 +150,7 @@ export default function LeadDetailPage({
             <CardTitle className="text-base">Notes</CardTitle>
           </CardHeader>
           <CardContent>
-            <MarkdownContent>{lead.notes}</MarkdownContent>
+            <TiptapMarkdownEditor editable={false} minimal value={lead.notes} />
           </CardContent>
         </Card>
       )}
