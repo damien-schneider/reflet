@@ -57,11 +57,7 @@ const SOCIAL_TYPES = new Set<DocumentType>([
   "twitter_post",
 ]);
 
-const RESEARCH_TYPES = new Set<DocumentType>([
-  "market_research",
-  "report",
-  "battlecard",
-]);
+const RESEARCH_TYPES = new Set<DocumentType>(["market_research", "battlecard"]);
 
 const SOCIAL_ICONS: Partial<Record<DocumentType, typeof IconBrandReddit>> = {
   reddit_reply: IconBrandReddit,
@@ -525,12 +521,15 @@ function SocialDraftContent({
               <IconCopy className="size-3.5" />
             </Button>
             {targetUrl && (
-              <Button asChild size="sm" variant="outline">
-                <a href={targetUrl} rel="noopener noreferrer" target="_blank">
-                  <PlatformIcon className="mr-1 size-3.5" />
-                  Open & Reply
-                </a>
-              </Button>
+              <a
+                className="inline-flex h-8 items-center gap-1 rounded-md border border-input bg-background px-3 font-medium text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                href={targetUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <PlatformIcon className="mr-1 size-3.5" />
+                Open & Reply
+              </a>
             )}
           </div>
         </div>

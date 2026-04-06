@@ -18,5 +18,31 @@ export const competitorsTables = {
     lastResearchedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
+    // Structured intelligence fields — populated by processCompetitorMoves
+    competitivityScore: v.optional(v.number()),
+    moves: v.optional(
+      v.array(
+        v.object({
+          action: v.string(),
+          impact: v.string(),
+          sourceUrl: v.optional(v.string()),
+          competitivityScore: v.number(),
+          recordedAt: v.number(),
+        })
+      )
+    ),
+    featureGaps: v.optional(
+      v.array(
+        v.object({
+          feature: v.string(),
+          us: v.string(),
+          them: v.string(),
+          gap: v.string(),
+        })
+      )
+    ),
+    // Arrays preferred by UI; legacy string fields (strengths/weaknesses) kept for backward compat
+    strengthsList: v.optional(v.array(v.string())),
+    weaknessesList: v.optional(v.array(v.string())),
   }).index("by_organization", ["organizationId"]),
 };

@@ -400,6 +400,22 @@ export const getSystemHealth = query({
     }
     checkCredentials(credentialStatus, config.adapter, state);
 
+    // Check if Dev agent is enabled but pipeline is blocked by missing credentials
+    const devEnabled =
+      (config as unknown as Record<string, unknown>).devEnabled !== false;
+    if (devEnabled && credentialStatus !== "valid") {
+      state.issues.push({
+        id: "dev_pipeline_blocked",
+        severity: "warning",
+        message:
+          "Dev agent is enabled but cannot execute — coding adapter credentials are missing or invalid",
+        resolution:
+          "Configure adapter credentials in Settings to unblock the Dev pipeline",
+        actionUrl: "settings",
+        actionLabel: "Configure Credentials",
+      });
+    }
+
     // Check items waiting for president approval
     const reviewWorkItems = await ctx.db
       .query("autopilotWorkItems")

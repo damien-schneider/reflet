@@ -126,18 +126,20 @@ Focus on finding REAL, RECENT threads where:
 
 IMPORTANT: Search for discussions about the PROBLEM DOMAIN the product addresses,
 not about the technologies it is built with. We want to find potential users and
-market conversations, not developer discussions about frameworks.`;
+market conversations, not developer discussions about frameworks or tech stacks.`;
 
   const prompt = `Find relevant community discussions for: ${productName}
 
-Product: ${productName}
-Description: ${productDescription}
+PRODUCT DEFINITION:
+${productDescription}
 
 Search for recent threads and posts where this product could naturally add value. Look for:
-1. Questions about problems this product solves
-2. "What tool do you use for X?" discussions about the problem domain
-3. Competing product discussions or comparisons
+1. Questions about problems this product solves (based on the product definition above)
+2. "What tool do you use for X?" discussions about the product's specific domain
+3. Discussions comparing products that solve the same user problem
 4. People expressing frustration with existing solutions in this space
+
+DO NOT search for discussions about the technologies the product is built with (frameworks, languages, databases, etc.). Only search for discussions about the USER PROBLEM the product addresses.
 
 Return the most relevant discussions you find with context about each one.`;
 
@@ -267,26 +269,33 @@ export const assessMarketGaps = async (
 ): Promise<z.infer<typeof gapAssessmentSchema>> => {
   const systemPrompt = `You are a growth strategist assessing what you DON'T know about the market.
 Your job is intellectual honesty — identify blind spots, not confirm what you already know.
-Think like a curious researcher, not a satisfied marketer.`;
+Think like a curious researcher, not a satisfied marketer.
+
+IMPORTANT: Stay anchored to the product's specific domain. Only suggest investigating
+competitors and trends that are directly relevant to the product's user problem.
+Do NOT suggest investigating frameworks, dev tools, or infrastructure unless the
+product itself is in that category.`;
 
   const prompt = `Assess gaps in our market understanding for ${productName}.
 
-Product: ${productName}
-Description: ${productDescription}
+PRODUCT DEFINITION:
+${productDescription}
 
 WHAT WE ALREADY KNOW:
 ${existingResearchSummary || "(very little — we're just getting started)"}
 
-COMPETITORS WE TRACK:
+COMPETITORS WE CURRENTLY TRACK:
 ${competitorNames.length > 0 ? competitorNames.join(", ") : "(none yet)"}
+${competitorNames.length > 0 ? "\nFirst, review the list above — are any of these NOT actually competitors (e.g. they don't solve the same user problem)? If so, note that in your gaps.\n" : ""}
 
 Identify 2-5 specific gaps:
-- What community conversations might we be missing?
-- What competitors might we not know about yet?
+- What community conversations about our product's domain might we be missing?
+- What DIRECT competitors (same user problem, same audience) might we not know about?
 - What user pain points haven't we explored?
-- What market trends could affect us that we haven't researched?
+- What market trends could affect the product's domain?
 
 Be specific. "We should research more" is useless. "Are there Slack communities discussing X?" is useful.
+Only suggest gaps relevant to the product domain described above.
 
 Rate our overall market understanding from 0 (blind) to 100 (fully informed).`;
 

@@ -158,7 +158,7 @@ export const bootstrapAutopilot = internalAction({
       if (knowledgeDocs.length === 0) {
         await ctx.scheduler.runAfter(
           0,
-          internal.autopilot.company_brief.generateCompanyBrief,
+          internal.autopilot.company_brief.triggerProductDefinitionPipeline,
           { organizationId: args.organizationId }
         );
 
@@ -167,7 +167,7 @@ export const bootstrapAutopilot = internalAction({
           agent: "system",
           level: "action",
           message:
-            "Company brief not found — generating in background. Agents starting now.",
+            "Product definition not found — triggering deep analysis pipeline.",
         });
       }
     }

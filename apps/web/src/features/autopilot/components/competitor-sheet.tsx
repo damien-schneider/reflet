@@ -3,9 +3,10 @@
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
 import { IconExternalLink } from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -18,6 +19,18 @@ import {
 import { cn } from "@/lib/utils";
 
 const BULLET_PREFIX_RE = /^[-•]\s*/;
+
+const MOVES_VISIBLE_DEFAULT = 10;
+
+function getScoreColor(score: number): "red" | "yellow" | "default" {
+  if (score >= 7) {
+    return "red";
+  }
+  if (score >= 4) {
+    return "yellow";
+  }
+  return "default";
+}
 
 interface CompetitorSheetProps {
   competitor: Doc<"autopilotCompetitors"> | null;
@@ -66,15 +79,10 @@ function BulletSection({
   label,
 }: {
   color: "green" | "red";
-  items: string;
+  items: string[];
   label: string;
 }) {
-  const lines = items
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => line.replace(BULLET_PREFIX_RE, ""));
-
-  if (lines.length === 0) {
+  if (items.length === 0) {
     return null;
   }
 
@@ -85,7 +93,7 @@ function BulletSection({
     <div>
       <span className={cn("font-medium text-xs", labelColor)}>{label}</span>
       <ul className="mt-1 space-y-1">
-        {lines.map((line) => (
+        {items.map((line) => (
           <li
             className="flex items-start gap-2 text-muted-foreground text-sm"
             key={line}
@@ -97,6 +105,104 @@ function BulletSection({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function parseBulletString(value: string): string[] {
+  return value
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => line.replace(BULLET_PREFIX_RE, ""));
+}
+
+function MovesTimeline({
+  moves,
+}: {
+  moves: NonNullable<Doc<"autopilotCompetitors">["moves"]>;
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const sorted = [...moves].sort((a, b) => b.recordedAt - a.recordedAt);
+  const visible = showAll ? sorted : sorted.slice(0, MOVES_VISIBLE_DEFAULT);
+
+  return (
+    <div>
+      <span className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+        Competitor Moves
+      </span>
+      <ul className="mt-2 space-y-3">
+        {visible.map((m) => (
+          <li
+            className="flex flex-col gap-0.5 border-border border-l-2 pl-3"
+            key={m.recordedAt}
+          >
+            <span className="text-sm">{m.action}</span>
+            <span className="text-muted-foreground text-xs">{m.impact}</span>
+            <div className="mt-0.5 flex items-center gap-2">
+              <span className="text-muted-foreground text-xs">
+                {formatDistanceToNow(m.recordedAt, { addSuffix: true })}
+              </span>
+              {m.sourceUrl && (
+                <a
+                  className="flex items-center gap-0.5 text-muted-foreground text-xs hover:text-foreground"
+                  href={m.sourceUrl}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <IconExternalLink className="size-3" />
+                  Source
+                </a>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+      {sorted.length > MOVES_VISIBLE_DEFAULT && (
+        <Button
+          className="mt-2 h-auto p-0 text-xs"
+          onClick={() => setShowAll((prev) => !prev)}
+          variant="link"
+        >
+          {showAll
+            ? "Show less"
+            : `Show ${String(sorted.length - MOVES_VISIBLE_DEFAULT)} more`}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function FeatureGapsTable({
+  gaps,
+}: {
+  gaps: NonNullable<Doc<"autopilotCompetitors">["featureGaps"]>;
+}) {
+  if (gaps.length === 0) {
+    return null;
+  }
+
+  return (
+    <div>
+      <span className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+        Feature Comparison
+      </span>
+      <div className="mt-2 overflow-hidden rounded-md border border-border text-sm">
+        <div className="grid grid-cols-3 gap-px bg-muted px-3 py-1.5 font-medium text-muted-foreground text-xs">
+          <span>Feature</span>
+          <span>Us</span>
+          <span>Them</span>
+        </div>
+        {gaps.map((g) => (
+          <div
+            className="grid grid-cols-3 gap-px px-3 py-2 even:bg-muted/30"
+            key={g.feature}
+          >
+            <span className="font-medium">{g.feature}</span>
+            <span className="text-muted-foreground">{g.us}</span>
+            <span className="text-muted-foreground">{g.them}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -213,6 +319,17 @@ function CompetitorView({
   competitor: Doc<"autopilotCompetitors">;
 }) {
   const { isStale, isAging } = computeStaleness(competitor.lastResearchedAt);
+  const scoreColor =
+    competitor.competitivityScore === undefined
+      ? null
+      : getScoreColor(competitor.competitivityScore);
+
+  const strengthsItems =
+    competitor.strengthsList ??
+    (competitor.strengths ? parseBulletString(competitor.strengths) : []);
+  const weaknessesItems =
+    competitor.weaknessesList ??
+    (competitor.weaknesses ? parseBulletString(competitor.weaknesses) : []);
 
   return (
     <>
@@ -223,6 +340,14 @@ function CompetitorView({
           )}
           {competitor.trafficEstimate && (
             <Badge variant="outline">{competitor.trafficEstimate}</Badge>
+          )}
+          {competitor.competitivityScore !== undefined && scoreColor && (
+            <Badge
+              color={scoreColor === "default" ? undefined : scoreColor}
+              variant={scoreColor === "default" ? "outline" : undefined}
+            >
+              {String(competitor.competitivityScore)}/10
+            </Badge>
           )}
           {isStale && <Badge color="red">Outdated</Badge>}
           {isAging && <Badge color="yellow">Aging</Badge>}
@@ -239,24 +364,24 @@ function CompetitorView({
           isStale={isStale}
         />
 
-        {(competitor.strengths ||
-          competitor.weaknesses ||
+        {(strengthsItems.length > 0 ||
+          weaknessesItems.length > 0 ||
           competitor.differentiator) && (
           <>
             <Separator className="my-4" />
             <div className="space-y-4">
-              {competitor.strengths && (
+              {strengthsItems.length > 0 && (
                 <BulletSection
                   color="green"
-                  items={competitor.strengths}
+                  items={strengthsItems}
                   label="Strengths"
                 />
               )}
 
-              {competitor.weaknesses && (
+              {weaknessesItems.length > 0 && (
                 <BulletSection
                   color="red"
-                  items={competitor.weaknesses}
+                  items={weaknessesItems}
                   label="Weaknesses"
                 />
               )}
@@ -272,6 +397,20 @@ function CompetitorView({
                 </div>
               )}
             </div>
+          </>
+        )}
+
+        {competitor.moves && competitor.moves.length > 0 && (
+          <>
+            <Separator className="my-4" />
+            <MovesTimeline moves={competitor.moves} />
+          </>
+        )}
+
+        {competitor.featureGaps && competitor.featureGaps.length > 0 && (
+          <>
+            <Separator className="my-4" />
+            <FeatureGapsTable gaps={competitor.featureGaps} />
           </>
         )}
       </ScrollArea>

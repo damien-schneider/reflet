@@ -85,7 +85,6 @@ export const documentType = v.union(
   v.literal("linkedin_post"),
   v.literal("twitter_post"),
   v.literal("hn_comment"),
-  v.literal("report"),
   v.literal("adr"),
   v.literal("prospect_brief")
 );

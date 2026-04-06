@@ -14,7 +14,8 @@ import {
   internalQuery,
 } from "../_generated/server";
 
-const ONE_HOUR = 60 * 60 * 1000;
+const TWO_HOURS = 2 * 60 * 60 * 1000;
+const RECENT_ACTIVITY_WINDOW = 30 * 60 * 1000;
 
 // ============================================
 // QUERIES
@@ -149,6 +150,33 @@ export const failTaskWithReason = internalMutation({
   },
 });
 
+/**
+ * Check if an agent has recent activity (within window).
+ * Used by self-heal to avoid cancelling tasks that are actively being worked on.
+ */
+export const hasRecentAgentActivity = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    agent: v.string(),
+    windowMs: v.number(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const cutoff = Date.now() - args.windowMs;
+    const recentLogs = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_org_created", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .take(50);
+
+    return recentLogs.some(
+      (log) => log.agent === args.agent && log.createdAt > cutoff
+    );
+  },
+});
+
 // ============================================
 // MAIN SELF-HEALING ACTION
 // ============================================
@@ -168,32 +196,47 @@ export const runSelfHealing = internalAction({
       try {
         let healed = 0;
 
-        // 1. Work items stuck in_progress > 1 hour → cancel
+        // 1. Work items stuck in_progress > 2 hours → cancel
+        //    (but skip if the assigned agent has recent activity)
         const stuckItems = await ctx.runQuery(
           internal.autopilot.self_heal.getStuckInProgressTasks,
           {
             organizationId: org.organizationId,
-            thresholdMs: ONE_HOUR,
+            thresholdMs: TWO_HOURS,
           }
         );
 
         for (const item of stuckItems) {
+          // Check if the assigned agent has been active recently — if so, task isn't truly stuck
+          if (item.assignedAgent) {
+            const agentActive = await ctx.runQuery(
+              internal.autopilot.self_heal.hasRecentAgentActivity,
+              {
+                organizationId: org.organizationId,
+                agent: item.assignedAgent,
+                windowMs: RECENT_ACTIVITY_WINDOW,
+              }
+            );
+            if (agentActive) {
+              continue;
+            }
+          }
           await ctx.runMutation(
             internal.autopilot.self_heal.failTaskWithReason,
             {
               taskId: item._id,
-              reason: "Auto-cancelled: no progress for 1 hour",
+              reason: "Auto-cancelled: no progress for 2 hours",
             }
           );
           healed++;
         }
 
-        // 2. Work items assigned to disabled agents in todo > 1 hour → cancel
+        // 2. Work items assigned to disabled agents in todo > 2 hours → cancel
         const orphanedItems = await ctx.runQuery(
           internal.autopilot.self_heal.getOrphanedPendingTasks,
           {
             organizationId: org.organizationId,
-            thresholdMs: ONE_HOUR,
+            thresholdMs: TWO_HOURS,
           }
         );
 

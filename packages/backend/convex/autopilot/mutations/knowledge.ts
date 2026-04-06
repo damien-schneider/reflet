@@ -157,7 +157,7 @@ export const deleteProductDefinitionAndRegenerate = mutation({
 
 /**
  * Regenerate the product definition by re-running deep product exploration.
- * Deletes the existing doc, triggers a new analysis → exploration → brief pipeline.
+ * Deletes the existing doc, then uses the shared pipeline (same as bootstrap).
  */
 export const regenerateProductDefinition = action({
   args: { organizationId: v.id("organizations") },
@@ -169,9 +169,10 @@ export const regenerateProductDefinition = action({
       { organizationId: args.organizationId }
     );
 
-    // Trigger a new repo analysis which will run the product exploration
-    await ctx.runMutation(
-      internal.integrations.github.repo_analysis.startAnalysisInternal,
+    // Use the single entry point for product definition generation
+    await ctx.scheduler.runAfter(
+      0,
+      internal.autopilot.company_brief.triggerProductDefinitionPipeline,
       { organizationId: args.organizationId }
     );
 

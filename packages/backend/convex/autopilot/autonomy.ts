@@ -50,6 +50,31 @@ const REAL_WORLD_IMPACT_ACTIONS = new Set([
 ]) as ReadonlySet<string>;
 
 // ============================================
+// REVIEW TYPE CLASSIFICATION
+// ============================================
+
+/**
+ * Review types that represent real-world impact — actions that contact humans,
+ * publish externally, or have irreversible external consequences.
+ * Only these should set `needsReview: true` in supervised mode.
+ */
+const REAL_WORLD_REVIEW_TYPES = new Set([
+  "growth_content", // posts replies on Reddit/HN/LinkedIn (external)
+  "support_reply", // sends a reply to a real user
+  "support_escalation", // escalates to a human
+  "sales_outreach", // contacts a prospect
+  "pr_review", // code PR ready to merge
+]) as ReadonlySet<string>;
+
+/**
+ * Returns true only for review types with external real-world impact.
+ * Internal operations (reports, coordination, research, bootstrap tasks)
+ * should never block the inbox.
+ */
+export const isRealWorldReviewType = (reviewType: string): boolean =>
+  REAL_WORLD_REVIEW_TYPES.has(reviewType);
+
+// ============================================
 // QUERIES
 // ============================================
 

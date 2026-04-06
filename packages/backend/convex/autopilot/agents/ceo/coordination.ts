@@ -304,7 +304,7 @@ Assess each agent, identify conflicts, suggest priority changes, and raise alert
           title: `Starvation detected: ${starvedAgents.join(", ")}`,
           content: `These agents have 0 activity in the last 7 days: ${starvedAgents.join(", ")}. They may need work assigned or may be stuck.`,
           sourceAgent: "system",
-          needsReview: true,
+          needsReview: false,
           reviewType: "coordination_alert",
           tags: ["coordination", "starvation"],
         });
@@ -319,7 +319,7 @@ Assess each agent, identify conflicts, suggest priority changes, and raise alert
           title: `Bottleneck: ${bottleneck.agent} has ${bottleneck.pending} pending tasks, 0 in progress`,
           content: `Agent "${bottleneck.agent}" has ${bottleneck.pending} tasks waiting but none being worked on. This agent may be blocked or needs attention.`,
           sourceAgent: "system",
-          needsReview: true,
+          needsReview: false,
           reviewType: "coordination_alert",
           tags: ["coordination", "bottleneck"],
         });

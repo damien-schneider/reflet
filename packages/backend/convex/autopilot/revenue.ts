@@ -373,7 +373,7 @@ const detectRevenueAlerts = async (
 
   await ctx.runMutation(internal.autopilot.documents.createDocument, {
     organizationId,
-    type: "report",
+    type: "note",
     title: `Revenue ${direction}: ${direction === "increase" ? "+" : "-"}$${changeAmount}`,
     content: `Daily revenue snapshot detected a significant change in MRR. Previous: $${prev.mrr}, Current: $${metrics.mrr}. Active subscriptions: ${metrics.activeSubscriptions}. Churn rate: ${metrics.churnRate}%.`,
     sourceAgent: "system",

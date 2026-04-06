@@ -33,9 +33,66 @@ import {
 
 interface ProductContext {
   agentKnowledge: string;
+  /** Full product definition markdown from the knowledge base. */
   productDescription: string;
+  /** Human-readable product name extracted from the knowledge base. */
   productName: string;
+  /** 1-2 sentence summary for use in compact prompts. */
+  productSummary: string;
 }
+
+// Regex patterns for product name extraction (top-level for performance)
+const HEADING_PATTERN = /^#{1,2}\s+(.+?)(?:\s*[-—:|]|$)/m;
+const SENTENCE_SPLIT_PATTERN = /[.!]/;
+const NAME_IS_PATTERN = /^(.+?)\s+(?:is|—|:)\s/;
+const GENERIC_HEADINGS = ["product definition", "overview"];
+
+/**
+ * Extract the product name from a knowledge doc.
+ *
+ * Tries (in order):
+ *   1. The doc title if it's more specific than "Product Definition"
+ *   2. The first H1/H2 heading in the content
+ *   3. The first sentence of the summary (pattern: "X is a ...")
+ */
+const extractProductName = (productDef: {
+  title: string;
+  contentFull: string;
+  contentSummary: string;
+}): string => {
+  // Use doc title if it's specific (not just "Product Definition")
+  const title = productDef.title.trim();
+  if (title && !title.toLowerCase().includes("product definition")) {
+    return title;
+  }
+
+  // Try to find the product name from the first heading
+  const headingMatch = productDef.contentFull.match(HEADING_PATTERN);
+  if (headingMatch?.[1]) {
+    const heading = headingMatch[1].trim();
+    const headingLower = heading.toLowerCase();
+    // Skip generic headings
+    if (
+      !GENERIC_HEADINGS.some((g) => headingLower.includes(g)) &&
+      heading.length < 80
+    ) {
+      return heading;
+    }
+  }
+
+  // Try the first sentence of the summary — often "X is a ..."
+  const sentences = productDef.contentSummary.split(SENTENCE_SPLIT_PATTERN);
+  const firstSentence = sentences[0]?.trim();
+  if (firstSentence) {
+    const isAMatch = firstSentence.match(NAME_IS_PATTERN);
+    if (isAMatch?.[1] && isAMatch[1].length < 60) {
+      return isAMatch[1];
+    }
+  }
+
+  // Last resort: use the summary itself (capped)
+  return productDef.contentSummary.slice(0, 60);
+};
 
 /**
  * Load product context for Growth from the Knowledge Base.
@@ -44,32 +101,38 @@ interface ProductContext {
  * NOT from raw codebase analysis. The repo analysis contains tech stack details
  * (React, Next.js, etc.) which Growth would incorrectly classify as competitors.
  * Tech stack data is for CTO/Dev agents only.
+ *
+ * Returns null if no product definition exists — callers must bail early.
  */
 const loadProductContext = async (
   ctx: { runQuery: ActionCtx["runQuery"] },
   organizationId: Id<"organizations">
-): Promise<ProductContext> => {
+): Promise<ProductContext | null> => {
   const productDef = await ctx.runQuery(
     internal.autopilot.knowledge.getKnowledgeDocByType,
     { organizationId, docType: "product_definition" }
   );
-  const repoUrl = await ctx.runQuery(
-    internal.autopilot.onboarding.getConnectedRepoUrl,
-    { organizationId }
-  );
+
+  if (!productDef) {
+    return null;
+  }
+
   const agentKnowledge = await ctx.runQuery(
     internal.autopilot.agent_context.loadAgentContext,
     { organizationId, agent: "growth" }
   );
 
   return {
-    productName: repoUrl
-      ? (repoUrl.split("/").pop() ?? "Our Product")
-      : "Our Product",
-    productDescription: productDef?.contentFull ?? "Software product",
+    productName: extractProductName(productDef),
+    productDescription: productDef.contentFull,
+    productSummary: productDef.contentSummary,
     agentKnowledge,
   };
 };
+
+const MISSING_PRODUCT_DEF_MESSAGE =
+  "Growth agent skipped — no product definition found in the Knowledge Base. " +
+  "Run the onboarding or manually create a product definition so Growth knows what the product is.";
 
 const saveContentDocuments = async (
   ctx: {
@@ -79,13 +142,17 @@ const saveContentDocuments = async (
   organizationId: Id<"organizations">,
   items: z.infer<typeof growthContentSchema>["items"]
 ): Promise<void> => {
+  // Batch dedup check — single query instead of N individual queries
+  const dedupResults = await ctx.runQuery(
+    internal.autopilot.dedup.findSimilarGrowthItems,
+    { organizationId, titles: items.map((i) => i.title) }
+  );
+  const existingTitles = new Set(
+    dedupResults.filter((r) => r.existingId !== null).map((r) => r.title)
+  );
+
   for (const item of items) {
-    // Dedup check — skip if similar document already exists
-    const existing = await ctx.runQuery(
-      internal.autopilot.dedup.findSimilarGrowthItem,
-      { organizationId, title: item.title }
-    );
-    if (existing) {
+    if (existingTitles.has(item.title)) {
       continue;
     }
     let validatedTargetUrl = item.targetUrl;
@@ -127,18 +194,16 @@ const saveContentDocuments = async (
 // ============================================
 
 const generateGrowthContent = async (
-  productName: string,
-  productDescription: string,
+  product: ProductContext,
   shippedFeatures: string[],
   completedTasks: string[],
-  discoveredThreads: z.infer<typeof threadDiscoverySchema>,
-  knowledgeContext?: string
+  discoveredThreads: z.infer<typeof threadDiscoverySchema>
 ): Promise<z.infer<typeof growthContentSchema>> => {
   const systemPrompt = buildAgentPrompt(
     GROWTH_SYSTEM_PROMPT,
     "",
     "",
-    knowledgeContext
+    product.agentKnowledge
   );
 
   const threadsContext = discoveredThreads.threads
@@ -148,10 +213,14 @@ const generateGrowthContent = async (
     )
     .join("\n");
 
-  const prompt = `Generate growth content for ${productName}.
+  const prompt = `Generate growth content for ${product.productName}.
 
-Product: ${productName}
-Description: ${productDescription}
+PRODUCT IDENTITY:
+Name: ${product.productName}
+Summary: ${product.productSummary}
+
+FULL PRODUCT DEFINITION:
+${product.productDescription}
 
 Recently shipped features:
 ${shippedFeatures.map((f) => `- ${f}`).join("\n")}
@@ -193,8 +262,7 @@ const runGapAssessment = async (
     runMutation: ActionCtx["runMutation"];
   },
   organizationId: Id<"organizations">,
-  productName: string,
-  productDescription: string
+  product: ProductContext
 ): Promise<void> => {
   // Gather existing research for context
   const existingDocs = await ctx.runQuery(
@@ -231,8 +299,8 @@ const runGapAssessment = async (
   }
 
   const gaps = await assessMarketGaps(
-    productName,
-    productDescription,
+    product.productName,
+    product.productDescription,
     existingResearchSummary,
     competitorNames
   );
@@ -329,6 +397,15 @@ export const runGrowthGeneration = internalAction({
       }
 
       const product = await loadProductContext(ctx, orgId);
+      if (!product) {
+        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+          organizationId: orgId,
+          agent: "growth",
+          level: "warning",
+          message: MISSING_PRODUCT_DEF_MESSAGE,
+        });
+        return;
+      }
 
       const discoveredThreads = await discoverThreads(
         product.productName,
@@ -382,18 +459,25 @@ export const processGrowthGenerationResults = internalAction({
       resetUsageTracker();
 
       const product = await loadProductContext(ctx, orgId);
+      if (!product) {
+        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+          organizationId: orgId,
+          agent: "growth",
+          level: "warning",
+          message: MISSING_PRODUCT_DEF_MESSAGE,
+        });
+        return;
+      }
 
       const discoveredThreads: z.infer<typeof threadDiscoverySchema> =
         JSON.parse(args.serializedThreads);
       const relevantTasks: string[] = JSON.parse(args.serializedRelevantTasks);
 
       const generatedContent = await generateGrowthContent(
-        product.productName,
-        product.productDescription,
+        product,
         relevantTasks,
         [],
-        discoveredThreads,
-        product.agentKnowledge
+        discoveredThreads
       );
 
       await saveContentDocuments(ctx, orgId, generatedContent.items);
@@ -413,12 +497,7 @@ export const processGrowthGenerationResults = internalAction({
 
       // After content generation, assess market gaps for proactive follow-up
       try {
-        await runGapAssessment(
-          ctx,
-          orgId,
-          product.productName,
-          product.productDescription
-        );
+        await runGapAssessment(ctx, orgId, product);
       } catch {
         // Gap assessment is non-critical
       }
@@ -545,6 +624,34 @@ const TECH_STACK_BLOCKLIST = new Set([
 const isTechStackItem = (name: string): boolean =>
   TECH_STACK_BLOCKLIST.has(name.toLowerCase().trim());
 
+// Inline Jaccard similarity for move dedup (bigrams on action text)
+const MOVE_SIMILARITY_THRESHOLD = 0.75;
+
+const getMovesBigrams = (str: string): Set<string> => {
+  const normalized = str.toLowerCase().trim();
+  const bigrams = new Set<string>();
+  for (let i = 0; i < normalized.length - 1; i++) {
+    bigrams.add(normalized.slice(i, i + 2));
+  }
+  return bigrams;
+};
+
+const movesJaccardSimilarity = (a: string, b: string): number => {
+  const bigramsA = getMovesBigrams(a);
+  const bigramsB = getMovesBigrams(b);
+  if (bigramsA.size === 0 && bigramsB.size === 0) {
+    return 1;
+  }
+  let intersection = 0;
+  for (const bigram of bigramsA) {
+    if (bigramsB.has(bigram)) {
+      intersection++;
+    }
+  }
+  const union = bigramsA.size + bigramsB.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+};
+
 const processCompetitorMoves = async (
   ctx: {
     runQuery: ActionCtx["runQuery"];
@@ -557,63 +664,56 @@ const processCompetitorMoves = async (
     if (isTechStackItem(move.competitor)) {
       continue;
     }
-    // Skip barely-related entries (score < 4 means too tangential to track)
-    if (move.competitivityScore < 4) {
+    // Skip loosely-related entries (score < 5 means too tangential to track)
+    if (move.competitivityScore < 5) {
       continue;
     }
-    // Dedup check — skip if similar battlecard exists
-    const existingDoc = await ctx.runQuery(
-      internal.autopilot.dedup.findSimilarGrowthItem,
-      { organizationId, title: `${move.competitor}: ${move.action}` }
-    );
-    if (existingDoc) {
-      continue;
-    }
+
     const existingCompetitor = await ctx.runQuery(
       internal.autopilot.competitors.findCompetitorByName,
       { organizationId, name: move.competitor }
     );
 
-    let competitorId: string;
-    if (existingCompetitor) {
-      competitorId = existingCompetitor._id;
-      await ctx.runMutation(internal.autopilot.competitors.updateCompetitor, {
-        competitorId: existingCompetitor._id,
-        description: move.action,
-      });
-    } else {
-      competitorId = await ctx.runMutation(
-        internal.autopilot.competitors.createCompetitor,
-        {
-          organizationId,
-          name: move.competitor,
-          description: move.action,
-        }
+    // Dedup: skip if a similar action already exists in the competitor's moves
+    if (existingCompetitor?.moves) {
+      const isDuplicate = existingCompetitor.moves.some(
+        (m) =>
+          movesJaccardSimilarity(m.action, move.action) >=
+          MOVE_SIMILARITY_THRESHOLD
       );
+      if (isDuplicate) {
+        continue;
+      }
     }
 
-    // Validate source URL before storing
     let validSourceUrl: string | undefined;
     if (move.sourceUrl) {
       const validation = await validateUrl(move.sourceUrl);
       validSourceUrl = validation.valid ? move.sourceUrl : undefined;
     }
 
-    const moveSourceUrls = validSourceUrl ? [validSourceUrl] : undefined;
-    const moveSourceLabel = validSourceUrl
-      ? `\n**Source:** [Link](${validSourceUrl})`
-      : "";
+    const moveObj = {
+      action: move.action,
+      impact: move.impact,
+      sourceUrl: validSourceUrl,
+      competitivityScore: move.competitivityScore,
+      recordedAt: Date.now(),
+    };
 
-    await ctx.runMutation(internal.autopilot.documents.createDocument, {
-      organizationId,
-      type: "battlecard",
-      title: `${move.competitor}: ${move.action}`,
-      content: `## ${move.competitor}\n\n**Competitivity:** ${move.competitivityScore}/10\n**Action:** ${move.action}\n**Impact:** ${move.impact}${moveSourceLabel}`,
-      tags: ["competitor", move.competitor.toLowerCase()],
-      sourceAgent: "growth",
-      sourceUrls: moveSourceUrls,
-      linkedCompetitorId: competitorId as Id<"autopilotCompetitors">,
-    });
+    if (existingCompetitor) {
+      await ctx.runMutation(internal.autopilot.competitors.updateCompetitor, {
+        competitorId: existingCompetitor._id,
+        moveToAppend: moveObj,
+        competitivityScore: move.competitivityScore,
+      });
+    } else {
+      await ctx.runMutation(internal.autopilot.competitors.createCompetitor, {
+        organizationId,
+        name: move.competitor,
+        moves: [moveObj],
+        competitivityScore: move.competitivityScore,
+      });
+    }
   }
 };
 
@@ -627,13 +727,17 @@ const saveResearchFindings = async (
   organizationId: Id<"organizations">,
   findings: ResearchFindings
 ): Promise<void> => {
+  // Batch dedup check — single query instead of N individual queries
+  const dedupResults = await ctx.runQuery(
+    internal.autopilot.dedup.findSimilarGrowthItems,
+    { organizationId, titles: findings.map((f) => f.topic) }
+  );
+  const existingTopics = new Set(
+    dedupResults.filter((r) => r.existingId !== null).map((r) => r.title)
+  );
+
   for (const finding of findings) {
-    // Dedup check — skip if similar research document exists
-    const existing = await ctx.runQuery(
-      internal.autopilot.dedup.findSimilarGrowthItem,
-      { organizationId, title: finding.topic }
-    );
-    if (existing) {
+    if (existingTopics.has(finding.topic)) {
       continue;
     }
     let validSourceUrl = finding.sourceUrl;
@@ -657,7 +761,7 @@ const saveResearchFindings = async (
       tags: ["market-research", finding.relevance],
       sourceAgent: "growth",
       sourceUrls,
-      needsReview: finding.relevance === "high",
+      needsReview: false,
       reviewType: "market_research",
     });
 
@@ -697,6 +801,15 @@ export const runGrowthMarketResearch = internalAction({
 
       resetUsageTracker();
       const product = await loadProductContext(ctx, orgId);
+      if (!product) {
+        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+          organizationId: orgId,
+          agent: "growth",
+          level: "warning",
+          message: MISSING_PRODUCT_DEF_MESSAGE,
+        });
+        return null;
+      }
 
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: orgId,
@@ -739,8 +852,12 @@ export const runGrowthMarketResearch = internalAction({
           systemPrompt,
           prompt: `Analyze these community discussions and find additional market intelligence.
 
-Product: ${product.productName}
-Description: ${product.productDescription}
+PRODUCT IDENTITY:
+Name: ${product.productName}
+Summary: ${product.productSummary}
+
+FULL PRODUCT DEFINITION:
+${product.productDescription}
 
 DISCOVERED THREADS:
 ${threadsContext || "(none found)"}
@@ -748,12 +865,12 @@ ${threadsContext || "(none found)"}
 ${followUpContext ? `PREVIOUS GAPS TO INVESTIGATE:\n${followUpContext}\n` : ""}
 
 Search for additional context about:
-1. Market trends relevant to the product
-2. Competitor product moves or announcements
+1. Market trends relevant to this product's specific domain
+2. Competitor product moves — only products/companies that solve the SAME user problem
 3. Opportunities for growth or positioning
-4. Community pain points the product can address
+4. Community pain points this product can address
 
-Focus on the PROBLEM DOMAIN, not on development tools or frameworks.
+CRITICAL: Focus on the PROBLEM DOMAIN the product addresses (see product definition above), NOT on development tools, frameworks, or infrastructure the product is built with.
 Provide detailed findings with sources.`,
           searchConfig: { max_results: 10 },
         });
@@ -793,8 +910,8 @@ Provide detailed findings with sources.`,
 });
 
 /**
- * Phase 2: Process discovery results — structure findings, save documents,
- * track competitor moves, and assess market gaps.
+ * Phase 2a: Structure findings via LLM and save research documents.
+ * Schedules Phase 2b for competitor processing and gap assessment.
  */
 export const processGrowthResearchResults = internalAction({
   args: {
@@ -811,6 +928,15 @@ export const processGrowthResearchResults = internalAction({
     try {
       resetUsageTracker();
       const product = await loadProductContext(ctx, orgId);
+      if (!product) {
+        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+          organizationId: orgId,
+          agent: "growth",
+          level: "warning",
+          message: MISSING_PRODUCT_DEF_MESSAGE,
+        });
+        return null;
+      }
 
       const deepCitations: Array<{
         url: string;
@@ -836,6 +962,13 @@ export const processGrowthResearchResults = internalAction({
         systemPrompt,
         prompt: `Structure this market research into findings and competitor moves.
 
+PRODUCT IDENTITY (use this to judge what is and isn't a competitor):
+Name: ${product.productName}
+Summary: ${product.productSummary}
+
+FULL PRODUCT DEFINITION:
+${product.productDescription}
+
 RAW RESEARCH:
 ${args.deepResearchText}
 
@@ -849,12 +982,76 @@ Rules:
 - Only use sourceUrl values from the VERIFIED SOURCES or THREAD URLS lists above
 - If a finding has no matching URL, set sourceUrl to empty string
 - Provide actionable findings that PM and Sales agents can use
-- CRITICAL: Competitors are products/companies that solve the SAME PROBLEM as us. Frameworks, languages, libraries, and tools (like React, Next.js, TypeScript, Tailwind, etc.) are NOT competitors. Only include actual competing products or services.
-- For each competitor, assess how directly they compete: a direct competitor solves the exact same problem for the same audience, while an indirect one only overlaps partially.`,
+
+COMPETITOR IDENTIFICATION RULES (read carefully):
+- A competitor is ONLY a product or company that solves the SAME USER PROBLEM for the SAME TARGET AUDIENCE as described in the product definition above.
+- Do NOT include: frameworks, languages, libraries, infrastructure providers, hosting platforms, databases, CI/CD tools, or any technology the product is BUILT WITH. These are part of our tech stack, not competitors.
+- Do NOT include: generic SaaS platforms, analytics tools, or developer tools unless they directly compete in our specific product category.
+- When in doubt, DO NOT include it. Only include products you are confident a user would evaluate as an alternative to ours.
+- For each competitor, the competitivityScore must reflect how directly they compete: 10 = exact same problem and audience, 5 = partial overlap, 1 = barely related.
+- If you found zero real competitors in the research, return an empty competitorMoves array. Do not fill it with tangentially related products.`,
       });
 
+      // Save research findings (DB writes only — no LLM calls)
       await saveResearchFindings(ctx, orgId, researchOutput.findings);
-      await processCompetitorMoves(ctx, orgId, researchOutput.competitorMoves);
+
+      const usage = getUsageTracker();
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: orgId,
+        agent: "growth",
+        level: "success",
+        message: `Market research phase 2a complete: ${researchOutput.findings.length} findings structured`,
+        details: `${researchOutput.summary} | LLM usage: ${usage.calls} calls, ${usage.inputTokens + usage.outputTokens} tokens, ~$${usage.estimatedCostUsd.toFixed(4)}`,
+      });
+
+      // Schedule Phase 2b: competitor processing + follow-up marking + gap assessment
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.agents.growth.content.processGrowthResearchPhase2b,
+        {
+          organizationId: orgId,
+          serializedCompetitorMoves: JSON.stringify(
+            researchOutput.competitorMoves
+          ),
+          followUpNoteIds: args.followUpNoteIds,
+        }
+      );
+
+      return null;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: orgId,
+        agent: "growth",
+        level: "error",
+        message: `Market research failed (phase 2a): ${errorMessage}`,
+      });
+      return null;
+    }
+  },
+});
+
+/**
+ * Phase 2b: Process competitor moves, mark follow-up notes, and run gap assessment.
+ * Separated from Phase 2a to keep each action well under the 600s limit.
+ */
+export const processGrowthResearchPhase2b = internalAction({
+  args: {
+    organizationId: v.id("organizations"),
+    serializedCompetitorMoves: v.string(),
+    followUpNoteIds: v.array(v.id("autopilotDocuments")),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const orgId = args.organizationId;
+
+    try {
+      const competitorMoves: z.infer<
+        typeof marketResearchSchema
+      >["competitorMoves"] = JSON.parse(args.serializedCompetitorMoves);
+
+      await processCompetitorMoves(ctx, orgId, competitorMoves);
 
       // Mark follow-up notes as processed
       for (const noteId of args.followUpNoteIds) {
@@ -869,24 +1066,21 @@ Rules:
         agent: "growth",
       });
 
-      const usage = getUsageTracker();
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {
         organizationId: orgId,
         agent: "growth",
         level: "success",
-        message: `Market research complete: ${researchOutput.findings.length} findings, ${researchOutput.competitorMoves.length} competitor moves`,
-        details: `${researchOutput.summary} | LLM usage: ${usage.calls} calls, ${usage.inputTokens + usage.outputTokens} tokens, ~$${usage.estimatedCostUsd.toFixed(4)}`,
+        message: `Market research phase 2b complete: ${competitorMoves.length} competitor moves processed, ${args.followUpNoteIds.length} follow-ups marked`,
       });
 
-      try {
-        await runGapAssessment(
-          ctx,
-          orgId,
-          product.productName,
-          product.productDescription
-        );
-      } catch {
-        // Gap assessment is non-critical
+      // Gap assessment (LLM call — runs in this separate action to stay within limits)
+      const product = await loadProductContext(ctx, orgId);
+      if (product) {
+        try {
+          await runGapAssessment(ctx, orgId, product);
+        } catch {
+          // Gap assessment is non-critical
+        }
       }
 
       return null;
@@ -897,7 +1091,7 @@ Rules:
         organizationId: orgId,
         agent: "growth",
         level: "error",
-        message: `Market research failed (processing phase): ${errorMessage}`,
+        message: `Market research failed (phase 2b): ${errorMessage}`,
       });
       return null;
     }

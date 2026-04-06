@@ -179,6 +179,19 @@ const STALENESS_TITLE: Record<string, string> = {
   fresh: "Recently researched",
 };
 
+function getScoreClassName(score: number | undefined): string | null {
+  if (score === undefined) {
+    return null;
+  }
+  if (score >= 7) {
+    return "text-red-500";
+  }
+  if (score >= 4) {
+    return "text-yellow-500";
+  }
+  return "text-muted-foreground";
+}
+
 function CompetitorRow({
   competitor,
   onClick,
@@ -195,6 +208,9 @@ function CompetitorRow({
         .map((f) => f.trim())
         .filter(Boolean).length
     : 0;
+  const moveCount = competitor.moves?.length ?? 0;
+  const score = competitor.competitivityScore;
+  const scoreClassName = getScoreClassName(score);
 
   return (
     <button
@@ -234,6 +250,24 @@ function CompetitorRow({
         <Badge className="hidden shrink-0 sm:inline-flex" variant="secondary">
           {competitor.pricingTier}
         </Badge>
+      )}
+
+      {score !== undefined && scoreClassName && (
+        <span
+          className={cn(
+            "hidden shrink-0 font-medium text-xs md:inline",
+            scoreClassName
+          )}
+          title="Competitivity score"
+        >
+          {String(score)}/10
+        </span>
+      )}
+
+      {moveCount > 0 && (
+        <span className="hidden shrink-0 text-muted-foreground text-xs md:inline">
+          {moveCount} move{moveCount === 1 ? "" : "s"}
+        </span>
       )}
 
       {featureCount > 0 && (

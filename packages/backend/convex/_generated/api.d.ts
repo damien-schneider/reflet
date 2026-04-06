@@ -72,6 +72,7 @@ import type * as autopilot_mutations_config from "../autopilot/mutations/config.
 import type * as autopilot_mutations_documents from "../autopilot/mutations/documents.js";
 import type * as autopilot_mutations_inbox from "../autopilot/mutations/inbox.js";
 import type * as autopilot_mutations_knowledge from "../autopilot/mutations/knowledge.js";
+import type * as autopilot_mutations_reports from "../autopilot/mutations/reports.js";
 import type * as autopilot_mutations_work from "../autopilot/mutations/work.js";
 import type * as autopilot_onboarding from "../autopilot/onboarding.js";
 import type * as autopilot_onboarding_tasks from "../autopilot/onboarding_tasks.js";
@@ -85,10 +86,12 @@ import type * as autopilot_queries_documents from "../autopilot/queries/document
 import type * as autopilot_queries_inbox from "../autopilot/queries/inbox.js";
 import type * as autopilot_queries_knowledge from "../autopilot/queries/knowledge.js";
 import type * as autopilot_queries_leads from "../autopilot/queries/leads.js";
+import type * as autopilot_queries_reports from "../autopilot/queries/reports.js";
 import type * as autopilot_queries_revenue from "../autopilot/queries/revenue.js";
 import type * as autopilot_queries_threads from "../autopilot/queries/threads.js";
 import type * as autopilot_queries_work from "../autopilot/queries/work.js";
 import type * as autopilot_repo_analysis from "../autopilot/repo_analysis.js";
+import type * as autopilot_reports from "../autopilot/reports.js";
 import type * as autopilot_revenue from "../autopilot/revenue.js";
 import type * as autopilot_routines from "../autopilot/routines.js";
 import type * as autopilot_sales_mutations from "../autopilot/sales_mutations.js";
@@ -313,6 +316,7 @@ declare const fullApi: ApiFromModules<{
   "autopilot/mutations/documents": typeof autopilot_mutations_documents;
   "autopilot/mutations/inbox": typeof autopilot_mutations_inbox;
   "autopilot/mutations/knowledge": typeof autopilot_mutations_knowledge;
+  "autopilot/mutations/reports": typeof autopilot_mutations_reports;
   "autopilot/mutations/work": typeof autopilot_mutations_work;
   "autopilot/onboarding": typeof autopilot_onboarding;
   "autopilot/onboarding_tasks": typeof autopilot_onboarding_tasks;
@@ -326,10 +330,12 @@ declare const fullApi: ApiFromModules<{
   "autopilot/queries/inbox": typeof autopilot_queries_inbox;
   "autopilot/queries/knowledge": typeof autopilot_queries_knowledge;
   "autopilot/queries/leads": typeof autopilot_queries_leads;
+  "autopilot/queries/reports": typeof autopilot_queries_reports;
   "autopilot/queries/revenue": typeof autopilot_queries_revenue;
   "autopilot/queries/threads": typeof autopilot_queries_threads;
   "autopilot/queries/work": typeof autopilot_queries_work;
   "autopilot/repo_analysis": typeof autopilot_repo_analysis;
+  "autopilot/reports": typeof autopilot_reports;
   "autopilot/revenue": typeof autopilot_revenue;
   "autopilot/routines": typeof autopilot_routines;
   "autopilot/sales_mutations": typeof autopilot_sales_mutations;

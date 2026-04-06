@@ -33,7 +33,7 @@ export const createPrimaryOnboardingTasks = internalMutation({
         status: "todo",
         priority: item.priority,
         assignedAgent: item.assignedAgent,
-        needsReview: true,
+        needsReview: false,
         reviewType: "task_approval",
         createdBy: "onboarding",
         createdAt: now,
@@ -73,7 +73,7 @@ export const createPrimaryOnboardingTasks = internalMutation({
 
     await ctx.db.insert("autopilotDocuments", {
       organizationId: args.organizationId,
-      type: "report",
+      type: "note",
       title: "Welcome to Reflet Autopilot",
       content: `I've started analyzing ${args.repoUrl}. 4 primary onboarding tasks have been created. I'll report back with findings from the market analysis shortly.`,
       tags: ["onboarding"],
@@ -107,7 +107,7 @@ export const createAnalysisTask = internalMutation({
       status: "todo",
       priority: "high",
       assignedAgent: "pm",
-      needsReview: true,
+      needsReview: false,
       reviewType: "task_approval",
       createdBy: "system",
       createdAt: args.createdAt,
@@ -116,7 +116,7 @@ export const createAnalysisTask = internalMutation({
 
     await ctx.db.insert("autopilotDocuments", {
       organizationId: args.organizationId,
-      type: "report",
+      type: "note",
       title: "Repository analysis started",
       content: `Autopilot is analyzing ${args.repoUrl} to generate initial improvement tasks.`,
       tags: ["onboarding", "analysis"],

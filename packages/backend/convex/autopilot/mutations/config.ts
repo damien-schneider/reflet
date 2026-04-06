@@ -373,6 +373,9 @@ const AUTOPILOT_TABLES_WITH_OTHER_ORG_TABLES = [
   "autopilotLeads",
   "autopilotRoutines",
   "autopilotAdapterCredentials",
+  "repoAnalysis",
+  "websiteReferences",
+  "projectSetupResults",
 ] as const;
 
 export const resetAllData = mutation({

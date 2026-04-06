@@ -2,10 +2,12 @@
 
 import {
   IconBook,
+  IconChartBar,
   IconDashboard,
   IconFileText,
   IconInbox,
   IconMap2,
+  IconMessageCircle,
   IconSettings,
   IconTarget,
   IconUserSearch,
@@ -27,6 +29,13 @@ const NAV_ITEMS = [
     icon: IconFileText,
     path: "/documents",
   },
+  {
+    id: "content",
+    label: "Content",
+    icon: IconMessageCircle,
+    path: "/content",
+  },
+  { id: "reports", label: "Reports", icon: IconChartBar, path: "/reports" },
   { id: "growth", label: "Competitors", icon: IconTarget, path: "/growth" },
   { id: "sales", label: "Sales", icon: IconUserSearch, path: "/sales" },
   { id: "settings", label: "Settings", icon: IconSettings, path: "/settings" },

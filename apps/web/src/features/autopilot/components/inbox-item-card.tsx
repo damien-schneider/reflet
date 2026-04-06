@@ -60,7 +60,7 @@ function formatTargetLabel(url: string): string {
 
 interface UnifiedInboxItem {
   _id: string;
-  _source: "work" | "document";
+  _source: "work" | "document" | "report";
   actionUrl?: string;
   assignedAgent?: string;
   content?: string;
@@ -96,9 +96,19 @@ export function InboxItemCard({
   const rejectWork = useMutation(api.autopilot.mutations.inbox.rejectWorkItem);
   const approveDoc = useMutation(api.autopilot.mutations.inbox.approveDocument);
   const rejectDoc = useMutation(api.autopilot.mutations.inbox.rejectDocument);
+  const acknowledgeReport = useMutation(
+    api.autopilot.mutations.reports.acknowledgeReport
+  );
 
   const handleAction = async (action: "approved" | "rejected") => {
     try {
+      if (item._source === "report") {
+        if (action === "approved") {
+          await acknowledgeReport({ reportId: item._id as never });
+          toast.success("Report acknowledged");
+        }
+        return;
+      }
       if (action === "approved") {
         if (item._source === "work") {
           await approveWork({ workItemId: item._id as never });
@@ -206,23 +216,25 @@ export function InboxItemCard({
                   handleAction("approved");
                 }}
                 size="icon"
-                title="Approve"
+                title={item._source === "report" ? "Acknowledge" : "Approve"}
                 variant="ghost"
               >
                 <IconCheck className="size-3.5 text-green-500" />
               </Button>
-              <Button
-                className="size-7"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAction("rejected");
-                }}
-                size="icon"
-                title="Reject"
-                variant="ghost"
-              >
-                <IconX className="size-3.5 text-red-500" />
-              </Button>
+              {item._source !== "report" && (
+                <Button
+                  className="size-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAction("rejected");
+                  }}
+                  size="icon"
+                  title="Reject"
+                  variant="ghost"
+                >
+                  <IconX className="size-3.5 text-red-500" />
+                </Button>
+              )}
             </div>
           )}
           {!isPending && (

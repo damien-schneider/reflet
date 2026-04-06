@@ -5,6 +5,7 @@ import { configTables } from "./config.tables";
 import { dataTables } from "./data.tables";
 import { documentsTables } from "./documents.tables";
 import { knowledgeTables } from "./knowledge.tables";
+import { reportsTables } from "./reports.tables";
 import { workTables } from "./work.tables";
 
 export const autopilotTables = {
@@ -16,4 +17,5 @@ export const autopilotTables = {
   ...documentsTables,
   ...competitorsTables,
   ...workTables,
+  ...reportsTables,
 };

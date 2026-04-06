@@ -148,3 +148,41 @@ export const findSimilarGrowthItem = internalQuery({
     return null;
   },
 });
+
+/**
+ * Batch check: given an array of titles, return which ones already have
+ * similar documents. Returns a map of title → existing doc ID (or null).
+ * Reduces N individual dedup queries to a single query + in-memory check.
+ */
+export const findSimilarGrowthItems = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    titles: v.array(v.string()),
+  },
+  returns: v.array(
+    v.object({
+      title: v.string(),
+      existingId: v.union(v.id("autopilotDocuments"), v.null()),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const existingDocs = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .take(500);
+
+    const activeDocs = existingDocs.filter((doc) => doc.status !== "archived");
+
+    return args.titles.map((title) => {
+      for (const doc of activeDocs) {
+        const similarity = jaccardSimilarity(title, doc.title);
+        if (similarity >= TITLE_SIMILARITY_THRESHOLD) {
+          return { title, existingId: doc._id };
+        }
+      }
+      return { title, existingId: null };
+    });
+  },
+});

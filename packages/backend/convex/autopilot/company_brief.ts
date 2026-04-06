@@ -146,6 +146,33 @@ function extractSummary(analysis: string): string {
 }
 
 /**
+ * Single entry point for product definition generation.
+ *
+ * Both the automatic bootstrap and the manual "Recompute" flow call this.
+ * It tries the full exploration pipeline first (deep codebase analysis),
+ * and falls back to direct LLM generation if no repo is connected or
+ * an analysis is already in progress.
+ */
+export const triggerProductDefinitionPipeline = internalAction({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    try {
+      await ctx.runMutation(
+        internal.integrations.github.repo_analysis.startAnalysisInternal,
+        { organizationId: args.organizationId }
+      );
+    } catch {
+      // No repo connected or analysis already in progress — fall back to direct generation
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.company_brief.generateCompanyBrief,
+        { organizationId: args.organizationId }
+      );
+    }
+  },
+});
+
+/**
  * Check if the product definition exists.
  */
 export const isCompanyBriefApproved = internalQuery({

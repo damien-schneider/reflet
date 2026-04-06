@@ -23,6 +23,7 @@ import { useAutopilotContext } from "@/features/autopilot/components/autopilot-c
 import { DocumentSheet } from "@/features/autopilot/components/document-sheet";
 import {
   AGENT_LABELS,
+  CONTENT_TYPES,
   TYPE_COLOR_MAP,
   TYPE_LABELS,
 } from "@/features/autopilot/lib/document-labels";
@@ -74,6 +75,9 @@ export default function DocumentsPage() {
   }
 
   const filteredDocs = documents.filter((doc) => {
+    if (CONTENT_TYPES.has(doc.type)) {
+      return false;
+    }
     if (
       searchQuery &&
       !doc.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -174,11 +178,18 @@ export default function DocumentsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All types</SelectItem>
-            {Object.entries(TYPE_LABELS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
+            {Object.entries(TYPE_LABELS)
+              .filter(
+                ([value]) =>
+                  !CONTENT_TYPES.has(
+                    value as Parameters<typeof CONTENT_TYPES.has>[0]
+                  )
+              )
+              .map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
 

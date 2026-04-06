@@ -665,7 +665,7 @@ Rules:
           title: pattern.pattern,
           content: pattern.description,
           sourceAgent: "sales",
-          needsReview: pattern.actionable,
+          needsReview: false,
           reviewType: "prospect_pattern",
           tags: ["prospect", pattern.actionable ? "actionable" : "observation"],
         });
@@ -691,7 +691,7 @@ Rules:
 
         await ctx.runMutation(internal.autopilot.documents.createDocument, {
           organizationId: args.organizationId,
-          type: "report",
+          type: "prospect_brief",
           title: `Prospecting: ${createdLeadCount} leads, ${prospectOutput.patterns.length} patterns`,
           content: briefContent,
           tags: ["sales", "prospecting"],

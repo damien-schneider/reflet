@@ -155,29 +155,17 @@ Generate a report that synthesizes this data into actionable insights.`;
         prompt: userPrompt,
       });
 
-      const reportContent = JSON.stringify({
+      await ctx.runMutation(internal.autopilot.reports.createReport, {
+        organizationId: args.organizationId,
+        reportType: args.reportType,
         title: reportOutput.title,
         executiveSummary: reportOutput.executiveSummary,
+        healthScore: reportOutput.overallHealthScore,
         sections: reportOutput.sections,
         recommendations: reportOutput.recommendations,
-        healthScore: reportOutput.overallHealthScore,
-        generatedAt: new Date().toISOString(),
-        reportType: args.reportType,
-      });
-
-      await ctx.runMutation(internal.autopilot.documents.createDocument, {
-        organizationId: args.organizationId,
-        type: "report",
-        title: reportOutput.title,
-        content: reportContent,
         sourceAgent: "system",
-        needsReview: true,
-        reviewType: "ceo_report",
+        needsReview: false,
         tags: ["report", args.reportType],
-        metadata: JSON.stringify({
-          reportType: args.reportType,
-          healthScore: reportOutput.overallHealthScore,
-        }),
       });
 
       await ctx.runMutation(internal.autopilot.tasks.logActivity, {

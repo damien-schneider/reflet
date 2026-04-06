@@ -24,6 +24,7 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const THREE_STORY_THRESHOLD = 3;
 const QUERY_LIMIT = 200;
+const GROWTH_FOLLOWUP_DAMPENING_MS = 30 * 60 * 1000; // 30 minutes
 
 // ============================================
 // PURE WAKE CONDITION FUNCTIONS (for testing)
@@ -42,6 +43,7 @@ interface ActivitySummary {
   now: number;
   readyStoryCount: number;
   recentErrorCount: number;
+  recentGrowthSuccessAt: number | null;
   shippedFeaturesWithoutContent: number;
   stuckReviewCount: number;
 }
@@ -85,7 +87,9 @@ export const shouldWakeDev = (summary: ActivitySummary): boolean => {
  * Growth wakes when there's content or research work:
  * - No research docs exist (bootstrap — prime the pipeline)
  * - Shipped features need content/announcements
- * - Growth has unprocessed follow-up notes (self-driven curiosity)
+ * - Growth has unprocessed follow-up notes (self-driven curiosity),
+ *   BUT only if Growth hasn't had a successful run in the last 30 minutes
+ *   (prevents no-op spam when guards block execution)
  */
 export const shouldWakeGrowth = (summary: ActivitySummary): boolean => {
   if (!summary.hasResearchDocs) {
@@ -95,7 +99,12 @@ export const shouldWakeGrowth = (summary: ActivitySummary): boolean => {
     return true;
   }
   if (summary.growthFollowUpNoteCount > 0) {
-    return true;
+    // Dampen follow-up wakes: only trigger if Growth hasn't run recently
+    const recentlyRan =
+      summary.recentGrowthSuccessAt !== null &&
+      summary.now - summary.recentGrowthSuccessAt <
+        GROWTH_FOLLOWUP_DAMPENING_MS;
+    return !recentlyRan;
   }
   return false;
 };
@@ -306,6 +315,13 @@ export const checkWakeConditions = internalQuery({
       (a) => a.level === "error" && now - a.createdAt < ONE_DAY_MS
     ).length;
 
+    // ---- Growth dampening: find last successful growth execution ----
+
+    const lastGrowthSuccess = recentActivity.find(
+      (a) => a.agent === "growth" && a.level === "success"
+    );
+    const recentGrowthSuccessAt = lastGrowthSuccess?.createdAt ?? null;
+
     // ---- Build summary ----
 
     const summary: ActivitySummary = {
@@ -322,6 +338,7 @@ export const checkWakeConditions = internalQuery({
       leadsNeedingFollowUp,
       stuckReviewCount,
       recentErrorCount,
+      recentGrowthSuccessAt,
       now,
     };
 
@@ -515,8 +532,9 @@ const dispatchDevTask = async (
 
 const dispatchPendingTasks = async (
   ctx: HeartbeatCtx,
-  orgId: Id<"organizations">
-): Promise<void> => {
+  orgId: Id<"organizations">,
+  enabledAgentSet: Set<string>
+): Promise<number> => {
   const pendingTasks = await ctx.runQuery(
     internal.autopilot.tasks.getPendingTasks,
     { organizationId: orgId }
@@ -535,12 +553,8 @@ const dispatchPendingTasks = async (
       continue;
     }
 
-    // Check if agent is enabled
-    const agentEnabled = await ctx.runQuery(
-      internal.autopilot.config.isAgentEnabled,
-      { organizationId: orgId, agent }
-    );
-    if (!agentEnabled) {
+    // Use the pre-fetched enabled set instead of querying per task
+    if (!enabledAgentSet.has(agent)) {
       continue;
     }
 
@@ -583,6 +597,63 @@ const dispatchPendingTasks = async (
       });
     }
   }
+
+  return dispatched;
+};
+
+interface WakeResult {
+  skipped: string[];
+  woken: string[];
+}
+
+/**
+ * Evaluate each agent and decide whether to wake it.
+ * Returns lists of woken and skipped agents with reasons.
+ */
+const evaluateAndWakeAgents = async (
+  ctx: HeartbeatCtx & { runQuery: ActionCtx["runQuery"] },
+  orgId: Id<"organizations">,
+  shouldWake: Record<string, boolean>,
+  enabledSet: Set<string>,
+  pipelineFull: boolean
+): Promise<WakeResult> => {
+  const woken: string[] = [];
+  const skipped: string[] = [];
+
+  for (const [agent, wake] of Object.entries(shouldWake)) {
+    if (!enabledSet.has(agent)) {
+      skipped.push(`${agent} (disabled)`);
+      continue;
+    }
+    if (!wake) {
+      skipped.push(`${agent} (no work)`);
+      continue;
+    }
+    if (agent === "pm" && pipelineFull) {
+      skipped.push("pm (pipeline full)");
+      continue;
+    }
+    const agentGuard = await ctx.runQuery(
+      internal.autopilot.guards.checkGuards,
+      { organizationId: orgId, agent }
+    );
+    if (!agentGuard.allowed) {
+      skipped.push(`${agent} (${agentGuard.reason ?? "guard blocked"})`);
+      continue;
+    }
+    const recentlyWoken = await ctx.runQuery(
+      internal.autopilot.heartbeat.isAgentRecentlyWoken,
+      { organizationId: orgId, agent }
+    );
+    if (recentlyWoken) {
+      skipped.push(`${agent} (recently woken)`);
+      continue;
+    }
+    await wakeAgent(ctx, orgId, agent);
+    woken.push(agent);
+  }
+
+  return { woken, skipped };
 };
 
 export const runHeartbeat = internalAction({
@@ -624,28 +695,30 @@ export const runHeartbeat = internalAction({
       );
       const pipelineFull = taskCapUsage.totalPending >= taskCapUsage.totalCap;
 
-      for (const [agent, wake] of Object.entries(shouldWake)) {
-        if (!(wake && enabledSet.has(agent))) {
-          continue;
-        }
-        // Don't wake PM if pipeline is full — it can't create tasks anyway
-        if (agent === "pm" && pipelineFull) {
-          continue;
-        }
-        // Concurrency guard: skip if agent was recently woken
-        const recentlyWoken = await ctx.runQuery(
-          internal.autopilot.heartbeat.isAgentRecentlyWoken,
-          { organizationId: orgId, agent }
-        );
-        if (recentlyWoken) {
-          continue;
-        }
-        await wakeAgent(ctx, orgId, agent);
-      }
+      const { woken, skipped } = await evaluateAndWakeAgents(
+        ctx,
+        orgId,
+        shouldWake,
+        enabledSet,
+        pipelineFull
+      );
 
-      // Also: dispatch any pending tasks to their assigned agents.
-      // This handles the task board work (assigned tasks from PM/onboarding).
-      await dispatchPendingTasks(ctx, orgId);
+      // Dispatch any pending tasks to their assigned agents
+      const tasksDispatched = await dispatchPendingTasks(
+        ctx,
+        orgId,
+        enabledSet
+      );
+
+      // Log a single heartbeat summary per org
+      const wokenStr = woken.length > 0 ? woken.join(", ") : "none";
+      const skippedStr = skipped.length > 0 ? skipped.join(", ") : "none";
+      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        organizationId: orgId,
+        agent: "system",
+        level: "info",
+        message: `Heartbeat: woke [${wokenStr}], skipped [${skippedStr}], pipeline: ${taskCapUsage.totalPending}/${taskCapUsage.totalCap} active, ${tasksDispatched} dispatched`,
+      });
     }
 
     return null;

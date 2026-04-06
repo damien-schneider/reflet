@@ -22,6 +22,7 @@ const BASE_SUMMARY = {
   now: Date.now(),
   readyStoryCount: 5,
   recentErrorCount: 0,
+  recentGrowthSuccessAt: null,
   shippedFeaturesWithoutContent: 0,
   stuckReviewCount: 0,
 } as const;
@@ -81,9 +82,29 @@ describe("shouldWakeGrowth", () => {
     ).toBe(true);
   });
 
-  it("wakes when growth follow-up notes exist", () => {
+  it("wakes when growth follow-up notes exist and no recent success", () => {
     expect(
       shouldWakeGrowth({ ...BASE_SUMMARY, growthFollowUpNoteCount: 2 })
+    ).toBe(true);
+  });
+
+  it("does not wake for follow-up notes if growth ran recently", () => {
+    expect(
+      shouldWakeGrowth({
+        ...BASE_SUMMARY,
+        growthFollowUpNoteCount: 2,
+        recentGrowthSuccessAt: Date.now() - 10 * 60 * 1000, // 10 min ago
+      })
+    ).toBe(false);
+  });
+
+  it("wakes for follow-up notes if growth success is older than 30 min", () => {
+    expect(
+      shouldWakeGrowth({
+        ...BASE_SUMMARY,
+        growthFollowUpNoteCount: 2,
+        recentGrowthSuccessAt: Date.now() - 35 * 60 * 1000, // 35 min ago
+      })
     ).toBe(true);
   });
 
