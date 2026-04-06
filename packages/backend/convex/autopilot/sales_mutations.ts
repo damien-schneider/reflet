@@ -20,7 +20,7 @@ export const triggerLeadDiscovery = mutation({
 
     await ctx.scheduler.runAfter(
       0,
-      internal.autopilot.agents.sales.runSalesProspecting,
+      internal.autopilot.agents.sales_prospecting.runSalesProspecting,
       { organizationId: args.organizationId }
     );
 

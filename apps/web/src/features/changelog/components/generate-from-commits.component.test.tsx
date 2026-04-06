@@ -52,9 +52,9 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
       },
     },
     changelog: {
-      actions: {
+      release_commits: {
         getLatestCommitFromPreviousRelease:
-          "changelog.actions.getLatestCommitFromPreviousRelease",
+          "changelog.release_commits.getLatestCommitFromPreviousRelease",
       },
     },
   },

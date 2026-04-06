@@ -58,10 +58,12 @@ vi.mock("./message-bubble", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     support: {
-      messages: {
-        listReactions: "support.messages.listReactions",
-        addReaction: "support.messages.addReaction",
-        removeReaction: "support.messages.removeReaction",
+      message_queries: {
+        listReactions: "support.message_queries.listReactions",
+      },
+      message_mutations: {
+        addReaction: "support.message_mutations.addReaction",
+        removeReaction: "support.message_mutations.removeReaction",
       },
     },
   },

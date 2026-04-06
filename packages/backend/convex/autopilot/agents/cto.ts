@@ -16,7 +16,7 @@ import {
 } from "../../_generated/server";
 import { AGENT_MODELS } from "./models";
 import { buildAgentPrompt, CTO_SYSTEM_PROMPT } from "./prompts";
-import { generateObjectWithFallback } from "./shared";
+import { generateObjectWithFallback } from "./shared_generation";
 
 // ============================================
 // ZOD SCHEMA
@@ -234,7 +234,7 @@ export const runCTOSpecGeneration = internalAction({
     }
 
     // Load the PM task
-    const task = await ctx.runQuery(internal.autopilot.tasks.getTask, {
+    const task = await ctx.runQuery(internal.autopilot.task_queries.getTask, {
       taskId: args.taskId,
     });
 
@@ -345,10 +345,13 @@ Create a specification that a developer can execute without asking clarifying qu
       );
 
       // Mark CTO task as completed
-      await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-        taskId: args.taskId,
-        status: "done",
-      });
+      await ctx.runMutation(
+        internal.autopilot.task_mutations.updateTaskStatus,
+        {
+          taskId: args.taskId,
+          status: "done",
+        }
+      );
 
       // Log success
       await ctx.runMutation(internal.autopilot.agents.cto.logCtoActivity, {
@@ -363,11 +366,14 @@ Create a specification that a developer can execute without asking clarifying qu
         error instanceof Error ? error.message : String(error);
 
       // Mark task as failed
-      await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-        taskId: args.taskId,
-        status: "cancelled",
-        errorMessage,
-      });
+      await ctx.runMutation(
+        internal.autopilot.task_mutations.updateTaskStatus,
+        {
+          taskId: args.taskId,
+          status: "cancelled",
+          errorMessage,
+        }
+      );
 
       // Log failure
       await ctx.runMutation(internal.autopilot.agents.cto.logCtoActivity, {

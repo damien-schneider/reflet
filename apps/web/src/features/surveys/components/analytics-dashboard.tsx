@@ -12,7 +12,7 @@ interface AnalyticsDashboardProps {
 }
 
 export function AnalyticsDashboard({ surveyId }: AnalyticsDashboardProps) {
-  const analytics = useQuery(api.surveys.mutations.getAnalytics, {
+  const analytics = useQuery(api.surveys.responses.getAnalytics, {
     surveyId,
   });
 

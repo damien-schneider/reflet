@@ -43,7 +43,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
     }),
     execute: async (ctx, input) => {
       const taskId = await ctx.runMutation(
-        internal.autopilot.tasks.createTask,
+        internal.autopilot.task_mutations.createTask,
         {
           organizationId,
           title: input.title,
@@ -96,10 +96,13 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
         .describe("Filter by task status"),
     }),
     execute: async (ctx, input) => {
-      const tasks = await ctx.runQuery(internal.autopilot.tasks.getTasksByOrg, {
-        organizationId,
-        status: input.status as never,
-      });
+      const tasks = await ctx.runQuery(
+        internal.autopilot.task_queries.getTasksByOrg,
+        {
+          organizationId,
+          status: input.status as never,
+        }
+      );
       if (tasks.length === 0) {
         return input.status
           ? `No ${input.status} tasks found.`
@@ -146,7 +149,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
     }),
     execute: async (ctx, input) => {
       const activities = await ctx.runQuery(
-        internal.autopilot.tasks.getRecentActivity,
+        internal.autopilot.task_queries.getRecentActivity,
         { organizationId, limit: input.limit ?? 15 }
       );
       if (activities.length === 0) {
@@ -191,12 +194,15 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
       if (input.itemType === "work_item") {
         const status =
           input.decision === "rejected" ? ("cancelled" as const) : undefined;
-        await ctx.runMutation(internal.autopilot.tasks.updateTaskStatus, {
-          taskId: input.itemId as Id<"autopilotWorkItems">,
-          status: status ?? "todo",
-          needsReview: false,
-          reviewType: undefined,
-        });
+        await ctx.runMutation(
+          internal.autopilot.task_mutations.updateTaskStatus,
+          {
+            taskId: input.itemId as Id<"autopilotWorkItems">,
+            status: status ?? "todo",
+            needsReview: false,
+            reviewType: undefined,
+          }
+        );
       } else {
         await ctx.runMutation(internal.autopilot.documents.updateDocument, {
           documentId: input.itemId as Id<"autopilotDocuments">,
@@ -225,7 +231,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
         return "Error: Autopilot not configured.";
       }
       const field = `${input.agent}Enabled`;
-      await ctx.runMutation(internal.autopilot.config.updateConfig, {
+      await ctx.runMutation(internal.autopilot.config_mutations.updateConfig, {
         configId: config._id,
         [field]: input.enabled,
       });

@@ -7,7 +7,7 @@ import {
   shouldWakePM,
   shouldWakeSales,
   shouldWakeSupport,
-} from "../heartbeat";
+} from "../heartbeat_conditions";
 
 const BASE_SUMMARY = {
   approvedSpecCount: 0,

@@ -6,7 +6,7 @@ import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../../_generated/api";
 import { internalAction } from "../../../_generated/server";
-import { generateObjectWithFallback } from "../shared";
+import { generateObjectWithFallback } from "../shared_generation";
 import { CEO_MODELS } from "./agent";
 
 // ============================================
@@ -168,7 +168,7 @@ Generate a report that synthesizes this data into actionable insights.`;
         tags: ["report", args.reportType],
       });
 
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "system",
         level: "success",
@@ -181,7 +181,7 @@ Generate a report that synthesizes this data into actionable insights.`;
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
 
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "system",
         level: "error",

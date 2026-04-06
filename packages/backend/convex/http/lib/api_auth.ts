@@ -24,7 +24,7 @@ export async function checkOrganizationAccess(
   isSecretKey: boolean
 ): Promise<{ allowed: true } | { allowed: false; response: Response }> {
   const org = await ctx.runQuery(
-    internal.feedback.api_public.getOrganizationConfig,
+    internal.feedback.api_public_queries.getOrganizationConfig,
     {
       organizationId,
     }

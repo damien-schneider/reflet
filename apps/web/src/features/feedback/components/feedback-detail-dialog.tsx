@@ -44,7 +44,7 @@ export function FeedbackDetailDialog({
 
   // Query organization statuses
   const organizationStatuses = useQuery(
-    api.organizations.statuses.list,
+    api.organizations.statuses_queries.list,
     feedback?.organizationId
       ? { organizationId: feedback.organizationId }
       : "skip"
@@ -54,9 +54,9 @@ export function FeedbackDetailDialog({
 
   const updateFeedback = useMutation(api.feedback.mutations.update);
   const updateFeedbackStatus = useMutation(
-    api.feedback.actions.updateOrganizationStatus
+    api.feedback.actions_manage.updateOrganizationStatus
   );
-  const deleteFeedback = useMutation(api.feedback.actions.remove);
+  const deleteFeedback = useMutation(api.feedback.actions_manage.remove);
   const toggleVote = useMutation(api.feedback.votes.toggle);
   const togglePin = useMutation(api.feedback.actions.togglePin);
   const createComment = useMutation(api.feedback.comments.create);

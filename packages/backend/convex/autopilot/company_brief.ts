@@ -11,7 +11,7 @@ import { z } from "zod";
 import { internal } from "../_generated/api";
 import { internalAction, internalQuery } from "../_generated/server";
 import { AGENT_MODELS } from "./agents/models";
-import { generateObjectWithFallback } from "./agents/shared";
+import { generateObjectWithFallback } from "./agents/shared_generation";
 
 const SUMMARY_MAX_LENGTH = 200;
 
@@ -67,7 +67,7 @@ export const generateCompanyBrief = internalAction({
         contentSummary: summary,
       });
 
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "system",
         level: "success",
@@ -107,7 +107,7 @@ export const generateCompanyBrief = internalAction({
       contentSummary: brief.contentSummary,
     });
 
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
       agent: "system",
       level: "success",

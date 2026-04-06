@@ -144,7 +144,7 @@ export function ResultsPopover({
   const hasFailed = failed > 0;
 
   const recentItems = useQuery(
-    api.feedback.auto_tagging.getRecentlyTaggedItems,
+    api.feedback.auto_tagging_queries.getRecentlyTaggedItems,
     { organizationId, since }
   );
 

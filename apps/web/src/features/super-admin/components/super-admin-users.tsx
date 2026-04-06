@@ -44,7 +44,7 @@ export function SuperAdminUsers() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
 
-  const result = useQuery(api.organizations.super_admin.listUsers, {
+  const result = useQuery(api.organizations.super_admin_queries.listUsers, {
     page,
     pageSize: PAGE_SIZE,
   });

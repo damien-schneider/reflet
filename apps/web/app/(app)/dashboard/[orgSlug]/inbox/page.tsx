@@ -58,7 +58,7 @@ export default function InboxPage({
     org?._id ? { organizationId: org._id } : "skip"
   );
   const supportSettings = useQuery(
-    api.support.conversations.getSupportSettings,
+    api.support.conversation_queries.getSupportSettings,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
@@ -77,7 +77,7 @@ export default function InboxPage({
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const conversations = useQuery(
-    api.support.conversations.listForAdmin,
+    api.support.conversation_queries.listForAdmin,
     org?._id
       ? {
           organizationId: org._id,
@@ -87,12 +87,12 @@ export default function InboxPage({
   );
 
   const selectedConversation = useQuery(
-    api.support.conversations.get,
+    api.support.conversation_queries.get,
     selectedConversationId ? { id: selectedConversationId } : "skip"
   );
 
   const messages = useQuery(
-    api.support.messages.list,
+    api.support.message_queries.list,
     selectedConversationId ? { conversationId: selectedConversationId } : "skip"
   );
 
@@ -101,12 +101,16 @@ export default function InboxPage({
     org?._id ? { organizationId: org._id } : "skip"
   );
 
-  const sendMessage = useMutation(api.support.messages.send);
-  const markAsRead = useMutation(api.support.messages.markAsRead);
-  const updateStatus = useMutation(api.support.conversations.updateStatus);
-  const assignConversation = useMutation(api.support.conversations.assign);
+  const sendMessage = useMutation(api.support.message_mutations.send);
+  const markAsRead = useMutation(api.support.message_mutations.markAsRead);
+  const updateStatus = useMutation(
+    api.support.conversation_mutations.updateStatus
+  );
+  const assignConversation = useMutation(
+    api.support.conversation_mutations.assign
+  );
   const updateSupportSettings = useMutation(
-    api.support.conversations.updateSupportSettings
+    api.support.conversation_mutations.updateSupportSettings
   );
 
   useEffect(

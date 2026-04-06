@@ -9,7 +9,9 @@ import { H2, Muted } from "@/components/ui/typography";
 import { SuperAdminDashboard } from "@/features/super-admin/components/super-admin-dashboard";
 
 export default function SuperAdminPage() {
-  const isSuperAdmin = useQuery(api.organizations.super_admin.isSuperAdmin);
+  const isSuperAdmin = useQuery(
+    api.organizations.super_admin_queries.isSuperAdmin
+  );
 
   if (isSuperAdmin === undefined) {
     return (

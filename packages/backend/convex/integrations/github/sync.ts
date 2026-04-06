@@ -30,10 +30,13 @@ export const syncAllReleases = internalAction({
     }
 
     // Update sync status to syncing
-    await ctx.runMutation(api.integrations.github.mutations.updateSyncStatus, {
-      connectionId: connection._id,
-      status: "syncing",
-    });
+    await ctx.runMutation(
+      api.integrations.github.connection_mutations.updateSyncStatus,
+      {
+        connectionId: connection._id,
+        status: "syncing",
+      }
+    );
 
     try {
       const { token } = await ctx.runAction(
@@ -84,7 +87,7 @@ export const syncAllReleases = internalAction({
       }));
 
       await ctx.runMutation(
-        api.integrations.github.mutations.saveSyncedReleases,
+        api.integrations.github.sync_mutations.saveSyncedReleases,
         {
           organizationId: args.organizationId,
           releases: mapped,
@@ -93,7 +96,7 @@ export const syncAllReleases = internalAction({
     } catch (error) {
       console.error("[GitHub Sync] Failed:", error);
       await ctx.runMutation(
-        api.integrations.github.mutations.updateSyncStatus,
+        api.integrations.github.connection_mutations.updateSyncStatus,
         {
           connectionId: connection._id,
           status: "error",

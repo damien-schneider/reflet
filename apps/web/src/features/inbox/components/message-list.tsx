@@ -106,12 +106,14 @@ export function MessageList({
   const messageIds = messages?.map((m) => m._id) ?? [];
 
   const reactionsData = useQuery(
-    api.support.messages.listReactions,
+    api.support.message_queries.listReactions,
     messageIds.length > 0 ? { messageIds } : "skip"
   );
 
-  const addReaction = useMutation(api.support.messages.addReaction);
-  const removeReaction = useMutation(api.support.messages.removeReaction);
+  const addReaction = useMutation(api.support.message_mutations.addReaction);
+  const removeReaction = useMutation(
+    api.support.message_mutations.removeReaction
+  );
 
   const reactionsMap = reactionsData?.reduce<Record<string, MessageReaction[]>>(
     (acc, item) => {

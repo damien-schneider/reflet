@@ -26,7 +26,7 @@ export default function MembersGearPage({
     org?._id ? { organizationId: org._id } : "skip"
   );
   const invitations = useQuery(
-    api.organizations.invitations.listPending,
+    api.organizations.invitation_queries.listPending,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const currentMember = useQuery(

@@ -9,7 +9,7 @@ import { z } from "zod";
 import { internal } from "../../../_generated/api";
 import type { Doc, Id } from "../../../_generated/dataModel";
 import { type ActionCtx, internalAction } from "../../../_generated/server";
-import { generateObjectWithFallback } from "../shared";
+import { generateObjectWithFallback } from "../shared_generation";
 import { CEO_MODELS } from "./agent";
 import { formatTaskStats } from "./reports";
 
@@ -97,7 +97,7 @@ async function applyPriorityOverrides(
   for (const override of overrides) {
     const taskId = validTaskIds.get(override.taskId);
     if (!taskId) {
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId,
         agent: "system",
         level: "info",
@@ -107,11 +107,14 @@ async function applyPriorityOverrides(
     }
 
     try {
-      await ctx.runMutation(internal.autopilot.tasks.updateTaskPriority, {
-        taskId,
-        priority: override.newPriority,
-      });
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(
+        internal.autopilot.task_mutations.updateTaskPriority,
+        {
+          taskId,
+          priority: override.newPriority,
+        }
+      );
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId,
         agent: "system",
         level: "action",
@@ -132,7 +135,7 @@ async function createCoordinationAlerts(
     if (alert.severity === "info") {
       continue;
     }
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId,
       agent: "system",
       level: alert.severity === "critical" ? "warning" : "info",
@@ -207,11 +210,11 @@ export const runCEOCoordination = internalAction({
       );
 
       const pendingTasks = await ctx.runQuery(
-        internal.autopilot.tasks.getTasksByOrg,
+        internal.autopilot.task_queries.getTasksByOrg,
         { organizationId: args.organizationId, status: "todo" }
       );
       const inProgressTasks = await ctx.runQuery(
-        internal.autopilot.tasks.getTasksByOrg,
+        internal.autopilot.task_queries.getTasksByOrg,
         { organizationId: args.organizationId, status: "in_progress" }
       );
 
@@ -329,7 +332,7 @@ Assess each agent, identify conflicts, suggest priority changes, and raise alert
         (a) => a.status === "blocked" || a.status === "needs_attention"
       );
 
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "system",
         level: blockedAgents.length > 0 ? "warning" : "success",
@@ -346,7 +349,7 @@ Assess each agent, identify conflicts, suggest priority changes, and raise alert
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
 
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "system",
         level: "error",

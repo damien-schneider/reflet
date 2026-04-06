@@ -113,7 +113,7 @@ export function DeleteFeedbackDialog({
   feedbackId,
   onClose,
 }: DeleteFeedbackDialogProps) {
-  const deleteFeedback = useMutation(api.feedback.actions.remove);
+  const deleteFeedback = useMutation(api.feedback.actions_manage.remove);
 
   const handleDelete = async () => {
     if (!feedbackId) {

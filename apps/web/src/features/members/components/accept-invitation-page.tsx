@@ -18,7 +18,7 @@ export function AcceptInvitationContent({
   token,
 }: AcceptInvitationContentProps) {
   const router = useRouter();
-  const invitation = useQuery(api.organizations.invitations.getByToken, {
+  const invitation = useQuery(api.organizations.invitation_queries.getByToken, {
     token,
   });
   const acceptInvitation = useMutation(api.organizations.invitations.accept);

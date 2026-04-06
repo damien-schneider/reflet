@@ -103,7 +103,7 @@ export const evaluateRoutines = internalMutation({
         continue;
       }
 
-      await ctx.runMutation(internal.autopilot.tasks.createTask, {
+      await ctx.runMutation(internal.autopilot.task_mutations.createTask, {
         organizationId: routine.organizationId,
         title: template.title ?? routine.title,
         description: template.description ?? routine.description ?? "",
@@ -119,7 +119,7 @@ export const evaluateRoutines = internalMutation({
         updatedAt: now,
       });
 
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: routine.organizationId,
         agent: "system",
         level: "action",

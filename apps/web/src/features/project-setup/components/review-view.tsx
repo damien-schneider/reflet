@@ -61,7 +61,7 @@ export function ReviewView({
   const [tags, setTags] = useState<SuggestedTag[]>(setup.suggestedTags ?? []);
 
   const applySetupResults = useMutation(
-    api.integrations.github.project_setup.applySetupResults
+    api.integrations.github.project_setup_mutations.applySetupResults
   );
 
   const toggleMonitor = (index: number) => {

@@ -25,18 +25,20 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
   const prevJobStatusRef = useRef<string | null>(null);
 
   const untaggedCount = useQuery(
-    api.feedback.auto_tagging.getUntaggedFeedbackCount,
+    api.feedback.auto_tagging_queries.getUntaggedFeedbackCount,
     { organizationId }
   );
 
-  const job = useQuery(api.feedback.auto_tagging.getActiveJob, {
+  const job = useQuery(api.feedback.auto_tagging_queries.getActiveJob, {
     organizationId,
   });
 
   const startBulkAutoTagging = useMutation(
-    api.feedback.auto_tagging.startBulkAutoTagging
+    api.feedback.auto_tagging_mutations.startBulkAutoTagging
   );
-  const dismissJob = useMutation(api.feedback.auto_tagging.dismissJob);
+  const dismissJob = useMutation(
+    api.feedback.auto_tagging_mutations.dismissJob
+  );
 
   // Fire toast on status transitions
   const jobStatus = job?.status ?? null;

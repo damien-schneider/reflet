@@ -216,7 +216,7 @@ export const create = mutation({
     if (!args.tagId) {
       await ctx.scheduler.runAfter(
         0,
-        internal.feedback.auto_tagging.processAutoTagging,
+        internal.feedback.auto_tagging_actions.processAutoTagging,
         { feedbackId }
       );
     }
@@ -227,7 +227,7 @@ export const create = mutation({
     );
     await ctx.scheduler.runAfter(
       0,
-      internal.feedback.clarification.generateDraftReplyAction,
+      internal.feedback.clarification_draft_reply.generateDraftReplyAction,
       { feedbackId }
     );
 

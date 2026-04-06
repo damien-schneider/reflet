@@ -7,7 +7,6 @@ import {
   IconBrandReddit,
   IconBrandX,
   IconCheck,
-  IconCopy,
   IconExternalLink,
   IconNews,
   IconPencil,
@@ -15,7 +14,7 @@ import {
 } from "@tabler/icons-react";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -31,8 +30,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
+import { ConversationContent } from "@/features/autopilot/components/content-sheet-conversation";
+import { ContentPropertyGrid } from "@/features/autopilot/components/content-sheet-property-grid";
 import {
-  AGENT_LABELS,
   PLATFORM_CONFIG,
   STATUS_COLOR_MAP,
   STATUS_LABELS,
@@ -185,7 +185,7 @@ function ContentSheetBody({
   if (document.status === "draft") {
     statusAction = "Submit for Review";
   } else if (document.status === "pending_review") {
-    statusAction = isBlogType ? "Approve & Publish" : "Approve & Publish";
+    statusAction = "Approve & Publish";
   }
 
   return (
@@ -282,102 +282,6 @@ function ContentSheetBody({
   );
 }
 
-function ConversationContent({
-  content,
-  isEditable,
-  onContentChange,
-  platformIcon: PlatformIcon,
-  targetUrl,
-  type,
-}: {
-  content: string;
-  isEditable: boolean;
-  onContentChange?: (value: string) => void;
-  platformIcon: typeof IconBrandReddit;
-  targetUrl?: string;
-  type: DocumentType;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(content);
-    setCopied(true);
-    toast.success("Copied to clipboard");
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="space-y-3">
-      {/* Received bubble — the original post being replied to */}
-      {targetUrl && (
-        <div className="max-w-[85%]">
-          <a
-            className="block rounded-lg bg-muted p-3 transition-colors hover:bg-muted/80"
-            href={targetUrl}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            <div className="mb-1 flex items-center gap-1.5">
-              <PlatformIcon className="size-3.5 text-muted-foreground" />
-              <span className="font-medium text-muted-foreground text-xs">
-                {PLATFORM_CONFIG[type]?.label ?? TYPE_LABELS[type]}
-              </span>
-            </div>
-            <p className="truncate text-foreground text-sm">{targetUrl}</p>
-            <span className="mt-1 flex items-center gap-1 text-muted-foreground text-xs">
-              View original
-              <IconExternalLink className="size-3" />
-            </span>
-          </a>
-        </div>
-      )}
-
-      {/* Sent bubble — our draft reply */}
-      <div className="ml-auto max-w-[90%]">
-        <div className="rounded-lg border-2 border-primary/30 border-dashed p-3">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-              Your Draft
-            </span>
-            <div className="flex items-center gap-1">
-              <Button onClick={handleCopy} size="icon-sm" variant="ghost">
-                {copied ? (
-                  <IconCheck className="size-3.5 text-green-500" />
-                ) : (
-                  <IconCopy className="size-3.5" />
-                )}
-              </Button>
-              {targetUrl && (
-                <a
-                  className="inline-flex h-7 items-center gap-1 rounded-md border border-input bg-background px-2.5 font-medium text-xs transition-colors hover:bg-accent hover:text-accent-foreground"
-                  href={targetUrl}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <PlatformIcon className="size-3" />
-                  Reply
-                </a>
-              )}
-            </div>
-          </div>
-          <TiptapMarkdownEditor
-            editable={isEditable}
-            minimal={!isEditable}
-            onChange={onContentChange}
-            placeholder={
-              isEditable ? "Edit your reply before posting..." : undefined
-            }
-            value={content}
-          />
-          <p className="mt-2 text-right text-muted-foreground text-xs">
-            {content.length} chars
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function BlogContent({
   content,
   isEditable,
@@ -395,104 +299,5 @@ function BlogContent({
       placeholder={isEditable ? "Edit content before approving..." : undefined}
       value={content}
     />
-  );
-}
-
-function PropertyRow({
-  children,
-  label,
-}: {
-  children: ReactNode;
-  label: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 py-1.5">
-      <span className="w-24 shrink-0 text-muted-foreground text-xs">
-        {label}
-      </span>
-      <div className="flex min-w-0 flex-1 items-center gap-1.5">{children}</div>
-    </div>
-  );
-}
-
-function ContentPropertyGrid({
-  document,
-}: {
-  document: Doc<"autopilotDocuments">;
-}) {
-  return (
-    <div className="text-sm">
-      <PropertyRow label="Platform">
-        <span>
-          {PLATFORM_CONFIG[document.type]?.label ?? TYPE_LABELS[document.type]}
-        </span>
-      </PropertyRow>
-
-      {document.sourceAgent && (
-        <PropertyRow label="Agent">
-          <Badge variant="secondary">
-            {AGENT_LABELS[document.sourceAgent] ?? document.sourceAgent}
-          </Badge>
-        </PropertyRow>
-      )}
-
-      <PropertyRow label="Status">
-        <Badge color={STATUS_COLOR_MAP[document.status]}>
-          {STATUS_LABELS[document.status]}
-        </Badge>
-      </PropertyRow>
-
-      {document.targetUrl && (
-        <PropertyRow label="Target URL">
-          <a
-            className="truncate text-primary hover:underline"
-            href={document.targetUrl}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {document.targetUrl}
-          </a>
-        </PropertyRow>
-      )}
-
-      {document.publishedUrl && (
-        <PropertyRow label="Published URL">
-          <a
-            className="truncate text-primary hover:underline"
-            href={document.publishedUrl}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {document.publishedUrl}
-          </a>
-        </PropertyRow>
-      )}
-
-      {document.tags.length > 0 && (
-        <PropertyRow label="Tags">
-          <div className="flex flex-wrap gap-1">
-            {document.tags.map((tag) => (
-              <Badge key={tag} variant="outline">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        </PropertyRow>
-      )}
-
-      <PropertyRow label="Created">
-        <span>
-          {formatDistanceToNow(document.createdAt, { addSuffix: true })}
-        </span>
-      </PropertyRow>
-
-      {document.updatedAt && (
-        <PropertyRow label="Updated">
-          <span>
-            {formatDistanceToNow(document.updatedAt, { addSuffix: true })}
-          </span>
-        </PropertyRow>
-      )}
-    </div>
   );
 }

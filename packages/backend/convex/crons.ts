@@ -36,7 +36,7 @@ crons.daily(
 crons.daily(
   "abandon stale survey responses",
   { hourUTC: 5, minuteUTC: 0 },
-  internal.surveys.mutations.abandonStaleResponses
+  internal.surveys.responses.abandonStaleResponses
 );
 
 crons.interval(

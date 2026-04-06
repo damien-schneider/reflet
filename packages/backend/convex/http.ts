@@ -5,6 +5,7 @@ import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth/auth";
 import { generateRssFeed } from "./changelog/rss";
 import { registerAdminContentRoutes } from "./http/admin_content";
+import { registerAdminContentSurveyRoutes } from "./http/admin_content_surveys";
 import { registerAdminFeedbackRoutes } from "./http/admin_feedback";
 import { registerAdminManagementRoutes } from "./http/admin_management";
 import { registerAiApiRoutes } from "./http/ai_api";
@@ -85,6 +86,7 @@ http.route({
 // Admin API (v1)
 registerAdminFeedbackRoutes(http);
 registerAdminContentRoutes(http);
+registerAdminContentSurveyRoutes(http);
 registerAdminManagementRoutes(http);
 
 // MCP server (JSON-RPC 2.0 over HTTP)

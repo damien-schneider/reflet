@@ -36,10 +36,10 @@ export function ProjectHubPage({
     organizationId,
   });
 
-  const tags = useQuery(api.feedback.tags.list, { organizationId });
+  const tags = useQuery(api.feedback.tags_queries.list, { organizationId });
 
   const setupStatus = useQuery(
-    api.integrations.github.project_setup.getSetupStatus,
+    api.integrations.github.project_setup_queries.getSetupStatus,
     { organizationId }
   );
 

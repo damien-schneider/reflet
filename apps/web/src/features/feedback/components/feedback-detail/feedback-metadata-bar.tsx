@@ -87,15 +87,18 @@ export function FeedbackMetadataBar({
     message: "Sign in to vote on this feedback",
   });
 
-  const organizationStatuses = useQuery(api.organizations.statuses.list, {
-    organizationId,
-  });
+  const organizationStatuses = useQuery(
+    api.organizations.statuses_queries.list,
+    {
+      organizationId,
+    }
+  );
   const members = useQuery(
     api.organizations.members.list,
     isAdmin ? { organizationId } : "skip"
   );
   const availableTags = useQuery(
-    api.feedback.tags.list,
+    api.feedback.tags_queries.list,
     isAdmin ? { organizationId } : "skip"
   );
   const isSubscribed = useQuery(api.feedback.subscriptions.isSubscribed, {
@@ -104,13 +107,17 @@ export function FeedbackMetadataBar({
 
   const toggleVote = useMutation(api.feedback.votes.toggle);
   const updateStatus = useMutation(
-    api.feedback.actions.updateOrganizationStatus
+    api.feedback.actions_manage.updateOrganizationStatus
   );
-  const assignFeedback = useMutation(api.feedback.actions.assign);
+  const assignFeedback = useMutation(api.feedback.actions_manage.assign);
   const toggleSubscription = useMutation(api.feedback.subscriptions.toggle);
-  const updateAnalysis = useMutation(api.feedback.actions.updateAnalysis);
-  const addTagMutation = useMutation(api.feedback.tags.addToFeedback);
-  const removeTagMutation = useMutation(api.feedback.tags.removeFromFeedback);
+  const updateAnalysis = useMutation(
+    api.feedback.actions_manage.updateAnalysis
+  );
+  const addTagMutation = useMutation(api.feedback.tags_mutations.addToFeedback);
+  const removeTagMutation = useMutation(
+    api.feedback.tags_mutations.removeFromFeedback
+  );
 
   const currentStatus = organizationStatuses?.find(
     (s) => s._id === organizationStatusId

@@ -22,6 +22,8 @@
  *   - claude-code-action installed in the repo (.github/workflows/claude.yml)
  */
 
+import { log } from "./adapter_helpers";
+import { buildHeaders, parseRepoUrl } from "./builtin_github";
 import type {
   ActivityLogEntry,
   CodingAdapter,
@@ -32,7 +34,6 @@ import type {
 
 const GITHUB_API = "https://api.github.com";
 
-const GITHUB_REPO_URL_REGEX = /github\.com[/:](?<owner>[^/]+)\/(?<repo>[^/.]+)/;
 const CLAUDE_REF_REGEX =
   /^claude:(?<owner>[^/]+)\/(?<repo>[^#]+)#(?<issue>\d+)$/;
 
@@ -68,34 +69,6 @@ const parseCiCheckRuns = (
     ciFailureLog: failedRun?.output?.summary?.slice(0, 2000),
   };
 };
-
-const buildHeaders = (token: string): Record<string, string> => ({
-  Authorization: `Bearer ${token}`,
-  Accept: "application/vnd.github+json",
-  "X-GitHub-Api-Version": "2022-11-28",
-  "Content-Type": "application/json",
-});
-
-const parseRepoUrl = (repoUrl: string): { owner: string; repo: string } => {
-  const match = repoUrl.match(GITHUB_REPO_URL_REGEX);
-  if (!match?.groups) {
-    throw new Error(`Invalid GitHub repo URL: ${repoUrl}`);
-  }
-  return { owner: match.groups.owner, repo: match.groups.repo };
-};
-
-const log = (
-  agent: ActivityLogEntry["agent"],
-  level: ActivityLogEntry["level"],
-  message: string,
-  details?: string
-): ActivityLogEntry => ({
-  agent,
-  level,
-  message,
-  details,
-  timestamp: Date.now(),
-});
 
 export const claudeCodeAdapter: CodingAdapter = {
   name: "claude_code",
@@ -145,7 +118,10 @@ export const claudeCodeAdapter: CodingAdapter = {
         `${GITHUB_API}/repos/${owner}/${repo}/issues`,
         {
           method: "POST",
-          headers: buildHeaders(githubToken),
+          headers: {
+            ...buildHeaders(githubToken),
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             title: `[autopilot] ${input.title}`,
             body: issueBody,
@@ -180,7 +156,10 @@ export const claudeCodeAdapter: CodingAdapter = {
         `${GITHUB_API}/repos/${owner}/${repo}/actions/workflows/claude.yml/dispatches`,
         {
           method: "POST",
-          headers: buildHeaders(githubToken),
+          headers: {
+            ...buildHeaders(githubToken),
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             ref: input.baseBranch,
             inputs: {
@@ -370,7 +349,10 @@ export const claudeCodeAdapter: CodingAdapter = {
 
     await fetch(`${GITHUB_API}/repos/${owner}/${repo}/issues/${issue}`, {
       method: "PATCH",
-      headers: buildHeaders(githubToken),
+      headers: {
+        ...buildHeaders(githubToken),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ state: "closed" }),
     });
   },

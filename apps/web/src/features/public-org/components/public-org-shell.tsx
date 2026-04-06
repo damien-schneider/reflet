@@ -53,7 +53,7 @@ export function PublicOrgShell({
   const router = useRouter();
 
   const supportSettings = useQuery(
-    api.support.conversations.getSupportSettings,
+    api.support.conversation_queries.getSupportSettings,
     { organizationId: org._id }
   );
 

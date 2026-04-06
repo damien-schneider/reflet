@@ -50,9 +50,12 @@ export function RoadmapKanban({
   const [isCreatingColumn, setIsCreatingColumn] = useState(false);
 
   // Fetch organization statuses (the single source of truth for columns)
-  const organizationStatuses = useQuery(api.organizations.statuses.list, {
-    organizationId,
-  });
+  const organizationStatuses = useQuery(
+    api.organizations.statuses_queries.list,
+    {
+      organizationId,
+    }
+  );
 
   // Fetch roadmap data (feedback items)
   const roadmapData = useQuery(api.feedback.list.listForRoadmapByOrganization, {
@@ -61,7 +64,7 @@ export function RoadmapKanban({
 
   // Mutations
   const updateFeedbackStatus = useMutation(
-    api.feedback.actions.updateOrganizationStatus
+    api.feedback.actions_manage.updateOrganizationStatus
   );
   const createStatus = useMutation(api.organizations.statuses.create);
 

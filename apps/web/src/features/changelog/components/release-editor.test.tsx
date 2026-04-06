@@ -115,8 +115,8 @@ vi.mock("convex/react", () => ({
     const mockMap: Record<string, ReturnType<typeof vi.fn>> = {
       "changelog.mutations.create": mockCreateRelease,
       "changelog.mutations.update": mockUpdateRelease,
-      "changelog.actions.publish": mockPublishRelease,
-      "changelog.actions.unpublish": mockUnpublishRelease,
+      "changelog.release_lifecycle.publish": mockPublishRelease,
+      "changelog.release_lifecycle.unpublish": mockUnpublishRelease,
     };
     const mock = mockMap[ref] ?? vi.fn();
     const fn = (...args: unknown[]) => mock(...args);
@@ -291,10 +291,10 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
         create: "changelog.mutations.create",
         update: "changelog.mutations.update",
       },
-      actions: {
-        publish: "changelog.actions.publish",
-        unpublish: "changelog.actions.unpublish",
-        pushToGithub: "changelog.actions.pushToGithub",
+      release_lifecycle: {
+        publish: "changelog.release_lifecycle.publish",
+        unpublish: "changelog.release_lifecycle.unpublish",
+        pushToGithub: "changelog.release_lifecycle.pushToGithub",
       },
       queries: {
         get: "changelog.queries.get",

@@ -43,7 +43,7 @@ export function TrackView({
   isAdmin,
   onFeedbackClick,
 }: MilestonesViewProps) {
-  const milestones = useQuery(api.organizations.milestones.list, {
+  const milestones = useQuery(api.organizations.milestones_queries.list, {
     organizationId,
   });
   const isMobile = useIsMobile();

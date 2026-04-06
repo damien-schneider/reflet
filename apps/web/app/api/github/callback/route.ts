@@ -157,7 +157,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     const { fetchAction } = await import("convex/nextjs");
     await fetchAction(
-      api.integrations.github.actions.saveInstallationFromCallback,
+      api.integrations.github.connection_actions.saveInstallationFromCallback,
       {
         userId: state.userId,
         installationId,

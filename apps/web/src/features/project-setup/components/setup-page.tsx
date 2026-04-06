@@ -35,21 +35,21 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
   const [isStarting, setIsStarting] = useState(false);
 
   const setupStatus = useQuery(
-    api.integrations.github.project_setup.getSetupStatus,
+    api.integrations.github.project_setup_queries.getSetupStatus,
     { organizationId }
   );
 
   const projectSetup = useQuery(
-    api.integrations.github.project_setup.getProjectSetup,
+    api.integrations.github.project_setup_queries.getProjectSetup,
     { organizationId }
   );
 
   const startProjectSetup = useMutation(
-    api.integrations.github.project_setup.startProjectSetup
+    api.integrations.github.project_setup_mutations.startProjectSetup
   );
 
   const skipSetup = useMutation(
-    api.integrations.github.project_setup.skipSetup
+    api.integrations.github.project_setup_mutations.skipSetup
   );
 
   // If setup is already completed, redirect to project hub

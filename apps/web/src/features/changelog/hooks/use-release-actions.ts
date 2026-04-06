@@ -36,7 +36,7 @@ export function useReleaseActions({
   const updateRelease = useMutation(api.changelog.mutations.update);
   const createRelease = useMutation(api.changelog.mutations.create);
   const publishRelease = useMutation(
-    api.changelog.actions.publish
+    api.changelog.release_lifecycle.publish
   ).withOptimisticUpdate((localStore, args) => {
     const current = localStore.getQuery(api.changelog.queries.get, {
       id: args.id,
@@ -55,7 +55,7 @@ export function useReleaseActions({
   });
 
   const unpublishRelease = useMutation(
-    api.changelog.actions.unpublish
+    api.changelog.release_lifecycle.unpublish
   ).withOptimisticUpdate((localStore, args) => {
     const current = localStore.getQuery(api.changelog.queries.get, {
       id: args.id,
@@ -77,7 +77,9 @@ export function useReleaseActions({
   const cancelSchedule = useMutation(
     api.changelog.scheduling.cancelScheduledPublish
   );
-  const pushToGithubMutation = useMutation(api.changelog.actions.pushToGithub);
+  const pushToGithubMutation = useMutation(
+    api.changelog.release_lifecycle.pushToGithub
+  );
   const githubConnection = useQuery(
     api.integrations.github.queries.getConnection,
     { organizationId }

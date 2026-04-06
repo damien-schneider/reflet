@@ -21,7 +21,7 @@ export default function TrashPage({
     api.feedback.trash.listDeleted,
     org?._id ? { organizationId: org._id } : "skip"
   );
-  const restoreFeedback = useMutation(api.feedback.actions.restore);
+  const restoreFeedback = useMutation(api.feedback.actions_manage.restore);
   const [restoringId, setRestoringId] = useState<string | null>(null);
 
   const handleRestore = async (feedbackId: Id<"feedback">) => {

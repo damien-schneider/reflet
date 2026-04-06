@@ -82,7 +82,7 @@ export function ReleaseSetupWizard({
 
   const updateOrg = useMutation(api.organizations.mutations.update);
   const toggleAutoSync = useMutation(
-    api.integrations.github.mutations.toggleAutoSync
+    api.integrations.github.connection_mutations.toggleAutoSync
   );
   const githubConnection = useQuery(
     api.integrations.github.queries.getConnection,

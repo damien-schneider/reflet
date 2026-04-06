@@ -39,7 +39,7 @@ export function CreateSurveyDialog({
   organizationId,
 }: CreateSurveyDialogProps) {
   const createSurvey = useMutation(api.surveys.mutations.create);
-  const addQuestion = useMutation(api.surveys.mutations.addQuestion);
+  const addQuestion = useMutation(api.surveys.questions.addQuestion);
 
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<Step>("template");

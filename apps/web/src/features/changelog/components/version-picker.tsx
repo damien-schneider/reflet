@@ -27,10 +27,13 @@ export function VersionPicker({
   disabled,
   className,
 }: VersionPickerProps) {
-  const versionSuggestions = useQuery(api.changelog.releases.getNextVersion, {
-    organizationId,
-    excludeReleaseId,
-  });
+  const versionSuggestions = useQuery(
+    api.changelog.release_versions.getNextVersion,
+    {
+      organizationId,
+      excludeReleaseId,
+    }
+  );
 
   const isAutoVersioning = versionSuggestions?.autoVersioning !== false;
   const hasAppliedDefault = useRef(false);

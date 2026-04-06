@@ -47,7 +47,7 @@ export const listRepositories = action({
     );
 
     const repos: Repository[] = await ctx.runAction(
-      api.integrations.github.actions.fetchRepositories,
+      api.integrations.github.fetch_actions.fetchRepositories,
       { installationToken: token }
     );
 
@@ -82,7 +82,7 @@ export const listLabels = action({
     );
 
     const labels: Label[] = await ctx.runAction(
-      api.integrations.github.actions.fetchLabels,
+      api.integrations.github.fetch_actions.fetchLabels,
       {
         installationToken: token,
         repositoryFullName: connection.repositoryFullName,
@@ -114,10 +114,13 @@ export const syncReleases = action({
       throw new Error("No repository connected");
     }
 
-    await ctx.runMutation(api.integrations.github.mutations.updateSyncStatus, {
-      connectionId: connection._id,
-      status: "syncing",
-    });
+    await ctx.runMutation(
+      api.integrations.github.connection_mutations.updateSyncStatus,
+      {
+        connectionId: connection._id,
+        status: "syncing",
+      }
+    );
 
     try {
       const { token } = await ctx.runAction(
@@ -126,7 +129,7 @@ export const syncReleases = action({
       );
 
       const releases = await ctx.runAction(
-        api.integrations.github.actions.fetchReleases,
+        api.integrations.github.fetch_actions.fetchReleases,
         {
           installationToken: token,
           repositoryFullName: connection.repositoryFullName,
@@ -134,14 +137,14 @@ export const syncReleases = action({
       );
 
       await ctx.runMutation(
-        api.integrations.github.mutations.saveSyncedReleases,
+        api.integrations.github.sync_mutations.saveSyncedReleases,
         { organizationId: args.organizationId, releases }
       );
 
       return { success: true, synced: releases.length };
     } catch (error) {
       await ctx.runMutation(
-        api.integrations.github.mutations.updateSyncStatus,
+        api.integrations.github.connection_mutations.updateSyncStatus,
         {
           connectionId: connection._id,
           status: "error",
@@ -182,7 +185,7 @@ export const syncIssues = action({
     }
 
     await ctx.runMutation(
-      api.integrations.github.issues.updateIssuesSyncStatus,
+      api.integrations.github.issue_mutations.updateIssuesSyncStatus,
       { connectionId: connection._id, status: "syncing" }
     );
 
@@ -193,7 +196,7 @@ export const syncIssues = action({
       );
 
       const issues = await ctx.runAction(
-        api.integrations.github.actions.fetchIssues,
+        api.integrations.github.fetch_actions.fetchIssues,
         {
           installationToken: token,
           repositoryFullName: connection.repositoryFullName,
@@ -202,13 +205,16 @@ export const syncIssues = action({
         }
       );
 
-      await ctx.runMutation(api.integrations.github.issues.saveSyncedIssues, {
-        organizationId: args.organizationId,
-        issues,
-      });
+      await ctx.runMutation(
+        api.integrations.github.issue_mutations.saveSyncedIssues,
+        {
+          organizationId: args.organizationId,
+          issues,
+        }
+      );
 
       const importResult = await ctx.runMutation(
-        api.integrations.github.issues.autoImportIssuesByLabel,
+        api.integrations.github.issue_imports.autoImportIssuesByLabel,
         { organizationId: args.organizationId }
       );
 
@@ -219,7 +225,7 @@ export const syncIssues = action({
       };
     } catch (error) {
       await ctx.runMutation(
-        api.integrations.github.issues.updateIssuesSyncStatus,
+        api.integrations.github.issue_mutations.updateIssuesSyncStatus,
         {
           connectionId: connection._id,
           status: "error",
@@ -275,7 +281,7 @@ export const setupWebhook = action({
     const webhookUrl = `${convexSiteUrl}/github-webhook`;
 
     const webhookResult = await ctx.runAction(
-      api.integrations.github.actions.createWebhook,
+      api.integrations.github.connection_actions.createWebhook,
       {
         installationToken: token,
         repositoryFullName: connection.repositoryFullName,
@@ -284,11 +290,14 @@ export const setupWebhook = action({
       }
     );
 
-    await ctx.runMutation(api.integrations.github.mutations.updateWebhook, {
-      organizationId: args.organizationId,
-      webhookId: webhookResult.webhookId,
-      webhookSecret,
-    });
+    await ctx.runMutation(
+      api.integrations.github.connection_mutations.updateWebhook,
+      {
+        organizationId: args.organizationId,
+        webhookId: webhookResult.webhookId,
+        webhookSecret,
+      }
+    );
 
     return { success: true, webhook: { id: webhookResult.webhookId } };
   },

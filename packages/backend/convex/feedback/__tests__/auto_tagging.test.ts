@@ -107,7 +107,7 @@ describe("Auto-tagging database operations", () => {
     });
 
     const count = await t.query(
-      api.feedback.auto_tagging.getUntaggedFeedbackCount,
+      api.feedback.auto_tagging_queries.getUntaggedFeedbackCount,
       {
         organizationId: orgId,
       }
@@ -156,7 +156,7 @@ describe("Auto-tagging database operations", () => {
     });
 
     // Apply tag using internal mutation
-    await t.mutation(internal.feedback.auto_tagging.applyAutoTags, {
+    await t.mutation(internal.feedback.auto_tagging_mutations.applyAutoTags, {
       feedbackId,
       tagIds: [tagId],
     });
@@ -212,12 +212,12 @@ describe("Auto-tagging database operations", () => {
     });
 
     // Apply the same tag twice
-    await t.mutation(internal.feedback.auto_tagging.applyAutoTags, {
+    await t.mutation(internal.feedback.auto_tagging_mutations.applyAutoTags, {
       feedbackId,
       tagIds: [tagId],
     });
 
-    await t.mutation(internal.feedback.auto_tagging.applyAutoTags, {
+    await t.mutation(internal.feedback.auto_tagging_mutations.applyAutoTags, {
       feedbackId,
       tagIds: [tagId],
     });
@@ -247,10 +247,13 @@ describe("Auto-tagging database operations", () => {
     });
 
     // Create a job
-    const jobId = await t.mutation(internal.feedback.auto_tagging.createJob, {
-      organizationId: orgId,
-      totalItems: 10,
-    });
+    const jobId = await t.mutation(
+      internal.feedback.auto_tagging_mutations.createJob,
+      {
+        organizationId: orgId,
+        totalItems: 10,
+      }
+    );
 
     expect(jobId).toBeDefined();
 
@@ -305,13 +308,16 @@ describe("Auto-tagging database operations", () => {
     });
 
     // Update progress
-    await t.mutation(internal.feedback.auto_tagging.updateJobProgress, {
-      jobId,
-      processedItems: 3,
-      successfulItems: 2,
-      failedItems: 1,
-      status: "processing",
-    });
+    await t.mutation(
+      internal.feedback.auto_tagging_mutations.updateJobProgress,
+      {
+        jobId,
+        processedItems: 3,
+        successfulItems: 2,
+        failedItems: 1,
+        status: "processing",
+      }
+    );
 
     // Verify progress was updated
     const job = await t.run(async (ctx) => {

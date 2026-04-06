@@ -133,7 +133,7 @@ export default function AutopilotSettingsPage() {
   const upsertCreds = useMutation(
     api.autopilot.mutations.config.upsertCredentials
   );
-  const resetAll = useMutation(api.autopilot.mutations.config.resetAllData);
+  const resetAll = useMutation(api.autopilot.mutations.routines.resetAllData);
 
   const [credentialInput, setCredentialInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);

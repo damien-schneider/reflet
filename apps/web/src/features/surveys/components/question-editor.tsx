@@ -37,10 +37,10 @@ interface QuestionEditorProps {
 }
 
 export function QuestionEditor({ questions, surveyId }: QuestionEditorProps) {
-  const addQuestion = useMutation(api.surveys.mutations.addQuestion);
-  const updateQuestion = useMutation(api.surveys.mutations.updateQuestion);
-  const deleteQuestion = useMutation(api.surveys.mutations.deleteQuestion);
-  const reorderQuestions = useMutation(api.surveys.mutations.reorderQuestions);
+  const addQuestion = useMutation(api.surveys.questions.addQuestion);
+  const updateQuestion = useMutation(api.surveys.questions.updateQuestion);
+  const deleteQuestion = useMutation(api.surveys.questions.deleteQuestion);
+  const reorderQuestions = useMutation(api.surveys.questions.reorderQuestions);
 
   const [activeQuestionId, setActiveQuestionId] =
     useState<Id<"surveyQuestions"> | null>(null);

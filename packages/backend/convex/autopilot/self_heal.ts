@@ -253,7 +253,7 @@ export const runSelfHealing = internalAction({
 
         // 3. Log ONE summary if anything was healed
         if (healed > 0) {
-          await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+          await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
             organizationId: org.organizationId,
             agent: "system",
             level: "success",

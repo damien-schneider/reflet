@@ -111,10 +111,14 @@ vi.mock("@/features/inbox/components/message-list", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    support_messages: {
-      listReactions: "support_messages.listReactions",
-      addReaction: "support_messages.addReaction",
-      removeReaction: "support_messages.removeReaction",
+    support: {
+      message_queries: {
+        listReactions: "support.message_queries.listReactions",
+      },
+      message_mutations: {
+        addReaction: "support.message_mutations.addReaction",
+        removeReaction: "support.message_mutations.removeReaction",
+      },
     },
   },
 }));

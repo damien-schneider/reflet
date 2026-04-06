@@ -35,7 +35,7 @@ function formatDate(timestamp: number): string {
 
 export function SuperAdminFeedback() {
   const topFeedback = useQuery(
-    api.organizations.super_admin.getTopVotedFeedback,
+    api.organizations.super_admin_analytics.getTopVotedFeedback,
     {
       limit: 20,
     }

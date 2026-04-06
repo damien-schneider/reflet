@@ -41,7 +41,7 @@ export function SuperAdminOrganizations() {
   const [search, setSearch] = useState("");
 
   const { results, status, loadMore } = usePaginatedQuery(
-    api.organizations.super_admin.listOrganizations,
+    api.organizations.super_admin_queries.listOrganizations,
     {},
     { initialNumItems: PAGE_SIZE }
   );

@@ -19,7 +19,7 @@ import {
   internalQuery,
 } from "../../_generated/server";
 import { AGENT_MODELS } from "./models";
-import { generateObjectWithFallback } from "./shared";
+import { generateObjectWithFallback } from "./shared_generation";
 
 // ============================================
 // ZOD SCHEMAS
@@ -116,7 +116,7 @@ async function processTriagedConversation(
   }
 
   const label = conv.intent === "bug_report" ? "Bug" : "Feature request";
-  await ctx.runMutation(internal.autopilot.tasks.createTask, {
+  await ctx.runMutation(internal.autopilot.task_mutations.createTask, {
     organizationId,
     title: `[Support] ${label}: ${conv.relatedFeature || conv.conversationId}`,
     description: conv.escalationReason ?? conv.suggestedReply,
@@ -138,7 +138,7 @@ export const runSupportTriage = internalAction({
       return;
     }
 
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
       agent: "support",
       level: "action",
@@ -151,7 +151,7 @@ export const runSupportTriage = internalAction({
     );
 
     if (conversations.length === 0) {
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "support",
         level: "info",
@@ -160,9 +160,12 @@ export const runSupportTriage = internalAction({
       return;
     }
 
-    const org = await ctx.runQuery(internal.autopilot.tasks.getOrganization, {
-      id: args.organizationId,
-    });
+    const org = await ctx.runQuery(
+      internal.autopilot.task_queries.getOrganization,
+      {
+        id: args.organizationId,
+      }
+    );
 
     const conversationSummaries = conversations
       .map(
@@ -188,12 +191,15 @@ Analyze support conversations and:
     }
 
     // Complete any in_progress tasks assigned to support
-    await ctx.runMutation(internal.autopilot.tasks.completeAgentTasks, {
-      organizationId: args.organizationId,
-      agent: "support",
-    });
+    await ctx.runMutation(
+      internal.autopilot.task_mutations.completeAgentTasks,
+      {
+        organizationId: args.organizationId,
+        agent: "support",
+      }
+    );
 
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
       agent: "support",
       level: "success",
@@ -244,7 +250,7 @@ export const notifyFeatureShipped = internalAction({
       });
     }
 
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
       agent: "support",
       level: "success",

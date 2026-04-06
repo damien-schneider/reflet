@@ -35,78 +35,24 @@ import {
   KanbanBoard,
   type KanbanColumn,
 } from "@/features/autopilot/components/kanban-board";
+import {
+  COLUMN_OPTIONS,
+  type ColumnKey,
+  type GroupKey,
+  getStoredColumns,
+  getStoredView,
+  PRIORITY_ORDER,
+  persistColumns,
+  persistView,
+  QUICK_FILTERS,
+  type SortKey,
+  STATUS_COLORS,
+  STATUS_LABELS,
+  STATUS_ORDER,
+  type ViewMode,
+} from "@/features/autopilot/components/views/initiatives-board-constants";
+import { GroupedList } from "@/features/autopilot/components/views/initiatives-board-grouped-list";
 import { cn } from "@/lib/utils";
-
-type ViewMode = "list" | "kanban";
-type SortKey = "status" | "priority" | "updated" | "created";
-type GroupKey = "status" | "priority" | "none";
-
-const QUICK_FILTERS = [
-  { label: "All", statuses: [] as string[] },
-  { label: "Active", statuses: ["backlog", "todo", "in_progress"] },
-  { label: "Completed", statuses: ["done"] },
-  { label: "Paused", statuses: ["in_review", "cancelled"] },
-] as const;
-
-const STATUS_ORDER = [
-  "backlog",
-  "todo",
-  "in_progress",
-  "in_review",
-  "done",
-  "cancelled",
-] as const;
-
-const STATUS_LABELS: Record<string, string> = {
-  backlog: "Backlog",
-  todo: "To Do",
-  in_progress: "In Progress",
-  in_review: "In Review",
-  done: "Done",
-  cancelled: "Cancelled",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  backlog: "bg-muted-foreground",
-  todo: "bg-blue-500",
-  in_progress: "bg-amber-500",
-  in_review: "bg-purple-500",
-  done: "bg-green-500",
-  cancelled: "bg-red-500",
-};
-
-const PRIORITY_ORDER = ["critical", "high", "medium", "low"] as const;
-
-const COLUMN_OPTIONS = [
-  { key: "status", label: "Status" },
-  { key: "priority", label: "Priority" },
-  { key: "assignee", label: "Assignee" },
-  { key: "updated", label: "Updated" },
-  { key: "created", label: "Created" },
-] as const;
-
-type ColumnKey = (typeof COLUMN_OPTIONS)[number]["key"];
-
-const STORAGE_KEY_VIEW = "autopilot-initiatives-view";
-const STORAGE_KEY_COLS = "autopilot-initiatives-columns";
-
-function getStoredView(): ViewMode {
-  if (typeof window === "undefined") {
-    return "list";
-  }
-  return (localStorage.getItem(STORAGE_KEY_VIEW) as ViewMode) ?? "list";
-}
-
-function getStoredColumns(): Set<ColumnKey> {
-  if (typeof window === "undefined") {
-    return new Set(["status", "priority", "updated"]);
-  }
-  const stored = localStorage.getItem(STORAGE_KEY_COLS);
-  if (stored) {
-    return new Set(JSON.parse(stored) as ColumnKey[]);
-  }
-  return new Set(["status", "priority", "updated"]);
-}
 
 export function InitiativesBoard({
   organizationId,
@@ -127,7 +73,7 @@ export function InitiativesBoard({
 
   function toggleView(mode: ViewMode) {
     setViewMode(mode);
-    localStorage.setItem(STORAGE_KEY_VIEW, mode);
+    persistView(mode);
   }
 
   function toggleColumn(key: ColumnKey) {
@@ -138,7 +84,7 @@ export function InitiativesBoard({
       } else {
         next.add(key);
       }
-      localStorage.setItem(STORAGE_KEY_COLS, JSON.stringify([...next]));
+      persistColumns(next);
       return next;
     });
   }
@@ -364,64 +310,6 @@ export function InitiativesBoard({
           No initiatives match the current filter
         </div>
       )}
-    </div>
-  );
-}
-
-function GroupedList({
-  items,
-  groupKey,
-}: {
-  items: Doc<"autopilotWorkItems">[];
-  groupKey: "status" | "priority";
-}) {
-  const groups = groupKey === "status" ? STATUS_ORDER : PRIORITY_ORDER;
-
-  return (
-    <div className="space-y-4">
-      {groups.map((group) => {
-        const filtered = items.filter((i) =>
-          groupKey === "status" ? i.status === group : i.priority === group
-        );
-        if (filtered.length === 0) {
-          return null;
-        }
-
-        return (
-          <div key={group}>
-            <div className="mb-2 flex items-center gap-2">
-              <span
-                className={cn(
-                  "size-2 rounded-full",
-                  groupKey === "status"
-                    ? (STATUS_COLORS[group] ?? "bg-muted-foreground")
-                    : "bg-muted-foreground"
-                )}
-              />
-              <span className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                {groupKey === "status"
-                  ? (STATUS_LABELS[group] ?? group)
-                  : group}
-              </span>
-              <span className="text-muted-foreground text-xs">
-                {filtered.length}
-              </span>
-            </div>
-            <div>
-              {filtered.map((initiative) => (
-                <IssueRow
-                  completionPercent={initiative.completionPercent}
-                  key={initiative._id}
-                  priority={initiative.priority}
-                  status={initiative.status}
-                  title={initiative.title}
-                  updatedAt={initiative.updatedAt}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }

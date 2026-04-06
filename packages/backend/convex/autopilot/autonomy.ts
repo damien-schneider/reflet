@@ -257,7 +257,7 @@ export const setAutonomyMode = internalMutation({
         updatedAt: now,
       });
 
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "system",
         level: "warning",
@@ -286,7 +286,7 @@ export const setAutonomyMode = internalMutation({
         updatedAt: now,
       });
 
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "system",
         level: "success",
@@ -302,7 +302,7 @@ export const setAutonomyMode = internalMutation({
       updatedAt: now,
     });
 
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
       agent: "system",
       level: "info",

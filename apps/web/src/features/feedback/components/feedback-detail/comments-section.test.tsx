@@ -22,9 +22,11 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
         update: "comments.update",
         remove: "comments.remove",
       },
-      clarification: {
-        getDraftReplyStatus: "feedback.clarification.getDraftReplyStatus",
-        initiateDraftReply: "feedback.clarification.initiateDraftReply",
+      clarification_draft_reply: {
+        getDraftReplyStatus:
+          "feedback.clarification_draft_reply.getDraftReplyStatus",
+        initiateDraftReply:
+          "feedback.clarification_draft_reply.initiateDraftReply",
       },
     },
   },

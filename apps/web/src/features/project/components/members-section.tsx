@@ -29,9 +29,12 @@ export function MembersSection({
   organizationId,
 }: MembersSectionProps) {
   const members = useQuery(api.organizations.members.list, { organizationId });
-  const invitations = useQuery(api.organizations.invitations.listPending, {
-    organizationId,
-  });
+  const invitations = useQuery(
+    api.organizations.invitation_queries.listPending,
+    {
+      organizationId,
+    }
+  );
   const currentMember = useQuery(api.organizations.members.getCurrentMember, {
     organizationId,
   });

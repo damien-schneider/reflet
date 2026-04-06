@@ -45,7 +45,7 @@ export function WidgetSettingsDialog({
   open,
   onOpenChange,
 }: WidgetSettingsDialogProps) {
-  const updateSettings = useMutation(api.widget.admin.updateSettings);
+  const updateSettings = useMutation(api.widget.admin_mutations.updateSettings);
   const [isSaving, setIsSaving] = useState(false);
 
   const [primaryColor, setPrimaryColor] = useState(

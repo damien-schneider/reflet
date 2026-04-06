@@ -1,11 +1,8 @@
 "use client";
 
 import { CheckCircle, PencilSimple, Trash } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
 import { motion } from "motion/react";
-import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -39,10 +36,10 @@ import {
   TIME_HORIZONS,
 } from "@/lib/milestone-constants";
 import { getDeadlineInfo } from "@/lib/milestone-deadline";
-import type { TagColor } from "@/lib/tag-colors";
-import { getTagColorValues, isValidTagColor } from "@/lib/tag-colors";
+import { getTagColorValues } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
+import { useMilestoneEdit } from "../hooks/use-milestone-edit";
 import { MilestoneDatePicker } from "./milestone-date-picker";
 
 interface MilestoneSegmentProps {
@@ -81,103 +78,28 @@ export function MilestoneSegment({
   const colorValues = getTagColorValues(milestone.color);
   const { percentage, completed, total } = milestone.progress;
 
-  const [editOpen, setEditOpen] = useState(false);
-  const [editName, setEditName] = useState(milestone.name);
-  const [editEmoji, setEditEmoji] = useState<string | undefined>(
-    milestone.emoji
-  );
-  const [editColor, setEditColor] = useState<TagColor>(
-    isValidTagColor(milestone.color) ? milestone.color : "default"
-  );
-  const [editHorizon, setEditHorizon] = useState<TimeHorizon>(
-    milestone.timeHorizon
-  );
-  const [editTargetDate, setEditTargetDate] = useState<number | undefined>(
-    milestone.targetDate
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const updateMilestone = useMutation(api.organizations.milestones.update);
-  const removeMilestone = useMutation(api.organizations.milestones.remove);
-
-  const handleEditOpen = useCallback(() => {
-    setEditName(milestone.name);
-    setEditEmoji(milestone.emoji);
-    setEditColor(
-      isValidTagColor(milestone.color) ? milestone.color : "default"
-    );
-    setEditHorizon(milestone.timeHorizon);
-    setEditTargetDate(milestone.targetDate);
-    setEditOpen(true);
-  }, [
-    milestone.name,
-    milestone.emoji,
-    milestone.color,
-    milestone.timeHorizon,
-    milestone.targetDate,
-  ]);
-
-  const handleEditSubmit = useCallback(async () => {
-    const trimmedName = editName.trim();
-    if (!trimmedName) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const dateCleared =
-        milestone.targetDate !== undefined && editTargetDate === undefined;
-      let dateUpdate: { clearTargetDate?: true; targetDate?: number } = {};
-      if (dateCleared) {
-        dateUpdate = { clearTargetDate: true };
-      } else if (editTargetDate !== undefined) {
-        dateUpdate = { targetDate: editTargetDate };
-      }
-      await updateMilestone({
-        id: milestone._id,
-        name: trimmedName,
-        emoji: editEmoji,
-        color: editColor,
-        timeHorizon: editHorizon,
-        ...dateUpdate,
-      });
-      setEditOpen(false);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
+  const {
+    editOpen,
+    setEditOpen,
     editName,
+    setEditName,
     editEmoji,
+    setEditEmoji,
     editColor,
+    setEditColor,
     editHorizon,
+    setEditHorizon,
     editTargetDate,
-    milestone._id,
-    milestone.targetDate,
-    updateMilestone,
-  ]);
+    setEditTargetDate,
+    isSubmitting,
+    handleEditOpen,
+    handleEditSubmit,
+    handleEditKeyDown,
+    handleComplete,
+    handleDelete,
+    isCompleted,
+  } = useMilestoneEdit(milestone);
 
-  const handleEditKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleEditSubmit();
-      }
-    },
-    [handleEditSubmit]
-  );
-
-  const handleComplete = useCallback(async () => {
-    await updateMilestone({
-      id: milestone._id,
-      status: "completed",
-    });
-  }, [milestone._id, updateMilestone]);
-
-  const handleDelete = useCallback(async () => {
-    await removeMilestone({ id: milestone._id });
-  }, [milestone._id, removeMilestone]);
-
-  const isCompleted = milestone.status === "completed";
   const deadlineInfo = getDeadlineInfo(milestone.targetDate, milestone.status);
   const isOverdue = deadlineInfo?.status === "overdue";
 

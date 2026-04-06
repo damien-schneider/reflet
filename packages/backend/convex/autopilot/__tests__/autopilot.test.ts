@@ -26,21 +26,24 @@ describe("autopilot tasks", () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    const taskId = await t.mutation(internal.autopilot.tasks.createTask, {
-      organizationId: orgId,
-      title: "Test task",
-      description: "A test description",
-      priority: "medium",
-      assignedAgent: "pm",
-      createdBy: "test",
-    });
+    const taskId = await t.mutation(
+      internal.autopilot.task_mutations.createTask,
+      {
+        organizationId: orgId,
+        title: "Test task",
+        description: "A test description",
+        priority: "medium",
+        assignedAgent: "pm",
+        createdBy: "test",
+      }
+    );
 
     expect(taskId).not.toBeNull();
     if (!taskId) {
       return;
     }
 
-    const task = await t.query(internal.autopilot.tasks.getTask, {
+    const task = await t.query(internal.autopilot.task_queries.getTask, {
       taskId,
     });
 
@@ -53,7 +56,7 @@ describe("autopilot tasks", () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    const org = await t.query(internal.autopilot.tasks.getOrganization, {
+    const org = await t.query(internal.autopilot.task_queries.getOrganization, {
       id: orgId,
     });
 
@@ -81,24 +84,27 @@ describe("autopilot tasks", () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    const taskId = await t.mutation(internal.autopilot.tasks.createTask, {
-      organizationId: orgId,
-      title: "Status test",
-      description: "Test status updates",
-      priority: "high",
-      assignedAgent: "dev",
-      createdBy: "test",
-    });
+    const taskId = await t.mutation(
+      internal.autopilot.task_mutations.createTask,
+      {
+        organizationId: orgId,
+        title: "Status test",
+        description: "Test status updates",
+        priority: "high",
+        assignedAgent: "dev",
+        createdBy: "test",
+      }
+    );
     if (!taskId) {
       return;
     }
 
-    await t.mutation(internal.autopilot.tasks.updateTaskStatus, {
+    await t.mutation(internal.autopilot.task_mutations.updateTaskStatus, {
       taskId,
       status: "in_progress",
     });
 
-    const task = await t.query(internal.autopilot.tasks.getTask, {
+    const task = await t.query(internal.autopilot.task_queries.getTask, {
       taskId,
     });
 
@@ -110,24 +116,27 @@ describe("autopilot tasks", () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    const taskId = await t.mutation(internal.autopilot.tasks.createTask, {
-      organizationId: orgId,
-      title: "Complete test",
-      description: "Test completion",
-      priority: "medium",
-      assignedAgent: "dev",
-      createdBy: "test",
-    });
+    const taskId = await t.mutation(
+      internal.autopilot.task_mutations.createTask,
+      {
+        organizationId: orgId,
+        title: "Complete test",
+        description: "Test completion",
+        priority: "medium",
+        assignedAgent: "dev",
+        createdBy: "test",
+      }
+    );
     if (!taskId) {
       return;
     }
 
-    await t.mutation(internal.autopilot.tasks.updateTaskStatus, {
+    await t.mutation(internal.autopilot.task_mutations.updateTaskStatus, {
       taskId,
       status: "done",
     });
 
-    const task = await t.query(internal.autopilot.tasks.getTask, {
+    const task = await t.query(internal.autopilot.task_queries.getTask, {
       taskId,
     });
 
@@ -139,7 +148,7 @@ describe("autopilot tasks", () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    await t.mutation(internal.autopilot.tasks.createTask, {
+    await t.mutation(internal.autopilot.task_mutations.createTask, {
       organizationId: orgId,
       title: "Pending task",
       description: "Should appear",
@@ -149,7 +158,7 @@ describe("autopilot tasks", () => {
     });
 
     const completedTaskId = await t.mutation(
-      internal.autopilot.tasks.createTask,
+      internal.autopilot.task_mutations.createTask,
       {
         organizationId: orgId,
         title: "Completed task",
@@ -163,14 +172,17 @@ describe("autopilot tasks", () => {
       return;
     }
 
-    await t.mutation(internal.autopilot.tasks.updateTaskStatus, {
+    await t.mutation(internal.autopilot.task_mutations.updateTaskStatus, {
       taskId: completedTaskId,
       status: "done",
     });
 
-    const pending = await t.query(internal.autopilot.tasks.getPendingTasks, {
-      organizationId: orgId,
-    });
+    const pending = await t.query(
+      internal.autopilot.task_queries.getPendingTasks,
+      {
+        organizationId: orgId,
+      }
+    );
 
     expect(pending).toHaveLength(1);
     expect(pending[0].title).toBe("Pending task");
@@ -180,7 +192,7 @@ describe("autopilot tasks", () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    await t.mutation(internal.autopilot.tasks.logActivity, {
+    await t.mutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: orgId,
       agent: "pm",
       level: "info",
@@ -202,7 +214,7 @@ describe("autopilot tasks", () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    await t.mutation(internal.autopilot.tasks.logActivity, {
+    await t.mutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: orgId,
       agent: "orchestrator",
       targetAgent: "pm",
@@ -225,22 +237,25 @@ describe("autopilot review items", () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    const taskId = await t.mutation(internal.autopilot.tasks.createTask, {
-      organizationId: orgId,
-      title: "Review me",
-      description: "Needs review",
-      priority: "medium",
-      assignedAgent: "pm",
-      needsReview: true,
-      reviewType: "task_approval",
-    });
+    const taskId = await t.mutation(
+      internal.autopilot.task_mutations.createTask,
+      {
+        organizationId: orgId,
+        title: "Review me",
+        description: "Needs review",
+        priority: "medium",
+        assignedAgent: "pm",
+        needsReview: true,
+        reviewType: "task_approval",
+      }
+    );
 
     expect(taskId).not.toBeNull();
     if (!taskId) {
       return;
     }
 
-    const task = await t.query(internal.autopilot.tasks.getTask, {
+    const task = await t.query(internal.autopilot.task_queries.getTask, {
       taskId,
     });
 
@@ -274,7 +289,7 @@ describe("autopilot config", () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    await t.mutation(internal.autopilot.config.createDefaultConfig, {
+    await t.mutation(internal.autopilot.config_mutations.createDefaultConfig, {
       organizationId: orgId,
     });
 

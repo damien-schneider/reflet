@@ -45,7 +45,7 @@ export default function ChangelogPage({
     org?._id ? { organizationId: org._id } : "skip"
   );
   const deleteRelease = useMutation(
-    api.changelog.actions.remove
+    api.changelog.release_lifecycle.remove
   ).withOptimisticUpdate((localStore, args) => {
     if (!org) {
       return;
@@ -64,7 +64,7 @@ export default function ChangelogPage({
   });
 
   const publishRelease = useMutation(
-    api.changelog.actions.publish
+    api.changelog.release_lifecycle.publish
   ).withOptimisticUpdate((localStore, args) => {
     if (!org) {
       return;
@@ -85,7 +85,7 @@ export default function ChangelogPage({
   });
 
   const unpublishRelease = useMutation(
-    api.changelog.actions.unpublish
+    api.changelog.release_lifecycle.unpublish
   ).withOptimisticUpdate((localStore, args) => {
     if (!org) {
       return;

@@ -27,7 +27,7 @@ export default function FeedbackDetailPage({
     feedbackId ? { id: feedbackId } : "skip"
   );
   const statuses = useQuery(
-    api.organizations.statuses.list,
+    api.organizations.statuses_queries.list,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const comments = useQuery(
@@ -45,7 +45,7 @@ export default function FeedbackDetailPage({
   );
 
   const toggleVote = useMutation(api.feedback.votes.toggle);
-  const assignFeedback = useMutation(api.feedback.actions.assign);
+  const assignFeedback = useMutation(api.feedback.actions_manage.assign);
 
   const handleVote = async () => {
     if (feedbackId) {

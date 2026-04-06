@@ -20,15 +20,15 @@ export function useGitHubSettingsQueries({
     orgId ? { organizationId: orgId } : "skip"
   );
   const issueSyncStatus = useQuery(
-    api.integrations.github.issues.getIssueSyncStatus,
+    api.integrations.github.issue_queries.getIssueSyncStatus,
     orgId ? { organizationId: orgId } : "skip"
   );
   const labelMappings = useQuery(
-    api.integrations.github.issues.getLabelMappings,
+    api.integrations.github.issue_queries.getLabelMappings,
     orgId ? { organizationId: orgId } : "skip"
   );
   const tags = useQuery(
-    api.feedback.tags.list,
+    api.feedback.tags_queries.list,
     orgId ? { organizationId: orgId } : "skip"
   );
 

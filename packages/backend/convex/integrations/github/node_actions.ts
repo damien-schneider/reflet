@@ -202,7 +202,7 @@ export const pushReleaseToGithub = internalAction({
 
     // Set status to pending before making the API call
     await ctx.runMutation(
-      internal.integrations.github.mutations.updateGithubPushStatus,
+      internal.integrations.github.sync_mutations.updateGithubPushStatus,
       {
         releaseId: args.releaseId,
         status: "pending",
@@ -250,7 +250,7 @@ export const pushReleaseToGithub = internalAction({
         response.status === 403 ? "permission_denied" : "unknown";
 
       await ctx.runMutation(
-        internal.integrations.github.mutations.updateGithubPushStatus,
+        internal.integrations.github.sync_mutations.updateGithubPushStatus,
         {
           releaseId: args.releaseId,
           status: "failed",
@@ -268,7 +268,7 @@ export const pushReleaseToGithub = internalAction({
 
     // Save the GitHub release ID and URL back to the Reflet release
     await ctx.runMutation(
-      internal.integrations.github.mutations.linkGithubRelease,
+      internal.integrations.github.sync_mutations.linkGithubRelease,
       {
         releaseId: args.releaseId,
         githubReleaseId: String(githubRelease.id),
@@ -277,7 +277,7 @@ export const pushReleaseToGithub = internalAction({
     );
 
     await ctx.runMutation(
-      internal.integrations.github.mutations.updateGithubPushStatus,
+      internal.integrations.github.sync_mutations.updateGithubPushStatus,
       {
         releaseId: args.releaseId,
         status: "success",

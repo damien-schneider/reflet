@@ -57,7 +57,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   );
 
   const adminUnreadCount = useQuery(
-    api.support.conversations.getUnreadCountForAdmin,
+    api.support.conversation_queries.getUnreadCountForAdmin,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
@@ -68,7 +68,9 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
 
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
-  const isSuperAdmin = useQuery(api.organizations.super_admin.isSuperAdmin);
+  const isSuperAdmin = useQuery(
+    api.organizations.super_admin_queries.isSuperAdmin
+  );
 
   const subscription = useQuery(
     api.billing.queries.getStatus,

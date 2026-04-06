@@ -82,7 +82,7 @@ export const recordCost = internalMutation({
     // Check if the cap has been reached after this spend
     const dailyCap = config.dailyCostCapUsd ?? 0;
     if (dailyCap > 0 && newCost >= dailyCap) {
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         workItemId: args.taskId,
         agent: "system",
@@ -129,7 +129,7 @@ export const evaluateBudget = internalMutation({
     const warnThreshold = dailyCap * (warnPercent / 100);
 
     if (costUsed >= warnThreshold && costUsed < dailyCap) {
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "system",
         level: "warning",
@@ -139,7 +139,7 @@ export const evaluateBudget = internalMutation({
     }
 
     if (costUsed >= dailyCap) {
-      await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "system",
         level: "error",

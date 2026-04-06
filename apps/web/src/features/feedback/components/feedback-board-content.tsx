@@ -98,11 +98,11 @@ export function FeedbackBoardContent({
   // Note: tagIds filtering is done client-side to avoid loading state when changing tag filters
 
   // Fetch statuses first so we can compute effectiveStatusIds for the feedback query
-  const orgStatuses = useQuery(api.organizations.statuses.list, {
+  const orgStatuses = useQuery(api.organizations.statuses_queries.list, {
     organizationId,
   });
 
-  const tags = useQuery(api.feedback.tags.list, {
+  const tags = useQuery(api.feedback.tags_queries.list, {
     organizationId,
   });
 
@@ -132,7 +132,7 @@ export function FeedbackBoardContent({
     api.feedback.actions.createPublicOrg
   );
   const createFeedbackMember = useMutation(api.feedback.mutations.create);
-  const assignFeedback = useMutation(api.feedback.actions.assign);
+  const assignFeedback = useMutation(api.feedback.actions_manage.assign);
   const toggleVoteMutation = useMutation(api.feedback.votes.toggle);
   const ensureStatusDefaults = useMutation(
     api.organizations.statuses.ensureDefaults

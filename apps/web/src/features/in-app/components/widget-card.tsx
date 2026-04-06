@@ -51,8 +51,8 @@ export function WidgetCard({ widget }: WidgetCardProps) {
   const [copied, setCopied] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const updateWidget = useMutation(api.widget.admin.update);
-  const removeWidget = useMutation(api.widget.admin.remove);
+  const updateWidget = useMutation(api.widget.admin_mutations.update);
+  const removeWidget = useMutation(api.widget.admin_mutations.remove);
 
   const embedCode = `<script src="https://cdn.reflet.app/widget/v1.js" data-widget-id="${widget.widgetId}"></script>`;
 

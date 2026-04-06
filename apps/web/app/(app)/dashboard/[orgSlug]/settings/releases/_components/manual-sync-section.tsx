@@ -130,11 +130,15 @@ export const ManualSyncSection = ({
       organizationId,
     }
   );
-  const triggerSync = useMutation(api.changelog.actions.triggerGithubSync);
-  const importRelease = useMutation(
-    api.integrations.github.mutations.importGithubRelease
+  const triggerSync = useMutation(
+    api.changelog.release_lifecycle.triggerGithubSync
   );
-  const pushToGithub = useMutation(api.changelog.actions.pushToGithub);
+  const importRelease = useMutation(
+    api.integrations.github.sync_mutations.importGithubRelease
+  );
+  const pushToGithub = useMutation(
+    api.changelog.release_lifecycle.pushToGithub
+  );
 
   const [importingId, setImportingId] = useState<string | null>(null);
   const [pushingId, setPushingId] = useState<string | null>(null);

@@ -94,9 +94,11 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
         togglePin: "feedback_actions.togglePin",
       },
       votes: { toggle: "votes.toggle" },
-      clarification: {
-        getDraftReplyStatus: "feedback.clarification.getDraftReplyStatus",
-        initiateDraftReply: "feedback.clarification.initiateDraftReply",
+      clarification_draft_reply: {
+        getDraftReplyStatus:
+          "feedback.clarification_draft_reply.getDraftReplyStatus",
+        initiateDraftReply:
+          "feedback.clarification_draft_reply.initiateDraftReply",
       },
     },
     organizations: {

@@ -62,7 +62,7 @@ export const initAutopilot = internalMutation({
       updatedAt: now,
     });
 
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
       agent: "system",
       level: "success",
@@ -94,7 +94,7 @@ export const analyzeRepo = internalAction({
       return;
     }
 
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
       agent: "system",
       level: "action",
@@ -121,7 +121,7 @@ export const analyzeRepo = internalAction({
       }
     );
 
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
       agent: "system",
       level: "success",
@@ -162,7 +162,7 @@ export const bootstrapAutopilot = internalAction({
           { organizationId: args.organizationId }
         );
 
-        await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
           organizationId: args.organizationId,
           agent: "system",
           level: "action",
@@ -209,7 +209,7 @@ export const bootstrapAutopilot = internalAction({
       }
     );
 
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
       agent: "system",
       level: "success",

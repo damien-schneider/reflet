@@ -9,11 +9,8 @@
 
 import { z } from "zod";
 import { AGENT_MODELS, WEB_SEARCH_MODELS } from "../models";
-import {
-  generateObjectWithFallback,
-  generateTextWithWebSearch,
-  validateUrls,
-} from "../shared";
+import { generateObjectWithFallback } from "../shared_generation";
+import { generateTextWithWebSearch, validateUrls } from "../shared_web";
 
 export const GROWTH_SEARCH_MODELS = WEB_SEARCH_MODELS;
 export const GROWTH_CONTENT_MODELS = AGENT_MODELS;

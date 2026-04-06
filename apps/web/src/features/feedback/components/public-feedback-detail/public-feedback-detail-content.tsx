@@ -31,14 +31,17 @@ export function PublicFeedbackDetailContent({
 }: PublicFeedbackDetailContentProps) {
   const feedback = useQuery(api.feedback.queries.get, { id: feedbackId });
   const comments = useQuery(api.feedback.comments.list, { feedbackId });
-  const organizationStatuses = useQuery(api.organizations.statuses.list, {
-    organizationId,
-  });
+  const organizationStatuses = useQuery(
+    api.organizations.statuses_queries.list,
+    {
+      organizationId,
+    }
+  );
 
   const toggleVote = useMutation(api.feedback.votes.toggle);
   const createComment = useMutation(api.feedback.comments.create);
   const updateFeedbackStatus = useMutation(
-    api.feedback.actions.updateOrganizationStatus
+    api.feedback.actions_manage.updateOrganizationStatus
   );
   const togglePin = useMutation(api.feedback.actions.togglePin);
 

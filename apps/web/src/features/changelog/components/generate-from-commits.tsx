@@ -81,7 +81,7 @@ export function GenerateFromCommits({
   );
 
   const previousReleaseCommit = useQuery(
-    api.changelog.actions.getLatestCommitFromPreviousRelease,
+    api.changelog.release_commits.getLatestCommitFromPreviousRelease,
     { organizationId, excludeReleaseId: releaseId ?? undefined }
   );
 

@@ -5,9 +5,7 @@ import { httpAction } from "../_generated/server";
 
 type Router = ReturnType<typeof httpRouter>;
 
-// ============================================
-// ZOD SCHEMAS
-// ============================================
+// — Zod Schemas —
 
 const webhookInstallationSchema = z.object({ id: z.number() });
 
@@ -65,9 +63,7 @@ const pullRequestPayloadSchema = z.object({
   installation: webhookInstallationSchema,
 });
 
-// ============================================
-// HELPERS
-// ============================================
+// — Helpers —
 
 type WebhookCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
 
@@ -120,9 +116,7 @@ async function verifyWebhookSignature(
   return a.length === b.length && a.every((val, i) => val === b[i]);
 }
 
-// ============================================
-// WEBHOOK HANDLERS
-// ============================================
+// — Webhook Handlers —
 
 async function handleInstallationWebhook(
   ctx: WebhookCtx,
@@ -133,7 +127,8 @@ async function handleInstallationWebhook(
   }
   const installation = webhookInstallationSchema.parse(payload.installation);
   await ctx.runMutation(
-    internal.integrations.github.mutations.handleInstallationDeleted,
+    internal.integrations.github.installation_mutations
+      .handleInstallationDeleted,
     {
       installationId: String(installation.id),
     }
@@ -155,7 +150,8 @@ async function handleReleaseWebhook(
 
   if (connection) {
     await ctx.runMutation(
-      internal.integrations.github.actions.processReleaseWebhook,
+      internal.integrations.github.webhook_release_processors
+        .processReleaseWebhook,
       {
         connectionId: connection._id,
         organizationId: connection.organizationId,
@@ -194,7 +190,7 @@ async function handleIssueWebhook(
 
   if (connection) {
     await ctx.runMutation(
-      internal.integrations.github.actions.processIssueWebhook,
+      internal.integrations.github.webhook_issue_processors.processIssueWebhook,
       {
         connectionId: connection._id,
         organizationId: connection.organizationId,
@@ -244,7 +240,8 @@ async function handlePullRequestWebhook(
 
   if (connection) {
     await ctx.runMutation(
-      internal.integrations.github.actions.processPullRequestWebhook,
+      internal.integrations.github.webhook_release_processors
+        .processPullRequestWebhook,
       {
         connectionId: connection._id,
         organizationId: connection.organizationId,
@@ -279,9 +276,7 @@ async function handlePullRequestWebhook(
   return webhookJson({ success: true, action: "pr_processed" });
 }
 
-// ============================================
-// SIGNATURE VERIFICATION
-// ============================================
+// — Signature Verification —
 
 async function verifySignatureIfPresent(
   ctx: WebhookCtx,
@@ -320,9 +315,7 @@ async function verifySignatureIfPresent(
   return null;
 }
 
-// ============================================
-// EVENT ROUTING
-// ============================================
+// — Event Routing —
 
 async function routeWebhookEvent(
   ctx: WebhookCtx,
@@ -351,9 +344,7 @@ async function routeWebhookEvent(
   return webhookJson({ success: true, event: eventType });
 }
 
-// ============================================
-// ROUTE REGISTRATION
-// ============================================
+// — Route Registration —
 
 export function registerGithubWebhookRoutes(http: Router): void {
   http.route({

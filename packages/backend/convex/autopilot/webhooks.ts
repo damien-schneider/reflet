@@ -40,7 +40,7 @@ export const handlePrMerged = internalMutation({
     }
 
     // Log the PR merge event
-    await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
       agent: "system",
       level: "info",

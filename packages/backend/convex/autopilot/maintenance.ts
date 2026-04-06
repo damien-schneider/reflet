@@ -100,7 +100,7 @@ export const runKnowledgeStalenessCheck = internalMutation({
         const isStale = now - doc.lastUpdatedAt > staleThresholdMs;
 
         if (isStale) {
-          await ctx.runMutation(internal.autopilot.tasks.logActivity, {
+          await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
             organizationId: config.organizationId,
             agent: "system",
             level: "warning",

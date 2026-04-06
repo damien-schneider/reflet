@@ -31,14 +31,16 @@ export default function CustomDomainSupportPage() {
   const [pendingEmail, setPendingEmail] = useState(guestEmail ?? "");
 
   const supportSettings = useQuery(
-    api.support.conversations.getSupportSettings,
+    api.support.conversation_queries.getSupportSettings,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const createConversation = useMutation(api.support.conversations.create);
+  const createConversation = useMutation(
+    api.support.conversation_mutations.create
+  );
 
   if (org === undefined || supportSettings === undefined) {
     return <LoadingState />;
