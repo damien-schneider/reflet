@@ -26,6 +26,9 @@ export const createWorkItem = mutation({
     tags: v.optional(v.array(v.string())),
     needsReview: v.optional(v.boolean()),
     reviewType: v.optional(v.string()),
+    isPublicRoadmap: v.optional(v.boolean()),
+    includeInChangelog: v.optional(v.boolean()),
+    createdByUser: v.optional(v.string()),
   },
   returns: v.id("autopilotWorkItems"),
   handler: async (ctx, args) => {
@@ -47,6 +50,9 @@ export const createWorkItem = mutation({
       acceptanceCriteria: args.acceptanceCriteria,
       tags: args.tags,
       completionPercent: args.type === "initiative" ? 0 : undefined,
+      isPublicRoadmap: args.isPublicRoadmap,
+      includeInChangelog: args.includeInChangelog,
+      createdByUser: args.createdByUser,
       createdBy: "user",
       createdAt: now,
       updatedAt: now,
@@ -82,6 +88,8 @@ export const updateWorkItem = mutation({
     prUrl: v.optional(v.string()),
     prNumber: v.optional(v.number()),
     branch: v.optional(v.string()),
+    isPublicRoadmap: v.optional(v.boolean()),
+    includeInChangelog: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {

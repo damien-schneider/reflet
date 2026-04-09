@@ -67,19 +67,18 @@ export const shouldWakePM = (summary: ActivitySummary): boolean => {
 };
 
 /**
- * CTO wakes when stories need technical specs.
- * Purely work-driven — only when stories are ready.
+ * CTO is disabled — tasks-centric architecture bypasses spec generation.
  */
-export const shouldWakeCTO = (summary: ActivitySummary): boolean => {
-  return summary.readyStoryCount > 0;
+export const shouldWakeCTO = (_summary: ActivitySummary): boolean => {
+  return false;
 };
 
 /**
  * Dev wakes when specs are approved or runs need retrying.
  * Purely work-driven — only when code work exists.
  */
-export const shouldWakeDev = (summary: ActivitySummary): boolean => {
-  return summary.approvedSpecCount > 0 || summary.failedRunCount > 0;
+export const shouldWakeDev = (_summary: ActivitySummary): boolean => {
+  return false;
 };
 
 /**
@@ -194,15 +193,8 @@ export const checkWakeConditions = internalQuery({
       (s) => s.status === "todo"
     ).length;
 
-    const specItems = await ctx.db
-      .query("autopilotWorkItems")
-      .withIndex("by_org_type", (q) =>
-        q.eq("organizationId", args.organizationId).eq("type", "spec")
-      )
-      .take(QUERY_LIMIT);
-    const approvedSpecCount = specItems.filter(
-      (s) => s.status === "in_review" || s.status === "done"
-    ).length;
+    // CTO disabled — skip spec query to save reads
+    const approvedSpecCount = 0;
 
     // Bootstrap: check if initiatives exist
     const initiatives = await ctx.db
@@ -213,17 +205,8 @@ export const checkWakeConditions = internalQuery({
       .take(1);
     const hasInitiatives = initiatives.length > 0;
 
-    // ---- Failed runs (last 24h) ----
-
-    const failedRuns = await ctx.db
-      .query("autopilotRuns")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "failed")
-      )
-      .take(QUERY_LIMIT);
-    const recentFailedRuns = failedRuns.filter(
-      (r) => now - r.startedAt < ONE_DAY_MS
-    );
+    // Dev disabled — skip failed runs query to save reads
+    const failedRunCount = 0;
 
     // ---- Documents (notes, support, research) ----
 
@@ -356,7 +339,7 @@ export const checkWakeConditions = internalQuery({
     const summary: ActivitySummary = {
       readyStoryCount,
       approvedSpecCount,
-      failedRunCount: recentFailedRuns.length,
+      failedRunCount,
       growthFollowUpNoteCount,
       newNoteCount,
       newSupportConversationCount,

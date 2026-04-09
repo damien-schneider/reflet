@@ -6,10 +6,7 @@ import {
   IconDashboard,
   IconFileText,
   IconInbox,
-  IconMap2,
-  IconMessageCircle,
   IconSettings,
-  IconTarget,
   IconUserSearch,
 } from "@tabler/icons-react";
 import { LayoutGroup, motion } from "motion/react";
@@ -21,7 +18,6 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: IconDashboard, path: "" },
   { id: "inbox", label: "Inbox", icon: IconInbox, path: "/inbox" },
-  { id: "roadmap", label: "Board", icon: IconMap2, path: "/roadmap" },
   { id: "knowledge", label: "Product", icon: IconBook, path: "/knowledge" },
   {
     id: "documents",
@@ -29,14 +25,7 @@ const NAV_ITEMS = [
     icon: IconFileText,
     path: "/documents",
   },
-  {
-    id: "content",
-    label: "Content",
-    icon: IconMessageCircle,
-    path: "/content",
-  },
   { id: "reports", label: "Reports", icon: IconChartBar, path: "/reports" },
-  { id: "growth", label: "Competitors", icon: IconTarget, path: "/growth" },
   { id: "sales", label: "Sales", icon: IconUserSearch, path: "/sales" },
   { id: "settings", label: "Settings", icon: IconSettings, path: "/settings" },
 ] as const;

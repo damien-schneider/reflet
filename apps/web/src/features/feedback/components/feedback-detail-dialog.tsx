@@ -21,6 +21,7 @@ import { FeedbackHeader } from "./feedback-detail-dialog/feedback-header";
 import { useAIDraftReply } from "./feedback-detail-dialog/use-ai-draft-reply";
 import { useCommentEditing } from "./feedback-detail-dialog/use-comment-editing";
 import { useFeedbackEditing } from "./feedback-detail-dialog/use-feedback-editing";
+import { LinkedTasksSection } from "./linked-tasks-section";
 
 interface FeedbackDetailDialogProps {
   feedbackId: Id<"feedback"> | null;
@@ -198,6 +199,17 @@ export function FeedbackDetailDialog({
                 </Badge>
               ))}
           </div>
+        </div>
+      )}
+
+      {/* Linked Tasks */}
+      {feedbackId && feedback?.organizationId && (
+        <div className="mb-6">
+          <LinkedTasksSection
+            feedbackId={feedbackId}
+            isAdmin={effectiveIsAdmin}
+            organizationId={feedback.organizationId}
+          />
         </div>
       )}
 

@@ -5,5 +5,5 @@ import { useAutopilotContext } from "@/features/autopilot/components/autopilot-c
 
 export default function AutopilotTasksPage() {
   const { orgSlug } = useAutopilotContext();
-  redirect(`/dashboard/${orgSlug}/autopilot/roadmap`);
+  redirect(`/dashboard/${orgSlug}/tasks`);
 }

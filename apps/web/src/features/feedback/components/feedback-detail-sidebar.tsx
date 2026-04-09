@@ -1,4 +1,5 @@
 import { X } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
+import { LinkedTasksSection } from "./linked-tasks-section";
 
 interface FeedbackDetailSidebarProps {
   availableTags:
@@ -21,8 +23,10 @@ interface FeedbackDetailSidebarProps {
     | undefined;
   commentsCount: number;
   feedback: {
+    _id: Id<"feedback">;
     voteCount: number;
     _creationTime: number;
+    organizationId: Id<"organizations">;
   };
   feedbackTags: Array<{
     _id: string;
@@ -125,6 +129,13 @@ export function FeedbackDetailSidebar({
           </div>
         </CardContent>
       </Card>
+
+      {/* Linked Tasks */}
+      <LinkedTasksSection
+        feedbackId={feedback._id}
+        isAdmin={isAdmin}
+        organizationId={feedback.organizationId}
+      />
     </div>
   );
 }

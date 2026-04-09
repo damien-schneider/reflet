@@ -48,26 +48,24 @@ describe("shouldWakePM", () => {
 });
 
 describe("shouldWakeCTO", () => {
-  it("wakes when ready stories exist", () => {
-    expect(shouldWakeCTO({ ...BASE_SUMMARY, readyStoryCount: 1 })).toBe(true);
+  it("never wakes (disabled)", () => {
+    expect(shouldWakeCTO({ ...BASE_SUMMARY, readyStoryCount: 1 })).toBe(false);
   });
 
-  it("does not wake when no ready stories", () => {
-    expect(shouldWakeCTO({ ...BASE_SUMMARY, readyStoryCount: 0 })).toBe(false);
+  it("does not wake even with ready stories", () => {
+    expect(shouldWakeCTO({ ...BASE_SUMMARY, readyStoryCount: 10 })).toBe(false);
   });
 });
 
 describe("shouldWakeDev", () => {
-  it("wakes when approved specs exist", () => {
-    expect(shouldWakeDev({ ...BASE_SUMMARY, approvedSpecCount: 1 })).toBe(true);
+  it("never wakes (disabled)", () => {
+    expect(shouldWakeDev({ ...BASE_SUMMARY, approvedSpecCount: 1 })).toBe(
+      false
+    );
   });
 
-  it("wakes when failed runs exist", () => {
-    expect(shouldWakeDev({ ...BASE_SUMMARY, failedRunCount: 2 })).toBe(true);
-  });
-
-  it("does not wake when nothing to do", () => {
-    expect(shouldWakeDev({ ...BASE_SUMMARY })).toBe(false);
+  it("does not wake even with failed runs", () => {
+    expect(shouldWakeDev({ ...BASE_SUMMARY, failedRunCount: 2 })).toBe(false);
   });
 });
 

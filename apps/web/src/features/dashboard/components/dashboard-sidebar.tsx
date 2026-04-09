@@ -7,11 +7,13 @@ import {
   Cube,
   FileText,
   Heartbeat,
+  ListChecks,
   Robot,
   ShieldStar,
   SignOut,
   Trash,
   User,
+  UsersThree,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
@@ -102,6 +104,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           badge: undefined,
         },
         {
+          href: "/dashboard/$orgSlug/tasks",
+          icon: ListChecks,
+          label: "Tasks",
+          badge: undefined,
+        },
+        {
           href: "/dashboard/$orgSlug/changelog",
           icon: FileText,
           label: "Changelog",
@@ -121,6 +129,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
 
   const adminNavItems = orgSlug
     ? [
+        {
+          href: "/dashboard/$orgSlug/community",
+          icon: UsersThree,
+          label: "Community",
+          badge: undefined,
+        },
         {
           href: "/dashboard/$orgSlug/status",
           icon: Heartbeat,

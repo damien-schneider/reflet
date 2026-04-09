@@ -21,6 +21,7 @@ export const listWorkItems = query({
     assignedAgent: v.optional(assignedAgent),
     priority: v.optional(priority),
     needsReview: v.optional(v.boolean()),
+    isPublicRoadmap: v.optional(v.boolean()),
     parentId: v.optional(v.id("autopilotWorkItems")),
     limit: v.optional(v.number()),
   },
@@ -29,6 +30,20 @@ export const listWorkItems = query({
     await requireOrgMembership(ctx, args.organizationId, user._id);
 
     const limit = args.limit ?? 200;
+
+    if (args.isPublicRoadmap !== undefined) {
+      const { isPublicRoadmap } = args;
+      const items = await ctx.db
+        .query("autopilotWorkItems")
+        .withIndex("by_org_public", (q) =>
+          q
+            .eq("organizationId", args.organizationId)
+            .eq("isPublicRoadmap", isPublicRoadmap)
+        )
+        .order("desc")
+        .take(limit);
+      return applyFilters(items, args);
+    }
 
     if (args.needsReview !== undefined) {
       const { needsReview } = args;

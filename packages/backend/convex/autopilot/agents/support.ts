@@ -123,6 +123,7 @@ async function processTriagedConversation(
     priority: conv.severity === "critical" ? "critical" : "high",
     assignedAgent: "pm",
     createdBy: "support_escalation",
+    needsReview: true,
   });
 }
 

@@ -8,6 +8,28 @@ import { use } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
+const TASK_STATUS_COLUMNS = [
+  { label: "Planned", statuses: ["backlog", "todo"] },
+  { label: "In Progress", statuses: ["in_progress", "in_review"] },
+  { label: "Shipped", statuses: ["done"] },
+] as const;
+
+const PRIORITY_COLORS: Record<string, string> = {
+  critical: "text-red-500",
+  high: "text-orange-500",
+  medium: "text-yellow-500",
+  low: "text-muted-foreground",
+};
+
+const TYPE_BADGES: Record<string, string> = {
+  initiative:
+    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+  story: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  task: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  bug: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+  spec: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300",
+};
+
 export default function PublicRoadmapPageClient({
   params,
 }: {
@@ -15,6 +37,12 @@ export default function PublicRoadmapPageClient({
 }) {
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
+
+  const publicTasks = useQuery(
+    api.autopilot.queries.tasks_public.listPublicRoadmapTasks,
+    org?._id ? { organizationId: org._id } : "skip"
+  );
+
   const roadmapConfig = useQuery(
     api.organizations.tag_manager.getRoadmapConfig,
     org?._id ? { organizationId: org._id } : "skip"
@@ -32,6 +60,14 @@ export default function PublicRoadmapPageClient({
     );
   }
 
+  // Dual-mode: if public tasks exist, show task-based roadmap
+  const hasPublicTasks = publicTasks && publicTasks.length > 0;
+
+  if (hasPublicTasks) {
+    return <TaskBasedRoadmap tasks={publicTasks} />;
+  }
+
+  // Fallback: feedback-based roadmap
   type RoadmapLane = NonNullable<
     NonNullable<typeof roadmapConfig>["lanes"]
   >[number];
@@ -107,6 +143,89 @@ export default function PublicRoadmapPageClient({
         ))}
       </div>
     </div>
+  );
+}
+
+function TaskBasedRoadmap({
+  tasks,
+}: {
+  tasks: Array<{
+    _id: string;
+    title: string;
+    type: string;
+    status: string;
+    priority: string;
+    tags?: string[];
+  }>;
+}) {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8 text-center">
+        <h1 className="font-bold text-3xl">Roadmap</h1>
+        <p className="mt-2 text-muted-foreground">
+          See what we&apos;re working on and what&apos;s coming next.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        {TASK_STATUS_COLUMNS.map((column) => {
+          const columnTasks = tasks.filter((t) =>
+            (column.statuses as readonly string[]).includes(t.status)
+          );
+          return (
+            <div key={column.label}>
+              <div className="mb-4 flex items-center gap-2">
+                <h3 className="font-semibold text-lg">{column.label}</h3>
+                <Badge variant="secondary">{columnTasks.length}</Badge>
+              </div>
+              <div className="space-y-3">
+                {columnTasks.map((task) => (
+                  <TaskRoadmapCard key={task._id} task={task} />
+                ))}
+                {columnTasks.length === 0 && (
+                  <p className="py-4 text-center text-muted-foreground text-sm">
+                    No items
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function TaskRoadmapCard({
+  task,
+}: {
+  task: {
+    _id: string;
+    title: string;
+    type: string;
+    status: string;
+    priority: string;
+    tags?: string[];
+  };
+}) {
+  return (
+    <Card className="transition-shadow hover:shadow-md">
+      <CardContent className="p-3">
+        <div className="flex items-start gap-2">
+          <h4 className="flex-1 font-medium text-sm">{task.title}</h4>
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <Badge className={TYPE_BADGES[task.type] ?? ""} variant="secondary">
+            {task.type}
+          </Badge>
+          <span
+            className={`text-xs ${PRIORITY_COLORS[task.priority] ?? "text-muted-foreground"}`}
+          >
+            {task.priority}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -34,6 +34,11 @@ export const workTables = {
     // Spec-specific
     acceptanceCriteria: v.optional(v.array(v.string())),
 
+    // Public roadmap & changelog
+    isPublicRoadmap: v.optional(v.boolean()),
+    includeInChangelog: v.optional(v.boolean()),
+    createdByUser: v.optional(v.string()),
+
     // Metadata
     tags: v.optional(v.array(v.string())),
 
@@ -46,5 +51,17 @@ export const workTables = {
     .index("by_org_status", ["organizationId", "status"])
     .index("by_org_agent", ["organizationId", "assignedAgent"])
     .index("by_org_review", ["organizationId", "needsReview"])
+    .index("by_org_public", ["organizationId", "isPublicRoadmap"])
     .index("by_parent", ["parentId"]),
+
+  feedbackTaskLinks: defineTable({
+    organizationId: v.id("organizations"),
+    feedbackId: v.id("feedback"),
+    workItemId: v.id("autopilotWorkItems"),
+    createdAt: v.number(),
+    createdBy: v.optional(v.string()),
+  })
+    .index("by_feedback", ["feedbackId"])
+    .index("by_work_item", ["workItemId"])
+    .index("by_organization", ["organizationId"]),
 };
