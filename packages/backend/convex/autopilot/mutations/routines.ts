@@ -107,6 +107,8 @@ const AUTOPILOT_TABLES_WITH_OTHER_ORG_TABLES = [
   "autopilotLeads",
   "autopilotRoutines",
   "autopilotAdapterCredentials",
+  "autopilotReports",
+  "autopilotAgentMemories",
   "repoAnalysis",
   "websiteReferences",
   "projectSetupResults",

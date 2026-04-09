@@ -225,6 +225,9 @@ export const processCompetitorMoves = async (
 
 export type ResearchFindings = z.infer<typeof marketResearchSchema>["findings"];
 
+const MAX_PENDING_RESEARCH_DOCS = 15;
+const MAX_PENDING_BLOG_POSTS = 3;
+
 export const saveResearchFindings = async (
   ctx: {
     runMutation: ActionCtx["runMutation"];
@@ -233,6 +236,34 @@ export const saveResearchFindings = async (
   organizationId: Id<"organizations">,
   findings: ResearchFindings
 ): Promise<void> => {
+  // Check existing research backlog
+  const existingResearch = await ctx.runQuery(
+    internal.autopilot.documents.getDocumentsByOrg,
+    { organizationId, type: "market_research" }
+  );
+  const pendingResearchCount = existingResearch.filter(
+    (d) => d.status === "draft" || d.status === "pending_review"
+  ).length;
+
+  if (pendingResearchCount >= MAX_PENDING_RESEARCH_DOCS) {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+      organizationId,
+      agent: "growth",
+      level: "info",
+      message: `Research save skipped — backlog full (${pendingResearchCount}/${MAX_PENDING_RESEARCH_DOCS} pending)`,
+    });
+    return;
+  }
+
+  const slotsAvailable = MAX_PENDING_RESEARCH_DOCS - pendingResearchCount;
+
+  // Check existing blog post backlog (research also creates blog posts for high-relevance findings)
+  const existingBlogs = await ctx.runQuery(
+    internal.autopilot.documents.getDocumentsByTags,
+    { organizationId, tags: ["market-insight"], status: "draft" }
+  );
+  let currentBlogCount = existingBlogs.length;
+
   // Batch dedup check — single query instead of N individual queries
   const dedupResults = await ctx.runQuery(
     internal.autopilot.dedup.findSimilarGrowthItems,
@@ -242,7 +273,11 @@ export const saveResearchFindings = async (
     dedupResults.filter((r) => r.existingId !== null).map((r) => r.title)
   );
 
+  let saved = 0;
   for (const finding of findings) {
+    if (saved >= slotsAvailable) {
+      break;
+    }
     if (existingTopics.has(finding.topic)) {
       continue;
     }
@@ -270,8 +305,12 @@ export const saveResearchFindings = async (
       needsReview: false,
       reviewType: "market_research",
     });
+    saved++;
 
-    if (finding.relevance === "high") {
+    if (
+      finding.relevance === "high" &&
+      currentBlogCount < MAX_PENDING_BLOG_POSTS
+    ) {
       await ctx.runMutation(internal.autopilot.documents.createDocument, {
         organizationId,
         type: "blog_post",
@@ -281,6 +320,7 @@ export const saveResearchFindings = async (
         sourceAgent: "growth",
         tags: ["market-insight"],
       });
+      currentBlogCount++;
     }
   }
 };

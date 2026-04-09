@@ -21,6 +21,7 @@ const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const THREE_STORY_THRESHOLD = 3;
 const QUERY_LIMIT = 200;
 const GROWTH_FOLLOWUP_DAMPENING_MS = 30 * 60 * 1000; // 30 minutes
+const MAX_PENDING_GROWTH_CONTENT = 10;
 
 // ============================================
 // PURE WAKE CONDITION FUNCTIONS (for testing)
@@ -32,11 +33,13 @@ interface ActivitySummary {
   failedRunCount: number;
   growthFollowUpNoteCount: number;
   hasInitiatives: boolean;
+  hasLeads: boolean;
   hasResearchDocs: boolean;
   leadsNeedingFollowUp: number;
   newNoteCount: number;
   newSupportConversationCount: number;
   now: number;
+  pendingGrowthContentCount: number;
   readyStoryCount: number;
   recentErrorCount: number;
   recentGrowthSuccessAt: number | null;
@@ -88,13 +91,22 @@ export const shouldWakeDev = (summary: ActivitySummary): boolean => {
  *   (prevents no-op spam when guards block execution)
  */
 export const shouldWakeGrowth = (summary: ActivitySummary): boolean => {
+  // Bootstrap always runs — we need initial research regardless of backlog
   if (!summary.hasResearchDocs) {
     return true;
   }
+
+  // Content backlog full — don't wake for content-producing reasons
+  const contentBacklogFull =
+    summary.pendingGrowthContentCount >= MAX_PENDING_GROWTH_CONTENT;
+
   if (summary.shippedFeaturesWithoutContent > 0) {
-    return true;
+    return !contentBacklogFull;
   }
   if (summary.growthFollowUpNoteCount > 0) {
+    if (contentBacklogFull) {
+      return false;
+    }
     // Dampen follow-up wakes: only trigger if Growth hasn't run recently
     const recentlyRan =
       summary.recentGrowthSuccessAt !== null &&
@@ -107,10 +119,14 @@ export const shouldWakeGrowth = (summary: ActivitySummary): boolean => {
 
 /**
  * Sales wakes when there's pipeline work:
+ * - No leads exist yet (bootstrap — prime the pipeline with prospecting)
  * - Discovered leads need initial outreach
  * - Leads have overdue follow-ups
  */
 export const shouldWakeSales = (summary: ActivitySummary): boolean => {
+  if (!summary.hasLeads && summary.hasResearchDocs) {
+    return true;
+  }
   if (summary.discoveredLeadCount > 0) {
     return true;
   }
@@ -158,6 +174,9 @@ export const checkWakeConditions = internalQuery({
       sales: v.boolean(),
       ceo: v.boolean(),
       support: v.boolean(),
+    }),
+    signals: v.object({
+      shippedFeaturesWithoutContent: v.boolean(),
     }),
   }),
   handler: async (ctx, args) => {
@@ -244,6 +263,19 @@ export const checkWakeConditions = internalQuery({
     );
     const growthFollowUpNoteCount = growthFollowUpNotes.length;
 
+    // Growth content backlog: count pending_review docs from growth agent
+    const pendingGrowthContent = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_org_status", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("status", "pending_review")
+      )
+      .take(QUERY_LIMIT);
+    const pendingGrowthContentCount = pendingGrowthContent.filter(
+      (d) => d.sourceAgent === "growth"
+    ).length;
+
     // ---- Shipped features without content (Growth signal) ----
 
     const doneItems = await ctx.db
@@ -276,6 +308,7 @@ export const checkWakeConditions = internalQuery({
         q.eq("organizationId", args.organizationId)
       )
       .take(QUERY_LIMIT);
+    const hasLeads = leads.length > 0;
     const discoveredLeadCount = leads.filter(
       (l) => l.status === "discovered"
     ).length;
@@ -329,9 +362,11 @@ export const checkWakeConditions = internalQuery({
       newSupportConversationCount,
       shippedFeaturesWithoutContent: shippedWithoutContent,
       hasInitiatives,
+      hasLeads,
       hasResearchDocs,
       discoveredLeadCount,
       leadsNeedingFollowUp,
+      pendingGrowthContentCount,
       stuckReviewCount,
       recentErrorCount,
       recentGrowthSuccessAt,
@@ -347,6 +382,9 @@ export const checkWakeConditions = internalQuery({
         sales: shouldWakeSales(summary),
         ceo: shouldWakeCEO(summary),
         support: shouldWakeSupport(summary),
+      },
+      signals: {
+        shippedFeaturesWithoutContent: shippedWithoutContent > 0,
       },
     };
   },

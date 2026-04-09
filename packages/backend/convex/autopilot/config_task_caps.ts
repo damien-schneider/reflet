@@ -10,8 +10,8 @@ import { internalQuery, type QueryCtx } from "../_generated/server";
 // TASK CAP DEFAULTS
 // ============================================
 
-const DEFAULT_MAX_PENDING_PER_AGENT = 2;
-const DEFAULT_MAX_PENDING_TOTAL = 5;
+const DEFAULT_MAX_PENDING_PER_AGENT = 4;
+const DEFAULT_MAX_PENDING_TOTAL = 12;
 
 /**
  * All agent names and their corresponding config fields.

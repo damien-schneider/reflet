@@ -92,27 +92,35 @@ export const MAX_EXPLORATION_STEPS = 20;
 export const MAX_TOKENS_EXPLORE = 8000;
 export const MAX_TOKENS_SYNTHESIZE = 8000;
 
-const RATE_LIMIT_PATTERNS = [
+const RETRYABLE_ERROR_PATTERNS = [
   "rate-limit",
   "rate limit",
   "rate increased",
   "temporarily",
   "429",
+  "500",
+  "502",
+  "503",
   "too many requests",
   "quota",
   "overloaded",
   "upstream error",
+  "internal server error",
+  "bad gateway",
+  "service unavailable",
   "non-retryable",
   "failed after",
   "throttl",
+  "deprecated",
+  "has been deprecated",
 ];
 
-export function isRateLimitError(error: unknown): boolean {
+export function isRetryableError(error: unknown): boolean {
   const msg =
     error instanceof Error
       ? error.message.toLowerCase()
       : String(error).toLowerCase();
-  return RATE_LIMIT_PATTERNS.some((pattern) => msg.includes(pattern));
+  return RETRYABLE_ERROR_PATTERNS.some((pattern) => msg.includes(pattern));
 }
 
 /**
@@ -129,7 +137,7 @@ export async function generateTextWithFallback(
       return await generateText(buildOptions(modelId));
     } catch (error) {
       lastError = error;
-      if (isRateLimitError(error)) {
+      if (isRetryableError(error)) {
         await onFallback?.(modelId);
         continue;
       }

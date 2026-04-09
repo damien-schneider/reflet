@@ -17,8 +17,8 @@ import { technicalSpecSchema } from "../agents/cto";
 
 // Growth agent schemas
 import {
+  enrichedThreadSchema,
   growthContentSchema,
-  threadDiscoverySchema,
 } from "../agents/growth/discovery";
 
 // PM agent schema
@@ -91,7 +91,7 @@ describe("agent schemas — Azure compatibility", () => {
   });
 
   test("growth schemas have all properties required", () => {
-    checkSchema(threadDiscoverySchema, "threadDiscoverySchema");
+    checkSchema(enrichedThreadSchema, "enrichedThreadSchema");
     checkSchema(growthContentSchema, "growthContentSchema");
   });
 

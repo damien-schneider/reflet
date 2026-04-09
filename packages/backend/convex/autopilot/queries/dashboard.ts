@@ -234,3 +234,103 @@ export const getAgentReadiness = query({
     return readiness;
   },
 });
+
+/**
+ * Agent performance scores — 7-day rolling metrics per agent.
+ */
+export const getAgentPerformance = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgMembership(ctx, args.organizationId, user._id);
+
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+    const logs = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_org_created", (q) =>
+        q.eq("organizationId", args.organizationId).gte("createdAt", cutoff)
+      )
+      .collect();
+
+    const docs = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .take(500);
+
+    const agents = ["pm", "cto", "dev", "growth", "support", "sales"] as const;
+
+    return agents.map((agent) => {
+      const agentLogs = logs.filter((l) => l.agent === agent);
+      const totalActions = agentLogs.filter(
+        (l) => l.action === "action"
+      ).length;
+      const successCount = agentLogs.filter(
+        (l) => l.level === "success"
+      ).length;
+      const errorCount = agentLogs.filter((l) => l.level === "error").length;
+
+      const agentDocs = docs.filter(
+        (d) => d.sourceAgent === agent && d.createdAt > cutoff
+      );
+      const approvedDocs = agentDocs.filter(
+        (d) => d.status === "published"
+      ).length;
+
+      return {
+        agent,
+        totalActions,
+        successCount,
+        errorCount,
+        successRate: totalActions > 0 ? successCount / totalActions : 0,
+        documentsCreated: agentDocs.length,
+        documentsApproved: approvedDocs,
+        approvalRate:
+          agentDocs.length > 0 ? approvedDocs / agentDocs.length : 0,
+      };
+    });
+  },
+});
+
+/**
+ * Content quality overview — pending review items with quality scores.
+ */
+export const getContentQualityOverview = query({
+  args: {
+    organizationId: v.id("organizations"),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgMembership(ctx, args.organizationId, user._id);
+
+    const docs = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .take(100);
+
+    const pendingDocs = docs.filter((d) => d.status === "pending_review");
+
+    const totalPending = pendingDocs.length;
+    const shortContent = pendingDocs.filter(
+      (d) => d.content.length < 200
+    ).length;
+    const byAgent: Record<string, number> = {};
+
+    for (const doc of pendingDocs) {
+      const agent = doc.sourceAgent ?? "unknown";
+      byAgent[agent] = (byAgent[agent] ?? 0) + 1;
+    }
+
+    return {
+      totalPending,
+      shortContent,
+      byAgent,
+    };
+  },
+});

@@ -16,8 +16,8 @@ import {
   resetUsageTracker,
 } from "../shared_generation";
 import { generateTextWithWebSearch } from "../shared_web";
-import { runGapAssessment } from "./content_generation";
 import { discoverThreads, GROWTH_CONTENT_MODELS } from "./discovery";
+import { runGapAssessment } from "./gap_assessment";
 import {
   loadProductContext,
   MISSING_PRODUCT_DEF_MESSAGE,
@@ -80,9 +80,20 @@ export const runGrowthMarketResearch = internalAction({
         .map((d: Doc<"autopilotDocuments">) => d.content)
         .join("\n");
 
-      const discoveredThreads = await discoverThreads(
+      // Load competitors to feed into discovery pipeline
+      const competitors = await ctx.runQuery(
+        internal.autopilot.competitors.getCompetitorsByOrg,
+        { organizationId: orgId }
+      );
+      const competitorNames = competitors.map(
+        (c: Doc<"autopilotCompetitors">) => c.name
+      );
+
+      // 4-stage discovery pipeline: query → search → enrich → score
+      const discoveryResult = await discoverThreads(
         product.productName,
-        product.productDescription
+        product.productDescription,
+        competitorNames
       );
 
       const systemPrompt = buildAgentPrompt(
@@ -92,10 +103,11 @@ export const runGrowthMarketResearch = internalAction({
         product.agentKnowledge
       );
 
-      const threadsContext = discoveredThreads.threads
+      // Build enriched threads context for deep research
+      const threadsContext = discoveryResult.threads
         .map(
           (t) =>
-            `- [${t.platform}] ${t.title} (${t.url})\n  Relevance: ${t.relevanceScore}/100 | Angle: ${t.suggestedAngle}`
+            `- [${t.platform}] ${t.title} (${t.url})\n  Community: ${t.community} | Relevance: ${t.relevanceScore}/100\n  ${t.originalPostContent.slice(0, 200)}`
         )
         .join("\n");
 
@@ -142,7 +154,7 @@ Provide detailed findings with sources.`,
           deepResearchText,
           serializedCitations: JSON.stringify(deepCitations),
           serializedThreadUrls: JSON.stringify(
-            discoveredThreads.threads.map((t) => t.url)
+            discoveryResult.threads.map((t) => t.url)
           ),
           followUpNoteIds,
         }

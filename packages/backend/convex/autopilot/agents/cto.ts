@@ -14,7 +14,7 @@ import {
   internalMutation,
   internalQuery,
 } from "../../_generated/server";
-import { AGENT_MODELS } from "./models";
+import { QUALITY_MODELS } from "./models";
 import { buildAgentPrompt, CTO_SYSTEM_PROMPT } from "./prompts";
 import { generateObjectWithFallback } from "./shared_generation";
 
@@ -203,7 +203,7 @@ export const logCtoActivity = internalMutation({
 // MODEL CONSTANTS
 // ============================================
 
-const CTO_MODELS = AGENT_MODELS;
+const CTO_MODELS = QUALITY_MODELS;
 
 // ============================================
 // MAIN ACTION

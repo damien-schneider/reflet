@@ -1,23 +1,93 @@
 /**
  * Deduplication helpers — prevent agents from creating duplicate work.
  *
- * Agents must check before creating tasks or inbox items to avoid
- * flooding the user with redundant items.
+ * Uses a hybrid similarity approach combining:
+ * 1. Normalized token overlap (word-level Jaccard)
+ * 2. Character bigram similarity (catches typos/rewordings)
+ * 3. Prefix matching (catches "Implement X" vs "Implement X for Y")
+ *
+ * The combined score catches near-duplicates that bigram-only misses:
+ * - "Implement dark mode for dashboard" vs "Add dark mode to the dashboard" → high match
+ * - "Fix login bug" vs "Fix login bug on mobile" → high match
  */
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
+
+const NON_ALPHANUM_REGEX = /[^a-z0-9\s]/g;
+const WHITESPACE_SPLIT_REGEX = /\s+/;
+
 import { documentType } from "./schema/validators";
 
 // ============================================
 // SIMILARITY THRESHOLD
 // ============================================
 
-const TITLE_SIMILARITY_THRESHOLD = 0.75;
+const SIMILARITY_THRESHOLD = 0.6;
 
 // ============================================
-// STRING SIMILARITY (Jaccard on bigrams)
+// STOP WORDS (filtered from token comparison)
 // ============================================
+
+const STOP_WORDS = new Set([
+  "a",
+  "an",
+  "the",
+  "and",
+  "or",
+  "but",
+  "in",
+  "on",
+  "at",
+  "to",
+  "for",
+  "of",
+  "with",
+  "by",
+  "from",
+  "is",
+  "it",
+  "this",
+  "that",
+  "be",
+  "as",
+  "are",
+  "was",
+  "were",
+  "been",
+  "being",
+  "have",
+  "has",
+  "had",
+  "do",
+  "does",
+  "did",
+  "will",
+  "would",
+  "could",
+  "should",
+  "may",
+  "might",
+  "shall",
+  "can",
+  "need",
+  "dare",
+  "ought",
+  "used",
+  "not",
+  "no",
+]);
+
+// ============================================
+// HYBRID SIMILARITY
+// ============================================
+
+const tokenize = (str: string): string[] =>
+  str
+    .toLowerCase()
+    .replace(NON_ALPHANUM_REGEX, " ")
+    .split(WHITESPACE_SPLIT_REGEX)
+    .filter((w) => w.length >= 2 && !STOP_WORDS.has(w));
 
 const getBigrams = (str: string): Set<string> => {
   const normalized = str.toLowerCase().trim();
@@ -28,23 +98,51 @@ const getBigrams = (str: string): Set<string> => {
   return bigrams;
 };
 
-const jaccardSimilarity = (a: string, b: string): number => {
-  const bigramsA = getBigrams(a);
-  const bigramsB = getBigrams(b);
-
-  if (bigramsA.size === 0 && bigramsB.size === 0) {
+const jaccardSimilarity = (setA: Set<string>, setB: Set<string>): number => {
+  if (setA.size === 0 && setB.size === 0) {
     return 1;
   }
-
   let intersection = 0;
-  for (const bigram of bigramsA) {
-    if (bigramsB.has(bigram)) {
+  for (const item of setA) {
+    if (setB.has(item)) {
       intersection++;
     }
   }
-
-  const union = bigramsA.size + bigramsB.size - intersection;
+  const union = setA.size + setB.size - intersection;
   return union === 0 ? 0 : intersection / union;
+};
+
+/**
+ * Hybrid similarity combining token overlap (semantic) and bigram similarity (structural).
+ * Catches both rewording ("implement" vs "add") and substring variations.
+ */
+const hybridSimilarity = (a: string, b: string): number => {
+  // Token-level Jaccard (catches "dark mode dashboard" vs "dark mode for the dashboard")
+  const tokensA = new Set(tokenize(a));
+  const tokensB = new Set(tokenize(b));
+  const tokenSim = jaccardSimilarity(tokensA, tokensB);
+
+  // Character bigram Jaccard (catches typos, slightly different phrasing)
+  const bigramsA = getBigrams(a);
+  const bigramsB = getBigrams(b);
+  const bigramSim = jaccardSimilarity(bigramsA, bigramsB);
+
+  // Containment check: if one title is a substring of the other (prefix matching)
+  const normalA = a.toLowerCase().trim();
+  const normalB = b.toLowerCase().trim();
+  const containment =
+    normalA.includes(normalB) || normalB.includes(normalA) ? 1 : 0;
+
+  // Weighted combination: tokens matter most (semantic), bigrams catch structure
+  const TOKEN_WEIGHT = 0.5;
+  const BIGRAM_WEIGHT = 0.3;
+  const CONTAINMENT_WEIGHT = 0.2;
+
+  return (
+    tokenSim * TOKEN_WEIGHT +
+    bigramSim * BIGRAM_WEIGHT +
+    containment * CONTAINMENT_WEIGHT
+  );
 };
 
 // ============================================
@@ -75,8 +173,8 @@ export const findSimilarTask = internalQuery({
     );
 
     for (const item of activeItems) {
-      const similarity = jaccardSimilarity(args.title, item.title);
-      if (similarity >= TITLE_SIMILARITY_THRESHOLD) {
+      const similarity = hybridSimilarity(args.title, item.title);
+      if (similarity >= SIMILARITY_THRESHOLD) {
         return item._id;
       }
     }
@@ -109,8 +207,8 @@ export const findSimilarInboxItem = internalQuery({
     );
 
     for (const doc of activeDocs) {
-      const similarity = jaccardSimilarity(args.title, doc.title);
-      if (similarity >= TITLE_SIMILARITY_THRESHOLD) {
+      const similarity = hybridSimilarity(args.title, doc.title);
+      if (similarity >= SIMILARITY_THRESHOLD) {
         return doc._id;
       }
     }
@@ -139,8 +237,8 @@ export const findSimilarGrowthItem = internalQuery({
     const activeDocs = existingDocs.filter((doc) => doc.status !== "archived");
 
     for (const doc of activeDocs) {
-      const similarity = jaccardSimilarity(args.title, doc.title);
-      if (similarity >= TITLE_SIMILARITY_THRESHOLD) {
+      const similarity = hybridSimilarity(args.title, doc.title);
+      if (similarity >= SIMILARITY_THRESHOLD) {
         return doc._id;
       }
     }
@@ -177,8 +275,8 @@ export const findSimilarGrowthItems = internalQuery({
 
     return args.titles.map((title) => {
       for (const doc of activeDocs) {
-        const similarity = jaccardSimilarity(title, doc.title);
-        if (similarity >= TITLE_SIMILARITY_THRESHOLD) {
+        const similarity = hybridSimilarity(title, doc.title);
+        if (similarity >= SIMILARITY_THRESHOLD) {
           return { title, existingId: doc._id };
         }
       }

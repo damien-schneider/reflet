@@ -6,90 +6,34 @@
 import { v } from "convex/values";
 import type { z } from "zod";
 import { internal } from "../../../_generated/api";
-import type { Doc, Id } from "../../../_generated/dataModel";
-import type { ActionCtx } from "../../../_generated/server";
+import type { Doc } from "../../../_generated/dataModel";
 import { internalAction } from "../../../_generated/server";
 import { buildAgentPrompt, GROWTH_SYSTEM_PROMPT } from "../prompts";
 import {
   generateObjectWithFallback,
   resetUsageTracker,
 } from "../shared_generation";
-import { validateUrl } from "../shared_web";
+import { saveContentDocuments } from "./content_storage";
 import {
-  assessMarketGaps,
+  type DiscoveryResult,
   discoverThreads,
   GROWTH_CONTENT_MODELS,
-  type growthContentSchema,
   growthContentSchema as growthSchema,
-  type threadDiscoverySchema,
+  type ScoredThread,
 } from "./discovery";
+import { runGapAssessment } from "./gap_assessment";
 import {
   loadProductContext,
   MISSING_PRODUCT_DEF_MESSAGE,
   type ProductContext,
 } from "./product_context";
 
-const saveContentDocuments = async (
-  ctx: {
-    runMutation: ActionCtx["runMutation"];
-    runQuery: ActionCtx["runQuery"];
-  },
-  organizationId: Id<"organizations">,
-  items: z.infer<typeof growthContentSchema>["items"]
-): Promise<void> => {
-  // Batch dedup check — single query instead of N individual queries
-  const dedupResults = await ctx.runQuery(
-    internal.autopilot.dedup.findSimilarGrowthItems,
-    { organizationId, titles: items.map((i) => i.title) }
-  );
-  const existingTitles = new Set(
-    dedupResults.filter((r) => r.existingId !== null).map((r) => r.title)
-  );
-
-  for (const item of items) {
-    if (existingTitles.has(item.title)) {
-      continue;
-    }
-    let validatedTargetUrl = item.targetUrl;
-    if (validatedTargetUrl) {
-      const validation = await validateUrl(validatedTargetUrl);
-      if (!validation.valid) {
-        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-          organizationId,
-          agent: "growth",
-          level: "info",
-          message: `Dropped invalid targetUrl: ${validatedTargetUrl} (${validation.reason})`,
-        });
-        validatedTargetUrl = "";
-      }
-    }
-
-    await ctx.runMutation(internal.autopilot.documents.createDocument, {
-      organizationId,
-      type: item.type as
-        | "blog_post"
-        | "reddit_reply"
-        | "linkedin_post"
-        | "twitter_post"
-        | "hn_comment",
-      title: item.title,
-      content: item.content,
-      targetUrl: validatedTargetUrl,
-      status: "pending_review",
-      sourceAgent: "growth",
-      needsReview: true,
-      reviewType: "growth_content",
-      tags: ["growth", item.type],
-    });
-  }
-};
-
 const generateGrowthContent = async (
   product: ProductContext,
   shippedFeatures: string[],
   completedTasks: string[],
-  discoveredThreads: z.infer<typeof threadDiscoverySchema>
-): Promise<z.infer<typeof growthContentSchema>> => {
+  scoredThreads: ScoredThread[]
+): Promise<z.infer<typeof growthSchema>> => {
   const systemPrompt = buildAgentPrompt(
     GROWTH_SYSTEM_PROMPT,
     "",
@@ -97,12 +41,26 @@ const generateGrowthContent = async (
     product.agentKnowledge
   );
 
-  const threadsContext = discoveredThreads.threads
+  const threadsContext = scoredThreads
+    .filter((t) => !t.isStale)
     .map(
       (t) =>
-        `- [${t.platform}] ${t.title} (${t.url})\n  Suggested angle: ${t.suggestedAngle}`
+        `--- THREAD ---
+Platform: ${t.platform} (${t.community})
+Title: ${t.title}
+URL: ${t.url}
+Author: ${t.authorName} | Age: ${t.postAge} | Comments: ${t.commentCount}
+Relevance: ${t.relevanceScore}/100 — ${t.relevanceReason}
+Suggested angle: ${t.suggestedAngle}
+
+Original post:
+${t.originalPostContent.slice(0, 1500)}
+
+Top comments already posted:
+${t.topComments.length > 0 ? t.topComments.map((c) => `• ${c.slice(0, 300)}`).join("\n") : "(no comments)"}
+---`
     )
-    .join("\n");
+    .join("\n\n");
 
   const prompt = `Generate growth content for ${product.productName}.
 
@@ -119,15 +77,21 @@ ${shippedFeatures.map((f) => `- ${f}`).join("\n")}
 Completed tasks:
 ${completedTasks.map((t) => `- ${t}`).join("\n")}
 
-Relevant discussion threads found:
-${threadsContext}
+ENRICHED THREAD DATA (read the actual content carefully):
+${threadsContext || "(no qualifying threads found)"}
 
 Generate 3-5 pieces of content:
-1. A Reddit reply to the most relevant thread
-2. A LinkedIn post announcing the new features
-3. A Twitter/X thread about the updates
-4. A HN comment if applicable
-5. A short blog post or changelog announcement
+1. Reddit/HN replies to the most relevant threads (prioritize — these have REAL context now)
+2. A LinkedIn post if there's a strong professional angle
+3. A Twitter/X post for engagement
+4. A blog post or changelog only if there's enough shipped work
+
+For thread replies:
+- Acknowledge the SPECIFIC pain points mentioned in the original post
+- Reference what existing commenters have said (don't repeat solved answers)
+- Mention ${product.productName} naturally — explain what specifically makes it relevant
+- Match the community's conversational tone
+- Do NOT sound like a marketing pitch
 
 Each piece should:
 - Be ready to post immediately
@@ -143,91 +107,6 @@ Each piece should:
   });
 };
 
-export const runGapAssessment = async (
-  ctx: {
-    runQuery: ActionCtx["runQuery"];
-    runMutation: ActionCtx["runMutation"];
-  },
-  organizationId: Id<"organizations">,
-  product: ProductContext
-): Promise<void> => {
-  // Gather existing research for context
-  const existingDocs = await ctx.runQuery(
-    internal.autopilot.documents.getDocumentsByOrg,
-    { organizationId, type: "market_research" }
-  );
-  const existingResearchSummary = existingDocs
-    .slice(0, 10)
-    .map((d: Doc<"autopilotDocuments">) => `- ${d.title}`)
-    .join("\n");
-
-  const competitors = await ctx.runQuery(
-    internal.autopilot.competitors.getCompetitorsByOrg,
-    { organizationId }
-  );
-  const competitorNames = competitors.map(
-    (c: Doc<"autopilotCompetitors">) => c.name
-  );
-
-  // Cap: don't create more follow-up notes if there are already unprocessed ones
-  const MAX_PENDING_FOLLOWUPS = 5;
-  const existingFollowUps = await ctx.runQuery(
-    internal.autopilot.documents.getDocumentsByTags,
-    { organizationId, tags: ["growth-followup"], status: "draft" }
-  );
-  if (existingFollowUps.length >= MAX_PENDING_FOLLOWUPS) {
-    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-      organizationId,
-      agent: "growth",
-      level: "info",
-      message: `Gap assessment skipped — ${existingFollowUps.length} unprocessed follow-up notes already pending`,
-    });
-    return;
-  }
-
-  const gaps = await assessMarketGaps(
-    product.productName,
-    product.productDescription,
-    existingResearchSummary,
-    competitorNames
-  );
-
-  // Only write follow-up notes if there are real gaps
-  if (gaps.gaps.length === 0 || gaps.marketUnderstandingScore > 85) {
-    return;
-  }
-
-  // Cap new notes to stay under the limit
-  const slotsAvailable = MAX_PENDING_FOLLOWUPS - existingFollowUps.length;
-  const gapsToWrite = gaps.gaps.slice(0, slotsAvailable);
-
-  for (const gap of gapsToWrite) {
-    // Dedup: skip if a similar follow-up note already exists
-    const existing = await ctx.runQuery(
-      internal.autopilot.dedup.findSimilarGrowthItem,
-      { organizationId, title: `Growth follow-up: ${gap.topic}` }
-    );
-    if (existing) {
-      continue;
-    }
-
-    await ctx.runMutation(internal.autopilot.documents.createDocument, {
-      organizationId,
-      type: "note",
-      title: `Growth follow-up: ${gap.topic}`,
-      content: `## ${gap.topic}\n\n${gap.reasoning}\n\n**Suggested searches:**\n${gap.suggestedSearchTerms.map((t) => `- ${t}`).join("\n")}`,
-      tags: ["growth-followup"],
-      sourceAgent: "growth",
-    });
-  }
-
-  await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-    organizationId,
-    agent: "growth",
-    level: "info",
-    message: `Market understanding: ${gaps.marketUnderstandingScore}/100 — created ${gapsToWrite.length} follow-up notes (${existingFollowUps.length} already pending)`,
-  });
-};
 /**
  * Phase 1: Discovery — find relevant threads via web search.
  * Schedules Phase 2 with the raw results to stay within the 600s action limit.
@@ -289,10 +168,40 @@ export const runGrowthGeneration = internalAction({
         return;
       }
 
-      const discoveredThreads = await discoverThreads(
-        product.productName,
-        product.productDescription
+      // Load competitors for query construction
+      const competitors = await ctx.runQuery(
+        internal.autopilot.competitors.getCompetitorsByOrg,
+        { organizationId: orgId }
       );
+      const competitorNames = competitors.map(
+        (c: Doc<"autopilotCompetitors">) => c.name
+      );
+
+      // Load previously found URLs to avoid re-discovering same threads
+      const existingGrowthDocs = await ctx.runQuery(
+        internal.autopilot.documents.getDocumentsByTags,
+        { organizationId: orgId, tags: ["growth"], status: "pending_review" }
+      );
+      const previousUrls = existingGrowthDocs
+        .filter((d: Doc<"autopilotDocuments">) => d.targetUrl)
+        .map((d: Doc<"autopilotDocuments">) => d.targetUrl as string);
+
+      // 4-stage discovery pipeline: query → search → enrich → score
+      const discoveryResult = await discoverThreads(
+        product.productName,
+        product.productDescription,
+        competitorNames,
+        previousUrls
+      );
+
+      if (discoveryResult.searchCostUsd > 0) {
+        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+          organizationId: orgId,
+          agent: "growth",
+          level: "info",
+          message: `Discovery pipeline: ${discoveryResult.queriesRun} queries → ${discoveryResult.threadsDiscovered} found → ${discoveryResult.threadsEnriched} enriched → ${discoveryResult.threadsQualified} qualified (Exa cost: $${discoveryResult.searchCostUsd.toFixed(4)})`,
+        });
+      }
 
       // Schedule Phase 2 with discovery results
       await ctx.scheduler.runAfter(
@@ -302,7 +211,7 @@ export const runGrowthGeneration = internalAction({
         {
           organizationId: orgId,
           triggerReason: args.triggerReason,
-          serializedThreads: JSON.stringify(discoveredThreads),
+          serializedThreads: JSON.stringify(discoveryResult),
           serializedRelevantTasks: JSON.stringify(relevantTasks),
         }
       );
@@ -352,28 +261,38 @@ export const processGrowthGenerationResults = internalAction({
         return;
       }
 
-      const discoveredThreads: z.infer<typeof threadDiscoverySchema> =
-        JSON.parse(args.serializedThreads);
+      const discoveryResult: DiscoveryResult = JSON.parse(
+        args.serializedThreads
+      );
       const relevantTasks: string[] = JSON.parse(args.serializedRelevantTasks);
 
       const generatedContent = await generateGrowthContent(
         product,
         relevantTasks,
         [],
-        discoveredThreads
+        discoveryResult.threads
       );
 
-      await saveContentDocuments(ctx, orgId, generatedContent.items);
+      const { saved, dropped } = await saveContentDocuments(
+        ctx,
+        orgId,
+        generatedContent.items,
+        discoveryResult.threads
+      );
 
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: orgId,
         agent: "growth",
         level: "success",
-        message: `Growth generation complete: ${generatedContent.items.length} pieces created, ${discoveredThreads.threads.length} threads analyzed`,
+        message: `Growth generation complete: ${saved} saved, ${dropped} dropped (cap), ${discoveryResult.threadsQualified} qualified threads`,
         details: JSON.stringify({
           tasksAnalyzed: relevantTasks.length,
-          threadsDiscovered: discoveredThreads.threads.length,
+          threadsDiscovered: discoveryResult.threadsDiscovered,
+          threadsEnriched: discoveryResult.threadsEnriched,
+          threadsQualified: discoveryResult.threadsQualified,
           contentPieces: generatedContent.items.length,
+          contentSaved: saved,
+          contentDropped: dropped,
           triggerReason: args.triggerReason,
         }),
       });

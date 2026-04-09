@@ -18,7 +18,7 @@ import {
   internalAction,
   internalQuery,
 } from "../../_generated/server";
-import { AGENT_MODELS } from "./models";
+import { FAST_MODELS } from "./models";
 import { generateObjectWithFallback } from "./shared_generation";
 
 // ============================================
@@ -175,7 +175,7 @@ export const runSupportTriage = internalAction({
       .join("\n");
 
     const triage = await generateObjectWithFallback({
-      models: AGENT_MODELS,
+      models: FAST_MODELS,
       schema: triageResultSchema,
       systemPrompt: `You are a support triage agent for ${org?.name ?? "the product"}. 
 Analyze support conversations and:
@@ -232,7 +232,7 @@ export const notifyFeatureShipped = internalAction({
       .join("\n");
 
     const notifications = await generateObjectWithFallback({
-      models: AGENT_MODELS,
+      models: FAST_MODELS,
       schema: shippedNotificationSchema,
       systemPrompt:
         "You draft brief, friendly 'shipped' notifications to inform users about features they requested.",

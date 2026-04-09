@@ -3,6 +3,10 @@
  *
  * Single cron that evaluates wake conditions and dispatches agent tasks.
  * Wake condition logic lives in heartbeat_conditions.ts.
+ *
+ * Includes per-cycle budget enforcement:
+ * - Max agents woken per cycle (prevents all agents firing at once)
+ * - Agents that produced no user-visible output last cycle are deprioritized
  */
 
 import { v } from "convex/values";
@@ -12,6 +16,7 @@ import type { ActionCtx } from "../_generated/server";
 import { internalAction, internalQuery } from "../_generated/server";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_AGENTS_PER_CYCLE = 3;
 
 /**
  * Check if a "Dev task paused" message was logged in the last 24h.
@@ -71,6 +76,49 @@ export const isAgentRecentlyWoken = internalQuery({
 });
 
 /**
+ * Check if an agent produced user-visible output in its last run.
+ * "Output" = success log, new document created, or task status change.
+ * If agent ran but produced nothing, it's deprioritized this cycle.
+ */
+export const didAgentProduceOutput = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    agent: v.string(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const recentLogs = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_org_created", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .take(100);
+
+    // Find the most recent action (wake) for this agent
+    const lastAction = recentLogs.find(
+      (log) => log.agent === args.agent && log.level === "action"
+    );
+
+    if (!lastAction) {
+      return true; // No recent run — allow waking
+    }
+
+    // Check if there's a success log after the last action
+    return recentLogs.some(
+      (log) =>
+        log.agent === args.agent &&
+        log.level === "success" &&
+        log.createdAt >= lastAction.createdAt
+    );
+  },
+});
+
+interface WakeContext {
+  shippedFeaturesWithoutContent: boolean;
+}
+
+/**
  * Schedule an agent to run asynchronously.
  * Uses ctx.scheduler.runAfter(0) so the heartbeat returns immediately.
  * Agents run in parallel, not blocking the heartbeat.
@@ -78,7 +126,8 @@ export const isAgentRecentlyWoken = internalQuery({
 const wakeAgent = async (
   ctx: { scheduler: ActionCtx["scheduler"] },
   orgId: Id<"organizations">,
-  agent: string
+  agent: string,
+  wakeContext: WakeContext
 ): Promise<void> => {
   switch (agent) {
     case "pm":
@@ -95,12 +144,23 @@ const wakeAgent = async (
       // Dev needs a specific taskId — dispatched by dispatchPendingTasks
       break;
     case "growth":
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.growth.market_research
-          .runGrowthMarketResearch,
-        { organizationId: orgId }
-      );
+      if (wakeContext.shippedFeaturesWithoutContent) {
+        // Shipped features need content — generate Reddit, HN, X, LinkedIn posts
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.agents.growth.content_generation
+            .runGrowthGeneration,
+          { organizationId: orgId, triggerReason: "scheduled" }
+        );
+      } else {
+        // No content needed — run market research instead
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.agents.growth.market_research
+            .runGrowthMarketResearch,
+          { organizationId: orgId }
+        );
+      }
       break;
     case "sales":
       await ctx.scheduler.runAfter(
@@ -266,13 +326,16 @@ interface WakeResult {
 /**
  * Evaluate each agent and decide whether to wake it.
  * Returns lists of woken and skipped agents with reasons.
+ * Enforces MAX_AGENTS_PER_CYCLE to prevent all agents firing at once.
+ * Deprioritizes agents that produced no output in their last run.
  */
 const evaluateAndWakeAgents = async (
   ctx: HeartbeatCtx & { runQuery: ActionCtx["runQuery"] },
   orgId: Id<"organizations">,
   shouldWake: Record<string, boolean>,
   enabledSet: Set<string>,
-  pipelineFull: boolean
+  pipelineFull: boolean,
+  wakeContext: WakeContext
 ): Promise<WakeResult> => {
   const woken: string[] = [];
   const skipped: string[] = [];
@@ -288,6 +351,11 @@ const evaluateAndWakeAgents = async (
     }
     if (agent === "pm" && pipelineFull) {
       skipped.push("pm (pipeline full)");
+      continue;
+    }
+    // Per-cycle budget: max N agents per heartbeat tick
+    if (woken.length >= MAX_AGENTS_PER_CYCLE) {
+      skipped.push(`${agent} (cycle budget exhausted)`);
       continue;
     }
     const agentGuard = await ctx.runQuery(
@@ -306,7 +374,16 @@ const evaluateAndWakeAgents = async (
       skipped.push(`${agent} (recently woken)`);
       continue;
     }
-    await wakeAgent(ctx, orgId, agent);
+    // Deprioritize agents that ran last cycle but produced no output
+    const producedOutput = await ctx.runQuery(
+      internal.autopilot.heartbeat.didAgentProduceOutput,
+      { organizationId: orgId, agent }
+    );
+    if (!producedOutput) {
+      skipped.push(`${agent} (no output last run)`);
+      continue;
+    }
+    await wakeAgent(ctx, orgId, agent, wakeContext);
     woken.push(agent);
   }
 
@@ -334,7 +411,7 @@ export const runHeartbeat = internalAction({
         continue;
       }
 
-      const { shouldWake } = await ctx.runQuery(
+      const { shouldWake, signals } = await ctx.runQuery(
         internal.autopilot.heartbeat_conditions.checkWakeConditions,
         { organizationId: orgId }
       );
@@ -357,7 +434,8 @@ export const runHeartbeat = internalAction({
         orgId,
         shouldWake,
         enabledSet,
-        pipelineFull
+        pipelineFull,
+        signals
       );
 
       // Dispatch any pending tasks to their assigned agents

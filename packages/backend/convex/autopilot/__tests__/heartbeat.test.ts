@@ -15,11 +15,13 @@ const BASE_SUMMARY = {
   failedRunCount: 0,
   growthFollowUpNoteCount: 0,
   hasInitiatives: true,
+  hasLeads: true,
   hasResearchDocs: true,
   leadsNeedingFollowUp: 0,
   newNoteCount: 0,
   newSupportConversationCount: 0,
   now: Date.now(),
+  pendingGrowthContentCount: 0,
   readyStoryCount: 5,
   recentErrorCount: 0,
   recentGrowthSuccessAt: null,
@@ -111,9 +113,69 @@ describe("shouldWakeGrowth", () => {
   it("does not wake when research exists and no content gap or follow-ups", () => {
     expect(shouldWakeGrowth({ ...BASE_SUMMARY })).toBe(false);
   });
+
+  it("does not wake for shipped features when content backlog is full", () => {
+    expect(
+      shouldWakeGrowth({
+        ...BASE_SUMMARY,
+        shippedFeaturesWithoutContent: 3,
+        pendingGrowthContentCount: 10,
+      })
+    ).toBe(false);
+  });
+
+  it("does not wake for follow-ups when content backlog is full", () => {
+    expect(
+      shouldWakeGrowth({
+        ...BASE_SUMMARY,
+        growthFollowUpNoteCount: 2,
+        pendingGrowthContentCount: 10,
+      })
+    ).toBe(false);
+  });
+
+  it("still wakes for bootstrap (no research docs) even when backlog full", () => {
+    expect(
+      shouldWakeGrowth({
+        ...BASE_SUMMARY,
+        hasResearchDocs: false,
+        pendingGrowthContentCount: 10,
+      })
+    ).toBe(true);
+  });
+
+  it("wakes when content backlog is below cap", () => {
+    expect(
+      shouldWakeGrowth({
+        ...BASE_SUMMARY,
+        shippedFeaturesWithoutContent: 2,
+        pendingGrowthContentCount: 5,
+      })
+    ).toBe(true);
+  });
 });
 
 describe("shouldWakeSales", () => {
+  it("wakes when no leads exist and research docs available (bootstrap)", () => {
+    expect(
+      shouldWakeSales({
+        ...BASE_SUMMARY,
+        hasLeads: false,
+        hasResearchDocs: true,
+      })
+    ).toBe(true);
+  });
+
+  it("does not bootstrap when no research docs yet", () => {
+    expect(
+      shouldWakeSales({
+        ...BASE_SUMMARY,
+        hasLeads: false,
+        hasResearchDocs: false,
+      })
+    ).toBe(false);
+  });
+
   it("wakes when discovered leads exist", () => {
     expect(shouldWakeSales({ ...BASE_SUMMARY, discoveredLeadCount: 3 })).toBe(
       true

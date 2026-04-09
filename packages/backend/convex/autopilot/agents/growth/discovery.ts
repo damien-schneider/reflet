@@ -1,32 +1,46 @@
 /**
- * Growth discovery — finds relevant online threads using real web search.
+ * Growth discovery — 4-stage pipeline for finding and qualifying community threads.
  *
- * Two-step pipeline:
- *   1. searchCommunities — real web search via openrouter:web_search server tool
- *   2. structureDiscoveries — LLM structures raw results into typed schema
- *   3. validateDiscoveredUrls — HTTP HEAD to confirm URLs are alive
+ * Stage 1: QUERY CONSTRUCTION — LLM generates targeted search queries
+ * Stage 2: MULTI-SEARCH — Exa.ai (preferred) or web search (fallback)
+ * Stage 3: CONTENT ENRICHMENT — fetch actual thread content
+ * Stage 4: RELEVANCE SCORING — LLM validates with real content
  */
 
 import { z } from "zod";
-import { AGENT_MODELS, WEB_SEARCH_MODELS } from "../models";
+import { FAST_MODELS } from "../models";
 import { generateObjectWithFallback } from "../shared_generation";
-import { generateTextWithWebSearch, validateUrls } from "../shared_web";
+import { executeSearchQueries, getSearchCostUsd } from "../shared_search";
+import { enrichThreads } from "./content_enricher";
+import { buildGrowthQueries } from "./query_builder";
+import { type ScoredThread, scoreThreadRelevance } from "./relevance_scorer";
 
-export const GROWTH_SEARCH_MODELS = WEB_SEARCH_MODELS;
-export const GROWTH_CONTENT_MODELS = AGENT_MODELS;
+export const GROWTH_CONTENT_MODELS = FAST_MODELS;
+
+// Re-export ScoredThread as the primary thread type for downstream consumers
+export type { ScoredThread } from "./relevance_scorer";
 
 // ============================================
 // SCHEMAS
 // ============================================
 
-export const threadDiscoverySchema = z.object({
+export const enrichedThreadSchema = z.object({
   threads: z.array(
     z.object({
       platform: z.enum(["reddit", "hackernews", "linkedin", "twitter"]),
-      url: z.string().describe("URL of the thread"),
+      url: z.string(),
       title: z.string(),
+      community: z.string().describe("e.g. r/macapps, Hacker News"),
+      originalPostContent: z.string().describe("The actual post text"),
+      topComments: z.array(z.string()).describe("Top 3-5 comments for context"),
+      authorName: z.string(),
       relevanceScore: z.number().min(0).max(100),
+      relevanceReason: z.string(),
       suggestedAngle: z.string(),
+      postAge: z.string(),
+      commentCount: z.number(),
+      isStale: z.boolean(),
+      engagementLevel: z.enum(["high", "medium", "low"]),
     })
   ),
 });
@@ -88,170 +102,71 @@ export const gapAssessmentSchema = z.object({
 });
 
 // ============================================
-// COMMUNITY SEARCH DOMAINS
-// ============================================
-
-const COMMUNITY_DOMAINS = [
-  "reddit.com",
-  "news.ycombinator.com",
-  "linkedin.com",
-  "x.com",
-  "twitter.com",
-  "indiehackers.com",
-  "dev.to",
-  "hashnode.com",
-  "medium.com",
-] as const;
-
-// ============================================
-// STEP 1: SEARCH COMMUNITIES (real web search)
-// ============================================
-
-const searchCommunities = async (
-  productName: string,
-  productDescription: string
-): Promise<{
-  text: string;
-  citations: Array<{ url: string; title: string; content: string }>;
-}> => {
-  const systemPrompt = `You are a growth intelligence analyst. Search for recent online discussions where a product like this could provide value.
-
-Focus on finding REAL, RECENT threads where:
-- People ask about problems the product solves
-- Competing products are discussed or compared
-- People are looking for alternatives or recommendations
-
-IMPORTANT: Search for discussions about the PROBLEM DOMAIN the product addresses,
-not about the technologies it is built with. We want to find potential users and
-market conversations, not developer discussions about frameworks or tech stacks.`;
-
-  const prompt = `Find relevant community discussions for: ${productName}
-
-PRODUCT DEFINITION:
-${productDescription}
-
-Search for recent threads and posts where this product could naturally add value. Look for:
-1. Questions about problems this product solves (based on the product definition above)
-2. "What tool do you use for X?" discussions about the product's specific domain
-3. Discussions comparing products that solve the same user problem
-4. People expressing frustration with existing solutions in this space
-
-DO NOT search for discussions about the technologies the product is built with (frameworks, languages, databases, etc.). Only search for discussions about the USER PROBLEM the product addresses.
-
-Return the most relevant discussions you find with context about each one.`;
-
-  return await generateTextWithWebSearch({
-    models: GROWTH_SEARCH_MODELS,
-    prompt,
-    systemPrompt,
-    searchConfig: {
-      max_results: 10,
-      allowed_domains: [...COMMUNITY_DOMAINS],
-    },
-  });
-};
-
-// ============================================
-// STEP 2: STRUCTURE DISCOVERIES
-// ============================================
-
-const structureDiscoveries = async (
-  rawSearchText: string,
-  citations: Array<{ url: string; title: string; content: string }>
-): Promise<z.infer<typeof threadDiscoverySchema>> => {
-  const citationsContext = citations
-    .map((c) => `- [${c.title}](${c.url})\n  ${c.content}`)
-    .join("\n\n");
-
-  const systemPrompt = `You are structuring web search results into a clean format.
-You MUST only use URLs that appear in the CITATIONS section below.
-Do NOT invent or guess any URLs. If a finding has no matching citation URL, skip it.`;
-
-  const prompt = `Structure these web search results into the thread discovery format.
-
-RAW SEARCH OUTPUT:
-${rawSearchText}
-
-CITATIONS (only use URLs from this list):
-${citationsContext || "(no citations returned)"}
-
-For each relevant thread found, extract:
-- platform: which platform (reddit, hackernews, linkedin, twitter)
-- url: the EXACT URL from the citations above
-- title: the thread/post title
-- relevanceScore: 0-100 based on how relevant this is
-- suggestedAngle: how the product could naturally engage
-
-Only include threads with relevance score 50+. Maximum 10 threads.`;
-
-  return await generateObjectWithFallback({
-    models: GROWTH_CONTENT_MODELS,
-    schema: threadDiscoverySchema,
-    prompt,
-    systemPrompt,
-  });
-};
-
-// ============================================
-// STEP 3: VALIDATE URLs
-// ============================================
-
-const validateDiscoveredUrls = async (
-  threads: z.infer<typeof threadDiscoverySchema>["threads"]
-): Promise<{
-  validThreads: z.infer<typeof threadDiscoverySchema>["threads"];
-  droppedUrls: Array<{ url: string; reason: string }>;
-}> => {
-  const urls = threads.map((t) => t.url);
-  const validationMap = await validateUrls(urls);
-
-  const validThreads: z.infer<typeof threadDiscoverySchema>["threads"] = [];
-  const droppedUrls: Array<{ url: string; reason: string }> = [];
-
-  for (const thread of threads) {
-    const validation = validationMap.get(thread.url);
-    if (validation?.valid) {
-      validThreads.push(thread);
-    } else {
-      droppedUrls.push({
-        url: thread.url,
-        reason: validation?.reason ?? "unknown",
-      });
-    }
-  }
-
-  return { validThreads, droppedUrls };
-};
-
-// ============================================
 // PUBLIC API
 // ============================================
 
+export interface DiscoveryResult {
+  queriesRun: number;
+  searchCostUsd: number;
+  threads: ScoredThread[];
+  threadsDiscovered: number;
+  threadsEnriched: number;
+  threadsQualified: number;
+}
+
 /**
- * Discover real community threads via web search → structure → validate.
+ * Discover and qualify community threads via the 4-stage pipeline:
+ *   1. Query construction (LLM generates targeted queries)
+ *   2. Multi-search execution (Exa or web search)
+ *   3. Content enrichment (fetch actual thread content)
+ *   4. Relevance scoring (LLM validates with real content)
  */
 export const discoverThreads = async (
   productName: string,
-  productDescription: string
-): Promise<z.infer<typeof threadDiscoverySchema>> => {
-  // Step 1: Real web search
-  const { text, citations } = await searchCommunities(
+  productDescription: string,
+  competitors: string[] = [],
+  previouslyFoundUrls: string[] = []
+): Promise<DiscoveryResult> => {
+  // Stage 1: Generate targeted search queries
+  const queries = await buildGrowthQueries(
+    productName,
+    productDescription,
+    competitors,
+    previouslyFoundUrls
+  );
+
+  // Stage 2: Execute search (Exa preferred, web search fallback)
+  const discovered = await executeSearchQueries(queries);
+
+  if (discovered.length === 0) {
+    return {
+      threads: [],
+      searchCostUsd: getSearchCostUsd(),
+      queriesRun: queries.length,
+      threadsDiscovered: 0,
+      threadsEnriched: 0,
+      threadsQualified: 0,
+    };
+  }
+
+  // Stage 3: Enrich with actual content (Reddit .json, HN API, Exa)
+  const enriched = await enrichThreads(discovered);
+
+  // Stage 4: LLM-based relevance scoring with real content
+  const scored = await scoreThreadRelevance(
+    enriched,
     productName,
     productDescription
   );
 
-  // No citations found — return empty (no hallucination fallback)
-  if (citations.length === 0) {
-    return { threads: [] };
-  }
-
-  // Step 2: Structure into typed schema (only using real citation URLs)
-  const structured = await structureDiscoveries(text, citations);
-
-  // Step 3: Validate URLs are alive
-  const { validThreads } = await validateDiscoveredUrls(structured.threads);
-
-  return { threads: validThreads };
+  return {
+    threads: scored,
+    searchCostUsd: getSearchCostUsd(),
+    queriesRun: queries.length,
+    threadsDiscovered: discovered.length,
+    threadsEnriched: enriched.length,
+    threadsQualified: scored.length,
+  };
 };
 
 /**

@@ -111,7 +111,7 @@ const tryGenerateTextWithSearch = async (
       },
     });
 
-    trackUsage(result.usage);
+    trackUsage(result.usage, model);
     const citations = extractCitations(result as never);
 
     return { text: result.text, citations };

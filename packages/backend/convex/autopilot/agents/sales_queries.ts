@@ -143,3 +143,30 @@ export const getPipelineSummary = internalQuery({
     return summary;
   },
 });
+
+/**
+ * Get a single lead by ID (internal use for verification).
+ */
+export const getLeadById = internalQuery({
+  args: { leadId: v.id("autopilotLeads") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.leadId);
+  },
+});
+
+/**
+ * Get recently created leads without verification (notes don't contain "[Verification:").
+ */
+export const getUnverifiedLeads = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, args) => {
+    const leads = await ctx.db
+      .query("autopilotLeads")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "discovered")
+      )
+      .collect();
+
+    return leads.filter((lead) => !lead.notes?.includes("[Verification:"));
+  },
+});

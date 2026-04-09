@@ -2,19 +2,19 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
-import type { Id } from "../../_generated/dataModel";
-import type { ActionCtx } from "../../_generated/server";
 import { internalAction } from "../../_generated/server";
-import { AGENT_MODELS, WEB_SEARCH_MODELS } from "./models";
+import { QUALITY_MODELS, WEB_SEARCH_MODELS } from "./models";
 import { buildAgentPrompt, SALES_SYSTEM_PROMPT } from "./prompts";
+import { createValidatedLeads, runExaSalesDiscovery } from "./sales_discovery";
+import { getExaCostUsd, isExaAvailable } from "./shared_exa";
 import {
   generateObjectWithFallback,
   getUsageTracker,
   resetUsageTracker,
 } from "./shared_generation";
-import { generateTextWithWebSearch, validateUrl } from "./shared_web";
+import { generateTextWithWebSearch } from "./shared_web";
 
-const PROSPECTING_MODELS = AGENT_MODELS;
+const PROSPECTING_MODELS = QUALITY_MODELS;
 
 const prospectingSchema = z.object({
   leads: z.array(
@@ -54,48 +54,9 @@ const prospectingSchema = z.object({
   summary: z.string().describe("Executive summary of prospecting findings"),
 });
 
-const createValidatedLeads = async (
-  ctx: { runMutation: ActionCtx["runMutation"] },
-  organizationId: Id<"organizations">,
-  leads: z.infer<typeof prospectingSchema>["leads"],
-  existingLeads: Array<{ name: string; company?: string }>
-): Promise<number> => {
-  let count = 0;
-  for (const lead of leads) {
-    const isDuplicate = existingLeads.some(
-      (existing) =>
-        existing.name.toLowerCase() === lead.name.toLowerCase() ||
-        (existing.company &&
-          lead.company &&
-          existing.company.toLowerCase() === lead.company.toLowerCase())
-    );
-    if (isDuplicate) {
-      continue;
-    }
-
-    let validatedSourceUrl = lead.sourceUrl;
-    if (validatedSourceUrl) {
-      const validation = await validateUrl(validatedSourceUrl);
-      if (!validation.valid) {
-        validatedSourceUrl = "";
-      }
-    }
-
-    await ctx.runMutation(
-      internal.autopilot.agents.sales_mutations.createLead,
-      {
-        organizationId,
-        name: lead.name,
-        company: lead.company,
-        source: lead.source,
-        sourceUrl: validatedSourceUrl,
-        notes: lead.notes,
-      }
-    );
-    count++;
-  }
-  return count;
-};
+// ============================================
+// LEAD CREATION
+// ============================================
 
 /**
  * Phase 1: Discovery — web search for lead signals.
@@ -162,9 +123,29 @@ export const runSalesProspecting = internalAction({
         )
         .join("\n");
 
-      // Step 1: Real web search for lead signals
-      const { text: searchResults, citations } =
-        await generateTextWithWebSearch({
+      // Step 1: Discovery — Exa (preferred) or web search (fallback)
+      let searchResults: string;
+      let citations: Array<{ url: string; title: string; content: string }>;
+
+      if (isExaAvailable()) {
+        const exaDiscovery = await runExaSalesDiscovery(
+          marketNotesContext,
+          marketDocsContext
+        );
+        searchResults = exaDiscovery.searchResults;
+        citations = exaDiscovery.citations;
+
+        const exaCost = getExaCostUsd();
+        if (exaCost > 0) {
+          await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+            organizationId: args.organizationId,
+            agent: "sales",
+            level: "info",
+            message: `Exa sales discovery: ${citations.length} results (cost: $${exaCost.toFixed(4)})`,
+          });
+        }
+      } else {
+        const webResult = await generateTextWithWebSearch({
           models: WEB_SEARCH_MODELS,
           systemPrompt:
             "You are a sales intelligence analyst. Search for high-intent signals — people looking for solutions, comparing tools, expressing frustration with competitors.",
@@ -193,6 +174,9 @@ Return detailed findings about each potential lead.`,
             ],
           },
         });
+        searchResults = webResult.text;
+        citations = webResult.citations;
+      }
 
       // Build existing leads context for Phase 2
       const existingLeadNames = existingLeads

@@ -1,8 +1,10 @@
 /**
  * Shared model constants for all autopilot agents.
  *
- * Centralizes model references so they can be updated in one place.
- * Uses OpenRouter model IDs.
+ * Tiered model strategy:
+ * - FAST_MODELS: Free models for low-stakes work (gap assessment, drafts, follow-ups)
+ * - QUALITY_MODELS: Paid models for decisions (task creation, specs, lead structuring)
+ * - Max 3 models per tier to avoid wasting API calls on cascading failures
  */
 
 export const MODELS = {
@@ -24,17 +26,30 @@ export const MODELS = {
   SEARCH_PAID: "openai/gpt-5.4-mini:online",
 } as const;
 
-/** Free model fallback chain — tried in order when rate-limited */
-export const FREE_MODEL_FALLBACKS = [
+/**
+ * FAST tier — free models for low-stakes work.
+ * Used for: gap assessment, follow-up notes, content drafts, pattern detection.
+ * Max 3 models to avoid cascading failure waste.
+ */
+export const FAST_MODELS = [
   "qwen/qwen3.6-plus:free",
   "nvidia/nemotron-3-super-120b-a12b:free",
-  "minimax/minimax-m2.5:free",
-  "stepfun/step-3.5-flash:free",
-  "openai/gpt-oss-120b:free",
   "meta-llama/llama-3.3-70b-instruct:free",
-  "z-ai/glm-4.5-air:free",
-  "qwen/qwen3-coder:free",
 ] as const;
+
+/**
+ * QUALITY tier — paid models for decisions that matter.
+ * Used for: PM task creation, CTO spec generation, Sales lead structuring,
+ * CEO coordination, content quality scoring.
+ * Starts with best free model, falls back to paid.
+ */
+export const QUALITY_MODELS = [
+  "qwen/qwen3.6-plus:free",
+  "openai/gpt-5.4-mini",
+] as const;
+
+/** @deprecated Use FAST_MODELS or QUALITY_MODELS instead. */
+export const FREE_MODEL_FALLBACKS = FAST_MODELS;
 
 /**
  * @deprecated Use WEB_SEARCH_MODELS with generateTextWithWebSearch instead.
@@ -55,5 +70,5 @@ export const WEB_SEARCH_MODELS = [
   "openai/gpt-5.4-mini",
 ] as const;
 
-/** Standard agent model chain: all free fallbacks, then paid */
-export const AGENT_MODELS = [...FREE_MODEL_FALLBACKS, MODELS.FAST] as const;
+/** @deprecated Use FAST_MODELS or QUALITY_MODELS based on task importance. */
+export const AGENT_MODELS = [...FAST_MODELS, MODELS.FAST] as const;

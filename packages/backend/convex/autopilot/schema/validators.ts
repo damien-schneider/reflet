@@ -42,6 +42,20 @@ export const assignedAgent = v.union(
 export const agentThreadRole = v.union(v.literal("user"), v.literal("agent"));
 
 // ============================================
+// Agent Memory
+// ============================================
+
+export const memoryCategory = v.union(
+  v.literal("topic_researched"),
+  v.literal("channel_tried"),
+  v.literal("strategy_outcome"),
+  v.literal("lead_contacted"),
+  v.literal("content_published"),
+  v.literal("decision_made"),
+  v.literal("lesson_learned")
+);
+
+// ============================================
 // Work Items (replaces tasks, initiatives, stories, specs)
 // ============================================
 

@@ -80,6 +80,32 @@ export const loadAgentContext = internalQuery({
       sections.push(`ACTIVE INITIATIVES:\n${initiativeSummaries}`);
     }
 
+    // 4. Agent-specific memories (topics researched, lessons learned, etc.)
+    const now = Date.now();
+    const memories = await ctx.db
+      .query("autopilotAgentMemories")
+      .withIndex("by_org_agent", (q) =>
+        q.eq("organizationId", args.organizationId).eq("agent", args.agent)
+      )
+      .order("desc")
+      .take(100);
+
+    const activeMemories = memories
+      .filter((m) => !m.expiresAt || m.expiresAt > now)
+      .slice(0, 20);
+
+    if (activeMemories.length > 0) {
+      const memoryLines = activeMemories
+        .map((m) => {
+          const outcomeTag = m.outcome ? ` [${m.outcome}]` : "";
+          return `- [${m.category}] ${m.key}: ${m.value}${outcomeTag}`;
+        })
+        .join("\n");
+      sections.push(
+        `YOUR MEMORY (topics you've already covered — avoid duplicating):\n${memoryLines}`
+      );
+    }
+
     if (sections.length === 0) {
       return "";
     }
