@@ -115,8 +115,108 @@ export const didAgentProduceOutput = internalQuery({
 });
 
 interface WakeContext {
+  chainGated: boolean;
+  openTaskCount: number;
   shippedFeaturesWithoutContent: boolean;
+  wakeThreshold: number;
 }
+
+/**
+ * Dispatch the chain producer for an agent's next actionable node.
+ * Returns true if a producer was dispatched; false if no chain work for this agent.
+ */
+const dispatchChainProducer = async (
+  ctx: { scheduler: ActionCtx["scheduler"]; runQuery: ActionCtx["runQuery"] },
+  orgId: Id<"organizations">,
+  agent: string
+): Promise<boolean> => {
+  const chainState = await ctx.runQuery(
+    internal.autopilot.chain.getChainState,
+    { organizationId: orgId }
+  );
+
+  type Producer =
+    | typeof internal.autopilot.agents.chain_producers.produceCodebaseUnderstanding
+    | typeof internal.autopilot.agents.chain_producers.produceAppDescription
+    | typeof internal.autopilot.agents.chain_producers.produceMarketAnalysis
+    | typeof internal.autopilot.agents.chain_producers.produceTargetDefinition
+    | typeof internal.autopilot.agents.chain_producers.producePersonas
+    | typeof internal.autopilot.agents.chain_producers.produceUseCases;
+
+  const candidates: Array<{ producer: Producer; condition: boolean }> = [];
+
+  if (agent === "cto") {
+    candidates.push(
+      {
+        producer:
+          internal.autopilot.agents.chain_producers
+            .produceCodebaseUnderstanding,
+        condition: chainState.codebase_understanding === "missing",
+      },
+      {
+        producer:
+          internal.autopilot.agents.chain_producers.produceAppDescription,
+        condition:
+          chainState.codebase_understanding === "published" &&
+          chainState.app_description === "missing",
+      }
+    );
+  } else if (agent === "growth") {
+    if (
+      chainState.app_description === "published" &&
+      chainState.market_analysis === "missing"
+    ) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.agents.chain_producers.produceMarketAnalysis,
+        { organizationId: orgId }
+      );
+      return true;
+    }
+    if (
+      chainState.personas === "published" &&
+      chainState.use_cases === "published" &&
+      chainState.community_posts === "missing"
+    ) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.agents.community_discovery.runCommunityDiscovery,
+        { organizationId: orgId }
+      );
+      return true;
+    }
+  } else if (agent === "pm") {
+    candidates.push(
+      {
+        producer:
+          internal.autopilot.agents.chain_producers.produceTargetDefinition,
+        condition:
+          chainState.market_analysis === "published" &&
+          chainState.target_definition === "missing",
+      },
+      {
+        producer: internal.autopilot.agents.chain_producers.producePersonas,
+        condition:
+          chainState.target_definition === "published" &&
+          chainState.personas === "missing",
+      },
+      {
+        producer: internal.autopilot.agents.chain_producers.produceUseCases,
+        condition:
+          chainState.personas === "published" &&
+          chainState.use_cases === "missing",
+      }
+    );
+  }
+
+  for (const { producer, condition } of candidates) {
+    if (condition) {
+      await ctx.scheduler.runAfter(0, producer, { organizationId: orgId });
+      return true;
+    }
+  }
+  return false;
+};
 
 /**
  * Schedule an agent to run asynchronously.
@@ -124,11 +224,17 @@ interface WakeContext {
  * Agents run in parallel, not blocking the heartbeat.
  */
 const wakeAgent = async (
-  ctx: { scheduler: ActionCtx["scheduler"] },
+  ctx: { scheduler: ActionCtx["scheduler"]; runQuery: ActionCtx["runQuery"] },
   orgId: Id<"organizations">,
   agent: string,
   wakeContext: WakeContext
 ): Promise<void> => {
+  // Try chain producer first — chain takes precedence over legacy endpoints
+  const dispatchedChain = await dispatchChainProducer(ctx, orgId, agent);
+  if (dispatchedChain) {
+    return;
+  }
+
   switch (agent) {
     case "pm":
       await ctx.scheduler.runAfter(
@@ -180,6 +286,13 @@ const wakeAgent = async (
       await ctx.scheduler.runAfter(
         0,
         internal.autopilot.agents.support.runSupportTriage,
+        { organizationId: orgId }
+      );
+      break;
+    case "validator":
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.agents.validator.runValidatorPass,
         { organizationId: orgId }
       );
       break;
@@ -421,6 +534,9 @@ export const runHeartbeat = internalAction({
         { organizationId: orgId }
       );
       const enabledSet = new Set(enabledAgents);
+      // CEO, support, validator always allowed (orchestrator + safety roles)
+      enabledSet.add("ceo");
+      enabledSet.add("validator");
 
       // Check pipeline capacity before waking PM (avoid waking just to skip)
       const taskCapUsage = await ctx.runQuery(

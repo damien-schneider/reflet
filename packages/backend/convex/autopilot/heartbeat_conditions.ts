@@ -1,145 +1,100 @@
 /**
  * Heartbeat wake conditions — pure functions + data query.
  *
- * Pure functions exported for testability.
+ * CHAIN-DRIVEN ARCHITECTURE: Agents wake ONLY when (a) the chain has a node
+ * ready to produce, OR (b) urgent external work exists (support, errors).
+ * Never time-based.
  *
- * WORK-DRIVEN ARCHITECTURE: Agents wake ONLY when there's actual work
- * on the shared board. No time-based fallbacks. The pipeline is self-sustaining:
- *   Growth → documents → PM → stories → CTO → specs → Dev → ships → Growth
- *
- * The only reasons the company stops:
- *   1. Waiting for President approval (items in needsReview)
- *   2. Plan limits / credits exhausted (guards block execution)
- *   3. Pipeline is full (cap reached, waiting for work to complete)
+ * Open-task threshold gates the chain: if the board has too many pending tasks,
+ * we don't advance the chain — only urgent work (support, CEO triage) runs.
  */
 
 import { v } from "convex/values";
-import { internalQuery } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { internalQuery, type QueryCtx } from "../_generated/server";
+import {
+  type ChainNodeKind,
+  type ChainState,
+  computeChainState,
+  isNodeReadyToProduce,
+} from "./chain";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-const THREE_STORY_THRESHOLD = 3;
 const QUERY_LIMIT = 200;
-const GROWTH_FOLLOWUP_DAMPENING_MS = 30 * 60 * 1000; // 30 minutes
-const MAX_PENDING_GROWTH_CONTENT = 10;
+const DEFAULT_WAKE_THRESHOLD_OPEN_TASKS = 5;
 
 // ============================================
-// PURE WAKE CONDITION FUNCTIONS (for testing)
+// PURE WAKE CONDITION FUNCTIONS (testable)
 // ============================================
 
-interface ActivitySummary {
-  approvedSpecCount: number;
-  discoveredLeadCount: number;
-  failedRunCount: number;
-  growthFollowUpNoteCount: number;
-  hasInitiatives: boolean;
-  hasLeads: boolean;
-  hasResearchDocs: boolean;
-  leadsNeedingFollowUp: number;
-  newNoteCount: number;
+export interface ActivitySummary {
+  chainState: ChainState;
   newSupportConversationCount: number;
   now: number;
-  pendingGrowthContentCount: number;
-  readyStoryCount: number;
+  openTaskCount: number;
+  pendingValidationCount: number;
   recentErrorCount: number;
-  recentGrowthSuccessAt: number | null;
   shippedFeaturesWithoutContent: number;
   stuckReviewCount: number;
+  wakeThresholdOpenTasks: number;
 }
 
-/**
- * PM wakes when there's planning work to do:
- * - No initiatives exist (bootstrap the roadmap)
- * - New notes from other agents need processing
- * - Story pipeline is running low (agents need more work)
- */
-export const shouldWakePM = (summary: ActivitySummary): boolean => {
-  if (!summary.hasInitiatives) {
-    return true;
-  }
-  if (summary.newNoteCount > 0) {
-    return true;
-  }
-  if (summary.readyStoryCount < THREE_STORY_THRESHOLD) {
-    return true;
-  }
-  return false;
-};
+export const isChainGated = (summary: ActivitySummary): boolean =>
+  summary.openTaskCount >= summary.wakeThresholdOpenTasks;
 
-/**
- * CTO is disabled — tasks-centric architecture bypasses spec generation.
- */
-export const shouldWakeCTO = (_summary: ActivitySummary): boolean => {
-  return false;
-};
-
-/**
- * Dev wakes when specs are approved or runs need retrying.
- * Purely work-driven — only when code work exists.
- */
-export const shouldWakeDev = (_summary: ActivitySummary): boolean => {
-  return false;
-};
-
-/**
- * Growth wakes when there's content or research work:
- * - No research docs exist (bootstrap — prime the pipeline)
- * - Shipped features need content/announcements
- * - Growth has unprocessed follow-up notes (self-driven curiosity),
- *   BUT only if Growth hasn't had a successful run in the last 30 minutes
- *   (prevents no-op spam when guards block execution)
- */
-export const shouldWakeGrowth = (summary: ActivitySummary): boolean => {
-  // Bootstrap always runs — we need initial research regardless of backlog
-  if (!summary.hasResearchDocs) {
-    return true;
+const ownerWakeForChain = (
+  owner: string,
+  summary: ActivitySummary
+): boolean => {
+  if (isChainGated(summary)) {
+    return false;
   }
-
-  // Content backlog full — don't wake for content-producing reasons
-  const contentBacklogFull =
-    summary.pendingGrowthContentCount >= MAX_PENDING_GROWTH_CONTENT;
-
-  if (summary.shippedFeaturesWithoutContent > 0) {
-    return !contentBacklogFull;
-  }
-  if (summary.growthFollowUpNoteCount > 0) {
-    if (contentBacklogFull) {
-      return false;
+  const ownedNodes: ChainNodeKind[] = [];
+  for (const [kind, kindOwner] of Object.entries(NODE_OWNERS)) {
+    if (kindOwner === owner) {
+      ownedNodes.push(kind as ChainNodeKind);
     }
-    // Dampen follow-up wakes: only trigger if Growth hasn't run recently
-    const recentlyRan =
-      summary.recentGrowthSuccessAt !== null &&
-      summary.now - summary.recentGrowthSuccessAt <
-        GROWTH_FOLLOWUP_DAMPENING_MS;
-    return !recentlyRan;
+  }
+  return ownedNodes.some((kind) =>
+    isNodeReadyToProduce(summary.chainState, kind)
+  );
+};
+
+const NODE_OWNERS: Record<ChainNodeKind, string> = {
+  codebase_understanding: "cto",
+  app_description: "cto",
+  market_analysis: "growth",
+  target_definition: "pm",
+  personas: "pm",
+  use_cases: "pm",
+  lead_targets: "sales",
+  community_posts: "growth",
+  drafts: "growth",
+};
+
+export const shouldWakeCTO = (summary: ActivitySummary): boolean =>
+  ownerWakeForChain("cto", summary);
+
+export const shouldWakePM = (summary: ActivitySummary): boolean =>
+  ownerWakeForChain("pm", summary);
+
+export const shouldWakeGrowth = (summary: ActivitySummary): boolean => {
+  if (ownerWakeForChain("growth", summary)) {
+    return true;
+  }
+  // Shipped feature → needs distribution content
+  if (!isChainGated(summary) && summary.shippedFeaturesWithoutContent > 0) {
+    return true;
   }
   return false;
 };
 
-/**
- * Sales wakes when there's pipeline work:
- * - No leads exist yet (bootstrap — prime the pipeline with prospecting)
- * - Discovered leads need initial outreach
- * - Leads have overdue follow-ups
- */
-export const shouldWakeSales = (summary: ActivitySummary): boolean => {
-  if (!summary.hasLeads && summary.hasResearchDocs) {
-    return true;
-  }
-  if (summary.discoveredLeadCount > 0) {
-    return true;
-  }
-  if (summary.leadsNeedingFollowUp > 0) {
-    return true;
-  }
-  return false;
-};
+export const shouldWakeSales = (summary: ActivitySummary): boolean =>
+  ownerWakeForChain("sales", summary);
 
-/**
- * CEO wakes when coordination is needed:
- * - Items stuck in review (bottleneck)
- * - Recent errors need attention (agent issues)
- */
+export const shouldWakeValidator = (summary: ActivitySummary): boolean =>
+  summary.pendingValidationCount > 0;
+
 export const shouldWakeCEO = (summary: ActivitySummary): boolean => {
   if (summary.stuckReviewCount > 0) {
     return true;
@@ -150,17 +105,126 @@ export const shouldWakeCEO = (summary: ActivitySummary): boolean => {
   return false;
 };
 
-/**
- * Support wakes when new conversations arrive.
- * Purely work-driven — only when support threads exist.
- */
-export const shouldWakeSupport = (summary: ActivitySummary): boolean => {
-  return summary.newSupportConversationCount > 0;
-};
+export const shouldWakeSupport = (summary: ActivitySummary): boolean =>
+  summary.newSupportConversationCount > 0;
+
+export const shouldWakeDev = (_summary: ActivitySummary): boolean => false;
 
 // ============================================
-// QUERY — collect wake conditions
+// DATA — collect summary
 // ============================================
+
+const fetchOpenTaskCount = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">
+): Promise<number> => {
+  const todoItems = await ctx.db
+    .query("autopilotWorkItems")
+    .withIndex("by_org_status", (q) =>
+      q.eq("organizationId", orgId).eq("status", "todo")
+    )
+    .collect();
+  const inProgressItems = await ctx.db
+    .query("autopilotWorkItems")
+    .withIndex("by_org_status", (q) =>
+      q.eq("organizationId", orgId).eq("status", "in_progress")
+    )
+    .collect();
+  return todoItems.length + inProgressItems.length;
+};
+
+const fetchPendingValidationCount = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">
+): Promise<number> => {
+  const pendingDocs = await ctx.db
+    .query("autopilotDocuments")
+    .withIndex("by_org_status", (q) =>
+      q.eq("organizationId", orgId).eq("status", "pending_review")
+    )
+    .take(QUERY_LIMIT);
+  const docsNeedingScoring = pendingDocs.filter((d) => !d.validation).length;
+
+  const pendingUseCases = await ctx.db
+    .query("autopilotUseCases")
+    .withIndex("by_org_status", (q) =>
+      q.eq("organizationId", orgId).eq("status", "pending_review")
+    )
+    .take(QUERY_LIMIT);
+  const useCasesNeedingScoring = pendingUseCases.filter(
+    (u) => !u.validation
+  ).length;
+
+  return docsNeedingScoring + useCasesNeedingScoring;
+};
+
+const fetchSupportSignal = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">
+): Promise<number> => {
+  const draftDocs = await ctx.db
+    .query("autopilotDocuments")
+    .withIndex("by_org_status", (q) =>
+      q.eq("organizationId", orgId).eq("status", "draft")
+    )
+    .take(QUERY_LIMIT);
+  return draftDocs.filter((d) => d.type === "support_thread").length;
+};
+
+const fetchStuckReviewCount = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">,
+  now: number
+): Promise<number> => {
+  const reviewItems = await ctx.db
+    .query("autopilotWorkItems")
+    .withIndex("by_org_review", (q) =>
+      q.eq("organizationId", orgId).eq("needsReview", true)
+    )
+    .take(QUERY_LIMIT);
+  return reviewItems.filter((item) => now - item.updatedAt > ONE_DAY_MS).length;
+};
+
+const fetchRecentErrorCount = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">,
+  now: number
+): Promise<number> => {
+  const recentActivity = await ctx.db
+    .query("autopilotActivityLog")
+    .withIndex("by_org_created", (q) => q.eq("organizationId", orgId))
+    .order("desc")
+    .take(100);
+  return recentActivity.filter(
+    (a) => a.level === "error" && now - a.createdAt < ONE_DAY_MS
+  ).length;
+};
+
+const fetchShippedWithoutContentCount = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">,
+  now: number
+): Promise<number> => {
+  const ONE_WEEK_MS = 7 * ONE_DAY_MS;
+  const doneItems = await ctx.db
+    .query("autopilotWorkItems")
+    .withIndex("by_org_status", (q) =>
+      q.eq("organizationId", orgId).eq("status", "done")
+    )
+    .take(QUERY_LIMIT);
+  const recent = doneItems.filter((t) => now - t.updatedAt < ONE_WEEK_MS);
+  let count = 0;
+  for (const item of recent.slice(0, 20)) {
+    const linkedDocs = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_linked_work", (q) => q.eq("linkedWorkItemId", item._id))
+      .take(1);
+    if (linkedDocs.length === 0) {
+      count++;
+    }
+  }
+  return count;
+};
 
 export const checkWakeConditions = internalQuery({
   args: { organizationId: v.id("organizations") },
@@ -173,186 +237,54 @@ export const checkWakeConditions = internalQuery({
       sales: v.boolean(),
       ceo: v.boolean(),
       support: v.boolean(),
+      validator: v.boolean(),
     }),
     signals: v.object({
       shippedFeaturesWithoutContent: v.boolean(),
+      chainGated: v.boolean(),
+      openTaskCount: v.number(),
+      wakeThreshold: v.number(),
     }),
   }),
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    // ---- Work items by type/status ----
-
-    const readyStories = await ctx.db
-      .query("autopilotWorkItems")
-      .withIndex("by_org_type", (q) =>
-        q.eq("organizationId", args.organizationId).eq("type", "story")
-      )
-      .take(QUERY_LIMIT);
-    const readyStoryCount = readyStories.filter(
-      (s) => s.status === "todo"
-    ).length;
-
-    // CTO disabled — skip spec query to save reads
-    const approvedSpecCount = 0;
-
-    // Bootstrap: check if initiatives exist
-    const initiatives = await ctx.db
-      .query("autopilotWorkItems")
-      .withIndex("by_org_type", (q) =>
-        q.eq("organizationId", args.organizationId).eq("type", "initiative")
-      )
-      .take(1);
-    const hasInitiatives = initiatives.length > 0;
-
-    // Dev disabled — skip failed runs query to save reads
-    const failedRunCount = 0;
-
-    // ---- Documents (notes, support, research) ----
-
-    const draftDocs = await ctx.db
-      .query("autopilotDocuments")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "draft")
-      )
-      .take(QUERY_LIMIT);
-    const newNoteCount = draftDocs.filter(
-      (d) =>
-        d.type === "note" &&
-        !d.tags.includes("coordination") &&
-        !d.tags.includes("growth-followup")
-    ).length;
-    const newSupportConversationCount = draftDocs.filter(
-      (d) => d.type === "support_thread"
-    ).length;
-
-    // Bootstrap: check if any research docs exist
-    const researchDocs = await ctx.db
-      .query("autopilotDocuments")
-      .withIndex("by_org_type", (q) =>
-        q
-          .eq("organizationId", args.organizationId)
-          .eq("type", "market_research")
-      )
-      .take(1);
-    const hasResearchDocs = researchDocs.length > 0;
-
-    // Growth self-driven curiosity: check for unprocessed follow-up notes
-    const growthFollowUpNotes = draftDocs.filter(
-      (d) =>
-        d.type === "note" &&
-        d.sourceAgent === "growth" &&
-        d.tags.includes("growth-followup")
-    );
-    const growthFollowUpNoteCount = growthFollowUpNotes.length;
-
-    // Growth content backlog: count pending_review docs from growth agent
-    const pendingGrowthContent = await ctx.db
-      .query("autopilotDocuments")
-      .withIndex("by_org_status", (q) =>
-        q
-          .eq("organizationId", args.organizationId)
-          .eq("status", "pending_review")
-      )
-      .take(QUERY_LIMIT);
-    const pendingGrowthContentCount = pendingGrowthContent.filter(
-      (d) => d.sourceAgent === "growth"
-    ).length;
-
-    // ---- Shipped features without content (Growth signal) ----
-
-    const doneItems = await ctx.db
-      .query("autopilotWorkItems")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "done")
-      )
-      .take(QUERY_LIMIT);
-    const recentDoneItems = doneItems.filter(
-      (t) => now - t.updatedAt < ONE_WEEK_MS
-    );
-
-    // Check which done items have linked content documents
-    let shippedWithoutContent = 0;
-    for (const item of recentDoneItems.slice(0, 20)) {
-      const linkedDocs = await ctx.db
-        .query("autopilotDocuments")
-        .withIndex("by_linked_work", (q) => q.eq("linkedWorkItemId", item._id))
-        .take(1);
-      if (linkedDocs.length === 0) {
-        shippedWithoutContent++;
-      }
-    }
-
-    // ---- Sales signals ----
-
-    const leads = await ctx.db
-      .query("autopilotLeads")
+    const config = await ctx.db
+      .query("autopilotConfig")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
-      .take(QUERY_LIMIT);
-    const hasLeads = leads.length > 0;
-    const discoveredLeadCount = leads.filter(
-      (l) => l.status === "discovered"
-    ).length;
-    const leadsNeedingFollowUp = leads.filter(
-      (l) =>
-        l.nextFollowUpAt !== undefined &&
-        l.nextFollowUpAt <= now &&
-        l.status !== "converted" &&
-        l.status !== "churned" &&
-        l.status !== "disqualified"
-    ).length;
+      .unique();
+    const wakeThresholdOpenTasks =
+      config?.wakeThresholdOpenTasks ?? DEFAULT_WAKE_THRESHOLD_OPEN_TASKS;
 
-    // ---- CEO coordination signals ----
-
-    const reviewItems = await ctx.db
-      .query("autopilotWorkItems")
-      .withIndex("by_org_review", (q) =>
-        q.eq("organizationId", args.organizationId).eq("needsReview", true)
-      )
-      .take(QUERY_LIMIT);
-    const stuckReviewCount = reviewItems.filter(
-      (item) => now - item.updatedAt > ONE_DAY_MS
-    ).length;
-
-    const recentActivity = await ctx.db
-      .query("autopilotActivityLog")
-      .withIndex("by_org_created", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .order("desc")
-      .take(100);
-    const recentErrorCount = recentActivity.filter(
-      (a) => a.level === "error" && now - a.createdAt < ONE_DAY_MS
-    ).length;
-
-    // ---- Growth dampening: find last successful growth execution ----
-
-    const lastGrowthSuccess = recentActivity.find(
-      (a) => a.agent === "growth" && a.level === "success"
-    );
-    const recentGrowthSuccessAt = lastGrowthSuccess?.createdAt ?? null;
-
-    // ---- Build summary ----
-
-    const summary: ActivitySummary = {
-      readyStoryCount,
-      approvedSpecCount,
-      failedRunCount,
-      growthFollowUpNoteCount,
-      newNoteCount,
+    const [
+      chainState,
+      openTaskCount,
+      pendingValidationCount,
       newSupportConversationCount,
-      shippedFeaturesWithoutContent: shippedWithoutContent,
-      hasInitiatives,
-      hasLeads,
-      hasResearchDocs,
-      discoveredLeadCount,
-      leadsNeedingFollowUp,
-      pendingGrowthContentCount,
       stuckReviewCount,
       recentErrorCount,
-      recentGrowthSuccessAt,
+      shippedFeaturesWithoutContent,
+    ] = await Promise.all([
+      computeChainState(ctx, args.organizationId),
+      fetchOpenTaskCount(ctx, args.organizationId),
+      fetchPendingValidationCount(ctx, args.organizationId),
+      fetchSupportSignal(ctx, args.organizationId),
+      fetchStuckReviewCount(ctx, args.organizationId, now),
+      fetchRecentErrorCount(ctx, args.organizationId, now),
+      fetchShippedWithoutContentCount(ctx, args.organizationId, now),
+    ]);
+
+    const summary: ActivitySummary = {
+      openTaskCount,
+      wakeThresholdOpenTasks,
+      chainState,
+      pendingValidationCount,
+      newSupportConversationCount,
+      stuckReviewCount,
+      recentErrorCount,
+      shippedFeaturesWithoutContent,
       now,
     };
 
@@ -365,9 +297,13 @@ export const checkWakeConditions = internalQuery({
         sales: shouldWakeSales(summary),
         ceo: shouldWakeCEO(summary),
         support: shouldWakeSupport(summary),
+        validator: shouldWakeValidator(summary),
       },
       signals: {
-        shippedFeaturesWithoutContent: shippedWithoutContent > 0,
+        shippedFeaturesWithoutContent: shippedFeaturesWithoutContent > 0,
+        chainGated: isChainGated(summary),
+        openTaskCount,
+        wakeThreshold: wakeThresholdOpenTasks,
       },
     };
   },

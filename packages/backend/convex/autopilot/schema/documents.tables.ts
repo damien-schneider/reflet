@@ -1,5 +1,6 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
+import { validatorScoreObject } from "./use_cases.tables";
 import {
   assignedAgent,
   documentStatus,
@@ -16,6 +17,12 @@ export const documentsTables = {
     tags: v.array(v.string()),
     sourceAgent: v.optional(assignedAgent),
     status: documentStatus,
+
+    // Chain dependencies — upstream docs this artifact derives from
+    dependsOnDocIds: v.optional(v.array(v.id("autopilotDocuments"))),
+
+    // Validator scoring (set by validator agent)
+    validation: v.optional(validatorScoreObject),
 
     // Review/inbox
     needsReview: v.boolean(),

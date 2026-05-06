@@ -36,7 +36,9 @@ export const assignedAgent = v.union(
   v.literal("orchestrator"),
   v.literal("system"),
   v.literal("support"),
-  v.literal("sales")
+  v.literal("sales"),
+  v.literal("ceo"),
+  v.literal("validator")
 );
 
 export const agentThreadRole = v.union(v.literal("user"), v.literal("agent"));
@@ -100,7 +102,35 @@ export const documentType = v.union(
   v.literal("twitter_post"),
   v.literal("hn_comment"),
   v.literal("adr"),
-  v.literal("prospect_brief")
+  v.literal("prospect_brief"),
+  // Chain canonical artifacts
+  v.literal("codebase_understanding"),
+  v.literal("app_description"),
+  v.literal("target_definition"),
+  v.literal("persona_brief")
+);
+
+// ============================================
+// Chain — DAG of canonical artifacts
+// ============================================
+
+export const chainNodeKind = v.union(
+  v.literal("codebase_understanding"),
+  v.literal("app_description"),
+  v.literal("market_analysis"),
+  v.literal("target_definition"),
+  v.literal("personas"),
+  v.literal("use_cases"),
+  v.literal("lead_targets"),
+  v.literal("community_posts"),
+  v.literal("drafts")
+);
+
+export const chainNodeStatus = v.union(
+  v.literal("missing"),
+  v.literal("draft"),
+  v.literal("pending_review"),
+  v.literal("published")
 );
 
 export const documentStatus = v.union(

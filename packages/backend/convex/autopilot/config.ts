@@ -54,6 +54,17 @@ export const getConfig = internalQuery({
       emailBlocklist: v.optional(v.array(v.string())),
       emailDailyLimit: v.optional(v.number()),
       orgEmailAddress: v.optional(v.string()),
+      chainEnabled: v.optional(v.boolean()),
+      wakeThresholdOpenTasks: v.optional(v.number()),
+      validatorWeights: v.optional(
+        v.object({
+          cost: v.number(),
+          devComplexity: v.number(),
+          maintainability: v.number(),
+          utility: v.number(),
+          audienceBreadth: v.number(),
+        })
+      ),
       createdAt: v.number(),
       updatedAt: v.number(),
     }),

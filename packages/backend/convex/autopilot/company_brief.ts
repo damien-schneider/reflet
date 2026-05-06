@@ -10,7 +10,7 @@ import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import { internalAction, internalQuery } from "../_generated/server";
-import { AGENT_MODELS } from "./agents/models";
+import { FAST_MODELS } from "./agents/models";
 import { generateObjectWithFallback } from "./agents/shared_generation";
 
 const SUMMARY_MAX_LENGTH = 200;
@@ -92,7 +92,7 @@ export const generateCompanyBrief = internalAction({
       : "Generate a product definition for a software product. Use placeholder content and flag that real data is needed.";
 
     const brief = await generateObjectWithFallback({
-      models: AGENT_MODELS,
+      models: FAST_MODELS,
       schema: fallbackBriefSchema,
       prompt,
       systemPrompt: FALLBACK_SYSTEM_PROMPT,

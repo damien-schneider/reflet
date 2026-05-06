@@ -46,6 +46,18 @@ export const configTables = {
     budgetWarnPercent: v.optional(v.number()),
     budgetHardStop: v.optional(v.boolean()),
     perAgentDailyCapUsd: v.optional(v.string()),
+    // Chain orchestration
+    chainEnabled: v.optional(v.boolean()),
+    wakeThresholdOpenTasks: v.optional(v.number()),
+    validatorWeights: v.optional(
+      v.object({
+        cost: v.number(),
+        devComplexity: v.number(),
+        maintainability: v.number(),
+        utility: v.number(),
+        audienceBreadth: v.number(),
+      })
+    ),
   }).index("by_organization", ["organizationId"]),
 
   autopilotAdapterCredentials: defineTable({

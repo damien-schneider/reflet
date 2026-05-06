@@ -1,16 +1,16 @@
 "use client";
 
 import {
+  IconArrowRight,
   IconInbox,
   IconMap,
+  IconRobot,
   IconSettings,
   IconSparkles,
   IconTrendingUp,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
-import { ActivityFeed } from "@/features/autopilot/components/activity-feed";
-import { AgentStatusCards } from "@/features/autopilot/components/agent-status-cards";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
 import { DashboardCharts } from "@/features/autopilot/components/dashboard-charts";
 import { DashboardStats } from "@/features/autopilot/components/dashboard-stats";
@@ -25,7 +25,7 @@ const QUICK_ACTIONS = [
 ] as const;
 
 export default function AutopilotDashboardPage() {
-  const { organizationId, isAdmin, orgSlug } = useAutopilotContext();
+  const { organizationId, orgSlug } = useAutopilotContext();
   const baseUrl = `/dashboard/${orgSlug}/autopilot`;
 
   return (
@@ -52,24 +52,21 @@ export default function AutopilotDashboardPage() {
 
       <DashboardCharts organizationId={organizationId} />
 
+      {/* Agent Fleet — link to dedicated page */}
       <section>
-        <div className="mb-3 flex items-center gap-2">
-          <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-            Agents
-          </h2>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-        <AgentStatusCards isAdmin={isAdmin} organizationId={organizationId} />
-      </section>
-
-      <section>
-        <div className="mb-3 flex items-center gap-2">
-          <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-            Activity
-          </h2>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-        <ActivityFeed organizationId={organizationId} />
+        <Link
+          className="group flex items-center justify-between rounded-xl border bg-card px-4 py-3 transition-colors hover:bg-accent/50"
+          href={`${baseUrl}/agents`}
+        >
+          <div className="flex items-center gap-2.5">
+            <IconRobot className="size-4 text-muted-foreground" />
+            <span className="font-medium text-sm">Agent Fleet</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+            <span>View all agents</span>
+            <IconArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+          </div>
+        </Link>
       </section>
     </div>
   );

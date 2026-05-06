@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
+import type { ChainState } from "../chain";
 import {
+  type ActivitySummary,
+  isChainGated,
   shouldWakeCEO,
   shouldWakeCTO,
   shouldWakeDev,
@@ -7,187 +10,193 @@ import {
   shouldWakePM,
   shouldWakeSales,
   shouldWakeSupport,
+  shouldWakeValidator,
 } from "../heartbeat_conditions";
 
-const BASE_SUMMARY = {
-  approvedSpecCount: 0,
-  discoveredLeadCount: 0,
-  failedRunCount: 0,
-  growthFollowUpNoteCount: 0,
-  hasInitiatives: true,
-  hasLeads: true,
-  hasResearchDocs: true,
-  leadsNeedingFollowUp: 0,
-  newNoteCount: 0,
+const emptyChain: ChainState = {
+  codebase_understanding: "missing",
+  app_description: "missing",
+  market_analysis: "missing",
+  target_definition: "missing",
+  personas: "missing",
+  use_cases: "missing",
+  lead_targets: "missing",
+  community_posts: "missing",
+  drafts: "missing",
+};
+
+const fullyPublishedChain: ChainState = {
+  codebase_understanding: "published",
+  app_description: "published",
+  market_analysis: "published",
+  target_definition: "published",
+  personas: "published",
+  use_cases: "published",
+  lead_targets: "published",
+  community_posts: "published",
+  drafts: "published",
+};
+
+const BASE_SUMMARY: ActivitySummary = {
+  openTaskCount: 0,
+  wakeThresholdOpenTasks: 5,
+  chainState: emptyChain,
   newSupportConversationCount: 0,
-  now: Date.now(),
-  pendingGrowthContentCount: 0,
-  readyStoryCount: 5,
-  recentErrorCount: 0,
-  recentGrowthSuccessAt: null,
-  shippedFeaturesWithoutContent: 0,
+  pendingValidationCount: 0,
   stuckReviewCount: 0,
-} as const;
+  recentErrorCount: 0,
+  shippedFeaturesWithoutContent: 0,
+  now: Date.now(),
+};
 
-describe("shouldWakePM", () => {
-  it("wakes when no initiatives exist (bootstrap)", () => {
-    expect(shouldWakePM({ ...BASE_SUMMARY, hasInitiatives: false })).toBe(true);
+describe("isChainGated", () => {
+  it("gates when openTaskCount >= threshold", () => {
+    expect(isChainGated({ ...BASE_SUMMARY, openTaskCount: 5 })).toBe(true);
+    expect(isChainGated({ ...BASE_SUMMARY, openTaskCount: 6 })).toBe(true);
   });
 
-  it("wakes when new notes exist", () => {
-    expect(shouldWakePM({ ...BASE_SUMMARY, newNoteCount: 2 })).toBe(true);
-  });
-
-  it("wakes when stories below threshold", () => {
-    expect(shouldWakePM({ ...BASE_SUMMARY, readyStoryCount: 1 })).toBe(true);
-  });
-
-  it("does not wake when stories sufficient and no new input", () => {
-    expect(shouldWakePM({ ...BASE_SUMMARY })).toBe(false);
+  it("does not gate when openTaskCount < threshold", () => {
+    expect(isChainGated({ ...BASE_SUMMARY, openTaskCount: 4 })).toBe(false);
   });
 });
 
 describe("shouldWakeCTO", () => {
-  it("never wakes (disabled)", () => {
-    expect(shouldWakeCTO({ ...BASE_SUMMARY, readyStoryCount: 1 })).toBe(false);
+  it("wakes when codebase_understanding missing (chain root)", () => {
+    expect(shouldWakeCTO(BASE_SUMMARY)).toBe(true);
   });
 
-  it("does not wake even with ready stories", () => {
-    expect(shouldWakeCTO({ ...BASE_SUMMARY, readyStoryCount: 10 })).toBe(false);
+  it("wakes when app_description ready to produce", () => {
+    expect(
+      shouldWakeCTO({
+        ...BASE_SUMMARY,
+        chainState: { ...emptyChain, codebase_understanding: "published" },
+      })
+    ).toBe(true);
+  });
+
+  it("does not wake when chain gated by open tasks", () => {
+    expect(shouldWakeCTO({ ...BASE_SUMMARY, openTaskCount: 5 })).toBe(false);
+  });
+
+  it("does not wake when chain fully published", () => {
+    expect(
+      shouldWakeCTO({ ...BASE_SUMMARY, chainState: fullyPublishedChain })
+    ).toBe(false);
   });
 });
 
-describe("shouldWakeDev", () => {
-  it("never wakes (disabled)", () => {
-    expect(shouldWakeDev({ ...BASE_SUMMARY, approvedSpecCount: 1 })).toBe(
-      false
-    );
+describe("shouldWakePM", () => {
+  it("wakes when target_definition ready (market_analysis published)", () => {
+    expect(
+      shouldWakePM({
+        ...BASE_SUMMARY,
+        chainState: {
+          ...emptyChain,
+          codebase_understanding: "published",
+          app_description: "published",
+          market_analysis: "published",
+        },
+      })
+    ).toBe(true);
   });
 
-  it("does not wake even with failed runs", () => {
-    expect(shouldWakeDev({ ...BASE_SUMMARY, failedRunCount: 2 })).toBe(false);
+  it("does not wake when upstream incomplete", () => {
+    expect(shouldWakePM(BASE_SUMMARY)).toBe(false);
+  });
+
+  it("does not wake when chain gated", () => {
+    expect(
+      shouldWakePM({
+        ...BASE_SUMMARY,
+        openTaskCount: 6,
+        chainState: {
+          ...emptyChain,
+          codebase_understanding: "published",
+          app_description: "published",
+          market_analysis: "published",
+        },
+      })
+    ).toBe(false);
   });
 });
 
 describe("shouldWakeGrowth", () => {
-  it("wakes when no research docs exist (bootstrap)", () => {
-    expect(shouldWakeGrowth({ ...BASE_SUMMARY, hasResearchDocs: false })).toBe(
-      true
-    );
-  });
-
-  it("wakes when shipped features without content", () => {
-    expect(
-      shouldWakeGrowth({ ...BASE_SUMMARY, shippedFeaturesWithoutContent: 3 })
-    ).toBe(true);
-  });
-
-  it("wakes when growth follow-up notes exist and no recent success", () => {
-    expect(
-      shouldWakeGrowth({ ...BASE_SUMMARY, growthFollowUpNoteCount: 2 })
-    ).toBe(true);
-  });
-
-  it("does not wake for follow-up notes if growth ran recently", () => {
+  it("wakes when market_analysis ready", () => {
     expect(
       shouldWakeGrowth({
         ...BASE_SUMMARY,
-        growthFollowUpNoteCount: 2,
-        recentGrowthSuccessAt: Date.now() - 10 * 60 * 1000, // 10 min ago
-      })
-    ).toBe(false);
-  });
-
-  it("wakes for follow-up notes if growth success is older than 30 min", () => {
-    expect(
-      shouldWakeGrowth({
-        ...BASE_SUMMARY,
-        growthFollowUpNoteCount: 2,
-        recentGrowthSuccessAt: Date.now() - 35 * 60 * 1000, // 35 min ago
+        chainState: {
+          ...emptyChain,
+          codebase_understanding: "published",
+          app_description: "published",
+        },
       })
     ).toBe(true);
   });
 
-  it("does not wake when research exists and no content gap or follow-ups", () => {
-    expect(shouldWakeGrowth({ ...BASE_SUMMARY })).toBe(false);
-  });
-
-  it("does not wake for shipped features when content backlog is full", () => {
+  it("wakes for shipped features without content (when not gated)", () => {
     expect(
       shouldWakeGrowth({
         ...BASE_SUMMARY,
-        shippedFeaturesWithoutContent: 3,
-        pendingGrowthContentCount: 10,
-      })
-    ).toBe(false);
-  });
-
-  it("does not wake for follow-ups when content backlog is full", () => {
-    expect(
-      shouldWakeGrowth({
-        ...BASE_SUMMARY,
-        growthFollowUpNoteCount: 2,
-        pendingGrowthContentCount: 10,
-      })
-    ).toBe(false);
-  });
-
-  it("still wakes for bootstrap (no research docs) even when backlog full", () => {
-    expect(
-      shouldWakeGrowth({
-        ...BASE_SUMMARY,
-        hasResearchDocs: false,
-        pendingGrowthContentCount: 10,
-      })
-    ).toBe(true);
-  });
-
-  it("wakes when content backlog is below cap", () => {
-    expect(
-      shouldWakeGrowth({
-        ...BASE_SUMMARY,
+        chainState: fullyPublishedChain,
         shippedFeaturesWithoutContent: 2,
-        pendingGrowthContentCount: 5,
       })
     ).toBe(true);
+  });
+
+  it("does not wake for shipped features when gated", () => {
+    expect(
+      shouldWakeGrowth({
+        ...BASE_SUMMARY,
+        chainState: fullyPublishedChain,
+        shippedFeaturesWithoutContent: 2,
+        openTaskCount: 6,
+      })
+    ).toBe(false);
   });
 });
 
 describe("shouldWakeSales", () => {
-  it("wakes when no leads exist and research docs available (bootstrap)", () => {
+  it("wakes when lead_targets ready (personas published)", () => {
     expect(
       shouldWakeSales({
         ...BASE_SUMMARY,
-        hasLeads: false,
-        hasResearchDocs: true,
+        chainState: {
+          ...emptyChain,
+          codebase_understanding: "published",
+          app_description: "published",
+          market_analysis: "published",
+          target_definition: "published",
+          personas: "published",
+        },
       })
     ).toBe(true);
   });
 
-  it("does not bootstrap when no research docs yet", () => {
+  it("does not wake when personas missing", () => {
+    expect(shouldWakeSales(BASE_SUMMARY)).toBe(false);
+  });
+});
+
+describe("shouldWakeValidator", () => {
+  it("wakes when there is pending validation work", () => {
     expect(
-      shouldWakeSales({
+      shouldWakeValidator({ ...BASE_SUMMARY, pendingValidationCount: 1 })
+    ).toBe(true);
+  });
+
+  it("does not wake when no pending validation", () => {
+    expect(shouldWakeValidator(BASE_SUMMARY)).toBe(false);
+  });
+
+  it("wakes regardless of chain gating (validator is always allowed)", () => {
+    expect(
+      shouldWakeValidator({
         ...BASE_SUMMARY,
-        hasLeads: false,
-        hasResearchDocs: false,
+        pendingValidationCount: 1,
+        openTaskCount: 100,
       })
-    ).toBe(false);
-  });
-
-  it("wakes when discovered leads exist", () => {
-    expect(shouldWakeSales({ ...BASE_SUMMARY, discoveredLeadCount: 3 })).toBe(
-      true
-    );
-  });
-
-  it("wakes when leads need follow-up", () => {
-    expect(shouldWakeSales({ ...BASE_SUMMARY, leadsNeedingFollowUp: 1 })).toBe(
-      true
-    );
-  });
-
-  it("does not wake when no sales work exists", () => {
-    expect(shouldWakeSales({ ...BASE_SUMMARY })).toBe(false);
+    ).toBe(true);
   });
 });
 
@@ -201,7 +210,7 @@ describe("shouldWakeCEO", () => {
   });
 
   it("does not wake when no coordination needed", () => {
-    expect(shouldWakeCEO({ ...BASE_SUMMARY })).toBe(false);
+    expect(shouldWakeCEO(BASE_SUMMARY)).toBe(false);
   });
 });
 
@@ -213,6 +222,13 @@ describe("shouldWakeSupport", () => {
   });
 
   it("does not wake when no conversations", () => {
-    expect(shouldWakeSupport({ ...BASE_SUMMARY })).toBe(false);
+    expect(shouldWakeSupport(BASE_SUMMARY)).toBe(false);
+  });
+});
+
+describe("shouldWakeDev", () => {
+  it("never wakes (disabled in chain architecture)", () => {
+    expect(shouldWakeDev(BASE_SUMMARY)).toBe(false);
+    expect(shouldWakeDev({ ...BASE_SUMMARY, openTaskCount: 0 })).toBe(false);
   });
 });

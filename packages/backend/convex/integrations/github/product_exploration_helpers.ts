@@ -4,7 +4,7 @@
 
 import { generateText } from "ai";
 import { internal } from "../../_generated/api";
-import { FREE_MODEL_FALLBACKS } from "../../autopilot/agents/models";
+import { FAST_MODELS } from "../../autopilot/agents/models";
 
 export const GITHUB_API_URL = "https://api.github.com";
 
@@ -132,7 +132,7 @@ export async function generateTextWithFallback(
 ) {
   let lastError: unknown;
 
-  for (const modelId of FREE_MODEL_FALLBACKS) {
+  for (const modelId of FAST_MODELS) {
     try {
       return await generateText(buildOptions(modelId));
     } catch (error) {

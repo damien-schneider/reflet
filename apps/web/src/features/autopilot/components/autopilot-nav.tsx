@@ -6,6 +6,7 @@ import {
   IconDashboard,
   IconFileText,
   IconInbox,
+  IconRobot,
   IconSettings,
   IconUserSearch,
 } from "@tabler/icons-react";
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: IconDashboard, path: "" },
+  { id: "agents", label: "Agents", icon: IconRobot, path: "/agents" },
   { id: "inbox", label: "Inbox", icon: IconInbox, path: "/inbox" },
   { id: "knowledge", label: "Product", icon: IconBook, path: "/knowledge" },
   {

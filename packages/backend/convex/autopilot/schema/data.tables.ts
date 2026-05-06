@@ -54,6 +54,27 @@ export const dataTables = {
     githubUsername: v.optional(v.string()),
     githubProfileUrl: v.optional(v.string()),
     bio: v.optional(v.string()),
+    linkedInUrl: v.optional(v.string()),
+    twitterHandle: v.optional(v.string()),
+    identityProvider: v.optional(
+      v.union(
+        v.literal("github"),
+        v.literal("linkedin"),
+        v.literal("twitter"),
+        v.literal("email"),
+        v.literal("manual")
+      )
+    ),
+    enrichmentSource: v.optional(
+      v.union(
+        v.literal("manual"),
+        v.literal("exa_people"),
+        v.literal("github_profile"),
+        v.literal("email_lookup_service")
+      )
+    ),
+    enrichedAt: v.optional(v.number()),
+    matchedPersonaIds: v.optional(v.array(v.id("autopilotPersonas"))),
     lastContactedAt: v.optional(v.number()),
     nextFollowUpAt: v.optional(v.number()),
     convertedAt: v.optional(v.number()),
