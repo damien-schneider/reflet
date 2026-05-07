@@ -1,7 +1,6 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { IconArrowLeft, IconMail, IconUserSearch } from "@tabler/icons-react";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
@@ -13,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { H2 } from "@/components/ui/typography";
+import { toOptionalId } from "@/lib/convex-helpers";
 
 const STATUS_STYLES = {
   discovered: "bg-blue-500/10 text-blue-500",
@@ -24,16 +24,55 @@ const STATUS_STYLES = {
   disqualified: "bg-muted text-muted-foreground",
 } as const;
 
+function getStatusStyle(status: string): string {
+  switch (status) {
+    case "discovered": {
+      return STATUS_STYLES.discovered;
+    }
+    case "contacted": {
+      return STATUS_STYLES.contacted;
+    }
+    case "replied": {
+      return STATUS_STYLES.replied;
+    }
+    case "demo": {
+      return STATUS_STYLES.demo;
+    }
+    case "converted": {
+      return STATUS_STYLES.converted;
+    }
+    case "churned": {
+      return STATUS_STYLES.churned;
+    }
+    case "disqualified": {
+      return STATUS_STYLES.disqualified;
+    }
+    default: {
+      return STATUS_STYLES.discovered;
+    }
+  }
+}
+
 export default function LeadDetailPage({
   params,
 }: {
   params: Promise<{ orgSlug: string; leadId: string }>;
 }) {
   const { orgSlug, leadId } = use(params);
+  const autopilotLeadId = toOptionalId("autopilotLeads", leadId);
 
-  const lead = useQuery(api.autopilot.queries.leads.getLead, {
-    leadId: leadId as Id<"autopilotLeads">,
-  });
+  const lead = useQuery(
+    api.autopilot.queries.leads.getLead,
+    autopilotLeadId ? { leadId: autopilotLeadId } : "skip"
+  );
+
+  if (!autopilotLeadId) {
+    return (
+      <div className="flex h-40 items-center justify-center">
+        <p className="text-muted-foreground">Lead not found.</p>
+      </div>
+    );
+  }
 
   if (lead === undefined) {
     return (
@@ -55,24 +94,21 @@ export default function LeadDetailPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link href={`/dashboard/${orgSlug}/autopilot/sales`}>
-          <Button size="icon" variant="ghost">
-            <IconArrowLeft className="size-4" />
-          </Button>
-        </Link>
+        <Button
+          aria-label="Back to sales"
+          render={<Link href={`/dashboard/${orgSlug}/autopilot/sales`} />}
+          size="icon"
+          variant="ghost"
+        >
+          <IconArrowLeft className="size-4" />
+        </Button>
         <div>
           <H2 variant="card">{lead.name}</H2>
           {lead.company && (
             <p className="text-muted-foreground text-sm">{lead.company}</p>
           )}
         </div>
-        <Badge
-          className={
-            STATUS_STYLES[lead.status as keyof typeof STATUS_STYLES] ??
-            STATUS_STYLES.discovered
-          }
-          variant="outline"
-        >
+        <Badge className={getStatusStyle(lead.status)} variant="outline">
           {lead.status}
         </Badge>
       </div>

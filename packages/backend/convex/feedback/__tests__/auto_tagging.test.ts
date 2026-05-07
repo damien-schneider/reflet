@@ -4,7 +4,10 @@ import { describe, expect, test } from "vitest";
 import { z } from "zod";
 import { api, internal } from "../../_generated/api";
 import schema from "../../schema";
-import { modules } from "../../test.helpers";
+import {
+  CONVEX_INTEGRATION_TEST_TIMEOUT_MS,
+  modules,
+} from "../../test.helpers";
 
 // Type assertion to work around convex-test version mismatch
 
@@ -116,61 +119,65 @@ describe("Auto-tagging database operations", () => {
     expect(count).toBe(2);
   });
 
-  test("should apply tags to feedback with AI indicator", async () => {
-    const t = convexTest(schema, modules);
+  test(
+    "should apply tags to feedback with AI indicator",
+    async () => {
+      const t = convexTest(schema, modules);
 
-    // Create organization, feedback, and tag
-    const { feedbackId, tagId } = await t.run(async (ctx) => {
-      const orgId = await ctx.db.insert("organizations", {
-        name: "Test Org",
-        slug: "test-org-tags",
-        isPublic: false,
-        subscriptionTier: "free",
-        subscriptionStatus: "none",
-        createdAt: Date.now(),
+      // Create organization, feedback, and tag
+      const { feedbackId, tagId } = await t.run(async (ctx) => {
+        const orgId = await ctx.db.insert("organizations", {
+          name: "Test Org",
+          slug: "test-org-tags",
+          isPublic: false,
+          subscriptionTier: "free",
+          subscriptionStatus: "none",
+          createdAt: Date.now(),
+        });
+
+        const feedbackId = await ctx.db.insert("feedback", {
+          organizationId: orgId,
+          title: "Feature Request",
+          description: "Please add dark mode",
+          status: "open",
+          voteCount: 0,
+          commentCount: 0,
+          isApproved: true,
+          isPinned: false,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+
+        const tagId = await ctx.db.insert("tags", {
+          organizationId: orgId,
+          name: "Feature",
+          slug: "feature",
+          color: "#0000FF",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+
+        return { orgId, feedbackId, tagId };
       });
 
-      const feedbackId = await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Feature Request",
-        description: "Please add dark mode",
-        status: "open",
-        voteCount: 0,
-        commentCount: 0,
-        isApproved: true,
-        isPinned: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+      // Apply tag using internal mutation
+      await t.mutation(internal.feedback.auto_tagging_mutations.applyAutoTags, {
+        feedbackId,
+        tagIds: [tagId],
       });
 
-      const tagId = await ctx.db.insert("tags", {
-        organizationId: orgId,
-        name: "Feature",
-        slug: "feature",
-        color: "#0000FF",
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+      // Verify the tag was applied with AI indicator
+      const feedbackTag = await t.run(async (ctx) => {
+        const allTags = await ctx.db.query("feedbackTags").collect();
+        return allTags.find((t) => t.feedbackId === feedbackId);
       });
 
-      return { orgId, feedbackId, tagId };
-    });
-
-    // Apply tag using internal mutation
-    await t.mutation(internal.feedback.auto_tagging_mutations.applyAutoTags, {
-      feedbackId,
-      tagIds: [tagId],
-    });
-
-    // Verify the tag was applied with AI indicator
-    const feedbackTag = await t.run(async (ctx) => {
-      const allTags = await ctx.db.query("feedbackTags").collect();
-      return allTags.find((t) => t.feedbackId === feedbackId);
-    });
-
-    expect(feedbackTag).toBeDefined();
-    expect(feedbackTag?.tagId).toBe(tagId);
-    expect(feedbackTag?.appliedByAi).toBe(true);
-  });
+      expect(feedbackTag).toBeDefined();
+      expect(feedbackTag?.tagId).toBe(tagId);
+      expect(feedbackTag?.appliedByAi).toBe(true);
+    },
+    CONVEX_INTEGRATION_TEST_TIMEOUT_MS
+  );
 
   test("should not duplicate tags when applying", async () => {
     const t = convexTest(schema, modules);

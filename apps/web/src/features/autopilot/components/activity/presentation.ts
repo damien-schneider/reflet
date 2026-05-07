@@ -11,8 +11,29 @@ export type ActivityLogEntry = Pick<
   | "targetAgent"
 >;
 
-type ActivityAgent = ActivityLogEntry["agent"];
+export type ActivityAgent = ActivityLogEntry["agent"];
 export type ActivityLevel = ActivityLogEntry["level"];
+
+export const ACTIVITY_AGENTS = [
+  "pm",
+  "cto",
+  "dev",
+  "growth",
+  "orchestrator",
+  "system",
+  "support",
+  "sales",
+  "ceo",
+  "validator",
+] as const satisfies readonly ActivityAgent[];
+
+export const ACTIVITY_LEVELS = [
+  "info",
+  "action",
+  "success",
+  "warning",
+  "error",
+] as const satisfies readonly ActivityLevel[];
 
 export const ACTIVITY_AGENT_LABELS = {
   pm: "PM",
@@ -23,6 +44,8 @@ export const ACTIVITY_AGENT_LABELS = {
   system: "System",
   support: "Support",
   sales: "Sales",
+  ceo: "CEO",
+  validator: "Validator",
 } satisfies Record<ActivityAgent, string>;
 
 export const ACTIVITY_AGENT_BADGE_STYLES = {
@@ -34,6 +57,8 @@ export const ACTIVITY_AGENT_BADGE_STYLES = {
   system: "border-border bg-muted text-muted-foreground",
   support: "border-teal-500/30 bg-teal-500/10 text-teal-500",
   sales: "border-rose-500/30 bg-rose-500/10 text-rose-500",
+  ceo: "border-cyan-500/30 bg-cyan-500/10 text-cyan-500",
+  validator: "border-amber-500/30 bg-amber-500/10 text-amber-500",
 } satisfies Record<ActivityAgent, string>;
 
 export const ACTIVITY_LEVEL_DOT_STYLES = {

@@ -46,7 +46,7 @@ function ProgressArc({ ratio, warn }: { ratio: number; warn: boolean }) {
       />
       <circle
         className={cn(
-          "transition-all duration-700",
+          "transition-colors duration-700",
           warn ? "stroke-amber-500" : "stroke-primary"
         )}
         cx="20"
@@ -59,6 +59,48 @@ function ProgressArc({ ratio, warn }: { ratio: number; warn: boolean }) {
         strokeWidth="2.5"
       />
     </svg>
+  );
+}
+
+function QueueSegments({
+  atCap,
+  cap,
+  count,
+  nearCap,
+}: {
+  atCap: boolean;
+  cap: number;
+  count: number;
+  nearCap: boolean;
+}) {
+  const segmentCount = Math.max(cap, 1);
+  const filledCount = Math.min(count, segmentCount);
+
+  return (
+    <div
+      aria-valuemax={cap}
+      aria-valuemin={0}
+      aria-valuenow={count}
+      className="flex h-1.5 flex-1 gap-0.5"
+      role="progressbar"
+    >
+      {Array.from({ length: segmentCount }, (_, segmentIndex) => {
+        const segmentNumber = segmentIndex + 1;
+        const filled = segmentNumber <= filledCount;
+        return (
+          <span
+            aria-hidden="true"
+            className={cn(
+              "min-w-0 flex-1 rounded-full bg-muted transition-colors",
+              filled && atCap && "bg-red-500",
+              filled && nearCap && "bg-amber-500",
+              filled && !(atCap || nearCap) && "bg-primary/60"
+            )}
+            key={`queue-segment-${segmentNumber}`}
+          />
+        );
+      })}
+    </div>
   );
 }
 
@@ -106,7 +148,10 @@ export function DashboardStats({
   const taskRatio =
     stats.maxTasksPerDay > 0 ? stats.tasksUsedToday / stats.maxTasksPerDay : 0;
   const totalPending = stats.todoCount + stats.inProgressCount;
-  const totalCapRatio = 0;
+  const totalCapRatio =
+    stats.maxPendingTasksTotal > 0
+      ? totalPending / stats.maxPendingTasksTotal
+      : 0;
 
   const cards: StatCard[] = [
     {
@@ -130,7 +175,7 @@ export function DashboardStats({
     {
       label: "Pending",
       value: String(totalPending),
-      caption: "queued",
+      caption: `of ${String(stats.maxPendingTasksTotal)} active cap`,
       icon: IconClock,
       ratio: totalCapRatio,
       warn: totalCapRatio > 0.8,
@@ -160,7 +205,7 @@ export function DashboardStats({
 
   const pendingTasksByAgent = stats.itemsByAgent ?? {};
   const agentEntries = Object.entries(pendingTasksByAgent);
-  const perAgentCap = 2;
+  const perAgentCap = stats.maxPendingTasksPerAgent;
 
   return (
     <div className="space-y-3">
@@ -290,19 +335,12 @@ export function DashboardStats({
                   <span className="w-20 truncate font-medium text-[13px] capitalize">
                     {agent}
                   </span>
-                  <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className={cn(
-                        "absolute inset-y-0 left-0 rounded-full transition-all duration-500",
-                        atCap && "bg-red-500",
-                        nearCap && "bg-amber-500",
-                        !(atCap || nearCap) && "bg-primary/60"
-                      )}
-                      style={{
-                        width: `${String(Math.min(ratio * 100, 100))}%`,
-                      }}
-                    />
-                  </div>
+                  <QueueSegments
+                    atCap={atCap}
+                    cap={perAgentCap}
+                    count={count}
+                    nearCap={nearCap}
+                  />
                   <span
                     className={cn(
                       "w-10 text-right font-mono text-[11px]",

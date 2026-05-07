@@ -66,9 +66,12 @@ export async function getBlogPostMeta(
   slug: string
 ): Promise<BlogPostMeta | null> {
   try {
-    const { meta } = await import(`@app/blog/(posts)/${slug}/page.mdx`);
+    const { meta } = await import(
+      `@app/(marketing)/blog/(posts)/${slug}/page.mdx`
+    );
     return isBlogPostMeta(meta) ? meta : null;
-  } catch {
+  } catch (error) {
+    console.error(`Failed to load blog metadata for "${slug}":`, error);
     return null;
   }
 }

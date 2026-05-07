@@ -16,6 +16,10 @@ vi.mock("sonner", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     widget: {
+      admin_mutations: {
+        update: "widget_admin.update",
+        remove: "widget_admin.remove",
+      },
       admin: {
         update: "widget_admin.update",
         remove: "widget_admin.remove",

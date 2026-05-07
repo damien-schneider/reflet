@@ -296,6 +296,9 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
         unpublish: "changelog.release_lifecycle.unpublish",
         pushToGithub: "changelog.release_lifecycle.pushToGithub",
       },
+      release_commits: {
+        saveReleaseCommits: "changelog.release_commits.saveReleaseCommits",
+      },
       queries: {
         get: "changelog.queries.get",
       },

@@ -24,6 +24,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { ViewMode } from "@/features/autopilot/components/document-view-mode";
 import { TYPE_LABELS } from "@/features/autopilot/lib/document-labels";
@@ -61,11 +62,15 @@ export function DocumentSheet({
   const [newTitle, setNewTitle] = useState("");
   const [newType, setNewType] = useState<DocumentType>("note");
   const [newContent, setNewContent] = useState("");
+  const [pendingAction, setPendingAction] = useState<
+    "archive" | "create" | "status" | null
+  >(null);
 
   const handleCreate = async () => {
-    if (!newTitle.trim()) {
+    if (!(newTitle.trim() && pendingAction === null)) {
       return;
     }
+    setPendingAction("create");
     try {
       await createDoc({
         organizationId,
@@ -80,28 +85,34 @@ export function DocumentSheet({
       onOpenChange(false);
     } catch {
       toast.error("Failed to create document");
+    } finally {
+      setPendingAction(null);
     }
   };
 
   const handleArchive = async () => {
-    if (!document) {
+    if (!(document && pendingAction === null)) {
       return;
     }
+    setPendingAction("archive");
     try {
       await archiveDoc({ documentId: document._id });
       toast.success("Document archived");
       onOpenChange(false);
     } catch {
       toast.error("Failed to archive document");
+    } finally {
+      setPendingAction(null);
     }
   };
 
   const handleStatusTransition = async () => {
-    if (!document) {
+    if (!(document && pendingAction === null)) {
       return;
     }
     const nextStatus =
       document.status === "draft" ? "pending_review" : "published";
+    setPendingAction("status");
     try {
       await updateDoc({ documentId: document._id, status: nextStatus });
       toast.success(
@@ -109,6 +120,8 @@ export function DocumentSheet({
       );
     } catch {
       toast.error("Failed to update status");
+    } finally {
+      setPendingAction(null);
     }
   };
 
@@ -120,6 +133,7 @@ export function DocumentSheet({
         variant="panel"
       >
         <SheetBody
+          actionPending={pendingAction !== null}
           document={document}
           mode={mode}
           newContent={newContent}
@@ -139,6 +153,7 @@ export function DocumentSheet({
 }
 
 function SheetBody({
+  actionPending,
   document,
   mode,
   newContent,
@@ -152,6 +167,7 @@ function SheetBody({
   onTitleChange,
   onTypeChange,
 }: {
+  actionPending: boolean;
   document: Doc<"autopilotDocuments"> | null;
   mode: "view" | "create";
   newContent: string;
@@ -174,6 +190,7 @@ function SheetBody({
         onOpenChange={onOpenChange}
         onTitleChange={onTitleChange}
         onTypeChange={onTypeChange}
+        pending={actionPending}
         title={newTitle}
         type={newType}
       />
@@ -183,6 +200,7 @@ function SheetBody({
   if (document) {
     return (
       <ViewMode
+        actionPending={actionPending}
         document={document}
         onArchive={onArchive}
         onStatusTransition={onStatusTransition}
@@ -190,7 +208,33 @@ function SheetBody({
     );
   }
 
-  return null;
+  return <DocumentSheetLoading />;
+}
+
+function DocumentSheetLoading() {
+  return (
+    <>
+      <SheetHeader>
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-7 w-2/3" />
+        <SheetDescription className="sr-only">
+          Loading document details
+        </SheetDescription>
+      </SheetHeader>
+      <ScrollArea className="flex-1" classNameViewport="px-4">
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-4/5" />
+        </div>
+      </ScrollArea>
+      <SheetFooter className="flex-row justify-end gap-2">
+        <Skeleton className="h-9 w-24" />
+        <Skeleton className="h-9 w-28" />
+      </SheetFooter>
+    </>
+  );
 }
 
 function CreateMode({
@@ -200,6 +244,7 @@ function CreateMode({
   onOpenChange,
   onTitleChange,
   onTypeChange,
+  pending,
   title,
   type,
 }: {
@@ -209,6 +254,7 @@ function CreateMode({
   onOpenChange: (open: boolean) => void;
   onTitleChange: (value: string) => void;
   onTypeChange: (value: DocumentType) => void;
+  pending: boolean;
   title: string;
   type: DocumentType;
 }) {
@@ -255,8 +301,8 @@ function CreateMode({
         <Button onClick={() => onOpenChange(false)} variant="outline">
           Cancel
         </Button>
-        <Button disabled={!title.trim()} onClick={onCreate}>
-          Create
+        <Button disabled={pending || !title.trim()} onClick={onCreate}>
+          {pending ? "Creating..." : "Create"}
         </Button>
       </SheetFooter>
     </>

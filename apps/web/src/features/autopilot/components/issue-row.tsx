@@ -11,6 +11,7 @@ import { formatDistanceToNow } from "date-fns";
 import type { ComponentType } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { AgentIdentity } from "@/features/autopilot/components/agent-identity";
 import { cn } from "@/lib/utils";
 
@@ -67,17 +68,16 @@ export function IssueRow({
 }) {
   const statusConfig = STATUS_ICONS[status] ?? STATUS_ICONS.pending;
   const StatusIcon = statusConfig.icon;
+  const completionSegments =
+    completionPercent === undefined
+      ? []
+      : Array.from({ length: 10 }, (_, segment) => ({
+          filled: (segment + 1) * 10 <= Math.min(100, completionPercent),
+          id: `progress-${String(segment + 1)}`,
+        }));
 
-  return (
-    <button
-      className={cn(
-        "group flex w-full items-center gap-3 border-border border-b px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-muted/40",
-        !onClick && "cursor-default",
-        className
-      )}
-      onClick={onClick}
-      type="button"
-    >
+  const rowContent = (
+    <>
       <StatusIcon className={cn("size-4 shrink-0", statusConfig.color)} />
 
       {priority && (
@@ -94,11 +94,17 @@ export function IssueRow({
 
       {completionPercent !== undefined && (
         <div className="flex w-16 shrink-0 items-center gap-1.5">
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary/60 transition-all"
-              style={{ width: `${Math.min(100, completionPercent)}%` }}
-            />
+          <div className="flex h-1 flex-1 gap-0.5">
+            {completionSegments.map((segment) => (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "min-w-0 flex-1 rounded-full bg-muted transition-colors",
+                  segment.filled && "bg-primary/60"
+                )}
+                key={segment.id}
+              />
+            ))}
           </div>
           <span className="w-7 text-right font-mono text-[10px] text-muted-foreground">
             {completionPercent}%
@@ -119,6 +125,27 @@ export function IssueRow({
       <Badge className="shrink-0 text-[10px] capitalize" variant="outline">
         {status.replace(/_/g, " ")}
       </Badge>
-    </button>
+    </>
+  );
+
+  const rowClassName = cn(
+    "group flex w-full items-center gap-3 border-border border-b px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-muted/40",
+    !onClick && "cursor-default",
+    className
+  );
+
+  if (!onClick) {
+    return <div className={rowClassName}>{rowContent}</div>;
+  }
+
+  return (
+    <Button
+      className={cn("h-auto justify-start rounded-none border-0", rowClassName)}
+      onClick={onClick}
+      type="button"
+      variant="ghost"
+    >
+      {rowContent}
+    </Button>
   );
 }

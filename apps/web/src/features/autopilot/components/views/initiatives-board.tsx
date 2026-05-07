@@ -1,11 +1,9 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
+import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   IconColumns,
-  IconEye,
-  IconEyeOff,
   IconFilter,
   IconLayoutList,
   IconSortAscending,
@@ -14,14 +12,6 @@ import { useQuery } from "convex/react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -36,13 +26,12 @@ import {
   type KanbanColumn,
 } from "@/features/autopilot/components/kanban-board";
 import {
-  COLUMN_OPTIONS,
-  type ColumnKey,
   type GroupKey,
-  getStoredColumns,
+  getPriorityRank,
+  getStatusRank,
   getStoredView,
-  PRIORITY_ORDER,
-  persistColumns,
+  isGroupKey,
+  isSortKey,
   persistView,
   QUICK_FILTERS,
   type SortKey,
@@ -54,20 +43,32 @@ import {
 import { GroupedList } from "@/features/autopilot/components/views/initiatives-board-grouped-list";
 import { cn } from "@/lib/utils";
 
+type InitiativeKanbanItem = Doc<"autopilotWorkItems"> & { id: string };
+
+function InitiativeKanbanCard({ item }: { item: InitiativeKanbanItem }) {
+  return (
+    <IssueRow
+      completionPercent={item.completionPercent}
+      priority={item.priority}
+      status={item.status}
+      title={item.title}
+      updatedAt={item.updatedAt}
+    />
+  );
+}
+
 export function InitiativesBoard({
   organizationId,
 }: {
-  organizationId: string;
+  organizationId: Id<"organizations">;
 }) {
   const [viewMode, setViewMode] = useState<ViewMode>(getStoredView);
   const [sortKey, setSortKey] = useState<SortKey>("status");
   const [groupKey, setGroupKey] = useState<GroupKey>("status");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [visibleColumns, setVisibleColumns] =
-    useState<Set<ColumnKey>>(getStoredColumns);
 
   const initiatives = useQuery(api.autopilot.queries.work.listWorkItems, {
-    organizationId: organizationId as never,
+    organizationId,
     type: "initiative",
   });
 
@@ -76,45 +77,35 @@ export function InitiativesBoard({
     persistView(mode);
   }
 
-  function toggleColumn(key: ColumnKey) {
-    setVisibleColumns((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      persistColumns(next);
-      return next;
-    });
+  function selectGroupKey(value: string | null) {
+    if (value && isGroupKey(value)) {
+      setGroupKey(value);
+    }
+  }
+
+  function selectSortKey(value: string | null) {
+    if (value && isSortKey(value)) {
+      setSortKey(value);
+    }
   }
 
   function sortInitiatives(
     items: Doc<"autopilotWorkItems">[]
   ): Doc<"autopilotWorkItems">[] {
-    return [...items].sort((a, b) => {
-      switch (sortKey) {
-        case "status":
-          return (
-            STATUS_ORDER.indexOf(a.status as (typeof STATUS_ORDER)[number]) -
-            STATUS_ORDER.indexOf(b.status as (typeof STATUS_ORDER)[number])
-          );
-        case "priority":
-          return (
-            PRIORITY_ORDER.indexOf(
-              a.priority as (typeof PRIORITY_ORDER)[number]
-            ) -
-            PRIORITY_ORDER.indexOf(
-              b.priority as (typeof PRIORITY_ORDER)[number]
-            )
-          );
-        case "updated":
-          return b.updatedAt - a.updatedAt;
-        case "created":
-          return b.createdAt - a.createdAt;
-        default:
-          return 0;
+    return items.slice().sort((a, b) => {
+      if (sortKey === "status") {
+        return getStatusRank(a.status) - getStatusRank(b.status);
       }
+
+      if (sortKey === "priority") {
+        return getPriorityRank(a.priority) - getPriorityRank(b.priority);
+      }
+
+      if (sortKey === "updated") {
+        return b.updatedAt - a.updatedAt;
+      }
+
+      return b.createdAt - a.createdAt;
     });
   }
 
@@ -131,29 +122,41 @@ export function InitiativesBoard({
     );
   }
 
-  const filtered = (
+  const filtered =
     statusFilter.length > 0
       ? initiatives.filter((i) => statusFilter.includes(i.status))
-      : initiatives
-  ) as Doc<"autopilotWorkItems">[];
+      : initiatives;
   const sorted = sortInitiatives(filtered);
 
-  const kanbanColumns: KanbanColumn<
-    Doc<"autopilotWorkItems"> & { id: string }
-  >[] = STATUS_ORDER.filter((s) => s !== "cancelled").map((status) => ({
-    id: status,
-    label: STATUS_LABELS[status] ?? status,
-    color: STATUS_COLORS[status] ?? "bg-muted-foreground",
-    items: sorted
-      .filter((i) => i.status === status)
-      .map((i) => ({ ...i, id: i._id })),
-  }));
+  const kanbanColumns = STATUS_ORDER.reduce<
+    KanbanColumn<InitiativeKanbanItem>[]
+  >((columns, status) => {
+    if (status === "cancelled") {
+      return columns;
+    }
+
+    columns.push({
+      id: status,
+      label: STATUS_LABELS[status] ?? status,
+      color: STATUS_COLORS[status] ?? "bg-muted-foreground",
+      items: [],
+    });
+    return columns;
+  }, []);
+  const kanbanColumnByStatus = new Map(
+    kanbanColumns.map((column) => [column.id, column])
+  );
+
+  for (const initiative of sorted) {
+    const column = kanbanColumnByStatus.get(initiative.status);
+    if (column) {
+      column.items.push({ ...initiative, id: initiative._id });
+    }
+  }
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* Quick filters */}
         <div className="flex gap-1">
           {QUICK_FILTERS.map((preset) => {
             const isActive =
@@ -209,10 +212,7 @@ export function InitiativesBoard({
         </div>
 
         {viewMode === "list" && (
-          <Select
-            onValueChange={(v) => setGroupKey(v as GroupKey)}
-            value={groupKey}
-          >
+          <Select onValueChange={selectGroupKey} value={groupKey}>
             <SelectTrigger className="w-32">
               <IconFilter className="mr-1 size-3" />
               <SelectValue placeholder="Group by" />
@@ -225,7 +225,7 @@ export function InitiativesBoard({
           </Select>
         )}
 
-        <Select onValueChange={(v) => setSortKey(v as SortKey)} value={sortKey}>
+        <Select onValueChange={selectSortKey} value={sortKey}>
           <SelectTrigger className="w-32">
             <IconSortAscending className="mr-1 size-3" />
             <SelectValue placeholder="Sort by" />
@@ -237,34 +237,8 @@ export function InitiativesBoard({
             <SelectItem value="created">Created</SelectItem>
           </SelectContent>
         </Select>
-
-        {/* B6: Column visibility */}
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>
-            {visibleColumns.size < COLUMN_OPTIONS.length ? (
-              <IconEyeOff className="mr-1 size-3" />
-            ) : (
-              <IconEye className="mr-1 size-3" />
-            )}
-            Columns
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuLabel>Visible columns</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {COLUMN_OPTIONS.map((col) => (
-              <DropdownMenuCheckboxItem
-                checked={visibleColumns.has(col.key)}
-                key={col.key}
-                onCheckedChange={() => toggleColumn(col.key)}
-              >
-                {col.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
-      {/* Views */}
       {initiatives.length === 0 && (
         <div className="flex h-40 items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm">
           No initiatives yet
@@ -274,15 +248,7 @@ export function InitiativesBoard({
       {sorted.length > 0 && viewMode === "kanban" && (
         <KanbanBoard
           columns={kanbanColumns}
-          renderItem={(item) => (
-            <IssueRow
-              completionPercent={item.completionPercent}
-              priority={item.priority}
-              status={item.status}
-              title={item.title}
-              updatedAt={item.updatedAt}
-            />
-          )}
+          itemComponent={InitiativeKanbanCard}
         />
       )}
 

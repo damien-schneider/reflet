@@ -43,6 +43,16 @@ export const assignedAgent = v.union(
 
 export const agentThreadRole = v.union(v.literal("user"), v.literal("agent"));
 
+export const communityPlatform = v.union(
+  v.literal("reddit"),
+  v.literal("hackernews"),
+  v.literal("twitter"),
+  v.literal("linkedin"),
+  v.literal("indiehackers"),
+  v.literal("devto"),
+  v.literal("other")
+);
+
 // ============================================
 // Agent Memory
 // ============================================
@@ -171,6 +181,15 @@ export const activityLogLevel = v.union(
   v.literal("success"),
   v.literal("warning"),
   v.literal("error")
+);
+
+export const activityEntityType = v.union(
+  v.literal("work_item"),
+  v.literal("document"),
+  v.literal("knowledge_doc"),
+  v.literal("run"),
+  v.literal("lead"),
+  v.literal("competitor")
 );
 
 // ============================================

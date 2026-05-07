@@ -12,6 +12,41 @@ import {
 } from "../schema/validators";
 import { requireOrgAdmin } from "./auth";
 
+type DocumentStatus = "archived" | "draft" | "pending_review" | "published";
+
+function applyDocumentReviewState({
+  docNeedsReview,
+  now,
+  status,
+  updates,
+}: {
+  docNeedsReview: boolean;
+  now: number;
+  status: DocumentStatus;
+  updates: Record<string, unknown>;
+}) {
+  if (status === "pending_review") {
+    updates.needsReview = true;
+    return;
+  }
+
+  if (status === "published") {
+    updates.needsReview = false;
+    updates.reviewedAt = now;
+    return;
+  }
+
+  if (status === "archived") {
+    updates.needsReview = false;
+    if (docNeedsReview) {
+      updates.reviewedAt = now;
+    }
+    return;
+  }
+
+  updates.needsReview = false;
+}
+
 export const createDocument = mutation({
   args: {
     organizationId: v.id("organizations"),
@@ -81,7 +116,8 @@ export const updateDocument = mutation({
     await requireOrgAdmin(ctx, doc.organizationId, user._id);
 
     const { documentId, ...fields } = args;
-    const updates: Record<string, unknown> = { updatedAt: Date.now() };
+    const now = Date.now();
+    const updates: Record<string, unknown> = { updatedAt: now };
 
     for (const [key, value] of Object.entries(fields)) {
       if (value !== undefined) {
@@ -89,12 +125,19 @@ export const updateDocument = mutation({
       }
     }
 
-    if (args.needsReview === false && doc.needsReview) {
-      updates.reviewedAt = Date.now();
+    if (args.status !== undefined) {
+      applyDocumentReviewState({
+        docNeedsReview: doc.needsReview,
+        now,
+        status: args.status,
+        updates,
+      });
+    } else if (args.needsReview === false && doc.needsReview) {
+      updates.reviewedAt = now;
     }
 
     if (args.publishedUrl && !doc.publishedAt) {
-      updates.publishedAt = Date.now();
+      updates.publishedAt = now;
     }
 
     await ctx.db.patch(documentId, updates);
@@ -114,9 +157,12 @@ export const archiveDocument = mutation({
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, doc.organizationId, user._id);
 
+    const now = Date.now();
     await ctx.db.patch(args.documentId, {
+      needsReview: false,
+      reviewedAt: doc.needsReview ? now : doc.reviewedAt,
       status: "archived",
-      updatedAt: Date.now(),
+      updatedAt: now,
     });
     return null;
   },

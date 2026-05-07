@@ -6,11 +6,187 @@
  */
 
 import { createTool, type ToolCtx } from "@convex-dev/agent";
+import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
 import type { DataModel, Id } from "../../_generated/dataModel";
+import { internalMutation, type MutationCtx } from "../../_generated/server";
 
 type CeoCtx = ToolCtx<DataModel>;
+type ReviewDecision = "approved" | "rejected";
+interface ScopedApprovalArgs {
+  ctx: MutationCtx;
+  decision: ReviewDecision;
+  itemId: string;
+  now: number;
+  organizationId: Id<"organizations">;
+}
+
+const reviewItemType = v.union(
+  v.literal("work_item"),
+  v.literal("document"),
+  v.literal("report")
+);
+
+const reviewDecision = v.union(v.literal("approved"), v.literal("rejected"));
+
+const assertScopedOrganization = (
+  itemOrganizationId: Id<"organizations">,
+  organizationId: Id<"organizations">
+) => {
+  if (itemOrganizationId !== organizationId) {
+    throw new Error("Review item does not belong to this organization");
+  }
+};
+
+function resolveApprovedWorkStatus(item: {
+  reviewType?: string;
+  status: string;
+}): "done" | "todo" {
+  if (item.status === "in_review" && item.reviewType === "pr_review") {
+    return "done";
+  }
+  return "todo";
+}
+
+const approveWorkItemForOrg = async ({
+  ctx,
+  organizationId,
+  itemId,
+  decision,
+  now,
+}: ScopedApprovalArgs) => {
+  const workItemId = ctx.db.normalizeId("autopilotWorkItems", itemId);
+  if (!workItemId) {
+    throw new Error("Invalid work item ID");
+  }
+
+  const item = await ctx.db.get(workItemId);
+  if (!item) {
+    throw new Error("Work item not found");
+  }
+  assertScopedOrganization(item.organizationId, organizationId);
+
+  const status =
+    decision === "rejected" ? "cancelled" : resolveApprovedWorkStatus(item);
+  await ctx.db.patch(workItemId, {
+    needsReview: false,
+    reviewedAt: now,
+    reviewType: undefined,
+    status,
+    updatedAt: now,
+  });
+
+  await ctx.db.insert("autopilotActivityLog", {
+    organizationId,
+    workItemId,
+    agent: "ceo",
+    level: decision === "rejected" ? "warning" : "success",
+    message: `CEO ${decision} work item: ${item.title}`,
+    createdAt: now,
+  });
+};
+
+const approveDocumentForOrg = async ({
+  ctx,
+  organizationId,
+  itemId,
+  decision,
+  now,
+}: ScopedApprovalArgs) => {
+  const documentId = ctx.db.normalizeId("autopilotDocuments", itemId);
+  if (!documentId) {
+    throw new Error("Invalid document ID");
+  }
+
+  const document = await ctx.db.get(documentId);
+  if (!document) {
+    throw new Error("Document not found");
+  }
+  assertScopedOrganization(document.organizationId, organizationId);
+
+  await ctx.db.patch(documentId, {
+    needsReview: false,
+    reviewedAt: now,
+    status: decision === "rejected" ? "archived" : "published",
+    updatedAt: now,
+  });
+
+  await ctx.db.insert("autopilotActivityLog", {
+    organizationId,
+    agent: "ceo",
+    level: decision === "rejected" ? "warning" : "success",
+    message: `CEO ${decision} document: ${document.title}`,
+    createdAt: now,
+  });
+};
+
+const approveReportForOrg = async ({
+  ctx,
+  organizationId,
+  itemId,
+  decision,
+  now,
+}: ScopedApprovalArgs) => {
+  const reportId = ctx.db.normalizeId("autopilotReports", itemId);
+  if (!reportId) {
+    throw new Error("Invalid report ID");
+  }
+
+  const report = await ctx.db.get(reportId);
+  if (!report) {
+    throw new Error("Report not found");
+  }
+  assertScopedOrganization(report.organizationId, organizationId);
+
+  await ctx.db.patch(reportId, {
+    archived: decision === "rejected",
+    needsReview: false,
+    reviewedAt: now,
+    acknowledgedAt: decision === "approved" ? now : undefined,
+    updatedAt: now,
+  });
+
+  await ctx.db.insert("autopilotActivityLog", {
+    organizationId,
+    agent: "ceo",
+    level: decision === "rejected" ? "warning" : "success",
+    message: `CEO ${decision} report: ${report.title}`,
+    createdAt: now,
+  });
+};
+
+export const approveInboxItemForOrg = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    itemId: v.string(),
+    itemType: reviewItemType,
+    decision: reviewDecision,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const approval = {
+      ctx,
+      organizationId: args.organizationId,
+      itemId: args.itemId,
+      decision: args.decision,
+      now: Date.now(),
+    };
+
+    if (args.itemType === "work_item") {
+      await approveWorkItemForOrg(approval);
+      return null;
+    }
+
+    if (args.itemType === "document") {
+      await approveDocumentForOrg(approval);
+      return null;
+    }
+
+    await approveReportForOrg(approval);
+    return null;
+  },
+});
 
 /**
  * Create org-scoped CEO tools. The organizationId is captured in the
@@ -80,7 +256,19 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
     },
   }),
 
-  getRecentTasks: createTool<{ status?: string }, string, CeoCtx>({
+  getRecentTasks: createTool<
+    {
+      status?:
+        | "backlog"
+        | "cancelled"
+        | "done"
+        | "in_progress"
+        | "in_review"
+        | "todo";
+    },
+    string,
+    CeoCtx
+  >({
     description: "Get recent autopilot tasks, optionally filtered by status.",
     inputSchema: z.object({
       status: z
@@ -100,7 +288,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
         internal.autopilot.task_queries.getTasksByOrg,
         {
           organizationId,
-          status: input.status as never,
+          status: input.status,
         }
       );
       if (tasks.length === 0) {
@@ -173,7 +361,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
   approveInboxItem: createTool<
     {
       itemId: string;
-      itemType: "work_item" | "document";
+      itemType: "document" | "report" | "work_item";
       decision: "approved" | "rejected";
     },
     string,
@@ -184,33 +372,22 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
     inputSchema: z.object({
       itemId: z.string().describe("The work item or document ID to act on"),
       itemType: z
-        .enum(["work_item", "document"])
-        .describe("Whether this is a work item or document"),
+        .enum(["work_item", "document", "report"])
+        .describe("Whether this is a work item, document, or report"),
       decision: z
         .enum(["approved", "rejected"])
         .describe("Approve or reject the item"),
     }),
     execute: async (ctx, input) => {
-      if (input.itemType === "work_item") {
-        const status =
-          input.decision === "rejected" ? ("cancelled" as const) : undefined;
-        await ctx.runMutation(
-          internal.autopilot.task_mutations.updateTaskStatus,
-          {
-            taskId: input.itemId as Id<"autopilotWorkItems">,
-            status: status ?? "todo",
-            needsReview: false,
-            reviewType: undefined,
-          }
-        );
-      } else {
-        await ctx.runMutation(internal.autopilot.documents.updateDocument, {
-          documentId: input.itemId as Id<"autopilotDocuments">,
-          needsReview: false,
-          reviewedAt: Date.now(),
-          status: input.decision === "rejected" ? "archived" : undefined,
-        });
-      }
+      await ctx.runMutation(
+        internal.autopilot.agents.ceo_tools.approveInboxItemForOrg,
+        {
+          organizationId,
+          itemId: input.itemId,
+          itemType: input.itemType,
+          decision: input.decision,
+        }
+      );
       return `Review item ${input.decision}.`;
     },
   }),

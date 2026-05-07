@@ -6,13 +6,16 @@ import {
 } from "@convex-dev/agent/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { IconArrowUp, IconSparkles } from "@tabler/icons-react";
+import { IconArrowUp, IconSparkles, IconX } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
+import { useSetAtom } from "jotai";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { ceoChatOpenAtom } from "@/store/ui";
 
 import { CeoChatMessage } from "./ceo-chat-message";
 
@@ -22,7 +25,9 @@ export function CeoChatPanel({
   organizationId: Id<"organizations">;
 }) {
   const [input, setInput] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isSending, setIsSending] = useState(false);
+  const setChatOpen = useSetAtom(ceoChatOpenAtom);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const threadId = useQuery(api.autopilot.ceo_chat.getThread, {
     organizationId,
@@ -45,37 +50,51 @@ export function CeoChatPanel({
     activeThreadId ? { threadId: activeThreadId, organizationId } : "skip",
     { initialNumItems: 50, stream: true }
   );
+  const latestMessageKey = messages.at(-1)?.key;
 
-  useEffect(function scrollToBottom() {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, []);
+  useEffect(
+    function scrollToBottom() {
+      if (latestMessageKey || status) {
+        bottomRef.current?.scrollIntoView({ block: "end" });
+      }
+    },
+    [latestMessageKey, status]
+  );
 
   const handleSend = async () => {
     const trimmed = input.trim();
-    if (!trimmed) {
+    if (!trimmed || isSending) {
       return;
     }
 
     setInput("");
+    setIsSending(true);
 
-    let currentThreadId = threadId;
-    if (!currentThreadId) {
-      currentThreadId = await getOrCreateThread({ organizationId });
+    try {
+      let currentThreadId = threadId;
+      if (!currentThreadId) {
+        currentThreadId = await getOrCreateThread({ organizationId });
+      }
+
+      await sendMessage({
+        organizationId,
+        threadId: currentThreadId,
+        prompt: trimmed,
+      });
+    } catch (error) {
+      setInput(trimmed);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to send message"
+      );
+    } finally {
+      setIsSending(false);
     }
-
-    await sendMessage({
-      organizationId,
-      threadId: currentThreadId,
-      prompt: trimmed,
-    });
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
-      handleSend().catch(() => undefined);
+      handleSend();
     }
   };
 
@@ -93,6 +112,15 @@ export function CeoChatPanel({
             Strategic advisor
           </p>
         </div>
+        <Button
+          aria-label="Close CEO chat"
+          className="ml-auto size-8"
+          onClick={() => setChatOpen(false)}
+          size="icon"
+          variant="ghost"
+        >
+          <IconX className="size-4" />
+        </Button>
       </div>
 
       <ScrollArea
@@ -100,7 +128,7 @@ export function CeoChatPanel({
         classNameViewport="p-4"
         direction="vertical"
       >
-        <div className="flex flex-col gap-4" ref={scrollRef}>
+        <div className="flex flex-col gap-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
               <div className="flex size-12 items-center justify-center rounded-xl bg-primary/5">
@@ -124,6 +152,7 @@ export function CeoChatPanel({
               <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary/30" />
             </div>
           )}
+          <div ref={bottomRef} />
         </div>
       </ScrollArea>
 
@@ -140,10 +169,8 @@ export function CeoChatPanel({
           <Button
             aria-label="Send message"
             className="absolute right-1.5 bottom-1.5 size-7"
-            disabled={!input.trim()}
-            onClick={() => {
-              handleSend().catch(() => undefined);
-            }}
+            disabled={isSending || !input.trim()}
+            onClick={handleSend}
             size="icon"
           >
             <IconArrowUp className="size-3.5" />

@@ -43,10 +43,12 @@ const STATUS_DOT_COLORS = {
 } as const;
 
 export function ViewMode({
+  actionPending = false,
   document,
   onArchive,
   onStatusTransition,
 }: {
+  actionPending?: boolean;
   document: Doc<"autopilotDocuments">;
   onArchive: () => void;
   onStatusTransition: () => void;
@@ -122,8 +124,8 @@ export function ViewMode({
         />
       </ScrollArea>
       <SheetFooter className="flex-row justify-between gap-2">
-        <Button onClick={onArchive} variant="outline">
-          Archive
+        <Button disabled={actionPending} onClick={onArchive} variant="outline">
+          {actionPending ? "Saving..." : "Archive"}
         </Button>
         <div className="flex gap-2">
           {hasEdits && (
@@ -136,7 +138,9 @@ export function ViewMode({
             </Button>
           )}
           {statusAction && (
-            <Button onClick={onStatusTransition}>{statusAction}</Button>
+            <Button disabled={actionPending} onClick={onStatusTransition}>
+              {actionPending ? "Saving..." : statusAction}
+            </Button>
           )}
         </div>
       </SheetFooter>

@@ -20,6 +20,7 @@ vi.mock("convex/react", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
+      actions_manage: { updateAnalysis: "feedback_actions.updateAnalysis" },
       actions: { updateAnalysis: "feedback_actions.updateAnalysis" },
     },
   },

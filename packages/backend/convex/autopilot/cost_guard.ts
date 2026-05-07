@@ -25,7 +25,10 @@ export const canExecute = internalQuery({
       )
       .unique();
 
-    if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
+    if (
+      !config?.enabled ||
+      (config.autonomyMode ?? "supervised") === "stopped"
+    ) {
       return false;
     }
 
@@ -56,7 +59,7 @@ export const recordCost = internalMutation({
   args: {
     organizationId: v.id("organizations"),
     costUsd: v.number(),
-    taskId: v.id("autopilotWorkItems"),
+    taskId: v.optional(v.id("autopilotWorkItems")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {

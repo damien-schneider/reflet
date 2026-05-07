@@ -278,6 +278,15 @@
   animation-name: hero-fade-in;
 }
 
+@keyframes autopilot-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 .hero-delay-0 {
   animation-duration: 0.6s;
   animation-delay: 0s;

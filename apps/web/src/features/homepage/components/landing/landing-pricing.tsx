@@ -75,7 +75,7 @@ const TIERS = [
 ] as const;
 
 export default function LandingPricing() {
-  const [interval, setInterval] = useState<BillingInterval>("yearly");
+  const [interval, setBillingInterval] = useState<BillingInterval>("yearly");
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.15 });
   const isYearly = interval === "yearly";
@@ -106,13 +106,13 @@ export default function LandingPricing() {
           <div className="flex items-center gap-2">
             <button
               className={cn(
-                "rounded-lg px-3.5 py-1.5 font-medium text-[13px] transition-all",
+                "rounded-lg px-3.5 py-1.5 font-medium text-[13px] transition-colors",
                 isYearly
                   ? "text-muted-foreground hover:text-foreground"
                   : "bg-card text-foreground shadow-sm"
               )}
               onClick={() => {
-                setInterval("monthly");
+                setBillingInterval("monthly");
                 capture("pricing_billing_toggled", { interval: "monthly" });
               }}
               type="button"
@@ -121,13 +121,13 @@ export default function LandingPricing() {
             </button>
             <button
               className={cn(
-                "rounded-lg px-3.5 py-1.5 font-medium text-[13px] transition-all",
+                "rounded-lg px-3.5 py-1.5 font-medium text-[13px] transition-colors",
                 isYearly
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
               onClick={() => {
-                setInterval("yearly");
+                setBillingInterval("yearly");
                 capture("pricing_billing_toggled", { interval: "yearly" });
               }}
               type="button"
@@ -153,7 +153,7 @@ export default function LandingPricing() {
               <motion.div
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
                 className={cn(
-                  "relative flex flex-col overflow-hidden rounded-2xl border p-6 transition-all",
+                  "relative flex flex-col overflow-hidden rounded-2xl border p-6 transition-colors",
                   tier.highlighted
                     ? "border-olive-600/30 bg-card shadow-lg dark:border-olive-400/30"
                     : "border-border bg-card"

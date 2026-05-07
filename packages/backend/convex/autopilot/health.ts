@@ -8,6 +8,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
+import { DEFAULT_MAX_PENDING_TOTAL } from "./config_task_caps";
 import type { HealthState } from "./health_checks";
 import {
   AGENT_FIELDS,
@@ -26,14 +27,45 @@ import {
   THIRTY_MINUTES,
   TOTAL_AGENTS,
 } from "./health_checks";
+import { requireOrgMembership } from "./queries/auth";
+
+const healthIssueValidator = v.object({
+  actionLabel: v.optional(v.string()),
+  actionUrl: v.optional(v.string()),
+  id: v.string(),
+  message: v.string(),
+  resolution: v.string(),
+  severity: v.union(
+    v.literal("critical"),
+    v.literal("info"),
+    v.literal("warning")
+  ),
+});
+
+const systemHealthValidator = v.object({
+  status: v.union(
+    v.literal("critical"),
+    v.literal("degraded"),
+    v.literal("healthy"),
+    v.literal("stopped")
+  ),
+  issues: v.array(healthIssueValidator),
+  lastActivity: v.union(v.number(), v.null()),
+  enabledAgentCount: v.number(),
+  totalAgentCount: v.number(),
+  pendingApprovalCount: v.optional(v.number()),
+});
 
 /**
  * Check the overall health of the autopilot system for an organization.
  */
 export const getSystemHealth = query({
   args: { organizationId: v.id("organizations") },
+  returns: systemHealthValidator,
   handler: async (ctx, args) => {
-    await getAuthUser(ctx);
+    const user = await getAuthUser(ctx);
+    await requireOrgMembership(ctx, args.organizationId, user._id);
+
     const config = await ctx.db
       .query("autopilotConfig")
       .withIndex("by_organization", (q) =>
@@ -58,7 +90,10 @@ export const getSystemHealth = query({
       };
     }
 
-    if ((config.autonomyMode ?? "supervised") === "stopped") {
+    if (
+      !config.enabled ||
+      (config.autonomyMode ?? "supervised") === "stopped"
+    ) {
       return {
         status: "stopped" as const,
         issues: [
@@ -79,10 +114,7 @@ export const getSystemHealth = query({
 
     checkAutonomyMode(config, state);
 
-    const enabledCount = checkAgentCount(
-      config as unknown as Record<string, unknown>,
-      state
-    );
+    const enabledCount = checkAgentCount(config, state);
 
     const lastActivityEntry = await ctx.db
       .query("autopilotActivityLog")
@@ -121,7 +153,7 @@ export const getSystemHealth = query({
 
     // Check for orphaned work items (assigned to disabled agents)
     const enabledAgentNames = AGENT_FIELDS.filter(
-      (field) => (config as unknown as Record<string, unknown>)[field] !== false
+      (field) => config[field] !== false
     ).map((field) => field.replace("Enabled", ""));
     const enabledSet = new Set(enabledAgentNames);
 
@@ -154,8 +186,7 @@ export const getSystemHealth = query({
     checkCredentials(credentialStatus, config.adapter, state);
 
     // Check if Dev agent is enabled but pipeline is blocked by missing credentials
-    const devEnabled =
-      (config as unknown as Record<string, unknown>).devEnabled !== false;
+    const devEnabled = config.devEnabled !== false;
     if (devEnabled && credentialStatus !== "valid") {
       state.issues.push({
         id: "dev_pipeline_blocked",
@@ -182,11 +213,19 @@ export const getSystemHealth = query({
         q.eq("organizationId", args.organizationId).eq("needsReview", true)
       )
       .collect();
-    const pendingApprovalCount = reviewWorkItems.length + reviewDocs.length;
+    const reviewReports = await ctx.db
+      .query("autopilotReports")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
+      )
+      .filter((q) => q.eq(q.field("archived"), false))
+      .collect();
+    const pendingApprovalCount =
+      reviewWorkItems.length + reviewDocs.length + reviewReports.length;
     checkPendingApprovals(pendingApprovalCount, state);
 
     // Check pipeline capacity
-    const totalCap = (config.maxPendingTasksTotal as number | undefined) ?? 5;
+    const totalCap = config.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
     const activeCount = todoItems.length + inProgressItems.length;
     checkPipelineCapacity(activeCount, totalCap, state);
 

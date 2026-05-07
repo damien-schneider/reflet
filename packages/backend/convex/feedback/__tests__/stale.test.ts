@@ -3,7 +3,10 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "../../_generated/api";
 import schema from "../../schema";
-import { modules } from "../../test.helpers";
+import {
+  CONVEX_INTEGRATION_TEST_TIMEOUT_MS,
+  modules,
+} from "../../test.helpers";
 
 describe("feedback_stale", () => {
   test("getSettings returns null for non-existent org", async () => {
@@ -23,25 +26,29 @@ describe("feedback_stale", () => {
     });
   });
 
-  test("getSettings returns null when no stale settings configured", async () => {
-    const t = convexTest(schema, modules);
+  test(
+    "getSettings returns null when no stale settings configured",
+    async () => {
+      const t = convexTest(schema, modules);
 
-    const orgId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organizations", {
-        name: "Test Org",
-        slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
-        subscriptionStatus: "none",
-        createdAt: Date.now(),
+      const orgId = await t.run(async (ctx) => {
+        return await ctx.db.insert("organizations", {
+          name: "Test Org",
+          slug: "test-org",
+          isPublic: false,
+          subscriptionTier: "free",
+          subscriptionStatus: "none",
+          createdAt: Date.now(),
+        });
       });
-    });
 
-    const result = await t.query(api.feedback.stale.getSettings, {
-      organizationId: orgId,
-    });
-    expect(result).toBeNull();
-  });
+      const result = await t.query(api.feedback.stale.getSettings, {
+        organizationId: orgId,
+      });
+      expect(result).toBeNull();
+    },
+    CONVEX_INTEGRATION_TEST_TIMEOUT_MS
+  );
 
   test("archiveStaleFeedback closes stale items", async () => {
     const t = convexTest(schema, modules);

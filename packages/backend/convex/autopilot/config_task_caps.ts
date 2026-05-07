@@ -10,8 +10,8 @@ import { internalQuery, type QueryCtx } from "../_generated/server";
 // TASK CAP DEFAULTS
 // ============================================
 
-const DEFAULT_MAX_PENDING_PER_AGENT = 4;
-const DEFAULT_MAX_PENDING_TOTAL = 12;
+export const DEFAULT_MAX_PENDING_PER_AGENT = 4;
+export const DEFAULT_MAX_PENDING_TOTAL = 12;
 
 /**
  * All agent names and their corresponding config fields.
@@ -34,14 +34,13 @@ async function fetchEnabledAgents(
     .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
     .unique();
 
-  if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
+  if (!config?.enabled || (config.autonomyMode ?? "supervised") === "stopped") {
     return [];
   }
 
-  return AGENT_CONFIG_FIELDS.filter(
-    ({ field }) =>
-      (config[field as keyof typeof config] as boolean | undefined) !== false
-  ).map(({ name }) => name);
+  return AGENT_CONFIG_FIELDS.filter(({ field }) => config[field] !== false).map(
+    ({ name }) => name
+  );
 }
 
 /**

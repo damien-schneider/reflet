@@ -16,10 +16,18 @@ vi.mock("convex/react", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     organizations: {
+      statuses_queries: { list: "organization_statuses.list" },
       statuses: { list: "organization_statuses.list" },
       members: { list: "members.list" },
     },
     feedback: {
+      tags_queries: {
+        list: "tags.list",
+      },
+      tags_mutations: {
+        addToFeedback: "tags.addToFeedback",
+        removeFromFeedback: "tags.removeFromFeedback",
+      },
       tags: {
         list: "tags.list",
         addToFeedback: "tags.addToFeedback",
@@ -30,6 +38,11 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
         toggle: "feedback_subscriptions.toggle",
       },
       votes: { toggle: "votes.toggle" },
+      actions_manage: {
+        updateOrganizationStatus: "feedback_actions.updateOrganizationStatus",
+        assign: "feedback_actions.assign",
+        updateAnalysis: "feedback_actions.updateAnalysis",
+      },
       actions: {
         updateOrganizationStatus: "feedback_actions.updateOrganizationStatus",
         assign: "feedback_actions.assign",

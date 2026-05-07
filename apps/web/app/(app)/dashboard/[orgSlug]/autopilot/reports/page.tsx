@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -27,6 +28,20 @@ import {
 import { cn } from "@/lib/utils";
 
 type ReportTypeFilter = "all" | "daily" | "weekly" | "on_demand";
+
+const REPORT_TYPE_FILTERS: readonly ReportTypeFilter[] = [
+  "all",
+  "daily",
+  "weekly",
+  "on_demand",
+];
+
+function isReportTypeFilter(value: string | null): value is ReportTypeFilter {
+  if (!value) {
+    return false;
+  }
+  return REPORT_TYPE_FILTERS.some((filter) => filter === value);
+}
 
 function getHealthColor(score: number): string {
   if (score >= 70) {
@@ -50,6 +65,7 @@ export default function ReportsPage() {
   const [filterType, setFilterType] = useState<ReportTypeFilter>("all");
   const [selectedReportId, setSelectedReportId] =
     useState<Id<"autopilotReports"> | null>(null);
+  const hasActiveFilters = searchQuery !== "" || filterType !== "all";
 
   if (reports === undefined) {
     return (
@@ -80,7 +96,7 @@ export default function ReportsPage() {
   });
 
   const selectedReport =
-    filteredReports.find((r) => r._id === selectedReportId) ?? null;
+    reports.find((r) => r._id === selectedReportId) ?? null;
 
   const handleSheetOpenChange = (open: boolean) => {
     if (!open) {
@@ -105,8 +121,8 @@ export default function ReportsPage() {
 
         <Select
           onValueChange={(v) => {
-            if (v) {
-              setFilterType(v as ReportTypeFilter);
+            if (isReportTypeFilter(v)) {
+              setFilterType(v);
             }
           }}
           value={filterType}
@@ -132,54 +148,74 @@ export default function ReportsPage() {
         <div className="flex h-48 items-center justify-center rounded-xl border border-dashed text-muted-foreground text-sm">
           <div className="text-center">
             <IconChartBar className="mx-auto mb-2 size-8" />
-            <p className="font-medium">No reports yet</p>
-            <p className="mt-1 text-xs">
-              Reports are generated automatically by the system.
+            <p className="font-medium">
+              {hasActiveFilters ? "No reports match" : "No reports yet"}
             </p>
+            <p className="mt-1 text-xs">
+              {hasActiveFilters
+                ? "Clear filters to review the full report history."
+                : "Reports are generated automatically by the system."}
+            </p>
+            {hasActiveFilters && (
+              <Button
+                className="mt-3"
+                onClick={() => {
+                  setSearchQuery("");
+                  setFilterType("all");
+                }}
+                size="sm"
+                variant="outline"
+              >
+                Clear filters
+              </Button>
+            )}
           </div>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filteredReports.map((report) => (
-            <button
+            <Button
               className={cn(
-                "group rounded-xl border bg-card p-4 text-left transition-colors hover:bg-accent/50",
+                "group h-auto w-full justify-start whitespace-normal rounded-xl border bg-card p-4 text-left hover:bg-accent/50",
                 selectedReportId === report._id && "border-primary/50 bg-muted"
               )}
               key={report._id}
               onClick={() => setSelectedReportId(report._id)}
               type="button"
+              variant="ghost"
             >
-              <div className="mb-2 flex items-center gap-2">
-                <span
-                  className={cn(
-                    "inline-flex size-7 shrink-0 items-center justify-center rounded-full font-bold text-white text-xs",
-                    getHealthColor(report.healthScore)
+              <div className="min-w-0 flex-1">
+                <div className="mb-2 flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "inline-flex size-7 shrink-0 items-center justify-center rounded-full font-bold text-white text-xs",
+                      getHealthColor(report.healthScore)
+                    )}
+                    title={`Health score: ${report.healthScore}/100`}
+                  >
+                    {report.healthScore}
+                  </span>
+                  <Badge
+                    className="shrink-0"
+                    color={REPORT_TYPE_COLORS[report.reportType]}
+                  >
+                    {REPORT_TYPE_LABELS[report.reportType]}
+                  </Badge>
+                  <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">
+                    {formatDistanceToNow(report.createdAt, { addSuffix: true })}
+                  </span>
+                  {report.needsReview && (
+                    <span className="size-2 shrink-0 rounded-full bg-blue-500" />
                   )}
-                  title={`Health score: ${report.healthScore}/100`}
-                >
-                  {report.healthScore}
-                </span>
-                <Badge
-                  className="shrink-0"
-                  color={REPORT_TYPE_COLORS[report.reportType]}
-                >
-                  {REPORT_TYPE_LABELS[report.reportType]}
-                </Badge>
-                <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">
-                  {formatDistanceToNow(report.createdAt, { addSuffix: true })}
-                </span>
-                {report.needsReview && (
-                  <span className="size-2 shrink-0 rounded-full bg-blue-500" />
-                )}
+                </div>
+                <p className="mb-1 font-medium text-sm leading-snug">
+                  {report.title}
+                </p>
+                <p className="line-clamp-2 text-muted-foreground text-xs leading-relaxed">
+                  {report.executiveSummary}
+                </p>
               </div>
-              <p className="mb-1 font-medium text-sm leading-snug">
-                {report.title}
-              </p>
-              <p className="line-clamp-2 text-muted-foreground text-xs leading-relaxed">
-                {report.executiveSummary}
-              </p>
-            </button>
+            </Button>
           ))}
         </div>
       )}

@@ -36,6 +36,14 @@ export const checkGuards = internalQuery({
 
     // Check autonomy mode (stopped = disabled)
     const autonomyMode = config.autonomyMode ?? "supervised";
+    if (!config.enabled) {
+      return {
+        allowed: false,
+        reason: "Autopilot is disabled",
+        autonomyMode,
+      };
+    }
+
     if (autonomyMode === "stopped") {
       return {
         allowed: false,
@@ -57,8 +65,11 @@ export const checkGuards = internalQuery({
       }
     }
 
-    // Check task-per-day limit
-    if (config.tasksUsedToday >= config.maxTasksPerDay) {
+    // Check task-per-day limit only inside the active counter window.
+    if (
+      Date.now() < config.tasksResetAt &&
+      config.tasksUsedToday >= config.maxTasksPerDay
+    ) {
       return {
         allowed: false,
         reason: `Daily task limit reached (${config.tasksUsedToday} / ${config.maxTasksPerDay})`,

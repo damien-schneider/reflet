@@ -25,6 +25,29 @@ import { generateObjectWithFallback } from "./shared_generation";
 // ZOD SCHEMAS
 // ============================================
 
+type SupportCtx = Pick<ActionCtx, "runMutation">;
+
+const markSupportTaskStatus = async (
+  ctx: SupportCtx,
+  taskId: Id<"autopilotWorkItems"> | undefined,
+  status: "cancelled" | "done" | "todo"
+) => {
+  if (!taskId) {
+    return;
+  }
+  if (status === "done") {
+    await ctx.runMutation(internal.autopilot.task_mutations.completeAgentTask, {
+      taskId,
+      agent: "support",
+    });
+    return;
+  }
+  await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
+    taskId,
+    status,
+  });
+};
+
 export const triageResultSchema = z.object({
   conversations: z.array(
     z.object({
@@ -128,7 +151,11 @@ async function processTriagedConversation(
 }
 
 export const runSupportTriage = internalAction({
-  args: { organizationId: v.id("organizations") },
+  args: {
+    organizationId: v.id("organizations"),
+    taskId: v.optional(v.id("autopilotWorkItems")),
+  },
+  returns: v.null(),
   handler: async (ctx, args) => {
     // Guard check: ensure budget/rate limits allow execution
     const guardResult = await ctx.runQuery(
@@ -136,76 +163,85 @@ export const runSupportTriage = internalAction({
       { organizationId: args.organizationId, agent: "support" }
     );
     if (!guardResult.allowed) {
-      return;
+      await markSupportTaskStatus(ctx, args.taskId, "todo");
+      return null;
     }
 
-    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-      organizationId: args.organizationId,
-      agent: "support",
-      level: "action",
-      message: "Starting support triage scan",
-    });
-
-    const conversations = await ctx.runQuery(
-      internal.autopilot.agents.support.getRecentConversations,
-      { organizationId: args.organizationId }
-    );
-
-    if (conversations.length === 0) {
+    try {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "support",
-        level: "info",
-        message: "No new support conversations to triage",
+        level: "action",
+        message: "Starting support triage scan",
       });
-      return;
-    }
 
-    const org = await ctx.runQuery(
-      internal.autopilot.task_queries.getOrganization,
-      {
-        id: args.organizationId,
+      const conversations = await ctx.runQuery(
+        internal.autopilot.agents.support.getRecentConversations,
+        { organizationId: args.organizationId }
+      );
+
+      if (conversations.length === 0) {
+        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+          organizationId: args.organizationId,
+          agent: "support",
+          level: "info",
+          message: "No new support conversations to triage",
+        });
+        await markSupportTaskStatus(ctx, args.taskId, "cancelled");
+        return null;
       }
-    );
 
-    const conversationSummaries = conversations
-      .map(
-        (c: { _id: string; subject?: string; lastMessage?: string }) =>
-          `[${c._id}] ${c.subject ?? "No subject"}: ${c.lastMessage ?? "No messages"}`
-      )
-      .join("\n");
+      const org = await ctx.runQuery(
+        internal.autopilot.task_queries.getOrganization,
+        {
+          id: args.organizationId,
+        }
+      );
 
-    const triage = await generateObjectWithFallback({
-      models: FAST_MODELS,
-      schema: triageResultSchema,
-      systemPrompt: `You are a support triage agent for ${org?.name ?? "the product"}. 
+      const conversationSummaries = conversations
+        .map(
+          (c: { _id: string; subject?: string; lastMessage?: string }) =>
+            `[${c._id}] ${c.subject ?? "No subject"}: ${c.lastMessage ?? "No messages"}`
+        )
+        .join("\n");
+
+      const triage = await generateObjectWithFallback({
+        models: FAST_MODELS,
+        schema: triageResultSchema,
+        systemPrompt: `You are a support triage agent for ${org?.name ?? "the product"}.
 Analyze support conversations and:
 1. Classify the intent (question, bug, feature request, praise)
 2. Assess severity
 3. Draft a helpful, empathetic reply
 4. Flag conversations that need human escalation (critical bugs, angry users, complex issues)`,
-      prompt: `Triage these support conversations:\n\n${conversationSummaries}`,
-    });
+        prompt: `Triage these support conversations:\n\n${conversationSummaries}`,
+      });
 
-    for (const conv of triage.conversations) {
-      await processTriagedConversation(ctx, args.organizationId, conv);
-    }
+      for (const conv of triage.conversations) {
+        await processTriagedConversation(ctx, args.organizationId, conv);
+      }
 
-    // Complete any in_progress tasks assigned to support
-    await ctx.runMutation(
-      internal.autopilot.task_mutations.completeAgentTasks,
-      {
+      await markSupportTaskStatus(ctx, args.taskId, "done");
+
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "support",
-      }
-    );
-
-    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-      organizationId: args.organizationId,
-      agent: "support",
-      level: "success",
-      message: `Triaged ${triage.conversations.length} conversations — ${triage.summary}`,
-    });
+        level: "success",
+        message: `Triaged ${triage.conversations.length} conversations — ${triage.summary}`,
+      });
+      return null;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+        organizationId: args.organizationId,
+        agent: "support",
+        level: "error",
+        message: `Support triage failed: ${errorMessage}`,
+      });
+      await markSupportTaskStatus(ctx, args.taskId, "cancelled");
+      return null;
+    }
   },
 });
 

@@ -2,7 +2,7 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import { assignedAgent, priority } from "./validators";
 
-const reportType = v.union(
+export const reportType = v.union(
   v.literal("daily"),
   v.literal("weekly"),
   v.literal("on_demand")

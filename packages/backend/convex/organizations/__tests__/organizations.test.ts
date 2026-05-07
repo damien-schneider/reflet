@@ -3,35 +3,42 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "../../_generated/api";
 import schema from "../../schema";
-import { modules } from "../../test.helpers";
+import {
+  CONVEX_INTEGRATION_TEST_TIMEOUT_MS,
+  modules,
+} from "../../test.helpers";
 
 // Type assertion to work around convex-test version mismatch
 
 describe("Organization slug uniqueness", () => {
-  test("should reject creating an organization with a duplicate slug", async () => {
-    const t = convexTest(schema, modules);
+  test(
+    "should reject creating an organization with a duplicate slug",
+    async () => {
+      const t = convexTest(schema, modules);
 
-    // First, insert an organization directly into the database
-    await t.run(async (ctx) => {
-      await ctx.db.insert("organizations", {
-        name: "First Org",
-        slug: "my-unique-slug",
-        isPublic: false,
-        subscriptionTier: "free",
-        subscriptionStatus: "none",
-        createdAt: Date.now(),
+      // First, insert an organization directly into the database
+      await t.run(async (ctx) => {
+        await ctx.db.insert("organizations", {
+          name: "First Org",
+          slug: "my-unique-slug",
+          isPublic: false,
+          subscriptionTier: "free",
+          subscriptionStatus: "none",
+          createdAt: Date.now(),
+        });
       });
-    });
 
-    // Attempt to create second organization with same slug - should throw
-    await expect(
-      t.mutation(internal.organizations.mutations.createOrganization, {
-        name: "Second Org",
-        slug: "my-unique-slug",
-        userId: "user_123",
-      })
-    ).rejects.toThrow("This slug is already taken");
-  });
+      // Attempt to create second organization with same slug - should throw
+      await expect(
+        t.mutation(internal.organizations.mutations.createOrganization, {
+          name: "Second Org",
+          slug: "my-unique-slug",
+          userId: "user_123",
+        })
+      ).rejects.toThrow("This slug is already taken");
+    },
+    CONVEX_INTEGRATION_TEST_TIMEOUT_MS
+  );
 
   test("should reject creating an organization with a duplicate generated slug", async () => {
     const t = convexTest(schema, modules);

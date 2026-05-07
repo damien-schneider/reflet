@@ -60,6 +60,11 @@ export const pmAnalysisSchema = z.object({
 });
 
 const PM_MODELS = QUALITY_MODELS;
+const PM_ASSIGNMENT_BLOCKLIST = new Set(["pm", "dev"]);
+
+export function getPMAssignableAgents(enabledAgents: readonly string[]) {
+  return enabledAgents.filter((agent) => !PM_ASSIGNMENT_BLOCKLIST.has(agent));
+}
 
 // ============================================
 // ACTION
@@ -92,7 +97,7 @@ export const runPMAnalysis = internalAction({
         { organizationId: args.organizationId }
       );
 
-      const assignableAgents = enabledAgents.filter((a: string) => a !== "pm");
+      const assignableAgents = getPMAssignableAgents(enabledAgents);
 
       if (assignableAgents.length === 0) {
         await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
@@ -217,7 +222,11 @@ ${existingTasksContext || "(none)"}
 AGENT NOTES (cross-domain context from all agents):
 ${notesContext || "(none)"}
 
-If no feedback or notes are available, use the knowledge base and roadmap context to create stories from planned initiatives. Never return empty results — always find work.
+If no feedback, notes, or credible roadmap gaps are available, return zero tasks and explain why in the summary. Do not invent work to stay busy.
+
+ROUTING RULE:
+- Technical implementation, architecture, and code-change work MUST go to CTO.
+- Dev receives executable subtasks only from CTO specifications; do not assign PM-created tasks directly to Dev.
 
 Generate tasks that address the highest-priority feedback and note patterns.
 For each task, provide:
@@ -308,6 +317,12 @@ For each task, provide:
       );
 
       const usage = getUsageTracker();
+      if (usage.estimatedCostUsd > 0) {
+        await ctx.runMutation(internal.autopilot.cost_guard.recordCost, {
+          organizationId: args.organizationId,
+          costUsd: usage.estimatedCostUsd,
+        });
+      }
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "pm",

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import UnifiedAuthForm from "./unified-auth/unified-auth-form";
 
@@ -145,7 +145,29 @@ const mockRegister = vi.fn((name: string) => ({
   onBlur: vi.fn(),
   ref: vi.fn(),
 }));
-const mockWatch = vi.fn((field: string) => {
+type AuthMode = "signIn" | "signUp" | null;
+type FormErrors = Record<string, { message?: string }>;
+type WatchField = (field: string) => string;
+
+interface AuthHookReturn {
+  apiError: string | null;
+  errors: FormErrors;
+  handleEmailChange: typeof mockHandleEmailChange;
+  handleSubmit: typeof mockHandleSubmit;
+  isCheckingEmail: boolean;
+  isSubmitting: boolean;
+  mode: AuthMode;
+  onSubmit: typeof mockOnSubmit;
+  passwordMismatchError: string | null;
+  register: typeof mockRegister;
+  resetMode: typeof mockResetMode;
+  setApiError: typeof mockSetApiError;
+  setValue: typeof mockSetValue;
+  trigger: typeof mockTrigger;
+  watch: typeof mockWatch;
+}
+
+const defaultWatch: WatchField = (field) => {
   if (field === "password") {
     return "password123";
   }
@@ -153,19 +175,21 @@ const mockWatch = vi.fn((field: string) => {
     return "password123";
   }
   return "";
-});
+};
+
+const mockWatch = vi.fn<WatchField>(defaultWatch);
 const mockOnSubmit = vi.fn();
 const mockResetMode = vi.fn();
 const mockHandleEmailChange = vi.fn();
 
-const defaultHookReturn = {
-  mode: null as string | null,
-  apiError: null as string | null,
+const defaultHookReturn: AuthHookReturn = {
+  mode: null,
+  apiError: null,
   setApiError: mockSetApiError,
-  passwordMismatchError: null as string | null,
+  passwordMismatchError: null,
   register: mockRegister,
   handleSubmit: mockHandleSubmit,
-  errors: {} as Record<string, unknown>,
+  errors: {},
   isSubmitting: false,
   watch: mockWatch,
   setValue: mockSetValue,
@@ -189,18 +213,11 @@ describe("UnifiedAuthForm", () => {
     defaultHookReturn.errors = {};
     defaultHookReturn.isSubmitting = false;
     defaultHookReturn.isCheckingEmail = false;
-    mockWatch.mockImplementation((field: string) => {
-      if (field === "password") {
-        return "password123";
-      }
-      if (field === "confirmPassword") {
-        return "password123";
-      }
-      return "";
-    });
+    mockWatch.mockImplementation(defaultWatch);
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 
@@ -307,7 +324,7 @@ describe("UnifiedAuthForm", () => {
   // and mode switching which is difficult to mock in unit tests.
 
   it("disables submit when mode is signUp and password too short", () => {
-    mockWatch.mockImplementation(((field: string) => {
+    mockWatch.mockImplementation((field) => {
       if (field === "password") {
         return "short";
       }
@@ -315,7 +332,7 @@ describe("UnifiedAuthForm", () => {
         return "short";
       }
       return "";
-    }) as never);
+    });
     defaultHookReturn.mode = "signUp";
     render(<UnifiedAuthForm />);
     const buttons = screen.getAllByRole("button");
@@ -324,7 +341,7 @@ describe("UnifiedAuthForm", () => {
 
   it("renders with signIn mode", () => {
     defaultHookReturn.mode = "signIn";
-    mockWatch.mockImplementation(((field: string) => {
+    mockWatch.mockImplementation((field) => {
       if (field === "password") {
         return "pass";
       }
@@ -332,7 +349,7 @@ describe("UnifiedAuthForm", () => {
         return "";
       }
       return "";
-    }) as never);
+    });
     render(<UnifiedAuthForm />);
     const form = document.querySelector("form");
     expect(form).toBeInTheDocument();

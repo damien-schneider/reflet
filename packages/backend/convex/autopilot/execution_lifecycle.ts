@@ -9,6 +9,11 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import { internalAction, internalMutation } from "../_generated/server";
+import {
+  parseAdapterCredentials,
+  resolveCompletionStatus,
+  resolveRetryDelayMs,
+} from "./execution_policy";
 import { assignedAgent } from "./schema/validators";
 
 /**
@@ -69,10 +74,7 @@ export const pollTaskStatus = internalAction({
     try {
       const { getAdapter } = await import("./adapters/registry");
       const adapter = getAdapter(config.adapter);
-      const credentials = JSON.parse(creds.credentials) as Record<
-        string,
-        string
-      >;
+      const credentials = parseAdapterCredentials(creds.credentials);
 
       const status = await adapter.getStatus(args.externalRef, credentials);
 
@@ -99,18 +101,28 @@ export const pollTaskStatus = internalAction({
       });
 
       if (status.status === "completed") {
+        if (status.estimatedCostUsd > 0) {
+          await ctx.runMutation(internal.autopilot.cost_guard.recordCost, {
+            organizationId: args.organizationId,
+            taskId: args.taskId,
+            costUsd: status.estimatedCostUsd,
+          });
+        }
         await ctx.runMutation(internal.autopilot.task_mutations.updateRun, {
           runId: args.runId,
           status: "completed",
           completedAt: Date.now(),
         });
-        const completionStatus =
-          config.autonomyLevel === "full_auto" ? "done" : "in_review";
+        const completionStatus = resolveCompletionStatus({
+          autoMergePRs: config.autoMergePRs,
+          autonomyLevel: config.autonomyLevel,
+          autonomyMode: config.autonomyMode,
+        });
         await ctx.runMutation(
           internal.autopilot.task_mutations.updateTaskStatus,
           {
             taskId: args.taskId,
-            status: completionStatus as "done" | "in_review",
+            status: completionStatus,
             prUrl: status.prUrl,
             prNumber: status.prNumber,
             needsReview: completionStatus === "in_review",
@@ -122,11 +134,42 @@ export const pollTaskStatus = internalAction({
       }
 
       if (status.status === "failed") {
+        const previousRuns = await ctx.runQuery(
+          internal.autopilot.task_queries.getRunsForTask,
+          { taskId: args.taskId }
+        );
+        const retryCount = previousRuns.filter(
+          (run: { status: string }) => run.status === "failed"
+        ).length;
+        if (status.estimatedCostUsd > 0) {
+          await ctx.runMutation(internal.autopilot.cost_guard.recordCost, {
+            organizationId: args.organizationId,
+            taskId: args.taskId,
+            costUsd: status.estimatedCostUsd,
+          });
+        }
         await ctx.runMutation(internal.autopilot.task_mutations.updateRun, {
           runId: args.runId,
           status: "failed",
           completedAt: Date.now(),
         });
+        await ctx.runMutation(
+          internal.autopilot.task_mutations.updateTaskStatus,
+          {
+            taskId: args.taskId,
+            status: "backlog",
+          }
+        );
+        const retryDelay = resolveRetryDelayMs({ retryCount });
+        if (retryDelay !== null) {
+          await ctx.scheduler.runAfter(
+            retryDelay,
+            internal.autopilot.execution.retryTask,
+            { organizationId: args.organizationId, taskId: args.taskId }
+          );
+          return;
+        }
+
         await ctx.runMutation(
           internal.autopilot.task_mutations.updateTaskStatus,
           {
@@ -208,10 +251,7 @@ export const cancelTask = internalAction({
         if (creds) {
           const { getAdapter } = await import("./adapters/registry");
           const adapter = getAdapter(config.adapter);
-          const credentials = JSON.parse(creds.credentials) as Record<
-            string,
-            string
-          >;
+          const credentials = parseAdapterCredentials(creds.credentials);
           await adapter.cancelTask(activeRun.externalRef, credentials);
         }
       } catch {

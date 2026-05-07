@@ -15,7 +15,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +52,16 @@ const SEVERITY_DOT = {
   info: "bg-blue-500",
 } as const;
 
+function getSeverityDot(severity: string) {
+  if (severity === "critical") {
+    return SEVERITY_DOT.critical;
+  }
+  if (severity === "warning") {
+    return SEVERITY_DOT.warning;
+  }
+  return SEVERITY_DOT.info;
+}
+
 export function HealthBanner() {
   const { organizationId, orgSlug } = useAutopilotContext();
   const health = useQuery(api.autopilot.health.getSystemHealth, {
@@ -64,10 +74,7 @@ export function HealthBanner() {
   }
 
   const baseUrl = `/dashboard/${orgSlug}/autopilot`;
-  const pendingApprovalCount =
-    "pendingApprovalCount" in health
-      ? (health.pendingApprovalCount as number)
-      : 0;
+  const pendingApprovalCount = health.pendingApprovalCount ?? 0;
 
   // When healthy: show pending approvals if any, otherwise hide
   if (health.status === "healthy") {
@@ -128,10 +135,12 @@ export function HealthBanner() {
               {config.label}
             </p>
             {hasMultipleIssues && !isCritical && (
-              <button
-                className="flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground"
+              <Button
+                className="h-auto gap-1 px-1 py-0 text-muted-foreground text-xs hover:text-foreground"
                 onClick={() => setExpanded((prev) => !prev)}
+                size="sm"
                 type="button"
+                variant="ghost"
               >
                 {expanded ? "Show less" : `${health.issues.length} issues`}
                 <ChevronDownIcon
@@ -140,27 +149,23 @@ export function HealthBanner() {
                     expanded && "rotate-180"
                   )}
                 />
-              </button>
+              </Button>
             )}
           </div>
 
           <div className="mt-2 space-y-3">
-            {visibleIssues.map(
-              (issue: {
-                id: string;
-                severity: string;
-                message: string;
-                resolution?: string;
-                actionUrl?: string;
-                actionLabel?: string;
-              }) => (
+            {visibleIssues.map((issue) => {
+              const actionUrl =
+                "actionUrl" in issue ? issue.actionUrl : undefined;
+              const actionLabel =
+                "actionLabel" in issue ? issue.actionLabel : undefined;
+
+              return (
                 <div className="flex items-start gap-2.5" key={issue.id}>
                   <span
                     className={cn(
                       "mt-1.5 size-2 shrink-0 rounded-full",
-                      SEVERITY_DOT[
-                        issue.severity as keyof typeof SEVERITY_DOT
-                      ] ?? SEVERITY_DOT.info
+                      getSeverityDot(issue.severity)
                     )}
                   />
                   <div className="min-w-0 flex-1">
@@ -171,21 +176,21 @@ export function HealthBanner() {
                       </p>
                     )}
                   </div>
-                  {issue.actionUrl !== undefined && issue.actionLabel && (
+                  {actionUrl && actionLabel && (
                     <Link
                       className={cn(
                         buttonVariants({ variant: "outline", size: "sm" }),
                         "shrink-0 gap-1 text-xs"
                       )}
-                      href={`${baseUrl}/${issue.actionUrl}`}
+                      href={`${baseUrl}/${actionUrl}`}
                     >
-                      {issue.actionLabel}
+                      {actionLabel}
                       <ArrowRightIcon className="size-3" />
                     </Link>
                   )}
                 </div>
-              )
-            )}
+              );
+            })}
           </div>
         </div>
       </div>

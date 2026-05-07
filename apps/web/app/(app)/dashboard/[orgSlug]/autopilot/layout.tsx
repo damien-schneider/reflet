@@ -4,7 +4,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useAtomValue } from "jotai";
 
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { use } from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +16,7 @@ import { AutopilotNav } from "@/features/autopilot/components/autopilot-nav";
 import { CeoChatPanel } from "@/features/autopilot/components/ceo-chat/ceo-chat-panel";
 import { CeoChatToggle } from "@/features/autopilot/components/ceo-chat/ceo-chat-toggle";
 import { HealthBanner } from "@/features/autopilot/components/health-banner";
+import { cn } from "@/lib/utils";
 import { ceoChatOpenAtom } from "@/store/ui";
 
 export default function AutopilotLayout({
@@ -27,58 +28,6 @@ export default function AutopilotLayout({
 }) {
   const { orgSlug } = use(params);
   const isChatOpen = useAtomValue(ceoChatOpenAtom);
-
-  const panelRef = useRef<HTMLElement>(null);
-  const isResizing = useRef(false);
-  const [panelWidth, setPanelWidth] = useState<number | null>(null);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    isResizing.current = true;
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-  }, []);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing.current) {
-        return;
-      }
-      const minWidth =
-        Number.parseFloat(
-          getComputedStyle(document.documentElement).getPropertyValue(
-            "--ceo-chat-min-width"
-          )
-        ) * 16;
-      const maxWidth =
-        Number.parseFloat(
-          getComputedStyle(document.documentElement).getPropertyValue(
-            "--ceo-chat-max-width"
-          )
-        ) * 16;
-      const newWidth = Math.min(
-        Math.max(window.innerWidth - e.clientX, minWidth),
-        maxWidth
-      );
-      setPanelWidth(newWidth);
-    };
-
-    const handleMouseUp = () => {
-      if (!isResizing.current) {
-        return;
-      }
-      isResizing.current = false;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
 
   const org = useQuery(api.organizations.queries.getBySlug, {
     slug: orgSlug,
@@ -146,17 +95,13 @@ export default function AutopilotLayout({
     currentMember?.role === "admin" || currentMember?.role === "owner";
   const baseUrl = `/dashboard/${orgSlug}/autopilot`;
 
-  const chatWidthStyle = panelWidth ? `${String(panelWidth)}px` : undefined;
-
   return (
     <AutopilotContext value={{ organizationId: org._id, isAdmin, orgSlug }}>
       <div
-        className="transition-[padding] duration-300 ease-in-out"
-        style={{
-          paddingRight: isChatOpen
-            ? `calc(${chatWidthStyle ?? "var(--ceo-chat-width)"} + 1.5rem)`
-            : undefined,
-        }}
+        className={cn(
+          "transition-[padding] duration-300 ease-in-out",
+          isChatOpen && "lg:pr-[calc(var(--ceo-chat-width)+1.5rem)]"
+        )}
       >
         <div className="mx-auto max-w-6xl px-4 pt-12 pb-8">
           <div className="mb-6 flex items-center justify-between">
@@ -194,21 +139,7 @@ export default function AutopilotLayout({
       <CeoChatToggle />
 
       {isChatOpen && (
-        <aside
-          className="fixed top-3 right-3 bottom-3 z-40 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
-          ref={panelRef}
-          style={{
-            width: chatWidthStyle ?? "var(--ceo-chat-width)",
-            minWidth: "var(--ceo-chat-min-width)",
-            maxWidth: "var(--ceo-chat-max-width)",
-          }}
-        >
-          <button
-            aria-label="Resize chat panel"
-            className="absolute inset-y-0 left-0 z-50 w-1.5 cursor-col-resize border-none bg-transparent p-0 transition-colors hover:bg-primary/10"
-            onMouseDown={handleMouseDown}
-            type="button"
-          />
+        <aside className="fixed inset-3 z-40 overflow-hidden rounded-xl border border-border bg-background shadow-lg sm:left-auto sm:w-[var(--ceo-chat-width)] sm:max-w-[calc(100vw-1.5rem)]">
           <CeoChatPanel organizationId={org._id} />
         </aside>
       )}

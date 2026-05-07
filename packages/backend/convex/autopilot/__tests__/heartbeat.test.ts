@@ -154,6 +154,18 @@ describe("shouldWakeGrowth", () => {
       })
     ).toBe(false);
   });
+
+  it("wakes when community posts are ready for draft production", () => {
+    expect(
+      shouldWakeGrowth({
+        ...BASE_SUMMARY,
+        chainState: {
+          ...fullyPublishedChain,
+          drafts: "missing",
+        },
+      })
+    ).toBe(true);
+  });
 });
 
 describe("shouldWakeSales", () => {

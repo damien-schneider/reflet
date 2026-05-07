@@ -20,9 +20,15 @@ export const approveWorkItem = mutation({
     await requireOrgAdmin(ctx, item.organizationId, user._id);
 
     const now = Date.now();
+    const status =
+      item.status === "in_review" && item.reviewType === "pr_review"
+        ? "done"
+        : item.status;
     await ctx.db.patch(args.workItemId, {
       needsReview: false,
       reviewedAt: now,
+      reviewType: undefined,
+      status,
       updatedAt: now,
     });
 

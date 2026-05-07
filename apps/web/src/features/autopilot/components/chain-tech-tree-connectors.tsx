@@ -66,6 +66,9 @@ const computePaths = (
   return result;
 };
 
+const HIGHLIGHT_STROKE = "var(--primary)";
+const DEFAULT_STROKE = "var(--border)";
+
 export function ChainTechTreeConnectors({
   containerRef,
   refMap,
@@ -75,43 +78,49 @@ export function ChainTechTreeConnectors({
   const [paths, setPaths] = useState<PathInfo[]>([]);
 
   // Recompute on mount, on highlightTargets identity change, and on resize.
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-    const refs = refMap.current;
-    if (!refs) {
-      return;
-    }
-    const recompute = () => {
-      setPaths(computePaths(container, refs, edges, highlightTargets));
-    };
-    recompute();
-    const observer = new ResizeObserver(recompute);
-    observer.observe(container);
-    for (const el of refs.values()) {
-      observer.observe(el);
-    }
-    return () => observer.disconnect();
-  }, [containerRef, refMap, edges, highlightTargets]);
+  useLayoutEffect(
+    function syncConnectorPaths() {
+      const container = containerRef.current;
+      if (!container) {
+        return;
+      }
+      const refs = refMap.current;
+      if (!refs) {
+        return;
+      }
+      const recompute = () => {
+        setPaths(computePaths(container, refs, edges, highlightTargets));
+      };
+      recompute();
+      const observer = new ResizeObserver(recompute);
+      observer.observe(container);
+      for (const el of refs.values()) {
+        observer.observe(el);
+      }
+      return () => observer.disconnect();
+    },
+    [containerRef, refMap, edges, highlightTargets]
+  );
 
   // Also redraw on window resize for safety (font scaling, devtools, etc.).
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-    const refs = refMap.current;
-    if (!refs) {
-      return;
-    }
-    const onResize = () => {
-      setPaths(computePaths(container, refs, edges, highlightTargets));
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [containerRef, refMap, edges, highlightTargets]);
+  useEffect(
+    function syncConnectorPathsOnResize() {
+      const container = containerRef.current;
+      if (!container) {
+        return;
+      }
+      const refs = refMap.current;
+      if (!refs) {
+        return;
+      }
+      const onResize = () => {
+        setPaths(computePaths(container, refs, edges, highlightTargets));
+      };
+      window.addEventListener("resize", onResize, { passive: true });
+      return () => window.removeEventListener("resize", onResize);
+    },
+    [containerRef, refMap, edges, highlightTargets]
+  );
 
   return (
     <svg
@@ -125,9 +134,7 @@ export function ChainTechTreeConnectors({
           <path
             d={p.d}
             fill="none"
-            stroke={
-              p.highlight ? "var(--color-amber-500, #f59e0b)" : "var(--border)"
-            }
+            stroke={p.highlight ? HIGHLIGHT_STROKE : DEFAULT_STROKE}
             strokeDasharray="2.25 3.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -138,9 +145,7 @@ export function ChainTechTreeConnectors({
             cy={p.endY}
             fill="var(--background)"
             r={2.5}
-            stroke={
-              p.highlight ? "var(--color-amber-500, #f59e0b)" : "var(--border)"
-            }
+            stroke={p.highlight ? HIGHLIGHT_STROKE : DEFAULT_STROKE}
           />
         </g>
       ))}

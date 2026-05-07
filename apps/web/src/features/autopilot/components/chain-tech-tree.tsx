@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { useCallback, useMemo, useRef } from "react";
+import { useRef } from "react";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -108,40 +108,31 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const refMap = useRef<Map<ChainNodeKind, HTMLElement>>(new Map());
 
-  const setCardRef = useCallback(
-    (kind: ChainNodeKind) => (el: HTMLDivElement | null) => {
-      if (el) {
-        refMap.current.set(kind, el);
-      } else {
-        refMap.current.delete(kind);
-      }
-    },
-    []
-  );
-
-  const nodesByKind = useMemo(() => {
-    if (!overview) {
-      return null;
+  const setCardRef = (kind: ChainNodeKind) => (el: HTMLDivElement | null) => {
+    if (el) {
+      refMap.current.set(kind, el);
+      return;
     }
-    const map = new Map<ChainNodeKind, (typeof overview.nodes)[number]>();
+    refMap.current.delete(kind);
+  };
+
+  const nodesByKind = overview
+    ? new Map<ChainNodeKind, (typeof overview.nodes)[number]>()
+    : null;
+  if (overview && nodesByKind) {
     for (const n of overview.nodes) {
-      map.set(n.kind, n);
+      nodesByKind.set(n.kind, n);
     }
-    return map;
-  }, [overview]);
+  }
 
-  const highlightTargets = useMemo(() => {
-    if (!overview) {
-      return new Set<ChainNodeKind>();
-    }
-    const set = new Set<ChainNodeKind>();
+  const highlightTargets = new Set<ChainNodeKind>();
+  if (overview) {
     for (const n of overview.nodes) {
       if (n.actionable) {
-        set.add(n.kind);
+        highlightTargets.add(n.kind);
       }
     }
-    return set;
-  }, [overview]);
+  }
 
   if (!(overview && nodesByKind)) {
     return (

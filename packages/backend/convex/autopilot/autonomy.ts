@@ -22,7 +22,7 @@ import { autonomyMode } from "./schema/validators";
  * Actions that execute autonomously in ALL modes (except stopped).
  * These are internal operations with zero real-world side effects.
  */
-const ALWAYS_AUTONOMOUS_ACTIONS = new Set([
+const ALWAYS_AUTONOMOUS_ACTIONS: ReadonlySet<string> = new Set([
   "agent_communication",
   "planning",
   "analysis",
@@ -32,14 +32,14 @@ const ALWAYS_AUTONOMOUS_ACTIONS = new Set([
   "run_scan",
   "create_inbox_item",
   "create_pr",
-]) as ReadonlySet<string>;
+]);
 
 /**
  * Actions with REAL-WORLD IMPACT — these contact humans, deploy code,
  * or publish externally. In supervised mode, they require approval.
  * In full_auto mode, they execute with a safety delay.
  */
-const REAL_WORLD_IMPACT_ACTIONS = new Set([
+const REAL_WORLD_IMPACT_ACTIONS: ReadonlySet<string> = new Set([
   "merge_pr",
   "send_email",
   "publish_content",
@@ -47,7 +47,7 @@ const REAL_WORLD_IMPACT_ACTIONS = new Set([
   "deploy",
   "rollback",
   "sales_outreach",
-]) as ReadonlySet<string>;
+]);
 
 // ============================================
 // REVIEW TYPE CLASSIFICATION
@@ -58,13 +58,13 @@ const REAL_WORLD_IMPACT_ACTIONS = new Set([
  * publish externally, or have irreversible external consequences.
  * Only these should set `needsReview: true` in supervised mode.
  */
-const REAL_WORLD_REVIEW_TYPES = new Set([
+const REAL_WORLD_REVIEW_TYPES: ReadonlySet<string> = new Set([
   "growth_content", // posts replies on Reddit/HN/LinkedIn (external)
   "support_reply", // sends a reply to a real user
   "support_escalation", // escalates to a human
   "sales_outreach", // contacts a prospect
   "pr_review", // code PR ready to merge
-]) as ReadonlySet<string>;
+]);
 
 /**
  * Returns true only for review types with external real-world impact.
@@ -136,7 +136,7 @@ export const shouldExecuteAction = internalQuery({
     const mode = config?.autonomyMode ?? "supervised";
 
     // No config or stopped mode — block everything
-    if (!config || mode === "stopped") {
+    if (!config?.enabled || mode === "stopped") {
       return {
         allowed: false,
         reason: "Autopilot is stopped",
@@ -203,7 +203,9 @@ export const isStopped = internalQuery({
       )
       .unique();
 
-    return !config || (config.autonomyMode ?? "supervised") === "stopped";
+    return (
+      !config?.enabled || (config.autonomyMode ?? "supervised") === "stopped"
+    );
   },
 });
 
@@ -252,6 +254,7 @@ export const setAutonomyMode = internalMutation({
       }
 
       await ctx.db.patch(config._id, {
+        enabled: false,
         autonomyMode: "stopped",
         stoppedAt: now,
         updatedAt: now,
@@ -277,10 +280,11 @@ export const setAutonomyMode = internalMutation({
         .collect();
 
       for (const item of backlogItems) {
-        await ctx.db.patch(item._id, { status: "in_progress", updatedAt: now });
+        await ctx.db.patch(item._id, { status: "todo", updatedAt: now });
       }
 
       await ctx.db.patch(config._id, {
+        enabled: true,
         autonomyMode: args.mode,
         stoppedAt: undefined,
         updatedAt: now,
@@ -298,6 +302,7 @@ export const setAutonomyMode = internalMutation({
 
     // Mode switch between supervised/full_auto
     await ctx.db.patch(config._id, {
+      enabled: args.mode !== "stopped",
       autonomyMode: args.mode,
       updatedAt: now,
     });

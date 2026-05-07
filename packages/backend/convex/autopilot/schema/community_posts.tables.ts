@@ -1,19 +1,12 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import { validatorScoreObject } from "./use_cases.tables";
+import { communityPlatform } from "./validators";
 
 export const communityPostsTables = {
   autopilotCommunityPosts: defineTable({
     organizationId: v.id("organizations"),
-    platform: v.union(
-      v.literal("reddit"),
-      v.literal("hackernews"),
-      v.literal("twitter"),
-      v.literal("linkedin"),
-      v.literal("indiehackers"),
-      v.literal("devto"),
-      v.literal("other")
-    ),
+    platform: communityPlatform,
     authorName: v.string(),
     authorUrl: v.optional(v.string()),
     authorEmail: v.optional(v.string()),

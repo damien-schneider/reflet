@@ -37,13 +37,17 @@ const AGENT_FIELDS = [
   "salesEnabled",
 ] as const;
 
+type AgentToggleConfig = Partial<
+  Record<(typeof AGENT_FIELDS)[number], boolean>
+>;
+
 const TOTAL_AGENTS = AGENT_FIELDS.length;
 
 function checkAutonomyMode(
-  config: { autonomyMode?: string },
+  config: { autonomyMode?: string; enabled: boolean },
   state: HealthState
 ): void {
-  if ((config.autonomyMode ?? "supervised") === "stopped") {
+  if (!config.enabled || (config.autonomyMode ?? "supervised") === "stopped") {
     state.status = "stopped";
     state.issues.push({
       id: "stopped_mode",
@@ -55,7 +59,7 @@ function checkAutonomyMode(
 }
 
 function checkAgentCount(
-  config: Record<string, unknown>,
+  config: AgentToggleConfig,
   state: HealthState
 ): number {
   const enabledCount = AGENT_FIELDS.filter(

@@ -20,6 +20,10 @@ vi.mock("convex/react", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     organizations: {
+      milestones_mutations: {
+        update: "milestones:update",
+        remove: "milestones:remove",
+      },
       milestones: {
         update: "milestones:update",
         remove: "milestones:remove",

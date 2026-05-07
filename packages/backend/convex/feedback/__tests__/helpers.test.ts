@@ -1,9 +1,9 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
-import { internal } from "../../_generated/api";
+import { components, internal } from "../../_generated/api";
 import schema from "../../schema";
-import { modules } from "../../test.helpers";
+import { modules, registerStripeComponent } from "../../test.helpers";
 
 describe("weekly_digest_helpers", () => {
   test("getAllOrganizationIds returns org IDs", async () => {
@@ -128,8 +128,9 @@ describe("shipped_notifications_helpers", () => {
 
   test("getShippedNotificationData returns linked feedback items", async () => {
     const t = convexTest(schema, modules);
+    registerStripeComponent(t);
 
-    const releaseId = await t.run(async (ctx) => {
+    const { orgId, releaseId } = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
         name: "Pro Org",
         slug: "pro-org",
@@ -165,7 +166,17 @@ describe("shipped_notifications_helpers", () => {
         createdAt: Date.now(),
       });
 
-      return rId;
+      return { orgId, releaseId: rId };
+    });
+
+    await t.mutation(components.stripe.private.handleSubscriptionCreated, {
+      stripeSubscriptionId: "sub_test",
+      stripeCustomerId: "cus_test",
+      status: "active",
+      currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000,
+      cancelAtPeriodEnd: false,
+      priceId: "price_pro",
+      metadata: { orgId },
     });
 
     const result = await t.query(

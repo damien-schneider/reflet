@@ -2,6 +2,8 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
+import type { Id } from "../../_generated/dataModel";
+import type { ActionCtx } from "../../_generated/server";
 import { internalAction } from "../../_generated/server";
 import { QUALITY_MODELS, WEB_SEARCH_MODELS } from "./models";
 import { buildAgentPrompt, SALES_SYSTEM_PROMPT } from "./prompts";
@@ -15,6 +17,29 @@ import {
 import { generateTextWithWebSearch } from "./shared_web";
 
 const PROSPECTING_MODELS = QUALITY_MODELS;
+
+type SalesCtx = Pick<ActionCtx, "runMutation">;
+
+const markSalesTaskStatus = async (
+  ctx: SalesCtx,
+  taskId: Id<"autopilotWorkItems"> | undefined,
+  status: "cancelled" | "done" | "todo"
+) => {
+  if (!taskId) {
+    return;
+  }
+  if (status === "done") {
+    await ctx.runMutation(internal.autopilot.task_mutations.completeAgentTask, {
+      taskId,
+      agent: "sales",
+    });
+    return;
+  }
+  await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
+    taskId,
+    status,
+  });
+};
 
 const prospectingSchema = z.object({
   leads: z.array(
@@ -63,7 +88,10 @@ const prospectingSchema = z.object({
  * Schedules Phase 2 with the raw results to stay within the 600s action limit.
  */
 export const runSalesProspecting = internalAction({
-  args: { organizationId: v.id("organizations") },
+  args: {
+    organizationId: v.id("organizations"),
+    taskId: v.optional(v.id("autopilotWorkItems")),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
@@ -73,6 +101,7 @@ export const runSalesProspecting = internalAction({
         { organizationId: args.organizationId, agent: "sales" }
       );
       if (!guardResult.allowed) {
+        await markSalesTaskStatus(ctx, args.taskId, "todo");
         return null;
       }
 
@@ -81,7 +110,8 @@ export const runSalesProspecting = internalAction({
       const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
         organizationId: args.organizationId,
       });
-      if (!config?.salesEnabled) {
+      if (!config || config.salesEnabled === false) {
+        await markSalesTaskStatus(ctx, args.taskId, "cancelled");
         return null;
       }
 
@@ -202,6 +232,7 @@ Return detailed findings about each potential lead.`,
               company: l.company,
             }))
           ),
+          taskId: args.taskId,
         }
       );
 
@@ -216,6 +247,7 @@ Return detailed findings about each potential lead.`,
         level: "error",
         message: `Sales prospecting failed (discovery phase): ${errorMessage}`,
       });
+      await markSalesTaskStatus(ctx, args.taskId, "cancelled");
 
       return null;
     }
@@ -233,6 +265,7 @@ export const processSalesProspectingResults = internalAction({
     serializedCitations: v.string(),
     existingLeadNames: v.string(),
     serializedExistingLeads: v.string(),
+    taskId: v.optional(v.id("autopilotWorkItems")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -344,16 +377,16 @@ Rules:
         });
       }
 
-      // Complete any in_progress tasks assigned to sales
-      await ctx.runMutation(
-        internal.autopilot.task_mutations.completeAgentTasks,
-        {
-          organizationId: args.organizationId,
-          agent: "sales",
-        }
-      );
+      await markSalesTaskStatus(ctx, args.taskId, "done");
 
       const usage = getUsageTracker();
+      if (usage.estimatedCostUsd > 0) {
+        await ctx.runMutation(internal.autopilot.cost_guard.recordCost, {
+          organizationId: args.organizationId,
+          taskId: args.taskId,
+          costUsd: usage.estimatedCostUsd,
+        });
+      }
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "sales",
@@ -373,6 +406,7 @@ Rules:
         level: "error",
         message: `Sales prospecting failed (processing phase): ${errorMessage}`,
       });
+      await markSalesTaskStatus(ctx, args.taskId, "cancelled");
 
       return null;
     }

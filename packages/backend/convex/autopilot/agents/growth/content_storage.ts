@@ -5,7 +5,7 @@
 
 import type { z } from "zod";
 import { internal } from "../../../_generated/api";
-import type { Id } from "../../../_generated/dataModel";
+import type { Doc, Id } from "../../../_generated/dataModel";
 import type { ActionCtx } from "../../../_generated/server";
 import { validateUrl } from "../shared_web";
 import type { growthContentSchema, ScoredThread } from "./discovery";
@@ -21,6 +21,21 @@ const CONTENT_PRIORITY: string[] = [
   "linkedin_post",
   "blog_post",
 ];
+
+type GrowthContentItem = z.infer<typeof growthContentSchema>["items"][number];
+
+const DOCUMENT_TYPE_BY_CONTENT_TYPE = {
+  blog_post: "blog_post",
+  changelog_announce: "changelog",
+  email_campaign: "email",
+  hn_comment: "hn_comment",
+  linkedin_post: "linkedin_post",
+  reddit_reply: "reddit_reply",
+  twitter_post: "twitter_post",
+} satisfies Record<
+  GrowthContentItem["type"],
+  Doc<"autopilotDocuments">["type"]
+>;
 
 export const buildThreadMetadata = (
   targetUrl: string,
@@ -135,12 +150,7 @@ export const saveContentDocuments = async (
 
     await ctx.runMutation(internal.autopilot.documents.createDocument, {
       organizationId,
-      type: item.type as
-        | "blog_post"
-        | "reddit_reply"
-        | "linkedin_post"
-        | "twitter_post"
-        | "hn_comment",
+      type: DOCUMENT_TYPE_BY_CONTENT_TYPE[item.type],
       title: item.title,
       content: item.content,
       targetUrl: validatedTargetUrl,

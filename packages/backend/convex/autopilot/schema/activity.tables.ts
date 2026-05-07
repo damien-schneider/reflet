@@ -1,20 +1,12 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
+  activityEntityType,
   activityLogLevel,
   assignedAgent,
   codingAdapterType,
   runStatus,
 } from "./validators";
-
-const activityEntityType = v.union(
-  v.literal("work_item"),
-  v.literal("document"),
-  v.literal("knowledge_doc"),
-  v.literal("run"),
-  v.literal("lead"),
-  v.literal("competitor")
-);
 
 export const activityTables = {
   autopilotRuns: defineTable({

@@ -185,10 +185,10 @@ function LinkTaskDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger>
-        <Button size="icon" title="Link to task" variant="ghost">
-          <IconLink className="size-4" />
-        </Button>
+      <DialogTrigger
+        render={<Button size="icon" title="Link to task" variant="ghost" />}
+      >
+        <IconLink className="size-4" />
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -259,10 +259,16 @@ function CreateTaskFromFeedbackDialog({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger>
-        <Button size="icon" title="Create task from feedback" variant="ghost">
-          <IconPlus className="size-4" />
-        </Button>
+      <DialogTrigger
+        render={
+          <Button
+            size="icon"
+            title="Create task from feedback"
+            variant="ghost"
+          />
+        }
+      >
+        <IconPlus className="size-4" />
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

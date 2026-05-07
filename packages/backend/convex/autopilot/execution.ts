@@ -10,8 +10,13 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { internalAction } from "../_generated/server";
-
-const GITHUB_REPO_URL_REGEX = /github\.com[/:](?<owner>[^/]+)\/(?<repo>[^/.]+)/;
+import {
+  fetchAgentsMd,
+  parseAdapterCredentials,
+  recordExecutionCost,
+  resolveCompletionStatus,
+  resolveRetryDelayMs,
+} from "./execution_policy";
 
 const resolveRunStatus = (
   resultStatus: string
@@ -25,52 +30,10 @@ const resolveRunStatus = (
   return "failed";
 };
 
-const resolveCompletionStatus = (
-  autonomyLevel: string
-): "done" | "in_review" =>
-  autonomyLevel === "full_auto" ? "done" : "in_review";
-
 const resolveCompletedAt = (resultStatus: string): number | undefined =>
   resultStatus === "success" || resultStatus === "failed"
     ? Date.now()
     : undefined;
-
-const fetchAgentsMd = async (
-  credentials: Record<string, string>
-): Promise<string> => {
-  const repoUrl = credentials.repoUrl ?? "";
-  if (!(repoUrl && credentials.githubToken)) {
-    return "";
-  }
-
-  try {
-    const repoMatch = repoUrl.match(GITHUB_REPO_URL_REGEX);
-    if (!repoMatch?.groups) {
-      return "";
-    }
-
-    const { owner, repo } = repoMatch.groups;
-    const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/AGENTS.md?ref=${credentials.baseBranch ?? "main"}`,
-      {
-        headers: {
-          Authorization: `Bearer ${credentials.githubToken}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
-    );
-
-    if (response.ok) {
-      const data = (await response.json()) as { content: string };
-      return atob(data.content.replace(/\n/g, ""));
-    }
-  } catch {
-    // AGENTS.md may not exist — continue without it
-  }
-
-  return "";
-};
 
 const handleTaskResult = async (
   ctx: ActionCtx,
@@ -88,7 +51,9 @@ const handleTaskResult = async (
     organizationId: Id<"organizations">;
     runId: Id<"autopilotRuns">;
     adapter: string;
+    autoMergePRs: boolean;
     autonomyLevel: string;
+    autonomyMode?: string;
     retryCount: number;
     maxRetries: number;
   }
@@ -99,13 +64,24 @@ const handleTaskResult = async (
     organizationId,
     runId,
     adapter,
+    autoMergePRs,
     autonomyLevel,
+    autonomyMode,
     retryCount,
     maxRetries,
   } = params;
 
   if (result.status === "success") {
-    const status = resolveCompletionStatus(autonomyLevel);
+    await recordExecutionCost(ctx, {
+      organizationId,
+      taskId,
+      costUsd: result.estimatedCostUsd,
+    });
+    const status = resolveCompletionStatus({
+      autoMergePRs,
+      autonomyLevel,
+      autonomyMode,
+    });
     await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
       taskId,
       status,
@@ -132,8 +108,22 @@ const handleTaskResult = async (
   }
 
   if (result.status === "failed" && retryCount < maxRetries) {
-    const RETRY_BASE_DELAY_MS = 5 * 60 * 1000;
-    const retryDelay = RETRY_BASE_DELAY_MS * 2 ** retryCount;
+    await recordExecutionCost(ctx, {
+      organizationId,
+      taskId,
+      costUsd: result.estimatedCostUsd,
+    });
+    const retryDelay = resolveRetryDelayMs({ maxRetries, retryCount });
+    if (retryDelay === null) {
+      await ctx.runMutation(
+        internal.autopilot.task_mutations.updateTaskStatus,
+        {
+          taskId,
+          status: "cancelled",
+        }
+      );
+      return;
+    }
 
     await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
       taskId,
@@ -149,6 +139,11 @@ const handleTaskResult = async (
   }
 
   if (result.status === "failed") {
+    await recordExecutionCost(ctx, {
+      organizationId,
+      taskId,
+      costUsd: result.estimatedCostUsd,
+    });
     await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
       taskId,
       status: "cancelled",
@@ -169,7 +164,10 @@ export const executeTask = internalAction({
       organizationId: args.organizationId,
     });
 
-    if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
+    if (
+      !config?.enabled ||
+      (config.autonomyMode ?? "supervised") === "stopped"
+    ) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         workItemId: args.taskId,
@@ -187,6 +185,14 @@ export const executeTask = internalAction({
     if (!task) {
       throw new Error(`Work item not found: ${args.taskId}`);
     }
+
+    const previousRuns = await ctx.runQuery(
+      internal.autopilot.task_queries.getRunsForTask,
+      { taskId: args.taskId }
+    );
+    const retryCount = previousRuns.filter(
+      (run: { status: string }) => run.status === "failed"
+    ).length;
 
     const creds = await ctx.runQuery(
       internal.autopilot.config.getAdapterCredentials,
@@ -228,10 +234,7 @@ export const executeTask = internalAction({
     try {
       const { getAdapter } = await import("./adapters/registry");
       const adapter = getAdapter(config.adapter);
-      const credentials = JSON.parse(creds.credentials) as Record<
-        string,
-        string
-      >;
+      const credentials = parseAdapterCredentials(creds.credentials);
 
       const credentialsValid = await adapter.validateCredentials(credentials);
       if (!credentialsValid) {
@@ -298,8 +301,10 @@ export const executeTask = internalAction({
         organizationId: args.organizationId,
         runId,
         adapter: config.adapter,
+        autoMergePRs: config.autoMergePRs,
         autonomyLevel: config.autonomyLevel,
-        retryCount: 0,
+        autonomyMode: config.autonomyMode,
+        retryCount,
         maxRetries: 3,
       });
     } catch (error) {
@@ -312,6 +317,23 @@ export const executeTask = internalAction({
         errorMessage,
         completedAt: Date.now(),
       });
+
+      await ctx.runMutation(
+        internal.autopilot.task_mutations.updateTaskStatus,
+        {
+          taskId: args.taskId,
+          status: "backlog",
+        }
+      );
+      const retryDelay = resolveRetryDelayMs({ retryCount });
+      if (retryDelay !== null) {
+        await ctx.scheduler.runAfter(
+          retryDelay,
+          internal.autopilot.execution.retryTask,
+          { organizationId: args.organizationId, taskId: args.taskId }
+        );
+        return;
+      }
 
       await ctx.runMutation(
         internal.autopilot.task_mutations.updateTaskStatus,

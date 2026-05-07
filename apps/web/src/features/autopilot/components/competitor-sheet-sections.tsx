@@ -15,7 +15,7 @@ export function MovesTimeline({
   moves: NonNullable<Doc<"autopilotCompetitors">["moves"]>;
 }) {
   const [showAll, setShowAll] = useState(false);
-  const sorted = [...moves].sort((a, b) => b.recordedAt - a.recordedAt);
+  const sorted = moves.slice().sort((a, b) => b.recordedAt - a.recordedAt);
   const visible = showAll ? sorted : sorted.slice(0, MOVES_VISIBLE_DEFAULT);
 
   return (

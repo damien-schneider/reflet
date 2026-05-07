@@ -116,16 +116,30 @@ export const cancelTaskWithReason = internalMutation({
     taskId: v.id("autopilotWorkItems"),
     reason: v.string(),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.taskId);
     if (!item) {
-      return;
+      return null;
     }
 
+    const now = Date.now();
     await ctx.db.patch(args.taskId, {
       status: "cancelled",
-      updatedAt: Date.now(),
+      updatedAt: now,
     });
+
+    await ctx.db.insert("autopilotActivityLog", {
+      organizationId: item.organizationId,
+      workItemId: args.taskId,
+      agent: item.assignedAgent ?? "system",
+      level: "error",
+      message: `Self-heal cancelled work item: ${item.title}`,
+      details: args.reason,
+      createdAt: now,
+    });
+
+    return null;
   },
 });
 
@@ -137,16 +151,30 @@ export const failTaskWithReason = internalMutation({
     taskId: v.id("autopilotWorkItems"),
     reason: v.string(),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.taskId);
     if (!item) {
-      return;
+      return null;
     }
 
+    const now = Date.now();
     await ctx.db.patch(args.taskId, {
       status: "cancelled",
-      updatedAt: Date.now(),
+      updatedAt: now,
     });
+
+    await ctx.db.insert("autopilotActivityLog", {
+      organizationId: item.organizationId,
+      workItemId: args.taskId,
+      agent: item.assignedAgent ?? "system",
+      level: "error",
+      message: `Self-heal failed work item: ${item.title}`,
+      details: args.reason,
+      createdAt: now,
+    });
+
+    return null;
   },
 });
 
@@ -187,6 +215,7 @@ export const hasRecentAgentActivity = internalQuery({
  */
 export const runSelfHealing = internalAction({
   args: {},
+  returns: v.null(),
   handler: async (ctx) => {
     const orgs = await ctx.runQuery(
       internal.autopilot.config.getEnabledConfigs
@@ -261,9 +290,19 @@ export const runSelfHealing = internalAction({
             details: `Stuck: ${stuckItems.length}, Orphaned: ${orphanedItems.length}`,
           });
         }
-      } catch {
-        // Best effort — continue with other orgs
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown self-healing error";
+        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+          organizationId: org.organizationId,
+          agent: "system",
+          level: "error",
+          message: "Self-healing failed",
+          details: message,
+        });
       }
     }
+
+    return null;
   },
 });

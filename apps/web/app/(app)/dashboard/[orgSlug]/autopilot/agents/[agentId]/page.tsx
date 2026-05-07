@@ -11,6 +11,10 @@ import { useAutopilotContext } from "@/features/autopilot/components/autopilot-c
 
 const VALID_AGENT_IDS = new Set<string>(GRID_AGENT_IDS);
 
+function isGridAgentId(agentId: string): agentId is GridAgentId {
+  return VALID_AGENT_IDS.has(agentId);
+}
+
 export default function AutopilotAgentDetailPage({
   params,
 }: {
@@ -20,13 +24,13 @@ export default function AutopilotAgentDetailPage({
   const { organizationId, isAdmin, orgSlug } = useAutopilotContext();
   const baseUrl = `/dashboard/${orgSlug}/autopilot`;
 
-  if (!VALID_AGENT_IDS.has(agentId)) {
+  if (!isGridAgentId(agentId)) {
     notFound();
   }
 
   return (
     <AgentDetailView
-      agentId={agentId as GridAgentId}
+      agentId={agentId}
       baseUrl={baseUrl}
       isAdmin={isAdmin}
       organizationId={organizationId}

@@ -1,0 +1,8 @@
+[mcp_servers.posthog]
+url = "https://mcp-eu.posthog.com/mcp"
+
+[mcp_servers.stripe-prod]
+url = "https://mcp.stripe.com/"
+
+[mcp_servers.stripe-sandbox]
+url = "https://mcp.stripe.com/"

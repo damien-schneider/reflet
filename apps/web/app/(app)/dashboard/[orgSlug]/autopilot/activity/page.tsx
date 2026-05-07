@@ -12,7 +12,7 @@ import {
 } from "@tabler/icons-react";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { type ComponentType, useMemo, useState } from "react";
+import { type ComponentType, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,9 @@ import { H2 } from "@/components/ui/typography";
 import {
   ACTIVITY_AGENT_BADGE_STYLES,
   ACTIVITY_AGENT_LABELS,
+  ACTIVITY_AGENTS,
+  ACTIVITY_LEVELS,
+  type ActivityAgent,
   type ActivityLevel,
   getActivityAgentLabel,
 } from "@/features/autopilot/components/activity/presentation";
@@ -50,17 +53,23 @@ const LEVEL_LABELS = {
   error: "Error",
 } satisfies Record<ActivityLevel, string>;
 
-const AGENT_OPTIONS = Object.entries(ACTIVITY_AGENT_LABELS) as [
-  string,
-  string,
-][];
+const AGENT_OPTIONS = ACTIVITY_AGENTS.map((agent) => ({
+  label: ACTIVITY_AGENT_LABELS[agent],
+  value: agent,
+}));
 
-const LEVEL_OPTIONS = Object.entries(LEVEL_LABELS) as [string, string][];
+const LEVEL_OPTIONS = ACTIVITY_LEVELS.map((level) => ({
+  label: LEVEL_LABELS[level],
+  value: level,
+}));
+
+type AgentFilter = ActivityAgent | "all";
+type LevelFilter = ActivityLevel | "all";
 
 export default function ActivityPage() {
   const { organizationId } = useAutopilotContext();
-  const [agentFilter, setAgentFilter] = useState<string>("all");
-  const [levelFilter, setLevelFilter] = useState<string>("all");
+  const [agentFilter, setAgentFilter] = useState<AgentFilter>("all");
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>("all");
   const [search, setSearch] = useState("");
 
   const activity = useQuery(
@@ -72,20 +81,16 @@ export default function ActivityPage() {
     }
   );
 
-  const filtered = useMemo(() => {
-    if (!activity) {
-      return undefined;
-    }
-    if (!search) {
-      return activity;
-    }
-    const lower = search.toLowerCase();
-    return activity.filter(
-      (e: { message: string; details?: string }) =>
-        e.message.toLowerCase().includes(lower) ||
-        e.details?.toLowerCase().includes(lower)
-    );
-  }, [activity, search]);
+  const searchText = search.toLowerCase();
+  const filtered =
+    activity === undefined
+      ? undefined
+      : activity.filter(
+          (entry) =>
+            searchText === "" ||
+            entry.message.toLowerCase().includes(searchText) ||
+            entry.details?.toLowerCase().includes(searchText)
+        );
 
   return (
     <div className="space-y-6">
@@ -107,7 +112,12 @@ export default function ActivityPage() {
         <div className="flex items-center gap-1.5">
           <IconFilter className="size-4 text-muted-foreground" />
           <Select
-            onValueChange={(v) => setAgentFilter(v ?? "all")}
+            onValueChange={(value) => {
+              const nextAgent = AGENT_OPTIONS.find(
+                (option) => option.value === value
+              )?.value;
+              setAgentFilter(nextAgent ?? "all");
+            }}
             value={agentFilter}
           >
             <SelectTrigger className="w-32">
@@ -115,15 +125,20 @@ export default function ActivityPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Agents</SelectItem>
-              {AGENT_OPTIONS.map(([key, label]) => (
-                <SelectItem key={key} value={key}>
+              {AGENT_OPTIONS.map(({ label, value }) => (
+                <SelectItem key={value} value={value}>
                   {label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select
-            onValueChange={(v) => setLevelFilter(v ?? "all")}
+            onValueChange={(value) => {
+              const nextLevel = LEVEL_OPTIONS.find(
+                (option) => option.value === value
+              )?.value;
+              setLevelFilter(nextLevel ?? "all");
+            }}
             value={levelFilter}
           >
             <SelectTrigger className="w-32">
@@ -131,8 +146,8 @@ export default function ActivityPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Levels</SelectItem>
-              {LEVEL_OPTIONS.map(([key, label]) => (
-                <SelectItem key={key} value={key}>
+              {LEVEL_OPTIONS.map(({ label, value }) => (
+                <SelectItem key={value} value={value}>
                   {label}
                 </SelectItem>
               ))}
@@ -149,7 +164,7 @@ export default function ActivityPage() {
 
 interface ActivityEntry {
   _id: string;
-  agent: string;
+  agent: ActivityAgent;
   createdAt: number;
   details?: string;
   level: ActivityLevel;
@@ -186,10 +201,7 @@ function ActivityResults({
     <div className="space-y-1.5">
       {filtered.map((entry) => {
         const LevelIcon = LEVEL_ICONS[entry.level];
-        const agentColor =
-          ACTIVITY_AGENT_BADGE_STYLES[
-            entry.agent as keyof typeof ACTIVITY_AGENT_BADGE_STYLES
-          ];
+        const agentColor = ACTIVITY_AGENT_BADGE_STYLES[entry.agent];
 
         return (
           <div
@@ -207,9 +219,7 @@ function ActivityResults({
                 )}
                 variant="outline"
               >
-                {getActivityAgentLabel(
-                  entry.agent as keyof typeof ACTIVITY_AGENT_LABELS
-                )}
+                {getActivityAgentLabel(entry.agent)}
               </Badge>
               <span className="text-[11px] text-muted-foreground/50">
                 {formatDistanceToNow(entry.createdAt, {

@@ -6,7 +6,8 @@
 import { v } from "convex/values";
 import type { z } from "zod";
 import { internal } from "../../../_generated/api";
-import type { Doc } from "../../../_generated/dataModel";
+import type { Doc, Id } from "../../../_generated/dataModel";
+import type { ActionCtx } from "../../../_generated/server";
 import { internalAction } from "../../../_generated/server";
 import { WEB_SEARCH_MODELS } from "../models";
 import { buildAgentPrompt, GROWTH_SYSTEM_PROMPT } from "../prompts";
@@ -28,6 +29,29 @@ import {
   saveResearchFindings,
 } from "./research_helpers";
 
+type GrowthCtx = Pick<ActionCtx, "runMutation">;
+
+const markGrowthTaskStatus = async (
+  ctx: GrowthCtx,
+  taskId: Id<"autopilotWorkItems"> | undefined,
+  status: "cancelled" | "done" | "todo"
+) => {
+  if (!taskId) {
+    return;
+  }
+  if (status === "done") {
+    await ctx.runMutation(internal.autopilot.task_mutations.completeAgentTask, {
+      taskId,
+      agent: "growth",
+    });
+    return;
+  }
+  await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
+    taskId,
+    status,
+  });
+};
+
 // ============================================
 // ACTIONS
 // ============================================
@@ -37,7 +61,10 @@ import {
  * Schedules Phase 2 with the raw results to stay within the 600s action limit.
  */
 export const runGrowthMarketResearch = internalAction({
-  args: { organizationId: v.id("organizations") },
+  args: {
+    organizationId: v.id("organizations"),
+    taskId: v.optional(v.id("autopilotWorkItems")),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     const orgId = args.organizationId;
@@ -49,6 +76,7 @@ export const runGrowthMarketResearch = internalAction({
         { organizationId: orgId, agent: "growth" }
       );
       if (!guardResult.allowed) {
+        await markGrowthTaskStatus(ctx, args.taskId, "todo");
         return null;
       }
 
@@ -61,6 +89,7 @@ export const runGrowthMarketResearch = internalAction({
           level: "warning",
           message: MISSING_PRODUCT_DEF_MESSAGE,
         });
+        await markGrowthTaskStatus(ctx, args.taskId, "cancelled");
         return null;
       }
 
@@ -157,6 +186,7 @@ Provide detailed findings with sources.`,
             discoveryResult.threads.map((t) => t.url)
           ),
           followUpNoteIds,
+          taskId: args.taskId,
         }
       );
 
@@ -170,6 +200,7 @@ Provide detailed findings with sources.`,
         level: "error",
         message: `Market research failed (discovery phase): ${errorMessage}`,
       });
+      await markGrowthTaskStatus(ctx, args.taskId, "cancelled");
       return null;
     }
   },
@@ -186,6 +217,7 @@ export const processGrowthResearchResults = internalAction({
     serializedCitations: v.string(),
     serializedThreadUrls: v.string(),
     followUpNoteIds: v.array(v.id("autopilotDocuments")),
+    taskId: v.optional(v.id("autopilotWorkItems")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -201,6 +233,7 @@ export const processGrowthResearchResults = internalAction({
           level: "warning",
           message: MISSING_PRODUCT_DEF_MESSAGE,
         });
+        await markGrowthTaskStatus(ctx, args.taskId, "cancelled");
         return null;
       }
 
@@ -262,6 +295,13 @@ COMPETITOR IDENTIFICATION RULES (read carefully):
       await saveResearchFindings(ctx, orgId, researchOutput.findings);
 
       const usage = getUsageTracker();
+      if (usage.estimatedCostUsd > 0) {
+        await ctx.runMutation(internal.autopilot.cost_guard.recordCost, {
+          organizationId: orgId,
+          taskId: args.taskId,
+          costUsd: usage.estimatedCostUsd,
+        });
+      }
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: orgId,
         agent: "growth",
@@ -281,6 +321,7 @@ COMPETITOR IDENTIFICATION RULES (read carefully):
             researchOutput.competitorMoves
           ),
           followUpNoteIds: args.followUpNoteIds,
+          taskId: args.taskId,
         }
       );
 
@@ -294,6 +335,7 @@ COMPETITOR IDENTIFICATION RULES (read carefully):
         level: "error",
         message: `Market research failed (phase 2a): ${errorMessage}`,
       });
+      await markGrowthTaskStatus(ctx, args.taskId, "cancelled");
       return null;
     }
   },
@@ -308,6 +350,7 @@ export const processGrowthResearchPhase2b = internalAction({
     organizationId: v.id("organizations"),
     serializedCompetitorMoves: v.string(),
     followUpNoteIds: v.array(v.id("autopilotDocuments")),
+    taskId: v.optional(v.id("autopilotWorkItems")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -328,13 +371,7 @@ export const processGrowthResearchPhase2b = internalAction({
         });
       }
 
-      await ctx.runMutation(
-        internal.autopilot.task_mutations.completeAgentTasks,
-        {
-          organizationId: orgId,
-          agent: "growth",
-        }
-      );
+      await markGrowthTaskStatus(ctx, args.taskId, "done");
 
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: orgId,
@@ -348,8 +385,15 @@ export const processGrowthResearchPhase2b = internalAction({
       if (product) {
         try {
           await runGapAssessment(ctx, orgId, product);
-        } catch {
-          // Gap assessment is non-critical
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+            organizationId: orgId,
+            agent: "growth",
+            level: "warning",
+            message: `Gap assessment skipped: ${errorMessage}`,
+          });
         }
       }
 
@@ -363,6 +407,7 @@ export const processGrowthResearchPhase2b = internalAction({
         level: "error",
         message: `Market research failed (phase 2b): ${errorMessage}`,
       });
+      await markGrowthTaskStatus(ctx, args.taskId, "cancelled");
       return null;
     }
   },

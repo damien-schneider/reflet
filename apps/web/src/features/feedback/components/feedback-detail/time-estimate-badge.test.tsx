@@ -20,6 +20,7 @@ vi.mock("convex/react", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
+      actions_manage: { updateAnalysis: "feedback_actions.updateAnalysis" },
       actions: { updateAnalysis: "feedback_actions.updateAnalysis" },
     },
   },
@@ -110,6 +111,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
     onClick?: () => void;
   }) => (
     <div
+      aria-checked={false}
       data-testid={`radio-item-${value}`}
       data-value={value}
       onClick={onClick}

@@ -109,10 +109,12 @@ function BulletSection({
 }
 
 function parseBulletString(value: string): string[] {
-  return value
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => line.replace(BULLET_PREFIX_RE, ""));
+  return value.split("\n").reduce<string[]>((items, line) => {
+    if (line) {
+      items.push(line.replace(BULLET_PREFIX_RE, ""));
+    }
+    return items;
+  }, []);
 }
 
 function computeStaleness(lastResearchedAt?: number) {
@@ -130,10 +132,13 @@ function parseFeatures(features?: string): string[] {
   if (!features) {
     return [];
   }
-  return features
-    .split(",")
-    .map((f) => f.trim())
-    .filter(Boolean);
+  return features.split(",").reduce<string[]>((items, feature) => {
+    const trimmed = feature.trim();
+    if (trimmed) {
+      items.push(trimmed);
+    }
+    return items;
+  }, []);
 }
 
 function CompetitorPropertyGrid({

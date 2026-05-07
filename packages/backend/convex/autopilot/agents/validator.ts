@@ -28,7 +28,7 @@ import {
 
 const MAX_ARTIFACTS_PER_PASS = 5;
 
-const DEFAULT_WEIGHTS = {
+export const DEFAULT_WEIGHTS = {
   cost: 0.15,
   devComplexity: 0.15,
   maintainability: 0.15,
@@ -48,11 +48,14 @@ const DRAFT_DOC_TYPES = [
 
 type DraftDocType = (typeof DRAFT_DOC_TYPES)[number];
 
+const DRAFT_DOC_TYPE_SET: ReadonlySet<Doc<"autopilotDocuments">["type"]> =
+  new Set(DRAFT_DOC_TYPES);
+
 const isDraftDocType = (
   type: Doc<"autopilotDocuments">["type"]
-): type is DraftDocType => DRAFT_DOC_TYPES.includes(type as DraftDocType);
+): type is DraftDocType => DRAFT_DOC_TYPE_SET.has(type);
 
-const validatorScoreSchema = z.object({
+export const validatorScoreSchema = z.object({
   cost: z.number().min(0).max(100),
   devComplexity: z.number().min(0).max(100),
   maintainability: z.number().min(0).max(100),
@@ -78,7 +81,7 @@ const validatorScoreValidator = v.object({
   scoredAt: v.number(),
 });
 
-const computeComposite = (
+export const computeComposite = (
   scores: {
     cost: number;
     devComplexity: number;

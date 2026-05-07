@@ -5,19 +5,12 @@
 
 import { v } from "convex/values";
 import { internalMutation } from "../../_generated/server";
+import { communityPlatform } from "../schema/validators";
 
 export const createCommunityPost = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    platform: v.union(
-      v.literal("reddit"),
-      v.literal("hackernews"),
-      v.literal("twitter"),
-      v.literal("linkedin"),
-      v.literal("indiehackers"),
-      v.literal("devto"),
-      v.literal("other")
-    ),
+    platform: communityPlatform,
     authorName: v.string(),
     authorUrl: v.optional(v.string()),
     title: v.optional(v.string()),
@@ -37,5 +30,20 @@ export const createCommunityPost = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
+  },
+});
+
+export const linkDraftToCommunityPost = internalMutation({
+  args: {
+    communityPostId: v.id("autopilotCommunityPosts"),
+    draftDocId: v.id("autopilotDocuments"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.communityPostId, {
+      draftDocId: args.draftDocId,
+      updatedAt: Date.now(),
+    });
+    return null;
   },
 });

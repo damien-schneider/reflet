@@ -5,7 +5,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { isTimeHorizon, TIME_HORIZON_CONFIG } from "@/lib/milestone-constants";
 import { getTagColorValues } from "@/lib/tag-colors";
@@ -14,6 +14,45 @@ import { cn } from "@/lib/utils";
 import { MilestoneExpandedPanel } from "../milestone-expanded-panel";
 import { MilestoneFormPopover } from "../milestone-form-popover";
 import type { MilestonesViewProps } from "../milestones-view";
+
+const TARGET_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+});
+
+interface MilestoneProgress {
+  progress: {
+    total: number;
+    completed: number;
+    inProgress: number;
+  };
+}
+
+const calculateTotals = (
+  milestones: readonly MilestoneProgress[] | undefined
+) => {
+  if (!milestones) {
+    return { total: 0, completed: 0, inProgress: 0, percentage: 0 };
+  }
+
+  let total = 0;
+  let completed = 0;
+  let inProgress = 0;
+
+  for (const milestone of milestones) {
+    total += milestone.progress.total;
+    completed += milestone.progress.completed;
+    inProgress += milestone.progress.inProgress;
+  }
+
+  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  return { total, completed, inProgress, percentage };
+};
+
+const formatTargetDate = (timestamp: number) =>
+  TARGET_DATE_FORMATTER.format(timestamp);
 
 function OverallProgressRing({ percentage }: { percentage: number }) {
   const size = 36;
@@ -111,38 +150,34 @@ export function DashboardTimelineView({
     useState<Id<"milestones"> | null>(null);
   const [sweepId, setSweepId] = useState<Id<"milestones"> | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const sweepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const totals = useMemo(() => {
-    if (!milestones) {
-      return { total: 0, completed: 0, inProgress: 0, percentage: 0 };
+  useEffect(function clearSweepTimeoutOnUnmount() {
+    return () => {
+      if (sweepTimeoutRef.current) {
+        clearTimeout(sweepTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const totals = calculateTotals(milestones);
+
+  const handleMilestoneClick = (milestoneId: Id<"milestones">) => {
+    if (sweepTimeoutRef.current) {
+      clearTimeout(sweepTimeoutRef.current);
     }
 
-    let total = 0;
-    let completed = 0;
-    let inProgress = 0;
-
-    for (const milestone of milestones) {
-      total += milestone.progress.total;
-      completed += milestone.progress.completed;
-      inProgress += milestone.progress.inProgress;
-    }
-
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-    return { total, completed, inProgress, percentage };
-  }, [milestones]);
-
-  const handleMilestoneClick = useCallback((milestoneId: Id<"milestones">) => {
     setSweepId(milestoneId);
-    setTimeout(() => {
+    sweepTimeoutRef.current = setTimeout(() => {
       setSweepId(null);
+      sweepTimeoutRef.current = null;
     }, 500);
     setActiveMilestoneId((prev) => (prev === milestoneId ? null : milestoneId));
-  }, []);
+  };
 
-  const handlePopoverOpenChange = useCallback((open: boolean) => {
+  const handlePopoverOpenChange = (open: boolean) => {
     setPopoverOpen(open);
-  }, []);
+  };
 
   if (milestones === undefined) {
     return (
@@ -275,13 +310,7 @@ export function DashboardTimelineView({
 
                   {milestone.targetDate && (
                     <span className="shrink-0 text-muted-foreground text-xs">
-                      {new Date(milestone.targetDate).toLocaleDateString(
-                        "en-US",
-                        {
-                          month: "short",
-                          day: "numeric",
-                        }
-                      )}
+                      {formatTargetDate(milestone.targetDate)}
                     </span>
                   )}
                 </div>

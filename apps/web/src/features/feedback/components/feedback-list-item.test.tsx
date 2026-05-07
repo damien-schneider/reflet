@@ -11,7 +11,10 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    feedback: { actions: { remove: "feedback_actions:remove" } },
+    feedback: {
+      actions_manage: { remove: "feedback_actions:remove" },
+      actions: { remove: "feedback_actions:remove" },
+    },
   },
 }));
 

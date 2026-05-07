@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type ViewMode = "list" | "kanban";
+type StoryKanbanItem = Doc<"autopilotWorkItems"> & { id: string };
 
 const STATUS_ORDER = [
   "draft",
@@ -46,6 +47,17 @@ const STATUS_COLORS: Record<string, string> = {
   shipped: "bg-green-500",
   cancelled: "bg-red-500",
 };
+
+function StoryKanbanCard({ item }: { item: StoryKanbanItem }) {
+  return (
+    <IssueRow
+      priority={item.priority}
+      status={item.status}
+      title={item.title}
+      updatedAt={item.updatedAt}
+    />
+  );
+}
 
 export function StoriesBoard({
   initiativeId,
@@ -79,16 +91,32 @@ export function StoriesBoard({
     );
   }
 
-  const kanbanColumns: KanbanColumn<
-    Doc<"autopilotWorkItems"> & { id: string }
-  >[] = STATUS_ORDER.filter((s) => s !== "cancelled").map((status) => ({
-    id: status,
-    label: STATUS_LABELS[status] ?? status,
-    color: STATUS_COLORS[status] ?? "bg-muted-foreground",
-    items: stories
-      .filter((s) => s.status === status)
-      .map((s) => ({ ...s, id: s._id })),
-  }));
+  const kanbanColumns = STATUS_ORDER.reduce<KanbanColumn<StoryKanbanItem>[]>(
+    (columns, status) => {
+      if (status === "cancelled") {
+        return columns;
+      }
+
+      columns.push({
+        id: status,
+        label: STATUS_LABELS[status] ?? status,
+        color: STATUS_COLORS[status] ?? "bg-muted-foreground",
+        items: [],
+      });
+      return columns;
+    },
+    []
+  );
+  const kanbanColumnByStatus = new Map(
+    kanbanColumns.map((column) => [column.id, column])
+  );
+
+  for (const story of stories) {
+    const column = kanbanColumnByStatus.get(story.status);
+    if (column) {
+      column.items.push({ ...story, id: story._id });
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -123,17 +151,7 @@ export function StoriesBoard({
       </div>
 
       {viewMode === "kanban" ? (
-        <KanbanBoard
-          columns={kanbanColumns}
-          renderItem={(item) => (
-            <IssueRow
-              priority={item.priority}
-              status={item.status}
-              title={item.title}
-              updatedAt={item.updatedAt}
-            />
-          )}
-        />
+        <KanbanBoard columns={kanbanColumns} itemComponent={StoryKanbanCard} />
       ) : (
         <div className="space-y-1">
           {stories.map((story) => (

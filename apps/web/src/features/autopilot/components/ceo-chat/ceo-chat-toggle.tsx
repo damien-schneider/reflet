@@ -9,13 +9,17 @@ import { ceoChatOpenAtom } from "@/store/ui";
 export function CeoChatToggle() {
   const [isOpen, setIsOpen] = useAtom(ceoChatOpenAtom);
 
+  if (isOpen) {
+    return null;
+  }
+
   return (
     <Button
-      aria-label={isOpen ? "Close CEO chat" : "Open CEO chat"}
+      aria-label="Open CEO chat"
       className="fixed right-6 bottom-6 z-50 size-14 gap-1.5 rounded-full shadow-lg"
       onClick={() => setIsOpen((prev) => !prev)}
       size="icon"
-      variant={isOpen ? "default" : "outline"}
+      variant="outline"
     >
       <IconMessageChatbot className="size-5" />
       <span className="sr-only">CEO</span>

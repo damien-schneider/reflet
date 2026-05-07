@@ -17,10 +17,59 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 
 import { components, internal } from "../_generated/api";
+import type { Doc, Id } from "../_generated/dataModel";
+import type { QueryCtx } from "../_generated/server";
 import { internalAction, mutation, query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 import { ceoAgent } from "./agents/ceo/agent";
 import { makeCeoToolsForOrg } from "./agents/ceo_tools";
+import { requireOrgAdmin } from "./mutations/auth";
+import { requireOrgMembership } from "./queries/auth";
+
+interface ChatConfigOptions {
+  organizationId: Id<"organizations">;
+  userId: string;
+}
+
+type ChatThreadOptions = ChatConfigOptions & {
+  threadId: string;
+};
+
+const getAuthorizedConfig = async (
+  ctx: { db: QueryCtx["db"] },
+  options: ChatConfigOptions
+): Promise<Doc<"autopilotConfig"> | null> => {
+  await requireOrgMembership(ctx, options.organizationId, options.userId);
+
+  return await ctx.db
+    .query("autopilotConfig")
+    .withIndex("by_organization", (q) =>
+      q.eq("organizationId", options.organizationId)
+    )
+    .unique();
+};
+
+const requireAuthorizedConfig = async (
+  ctx: { db: QueryCtx["db"] },
+  options: ChatConfigOptions
+): Promise<Doc<"autopilotConfig">> => {
+  const config = await getAuthorizedConfig(ctx, options);
+  if (!config) {
+    throw new Error("Autopilot is not configured for this organization");
+  }
+  return config;
+};
+
+const requireOwnedThread = async (
+  ctx: { db: QueryCtx["db"] },
+  options: ChatThreadOptions
+) => {
+  const config = await requireAuthorizedConfig(ctx, options);
+  if (config.ceoChatThreadId !== options.threadId) {
+    throw new Error("CEO chat thread does not belong to this organization");
+  }
+  return config;
+};
 
 // ============================================
 // QUERIES
@@ -35,24 +84,10 @@ export const getThread = query({
   returns: v.union(v.string(), v.null()),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
-      throw new Error("Not a member of this organization");
-    }
-
-    const config = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
+    const config = await getAuthorizedConfig(ctx, {
+      organizationId: args.organizationId,
+      userId: user._id,
+    });
 
     return config?.ceoChatThreadId ?? null;
   },
@@ -70,17 +105,11 @@ export const listMessages = query({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
-      throw new Error("Not a member of this organization");
-    }
+    await requireOwnedThread(ctx, {
+      organizationId: args.organizationId,
+      threadId: args.threadId,
+      userId: user._id,
+    });
 
     const paginated = await listUIMessages(ctx, components.agent, {
       threadId: args.threadId,
@@ -108,37 +137,22 @@ export const getOrCreateThread = mutation({
   returns: v.string(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, user._id);
+    const config = await requireAuthorizedConfig(ctx, {
+      organizationId: args.organizationId,
+      userId: user._id,
+    });
 
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
-      throw new Error("Not a member of this organization");
-    }
-
-    const config = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    if (config?.ceoChatThreadId) {
+    if (config.ceoChatThreadId) {
       return config.ceoChatThreadId;
     }
 
     const threadId = await createThread(ctx, components.agent, {});
 
-    if (config) {
-      await ctx.db.patch(config._id, {
-        ceoChatThreadId: threadId,
-        updatedAt: Date.now(),
-      });
-    }
+    await ctx.db.patch(config._id, {
+      ceoChatThreadId: threadId,
+      updatedAt: Date.now(),
+    });
 
     return threadId;
   },
@@ -157,17 +171,12 @@ export const sendMessage = mutation({
   returns: v.string(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
-      throw new Error("Not a member of this organization");
-    }
+    await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireOwnedThread(ctx, {
+      organizationId: args.organizationId,
+      threadId: args.threadId,
+      userId: user._id,
+    });
 
     const { messageId } = await saveMessage(ctx, components.agent, {
       threadId: args.threadId,
@@ -246,8 +255,14 @@ export const generateCEOResponseAsync = internalAction({
       detailed.reviewSummaries.length > 0
         ? detailed.reviewSummaries
             .map(
-              (i: { priority: string; title: string; type: string }) =>
-                `  - [${i.type}] ${i.title} (${i.priority})`
+              (i: {
+                id: string;
+                priority: string;
+                source: string;
+                title: string;
+                type: string;
+              }) =>
+                `  - [${i.source}:${i.id}] ${i.title} (${i.type}, ${i.priority})`
             )
             .join("\n")
         : "  None";

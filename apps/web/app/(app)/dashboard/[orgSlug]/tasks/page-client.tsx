@@ -344,11 +344,9 @@ function CreateTaskDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={isOpen}>
-      <DialogTrigger>
-        <Button className="gap-2" size="sm">
-          <IconPlus className="size-4" />
-          New Task
-        </Button>
+      <DialogTrigger render={<Button className="gap-2" size="sm" />}>
+        <IconPlus className="size-4" />
+        New Task
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -6,7 +6,7 @@ import type { Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
 
 export const requireOrgMembership = async (
-  ctx: QueryCtx,
+  ctx: { db: QueryCtx["db"] },
   organizationId: Id<"organizations">,
   userId: string
 ) => {

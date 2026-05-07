@@ -60,17 +60,21 @@ function ExplorationProgress({
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const activityCount = activity?.length ?? 0;
 
-  // Auto-scroll to bottom on new entries via callback ref
-  const scrollToBottom = () => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
-    });
-  };
+  useEffect(
+    function syncExplorationScroll() {
+      if (activityCount === 0) {
+        return;
+      }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll when activity changes
-  useEffect(scrollToBottom, [activity?.length]);
+      scrollRef.current?.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    },
+    [activityCount]
+  );
 
   if (!activity || activity.length === 0) {
     return (
@@ -180,17 +184,19 @@ export default function ProductPage() {
 
   // Track the doc version to detect when it updates after regeneration
   const prevVersionRef = useRef(doc?.version);
-  useEffect(() => {
-    if (
-      doc?.version &&
-      prevVersionRef.current &&
-      doc.version > prevVersionRef.current
-    ) {
-      // Content was updated (e.g., regeneration completed)
-      setIsEditing(false);
-    }
-    prevVersionRef.current = doc?.version;
-  }, [doc?.version]);
+  useEffect(
+    function closeEditorAfterRegeneration() {
+      if (
+        doc?.version &&
+        prevVersionRef.current &&
+        doc.version > prevVersionRef.current
+      ) {
+        setIsEditing(false);
+      }
+      prevVersionRef.current = doc?.version;
+    },
+    [doc?.version]
+  );
 
   if (doc === undefined) {
     return (

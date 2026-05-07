@@ -72,3 +72,45 @@ export const getReportById = internalQuery({
     return ctx.db.get(args.reportId);
   },
 });
+
+export const acknowledgeReport = internalMutation({
+  args: { reportId: v.id("autopilotReports") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const report = await ctx.db.get(args.reportId);
+    if (!report) {
+      return null;
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(args.reportId, {
+      needsReview: false,
+      reviewedAt: now,
+      acknowledgedAt: now,
+      updatedAt: now,
+    });
+
+    return null;
+  },
+});
+
+export const archiveReport = internalMutation({
+  args: { reportId: v.id("autopilotReports") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const report = await ctx.db.get(args.reportId);
+    if (!report) {
+      return null;
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(args.reportId, {
+      archived: true,
+      needsReview: false,
+      reviewedAt: now,
+      updatedAt: now,
+    });
+
+    return null;
+  },
+});

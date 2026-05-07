@@ -14,7 +14,6 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
-import { motion } from "motion/react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -78,6 +77,38 @@ const AGENT_META = {
   },
 } as const;
 
+function isAgentEnabled(
+  agentId: GridAgentId,
+  config: {
+    ctoEnabled?: boolean;
+    devEnabled?: boolean;
+    growthEnabled?: boolean;
+    pmEnabled?: boolean;
+    salesEnabled?: boolean;
+    supportEnabled?: boolean;
+  }
+) {
+  if (agentId === "orchestrator") {
+    return true;
+  }
+  if (agentId === "pm") {
+    return config.pmEnabled !== false;
+  }
+  if (agentId === "cto") {
+    return config.ctoEnabled !== false;
+  }
+  if (agentId === "dev") {
+    return config.devEnabled !== false;
+  }
+  if (agentId === "growth") {
+    return config.growthEnabled !== false;
+  }
+  if (agentId === "support") {
+    return config.supportEnabled !== false;
+  }
+  return config.salesEnabled !== false;
+}
+
 export function AgentDetailView({
   organizationId,
   agentId,
@@ -108,19 +139,25 @@ export function AgentDetailView({
   }
 
   if (!config) {
-    return null;
+    return (
+      <div className="flex h-40 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-center">
+        <p className="text-muted-foreground text-sm">
+          Autopilot is not configured yet.
+        </p>
+        <Button
+          render={<Link href={`${baseUrl}/settings`} />}
+          variant="outline"
+        >
+          Open settings
+        </Button>
+      </div>
+    );
   }
 
   // Derive status
   const isOrchestrator = agentId === "orchestrator";
-  const enabled = isOrchestrator
-    ? true
-    : (config as unknown as Record<string, unknown>)[
-        meta.configField as string
-      ] !== false;
-  const agentReadiness = readiness?.[agentId] as
-    | { ready: boolean; reason?: string }
-    | undefined;
+  const enabled = isAgentEnabled(agentId, config);
+  const agentReadiness = readiness?.[agentId];
   const isBlocked =
     enabled && agentReadiness !== undefined && !agentReadiness.ready;
 
@@ -150,12 +187,7 @@ export function AgentDetailView({
   return (
     <div className="flex h-full flex-col gap-6">
       {/* Header */}
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-4"
-        initial={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div className="flex items-center gap-4">
         <Button
           render={<Link href={`${baseUrl}/agents`} />}
           size="icon"
@@ -202,17 +234,13 @@ export function AgentDetailView({
             />
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Blocked banner */}
       {isBlocked && agentReadiness?.reason && (
-        <motion.div
-          animate={{ opacity: 1, height: "auto" }}
-          className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-amber-600 text-sm"
-          initial={{ opacity: 0, height: 0 }}
-        >
+        <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-amber-600 text-sm">
           {agentReadiness.reason}
-        </motion.div>
+        </div>
       )}
 
       {/* Two-column layout: Activity Feed + Conversation */}

@@ -215,7 +215,7 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
 
   const handleRetry = async () => {
     try {
-      await retryTask({ workItemId: task._id, status: "backlog" });
+      await retryTask({ workItemId: task._id, status: "todo" });
       toast.success("Task re-queued");
     } catch {
       toast.error("Failed to retry task");
@@ -225,10 +225,11 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
   return (
     <>
       <div className="group flex items-start gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50">
-        <button
-          className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 text-left"
+        <Button
+          className="h-auto min-w-0 flex-1 cursor-pointer items-start justify-start gap-3 whitespace-normal rounded-none p-0 text-left hover:bg-transparent"
           onClick={() => setDetailOpen(true)}
           type="button"
+          variant="ghost"
         >
           <StatusIcon
             className={cn("mt-0.5 size-5 shrink-0", statusConfig.color)}
@@ -253,7 +254,7 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
               </span>
             </div>
           </div>
-        </button>
+        </Button>
 
         {/* Inline actions */}
         <div className="flex shrink-0 items-center gap-1">

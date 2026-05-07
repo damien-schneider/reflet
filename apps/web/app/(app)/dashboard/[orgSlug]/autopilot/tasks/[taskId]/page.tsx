@@ -1,7 +1,6 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   IconCircleCheck,
   IconCircleDashed,
@@ -20,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { H2, Muted } from "@/components/ui/typography";
+import { toOptionalId } from "@/lib/convex-helpers";
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
@@ -55,16 +55,48 @@ const STATUS_CONFIG = {
   },
 } as const;
 
+function getStatusConfig(status: string) {
+  switch (status) {
+    case "backlog": {
+      return STATUS_CONFIG.backlog;
+    }
+    case "todo": {
+      return STATUS_CONFIG.todo;
+    }
+    case "in_progress": {
+      return STATUS_CONFIG.in_progress;
+    }
+    case "in_review": {
+      return STATUS_CONFIG.in_review;
+    }
+    case "done": {
+      return STATUS_CONFIG.done;
+    }
+    case "cancelled": {
+      return STATUS_CONFIG.cancelled;
+    }
+    default: {
+      return STATUS_CONFIG.backlog;
+    }
+  }
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export default function TaskDetailPage({
   params,
 }: {
   params: Promise<{ taskId: string }>;
 }) {
   const { taskId } = use(params);
+  const workItemId = toOptionalId("autopilotWorkItems", taskId);
 
-  const task = useQuery(api.autopilot.queries.work.getWorkItem, {
-    workItemId: taskId as Id<"autopilotWorkItems">,
-  });
+  const task = useQuery(
+    api.autopilot.queries.work.getWorkItem,
+    workItemId ? { workItemId } : "skip"
+  );
 
   const subtasks = useQuery(
     api.autopilot.queries.work.getChildren,
@@ -77,6 +109,14 @@ export default function TaskDetailPage({
   );
 
   const cancelTask = useMutation(api.autopilot.mutations.work.updateWorkItem);
+
+  if (!workItemId) {
+    return (
+      <div className="flex h-40 items-center justify-center">
+        <Muted>Task not found</Muted>
+      </div>
+    );
+  }
 
   if (task === undefined) {
     return (
@@ -96,9 +136,7 @@ export default function TaskDetailPage({
     );
   }
 
-  const statusConfig =
-    STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ??
-    STATUS_CONFIG.backlog;
+  const statusConfig = getStatusConfig(task.status);
   const StatusIcon = statusConfig.icon;
 
   const canCancel =
@@ -110,8 +148,8 @@ export default function TaskDetailPage({
     try {
       await cancelTask({ workItemId: task._id, status: "cancelled" });
       toast.success("Task cancelled");
-    } catch {
-      toast.error("Failed to cancel task");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Failed to cancel task"));
     }
   };
 
@@ -196,9 +234,7 @@ export default function TaskDetailPage({
           </H2>
           <div className="space-y-2">
             {subtasks.map((sub) => {
-              const subStatus =
-                STATUS_CONFIG[sub.status as keyof typeof STATUS_CONFIG] ??
-                STATUS_CONFIG.backlog;
+              const subStatus = getStatusConfig(sub.status);
               const SubIcon = subStatus.icon;
               return (
                 <div

@@ -54,10 +54,12 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
       queries: { get: "feedback.get" },
       comments: { list: "comments.list" },
       votes: { toggle: "votes.toggle" },
+      actions_manage: { assign: "feedback_actions.assign" },
       actions: { assign: "feedback_actions.assign" },
     },
     organizations: {
       queries: { getBySlug: "organizations.getBySlug" },
+      statuses_queries: { list: "organization_statuses.list" },
       statuses: { list: "organization_statuses.list" },
       members: {
         getMembership: "members.getMembership",

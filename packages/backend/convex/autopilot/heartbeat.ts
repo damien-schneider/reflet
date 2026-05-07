@@ -185,6 +185,18 @@ const dispatchChainProducer = async (
       );
       return true;
     }
+    if (
+      chainState.community_posts === "published" &&
+      chainState.drafts === "missing"
+    ) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.agents.growth.drafts.producer
+          .runCommunityDraftGeneration,
+        { organizationId: orgId }
+      );
+      return true;
+    }
   } else if (agent === "pm") {
     candidates.push(
       {
@@ -295,6 +307,12 @@ const wakeAgent = async (
         internal.autopilot.agents.validator.runValidatorPass,
         { organizationId: orgId }
       );
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.agents.validation.community_posts
+          .runCommunityPostValidatorPass,
+        { organizationId: orgId }
+      );
       break;
     default:
       break;
@@ -314,14 +332,45 @@ interface HeartbeatCtx {
   scheduler: ActionCtx["scheduler"];
 }
 
+interface PendingDispatchTask {
+  _id: Id<"autopilotWorkItems">;
+  assignedAgent?: string | undefined;
+  title: string;
+}
+
+type DispatchableAgent = "cto" | "dev" | "growth" | "sales" | "support";
+
+const checkoutTaskForAgent = async (
+  ctx: HeartbeatCtx,
+  orgId: Id<"organizations">,
+  task: PendingDispatchTask,
+  agent: DispatchableAgent
+): Promise<boolean> => {
+  const checkedOut = await ctx.runMutation(
+    internal.autopilot.execution_lifecycle.checkoutTask,
+    {
+      taskId: task._id,
+      agent,
+    }
+  );
+  if (!checkedOut) {
+    return false;
+  }
+
+  await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+    organizationId: orgId,
+    taskId: task._id,
+    agent,
+    level: "action",
+    message: `Task picked up: ${task.title}`,
+  });
+  return true;
+};
+
 const dispatchDevTask = async (
   ctx: HeartbeatCtx,
   orgId: Id<"organizations">,
-  task: {
-    _id: Id<"autopilotWorkItems">;
-    title: string;
-    assignedAgent?: string | undefined;
-  }
+  task: PendingDispatchTask
 ): Promise<boolean> => {
   const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
     organizationId: orgId,
@@ -350,11 +399,113 @@ const dispatchDevTask = async (
     }
     return false;
   }
+
+  const checkedOut = await checkoutTaskForAgent(ctx, orgId, task, "dev");
+  if (!checkedOut) {
+    return false;
+  }
+
   await ctx.scheduler.runAfter(0, internal.autopilot.execution.executeTask, {
     organizationId: orgId,
     taskId: task._id,
   });
   return true;
+};
+
+const dispatchCtoTask = async (
+  ctx: HeartbeatCtx,
+  orgId: Id<"organizations">,
+  task: PendingDispatchTask
+): Promise<boolean> => {
+  const checkedOut = await checkoutTaskForAgent(ctx, orgId, task, "cto");
+  if (!checkedOut) {
+    return false;
+  }
+
+  await ctx.scheduler.runAfter(
+    0,
+    internal.autopilot.agents.cto.runCTOSpecGeneration,
+    { organizationId: orgId, taskId: task._id }
+  );
+  return true;
+};
+
+const dispatchGrowthTask = async (
+  ctx: HeartbeatCtx,
+  orgId: Id<"organizations">,
+  task: PendingDispatchTask
+): Promise<boolean> => {
+  const checkedOut = await checkoutTaskForAgent(ctx, orgId, task, "growth");
+  if (!checkedOut) {
+    return false;
+  }
+
+  await ctx.scheduler.runAfter(
+    0,
+    internal.autopilot.agents.growth.market_research.runGrowthMarketResearch,
+    { organizationId: orgId, taskId: task._id }
+  );
+  return true;
+};
+
+const dispatchSalesTask = async (
+  ctx: HeartbeatCtx,
+  orgId: Id<"organizations">,
+  task: PendingDispatchTask
+): Promise<boolean> => {
+  const checkedOut = await checkoutTaskForAgent(ctx, orgId, task, "sales");
+  if (!checkedOut) {
+    return false;
+  }
+
+  await ctx.scheduler.runAfter(
+    0,
+    internal.autopilot.agents.sales_prospecting.runSalesProspecting,
+    { organizationId: orgId, taskId: task._id }
+  );
+  return true;
+};
+
+const dispatchSupportTask = async (
+  ctx: HeartbeatCtx,
+  orgId: Id<"organizations">,
+  task: PendingDispatchTask
+): Promise<boolean> => {
+  const checkedOut = await checkoutTaskForAgent(ctx, orgId, task, "support");
+  if (!checkedOut) {
+    return false;
+  }
+
+  await ctx.scheduler.runAfter(
+    0,
+    internal.autopilot.agents.support.runSupportTriage,
+    { organizationId: orgId, taskId: task._id }
+  );
+  return true;
+};
+
+const dispatchTaskToAgent = async (
+  ctx: HeartbeatCtx,
+  orgId: Id<"organizations">,
+  task: PendingDispatchTask,
+  agent: string
+): Promise<boolean> => {
+  if (agent === "dev") {
+    return await dispatchDevTask(ctx, orgId, task);
+  }
+  if (agent === "cto") {
+    return await dispatchCtoTask(ctx, orgId, task);
+  }
+  if (agent === "growth") {
+    return await dispatchGrowthTask(ctx, orgId, task);
+  }
+  if (agent === "sales") {
+    return await dispatchSalesTask(ctx, orgId, task);
+  }
+  if (agent === "support") {
+    return await dispatchSupportTask(ctx, orgId, task);
+  }
+  return false;
 };
 
 const dispatchPendingTasks = async (
@@ -386,33 +537,9 @@ const dispatchPendingTasks = async (
     }
 
     try {
-      if (agent === "dev") {
-        const dispatcedDev = await dispatchDevTask(ctx, orgId, task);
-        if (!dispatcedDev) {
-          continue;
-        }
-      } else if (agent === "cto") {
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.cto.runCTOSpecGeneration,
-          { organizationId: orgId, taskId: task._id }
-        );
-      } else {
-        await ctx.runMutation(
-          internal.autopilot.task_mutations.updateTaskStatus,
-          {
-            taskId: task._id,
-            status: "in_progress",
-          }
-        );
-
-        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-          organizationId: orgId,
-          taskId: task._id,
-          agent,
-          level: "action",
-          message: `Task picked up: ${task.title}`,
-        });
+      const wasDispatched = await dispatchTaskToAgent(ctx, orgId, task, agent);
+      if (!wasDispatched) {
+        continue;
       }
 
       dispatched++;
@@ -512,6 +639,8 @@ export const runHeartbeat = internalAction({
       {}
     );
 
+    await ctx.runMutation(internal.autopilot.routines.evaluateRoutines, {});
+
     for (const config of configs) {
       const orgId = config.organizationId;
 
@@ -559,6 +688,17 @@ export const runHeartbeat = internalAction({
         ctx,
         orgId,
         enabledSet
+      );
+
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.integrations.email.sendApprovedOutreach,
+        { organizationId: orgId }
+      );
+      await ctx.scheduler.runAfter(
+        0,
+        internal.autopilot.integrations.social.publishApprovedContent,
+        { organizationId: orgId }
       );
 
       // Log a single heartbeat summary per org

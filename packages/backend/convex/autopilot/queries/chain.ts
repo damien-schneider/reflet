@@ -36,6 +36,9 @@ export const getChainStatePublic = query({
   args: { organizationId: v.id("organizations") },
   returns: chainStateValidator,
   handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgMembership(ctx, args.organizationId, user._id);
+
     return await computeChainState(ctx, args.organizationId);
   },
 });

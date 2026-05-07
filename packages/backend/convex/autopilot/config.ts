@@ -115,7 +115,7 @@ export const canDispatchTask = internalQuery({
       )
       .unique();
 
-    if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
+    if (!isConfigActive(config)) {
       return false;
     }
 
@@ -148,26 +148,11 @@ export const isAgentEnabled = internalQuery({
       )
       .unique();
 
-    if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
+    if (!isConfigActive(config)) {
       return false;
     }
 
-    switch (args.agent) {
-      case "pm":
-        return config.pmEnabled !== false;
-      case "cto":
-        return config.ctoEnabled !== false;
-      case "dev":
-        return config.devEnabled !== false;
-      case "growth":
-        return config.growthEnabled !== false;
-      case "support":
-        return config.supportEnabled !== false;
-      case "sales":
-        return config.salesEnabled !== false;
-      default:
-        return true;
-    }
+    return isAgentEnabledInConfig(args.agent, config);
   },
 });
 
@@ -183,6 +168,43 @@ const AGENT_CONFIG_FIELDS = [
   { name: "sales", field: "salesEnabled" },
 ] as const;
 
+function isConfigActive<T extends { autonomyMode?: string; enabled: boolean }>(
+  config: T | null
+): config is T {
+  return Boolean(
+    config?.enabled && (config.autonomyMode ?? "supervised") !== "stopped"
+  );
+}
+
+function isAgentEnabledInConfig(
+  agent: string,
+  config: {
+    ctoEnabled?: boolean;
+    devEnabled?: boolean;
+    growthEnabled?: boolean;
+    pmEnabled?: boolean;
+    salesEnabled?: boolean;
+    supportEnabled?: boolean;
+  }
+): boolean {
+  switch (agent) {
+    case "pm":
+      return config.pmEnabled !== false;
+    case "cto":
+      return config.ctoEnabled !== false;
+    case "dev":
+      return config.devEnabled !== false;
+    case "growth":
+      return config.growthEnabled !== false;
+    case "support":
+      return config.supportEnabled !== false;
+    case "sales":
+      return config.salesEnabled !== false;
+    default:
+      return true;
+  }
+}
+
 async function fetchEnabledAgents(
   ctx: { db: QueryCtx["db"] },
   organizationId: Id<"organizations">
@@ -192,13 +214,12 @@ async function fetchEnabledAgents(
     .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
     .unique();
 
-  if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
+  if (!isConfigActive(config)) {
     return [];
   }
 
-  return AGENT_CONFIG_FIELDS.filter(
-    ({ field }) =>
-      (config[field as keyof typeof config] as boolean | undefined) !== false
+  return AGENT_CONFIG_FIELDS.filter(({ name }) =>
+    isAgentEnabledInConfig(name, config)
   ).map(({ name }) => name);
 }
 
@@ -228,7 +249,7 @@ export const getEnabledConfigs = internalQuery({
   handler: async (ctx) => {
     const configs = await ctx.db.query("autopilotConfig").collect();
     return configs
-      .filter((c) => (c.autonomyMode ?? "supervised") !== "stopped")
+      .filter((config) => isConfigActive(config))
       .map((c) => ({
         organizationId: c.organizationId,
         autonomyMode: c.autonomyMode,

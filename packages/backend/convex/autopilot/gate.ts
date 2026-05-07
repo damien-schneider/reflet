@@ -92,6 +92,35 @@ const gateResultValidator = v.object({
   ),
 });
 
+function isAgentEnabledInConfig(
+  config: {
+    ctoEnabled?: boolean;
+    devEnabled?: boolean;
+    growthEnabled?: boolean;
+    pmEnabled?: boolean;
+    salesEnabled?: boolean;
+    supportEnabled?: boolean;
+  },
+  agent: string
+): boolean {
+  switch (agent) {
+    case "pm":
+      return config.pmEnabled !== false;
+    case "cto":
+      return config.ctoEnabled !== false;
+    case "dev":
+      return config.devEnabled !== false;
+    case "growth":
+      return config.growthEnabled !== false;
+    case "support":
+      return config.supportEnabled !== false;
+    case "sales":
+      return config.salesEnabled !== false;
+    default:
+      return true;
+  }
+}
+
 // ============================================
 // GATE CHECK
 // ============================================
@@ -124,15 +153,12 @@ export const checkGate = internalQuery({
 
     // 1b. Check autonomy mode (stopped = disabled)
     const mode = config?.autonomyMode ?? "supervised";
-    if (!config || mode === "stopped") {
+    if (!config?.enabled || mode === "stopped") {
       return { proceed: false, reason: "stopped" as const };
     }
 
     // 3. Check if agent is enabled
-    const agentToggleKey = `${args.agent}Enabled` as const;
-    const agentEnabled =
-      (config as Record<string, unknown>)[agentToggleKey] ?? true;
-    if (agentEnabled === false) {
+    if (!isAgentEnabledInConfig(config, args.agent)) {
       return { proceed: false, reason: "agent_disabled" as const };
     }
 
@@ -217,15 +243,14 @@ export const isAgentActive = internalQuery({
       )
       .unique();
 
-    if (!config || (config.autonomyMode ?? "supervised") === "stopped") {
+    if (
+      !config?.enabled ||
+      (config.autonomyMode ?? "supervised") === "stopped"
+    ) {
       return false;
     }
 
-    const agentToggleKey = `${args.agent}Enabled` as const;
-    const agentEnabled =
-      (config as Record<string, unknown>)[agentToggleKey] ?? true;
-
-    return agentEnabled !== false;
+    return isAgentEnabledInConfig(config, args.agent);
   },
 });
 
@@ -244,6 +269,8 @@ export const isStopped = internalQuery({
       )
       .unique();
 
-    return !config || (config.autonomyMode ?? "supervised") === "stopped";
+    return (
+      !config?.enabled || (config.autonomyMode ?? "supervised") === "stopped"
+    );
   },
 });

@@ -56,8 +56,9 @@ export function AutonomyToggle() {
   });
   const setMode = useMutation(api.autopilot.mutations.config.setAutonomyMode);
 
-  const currentMode: AutonomyModeValue =
-    (config?.autonomyMode as AutonomyModeValue) ?? "supervised";
+  const currentMode =
+    MODES.find((mode) => mode.value === config?.autonomyMode)?.value ??
+    "supervised";
 
   const handleModeChange = async (mode: AutonomyModeValue) => {
     if (mode === currentMode) {
@@ -86,7 +87,7 @@ export function AutonomyToggle() {
             <TooltipTrigger
               aria-label={`${mode.label}: ${mode.description}`}
               className={cn(
-                "relative flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs transition-all duration-200",
+                "relative flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs transition-colors duration-200",
                 "text-muted-foreground hover:text-foreground",
                 "disabled:pointer-events-none disabled:opacity-50",
                 isActive && mode.activeClass

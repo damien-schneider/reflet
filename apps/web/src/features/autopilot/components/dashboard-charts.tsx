@@ -199,13 +199,20 @@ function CostTimelineChart({
 }
 
 function WorkItemsByStatusChart({ data }: { data: Record<string, number> }) {
-  const chartData = Object.entries(data)
-    .filter(([, count]) => count > 0)
-    .map(([status, count]) => ({
+  const chartData = Object.entries(data).reduce<
+    Array<{ count: number; fill: string; status: string }>
+  >((items, [status, count]) => {
+    if (count <= 0) {
+      return items;
+    }
+
+    items.push({
       status,
       count,
       fill: STATUS_COLORS[status] ?? "var(--chart-3)",
-    }));
+    });
+    return items;
+  }, []);
 
   if (chartData.length === 0) {
     return null;
@@ -256,13 +263,20 @@ function WorkItemsByStatusChart({ data }: { data: Record<string, number> }) {
 }
 
 function WorkItemsByTypeChart({ data }: { data: Record<string, number> }) {
-  const chartData = Object.entries(data)
-    .filter(([, count]) => count > 0)
-    .map(([type, count]) => ({
+  const chartData = Object.entries(data).reduce<
+    Array<{ count: number; fill: string; type: string }>
+  >((items, [type, count]) => {
+    if (count <= 0) {
+      return items;
+    }
+
+    items.push({
       type,
       count,
       fill: TYPE_COLORS[type] ?? "var(--chart-3)",
-    }));
+    });
+    return items;
+  }, []);
 
   if (chartData.length === 0) {
     return null;

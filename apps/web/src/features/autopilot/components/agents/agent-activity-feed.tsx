@@ -5,7 +5,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -145,12 +144,13 @@ function ActivityFeedContent({
 
   return (
     <div className="space-y-1">
-      <AnimatePresence initial={false}>
-        {/* Activity is desc from Convex — reverse to show oldest first */}
-        {[...activity].reverse().map((entry) => (
+      {/* Activity is desc from Convex — reverse to show oldest first */}
+      {activity
+        .slice()
+        .reverse()
+        .map((entry) => (
           <ActivityEntry entry={entry} key={entry._id} />
         ))}
-      </AnimatePresence>
       <div ref={scrollBottomRef} />
     </div>
   );
@@ -171,13 +171,7 @@ function ActivityEntry({ entry }: { entry: ActivityEntryData }) {
   const hasDetails = Boolean(entry.details);
 
   return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-lg border border-transparent px-3 py-2 transition-colors hover:border-border/50 hover:bg-muted/30"
-      initial={{ opacity: 0, y: 4 }}
-      layout
-      transition={{ duration: 0.2 }}
-    >
+    <div className="rounded-lg border border-transparent px-3 py-2 transition-colors hover:border-border/50 hover:bg-muted/30">
       <div className="flex items-start gap-2">
         <span
           className={cn(
@@ -216,21 +210,13 @@ function ActivityEntry({ entry }: { entry: ActivityEntryData }) {
         )}
       </div>
 
-      <AnimatePresence>
-        {expanded && entry.details && (
-          <motion.div
-            animate={{ height: "auto", opacity: 1 }}
-            className="overflow-hidden"
-            exit={{ height: 0, opacity: 0 }}
-            initial={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <pre className="mt-2 whitespace-pre-wrap rounded-md bg-muted/50 p-2 font-mono text-[11px] text-muted-foreground leading-relaxed">
-              {entry.details}
-            </pre>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+      {expanded && entry.details ? (
+        <div className="overflow-hidden">
+          <pre className="mt-2 whitespace-pre-wrap rounded-md bg-muted/50 p-2 font-mono text-[11px] text-muted-foreground leading-relaxed">
+            {entry.details}
+          </pre>
+        </div>
+      ) : null}
+    </div>
   );
 }

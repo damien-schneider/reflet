@@ -2,12 +2,24 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "../../_generated/api";
+import type { Id } from "../../_generated/dataModel";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
-const testSchema = schema as any;
+const createTestContext = () => convexTest(schema, modules);
+type TestContext = ReturnType<typeof createTestContext>;
 
-const createOrg = async (t: ReturnType<typeof convexTest>) => {
+function expectWorkItemId(
+  taskId: Id<"autopilotWorkItems"> | null
+): Id<"autopilotWorkItems"> {
+  expect(taskId).toBeTypeOf("string");
+  if (taskId === null) {
+    throw new Error("Expected createTask to return a work item id");
+  }
+  return taskId;
+}
+
+const createOrg = async (t: TestContext) => {
   const orgId = await t.run(async (ctx) =>
     ctx.db.insert("organizations", {
       name: "Test Org",
@@ -23,25 +35,19 @@ const createOrg = async (t: ReturnType<typeof convexTest>) => {
 
 describe("autopilot tasks", () => {
   test("createTask creates a task with correct defaults", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = createTestContext();
     const orgId = await createOrg(t);
 
-    const taskId = await t.mutation(
-      internal.autopilot.task_mutations.createTask,
-      {
+    const taskId = expectWorkItemId(
+      await t.mutation(internal.autopilot.task_mutations.createTask, {
         organizationId: orgId,
         title: "Test task",
         description: "A test description",
         priority: "medium",
         assignedAgent: "pm",
         createdBy: "test",
-      }
+      })
     );
-
-    expect(taskId).not.toBeNull();
-    if (!taskId) {
-      return;
-    }
 
     const task = await t.query(internal.autopilot.task_queries.getTask, {
       taskId,
@@ -53,7 +59,7 @@ describe("autopilot tasks", () => {
   });
 
   test("getOrganization returns org by ID", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = createTestContext();
     const orgId = await createOrg(t);
 
     const org = await t.query(internal.autopilot.task_queries.getOrganization, {
@@ -65,39 +71,34 @@ describe("autopilot tasks", () => {
   });
 
   test("getOrganization returns null for nonexistent ID", async () => {
-    const t = convexTest(testSchema, modules);
-    await createOrg(t);
+    const t = createTestContext();
+    const orgId = await createOrg(t);
 
-    const org = await t.run(async (ctx) => {
-      const fakeId = "fake_id" as any;
-      try {
-        return await ctx.db.get(fakeId);
-      } catch {
-        return null;
-      }
+    await t.run(async (ctx) => {
+      await ctx.db.delete(orgId);
+    });
+
+    const org = await t.query(internal.autopilot.task_queries.getOrganization, {
+      id: orgId,
     });
 
     expect(org).toBeNull();
   });
 
   test("updateTaskStatus updates status correctly", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = createTestContext();
     const orgId = await createOrg(t);
 
-    const taskId = await t.mutation(
-      internal.autopilot.task_mutations.createTask,
-      {
+    const taskId = expectWorkItemId(
+      await t.mutation(internal.autopilot.task_mutations.createTask, {
         organizationId: orgId,
         title: "Status test",
         description: "Test status updates",
         priority: "high",
         assignedAgent: "dev",
         createdBy: "test",
-      }
+      })
     );
-    if (!taskId) {
-      return;
-    }
 
     await t.mutation(internal.autopilot.task_mutations.updateTaskStatus, {
       taskId,
@@ -113,23 +114,19 @@ describe("autopilot tasks", () => {
   });
 
   test("updateTaskStatus sets terminal status correctly", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = createTestContext();
     const orgId = await createOrg(t);
 
-    const taskId = await t.mutation(
-      internal.autopilot.task_mutations.createTask,
-      {
+    const taskId = expectWorkItemId(
+      await t.mutation(internal.autopilot.task_mutations.createTask, {
         organizationId: orgId,
         title: "Complete test",
         description: "Test completion",
         priority: "medium",
         assignedAgent: "dev",
         createdBy: "test",
-      }
+      })
     );
-    if (!taskId) {
-      return;
-    }
 
     await t.mutation(internal.autopilot.task_mutations.updateTaskStatus, {
       taskId,
@@ -145,7 +142,7 @@ describe("autopilot tasks", () => {
   });
 
   test("getPendingTasks returns only pending tasks", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = createTestContext();
     const orgId = await createOrg(t);
 
     await t.mutation(internal.autopilot.task_mutations.createTask, {
@@ -157,20 +154,16 @@ describe("autopilot tasks", () => {
       createdBy: "test",
     });
 
-    const completedTaskId = await t.mutation(
-      internal.autopilot.task_mutations.createTask,
-      {
+    const completedTaskId = expectWorkItemId(
+      await t.mutation(internal.autopilot.task_mutations.createTask, {
         organizationId: orgId,
         title: "Completed task",
         description: "Should not appear",
         priority: "low",
         assignedAgent: "dev",
         createdBy: "test",
-      }
+      })
     );
-    if (!completedTaskId) {
-      return;
-    }
 
     await t.mutation(internal.autopilot.task_mutations.updateTaskStatus, {
       taskId: completedTaskId,
@@ -189,7 +182,7 @@ describe("autopilot tasks", () => {
   });
 
   test("logActivity creates an activity log entry", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = createTestContext();
     const orgId = await createOrg(t);
 
     await t.mutation(internal.autopilot.task_mutations.logActivity, {
@@ -211,7 +204,7 @@ describe("autopilot tasks", () => {
   });
 
   test("logActivity persists targetAgent when provided", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = createTestContext();
     const orgId = await createOrg(t);
 
     await t.mutation(internal.autopilot.task_mutations.logActivity, {
@@ -234,12 +227,11 @@ describe("autopilot tasks", () => {
 
 describe("autopilot review items", () => {
   test("createTask with needsReview creates a reviewable item", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = createTestContext();
     const orgId = await createOrg(t);
 
-    const taskId = await t.mutation(
-      internal.autopilot.task_mutations.createTask,
-      {
+    const taskId = expectWorkItemId(
+      await t.mutation(internal.autopilot.task_mutations.createTask, {
         organizationId: orgId,
         title: "Review me",
         description: "Needs review",
@@ -247,13 +239,8 @@ describe("autopilot review items", () => {
         assignedAgent: "pm",
         needsReview: true,
         reviewType: "task_approval",
-      }
+      })
     );
-
-    expect(taskId).not.toBeNull();
-    if (!taskId) {
-      return;
-    }
 
     const task = await t.query(internal.autopilot.task_queries.getTask, {
       taskId,
@@ -265,7 +252,7 @@ describe("autopilot review items", () => {
   });
 
   test("createDocument creates a reviewable document", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = createTestContext();
     const orgId = await createOrg(t);
 
     const docId = await t.mutation(
@@ -281,12 +268,15 @@ describe("autopilot review items", () => {
     );
 
     expect(docId).toBeDefined();
+    const doc = await t.run(async (ctx) => ctx.db.get(docId));
+    expect(doc?.status).toBe("pending_review");
+    expect(doc?.needsReview).toBe(true);
   });
 });
 
 describe("autopilot config", () => {
   test("createDefaultConfig creates config with defaults", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = createTestContext();
     const orgId = await createOrg(t);
 
     await t.mutation(internal.autopilot.config_mutations.createDefaultConfig, {

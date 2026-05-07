@@ -20,6 +20,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
     },
     integrations: {
       github: {
+        connection_mutations: { toggleAutoSync: "github.toggleAutoSync" },
         mutations: { toggleAutoSync: "github.toggleAutoSync" },
         queries: { getConnection: "github.getConnection" },
       },

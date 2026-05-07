@@ -12,7 +12,9 @@ import {
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,32 +70,36 @@ export default function SalesPipelinePage() {
       </div>
 
       <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
-        <button
+        <Button
           className={cn(
-            "flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium text-sm transition-colors",
+            "h-8 rounded-md px-3 text-sm",
             activeTab === "pipeline"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           )}
           onClick={() => setActiveTab("pipeline")}
+          size="sm"
           type="button"
+          variant="ghost"
         >
           <IconTrendingUp className="size-4" />
           Pipeline
-        </button>
-        <button
+        </Button>
+        <Button
           className={cn(
-            "flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium text-sm transition-colors",
+            "h-8 rounded-md px-3 text-sm",
             activeTab === "insights"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           )}
           onClick={() => setActiveTab("insights")}
+          size="sm"
           type="button"
+          variant="ghost"
         >
           <IconFileText className="size-4" />
           Prospect Briefs
-        </button>
+        </Button>
       </div>
 
       {activeTab === "pipeline" && <SalesPipelineTab />}
@@ -170,7 +176,7 @@ function SalesInsightsTab() {
 }
 
 function SalesPipelineTab() {
-  const { organizationId } = useAutopilotContext();
+  const { organizationId, orgSlug } = useAutopilotContext();
 
   const stats = useQuery(api.autopilot.queries.leads.getSalesStats, {
     organizationId,
@@ -293,7 +299,7 @@ function SalesPipelineTab() {
           ) : (
             <div className="space-y-3">
               {leads.map((lead) => (
-                <LeadCard key={lead._id} lead={lead} />
+                <LeadCard key={lead._id} lead={lead} orgSlug={orgSlug} />
               ))}
             </div>
           )}
@@ -314,10 +320,13 @@ function DiscoverLeadsButton() {
     return null;
   }
 
-  const handleClick = async () => {
+  const discoverLeads = async () => {
     setLoading(true);
     try {
       await triggerDiscovery({ organizationId });
+      toast.success("Lead discovery started");
+    } catch {
+      toast.error("Failed to start lead discovery");
     } finally {
       setLoading(false);
     }
@@ -326,7 +335,7 @@ function DiscoverLeadsButton() {
   return (
     <Button
       disabled={loading}
-      onClick={handleClick}
+      onClick={discoverLeads}
       size="sm"
       variant="outline"
     >
@@ -353,6 +362,7 @@ function getScoreTier(score: number): keyof typeof SCORE_STYLES {
 
 function LeadCard({
   lead,
+  orgSlug,
 }: {
   lead: {
     _id: string;
@@ -369,6 +379,7 @@ function LeadCard({
     createdAt: number;
     nextFollowUpAt?: number;
   };
+  orgSlug: string;
 }) {
   return (
     <div className="flex items-start gap-3 rounded-lg border p-3">
@@ -436,7 +447,7 @@ function LeadCard({
           </p>
         )}
       </div>
-      <div className="shrink-0 text-right">
+      <div className="flex shrink-0 flex-col items-end gap-2 text-right">
         <span className="text-muted-foreground text-xs">
           {formatDistanceToNow(lead.createdAt, { addSuffix: true })}
         </span>
@@ -446,6 +457,15 @@ function LeadCard({
             {formatDistanceToNow(lead.nextFollowUpAt, { addSuffix: true })}
           </p>
         )}
+        <Button
+          render={
+            <Link href={`/dashboard/${orgSlug}/autopilot/sales/${lead._id}`} />
+          }
+          size="sm"
+          variant="outline"
+        >
+          View
+        </Button>
       </div>
     </div>
   );

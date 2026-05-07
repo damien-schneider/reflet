@@ -5,10 +5,38 @@
 import { v } from "convex/values";
 import { query } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
+import {
+  DEFAULT_MAX_PENDING_PER_AGENT,
+  DEFAULT_MAX_PENDING_TOTAL,
+} from "../config_task_caps";
+import {
+  autonomyLevel,
+  autonomyMode,
+  codingAdapterType,
+} from "../schema/validators";
 import { requireOrgMembership } from "./auth";
+
+const dashboardStatsValidator = v.object({
+  enabled: v.boolean(),
+  adapter: codingAdapterType,
+  autonomyLevel,
+  autonomyMode,
+  tasksUsedToday: v.number(),
+  maxTasksPerDay: v.number(),
+  costUsedTodayUsd: v.number(),
+  dailyCostCapUsd: v.optional(v.number()),
+  todoCount: v.number(),
+  inProgressCount: v.number(),
+  doneCount: v.number(),
+  pendingReviewCount: v.number(),
+  maxPendingTasksPerAgent: v.number(),
+  maxPendingTasksTotal: v.number(),
+  itemsByAgent: v.record(v.string(), v.number()),
+});
 
 export const getDashboardStats = query({
   args: { organizationId: v.id("organizations") },
+  returns: dashboardStatsValidator,
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgMembership(ctx, args.organizationId, user._id);
@@ -54,9 +82,28 @@ export const getDashboardStats = query({
         q.eq("organizationId", args.organizationId).eq("needsReview", true)
       )
       .collect();
+    const pendingReviewReports = await ctx.db
+      .query("autopilotReports")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
+      )
+      .filter((q) => q.eq(q.field("archived"), false))
+      .collect();
+
+    const maxPendingTasksPerAgent =
+      config?.maxPendingTasksPerAgent ?? DEFAULT_MAX_PENDING_PER_AGENT;
+    const maxPendingTasksTotal =
+      config?.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
+    const itemsByAgent: Record<string, number> = {};
+    for (const item of [...todoItems, ...inProgressItems]) {
+      const agent = item.assignedAgent ?? "unassigned";
+      itemsByAgent[agent] = (itemsByAgent[agent] ?? 0) + 1;
+    }
 
     return {
-      enabled: (config?.autonomyMode ?? "supervised") !== "stopped",
+      enabled: Boolean(
+        config?.enabled && (config.autonomyMode ?? "supervised") !== "stopped"
+      ),
       adapter: config?.adapter ?? "builtin",
       autonomyLevel: config?.autonomyLevel ?? "review_required",
       autonomyMode: config?.autonomyMode ?? "supervised",
@@ -67,14 +114,13 @@ export const getDashboardStats = query({
       todoCount: todoItems.length,
       inProgressCount: inProgressItems.length,
       doneCount: doneItems.length,
-      pendingReviewCount: pendingReviewItems.length + pendingReviewDocs.length,
-      itemsByAgent: Object.fromEntries(
-        [...todoItems, ...inProgressItems].reduce((acc, item) => {
-          const agent = item.assignedAgent ?? "unassigned";
-          acc.set(agent, (acc.get(agent) ?? 0) + 1);
-          return acc;
-        }, new Map<string, number>())
-      ),
+      pendingReviewCount:
+        pendingReviewItems.length +
+        pendingReviewDocs.length +
+        pendingReviewReports.length,
+      maxPendingTasksPerAgent,
+      maxPendingTasksTotal,
+      itemsByAgent,
     };
   },
 });

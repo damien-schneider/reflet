@@ -10,6 +10,7 @@
  */
 
 import { v } from "convex/values";
+import { z } from "zod";
 import type { Id } from "../_generated/dataModel";
 import { internalQuery, type QueryCtx } from "../_generated/server";
 import {
@@ -22,6 +23,9 @@ import {
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const QUERY_LIMIT = 200;
 const DEFAULT_WAKE_THRESHOLD_OPEN_TASKS = 5;
+const supportThreadMetadataSchema = z.object({
+  conversationId: z.string(),
+});
 
 // ============================================
 // PURE WAKE CONDITION FUNCTIONS (testable)
@@ -155,20 +159,65 @@ const fetchPendingValidationCount = async (
     (u) => !u.validation
   ).length;
 
-  return docsNeedingScoring + useCasesNeedingScoring;
+  const communityPosts = await ctx.db
+    .query("autopilotCommunityPosts")
+    .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+    .take(QUERY_LIMIT);
+  const communityPostsNeedingScoring = communityPosts.filter(
+    (post) => !post.validation
+  ).length;
+
+  return (
+    docsNeedingScoring + useCasesNeedingScoring + communityPostsNeedingScoring
+  );
 };
 
 const fetchSupportSignal = async (
   ctx: { db: QueryCtx["db"] },
   orgId: Id<"organizations">
 ): Promise<number> => {
-  const draftDocs = await ctx.db
-    .query("autopilotDocuments")
+  const recentCutoff = Date.now() - ONE_DAY_MS;
+  const conversations = await ctx.db
+    .query("supportConversations")
     .withIndex("by_org_status", (q) =>
-      q.eq("organizationId", orgId).eq("status", "draft")
+      q.eq("organizationId", orgId).eq("status", "open")
     )
     .take(QUERY_LIMIT);
-  return draftDocs.filter((d) => d.type === "support_thread").length;
+
+  const recentOpenConversations = conversations.filter(
+    (conversation) => conversation.lastMessageAt >= recentCutoff
+  );
+  if (recentOpenConversations.length === 0) {
+    return 0;
+  }
+
+  const supportDrafts = await ctx.db
+    .query("autopilotDocuments")
+    .withIndex("by_org_type", (q) =>
+      q.eq("organizationId", orgId).eq("type", "support_thread")
+    )
+    .take(QUERY_LIMIT);
+
+  const triagedConversationIds = new Set<string>();
+  for (const draft of supportDrafts) {
+    if (!draft.metadata) {
+      continue;
+    }
+
+    try {
+      const parsed: unknown = JSON.parse(draft.metadata);
+      const metadata = supportThreadMetadataSchema.safeParse(parsed);
+      if (metadata.success) {
+        triagedConversationIds.add(metadata.data.conversationId);
+      }
+    } catch (error) {
+      console.warn("Invalid support thread metadata", error);
+    }
+  }
+
+  return recentOpenConversations.filter(
+    (conversation) => !triagedConversationIds.has(conversation._id)
+  ).length;
 };
 
 const fetchStuckReviewCount = async (

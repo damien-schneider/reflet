@@ -14,6 +14,41 @@ import {
   impactLevel,
 } from "./schema/validators";
 
+type DocumentStatus = "archived" | "draft" | "pending_review" | "published";
+
+function applyDocumentReviewState({
+  docNeedsReview,
+  now,
+  status,
+  updates,
+}: {
+  docNeedsReview: boolean;
+  now: number;
+  status: DocumentStatus;
+  updates: Record<string, unknown>;
+}) {
+  if (status === "pending_review") {
+    updates.needsReview = true;
+    return;
+  }
+
+  if (status === "published") {
+    updates.needsReview = false;
+    updates.reviewedAt = now;
+    return;
+  }
+
+  if (status === "archived") {
+    updates.needsReview = false;
+    if (docNeedsReview) {
+      updates.reviewedAt = now;
+    }
+    return;
+  }
+
+  updates.needsReview = false;
+}
+
 export const createDocument = internalMutation({
   args: {
     organizationId: v.id("organizations"),
@@ -39,6 +74,8 @@ export const createDocument = internalMutation({
   returns: v.id("autopilotDocuments"),
   handler: async (ctx, args) => {
     const now = Date.now();
+    const status =
+      args.status ?? (args.needsReview ? "pending_review" : "draft");
     return await ctx.db.insert("autopilotDocuments", {
       organizationId: args.organizationId,
       type: args.type,
@@ -46,7 +83,7 @@ export const createDocument = internalMutation({
       content: args.content,
       tags: args.tags ?? [],
       sourceAgent: args.sourceAgent,
-      status: args.status ?? "draft",
+      status,
       needsReview: args.needsReview ?? false,
       reviewType: args.reviewType,
       linkedWorkItemId: args.linkedWorkItemId,
@@ -92,12 +129,24 @@ export const updateDocument = internalMutation({
     }
 
     const { documentId, ...rest } = args;
-    const updates: Record<string, unknown> = { updatedAt: Date.now() };
+    const now = Date.now();
+    const updates: Record<string, unknown> = { updatedAt: now };
 
     for (const [key, value] of Object.entries(rest)) {
       if (value !== undefined) {
         updates[key] = value;
       }
+    }
+
+    if (args.status !== undefined) {
+      applyDocumentReviewState({
+        docNeedsReview: doc.needsReview,
+        now,
+        status: args.status,
+        updates,
+      });
+    } else if (args.needsReview === false && doc.needsReview) {
+      updates.reviewedAt = now;
     }
 
     await ctx.db.patch(documentId, updates);

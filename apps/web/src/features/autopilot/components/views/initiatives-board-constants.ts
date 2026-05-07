@@ -3,11 +3,11 @@ export type SortKey = "status" | "priority" | "updated" | "created";
 export type GroupKey = "status" | "priority" | "none";
 
 export const QUICK_FILTERS = [
-  { label: "All", statuses: [] as string[] },
+  { label: "All", statuses: [] },
   { label: "Active", statuses: ["backlog", "todo", "in_progress"] },
   { label: "Completed", statuses: ["done"] },
   { label: "Paused", statuses: ["in_review", "cancelled"] },
-] as const;
+] satisfies Array<{ label: string; statuses: string[] }>;
 
 export const STATUS_ORDER = [
   "backlog",
@@ -38,41 +38,54 @@ export const STATUS_COLORS: Record<string, string> = {
 
 export const PRIORITY_ORDER = ["critical", "high", "medium", "low"] as const;
 
-export const COLUMN_OPTIONS = [
-  { key: "status", label: "Status" },
-  { key: "priority", label: "Priority" },
-  { key: "assignee", label: "Assignee" },
-  { key: "updated", label: "Updated" },
-  { key: "created", label: "Created" },
-] as const;
-
-export type ColumnKey = (typeof COLUMN_OPTIONS)[number]["key"];
-
 const STORAGE_KEY_VIEW = "autopilot-initiatives-view";
-const STORAGE_KEY_COLS = "autopilot-initiatives-columns";
+const FALLBACK_RANK = 999;
+const VIEW_MODES = new Set<string>(["list", "kanban"]);
+const GROUP_KEYS = new Set<string>(["status", "priority", "none"]);
+const SORT_KEYS = new Set<string>(["status", "priority", "updated", "created"]);
+const STATUS_RANKS = STATUS_ORDER.reduce<Record<string, number>>(
+  (ranks, status, index) => {
+    ranks[status] = index;
+    return ranks;
+  },
+  {}
+);
+const PRIORITY_RANKS = PRIORITY_ORDER.reduce<Record<string, number>>(
+  (ranks, priority, index) => {
+    ranks[priority] = index;
+    return ranks;
+  },
+  {}
+);
+
+export function isGroupKey(value: string): value is GroupKey {
+  return GROUP_KEYS.has(value);
+}
+
+export function isSortKey(value: string): value is SortKey {
+  return SORT_KEYS.has(value);
+}
+
+function isViewMode(value: string | null): value is ViewMode {
+  return value !== null && VIEW_MODES.has(value);
+}
+
+export function getStatusRank(status: string): number {
+  return STATUS_RANKS[status] ?? FALLBACK_RANK;
+}
+
+export function getPriorityRank(priority: string): number {
+  return PRIORITY_RANKS[priority] ?? FALLBACK_RANK;
+}
 
 export function getStoredView(): ViewMode {
   if (typeof window === "undefined") {
     return "list";
   }
-  return (localStorage.getItem(STORAGE_KEY_VIEW) as ViewMode) ?? "list";
-}
-
-export function getStoredColumns(): Set<ColumnKey> {
-  if (typeof window === "undefined") {
-    return new Set(["status", "priority", "updated"]);
-  }
-  const stored = localStorage.getItem(STORAGE_KEY_COLS);
-  if (stored) {
-    return new Set(JSON.parse(stored) as ColumnKey[]);
-  }
-  return new Set(["status", "priority", "updated"]);
+  const stored = localStorage.getItem(STORAGE_KEY_VIEW);
+  return isViewMode(stored) ? stored : "list";
 }
 
 export function persistView(mode: ViewMode): void {
   localStorage.setItem(STORAGE_KEY_VIEW, mode);
-}
-
-export function persistColumns(columns: Set<ColumnKey>): void {
-  localStorage.setItem(STORAGE_KEY_COLS, JSON.stringify([...columns]));
 }

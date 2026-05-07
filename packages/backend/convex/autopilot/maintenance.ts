@@ -84,7 +84,10 @@ export const runKnowledgeStalenessCheck = internalMutation({
     const configs = await ctx.db.query("autopilotConfig").collect();
 
     for (const config of configs) {
-      if ((config.autonomyMode ?? "supervised") === "stopped") {
+      if (
+        !config.enabled ||
+        (config.autonomyMode ?? "supervised") === "stopped"
+      ) {
         continue;
       }
 

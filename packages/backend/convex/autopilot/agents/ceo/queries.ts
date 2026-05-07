@@ -5,6 +5,15 @@
 import { v } from "convex/values";
 import { internalQuery } from "../../../_generated/server";
 
+const AGENT_CONFIG_FIELDS = [
+  { name: "pm", field: "pmEnabled" },
+  { name: "cto", field: "ctoEnabled" },
+  { name: "dev", field: "devEnabled" },
+  { name: "growth", field: "growthEnabled" },
+  { name: "support", field: "supportEnabled" },
+  { name: "sales", field: "salesEnabled" },
+] as const;
+
 /**
  * Build comprehensive context about product state for the CEO agent.
  * Returns aggregated data: task stats, activity, feedback, revenue.
@@ -61,9 +70,10 @@ export const getCEOContext = internalQuery({
     const activeFeedback = allFeedback.filter(
       (f) => !(f.deletedAt || f.isMerged)
     );
+    const byStatus: Record<string, number> = {};
     const feedbackStats = {
       total: activeFeedback.length,
-      byStatus: {} as Record<string, number>,
+      byStatus,
     };
 
     for (const feedback of activeFeedback) {
@@ -86,8 +96,16 @@ export const getCEOContext = internalQuery({
         q.eq("organizationId", args.organizationId).eq("needsReview", true)
       )
       .collect();
+    const reviewReports = await ctx.db
+      .query("autopilotReports")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
+      )
+      .filter((q) => q.eq(q.field("archived"), false))
+      .collect();
 
-    const pendingReviewCount = reviewWorkItems.length + reviewDocuments.length;
+    const pendingReviewCount =
+      reviewWorkItems.length + reviewDocuments.length + reviewReports.length;
 
     return {
       taskStats,
@@ -131,17 +149,8 @@ export const getDetailedCEOContext = internalQuery({
 
     const agentStates: Record<string, boolean> = {};
     if (config) {
-      const agents = [
-        "pm",
-        "cto",
-        "dev",
-        "growth",
-        "support",
-        "sales",
-      ] as const;
-      for (const agent of agents) {
-        const field = `${agent}Enabled` as keyof typeof config;
-        agentStates[agent] = config[field] !== false;
+      for (const { name, field } of AGENT_CONFIG_FIELDS) {
+        agentStates[name] = config[field] !== false;
       }
     }
 
@@ -176,16 +185,34 @@ export const getDetailedCEOContext = internalQuery({
         q.eq("organizationId", args.organizationId).eq("needsReview", true)
       )
       .take(10);
+    const reviewReports = await ctx.db
+      .query("autopilotReports")
+      .withIndex("by_org_review", (q) =>
+        q.eq("organizationId", args.organizationId).eq("needsReview", true)
+      )
+      .filter((q) => q.eq(q.field("archived"), false))
+      .take(10);
 
     const reviewSummaries = [
       ...reviewWorkItems.map((w) => ({
+        id: w._id,
+        source: "work_item",
         title: w.title,
         type: w.reviewType ?? w.type,
         priority: w.priority,
       })),
       ...reviewDocs.map((d) => ({
+        id: d._id,
+        source: "document",
         title: d.title,
         type: d.reviewType ?? d.type,
+        priority: "medium" as const,
+      })),
+      ...reviewReports.map((report) => ({
+        id: report._id,
+        source: "report",
+        title: report.title,
+        type: report.reportType,
         priority: "medium" as const,
       })),
     ];

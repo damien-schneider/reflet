@@ -138,6 +138,7 @@ export const setAutonomyMode = mutation({
       }
 
       await ctx.db.patch(config._id, {
+        enabled: false,
         autonomyMode: "stopped",
         stoppedAt: now,
         updatedAt: now,
@@ -163,12 +164,13 @@ export const setAutonomyMode = mutation({
 
       for (const item of backlogItems) {
         await ctx.db.patch(item._id, {
-          status: "in_progress",
+          status: "todo",
           updatedAt: now,
         });
       }
 
       await ctx.db.patch(config._id, {
+        enabled: true,
         autonomyMode: args.mode,
         stoppedAt: undefined,
         updatedAt: now,
@@ -181,17 +183,11 @@ export const setAutonomyMode = mutation({
         message: `Autopilot resumed in ${args.mode} mode — ${backlogItems.length} work items resumed`,
         organizationId: args.organizationId,
       });
-
-      // Trigger bootstrap when resuming from stopped
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.onboarding.bootstrapAutopilot,
-        { organizationId: config.organizationId }
-      );
       return;
     }
 
     await ctx.db.patch(config._id, {
+      enabled: args.mode !== "stopped",
       autonomyMode: args.mode,
       updatedAt: now,
     });

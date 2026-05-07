@@ -93,6 +93,10 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
         remove: "feedback_actions.remove",
         togglePin: "feedback_actions.togglePin",
       },
+      actions_manage: {
+        updateOrganizationStatus: "feedback_actions.updateOrganizationStatus",
+        remove: "feedback_actions.remove",
+      },
       votes: { toggle: "votes.toggle" },
       clarification_draft_reply: {
         getDraftReplyStatus:
@@ -100,9 +104,34 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
         initiateDraftReply:
           "feedback.clarification_draft_reply.initiateDraftReply",
       },
+      clarification: {
+        getClarificationStatus: "feedback.clarification.getClarificationStatus",
+        generateCodingPrompt: "feedback.clarification.generateCodingPrompt",
+        initiateClarification: "feedback.clarification.initiateClarification",
+      },
     },
     organizations: {
+      statuses_queries: { list: "organization_statuses.list" },
       statuses: { list: "organization_statuses.list" },
+    },
+    autopilot: {
+      queries: {
+        feedback_links: {
+          getTasksForFeedback: "autopilot.feedback_links.getTasksForFeedback",
+        },
+        work: {
+          listWorkItems: "autopilot.work.listWorkItems",
+        },
+      },
+      mutations: {
+        feedback_links: {
+          linkFeedbackToTask: "autopilot.feedback_links.linkFeedbackToTask",
+          unlinkFeedbackFromTask:
+            "autopilot.feedback_links.unlinkFeedbackFromTask",
+          createTaskFromFeedback:
+            "autopilot.feedback_links.createTaskFromFeedback",
+        },
+      },
     },
   },
 }));
@@ -125,6 +154,9 @@ vi.mock("@/components/ui/dialog", () => ({
   ),
   DialogFooter: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
+  ),
+  DialogTrigger: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-trigger">{children}</div>
   ),
 }));
 

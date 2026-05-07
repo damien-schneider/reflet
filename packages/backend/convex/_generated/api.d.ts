@@ -52,6 +52,7 @@ import type * as autopilot_agents_growth_content_enricher from "../autopilot/age
 import type * as autopilot_agents_growth_content_generation from "../autopilot/agents/growth/content_generation.js";
 import type * as autopilot_agents_growth_content_storage from "../autopilot/agents/growth/content_storage.js";
 import type * as autopilot_agents_growth_discovery from "../autopilot/agents/growth/discovery.js";
+import type * as autopilot_agents_growth_drafts_producer from "../autopilot/agents/growth/drafts/producer.js";
 import type * as autopilot_agents_growth_gap_assessment from "../autopilot/agents/growth/gap_assessment.js";
 import type * as autopilot_agents_growth_market_research from "../autopilot/agents/growth/market_research.js";
 import type * as autopilot_agents_growth_product_context from "../autopilot/agents/growth/product_context.js";
@@ -72,6 +73,7 @@ import type * as autopilot_agents_shared_generation from "../autopilot/agents/sh
 import type * as autopilot_agents_shared_search from "../autopilot/agents/shared_search.js";
 import type * as autopilot_agents_shared_web from "../autopilot/agents/shared_web.js";
 import type * as autopilot_agents_support from "../autopilot/agents/support.js";
+import type * as autopilot_agents_validation_community_posts from "../autopilot/agents/validation/community_posts.js";
 import type * as autopilot_agents_validator from "../autopilot/agents/validator.js";
 import type * as autopilot_agents_validator_prompts from "../autopilot/agents/validator_prompts.js";
 import type * as autopilot_autonomy from "../autopilot/autonomy.js";
@@ -90,6 +92,7 @@ import type * as autopilot_dedup from "../autopilot/dedup.js";
 import type * as autopilot_documents from "../autopilot/documents.js";
 import type * as autopilot_execution from "../autopilot/execution.js";
 import type * as autopilot_execution_lifecycle from "../autopilot/execution_lifecycle.js";
+import type * as autopilot_execution_policy from "../autopilot/execution_policy.js";
 import type * as autopilot_gate from "../autopilot/gate.js";
 import type * as autopilot_guards from "../autopilot/guards.js";
 import type * as autopilot_health from "../autopilot/health.js";
@@ -390,6 +393,7 @@ declare const fullApi: ApiFromModules<{
   "autopilot/agents/growth/content_generation": typeof autopilot_agents_growth_content_generation;
   "autopilot/agents/growth/content_storage": typeof autopilot_agents_growth_content_storage;
   "autopilot/agents/growth/discovery": typeof autopilot_agents_growth_discovery;
+  "autopilot/agents/growth/drafts/producer": typeof autopilot_agents_growth_drafts_producer;
   "autopilot/agents/growth/gap_assessment": typeof autopilot_agents_growth_gap_assessment;
   "autopilot/agents/growth/market_research": typeof autopilot_agents_growth_market_research;
   "autopilot/agents/growth/product_context": typeof autopilot_agents_growth_product_context;
@@ -410,6 +414,7 @@ declare const fullApi: ApiFromModules<{
   "autopilot/agents/shared_search": typeof autopilot_agents_shared_search;
   "autopilot/agents/shared_web": typeof autopilot_agents_shared_web;
   "autopilot/agents/support": typeof autopilot_agents_support;
+  "autopilot/agents/validation/community_posts": typeof autopilot_agents_validation_community_posts;
   "autopilot/agents/validator": typeof autopilot_agents_validator;
   "autopilot/agents/validator_prompts": typeof autopilot_agents_validator_prompts;
   "autopilot/autonomy": typeof autopilot_autonomy;
@@ -428,6 +433,7 @@ declare const fullApi: ApiFromModules<{
   "autopilot/documents": typeof autopilot_documents;
   "autopilot/execution": typeof autopilot_execution;
   "autopilot/execution_lifecycle": typeof autopilot_execution_lifecycle;
+  "autopilot/execution_policy": typeof autopilot_execution_policy;
   "autopilot/gate": typeof autopilot_gate;
   "autopilot/guards": typeof autopilot_guards;
   "autopilot/health": typeof autopilot_health;

@@ -9,10 +9,11 @@ import {
   IconSparkles,
   IconTrendingUp,
 } from "@tabler/icons-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
-import { DashboardCharts } from "@/features/autopilot/components/dashboard-charts";
 import { DashboardStats } from "@/features/autopilot/components/dashboard-stats";
 import { OnboardingChecklist } from "@/features/autopilot/components/onboarding-checklist";
 
@@ -24,6 +25,30 @@ const QUICK_ACTIONS = [
   { label: "Settings", icon: IconSettings, path: "/settings" },
 ] as const;
 
+function DashboardChartsFallback() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      {Array.from({ length: 4 }, (_, index) => (
+        <Skeleton
+          className="h-[300px] w-full rounded-xl"
+          key={`dashboard-chart-${String(index)}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+const DashboardCharts = dynamic(
+  () =>
+    import("@/features/autopilot/components/dashboard-charts").then(
+      (module) => module.DashboardCharts
+    ),
+  {
+    loading: DashboardChartsFallback,
+    ssr: false,
+  }
+);
+
 export default function AutopilotDashboardPage() {
   const { organizationId, orgSlug } = useAutopilotContext();
   const baseUrl = `/dashboard/${orgSlug}/autopilot`;
@@ -34,7 +59,6 @@ export default function AutopilotDashboardPage() {
 
       <OnboardingChecklist baseUrl={baseUrl} organizationId={organizationId} />
 
-      {/* Quick Actions */}
       <section>
         <div className="flex flex-wrap gap-2">
           {QUICK_ACTIONS.map((action) => (
@@ -52,7 +76,6 @@ export default function AutopilotDashboardPage() {
 
       <DashboardCharts organizationId={organizationId} />
 
-      {/* Agent Fleet — link to dedicated page */}
       <section>
         <Link
           className="group flex items-center justify-between rounded-xl border bg-card px-4 py-3 transition-colors hover:bg-accent/50"

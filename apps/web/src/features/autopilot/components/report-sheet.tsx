@@ -5,6 +5,7 @@ import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { IconArrowDown, IconArrowUp, IconMinus } from "@tabler/icons-react";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AGENT_LABELS } from "@/features/autopilot/lib/document-labels";
 import { cn } from "@/lib/utils";
 
@@ -89,7 +91,7 @@ function HealthScoreRing({ score }: { score: number }) {
           strokeWidth="6"
         />
         <circle
-          className={cn("transition-all duration-500", color)}
+          className={cn("transition-colors duration-500", color)}
           cx="40"
           cy="40"
           fill="none"
@@ -274,29 +276,38 @@ export function ReportSheet({ onOpenChange, open, report }: ReportSheetProps) {
   const acknowledgeReport = useMutation(
     api.autopilot.mutations.reports.acknowledgeReport
   );
+  const [pendingAction, setPendingAction] = useState<
+    "acknowledge" | "archive" | null
+  >(null);
 
   const handleArchive = async () => {
-    if (!report) {
+    if (!(report && pendingAction === null)) {
       return;
     }
+    setPendingAction("archive");
     try {
       await archiveReport({ reportId: report._id });
       toast.success("Report archived");
       onOpenChange(false);
     } catch {
       toast.error("Failed to archive report");
+    } finally {
+      setPendingAction(null);
     }
   };
 
   const handleAcknowledge = async () => {
-    if (!report) {
+    if (!(report && pendingAction === null)) {
       return;
     }
+    setPendingAction("acknowledge");
     try {
       await acknowledgeReport({ reportId: report._id });
       toast.success("Report acknowledged");
     } catch {
       toast.error("Failed to acknowledge report");
+    } finally {
+      setPendingAction(null);
     }
   };
 
@@ -334,17 +345,58 @@ export function ReportSheet({ onOpenChange, open, report }: ReportSheetProps) {
               <ReportBody report={report} />
             </ScrollArea>
             <SheetFooter className="flex-row justify-between gap-2">
-              <Button onClick={handleArchive} variant="outline">
-                Archive
+              <Button
+                disabled={pendingAction !== null}
+                onClick={handleArchive}
+                variant="outline"
+              >
+                {pendingAction === "archive" ? "Archiving..." : "Archive"}
               </Button>
               {report.needsReview && (
-                <Button onClick={handleAcknowledge}>Acknowledge</Button>
+                <Button
+                  disabled={pendingAction !== null}
+                  onClick={handleAcknowledge}
+                >
+                  {pendingAction === "acknowledge"
+                    ? "Acknowledging..."
+                    : "Acknowledge"}
+                </Button>
               )}
             </SheetFooter>
           </>
-        ) : null}
+        ) : (
+          <ReportSheetLoading />
+        )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+function ReportSheetLoading() {
+  return (
+    <>
+      <SheetHeader>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-5 w-16" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+        <Skeleton className="h-7 w-2/3" />
+        <SheetDescription className="sr-only">
+          Loading report details
+        </SheetDescription>
+      </SheetHeader>
+      <ScrollArea className="flex-1" classNameViewport="px-4">
+        <div className="space-y-5">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
+      </ScrollArea>
+      <SheetFooter className="flex-row justify-between gap-2">
+        <Skeleton className="h-9 w-24" />
+        <Skeleton className="h-9 w-28" />
+      </SheetFooter>
+    </>
   );
 }
 
