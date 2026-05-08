@@ -3,8 +3,13 @@
  */
 
 import { v } from "convex/values";
-import { mutation } from "../../_generated/server";
+import { mutation, query } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
+import {
+  deleteAutopilotResetData,
+  getAutopilotResetScope,
+  resetScopeGroup,
+} from "../reset/scope";
 import { requireOrgAdmin } from "./auth";
 
 export const createRoutine = mutation({
@@ -103,25 +108,11 @@ export const deleteRoutine = mutation({
 // Reset — wipe all autopilot data for an org
 // ============================================
 
-const AUTOPILOT_TABLES_WITH_OTHER_ORG_TABLES = [
-  "autopilotActivityLog",
-  "autopilotDocuments",
-  "autopilotCompetitors",
-  "autopilotCommunityPosts",
-  "autopilotRevenueSnapshots",
-  "autopilotRepoAnalysis",
-  "autopilotLeads",
-  "autopilotPersonas",
-  "autopilotRoutines",
-  "autopilotAdapterCredentials",
-  "autopilotReports",
-  "autopilotAgentMemories",
-  "autopilotUseCases",
-  "feedbackTaskLinks",
-  "repoAnalysis",
-  "websiteReferences",
-  "projectSetupResults",
-] as const;
+export const getResetScope = query({
+  args: {},
+  returns: v.array(resetScopeGroup),
+  handler: getAutopilotResetScope,
+});
 
 export const resetAllData = mutation({
   args: { organizationId: v.id("organizations") },
@@ -130,87 +121,7 @@ export const resetAllData = mutation({
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
 
-    // 1. Delete knowledge doc versions (linked via docId, no org index)
-    const knowledgeDocs = await ctx.db
-      .query("autopilotKnowledgeDocs")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    for (const doc of knowledgeDocs) {
-      const versions = await ctx.db
-        .query("autopilotKnowledgeDocVersions")
-        .withIndex("by_doc", (q) => q.eq("docId", doc._id))
-        .collect();
-      for (const version of versions) {
-        await ctx.db.delete(version._id);
-      }
-      await ctx.db.delete(doc._id);
-    }
-
-    // 2. Delete agent messages (linked via threadId)
-    const threads = await ctx.db
-      .query("autopilotAgentThreads")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    for (const thread of threads) {
-      const messages = await ctx.db
-        .query("autopilotAgentMessages")
-        .withIndex("by_thread", (q) => q.eq("threadId", thread._id))
-        .collect();
-      for (const msg of messages) {
-        await ctx.db.delete(msg._id);
-      }
-      await ctx.db.delete(thread._id);
-    }
-
-    // 3. Delete work items and their associated runs
-    const workItems = await ctx.db
-      .query("autopilotWorkItems")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    for (const item of workItems) {
-      const runs = await ctx.db
-        .query("autopilotRuns")
-        .withIndex("by_work_item", (q) => q.eq("workItemId", item._id))
-        .collect();
-      for (const run of runs) {
-        await ctx.db.delete(run._id);
-      }
-      await ctx.db.delete(item._id);
-    }
-
-    // 4. Delete all other autopilot tables with by_organization index
-    for (const table of AUTOPILOT_TABLES_WITH_OTHER_ORG_TABLES) {
-      const rows = await ctx.db
-        .query(table)
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", args.organizationId)
-        )
-        .collect();
-      for (const row of rows) {
-        await ctx.db.delete(row._id);
-      }
-    }
-
-    // 5. Delete the config itself (last, so we can re-initialize)
-    const config = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    if (config) {
-      await ctx.db.delete(config._id);
-    }
+    await deleteAutopilotResetData(ctx, args.organizationId);
 
     return null;
   },

@@ -9,11 +9,25 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { toOrgId } from "@/lib/convex-helpers";
 
-const { mockToastError, mockUseQuery, mutationHandlers } = vi.hoisted(() => ({
-  mockToastError: vi.fn(),
-  mockUseQuery: vi.fn(),
-  mutationHandlers: new Map<string, ReturnType<typeof vi.fn>>(),
-}));
+type ResetScopeForTest = Array<{
+  description: string;
+  items: string[];
+  title: string;
+}>;
+
+interface DangerZonePropsForTest {
+  isResetting: boolean;
+  onReset: () => void;
+  resetScope: ResetScopeForTest | undefined;
+}
+
+const { mockDangerZoneRender, mockToastError, mockUseQuery, mutationHandlers } =
+  vi.hoisted(() => ({
+    mockDangerZoneRender: vi.fn(),
+    mockToastError: vi.fn(),
+    mockUseQuery: vi.fn(),
+    mutationHandlers: new Map<string, ReturnType<typeof vi.fn>>(),
+  }));
 
 vi.mock("convex/react", () => ({
   useMutation: (mutation: string) => {
@@ -36,6 +50,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
           upsertCredentials: "autopilot.config.upsertCredentials",
         },
         routines: {
+          getResetScope: "autopilot.routines.getResetScope",
           resetAllData: "autopilot.routines.resetAllData",
         },
       },
@@ -84,7 +99,10 @@ vi.mock("@/features/autopilot/components/settings/budget-settings", () => ({
 }));
 
 vi.mock("@/features/autopilot/components/settings/danger-zone", () => ({
-  DangerZone: () => null,
+  DangerZone: (props: DangerZonePropsForTest) => {
+    mockDangerZoneRender(props);
+    return <div data-testid="danger-zone" />;
+  },
 }));
 
 vi.mock("@/features/autopilot/components/settings/general-settings", () => ({
@@ -100,6 +118,14 @@ const config = {
   maxTasksPerDay: 5,
   perAgentDailyCapUsd: undefined,
 };
+
+const resetScope = [
+  {
+    title: "Execution history",
+    description: "Tasks and their run records.",
+    items: ["Tasks", "Runs"],
+  },
+];
 
 async function renderSettingsPage() {
   const module = await import("./page");
@@ -118,6 +144,9 @@ beforeEach(() => {
     if (queryName === "billing.getStatus") {
       return { tier: "pro" };
     }
+    if (queryName === "autopilot.routines.getResetScope") {
+      return resetScope;
+    }
     return undefined;
   });
 });
@@ -129,6 +158,18 @@ afterEach(() => {
 });
 
 describe("AutopilotSettingsPage", () => {
+  it("passes the backend reset scope into the danger zone", async () => {
+    await renderSettingsPage();
+
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      "autopilot.routines.getResetScope",
+      {}
+    );
+    expect(mockDangerZoneRender).toHaveBeenCalledWith(
+      expect.objectContaining({ resetScope })
+    );
+  });
+
   it("rolls back edited limits when saving fails", async () => {
     const updateConfig = vi.fn(() => Promise.reject(new Error("Save failed")));
     mutationHandlers.set("autopilot.config.updateConfig", updateConfig);

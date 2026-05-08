@@ -18,13 +18,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionHeader } from "@/features/autopilot/components/settings/section-header";
 
+interface ResetScopeGroup {
+  description: string;
+  items: string[];
+  title: string;
+}
+
 export function DangerZone({
   isResetting,
   onReset,
+  resetScope,
 }: {
   isResetting: boolean;
   onReset: () => void;
+  resetScope: ResetScopeGroup[] | undefined;
 }) {
+  const isResetScopeLoading = resetScope === undefined;
+
   return (
     <section className="space-y-5">
       <SectionHeader
@@ -38,8 +48,8 @@ export function DangerZone({
           <div className="min-w-0">
             <p className="font-medium text-sm">Reset Autopilot</p>
             <p className="text-muted-foreground text-xs">
-              Delete all autopilot data: work items, runs, knowledge, documents,
-              activity logs, and config. This cannot be undone.
+              Delete Autopilot&apos;s generated data and settings. The
+              confirmation dialog shows the full deletion scope.
             </p>
           </div>
           <AlertDialog>
@@ -47,7 +57,7 @@ export function DangerZone({
               render={
                 <Button
                   className="shrink-0"
-                  disabled={isResetting}
+                  disabled={isResetting || isResetScopeLoading}
                   variant="destructive"
                 >
                   <IconTrash className="mr-1.5 size-4" />
@@ -67,6 +77,29 @@ export function DangerZone({
                   scratch.
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              <div className="max-h-72 overflow-y-auto rounded-lg border bg-muted/30 p-3">
+                {isResetScopeLoading ? (
+                  <p className="text-muted-foreground text-sm">
+                    Loading reset scope...
+                  </p>
+                ) : (
+                  <ul className="space-y-3">
+                    {resetScope.map((group) => (
+                      <li className="space-y-1" key={group.title}>
+                        <p className="font-medium text-sm">{group.title}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {group.description}
+                        </p>
+                        <ul className="list-disc space-y-1 pl-4 text-muted-foreground text-xs">
+                          {group.items.map((item) => (
+                            <li key={`${group.title}-${item}`}>{item}</li>
+                          ))}
+                        </ul>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction

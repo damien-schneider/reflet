@@ -40,6 +40,10 @@ export default function AutopilotSettingsPage() {
   const billing = useQuery(api.billing.queries.getStatus, {
     organizationId,
   });
+  const resetScope = useQuery(
+    api.autopilot.mutations.routines.getResetScope,
+    {}
+  );
 
   const initConfig = useMutation(api.autopilot.mutations.config.initConfig);
   const updateConfig = useMutation(api.autopilot.mutations.config.updateConfig);
@@ -215,7 +219,11 @@ export default function AutopilotSettingsPage() {
       />
 
       {isAdmin && (
-        <DangerZone isResetting={isResetting} onReset={handleResetAll} />
+        <DangerZone
+          isResetting={isResetting}
+          onReset={handleResetAll}
+          resetScope={resetScope}
+        />
       )}
     </div>
   );

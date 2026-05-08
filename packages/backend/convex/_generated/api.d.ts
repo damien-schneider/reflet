@@ -139,6 +139,7 @@ import type * as autopilot_queries_threads from "../autopilot/queries/threads.js
 import type * as autopilot_queries_work from "../autopilot/queries/work.js";
 import type * as autopilot_repo_analysis from "../autopilot/repo_analysis.js";
 import type * as autopilot_reports from "../autopilot/reports.js";
+import type * as autopilot_reset_scope from "../autopilot/reset/scope.js";
 import type * as autopilot_revenue_actions from "../autopilot/revenue_actions.js";
 import type * as autopilot_revenue_queries from "../autopilot/revenue_queries.js";
 import type * as autopilot_routines from "../autopilot/routines.js";
@@ -481,6 +482,7 @@ declare const fullApi: ApiFromModules<{
   "autopilot/queries/work": typeof autopilot_queries_work;
   "autopilot/repo_analysis": typeof autopilot_repo_analysis;
   "autopilot/reports": typeof autopilot_reports;
+  "autopilot/reset/scope": typeof autopilot_reset_scope;
   "autopilot/revenue_actions": typeof autopilot_revenue_actions;
   "autopilot/revenue_queries": typeof autopilot_revenue_queries;
   "autopilot/routines": typeof autopilot_routines;
