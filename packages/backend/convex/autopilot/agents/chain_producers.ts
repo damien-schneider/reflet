@@ -556,7 +556,8 @@ export const produceUseCases = internalAction({
       return null;
     }
 
-    const personasForPrompt = context.personas.map((p) => ({
+    const personas: Doc<"autopilotPersonas">[] = context.personas;
+    const personasForPrompt = personas.map((p) => ({
       _id: p._id,
       name: p.name,
       painPoints: p.painPoints,
@@ -571,9 +572,7 @@ export const produceUseCases = internalAction({
       temperature: 0,
     });
 
-    const personaIdByName = new Map(
-      context.personas.map((p) => [p.name, p._id])
-    );
+    const personaIdByName = new Map(personas.map((p) => [p.name, p._id]));
 
     for (const uc of result.useCases) {
       const personaId = personaIdByName.get(uc.personaName);

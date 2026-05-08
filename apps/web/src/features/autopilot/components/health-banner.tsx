@@ -159,6 +159,9 @@ export function HealthBanner() {
                 "actionUrl" in issue ? issue.actionUrl : undefined;
               const actionLabel =
                 "actionLabel" in issue ? issue.actionLabel : undefined;
+              const actionHref = actionUrl
+                ? `${baseUrl}/${actionUrl}`
+                : baseUrl;
 
               return (
                 <div className="flex items-start gap-2.5" key={issue.id}>
@@ -176,13 +179,13 @@ export function HealthBanner() {
                       </p>
                     )}
                   </div>
-                  {actionUrl && actionLabel && (
+                  {actionLabel && (
                     <Link
                       className={cn(
                         buttonVariants({ variant: "outline", size: "sm" }),
                         "shrink-0 gap-1 text-xs"
                       )}
-                      href={`${baseUrl}/${actionUrl}`}
+                      href={actionHref}
                     >
                       {actionLabel}
                       <ArrowRightIcon className="size-3" />

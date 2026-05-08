@@ -5,6 +5,12 @@ import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
+import {
+  createParentTask,
+  createAutopilotConfig as createProAutopilotConfig,
+  createOrg as createProOrg,
+  createTestContext as createProTestContext,
+} from "./test-fixtures.helpers";
 
 const createTestContext = () => convexTest(schema, modules);
 type TestContext = ReturnType<typeof createTestContext>;
@@ -255,7 +261,7 @@ describe("autopilot review items", () => {
     const t = createTestContext();
     const orgId = await createOrg(t);
 
-    const docId = await t.mutation(
+    const docId: Id<"autopilotDocuments"> = await t.mutation(
       internal.autopilot.documents.createDocument,
       {
         organizationId: orgId,
@@ -290,5 +296,55 @@ describe("autopilot config", () => {
     expect(config).not.toBeNull();
     expect(config?.enabled).toBe(false);
     expect(config?.autonomyLevel).toBe("review_required");
+  });
+});
+
+describe("autopilot execution", () => {
+  test("pauses capped tasks outside the dispatch queue", async () => {
+    const t = createProTestContext();
+    const organizationId = await createProOrg(t);
+    const configId = await createProAutopilotConfig(t, organizationId, {
+      maxTasksPerDay: 1,
+      tasksUsedToday: 1,
+    });
+    const taskId = await createParentTask(t, {
+      organizationId,
+      title: "Queued after daily cap",
+      description: "Do not churn in the heartbeat dispatch queue.",
+      priority: "medium",
+    });
+    await t.mutation(
+      internal.autopilot.config_mutations.upsertAdapterCredentials,
+      {
+        organizationId,
+        adapter: "builtin",
+        credentials: JSON.stringify({ githubToken: "ghp_test" }),
+      }
+    );
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response("{}", { status: 200 });
+
+    try {
+      await t.action(internal.autopilot.execution.executeTask, {
+        organizationId,
+        taskId,
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+
+    const rows = await t.run(async (ctx) => ({
+      activity: await ctx.db.query("autopilotActivityLog").collect(),
+      config: await ctx.db.get(configId),
+      task: await ctx.db.get(taskId),
+    }));
+
+    expect(rows.config?.tasksUsedToday).toBe(1);
+    expect(rows.task?.status).toBe("backlog");
+    expect(
+      rows.activity.some((entry) =>
+        entry.details?.includes("Daily task limit reached")
+      )
+    ).toBe(true);
   });
 });

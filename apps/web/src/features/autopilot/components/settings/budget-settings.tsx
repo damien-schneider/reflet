@@ -11,7 +11,7 @@ export function BudgetSettings({
   storedValue,
 }: {
   disabled: boolean;
-  onSave: (json: string) => void;
+  onSave: (json: string) => Promise<void>;
   storedValue: string | undefined;
 }) {
   return (

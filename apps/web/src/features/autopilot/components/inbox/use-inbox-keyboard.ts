@@ -1,34 +1,22 @@
 import { useEffect } from "react";
-import type {
-  InboxItem,
-  InboxStatusAction,
-  InboxTab,
-  SelectedIndexAction,
-} from "./types";
+import type { InboxItem, InboxTab, SelectedIndexAction } from "./types";
 
 interface InboxActionOptions {
   dispatchSelectedIndex: (action: SelectedIndexAction) => void;
-  isUpdatingItem: (itemId: string) => boolean;
+  hasAnyModifier: boolean;
   items: InboxItem[];
   key: string;
   openDetail: (item: InboxItem) => void;
   selectedIndex: number;
-  updateStatus: (
-    item: InboxItem,
-    status: InboxStatusAction
-  ) => Promise<unknown>;
 }
+
+type InboxAction = () => Promise<unknown>;
 
 interface UseInboxKeyboardOptions {
   dispatchSelectedIndex: (action: SelectedIndexAction) => void;
   filteredItems: InboxItem[] | undefined;
-  isUpdatingItem: (itemId: string) => boolean;
   openDetail: (item: InboxItem) => void;
   selectedIndex: number;
-  updateStatus: (
-    item: InboxItem,
-    status: InboxStatusAction
-  ) => Promise<unknown>;
 }
 
 export function getEmptyMessage(search: string, tab: InboxTab): string {
@@ -41,55 +29,77 @@ export function getEmptyMessage(search: string, tab: InboxTab): string {
   return "No resolved items";
 }
 
-async function handleInboxAction({
+const EDITABLE_SHORTCUT_TARGET_SELECTOR =
+  "input, textarea, select, [contenteditable='true'], [contenteditable='']";
+const INTERACTIVE_SHORTCUT_TARGET_SELECTOR =
+  "button, a, [role='button'], [role='link']";
+
+function isShortcutTarget(
+  target: EventTarget | null,
+  selector: string
+): boolean {
+  return target instanceof Element && target.closest(selector) !== null;
+}
+
+function hasAnyKeyboardModifier(event: KeyboardEvent): boolean {
+  return event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
+}
+
+function getShortcutKey(event: KeyboardEvent): string {
+  if (event.key.length === 1) {
+    return event.key.toLowerCase();
+  }
+  return event.key;
+}
+
+function isNavigationShortcut(key: string, hasAnyModifier: boolean): boolean {
+  return !hasAnyModifier && (key === "j" || key === "k");
+}
+
+function getInboxAction({
   dispatchSelectedIndex,
-  isUpdatingItem,
+  hasAnyModifier,
   items,
   key,
   openDetail,
   selectedIndex,
-  updateStatus,
-}: InboxActionOptions): Promise<boolean> {
+}: InboxActionOptions): InboxAction | null {
   const item = items[selectedIndex];
   switch (key) {
     case "j": {
-      dispatchSelectedIndex({
-        kind: "setSelectedIndex",
-        update: (previous) => Math.min(previous + 1, items.length - 1),
-      });
-      return true;
+      if (hasAnyModifier) {
+        return null;
+      }
+      return async () =>
+        dispatchSelectedIndex({
+          kind: "setSelectedIndex",
+          update: (previous) => Math.min(previous + 1, items.length - 1),
+        });
     }
     case "k": {
-      dispatchSelectedIndex({
-        kind: "setSelectedIndex",
-        update: (previous) => Math.max(previous - 1, 0),
-      });
-      return true;
+      if (hasAnyModifier) {
+        return null;
+      }
+      return async () =>
+        dispatchSelectedIndex({
+          kind: "setSelectedIndex",
+          update: (previous) => Math.max(previous - 1, 0),
+        });
     }
     case "a": {
-      if (item?.needsReview && !isUpdatingItem(item._id)) {
-        await updateStatus(item, "approved");
-      }
-      return true;
+      return null;
     }
     case "y": {
-      if (
-        item?.needsReview &&
-        item._source !== "report" &&
-        !isUpdatingItem(item._id)
-      ) {
-        await updateStatus(item, "rejected");
-      }
-      return true;
+      return null;
     }
     case "Enter": {
-      if (item) {
-        openDetail(item);
+      if (hasAnyModifier || !item) {
+        return null;
       }
-      return true;
+      return async () => openDetail(item);
     }
     default: {
-      return false;
+      return null;
     }
   }
 }
@@ -97,45 +107,49 @@ async function handleInboxAction({
 export function useInboxKeyboard({
   dispatchSelectedIndex,
   filteredItems,
-  isUpdatingItem,
   openDetail,
   selectedIndex,
-  updateStatus,
 }: UseInboxKeyboardOptions) {
   useEffect(
     function bindKeyboardNavigation() {
       const handleKeyDown = async (event: KeyboardEvent) => {
-        const isTextInput =
-          event.target instanceof HTMLInputElement ||
-          event.target instanceof HTMLTextAreaElement;
-        if (isTextInput || !filteredItems || filteredItems.length === 0) {
+        const key = getShortcutKey(event);
+        const hasAnyModifier = hasAnyKeyboardModifier(event);
+        if (
+          isShortcutTarget(event.target, EDITABLE_SHORTCUT_TARGET_SELECTOR) ||
+          !filteredItems ||
+          filteredItems.length === 0
+        ) {
+          return;
+        }
+        if (
+          isShortcutTarget(
+            event.target,
+            INTERACTIVE_SHORTCUT_TARGET_SELECTOR
+          ) &&
+          !isNavigationShortcut(key, hasAnyModifier)
+        ) {
           return;
         }
 
-        const handled = await handleInboxAction({
+        const action = getInboxAction({
           dispatchSelectedIndex,
-          isUpdatingItem,
+          hasAnyModifier,
           items: filteredItems,
-          key: event.key,
+          key,
           openDetail,
           selectedIndex,
-          updateStatus,
         });
-        if (handled) {
-          event.preventDefault();
+        if (!action) {
+          return;
         }
+        event.preventDefault();
+        await action();
       };
 
       window.addEventListener("keydown", handleKeyDown);
       return () => window.removeEventListener("keydown", handleKeyDown);
     },
-    [
-      dispatchSelectedIndex,
-      filteredItems,
-      isUpdatingItem,
-      openDetail,
-      selectedIndex,
-      updateStatus,
-    ]
+    [dispatchSelectedIndex, filteredItems, openDetail, selectedIndex]
   );
 }

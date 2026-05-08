@@ -26,6 +26,7 @@ export const createRoutine = mutation({
     timezone: v.optional(v.string()),
     taskTemplate: v.string(),
   },
+  returns: v.id("autopilotRoutines"),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
@@ -57,6 +58,7 @@ export const updateRoutine = mutation({
     taskTemplate: v.optional(v.string()),
     enabled: v.optional(v.boolean()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     const routine = await ctx.db.get(args.routineId);
@@ -75,6 +77,7 @@ export const updateRoutine = mutation({
     }
 
     await ctx.db.patch(routineId, cleanUpdates);
+    return null;
   },
 });
 
@@ -82,6 +85,7 @@ export const deleteRoutine = mutation({
   args: {
     routineId: v.id("autopilotRoutines"),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     const routine = await ctx.db.get(args.routineId);
@@ -91,6 +95,7 @@ export const deleteRoutine = mutation({
     await requireOrgAdmin(ctx, routine.organizationId, user._id);
 
     await ctx.db.delete(args.routineId);
+    return null;
   },
 });
 
@@ -102,13 +107,17 @@ const AUTOPILOT_TABLES_WITH_OTHER_ORG_TABLES = [
   "autopilotActivityLog",
   "autopilotDocuments",
   "autopilotCompetitors",
+  "autopilotCommunityPosts",
   "autopilotRevenueSnapshots",
   "autopilotRepoAnalysis",
   "autopilotLeads",
+  "autopilotPersonas",
   "autopilotRoutines",
   "autopilotAdapterCredentials",
   "autopilotReports",
   "autopilotAgentMemories",
+  "autopilotUseCases",
+  "feedbackTaskLinks",
   "repoAnalysis",
   "websiteReferences",
   "projectSetupResults",
@@ -116,6 +125,7 @@ const AUTOPILOT_TABLES_WITH_OTHER_ORG_TABLES = [
 
 export const resetAllData = mutation({
   args: { organizationId: v.id("organizations") },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
@@ -201,5 +211,7 @@ export const resetAllData = mutation({
     if (config) {
       await ctx.db.delete(config._id);
     }
+
+    return null;
   },
 });

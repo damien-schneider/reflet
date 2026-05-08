@@ -19,9 +19,12 @@ export const archiveReport = mutation({
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, report.organizationId, user._id);
 
+    const now = Date.now();
     await ctx.db.patch(args.reportId, {
       archived: true,
-      updatedAt: Date.now(),
+      needsReview: false,
+      reviewedAt: now,
+      updatedAt: now,
     });
     return null;
   },
@@ -39,11 +42,12 @@ export const acknowledgeReport = mutation({
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, report.organizationId, user._id);
 
+    const now = Date.now();
     await ctx.db.patch(args.reportId, {
       needsReview: false,
-      reviewedAt: Date.now(),
-      acknowledgedAt: Date.now(),
-      updatedAt: Date.now(),
+      reviewedAt: now,
+      acknowledgedAt: now,
+      updatedAt: now,
     });
     return null;
   },

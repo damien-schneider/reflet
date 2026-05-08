@@ -6,6 +6,7 @@
  */
 
 import { generateText } from "ai";
+import { z } from "zod";
 import {
   DEFAULT_MAX_OUTPUT_TOKENS,
   openrouter,
@@ -36,23 +37,42 @@ interface WebSearchResult {
   text: string;
 }
 
-const extractCitations = (response: {
-  response?: {
-    messages?: Array<{
-      role: string;
-      annotations?: Array<{
-        type: string;
-        url_citation?: {
-          url: string;
-          title: string;
-          content: string;
-        };
-      }>;
-    }>;
-  };
-}): UrlCitation[] => {
+const webSearchResultSchema = z.object({
+  response: z
+    .object({
+      messages: z
+        .array(
+          z.object({
+            role: z.string(),
+            annotations: z
+              .array(
+                z.object({
+                  type: z.string(),
+                  url_citation: z
+                    .object({
+                      url: z.string(),
+                      title: z.string(),
+                      content: z.string(),
+                    })
+                    .optional(),
+                })
+              )
+              .optional(),
+          })
+        )
+        .optional(),
+    })
+    .optional(),
+});
+
+const extractCitations = (response: unknown): UrlCitation[] => {
+  const parsed = webSearchResultSchema.safeParse(response);
+  if (!parsed.success) {
+    return [];
+  }
+
   const citations: UrlCitation[] = [];
-  const messages = response.response?.messages;
+  const messages = parsed.data.response?.messages;
   if (!Array.isArray(messages)) {
     return citations;
   }
@@ -112,7 +132,7 @@ const tryGenerateTextWithSearch = async (
     });
 
     trackUsage(result.usage, model);
-    const citations = extractCitations(result as never);
+    const citations = extractCitations(result);
 
     return { text: result.text, citations };
   } catch (error) {

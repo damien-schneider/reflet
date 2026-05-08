@@ -14,6 +14,12 @@ export const codingAdapterType = v.union(
   v.literal("openclaw")
 );
 
+export function isProductionCodingAdapter(adapter: string): boolean {
+  return (
+    adapter === "claude_code" || adapter === "codex" || adapter === "copilot"
+  );
+}
+
 // Autonomy
 export const autonomyLevel = v.union(
   v.literal("full_auto"),

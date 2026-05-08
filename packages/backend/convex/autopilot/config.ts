@@ -7,10 +7,12 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { internalQuery, type QueryCtx } from "../_generated/server";
+import { getEffectiveTier } from "../billing/effective_tier";
 import {
   autonomyLevel,
   autonomyMode,
   codingAdapterType,
+  isProductionCodingAdapter,
 } from "./schema/validators";
 
 // ============================================
@@ -176,9 +178,18 @@ function isConfigActive<T extends { autonomyMode?: string; enabled: boolean }>(
   );
 }
 
+async function isOrgAutopilotAllowed(
+  ctx: Pick<QueryCtx, "runQuery">,
+  organizationId: Id<"organizations">
+): Promise<boolean> {
+  const tier = await getEffectiveTier(ctx, organizationId);
+  return tier === "pro";
+}
+
 function isAgentEnabledInConfig(
   agent: string,
   config: {
+    adapter?: string;
     ctoEnabled?: boolean;
     devEnabled?: boolean;
     growthEnabled?: boolean;
@@ -193,7 +204,10 @@ function isAgentEnabledInConfig(
     case "cto":
       return config.ctoEnabled !== false;
     case "dev":
-      return config.devEnabled !== false;
+      return (
+        isProductionCodingAdapter(config.adapter ?? "builtin") &&
+        config.devEnabled !== false
+      );
     case "growth":
       return config.growthEnabled !== false;
     case "support":
@@ -248,11 +262,24 @@ export const getEnabledConfigs = internalQuery({
   ),
   handler: async (ctx) => {
     const configs = await ctx.db.query("autopilotConfig").collect();
-    return configs
-      .filter((config) => isConfigActive(config))
-      .map((c) => ({
-        organizationId: c.organizationId,
-        autonomyMode: c.autonomyMode,
-      }));
+    const enabledConfigs: Array<{
+      autonomyMode?: string;
+      organizationId: Id<"organizations">;
+    }> = [];
+
+    for (const config of configs) {
+      if (!isConfigActive(config)) {
+        continue;
+      }
+      if (!(await isOrgAutopilotAllowed(ctx, config.organizationId))) {
+        continue;
+      }
+      enabledConfigs.push({
+        organizationId: config.organizationId,
+        autonomyMode: config.autonomyMode,
+      });
+    }
+
+    return enabledConfigs;
   },
 });

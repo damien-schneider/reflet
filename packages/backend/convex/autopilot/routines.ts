@@ -8,6 +8,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
+import { isProductionCodingAdapter } from "./schema/validators";
 
 interface RoutineTemplate {
   description?: string;
@@ -117,6 +118,7 @@ function parseRoutineTemplate(template: string): RoutineTemplate | null {
 function isRoutineAgentEnabled(
   agent: string,
   config: {
+    adapter?: string;
     ctoEnabled?: boolean;
     devEnabled?: boolean;
     growthEnabled?: boolean;
@@ -132,7 +134,10 @@ function isRoutineAgentEnabled(
     return config.ctoEnabled !== false;
   }
   if (agent === "dev") {
-    return config.devEnabled !== false;
+    return (
+      isProductionCodingAdapter(config.adapter ?? "builtin") &&
+      config.devEnabled !== false
+    );
   }
   if (agent === "growth") {
     return config.growthEnabled !== false;

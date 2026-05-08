@@ -2,6 +2,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "../../../_generated/api";
+import type { Id } from "../../../_generated/dataModel";
 import schema from "../../../schema";
 import {
   CONVEX_INTEGRATION_TEST_TIMEOUT_MS,
@@ -45,7 +46,7 @@ describe("saveUserInstallation", () => {
   test("should create a new user GitHub connection", async () => {
     const t = convexTest(schema, modules);
 
-    const connectionId = await t.mutation(
+    const connectionId: Id<"userGithubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         userId: "user_123",
@@ -69,7 +70,7 @@ describe("saveUserInstallation", () => {
   test("should upsert when user already has a connection", async () => {
     const t = convexTest(schema, modules);
 
-    const firstId = await t.mutation(
+    const firstId: Id<"userGithubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         userId: "user_123",
@@ -79,7 +80,7 @@ describe("saveUserInstallation", () => {
       }
     );
 
-    const secondId = await t.mutation(
+    const secondId: Id<"userGithubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         userId: "user_123",
@@ -180,7 +181,7 @@ describe("getOrgAvailableInstallations", () => {
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
 
-    const connectionId = await t.mutation(
+    const connectionId: Id<"userGithubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         userId: "user_A",
@@ -227,7 +228,7 @@ describe("linkRepoToOrg", () => {
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
 
-    const userConnectionId = await t.mutation(
+    const userConnectionId: Id<"userGithubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         userId: "user_A",
@@ -238,7 +239,7 @@ describe("linkRepoToOrg", () => {
       }
     );
 
-    const connectionId = await t.mutation(
+    const connectionId: Id<"githubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         organizationId: orgId,
@@ -263,7 +264,7 @@ describe("linkRepoToOrg", () => {
     await createMember(t, orgId, "user_A", "admin");
     await createMember(t, orgId, "user_B", "admin");
 
-    const userConnA = await t.mutation(
+    const userConnA: Id<"userGithubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         userId: "user_A",
@@ -274,7 +275,7 @@ describe("linkRepoToOrg", () => {
     );
 
     // First link by user A
-    const firstConnectionId = await t.mutation(
+    const firstConnectionId: Id<"githubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         organizationId: orgId,
@@ -283,7 +284,7 @@ describe("linkRepoToOrg", () => {
       }
     );
 
-    const userConnB = await t.mutation(
+    const userConnB: Id<"userGithubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         userId: "user_B",
@@ -294,7 +295,7 @@ describe("linkRepoToOrg", () => {
     );
 
     // Re-link by user B
-    const secondConnectionId = await t.mutation(
+    const secondConnectionId: Id<"githubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         organizationId: orgId,
@@ -355,7 +356,7 @@ describe("handleMemberRemoved", () => {
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
 
-    const userConn = await t.mutation(
+    const userConn: Id<"userGithubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         userId: "user_A",
@@ -365,7 +366,7 @@ describe("handleMemberRemoved", () => {
       }
     );
 
-    const connectionId = await t.mutation(
+    const connectionId: Id<"githubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         organizationId: orgId,
@@ -392,7 +393,7 @@ describe("handleMemberRemoved", () => {
     await createMember(t, orgId, "user_A", "admin");
     await createMember(t, orgId, "user_B", "admin");
 
-    const userConnB = await t.mutation(
+    const userConnB: Id<"userGithubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         userId: "user_B",
@@ -402,7 +403,7 @@ describe("handleMemberRemoved", () => {
       }
     );
 
-    const connectionId = await t.mutation(
+    const connectionId: Id<"githubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         organizationId: orgId,
@@ -435,7 +436,7 @@ describe("handleInstallationDeleted (updated)", () => {
     const orgId = await createOrg(t);
     await createMember(t, orgId, "user_A", "admin");
 
-    const userConnId = await t.mutation(
+    const userConnId: Id<"userGithubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         userId: "user_A",
@@ -445,13 +446,59 @@ describe("handleInstallationDeleted (updated)", () => {
       }
     );
 
-    const orgConnectionId = await t.mutation(
+    const orgConnectionId: Id<"githubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         organizationId: orgId,
         userGithubConnectionId: userConnId,
         linkedByUserId: "user_A",
       }
+    );
+    const secondUserConnId: Id<"userGithubConnections"> = await t.run(
+      async (ctx) =>
+        ctx.db.insert("userGithubConnections", {
+          userId: "user_B",
+          installationId: "inst_A",
+          accountType: "user",
+          accountLogin: "octocat-secondary",
+          status: "connected",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        })
+    );
+    const issueId = await t.run(async (ctx) =>
+      ctx.db.insert("githubIssues", {
+        organizationId: orgId,
+        githubConnectionId: orgConnectionId,
+        githubIssueId: "issue-1",
+        githubIssueNumber: 1,
+        title: "Imported issue",
+        htmlUrl: "https://github.com/acme/repo/issues/1",
+        state: "open",
+        githubLabels: [],
+        githubCreatedAt: Date.now(),
+        githubUpdatedAt: Date.now(),
+        lastSyncedAt: Date.now(),
+      })
+    );
+    const analysisId = await t.run(async (ctx) =>
+      ctx.db.insert("repoAnalysis", {
+        organizationId: orgId,
+        githubConnectionId: orgConnectionId,
+        status: "completed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+    );
+    const setupId = await t.run(async (ctx) =>
+      ctx.db.insert("projectSetupResults", {
+        organizationId: orgId,
+        githubConnectionId: orgConnectionId,
+        status: "completed",
+        steps: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
     );
 
     const result = await t.mutation(
@@ -465,10 +512,22 @@ describe("handleInstallationDeleted (updated)", () => {
     // User connection should be marked as disconnected (error status used since "disconnected" is not a valid status)
     const userConn = await t.run(async (ctx) => ctx.db.get(userConnId));
     expect(userConn?.status).toBe("error");
+    const secondUserConn = await t.run(async (ctx) =>
+      ctx.db.get(secondUserConnId)
+    );
+    expect(secondUserConn?.status).toBe("error");
 
     // Org connection should be deleted
-    const orgConn = await t.run(async (ctx) => ctx.db.get(orgConnectionId));
-    expect(orgConn).toBeNull();
+    const rows = await t.run(async (ctx) => ({
+      analysis: await ctx.db.get(analysisId),
+      issue: await ctx.db.get(issueId),
+      orgConnection: await ctx.db.get(orgConnectionId),
+      setup: await ctx.db.get(setupId),
+    }));
+    expect(rows.orgConnection).toBeNull();
+    expect(rows.issue).toBeNull();
+    expect(rows.analysis).toBeNull();
+    expect(rows.setup).toBeNull();
   });
 
   test("should handle deletion when installation spans multiple orgs", async () => {
@@ -478,7 +537,7 @@ describe("handleInstallationDeleted (updated)", () => {
     await createMember(t, orgId1, "user_A", "admin");
     await createMember(t, orgId2, "user_A", "admin");
 
-    const userConnId = await t.mutation(
+    const userConnId: Id<"userGithubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         userId: "user_A",
@@ -488,7 +547,7 @@ describe("handleInstallationDeleted (updated)", () => {
       }
     );
 
-    const connId1 = await t.mutation(
+    const connId1: Id<"githubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         organizationId: orgId1,
@@ -497,7 +556,7 @@ describe("handleInstallationDeleted (updated)", () => {
       }
     );
 
-    const connId2 = await t.mutation(
+    const connId2: Id<"githubConnections"> = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         organizationId: orgId2,

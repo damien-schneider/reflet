@@ -144,6 +144,14 @@ export const getRunsForTask = internalQuery({
 });
 
 /**
+ * Get one coding run by ID.
+ */
+export const getRun = internalQuery({
+  args: { runId: v.id("autopilotRuns") },
+  handler: async (ctx, args) => ctx.db.get(args.runId),
+});
+
+/**
  * Get recent activity for an org (for the live feed).
  */
 export const getRecentActivity = internalQuery({

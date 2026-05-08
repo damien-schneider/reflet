@@ -13,6 +13,7 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
+import type { Doc } from "../../_generated/dataModel";
 import { internalAction, internalQuery } from "../../_generated/server";
 import { computeChainState, isNodeReadyToProduce } from "../chain";
 import { FAST_MODELS } from "./models";
@@ -21,6 +22,11 @@ import { executeSearchQueries, type SearchQuery } from "./shared_search";
 
 const MAX_QUERIES_PER_RUN = 6;
 const MAX_POSTS_TO_PERSIST = 12;
+interface CommunityDiscoveryContext {
+  chainState: Awaited<ReturnType<typeof computeChainState>>;
+  personas: Doc<"autopilotPersonas">[];
+  useCases: Doc<"autopilotUseCases">[];
+}
 
 const platformFromUrl = (
   url: string
@@ -122,11 +128,12 @@ export const runCommunityDiscovery = internalAction({
   args: { organizationId: v.id("organizations") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { chainState, personas, useCases } = await ctx.runQuery(
-      internal.autopilot.agents.community_discovery
-        .getCommunityDiscoveryContext,
-      { organizationId: args.organizationId }
-    );
+    const { chainState, personas, useCases }: CommunityDiscoveryContext =
+      await ctx.runQuery(
+        internal.autopilot.agents.community_discovery
+          .getCommunityDiscoveryContext,
+        { organizationId: args.organizationId }
+      );
 
     if (!isNodeReadyToProduce(chainState, "community_posts")) {
       return null;

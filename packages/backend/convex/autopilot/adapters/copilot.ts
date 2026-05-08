@@ -17,6 +17,17 @@
  *   - Copilot coding agent enabled for the repository
  */
 
+import type { z } from "zod";
+import {
+  createProviderParseFailure,
+  createProviderStatusFailure,
+  githubCheckRunsResponseSchema,
+  githubIssueResponseSchema,
+  githubPullsResponseSchema,
+  isPullRequestLinkedToIssue,
+  parseGitHubCheckRuns,
+  parseResponseJson,
+} from "./adapter_helpers";
 import type {
   ActivityLogEntry,
   CodingAdapter,
@@ -120,10 +131,11 @@ export const copilotAdapter: CodingAdapter = {
         );
       }
 
-      const issueData = (await issueResponse.json()) as {
-        number: number;
-        html_url: string;
-      };
+      const issueData = await parseResponseJson(
+        issueResponse,
+        githubIssueResponseSchema,
+        "GitHub issue"
+      );
       logs.push(
         log(
           "dev",
@@ -211,36 +223,27 @@ export const copilotAdapter: CodingAdapter = {
 
     // Check if Copilot has opened a PR linked to this issue
     const searchResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/pulls?state=open&sort=created&direction=desc&per_page=10`,
+      `${GITHUB_API}/repos/${owner}/${repo}/pulls?state=all&sort=created&direction=desc&per_page=50`,
       { headers: buildHeaders(githubPat) }
     );
 
     if (!searchResponse.ok) {
-      return {
-        status: "running",
-        activityLogs: [log("system", "warning", "Could not check PR status")],
-        tokensUsed: 0,
-        estimatedCostUsd: 0,
-      };
+      return createProviderStatusFailure("Copilot", searchResponse, logs);
     }
 
-    const pulls = (await searchResponse.json()) as Array<{
-      number: number;
-      html_url: string;
-      title: string;
-      body: string;
-      draft: boolean;
-      head: { ref: string };
-      state: string;
-    }>;
+    let pulls: z.infer<typeof githubPullsResponseSchema>;
+    try {
+      pulls = await parseResponseJson(
+        searchResponse,
+        githubPullsResponseSchema,
+        "GitHub pull requests"
+      );
+    } catch (error) {
+      return createProviderParseFailure("Copilot", "PR list", error, logs);
+    }
 
     // Find a PR that references this issue
-    const linkedPR = pulls.find(
-      (pr) =>
-        pr.body?.includes(`#${issue}`) ||
-        pr.title?.includes(`#${issue}`) ||
-        pr.body?.includes(`issues/${issue}`)
-    );
+    const linkedPR = pulls.find((pr) => isPullRequestLinkedToIssue(pr, issue));
 
     if (!linkedPR) {
       logs.push(log("dev", "info", "Copilot is still working — no PR yet"));
@@ -267,45 +270,37 @@ export const copilotAdapter: CodingAdapter = {
       { headers: buildHeaders(githubPat) }
     );
 
-    let ciStatus: "pending" | "running" | "passed" | "failed" = "pending";
-    let ciFailureLog: string | undefined;
-
-    if (ciResponse.ok) {
-      const ciData = (await ciResponse.json()) as {
-        check_runs: Array<{
-          status: string;
-          conclusion: string | null;
-          output?: { summary?: string };
-        }>;
-      };
-
-      if (ciData.check_runs.length > 0) {
-        const hasRunning = ciData.check_runs.some(
-          (run) => run.status !== "completed"
-        );
-        const hasFailed = ciData.check_runs.some(
-          (run) =>
-            run.conclusion === "failure" || run.conclusion === "cancelled"
-        );
-
-        if (hasRunning) {
-          ciStatus = "running";
-        } else if (hasFailed) {
-          ciStatus = "failed";
-          const failedRun = ciData.check_runs.find(
-            (run) => run.conclusion === "failure"
-          );
-          ciFailureLog = failedRun?.output?.summary?.slice(0, 2000);
-        } else {
-          ciStatus = "passed";
-        }
-      }
+    if (!ciResponse.ok) {
+      return createProviderStatusFailure("Copilot CI", ciResponse, logs);
     }
 
+    let ciData: z.infer<typeof githubCheckRunsResponseSchema>;
+    try {
+      ciData = await parseResponseJson(
+        ciResponse,
+        githubCheckRunsResponseSchema,
+        "GitHub check runs"
+      );
+    } catch (error) {
+      return createProviderParseFailure(
+        "Copilot CI",
+        "check runs",
+        error,
+        logs
+      );
+    }
+    const { ciStatus, ciFailureLog } = parseGitHubCheckRuns(ciData.check_runs);
+
     const isCompleted = ciStatus === "passed" && !linkedPR.draft;
+    let status: TaskStatusResponse["status"] = isCompleted
+      ? "completed"
+      : "running";
+    if (ciStatus === "failed") {
+      status = "failed";
+    }
 
     return {
-      status: isCompleted ? "completed" : "running",
+      status,
       prUrl: linkedPR.html_url,
       prNumber: linkedPR.number,
       ciStatus,

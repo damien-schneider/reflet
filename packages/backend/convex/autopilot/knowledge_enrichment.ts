@@ -8,6 +8,7 @@
 
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { internalAction, internalQuery } from "../_generated/server";
 
@@ -143,14 +144,14 @@ type KnowledgeDocType =
 
 async function appendToKnowledgeDoc(
   ctx: ActionCtx,
-  organizationId: string,
+  organizationId: Id<"organizations">,
   docType: KnowledgeDocType,
   newFindings: string[]
 ): Promise<void> {
   const existing = await ctx.runQuery(
     internal.autopilot.knowledge.getKnowledgeDocByType,
     {
-      organizationId: organizationId as never,
+      organizationId,
       docType,
     }
   );

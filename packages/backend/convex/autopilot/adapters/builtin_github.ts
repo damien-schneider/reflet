@@ -8,6 +8,16 @@
  *   - Checking CI status
  */
 
+import {
+  githubCheckRunsResponseSchema,
+  githubCodeSearchResponseSchema,
+  githubContentFileResponseSchema,
+  githubDirectoryResponseSchema,
+  githubIssueResponseSchema,
+  githubRefResponseSchema,
+  parseResponseJson,
+} from "./adapter_helpers";
+
 const GITHUB_API = "https://api.github.com";
 
 const GITHUB_REPO_URL_REGEX = /github\.com[/:](?<owner>[^/]+)\/(?<repo>[^/.]+)/;
@@ -58,7 +68,11 @@ export const readFileFromGitHub = async (
     );
   }
 
-  const data = (await response.json()) as { content: string; sha: string };
+  const data = await parseResponseJson(
+    response,
+    githubContentFileResponseSchema,
+    "GitHub content"
+  );
   const content = atob(data.content.replace(/\n/g, ""));
   return { content, sha: data.sha };
 };
@@ -82,11 +96,11 @@ export const listDirectoryFromGitHub = async (
     throw new Error(`GitHub API error: ${response.status}`);
   }
 
-  return (await response.json()) as Array<{
-    name: string;
-    path: string;
-    type: string;
-  }>;
+  return parseResponseJson(
+    response,
+    githubDirectoryResponseSchema,
+    "GitHub directory"
+  );
 };
 
 /**
@@ -108,12 +122,11 @@ export const searchCodeInRepo = async (
     return [];
   }
 
-  const data = (await response.json()) as {
-    items: Array<{
-      path: string;
-      text_matches?: Array<{ fragment: string }>;
-    }>;
-  };
+  const data = await parseResponseJson(
+    response,
+    githubCodeSearchResponseSchema,
+    "GitHub code search"
+  );
 
   return data.items.map((item) => ({
     path: item.path,
@@ -141,9 +154,11 @@ export const createBranch = async (
     throw new Error(`Failed to get base branch ref: ${refResponse.status}`);
   }
 
-  const refData = (await refResponse.json()) as {
-    object: { sha: string };
-  };
+  const refData = await parseResponseJson(
+    refResponse,
+    githubRefResponseSchema,
+    "GitHub branch ref"
+  );
 
   // Create the new branch
   const createResponse = await fetch(
@@ -204,10 +219,11 @@ export const createPullRequest = async (
     throw new Error(`Failed to create PR: ${response.status} ${errorBody}`);
   }
 
-  const data = (await response.json()) as {
-    html_url: string;
-    number: number;
-  };
+  const data = await parseResponseJson(
+    response,
+    githubIssueResponseSchema,
+    "GitHub pull request"
+  );
   return { prUrl: data.html_url, prNumber: data.number };
 };
 
@@ -232,13 +248,11 @@ export const getCIStatus = async (
     return { status: "pending" };
   }
 
-  const data = (await response.json()) as {
-    check_runs: Array<{
-      status: string;
-      conclusion: string | null;
-      output?: { summary?: string };
-    }>;
-  };
+  const data = await parseResponseJson(
+    response,
+    githubCheckRunsResponseSchema,
+    "GitHub check runs"
+  );
 
   if (data.check_runs.length === 0) {
     return { status: "pending" };

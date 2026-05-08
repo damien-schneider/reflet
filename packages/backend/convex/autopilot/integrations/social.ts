@@ -8,12 +8,24 @@
  */
 
 import { v } from "convex/values";
+import { z } from "zod";
 import { internal } from "../../_generated/api";
 import {
   internalAction,
   internalMutation,
   internalQuery,
 } from "../../_generated/server";
+
+const typefullyResponseSchema = z.object({
+  share_url: z.string().optional(),
+});
+
+const bufferProfilesResponseSchema = z.array(
+  z.object({
+    id: z.string(),
+    service: z.string(),
+  })
+);
 
 // ============================================
 // QUERIES
@@ -84,8 +96,23 @@ export const markContentPosted = internalMutation({
  */
 export const publishApprovedContent = internalAction({
   args: { organizationId: v.id("organizations") },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const orgId = args.organizationId;
+    const gate = await ctx.runQuery(internal.autopilot.gate.checkGate, {
+      organizationId: orgId,
+      agent: "growth",
+      action: "publish_content",
+    });
+    if (!gate.proceed) {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+        organizationId: orgId,
+        agent: "growth",
+        level: "info",
+        message: `Social publishing skipped — gate blocked with ${gate.reason ?? "unknown"}`,
+      });
+      return null;
+    }
 
     const approved = await ctx.runQuery(
       internal.autopilot.integrations.social.getApprovedContent,
@@ -93,7 +120,7 @@ export const publishApprovedContent = internalAction({
     );
 
     if (approved.length === 0) {
-      return;
+      return null;
     }
 
     const bufferAccessToken = process.env.BUFFER_ACCESS_TOKEN;
@@ -106,7 +133,7 @@ export const publishApprovedContent = internalAction({
         level: "info",
         message: `${approved.length} content pieces approved for publishing but no social API configured (set BUFFER_ACCESS_TOKEN or TYPEFULLY_API_KEY)`,
       });
-      return;
+      return null;
     }
 
     let published = 0;
@@ -168,6 +195,7 @@ export const publishApprovedContent = internalAction({
         message: `Social publishing complete: ${published}/${approved.length} pieces published`,
       });
     }
+    return null;
   },
 });
 
@@ -203,8 +231,8 @@ const publishViaTypefully = async (
     throw new Error(`Typefully API error: ${response.status} ${error}`);
   }
 
-  const result = await response.json();
-  return result.share_url as string | undefined;
+  const result = typefullyResponseSchema.parse(await response.json());
+  return result.share_url;
 };
 
 /**
@@ -227,10 +255,9 @@ const publishViaBuffer = async (
     throw new Error(`Buffer API error: ${profilesResponse.status}`);
   }
 
-  const profiles = (await profilesResponse.json()) as Array<{
-    id: string;
-    service: string;
-  }>;
+  const profiles = bufferProfilesResponseSchema.parse(
+    await profilesResponse.json()
+  );
   if (profiles.length === 0) {
     throw new Error("No Buffer profiles configured");
   }

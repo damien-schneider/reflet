@@ -179,28 +179,29 @@ export const failTaskWithReason = internalMutation({
 });
 
 /**
- * Check if an agent has recent activity (within window).
+ * Check if a work item has recent activity (within window).
  * Used by self-heal to avoid cancelling tasks that are actively being worked on.
  */
-export const hasRecentAgentActivity = internalQuery({
+export const hasRecentTaskActivity = internalQuery({
   args: {
     organizationId: v.id("organizations"),
     agent: v.string(),
+    taskId: v.id("autopilotWorkItems"),
     windowMs: v.number(),
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
     const cutoff = Date.now() - args.windowMs;
-    const recentLogs = await ctx.db
+    const taskLogs = await ctx.db
       .query("autopilotActivityLog")
-      .withIndex("by_org_created", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .order("desc")
-      .take(50);
+      .withIndex("by_work_item", (q) => q.eq("workItemId", args.taskId))
+      .collect();
 
-    return recentLogs.some(
-      (log) => log.agent === args.agent && log.createdAt > cutoff
+    return taskLogs.some(
+      (log) =>
+        log.organizationId === args.organizationId &&
+        log.agent === args.agent &&
+        log.createdAt > cutoff
     );
   },
 });
@@ -226,7 +227,7 @@ export const runSelfHealing = internalAction({
         let healed = 0;
 
         // 1. Work items stuck in_progress > 2 hours → cancel
-        //    (but skip if the assigned agent has recent activity)
+        //    (but skip if that specific task has recent activity)
         const stuckItems = await ctx.runQuery(
           internal.autopilot.self_heal.getStuckInProgressTasks,
           {
@@ -236,17 +237,17 @@ export const runSelfHealing = internalAction({
         );
 
         for (const item of stuckItems) {
-          // Check if the assigned agent has been active recently — if so, task isn't truly stuck
           if (item.assignedAgent) {
-            const agentActive = await ctx.runQuery(
-              internal.autopilot.self_heal.hasRecentAgentActivity,
+            const taskActive = await ctx.runQuery(
+              internal.autopilot.self_heal.hasRecentTaskActivity,
               {
                 organizationId: org.organizationId,
                 agent: item.assignedAgent,
+                taskId: item._id,
                 windowMs: RECENT_ACTIVITY_WINDOW,
               }
             );
-            if (agentActive) {
+            if (taskActive) {
               continue;
             }
           }

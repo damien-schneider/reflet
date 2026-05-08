@@ -4,23 +4,61 @@
  */
 
 import { v } from "convex/values";
+import { z } from "zod";
 import { internal } from "../_generated/api";
+import type { Doc } from "../_generated/dataModel";
 import { internalAction, internalMutation } from "../_generated/server";
+import { getEffectiveTier } from "../billing/effective_tier";
+import { DEFAULT_DAILY_COST_CAP_USD } from "./config_task_caps";
 import {
   autonomyLevel,
   autonomyMode,
   codingAdapterType,
+  isProductionCodingAdapter,
 } from "./schema/validators";
 
-// ============================================
-// INTERNAL MUTATIONS
-// ============================================
+const credentialMapSchema = z.record(z.string(), z.string());
+
+type InternalConfigPatch = Partial<
+  Pick<
+    Doc<"autopilotConfig">,
+    | "adapter"
+    | "autoMergePRs"
+    | "autoMergeThreshold"
+    | "autonomyLevel"
+    | "autonomyMode"
+    | "ctoEnabled"
+    | "devEnabled"
+    | "fullAutoDelay"
+    | "growthEnabled"
+    | "intelligenceEnabled"
+    | "maxPendingTasksPerAgent"
+    | "maxPendingTasksTotal"
+    | "maxTasksPerDay"
+    | "pmEnabled"
+    | "requireArchitectReview"
+    | "salesEnabled"
+    | "supportEnabled"
+  >
+> & { updatedAt: number };
+
+function parseCredentialMap(
+  credentials: string
+): Record<string, string> | null {
+  try {
+    const parsed = credentialMapSchema.safeParse(JSON.parse(credentials));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Create default autopilot config for an org.
  */
 export const createDefaultConfig = internalMutation({
   args: { organizationId: v.id("organizations") },
+  returns: v.id("autopilotConfig"),
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("autopilotConfig")
@@ -42,7 +80,7 @@ export const createDefaultConfig = internalMutation({
       intelligenceEnabled: false,
       pmEnabled: true,
       ctoEnabled: true,
-      devEnabled: true,
+      devEnabled: false,
       growthEnabled: false,
       supportEnabled: false,
       salesEnabled: false,
@@ -54,6 +92,7 @@ export const createDefaultConfig = internalMutation({
       maxTasksPerDay: 10,
       tasksUsedToday: 0,
       tasksResetAt: now + TWENTY_FOUR_HOURS,
+      dailyCostCapUsd: DEFAULT_DAILY_COST_CAP_USD,
       autoMergePRs: false,
       requireArchitectReview: true,
       createdAt: now,
@@ -86,20 +125,66 @@ export const updateConfig = internalMutation({
     maxPendingTasksPerAgent: v.optional(v.number()),
     maxPendingTasksTotal: v.optional(v.number()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
-    const { configId, ...updates } = args;
-    const filtered: Record<string, unknown> = {};
-
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined) {
-        filtered[key] = value;
+    const updates: InternalConfigPatch = { updatedAt: Date.now() };
+    if (args.adapter !== undefined) {
+      updates.adapter = args.adapter;
+      if (!isProductionCodingAdapter(args.adapter)) {
+        updates.devEnabled = false;
       }
     }
+    if (args.autonomyLevel !== undefined) {
+      updates.autonomyLevel = args.autonomyLevel;
+    }
+    if (args.maxTasksPerDay !== undefined) {
+      updates.maxTasksPerDay = args.maxTasksPerDay;
+    }
+    if (args.autoMergePRs !== undefined) {
+      updates.autoMergePRs = args.autoMergePRs;
+    }
+    if (args.intelligenceEnabled !== undefined) {
+      updates.intelligenceEnabled = args.intelligenceEnabled;
+    }
+    if (args.pmEnabled !== undefined) {
+      updates.pmEnabled = args.pmEnabled;
+    }
+    if (args.ctoEnabled !== undefined) {
+      updates.ctoEnabled = args.ctoEnabled;
+    }
+    if (args.devEnabled !== undefined) {
+      updates.devEnabled = args.devEnabled;
+    }
+    if (args.growthEnabled !== undefined) {
+      updates.growthEnabled = args.growthEnabled;
+    }
+    if (args.supportEnabled !== undefined) {
+      updates.supportEnabled = args.supportEnabled;
+    }
+    if (args.salesEnabled !== undefined) {
+      updates.salesEnabled = args.salesEnabled;
+    }
+    if (args.requireArchitectReview !== undefined) {
+      updates.requireArchitectReview = args.requireArchitectReview;
+    }
+    if (args.autonomyMode !== undefined) {
+      updates.autonomyMode = args.autonomyMode;
+    }
+    if (args.fullAutoDelay !== undefined) {
+      updates.fullAutoDelay = args.fullAutoDelay;
+    }
+    if (args.autoMergeThreshold !== undefined) {
+      updates.autoMergeThreshold = args.autoMergeThreshold;
+    }
+    if (args.maxPendingTasksPerAgent !== undefined) {
+      updates.maxPendingTasksPerAgent = args.maxPendingTasksPerAgent;
+    }
+    if (args.maxPendingTasksTotal !== undefined) {
+      updates.maxPendingTasksTotal = args.maxPendingTasksTotal;
+    }
 
-    await ctx.db.patch(configId, {
-      ...filtered,
-      updatedAt: Date.now(),
-    });
+    await ctx.db.patch(args.configId, updates);
+    return null;
   },
 });
 
@@ -108,6 +193,7 @@ export const updateConfig = internalMutation({
  */
 export const incrementTaskCounter = internalMutation({
   args: { organizationId: v.id("organizations") },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const config = await ctx.db
       .query("autopilotConfig")
@@ -117,7 +203,7 @@ export const incrementTaskCounter = internalMutation({
       .unique();
 
     if (!config) {
-      return;
+      return null;
     }
 
     const now = Date.now();
@@ -136,6 +222,63 @@ export const incrementTaskCounter = internalMutation({
         updatedAt: now,
       });
     }
+    return null;
+  },
+});
+
+export const reserveTaskExecution = internalMutation({
+  args: { organizationId: v.id("organizations") },
+  returns: v.object({
+    allowed: v.boolean(),
+    reason: v.optional(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    const tier = await getEffectiveTier(ctx, args.organizationId);
+    if (tier !== "pro") {
+      return {
+        allowed: false,
+        reason: "Autopilot requires a Pro subscription.",
+      };
+    }
+
+    const config = await ctx.db
+      .query("autopilotConfig")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    if (
+      !config?.enabled ||
+      (config?.autonomyMode ?? "supervised") === "stopped"
+    ) {
+      return { allowed: false, reason: "Autopilot is not active" };
+    }
+
+    const now = Date.now();
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+    if (now > config.tasksResetAt) {
+      await ctx.db.patch(config._id, {
+        tasksUsedToday: 1,
+        tasksResetAt: now + TWENTY_FOUR_HOURS,
+        updatedAt: now,
+      });
+      return { allowed: true };
+    }
+
+    if (config.tasksUsedToday >= config.maxTasksPerDay) {
+      return {
+        allowed: false,
+        reason: `Daily task limit reached (${config.tasksUsedToday} / ${config.maxTasksPerDay})`,
+      };
+    }
+
+    await ctx.db.patch(config._id, {
+      tasksUsedToday: config.tasksUsedToday + 1,
+      updatedAt: now,
+    });
+    return { allowed: true };
   },
 });
 
@@ -148,6 +291,7 @@ export const upsertAdapterCredentials = internalMutation({
     adapter: codingAdapterType,
     credentials: v.string(),
   },
+  returns: v.id("autopilotAdapterCredentials"),
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("autopilotAdapterCredentials")
@@ -186,12 +330,15 @@ export const markCredentialsValid = internalMutation({
     credentialId: v.id("autopilotAdapterCredentials"),
     isValid: v.boolean(),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
+    const now = Date.now();
     await ctx.db.patch(args.credentialId, {
       isValid: args.isValid,
-      lastValidatedAt: Date.now(),
-      updatedAt: Date.now(),
+      lastValidatedAt: now,
+      updatedAt: now,
     });
+    return null;
   },
 });
 
@@ -207,6 +354,7 @@ export const validateAdapterCredentials = internalAction({
     organizationId: v.id("organizations"),
     adapter: codingAdapterType,
   },
+  returns: v.boolean(),
   handler: async (ctx, args) => {
     const creds = await ctx.runQuery(
       internal.autopilot.config.getAdapterCredentials,
@@ -220,8 +368,10 @@ export const validateAdapterCredentials = internalAction({
     const { getAdapter } = await import("./adapters/registry");
     const adapterInstance = getAdapter(args.adapter);
 
-    const parsed = JSON.parse(creds.credentials) as Record<string, string>;
-    const isValid = await adapterInstance.validateCredentials(parsed);
+    const parsed = parseCredentialMap(creds.credentials);
+    const isValid = parsed
+      ? await adapterInstance.validateCredentials(parsed)
+      : false;
 
     await ctx.runMutation(
       internal.autopilot.config_mutations.markCredentialsValid,

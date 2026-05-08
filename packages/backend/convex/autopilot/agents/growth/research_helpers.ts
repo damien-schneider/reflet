@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import { internal } from "../../../_generated/api";
-import type { Id } from "../../../_generated/dataModel";
+import type { Doc, Id } from "../../../_generated/dataModel";
 import type { ActionCtx } from "../../../_generated/server";
 import { validateUrl } from "../shared_web";
 
@@ -175,10 +175,11 @@ export const processCompetitorMoves = async (
       continue;
     }
 
-    const existingCompetitor = await ctx.runQuery(
-      internal.autopilot.competitors.findCompetitorByName,
-      { organizationId, name: move.competitor }
-    );
+    const existingCompetitor: Doc<"autopilotCompetitors"> | null =
+      await ctx.runQuery(internal.autopilot.competitors.findCompetitorByName, {
+        organizationId,
+        name: move.competitor,
+      });
 
     // Dedup: skip if a similar action already exists in the competitor's moves
     if (existingCompetitor?.moves) {
@@ -224,6 +225,10 @@ export const processCompetitorMoves = async (
 };
 
 export type ResearchFindings = z.infer<typeof marketResearchSchema>["findings"];
+interface GrowthDedupResult {
+  existingId: Id<"autopilotDocuments"> | null;
+  title: string;
+}
 
 const MAX_PENDING_RESEARCH_DOCS = 15;
 const MAX_PENDING_BLOG_POSTS = 3;
@@ -237,7 +242,7 @@ export const saveResearchFindings = async (
   findings: ResearchFindings
 ): Promise<void> => {
   // Check existing research backlog
-  const existingResearch = await ctx.runQuery(
+  const existingResearch: Doc<"autopilotDocuments">[] = await ctx.runQuery(
     internal.autopilot.documents.getDocumentsByOrg,
     { organizationId, type: "market_research" }
   );
@@ -258,14 +263,14 @@ export const saveResearchFindings = async (
   const slotsAvailable = MAX_PENDING_RESEARCH_DOCS - pendingResearchCount;
 
   // Check existing blog post backlog (research also creates blog posts for high-relevance findings)
-  const existingBlogs = await ctx.runQuery(
+  const existingBlogs: Doc<"autopilotDocuments">[] = await ctx.runQuery(
     internal.autopilot.documents.getDocumentsByTags,
     { organizationId, tags: ["market-insight"], status: "draft" }
   );
   let currentBlogCount = existingBlogs.length;
 
   // Batch dedup check — single query instead of N individual queries
-  const dedupResults = await ctx.runQuery(
+  const dedupResults: GrowthDedupResult[] = await ctx.runQuery(
     internal.autopilot.dedup.findSimilarGrowthItems,
     { organizationId, titles: findings.map((f) => f.topic) }
   );

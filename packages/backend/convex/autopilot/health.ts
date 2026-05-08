@@ -28,6 +28,7 @@ import {
   TOTAL_AGENTS,
 } from "./health_checks";
 import { requireOrgMembership } from "./queries/auth";
+import { isProductionCodingAdapter } from "./schema/validators";
 
 const healthIssueValidator = v.object({
   actionLabel: v.optional(v.string()),
@@ -186,7 +187,8 @@ export const getSystemHealth = query({
     checkCredentials(credentialStatus, config.adapter, state);
 
     // Check if Dev agent is enabled but pipeline is blocked by missing credentials
-    const devEnabled = config.devEnabled !== false;
+    const devEnabled =
+      isProductionCodingAdapter(config.adapter) && config.devEnabled !== false;
     if (devEnabled && credentialStatus !== "valid") {
       state.issues.push({
         id: "dev_pipeline_blocked",

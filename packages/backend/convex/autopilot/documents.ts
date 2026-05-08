@@ -6,7 +6,9 @@
  */
 
 import { v } from "convex/values";
+import type { Doc } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { autopilotDocumentRecord } from "./schema/documents.tables";
 import {
   assignedAgent,
   documentStatus,
@@ -15,38 +17,137 @@ import {
 } from "./schema/validators";
 
 type DocumentStatus = "archived" | "draft" | "pending_review" | "published";
+type DocumentPatch = Partial<
+  Pick<
+    Doc<"autopilotDocuments">,
+    | "content"
+    | "linkedCompetitorId"
+    | "linkedLeadId"
+    | "linkedWorkItemId"
+    | "metadata"
+    | "needsReview"
+    | "platform"
+    | "publishedAt"
+    | "publishedUrl"
+    | "reviewedAt"
+    | "reviewType"
+    | "status"
+    | "tags"
+    | "targetUrl"
+    | "title"
+  >
+> & { updatedAt: number };
+interface DocumentReviewState {
+  needsReview: boolean;
+  reviewedAt?: number;
+}
 
-function applyDocumentReviewState({
+function getDocumentReviewState({
   docNeedsReview,
   now,
   status,
-  updates,
 }: {
   docNeedsReview: boolean;
   now: number;
   status: DocumentStatus;
-  updates: Record<string, unknown>;
-}) {
+}): DocumentReviewState {
   if (status === "pending_review") {
-    updates.needsReview = true;
-    return;
+    return { needsReview: true };
   }
 
   if (status === "published") {
-    updates.needsReview = false;
-    updates.reviewedAt = now;
-    return;
+    return { needsReview: false, reviewedAt: now };
   }
 
   if (status === "archived") {
-    updates.needsReview = false;
     if (docNeedsReview) {
-      updates.reviewedAt = now;
+      return { needsReview: false, reviewedAt: now };
     }
-    return;
+    return { needsReview: false };
   }
 
-  updates.needsReview = false;
+  return { needsReview: false };
+}
+
+function applyDocumentContentPatch(
+  args: {
+    content?: string;
+    metadata?: string;
+    needsReview?: boolean;
+    platform?: string;
+    publishedAt?: number;
+    publishedUrl?: string;
+    reviewedAt?: number;
+    reviewType?: string;
+    status?: DocumentStatus;
+    tags?: string[];
+    targetUrl?: string;
+    title?: string;
+  },
+  updates: DocumentPatch
+): void {
+  if (args.title !== undefined) {
+    updates.title = args.title;
+  }
+  if (args.content !== undefined) {
+    updates.content = args.content;
+  }
+  if (args.tags !== undefined) {
+    updates.tags = args.tags;
+  }
+  if (args.status !== undefined) {
+    updates.status = args.status;
+  }
+  if (args.needsReview !== undefined) {
+    updates.needsReview = args.needsReview;
+  }
+  if (args.reviewType !== undefined) {
+    updates.reviewType = args.reviewType;
+  }
+  if (args.reviewedAt !== undefined) {
+    updates.reviewedAt = args.reviewedAt;
+  }
+  if (args.platform !== undefined) {
+    updates.platform = args.platform;
+  }
+  if (args.targetUrl !== undefined) {
+    updates.targetUrl = args.targetUrl;
+  }
+  if (args.publishedAt !== undefined) {
+    updates.publishedAt = args.publishedAt;
+  }
+  if (args.publishedUrl !== undefined) {
+    updates.publishedUrl = args.publishedUrl;
+  }
+  if (args.metadata !== undefined) {
+    updates.metadata = args.metadata;
+  }
+}
+
+function applyDocumentRelationPatch(
+  args: {
+    linkedCompetitorId?: Doc<"autopilotDocuments">["linkedCompetitorId"];
+    linkedLeadId?: Doc<"autopilotDocuments">["linkedLeadId"];
+    linkedWorkItemId?: Doc<"autopilotDocuments">["linkedWorkItemId"];
+  },
+  updates: DocumentPatch
+): void {
+  if (args.linkedWorkItemId !== undefined) {
+    updates.linkedWorkItemId = args.linkedWorkItemId;
+  }
+  if (args.linkedCompetitorId !== undefined) {
+    updates.linkedCompetitorId = args.linkedCompetitorId;
+  }
+  if (args.linkedLeadId !== undefined) {
+    updates.linkedLeadId = args.linkedLeadId;
+  }
+}
+
+function documentHasTags(
+  doc: Pick<Doc<"autopilotDocuments">, "tags">,
+  tags: string[]
+): boolean {
+  return tags.every((tag) => doc.tags.includes(tag));
 }
 
 export const createDocument = internalMutation({
@@ -76,6 +177,11 @@ export const createDocument = internalMutation({
     const now = Date.now();
     const status =
       args.status ?? (args.needsReview ? "pending_review" : "draft");
+    const reviewState = getDocumentReviewState({
+      docNeedsReview: false,
+      now,
+      status,
+    });
     return await ctx.db.insert("autopilotDocuments", {
       organizationId: args.organizationId,
       type: args.type,
@@ -84,7 +190,8 @@ export const createDocument = internalMutation({
       tags: args.tags ?? [],
       sourceAgent: args.sourceAgent,
       status,
-      needsReview: args.needsReview ?? false,
+      needsReview: reviewState.needsReview,
+      reviewedAt: reviewState.reviewedAt,
       reviewType: args.reviewType,
       linkedWorkItemId: args.linkedWorkItemId,
       linkedCompetitorId: args.linkedCompetitorId,
@@ -128,28 +235,26 @@ export const updateDocument = internalMutation({
       return null;
     }
 
-    const { documentId, ...rest } = args;
     const now = Date.now();
-    const updates: Record<string, unknown> = { updatedAt: now };
-
-    for (const [key, value] of Object.entries(rest)) {
-      if (value !== undefined) {
-        updates[key] = value;
-      }
-    }
+    const updates: DocumentPatch = { updatedAt: now };
+    applyDocumentContentPatch(args, updates);
+    applyDocumentRelationPatch(args, updates);
 
     if (args.status !== undefined) {
-      applyDocumentReviewState({
+      const reviewState = getDocumentReviewState({
         docNeedsReview: doc.needsReview,
         now,
         status: args.status,
-        updates,
       });
+      updates.needsReview = reviewState.needsReview;
+      if (reviewState.reviewedAt !== undefined) {
+        updates.reviewedAt = reviewState.reviewedAt;
+      }
     } else if (args.needsReview === false && doc.needsReview) {
       updates.reviewedAt = now;
     }
 
-    await ctx.db.patch(documentId, updates);
+    await ctx.db.patch(args.documentId, updates);
     return null;
   },
 });
@@ -160,6 +265,7 @@ export const getDocumentsByOrg = internalQuery({
     type: v.optional(documentType),
     limit: v.optional(v.number()),
   },
+  returns: v.array(autopilotDocumentRecord),
   handler: async (ctx, args) => {
     const take = args.limit ?? 200;
     if (args.type) {
@@ -190,32 +296,35 @@ export const getDocumentsByTags = internalQuery({
     organizationId: v.id("organizations"),
     tags: v.array(v.string()),
     status: v.optional(documentStatus),
+    limit: v.optional(v.number()),
   },
+  returns: v.array(autopilotDocumentRecord),
   handler: async (ctx, args) => {
-    const docs = args.status
-      ? await ctx.db
-          .query("autopilotDocuments")
-          .withIndex("by_org_status", (q) =>
-            q
-              .eq("organizationId", args.organizationId)
-              .eq(
-                "status",
-                args.status as
-                  | "draft"
-                  | "pending_review"
-                  | "published"
-                  | "archived"
-              )
-          )
-          .take(200)
-      : await ctx.db
-          .query("autopilotDocuments")
-          .withIndex("by_organization", (q) =>
-            q.eq("organizationId", args.organizationId)
-          )
-          .take(200);
+    const limit = args.limit ?? 200;
 
-    return docs.filter((d) => args.tags.every((tag) => d.tags.includes(tag)));
+    if (args.status) {
+      const { status } = args;
+      const docs = await ctx.db
+        .query("autopilotDocuments")
+        .withIndex("by_org_status", (q) =>
+          q.eq("organizationId", args.organizationId).eq("status", status)
+        )
+        .collect();
+
+      return docs
+        .filter((doc) => documentHasTags(doc, args.tags))
+        .slice(0, limit);
+    }
+
+    const docs = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+    return docs
+      .filter((doc) => documentHasTags(doc, args.tags))
+      .slice(0, limit);
   },
 });
 
@@ -224,6 +333,7 @@ export const getDocumentsByTags = internalQuery({
  */
 export const getDocumentById = internalQuery({
   args: { documentId: v.id("autopilotDocuments") },
+  returns: v.union(autopilotDocumentRecord, v.null()),
   handler: async (ctx, args) => {
     return await ctx.db.get(args.documentId);
   },
@@ -234,6 +344,7 @@ export const getDocumentById = internalQuery({
  */
 export const getUnverifiedDocuments = internalQuery({
   args: { organizationId: v.id("organizations") },
+  returns: v.array(autopilotDocumentRecord),
   handler: async (ctx, args) => {
     const docs = await ctx.db
       .query("autopilotDocuments")

@@ -216,26 +216,49 @@ export const writeDocValidation = internalMutation({
     docId: v.id("autopilotDocuments"),
     validation: validatorScoreValidator,
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.docId, {
       validation: args.validation,
       updatedAt: Date.now(),
     });
+    return null;
   },
 });
+
+const USE_CASE_VALIDATION_STATUS_BY_RECOMMENDATION = {
+  publish: "published",
+  reject: "archived",
+  revise: "pending_review",
+} satisfies Record<
+  "publish" | "reject" | "revise",
+  "archived" | "pending_review" | "published"
+>;
 
 export const writeUseCaseValidation = internalMutation({
   args: {
     useCaseId: v.id("autopilotUseCases"),
     validation: validatorScoreValidator,
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
+    const status = resolveUseCaseValidationStatus(
+      args.validation.recommendation
+    );
     await ctx.db.patch(args.useCaseId, {
+      status,
       validation: args.validation,
       updatedAt: Date.now(),
     });
+    return null;
   },
 });
+
+function resolveUseCaseValidationStatus(
+  recommendation: "publish" | "reject" | "revise"
+): "archived" | "pending_review" | "published" {
+  return USE_CASE_VALIDATION_STATUS_BY_RECOMMENDATION[recommendation];
+}
 
 // ============================================
 // ACTION — main validator pass

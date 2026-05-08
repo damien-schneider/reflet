@@ -1,28 +1,16 @@
-/**
- * Claude Code adapter.
- *
- * Delegates coding tasks to Anthropic's Claude Code via the GitHub Action
- * (anthropics/claude-code-action).
- *
- * Claude Code handles the full development lifecycle:
- *   - Clones the repo in a GitHub Actions runner
- *   - Has Read, Write, Edit, Bash, Glob, Grep tools
- *   - Supports subagents for complex multi-file work
- *   - Reads AGENTS.md for project conventions
- *   - Creates PRs with detailed explanations
- *
- * Integration approach:
- *   We create a GitHub Issue and trigger the claude-code workflow dispatch,
- *   or use @claude mention in the issue body if the action is configured
- *   with issue triggers.
- *
- * Requirements:
- *   - Anthropic API key (or Bedrock/Vertex credentials)
- *   - GitHub PAT with actions:write, contents:write, issues:write
- *   - claude-code-action installed in the repo (.github/workflows/claude.yml)
- */
-
-import { log } from "./adapter_helpers";
+import type { z } from "zod";
+import {
+  createProviderParseFailure,
+  createProviderStatusFailure,
+  githubCheckRunsResponseSchema,
+  githubCommentsResponseSchema,
+  githubIssueResponseSchema,
+  githubPullsResponseSchema,
+  isPullRequestLinkedToIssue,
+  log,
+  parseGitHubCheckRuns,
+  parseResponseJson,
+} from "./adapter_helpers";
 import { buildHeaders, parseRepoUrl } from "./builtin_github";
 import type {
   ActivityLogEntry,
@@ -36,39 +24,6 @@ const GITHUB_API = "https://api.github.com";
 
 const CLAUDE_REF_REGEX =
   /^claude:(?<owner>[^/]+)\/(?<repo>[^#]+)#(?<issue>\d+)$/;
-
-interface CheckRun {
-  conclusion: string | null;
-  output?: { summary?: string };
-  status: string;
-}
-
-const parseCiCheckRuns = (
-  checkRuns: CheckRun[]
-): {
-  ciStatus: "pending" | "running" | "passed" | "failed";
-  ciFailureLog?: string;
-} => {
-  if (checkRuns.length === 0) {
-    return { ciStatus: "pending" };
-  }
-
-  const hasRunning = checkRuns.some((run) => run.status !== "completed");
-  if (hasRunning) {
-    return { ciStatus: "running" };
-  }
-
-  const hasFailed = checkRuns.some((run) => run.conclusion === "failure");
-  if (!hasFailed) {
-    return { ciStatus: "passed" };
-  }
-
-  const failedRun = checkRuns.find((run) => run.conclusion === "failure");
-  return {
-    ciStatus: "failed",
-    ciFailureLog: failedRun?.output?.summary?.slice(0, 2000),
-  };
-};
 
 export const claudeCodeAdapter: CodingAdapter = {
   name: "claude_code",
@@ -88,7 +43,6 @@ export const claudeCodeAdapter: CodingAdapter = {
         log("dev", "info", `Delegating to Claude Code on ${owner}/${repo}`)
       );
 
-      // Step 1: Create an issue with @claude mention to trigger the action
       const issueBody = [
         "@claude",
         "",
@@ -136,10 +90,11 @@ export const claudeCodeAdapter: CodingAdapter = {
         );
       }
 
-      const issueData = (await issueResponse.json()) as {
-        number: number;
-        html_url: string;
-      };
+      const issueData = await parseResponseJson(
+        issueResponse,
+        githubIssueResponseSchema,
+        "GitHub issue"
+      );
       logs.push(
         log(
           "dev",
@@ -149,7 +104,6 @@ export const claudeCodeAdapter: CodingAdapter = {
         )
       );
 
-      // Step 2: Try to trigger the claude-code workflow dispatch
       logs.push(log("dev", "action", "Triggering Claude Code workflow..."));
 
       const dispatchResponse = await fetch(
@@ -172,8 +126,6 @@ export const claudeCodeAdapter: CodingAdapter = {
       if (dispatchResponse.ok) {
         logs.push(log("dev", "success", "Claude Code workflow triggered"));
       } else {
-        // The @claude mention in the issue body should trigger it if
-        // the action is configured with issue event triggers
         logs.push(
           log(
             "dev",
@@ -212,7 +164,6 @@ export const claudeCodeAdapter: CodingAdapter = {
   ): Promise<TaskStatusResponse> => {
     const { githubToken } = credentials;
 
-    // Parse externalRef: "claude:owner/repo#issueNumber"
     const match = externalRef.match(CLAUDE_REF_REGEX);
     if (!match?.groups) {
       return {
@@ -228,18 +179,30 @@ export const claudeCodeAdapter: CodingAdapter = {
     const { owner, repo, issue } = match.groups;
     const logs: ActivityLogEntry[] = [];
 
-    // Check for comments from Claude on the issue (progress indicator)
     const commentsResponse = await fetch(
       `${GITHUB_API}/repos/${owner}/${repo}/issues/${issue}/comments?per_page=5&sort=created&direction=desc`,
       { headers: buildHeaders(githubToken) }
     );
 
     if (commentsResponse.ok) {
-      const comments = (await commentsResponse.json()) as Array<{
-        user: { login: string };
-        body: string;
-        created_at: string;
-      }>;
+      let comments: z.infer<typeof githubCommentsResponseSchema>;
+      try {
+        comments = await parseResponseJson(
+          commentsResponse,
+          githubCommentsResponseSchema,
+          "GitHub issue comments"
+        );
+      } catch (error) {
+        logs.push(
+          log(
+            "system",
+            "warning",
+            "Could not parse Claude Code issue comments",
+            error instanceof Error ? error.message : "Unknown parse error"
+          )
+        );
+        comments = [];
+      }
 
       const claudeComments = comments.filter(
         (c) =>
@@ -259,36 +222,27 @@ export const claudeCodeAdapter: CodingAdapter = {
       }
     }
 
-    // Check for PRs linked to this issue
     const prResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/pulls?state=open&sort=created&direction=desc&per_page=10`,
+      `${GITHUB_API}/repos/${owner}/${repo}/pulls?state=all&sort=created&direction=desc&per_page=50`,
       { headers: buildHeaders(githubToken) }
     );
 
     if (!prResponse.ok) {
-      return {
-        status: "running",
-        activityLogs:
-          logs.length > 0
-            ? logs
-            : [log("dev", "info", "Claude Code is working...")],
-        tokensUsed: 0,
-        estimatedCostUsd: 0,
-      };
+      return createProviderStatusFailure("Claude Code", prResponse, logs);
     }
 
-    const pulls = (await prResponse.json()) as Array<{
-      number: number;
-      html_url: string;
-      body: string;
-      head: { ref: string };
-      draft: boolean;
-    }>;
+    let pulls: z.infer<typeof githubPullsResponseSchema>;
+    try {
+      pulls = await parseResponseJson(
+        prResponse,
+        githubPullsResponseSchema,
+        "GitHub pull requests"
+      );
+    } catch (error) {
+      return createProviderParseFailure("Claude Code", "PR list", error, logs);
+    }
 
-    const linkedPR = pulls.find(
-      (pr) =>
-        pr.body?.includes(`#${issue}`) || pr.body?.includes(`issues/${issue}`)
-    );
+    const linkedPR = pulls.find((pr) => isPullRequestLinkedToIssue(pr, issue));
 
     if (!linkedPR) {
       return {
@@ -311,20 +265,41 @@ export const claudeCodeAdapter: CodingAdapter = {
       )
     );
 
-    // Check CI
     const ciResponse = await fetch(
       `${GITHUB_API}/repos/${owner}/${repo}/commits/${linkedPR.head.ref}/check-runs`,
       { headers: buildHeaders(githubToken) }
     );
 
-    const { ciStatus, ciFailureLog } = ciResponse.ok
-      ? parseCiCheckRuns(
-          ((await ciResponse.json()) as { check_runs: CheckRun[] }).check_runs
-        )
-      : { ciStatus: "pending" as const, ciFailureLog: undefined };
+    if (!ciResponse.ok) {
+      return createProviderStatusFailure("Claude Code CI", ciResponse, logs);
+    }
+
+    let ciData: z.infer<typeof githubCheckRunsResponseSchema>;
+    try {
+      ciData = await parseResponseJson(
+        ciResponse,
+        githubCheckRunsResponseSchema,
+        "GitHub check runs"
+      );
+    } catch (error) {
+      return createProviderParseFailure(
+        "Claude Code CI",
+        "check runs",
+        error,
+        logs
+      );
+    }
+
+    const { ciStatus, ciFailureLog } = parseGitHubCheckRuns(ciData.check_runs);
+
+    let status: TaskStatusResponse["status"] =
+      ciStatus === "passed" ? "completed" : "running";
+    if (ciStatus === "failed") {
+      status = "failed";
+    }
 
     return {
-      status: ciStatus === "passed" ? "completed" : "running",
+      status,
       prUrl: linkedPR.html_url,
       prNumber: linkedPR.number,
       ciStatus,
@@ -361,7 +336,6 @@ export const claudeCodeAdapter: CodingAdapter = {
     credentials: Record<string, string>
   ): Promise<boolean> => {
     try {
-      // Validate GitHub token
       const ghResponse = await fetch(`${GITHUB_API}/user`, {
         headers: buildHeaders(credentials.githubToken),
       });
@@ -369,7 +343,6 @@ export const claudeCodeAdapter: CodingAdapter = {
         return false;
       }
 
-      // Validate Anthropic key
       const anthropicResponse = await fetch(
         "https://api.anthropic.com/v1/messages",
         {
@@ -386,7 +359,6 @@ export const claudeCodeAdapter: CodingAdapter = {
           }),
         }
       );
-      // A 200 or 400 (bad request but authenticated) means the key works
       return anthropicResponse.status !== 401;
     } catch {
       return false;

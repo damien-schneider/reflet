@@ -18,14 +18,14 @@ export function PerAgentBudgets({
 }: {
   storedValue: string | undefined;
   disabled: boolean;
-  onSave: (json: string) => void;
+  onSave: (json: string) => Promise<void>;
 }) {
   const [values, setValues] = useState<Record<string, string>>(() =>
     createBudgetInputValues(storedValue)
   );
 
   const saveAgentBudgetCaps = () => {
-    onSave(formatBudgetCapsJson(values));
+    onSave(formatBudgetCapsJson(values)).catch(() => undefined);
   };
 
   return (

@@ -151,6 +151,7 @@ import type * as autopilot_task_queries from "../autopilot/task_queries.js";
 import type * as autopilot_verification from "../autopilot/verification.js";
 import type * as autopilot_webhooks from "../autopilot/webhooks.js";
 import type * as billing_actions from "../billing/actions.js";
+import type * as billing_effective_tier from "../billing/effective_tier.js";
 import type * as billing_internal from "../billing/internal.js";
 import type * as billing_queries from "../billing/queries.js";
 import type * as billing_stripe from "../billing/stripe.js";
@@ -492,6 +493,7 @@ declare const fullApi: ApiFromModules<{
   "autopilot/verification": typeof autopilot_verification;
   "autopilot/webhooks": typeof autopilot_webhooks;
   "billing/actions": typeof billing_actions;
+  "billing/effective_tier": typeof billing_effective_tier;
   "billing/internal": typeof billing_internal;
   "billing/queries": typeof billing_queries;
   "billing/stripe": typeof billing_stripe;

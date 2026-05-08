@@ -16,7 +16,10 @@ import {
   internalMutation,
   internalQuery,
 } from "../_generated/server";
-import { codingAdapterType } from "./schema/validators";
+import {
+  codingAdapterType,
+  isProductionCodingAdapter,
+} from "./schema/validators";
 
 /**
  * Initialize autopilot for an org — creates config with V6 defaults.
@@ -56,6 +59,7 @@ export const initAutopilot = internalMutation({
       tasksResetAt: now + TWENTY_FOUR_HOURS,
       autoMergePRs: false,
       autoMergeThreshold: 80,
+      devEnabled: isProductionCodingAdapter(args.adapter),
       fullAutoDelay: 15 * 60 * 1000,
       requireArchitectReview: true,
       createdAt: now,

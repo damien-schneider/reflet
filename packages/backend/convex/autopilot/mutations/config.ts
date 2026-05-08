@@ -3,21 +3,38 @@
  */
 
 import { v } from "convex/values";
+import { z } from "zod";
 import { internal } from "../../_generated/api";
-import { mutation } from "../../_generated/server";
+import type { Doc, Id } from "../../_generated/dataModel";
+import { type MutationCtx, mutation } from "../../_generated/server";
+import { getEffectiveTier } from "../../billing/effective_tier";
 import { getAuthUser } from "../../shared/utils";
+import { DEFAULT_DAILY_COST_CAP_USD } from "../config_task_caps";
 import {
   autonomyLevel,
   autonomyMode,
   codingAdapterType,
+  isProductionCodingAdapter,
 } from "../schema/validators";
 import { requireOrgAdmin } from "./auth";
 
+async function requireAutopilotAccess(
+  ctx: Pick<MutationCtx, "runQuery">,
+  organizationId: Id<"organizations">
+): Promise<void> {
+  const tier = await getEffectiveTier(ctx, organizationId);
+  if (tier !== "pro") {
+    throw new Error("Autopilot requires a Pro subscription.");
+  }
+}
+
 export const initConfig = mutation({
   args: { organizationId: v.id("organizations") },
+  returns: v.id("autopilotConfig"),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
 
     const existing = await ctx.db
       .query("autopilotConfig")
@@ -41,9 +58,11 @@ export const initConfig = mutation({
       autonomyMode: "stopped",
       autoMergeThreshold: 80,
       fullAutoDelay: 15 * 60 * 1000,
+      devEnabled: false,
       maxTasksPerDay: 10,
       tasksUsedToday: 0,
       tasksResetAt: now + TWENTY_FOUR_HOURS,
+      dailyCostCapUsd: DEFAULT_DAILY_COST_CAP_USD,
       autoMergePRs: false,
       requireArchitectReview: true,
       createdAt: now,
@@ -51,6 +70,77 @@ export const initConfig = mutation({
     });
   },
 });
+
+type ConfigPatch = Partial<
+  Pick<
+    Doc<"autopilotConfig">,
+    | "adapter"
+    | "autoMergePRs"
+    | "autonomyLevel"
+    | "ctoEnabled"
+    | "dailyCostCapUsd"
+    | "devEnabled"
+    | "emailDailyLimit"
+    | "growthEnabled"
+    | "intelligenceEnabled"
+    | "maxPendingTasksPerAgent"
+    | "maxPendingTasksTotal"
+    | "maxTasksPerDay"
+    | "perAgentDailyCapUsd"
+    | "pmEnabled"
+    | "requireArchitectReview"
+    | "salesEnabled"
+    | "supportEnabled"
+  >
+> & { updatedAt: number };
+
+const perAgentDailyCapUsdSchema = z
+  .object({
+    cto: z.number().positive().finite().optional(),
+    dev: z.number().positive().finite().optional(),
+    growth: z.number().positive().finite().optional(),
+    pm: z.number().positive().finite().optional(),
+    sales: z.number().positive().finite().optional(),
+    support: z.number().positive().finite().optional(),
+  })
+  .strict();
+
+function assertAtLeastOne(value: number | undefined, field: string): void {
+  if (value !== undefined && (!Number.isFinite(value) || value < 1)) {
+    throw new Error(`${field} must be at least 1`);
+  }
+}
+
+function assertNonNegative(value: number | undefined, field: string): void {
+  if (value !== undefined && (!Number.isFinite(value) || value < 0)) {
+    throw new Error(`${field} must be 0 or greater`);
+  }
+}
+
+function validateConfigUpdate(args: {
+  dailyCostCapUsd?: number;
+  emailDailyLimit?: number;
+  maxPendingTasksPerAgent?: number;
+  maxPendingTasksTotal?: number;
+  maxTasksPerDay?: number;
+  perAgentDailyCapUsd?: string;
+}): void {
+  assertAtLeastOne(args.maxTasksPerDay, "maxTasksPerDay");
+  assertAtLeastOne(args.maxPendingTasksPerAgent, "maxPendingTasksPerAgent");
+  assertAtLeastOne(args.maxPendingTasksTotal, "maxPendingTasksTotal");
+  assertNonNegative(args.dailyCostCapUsd, "dailyCostCapUsd");
+  assertNonNegative(args.emailDailyLimit, "emailDailyLimit");
+  if (args.perAgentDailyCapUsd === undefined) {
+    return;
+  }
+  try {
+    perAgentDailyCapUsdSchema.parse(JSON.parse(args.perAgentDailyCapUsd));
+  } catch {
+    throw new Error(
+      "perAgentDailyCapUsd must be a JSON object of positive finite dollar amounts for known agents"
+    );
+  }
+}
 
 export const updateConfig = mutation({
   args: {
@@ -71,7 +161,9 @@ export const updateConfig = mutation({
     emailDailyLimit: v.optional(v.number()),
     maxPendingTasksPerAgent: v.optional(v.number()),
     maxPendingTasksTotal: v.optional(v.number()),
+    perAgentDailyCapUsd: v.optional(v.string()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     const config = await ctx.db.get(args.configId);
@@ -80,20 +172,66 @@ export const updateConfig = mutation({
     }
 
     await requireOrgAdmin(ctx, config.organizationId, user._id);
+    validateConfigUpdate(args);
 
-    const { configId, ...updates } = args;
-    const filtered: Record<string, unknown> = {};
-
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined) {
-        filtered[key] = value;
+    const updates: ConfigPatch = { updatedAt: Date.now() };
+    if (args.adapter !== undefined) {
+      updates.adapter = args.adapter;
+      if (!isProductionCodingAdapter(args.adapter)) {
+        updates.devEnabled = false;
       }
     }
+    if (args.autonomyLevel !== undefined) {
+      updates.autonomyLevel = args.autonomyLevel;
+    }
+    if (args.maxTasksPerDay !== undefined) {
+      updates.maxTasksPerDay = args.maxTasksPerDay;
+    }
+    if (args.autoMergePRs !== undefined) {
+      updates.autoMergePRs = args.autoMergePRs;
+    }
+    if (args.requireArchitectReview !== undefined) {
+      updates.requireArchitectReview = args.requireArchitectReview;
+    }
+    if (args.intelligenceEnabled !== undefined) {
+      updates.intelligenceEnabled = args.intelligenceEnabled;
+    }
+    if (args.pmEnabled !== undefined) {
+      updates.pmEnabled = args.pmEnabled;
+    }
+    if (args.ctoEnabled !== undefined) {
+      updates.ctoEnabled = args.ctoEnabled;
+    }
+    if (args.devEnabled !== undefined) {
+      updates.devEnabled = args.devEnabled;
+    }
+    if (args.growthEnabled !== undefined) {
+      updates.growthEnabled = args.growthEnabled;
+    }
+    if (args.supportEnabled !== undefined) {
+      updates.supportEnabled = args.supportEnabled;
+    }
+    if (args.salesEnabled !== undefined) {
+      updates.salesEnabled = args.salesEnabled;
+    }
+    if (args.dailyCostCapUsd !== undefined) {
+      updates.dailyCostCapUsd = args.dailyCostCapUsd;
+    }
+    if (args.emailDailyLimit !== undefined) {
+      updates.emailDailyLimit = args.emailDailyLimit;
+    }
+    if (args.maxPendingTasksPerAgent !== undefined) {
+      updates.maxPendingTasksPerAgent = args.maxPendingTasksPerAgent;
+    }
+    if (args.maxPendingTasksTotal !== undefined) {
+      updates.maxPendingTasksTotal = args.maxPendingTasksTotal;
+    }
+    if (args.perAgentDailyCapUsd !== undefined) {
+      updates.perAgentDailyCapUsd = args.perAgentDailyCapUsd;
+    }
 
-    await ctx.db.patch(configId, {
-      ...filtered,
-      updatedAt: Date.now(),
-    });
+    await ctx.db.patch(args.configId, updates);
+    return null;
   },
 });
 
@@ -102,9 +240,13 @@ export const setAutonomyMode = mutation({
     organizationId: v.id("organizations"),
     mode: autonomyMode,
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    if (args.mode !== "stopped") {
+      await requireAutopilotAccess(ctx, args.organizationId);
+    }
 
     const config = await ctx.db
       .query("autopilotConfig")
@@ -135,6 +277,15 @@ export const setAutonomyMode = mutation({
           status: "backlog",
           updatedAt: now,
         });
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.execution_lifecycle.cancelTask,
+          {
+            organizationId: args.organizationId,
+            taskId: item._id,
+            finalStatus: "backlog",
+          }
+        );
       }
 
       await ctx.db.patch(config._id, {
@@ -151,7 +302,7 @@ export const setAutonomyMode = mutation({
         message: `Autopilot stopped — ${inProgressItems.length} work items paused`,
         organizationId: args.organizationId,
       });
-      return;
+      return null;
     }
 
     if (previousMode === "stopped" && args.mode !== "stopped") {
@@ -183,7 +334,7 @@ export const setAutonomyMode = mutation({
         message: `Autopilot resumed in ${args.mode} mode — ${backlogItems.length} work items resumed`,
         organizationId: args.organizationId,
       });
-      return;
+      return null;
     }
 
     await ctx.db.patch(config._id, {
@@ -199,6 +350,7 @@ export const setAutonomyMode = mutation({
       message: `Autonomy mode changed to ${args.mode}`,
       organizationId: args.organizationId,
     });
+    return null;
   },
 });
 
@@ -208,6 +360,7 @@ export const upsertCredentials = mutation({
     adapter: codingAdapterType,
     credentials: v.string(),
   },
+  returns: v.id("autopilotAdapterCredentials"),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
@@ -221,23 +374,35 @@ export const upsertCredentials = mutation({
 
     const now = Date.now();
 
+    const credentialId = existing
+      ? existing._id
+      : await ctx.db.insert("autopilotAdapterCredentials", {
+          organizationId: args.organizationId,
+          adapter: args.adapter,
+          credentials: args.credentials,
+          isValid: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+
     if (existing) {
       await ctx.db.patch(existing._id, {
         credentials: args.credentials,
         isValid: false,
         updatedAt: now,
       });
-      return existing._id;
     }
 
-    return ctx.db.insert("autopilotAdapterCredentials", {
-      organizationId: args.organizationId,
-      adapter: args.adapter,
-      credentials: args.credentials,
-      isValid: false,
-      createdAt: now,
-      updatedAt: now,
-    });
+    await ctx.scheduler.runAfter(
+      0,
+      internal.autopilot.config_mutations.validateAdapterCredentials,
+      {
+        organizationId: args.organizationId,
+        adapter: args.adapter,
+      }
+    );
+
+    return credentialId;
   },
 });
 
@@ -250,7 +415,9 @@ export const raiseBudgetCap = mutation({
     organizationId: v.id("organizations"),
     newCapUsd: v.number(),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
+    assertNonNegative(args.newCapUsd, "newCapUsd");
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
 
@@ -278,5 +445,6 @@ export const raiseBudgetCap = mutation({
       message: `Budget cap raised to $${args.newCapUsd.toFixed(2)}`,
       action: "budget.raised",
     });
+    return null;
   },
 });

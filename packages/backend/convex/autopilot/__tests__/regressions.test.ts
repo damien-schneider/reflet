@@ -8,6 +8,7 @@ import schema from "../../schema";
 import {
   CONVEX_INTEGRATION_TEST_TIMEOUT_MS,
   modules,
+  registerStripeComponent,
 } from "../../test.helpers";
 import { getPMAssignableAgents } from "../agents/pm/analysis";
 import {
@@ -17,20 +18,49 @@ import {
 
 const readDocId = (doc: { _id: string }) => doc._id;
 
-const createTestContext = () => convexTest(schema, modules);
+const createTestContext = () => {
+  const t = convexTest(schema, modules);
+  registerStripeComponent(t);
+  return t;
+};
 type TestContext = ReturnType<typeof createTestContext>;
+interface EnabledAutopilotConfig {
+  organizationId: Id<"organizations">;
+}
+interface InboxReviewItem {
+  _source: "document" | "report" | "work";
+  title: string;
+}
 
-const createOrg = async (t: TestContext) =>
-  t.run(async (ctx) =>
+const createActiveStripeSubscription = async (
+  t: TestContext,
+  organizationId: Id<"organizations">
+) => {
+  await t.mutation(components.stripe.private.handleSubscriptionCreated, {
+    stripeSubscriptionId: `sub_autopilot_${organizationId}`,
+    stripeCustomerId: `cus_autopilot_${organizationId}`,
+    status: "active",
+    currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000,
+    cancelAtPeriodEnd: false,
+    priceId: "price_pro",
+    metadata: { orgId: organizationId },
+  });
+};
+
+const createOrg = async (t: TestContext) => {
+  const organizationId = await t.run(async (ctx) =>
     ctx.db.insert("organizations", {
       name: "Test Org",
       slug: `test-org-${Date.now()}`,
       isPublic: false,
-      subscriptionTier: "free",
+      subscriptionTier: "pro",
       subscriptionStatus: "active",
       createdAt: Date.now(),
     })
   );
+  await createActiveStripeSubscription(t, organizationId);
+  return organizationId;
+};
 
 const createMemberSession = async (
   t: TestContext,
@@ -696,7 +726,7 @@ describe("autopilot regressions", () => {
     await createAutopilotConfig(t, disabledOrgId, { enabled: false });
     await createAutopilotConfig(t, activeOrgId);
 
-    const enabledConfigs = await t.query(
+    const enabledConfigs: EnabledAutopilotConfig[] = await t.query(
       internal.autopilot.config.getEnabledConfigs,
       {}
     );
@@ -787,7 +817,7 @@ describe("autopilot regressions", () => {
     });
     const authed = await createMemberSession(t, organizationId);
 
-    const allItems = await authed.query(
+    const allItems: InboxReviewItem[] = await authed.query(
       api.autopilot.queries.inbox.listInboxItems,
       { organizationId, reviewState: "pending" }
     );
@@ -961,5 +991,61 @@ describe("autopilot regressions", () => {
 
     expect(guard.allowed).toBe(false);
     expect(guard.reason).toContain("Daily cost cap reached");
+  });
+
+  test("cancel task records provider cancellation failures", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createAutopilotConfig(t, organizationId);
+    const taskId = await createWorkItem(t, {
+      organizationId,
+      status: "in_progress",
+    });
+    const runId = await t.mutation(
+      internal.autopilot.task_mutations.createRun,
+      {
+        organizationId,
+        taskId,
+        adapter: "builtin",
+      }
+    );
+    await t.mutation(internal.autopilot.task_mutations.updateRun, {
+      runId,
+      status: "queued",
+      externalRef: "builtin:owner/repo#12",
+    });
+    await t.mutation(
+      internal.autopilot.config_mutations.upsertAdapterCredentials,
+      {
+        organizationId,
+        adapter: "builtin",
+        credentials: JSON.stringify({ githubToken: "ghp_test" }),
+      }
+    );
+    const originalFetch = globalThis.fetch;
+    const failingFetch: typeof fetch = async () =>
+      new Response("GitHub unavailable", { status: 500 });
+    globalThis.fetch = failingFetch;
+
+    try {
+      await t.action(internal.autopilot.execution_lifecycle.cancelTask, {
+        organizationId,
+        taskId,
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+
+    const activity = await t.run((ctx) =>
+      ctx.db.query("autopilotActivityLog").collect()
+    );
+    expect(
+      activity.some(
+        (entry) =>
+          entry.level === "warning" &&
+          entry.message === "Provider cancellation failed" &&
+          entry.details?.includes("Failed to close PR #12: 500")
+      )
+    ).toBe(true);
   });
 });

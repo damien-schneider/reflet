@@ -2,6 +2,7 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
 import { useEffect, useReducer } from "react";
 import { toast } from "sonner";
 
@@ -30,7 +31,8 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 export default function AutopilotInboxPage() {
-  const { organizationId } = useAutopilotContext();
+  const { organizationId, orgSlug } = useAutopilotContext();
+  const { push } = useRouter();
   const [pageState, dispatchPageState] = useReducer(
     reduceInboxPageState,
     initialInboxPageState
@@ -137,9 +139,7 @@ export default function AutopilotInboxPage() {
       updatePageState({ detailReportId: item._id });
       return;
     }
-    if (item.prUrl) {
-      window.open(item.prUrl, "_blank", "noopener,noreferrer");
-    }
+    push(`/dashboard/${orgSlug}/autopilot/tasks/${item._id}`);
   };
 
   const filteredItems = items?.filter((item) => {
@@ -168,10 +168,8 @@ export default function AutopilotInboxPage() {
   useInboxKeyboard({
     dispatchSelectedIndex: dispatchPageState,
     filteredItems,
-    isUpdatingItem,
     openDetail,
     selectedIndex,
-    updateStatus,
   });
 
   if (items === undefined) {
@@ -188,11 +186,15 @@ export default function AutopilotInboxPage() {
     );
   }
 
-  const pendingItems =
-    activeTab === "pending" ? items.filter((item) => item.needsReview) : [];
+  const visiblePendingItems =
+    activeTab === "pending"
+      ? (filteredItems?.filter((item) => item.needsReview) ?? [])
+      : [];
 
   const handleBulkApprove = async () => {
-    const readyItems = pendingItems.filter((item) => !isUpdatingItem(item._id));
+    const readyItems = visiblePendingItems.filter(
+      (item) => !isUpdatingItem(item._id)
+    );
     if (readyItems.length === 0) {
       return;
     }
@@ -222,7 +224,7 @@ export default function AutopilotInboxPage() {
       <InboxHeader
         countsTotal={counts?.total}
         onBulkApprove={handleBulkApprove}
-        pendingCount={pendingItems.length}
+        pendingCount={visiblePendingItems.length}
       />
 
       <InboxFilters

@@ -19,30 +19,70 @@ type AdapterName =
   | "open_swe"
   | "openclaw";
 
+const createUnsupportedAdapter = (
+  name: Extract<AdapterName, "open_swe" | "openclaw">,
+  displayName: string
+): CodingAdapter => {
+  const errorMessage = `${displayName} is not configured for production execution. Select Codex, Claude Code, or Copilot before dispatching dev work.`;
+  return {
+    name,
+    displayName: `${displayName} (not configured)`,
+    requiredCredentials: [],
+    executeTask: async () => ({
+      status: "failed",
+      activityLogs: [
+        {
+          agent: "dev",
+          level: "error",
+          message: errorMessage,
+          timestamp: Date.now(),
+        },
+      ],
+      tokensUsed: 0,
+      estimatedCostUsd: 0,
+      errorMessage,
+    }),
+    getStatus: async () => ({
+      status: "failed",
+      activityLogs: [
+        {
+          agent: "system",
+          level: "error",
+          message: errorMessage,
+          timestamp: Date.now(),
+        },
+      ],
+      tokensUsed: 0,
+      estimatedCostUsd: 0,
+    }),
+    cancelTask: async () => undefined,
+    validateCredentials: async () => false,
+  };
+};
+
 const adapters: Record<AdapterName, CodingAdapter> = {
   builtin: builtinAdapter,
   copilot: copilotAdapter,
   codex: codexAdapter,
   claude_code: claudeCodeAdapter,
-  // V6: open_swe and openclaw use the same interface but route through
-  // external GitHub Actions / self-hosted instances. They reuse the
-  // builtin adapter as a fallback until their specific implementations
-  // are connected.
-  open_swe: builtinAdapter,
-  openclaw: builtinAdapter,
-} as const;
+  open_swe: createUnsupportedAdapter("open_swe", "Open SWE"),
+  openclaw: createUnsupportedAdapter("openclaw", "OpenClaw"),
+};
+
+function isAdapterName(name: string): name is AdapterName {
+  return name in adapters;
+}
 
 /**
  * Get a coding adapter by name. Throws if unknown.
  */
 export const getAdapter = (name: string): CodingAdapter => {
-  const adapter = adapters[name as AdapterName];
-  if (!adapter) {
+  if (!isAdapterName(name)) {
     throw new Error(
       `Unknown adapter "${name}". Available: ${Object.keys(adapters).join(", ")}`
     );
   }
-  return adapter;
+  return adapters[name];
 };
 
 /**

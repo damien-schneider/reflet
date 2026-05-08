@@ -57,6 +57,20 @@ type CommunityDraftDocType = Extract<
   Doc<"autopilotDocuments">["type"],
   "hn_comment" | "linkedin_post" | "reddit_reply" | "twitter_post"
 >;
+interface DraftSourcePost {
+  _id: Id<"autopilotCommunityPosts">;
+  authorName: string;
+  content: string;
+  platform: CommunityPlatform;
+  sourceUrl: string;
+  title?: string;
+  validationComposite: number;
+  validationRationale: string;
+}
+interface CommunityDraftContext {
+  chainState: Awaited<ReturnType<typeof computeChainState>>;
+  posts: DraftSourcePost[];
+}
 
 const DOC_TYPE_BY_PLATFORM = {
   devto: "reddit_reply",
@@ -212,7 +226,7 @@ export const runCommunityDraftGeneration = internalAction({
   args: { organizationId: v.id("organizations") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { chainState, posts } = await ctx.runQuery(
+    const { chainState, posts }: CommunityDraftContext = await ctx.runQuery(
       internal.autopilot.agents.growth.drafts.producer.getCommunityDraftContext,
       { organizationId: args.organizationId }
     );

@@ -86,6 +86,7 @@ export function AutonomyToggle() {
           <Tooltip key={mode.value}>
             <TooltipTrigger
               aria-label={`${mode.label}: ${mode.description}`}
+              aria-pressed={isActive}
               className={cn(
                 "relative flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs transition-colors duration-200",
                 "text-muted-foreground hover:text-foreground",
@@ -94,6 +95,7 @@ export function AutonomyToggle() {
               )}
               disabled={!isAdmin}
               onClick={() => handleModeChange(mode.value)}
+              type="button"
             >
               {isActive && (
                 <span

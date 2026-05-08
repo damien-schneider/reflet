@@ -1,23 +1,15 @@
-/**
- * OpenAI Codex adapter.
- *
- * Delegates coding tasks to OpenAI Codex via the GitHub Action integration.
- * Codex handles its own managed sandbox:
- *   - Isolated container with network access in setup phase
- *   - Automatic dependency detection and installation
- *   - Reads AGENTS.md for project conventions
- *   - Creates PRs and can auto-review them
- *
- * Integration approach:
- *   We trigger Codex through the GitHub Action (openai/codex-action@v1)
- *   by creating a GitHub Issue labeled `codex` and dispatching a workflow.
- *
- * Requirements:
- *   - OpenAI API key (for Codex cloud tasks)
- *   - GitHub PAT with actions:write, contents:write, issues:write
- *   - Codex GitHub Action installed in the repo
- */
-
+import type { z } from "zod";
+import {
+  createProviderParseFailure,
+  createProviderStatusFailure,
+  githubCheckRunsResponseSchema,
+  githubIssueResponseSchema,
+  githubPullsResponseSchema,
+  githubWorkflowRunsResponseSchema,
+  isPullRequestLinkedToIssue,
+  parseGitHubCheckRuns,
+  parseResponseJson,
+} from "./adapter_helpers";
 import type {
   ActivityLogEntry,
   CodingAdapter,
@@ -30,49 +22,6 @@ const GITHUB_API = "https://api.github.com";
 
 const GITHUB_REPO_URL_REGEX = /github\.com[/:](?<owner>[^/]+)\/(?<repo>[^/.]+)/;
 const CODEX_REF_REGEX = /^codex:(?<owner>[^/]+)\/(?<repo>[^#]+)#(?<issue>\d+)$/;
-
-interface CheckRun {
-  conclusion: string | null;
-  output?: { summary?: string };
-  status: string;
-}
-
-const parseCiCheckRuns = (
-  checkRuns: CheckRun[]
-): {
-  ciStatus: "pending" | "running" | "passed" | "failed";
-  ciFailureLog?: string;
-} => {
-  if (checkRuns.length === 0) {
-    return { ciStatus: "pending" };
-  }
-
-  const hasRunning = checkRuns.some((run) => run.status !== "completed");
-  if (hasRunning) {
-    return { ciStatus: "running" };
-  }
-
-  const hasFailed = checkRuns.some(
-    (run) =>
-      run.conclusion === "failure" ||
-      run.conclusion === "cancelled" ||
-      run.conclusion === "timed_out"
-  );
-  if (!hasFailed) {
-    return { ciStatus: "passed" };
-  }
-
-  const failedRun = checkRuns.find(
-    (run) =>
-      run.conclusion === "failure" ||
-      run.conclusion === "cancelled" ||
-      run.conclusion === "timed_out"
-  );
-  return {
-    ciStatus: "failed",
-    ciFailureLog: failedRun?.output?.summary?.slice(0, 2000),
-  };
-};
 
 const buildHeaders = (token: string): Record<string, string> => ({
   Authorization: `Bearer ${token}`,
@@ -101,6 +50,61 @@ const log = (
   details,
   timestamp: Date.now(),
 });
+
+const getNoPrStatus = async ({
+  githubToken,
+  logs,
+  owner,
+  repo,
+}: {
+  githubToken: string;
+  logs: ActivityLogEntry[];
+  owner: string;
+  repo: string;
+}): Promise<TaskStatusResponse> => {
+  const runsResponse = await fetch(
+    `${GITHUB_API}/repos/${owner}/${repo}/actions/runs?per_page=5`,
+    { headers: buildHeaders(githubToken) }
+  );
+
+  if (runsResponse.ok) {
+    try {
+      const runsData = await parseResponseJson(
+        runsResponse,
+        githubWorkflowRunsResponseSchema,
+        "GitHub workflow runs"
+      );
+      const codexRun = runsData.workflow_runs.find(
+        (run) =>
+          run.name.toLowerCase().includes("codex") && run.status !== "completed"
+      );
+      if (codexRun) {
+        logs.push(
+          log("dev", "info", `Codex workflow running: ${codexRun.status}`)
+        );
+      }
+    } catch (error) {
+      logs.push(
+        log(
+          "system",
+          "warning",
+          "Could not parse Codex workflow run status",
+          error instanceof Error ? error.message : "Unknown parse error"
+        )
+      );
+    }
+  }
+
+  return {
+    status: "running",
+    activityLogs:
+      logs.length > 0
+        ? logs
+        : [log("dev", "info", "Codex is working — no PR yet")],
+    tokensUsed: 0,
+    estimatedCostUsd: 0,
+  };
+};
 
 export const codexAdapter: CodingAdapter = {
   name: "codex",
@@ -159,10 +163,11 @@ export const codexAdapter: CodingAdapter = {
         );
       }
 
-      const issueData = (await issueResponse.json()) as {
-        number: number;
-        html_url: string;
-      };
+      const issueData = await parseResponseJson(
+        issueResponse,
+        githubIssueResponseSchema,
+        "GitHub issue"
+      );
 
       logs.push(
         log(
@@ -251,68 +256,29 @@ export const codexAdapter: CodingAdapter = {
 
     // Check for PRs linked to this issue
     const prResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/pulls?state=open&sort=created&direction=desc&per_page=10`,
+      `${GITHUB_API}/repos/${owner}/${repo}/pulls?state=all&sort=created&direction=desc&per_page=50`,
       { headers: buildHeaders(githubToken) }
     );
 
     if (!prResponse.ok) {
-      return {
-        status: "running",
-        activityLogs: [log("system", "info", "Codex is working...")],
-        tokensUsed: 0,
-        estimatedCostUsd: 0,
-      };
+      return createProviderStatusFailure("Codex", prResponse);
     }
 
-    const pulls = (await prResponse.json()) as Array<{
-      number: number;
-      html_url: string;
-      body: string;
-      head: { ref: string };
-      draft: boolean;
-    }>;
+    let pulls: z.infer<typeof githubPullsResponseSchema>;
+    try {
+      pulls = await parseResponseJson(
+        prResponse,
+        githubPullsResponseSchema,
+        "GitHub pull requests"
+      );
+    } catch (error) {
+      return createProviderParseFailure("Codex", "PR list", error, logs);
+    }
 
-    const linkedPR = pulls.find(
-      (pr) =>
-        pr.body?.includes(`#${issue}`) || pr.body?.includes(`issues/${issue}`)
-    );
+    const linkedPR = pulls.find((pr) => isPullRequestLinkedToIssue(pr, issue));
 
     if (!linkedPR) {
-      // Check workflow run status
-      const runsResponse = await fetch(
-        `${GITHUB_API}/repos/${owner}/${repo}/actions/runs?per_page=5`,
-        { headers: buildHeaders(githubToken) }
-      );
-
-      if (runsResponse.ok) {
-        const runsData = (await runsResponse.json()) as {
-          workflow_runs: Array<{
-            name: string;
-            status: string;
-            conclusion: string | null;
-          }>;
-        };
-        const codexRun = runsData.workflow_runs.find(
-          (run) =>
-            run.name.toLowerCase().includes("codex") &&
-            run.status !== "completed"
-        );
-        if (codexRun) {
-          logs.push(
-            log("dev", "info", `Codex workflow running: ${codexRun.status}`)
-          );
-        }
-      }
-
-      return {
-        status: "running",
-        activityLogs:
-          logs.length > 0
-            ? logs
-            : [log("dev", "info", "Codex is working — no PR yet")],
-        tokensUsed: 0,
-        estimatedCostUsd: 0,
-      };
+      return getNoPrStatus({ githubToken, logs, owner, repo });
     }
 
     logs.push(
@@ -330,14 +296,31 @@ export const codexAdapter: CodingAdapter = {
       { headers: buildHeaders(githubToken) }
     );
 
-    const { ciStatus, ciFailureLog } = ciResponse.ok
-      ? parseCiCheckRuns(
-          ((await ciResponse.json()) as { check_runs: CheckRun[] }).check_runs
-        )
-      : { ciStatus: "pending" as const, ciFailureLog: undefined };
+    if (!ciResponse.ok) {
+      return createProviderStatusFailure("Codex CI", ciResponse, logs);
+    }
+
+    let ciData: z.infer<typeof githubCheckRunsResponseSchema>;
+    try {
+      ciData = await parseResponseJson(
+        ciResponse,
+        githubCheckRunsResponseSchema,
+        "GitHub check runs"
+      );
+    } catch (error) {
+      return createProviderParseFailure("Codex CI", "check runs", error, logs);
+    }
+
+    const { ciStatus, ciFailureLog } = parseGitHubCheckRuns(ciData.check_runs);
+
+    let status: TaskStatusResponse["status"] =
+      ciStatus === "passed" ? "completed" : "running";
+    if (ciStatus === "failed") {
+      status = "failed";
+    }
 
     return {
-      status: ciStatus === "passed" ? "completed" : "running",
+      status,
       prUrl: linkedPR.html_url,
       prNumber: linkedPR.number,
       ciStatus,

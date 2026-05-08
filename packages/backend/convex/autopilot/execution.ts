@@ -8,148 +8,17 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import type { ActionCtx } from "../_generated/server";
 import { internalAction } from "../_generated/server";
 import {
   fetchAgentsMd,
+  getRequiredTask,
+  handleTaskResult,
+  isAutopilotConfigStopped,
   parseAdapterCredentials,
-  recordExecutionCost,
-  resolveCompletionStatus,
+  resolveCompletedAt,
   resolveRetryDelayMs,
+  resolveRunStatus,
 } from "./execution_policy";
-
-const resolveRunStatus = (
-  resultStatus: string
-): "completed" | "creating_pr" | "failed" => {
-  if (resultStatus === "success") {
-    return "completed";
-  }
-  if (resultStatus === "pending") {
-    return "creating_pr";
-  }
-  return "failed";
-};
-
-const resolveCompletedAt = (resultStatus: string): number | undefined =>
-  resultStatus === "success" || resultStatus === "failed"
-    ? Date.now()
-    : undefined;
-
-const handleTaskResult = async (
-  ctx: ActionCtx,
-  params: {
-    result: {
-      status: string;
-      externalRef?: string;
-      prUrl?: string;
-      prNumber?: number;
-      tokensUsed?: number;
-      estimatedCostUsd?: number;
-      errorMessage?: string;
-    };
-    taskId: Id<"autopilotWorkItems">;
-    organizationId: Id<"organizations">;
-    runId: Id<"autopilotRuns">;
-    adapter: string;
-    autoMergePRs: boolean;
-    autonomyLevel: string;
-    autonomyMode?: string;
-    retryCount: number;
-    maxRetries: number;
-  }
-) => {
-  const {
-    result,
-    taskId,
-    organizationId,
-    runId,
-    adapter,
-    autoMergePRs,
-    autonomyLevel,
-    autonomyMode,
-    retryCount,
-    maxRetries,
-  } = params;
-
-  if (result.status === "success") {
-    await recordExecutionCost(ctx, {
-      organizationId,
-      taskId,
-      costUsd: result.estimatedCostUsd,
-    });
-    const status = resolveCompletionStatus({
-      autoMergePRs,
-      autonomyLevel,
-      autonomyMode,
-    });
-    await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
-      taskId,
-      status,
-      prUrl: result.prUrl,
-      prNumber: result.prNumber,
-      needsReview: status === "in_review",
-      reviewType: status === "in_review" ? "pr_review" : undefined,
-    });
-    return;
-  }
-
-  if (result.status === "pending") {
-    if (!result.externalRef) {
-      throw new Error(
-        `Async adapter ${adapter} returned pending status without an externalRef`
-      );
-    }
-    await ctx.scheduler.runAfter(
-      30_000,
-      internal.autopilot.execution_lifecycle.pollTaskStatus,
-      { organizationId, taskId, runId, externalRef: result.externalRef }
-    );
-    return;
-  }
-
-  if (result.status === "failed" && retryCount < maxRetries) {
-    await recordExecutionCost(ctx, {
-      organizationId,
-      taskId,
-      costUsd: result.estimatedCostUsd,
-    });
-    const retryDelay = resolveRetryDelayMs({ maxRetries, retryCount });
-    if (retryDelay === null) {
-      await ctx.runMutation(
-        internal.autopilot.task_mutations.updateTaskStatus,
-        {
-          taskId,
-          status: "cancelled",
-        }
-      );
-      return;
-    }
-
-    await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
-      taskId,
-      status: "backlog",
-    });
-
-    await ctx.scheduler.runAfter(
-      retryDelay,
-      internal.autopilot.execution.retryTask,
-      { organizationId, taskId }
-    );
-    return;
-  }
-
-  if (result.status === "failed") {
-    await recordExecutionCost(ctx, {
-      organizationId,
-      taskId,
-      costUsd: result.estimatedCostUsd,
-    });
-    await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
-      taskId,
-      status: "cancelled",
-    });
-  }
-};
 
 /**
  * Execute a coding task using the org's configured adapter.
@@ -159,15 +28,33 @@ export const executeTask = internalAction({
     organizationId: v.id("organizations"),
     taskId: v.id("autopilotWorkItems"),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
       organizationId: args.organizationId,
     });
 
-    if (
-      !config?.enabled ||
-      (config.autonomyMode ?? "supervised") === "stopped"
-    ) {
+    const task = await getRequiredTask(ctx, args.taskId);
+    if (task.organizationId !== args.organizationId) {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+        organizationId: task.organizationId,
+        workItemId: args.taskId,
+        agent: "system",
+        level: "warning",
+        message: "Execution stopped: work item belongs to another organization",
+      });
+      return null;
+    }
+
+    if (!config || isAutopilotConfigStopped(config)) {
+      await ctx.runMutation(
+        internal.autopilot.task_mutations.updateTaskStatus,
+        {
+          taskId: args.taskId,
+          status: "backlog",
+          errorMessage: "Autopilot is disabled",
+        }
+      );
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         workItemId: args.taskId,
@@ -175,15 +62,32 @@ export const executeTask = internalAction({
         level: "warning",
         message: "Autopilot is disabled — task not executed",
       });
-      return;
+      return null;
     }
 
-    const task = await ctx.runQuery(internal.autopilot.task_queries.getTask, {
-      taskId: args.taskId,
-    });
-
-    if (!task) {
-      throw new Error(`Work item not found: ${args.taskId}`);
+    const billingAccess = await ctx.runQuery(
+      internal.autopilot.billing_gate.checkAccess,
+      { organizationId: args.organizationId }
+    );
+    if (!billingAccess.allowed) {
+      const reason =
+        billingAccess.reason ?? "Autopilot requires a Pro subscription.";
+      await ctx.runMutation(
+        internal.autopilot.task_mutations.updateTaskStatus,
+        {
+          taskId: args.taskId,
+          status: "backlog",
+          errorMessage: reason,
+        }
+      );
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+        organizationId: args.organizationId,
+        workItemId: args.taskId,
+        agent: "system",
+        level: "warning",
+        message: reason,
+      });
+      return null;
     }
 
     const previousRuns = await ctx.runQuery(
@@ -207,29 +111,10 @@ export const executeTask = internalAction({
           status: "cancelled",
         }
       );
-      return;
+      return null;
     }
 
-    const runId = await ctx.runMutation(
-      internal.autopilot.task_mutations.createRun,
-      {
-        organizationId: args.organizationId,
-        taskId: args.taskId,
-        adapter: config.adapter,
-      }
-    );
-
-    await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
-      taskId: args.taskId,
-      status: "in_progress",
-    });
-
-    await ctx.runMutation(
-      internal.autopilot.config_mutations.incrementTaskCounter,
-      {
-        organizationId: args.organizationId,
-      }
-    );
+    let runId: Id<"autopilotRuns"> | null = null;
 
     try {
       const { getAdapter } = await import("./adapters/registry");
@@ -245,14 +130,49 @@ export const executeTask = internalAction({
             status: "cancelled",
           }
         );
-        await ctx.runMutation(internal.autopilot.task_mutations.updateRun, {
-          runId,
-          status: "failed",
-          errorMessage: "Invalid credentials",
-          completedAt: Date.now(),
-        });
-        return;
+        return null;
       }
+
+      const reservation = await ctx.runMutation(
+        internal.autopilot.config_mutations.reserveTaskExecution,
+        { organizationId: args.organizationId }
+      );
+      if (!reservation.allowed) {
+        await ctx.runMutation(
+          internal.autopilot.task_mutations.updateTaskStatus,
+          {
+            taskId: args.taskId,
+            status: "backlog",
+            errorMessage: reservation.reason,
+          }
+        );
+        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+          organizationId: args.organizationId,
+          workItemId: args.taskId,
+          agent: "system",
+          level: "warning",
+          message: reservation.reason ?? "Task execution paused",
+        });
+        return null;
+      }
+
+      const createdRunId = await ctx.runMutation(
+        internal.autopilot.task_mutations.createRun,
+        {
+          organizationId: args.organizationId,
+          taskId: args.taskId,
+          adapter: config.adapter,
+        }
+      );
+      runId = createdRunId;
+
+      await ctx.runMutation(
+        internal.autopilot.task_mutations.updateTaskStatus,
+        {
+          taskId: args.taskId,
+          status: "in_progress",
+        }
+      );
 
       const agentsMdContent = await fetchAgentsMd(credentials);
       const repoUrl = credentials.repoUrl ?? "";
@@ -274,7 +194,7 @@ export const executeTask = internalAction({
         await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
           organizationId: args.organizationId,
           workItemId: args.taskId,
-          runId,
+          runId: createdRunId,
           agent: logEntry.agent,
           level: logEntry.level,
           message: logEntry.message,
@@ -283,7 +203,7 @@ export const executeTask = internalAction({
       }
 
       await ctx.runMutation(internal.autopilot.task_mutations.updateRun, {
-        runId,
+        runId: createdRunId,
         status: resolveRunStatus(result.status),
         externalRef: result.externalRef,
         branch: result.branch,
@@ -299,7 +219,7 @@ export const executeTask = internalAction({
         result,
         taskId: args.taskId,
         organizationId: args.organizationId,
-        runId,
+        runId: createdRunId,
         adapter: config.adapter,
         autoMergePRs: config.autoMergePRs,
         autonomyLevel: config.autonomyLevel,
@@ -307,16 +227,19 @@ export const executeTask = internalAction({
         retryCount,
         maxRetries: 3,
       });
+      return null;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown execution error";
 
-      await ctx.runMutation(internal.autopilot.task_mutations.updateRun, {
-        runId,
-        status: "failed",
-        errorMessage,
-        completedAt: Date.now(),
-      });
+      if (runId !== null) {
+        await ctx.runMutation(internal.autopilot.task_mutations.updateRun, {
+          runId,
+          status: "failed",
+          errorMessage,
+          completedAt: Date.now(),
+        });
+      }
 
       await ctx.runMutation(
         internal.autopilot.task_mutations.updateTaskStatus,
@@ -332,7 +255,7 @@ export const executeTask = internalAction({
           internal.autopilot.execution.retryTask,
           { organizationId: args.organizationId, taskId: args.taskId }
         );
-        return;
+        return null;
       }
 
       await ctx.runMutation(
@@ -342,6 +265,7 @@ export const executeTask = internalAction({
           status: "cancelled",
         }
       );
+      return null;
     }
   },
 });
@@ -354,13 +278,25 @@ export const retryTask = internalAction({
     organizationId: v.id("organizations"),
     taskId: v.id("autopilotWorkItems"),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const task = await ctx.runQuery(internal.autopilot.task_queries.getTask, {
       taskId: args.taskId,
     });
 
     if (!task || task.status === "cancelled") {
-      return;
+      return null;
+    }
+
+    if (task.organizationId !== args.organizationId) {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+        organizationId: task.organizationId,
+        workItemId: args.taskId,
+        agent: "system",
+        level: "warning",
+        message: "Retry stopped: work item belongs to another organization",
+      });
+      return null;
     }
 
     await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
@@ -375,5 +311,6 @@ export const retryTask = internalAction({
       level: "info",
       message: "Re-queued after backoff",
     });
+    return null;
   },
 });

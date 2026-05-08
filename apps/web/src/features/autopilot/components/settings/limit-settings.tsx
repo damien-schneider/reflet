@@ -6,6 +6,7 @@ import {
   IconRobot,
   IconShieldCheck,
 } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
 
 import {
   Card,
@@ -18,18 +19,40 @@ import { Input } from "@/components/ui/input";
 import { SectionHeader } from "@/features/autopilot/components/settings/section-header";
 
 function parsePositiveInteger(value: string): number | undefined {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isNaN(parsed) || parsed <= 0 ? undefined : parsed;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 }
 
 function parseNonNegativeFloat(value: string): number | undefined {
-  const parsed = Number.parseFloat(value);
-  return Number.isNaN(parsed) || parsed < 0 ? undefined : parsed;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
 function parseNonNegativeInteger(value: string): number | undefined {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isNaN(parsed) || parsed < 0 ? undefined : parsed;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
+interface LimitInputValues {
+  costCap: string;
+  emailLimit: string;
+  maxTasks: string;
+}
+
+function getLimitInputValues({
+  dailyCostCapUsd,
+  emailDailyLimit,
+  maxTasksPerDay,
+}: {
+  dailyCostCapUsd: number | undefined;
+  emailDailyLimit: number | undefined;
+  maxTasksPerDay: number;
+}): LimitInputValues {
+  return {
+    costCap: dailyCostCapUsd === undefined ? "" : String(dailyCostCapUsd),
+    emailLimit: String(emailDailyLimit ?? 20),
+    maxTasks: String(maxTasksPerDay),
+  };
 }
 
 export function LimitSettings({
@@ -37,14 +60,63 @@ export function LimitSettings({
   disabled,
   emailDailyLimit,
   maxTasksPerDay,
+  onInvalidValue,
   onUpdate,
 }: {
   dailyCostCapUsd: number | undefined;
   disabled: boolean;
   emailDailyLimit: number | undefined;
   maxTasksPerDay: number;
-  onUpdate: (field: string, value: number) => void;
+  onInvalidValue: (message: string) => void;
+  onUpdate: (field: string, value: number) => Promise<void>;
 }) {
+  const [values, setValues] = useState(() =>
+    getLimitInputValues({ dailyCostCapUsd, emailDailyLimit, maxTasksPerDay })
+  );
+
+  useEffect(
+    function syncLimitInputsFromConfig() {
+      setValues(
+        getLimitInputValues({
+          dailyCostCapUsd,
+          emailDailyLimit,
+          maxTasksPerDay,
+        })
+      );
+    },
+    [dailyCostCapUsd, emailDailyLimit, maxTasksPerDay]
+  );
+
+  const commitLimitValue = async ({
+    currentValue,
+    field,
+    inputKey,
+    invalidMessage,
+    parse,
+    value,
+  }: {
+    currentValue: string;
+    field: string;
+    inputKey: keyof LimitInputValues;
+    invalidMessage: string;
+    parse: (rawValue: string) => number | undefined;
+    value: string;
+  }) => {
+    const parsed = parse(value);
+    if (parsed === undefined) {
+      setValues((current) => ({ ...current, [inputKey]: currentValue }));
+      onInvalidValue(invalidMessage);
+      return;
+    }
+    try {
+      await onUpdate(field, parsed);
+      setValues((current) => ({ ...current, [inputKey]: String(parsed) }));
+    } catch {
+      setValues((current) => ({ ...current, [inputKey]: currentValue }));
+      onInvalidValue("Failed to save limit");
+    }
+  };
+
   return (
     <section className="space-y-5">
       <SectionHeader
@@ -68,17 +140,27 @@ export function LimitSettings({
             <Input
               aria-label="Maximum tasks per day"
               className="font-mono"
-              defaultValue={maxTasksPerDay}
               disabled={disabled}
               id="max-tasks"
               min={1}
-              onBlur={(event) => {
-                const value = parsePositiveInteger(event.target.value);
-                if (value !== undefined) {
-                  onUpdate("maxTasksPerDay", value);
-                }
+              onBlur={async (event) => {
+                await commitLimitValue({
+                  currentValue: String(maxTasksPerDay),
+                  field: "maxTasksPerDay",
+                  inputKey: "maxTasks",
+                  invalidMessage: "Tasks per day must be at least 1",
+                  parse: parsePositiveInteger,
+                  value: event.target.value,
+                });
               }}
+              onChange={(event) =>
+                setValues((current) => ({
+                  ...current,
+                  maxTasks: event.target.value,
+                }))
+              }
               type="number"
+              value={values.maxTasks}
             />
           </CardContent>
         </Card>
@@ -97,18 +179,31 @@ export function LimitSettings({
             <Input
               aria-label="Daily cost cap in US dollars"
               className="font-mono"
-              defaultValue={dailyCostCapUsd ?? ""}
               disabled={disabled}
               id="cost-cap"
               min={0}
-              onBlur={(event) => {
-                const value = parseNonNegativeFloat(event.target.value);
-                if (value !== undefined) {
-                  onUpdate("dailyCostCapUsd", value);
-                }
+              onBlur={async (event) => {
+                await commitLimitValue({
+                  currentValue:
+                    dailyCostCapUsd === undefined
+                      ? ""
+                      : String(dailyCostCapUsd),
+                  field: "dailyCostCapUsd",
+                  inputKey: "costCap",
+                  invalidMessage: "Daily cost cap must be 0 or greater",
+                  parse: parseNonNegativeFloat,
+                  value: event.target.value,
+                });
               }}
+              onChange={(event) =>
+                setValues((current) => ({
+                  ...current,
+                  costCap: event.target.value,
+                }))
+              }
               step="0.01"
               type="number"
+              value={values.costCap}
             />
           </CardContent>
         </Card>
@@ -127,17 +222,27 @@ export function LimitSettings({
             <Input
               aria-label="Maximum outbound emails per day"
               className="font-mono"
-              defaultValue={emailDailyLimit ?? 20}
               disabled={disabled}
               id="email-limit"
               min={0}
-              onBlur={(event) => {
-                const value = parseNonNegativeInteger(event.target.value);
-                if (value !== undefined) {
-                  onUpdate("emailDailyLimit", value);
-                }
+              onBlur={async (event) => {
+                await commitLimitValue({
+                  currentValue: String(emailDailyLimit ?? 20),
+                  field: "emailDailyLimit",
+                  inputKey: "emailLimit",
+                  invalidMessage: "Email limit must be 0 or greater",
+                  parse: parseNonNegativeInteger,
+                  value: event.target.value,
+                });
               }}
+              onChange={(event) =>
+                setValues((current) => ({
+                  ...current,
+                  emailLimit: event.target.value,
+                }))
+              }
               type="number"
+              value={values.emailLimit}
             />
           </CardContent>
         </Card>

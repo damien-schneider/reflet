@@ -70,10 +70,14 @@ export function AdapterSettings({
   credentialInput: string;
   disabled: boolean;
   isSaving: boolean;
-  onAdapterChange: (value: string | undefined) => void;
+  onAdapterChange: (value: string | undefined) => Promise<void>;
   onCredentialInputChange: (value: string) => void;
   onSaveCredentials: () => void;
 }) {
+  const changeAdapter = (value: string | null) => {
+    onAdapterChange(value ?? undefined).catch(() => undefined);
+  };
+
   return (
     <section className="space-y-5">
       <SectionHeader
@@ -88,7 +92,7 @@ export function AdapterSettings({
             <Label htmlFor="adapter-select">Active Adapter</Label>
             <Select
               disabled={disabled}
-              onValueChange={(value) => onAdapterChange(value ?? undefined)}
+              onValueChange={changeAdapter}
               value={adapter}
             >
               <SelectTrigger id="adapter-select">

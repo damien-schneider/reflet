@@ -23,6 +23,10 @@ const CONTENT_PRIORITY: string[] = [
 ];
 
 type GrowthContentItem = z.infer<typeof growthContentSchema>["items"][number];
+interface DedupResult {
+  existingId: Id<"autopilotDocuments"> | null;
+  title: string;
+}
 
 const DOCUMENT_TYPE_BY_CONTENT_TYPE = {
   blog_post: "blog_post",
@@ -69,7 +73,7 @@ export const saveContentDocuments = async (
   scoredThreads?: ScoredThread[]
 ): Promise<{ saved: number; dropped: number }> => {
   // Check existing backlog
-  const pendingDocs = await ctx.runQuery(
+  const pendingDocs: Doc<"autopilotDocuments">[] = await ctx.runQuery(
     internal.autopilot.documents.getDocumentsByTags,
     { organizationId, tags: ["growth"], status: "pending_review" }
   );
@@ -101,7 +105,7 @@ export const saveContentDocuments = async (
   );
 
   // Batch dedup check — single query instead of N individual queries
-  const dedupResults = await ctx.runQuery(
+  const dedupResults: DedupResult[] = await ctx.runQuery(
     internal.autopilot.dedup.findSimilarGrowthItems,
     { organizationId, titles: sortedItems.map((i) => i.title) }
   );

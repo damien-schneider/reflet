@@ -1,9 +1,21 @@
 import { v } from "convex/values";
+import { z } from "zod";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { internalQuery } from "../_generated/server";
 
-type AgentName = "growth" | "sales" | "support";
+const activationAgent = v.union(
+  v.literal("pm"),
+  v.literal("cto"),
+  v.literal("dev"),
+  v.literal("growth"),
+  v.literal("support"),
+  v.literal("sales")
+);
+
+type ActivationAgent = "pm" | "cto" | "dev" | "growth" | "support" | "sales";
+
+const activationOverrideSchema = z.record(z.string(), z.boolean());
 
 interface ActivationResult {
   active: boolean;
@@ -12,21 +24,24 @@ interface ActivationResult {
 
 const checkManualOverride = (
   activationOverrides: string | undefined,
-  agent: AgentName
+  agent: ActivationAgent
 ): boolean | null => {
   if (!activationOverrides) {
     return null;
   }
   try {
-    const overrides = JSON.parse(activationOverrides) as Record<
-      string,
-      boolean
-    >;
+    const parsed = activationOverrideSchema.safeParse(
+      JSON.parse(activationOverrides)
+    );
+    if (!parsed.success) {
+      return null;
+    }
+    const overrides = parsed.data;
     if (agent in overrides) {
       return overrides[agent] ?? null;
     }
-  } catch {
-    // Invalid JSON — no override
+  } catch (error) {
+    console.warn("Invalid autopilot activation override JSON", error);
   }
   return null;
 };
@@ -119,11 +134,13 @@ const checkSupportActivation = async (
 export const getActivationStatus = internalQuery({
   args: {
     organizationId: v.id("organizations"),
-    agent: v.string(),
+    agent: activationAgent,
   },
+  returns: v.object({
+    active: v.boolean(),
+    reason: v.string(),
+  }),
   handler: async (ctx, args) => {
-    const agent = args.agent as AgentName;
-
     const config = await ctx.db
       .query("autopilotConfig")
       .withIndex("by_organization", (q) =>
@@ -133,7 +150,7 @@ export const getActivationStatus = internalQuery({
 
     const manualOverride = checkManualOverride(
       config?.activationOverrides,
-      agent
+      args.agent
     );
 
     if (manualOverride !== null) {
@@ -143,15 +160,15 @@ export const getActivationStatus = internalQuery({
       };
     }
 
-    switch (agent) {
-      case "growth":
-        return checkGrowthActivation(ctx, args.organizationId);
-      case "sales":
-        return checkSalesActivation(ctx, args.organizationId);
-      case "support":
-        return checkSupportActivation(ctx, args.organizationId);
-      default:
-        return { active: true, reason: "Core agent — always active" };
+    if (args.agent === "growth") {
+      return checkGrowthActivation(ctx, args.organizationId);
     }
+    if (args.agent === "sales") {
+      return checkSalesActivation(ctx, args.organizationId);
+    }
+    if (args.agent === "support") {
+      return checkSupportActivation(ctx, args.organizationId);
+    }
+    return { active: true, reason: "Core agent — always active" };
   },
 });

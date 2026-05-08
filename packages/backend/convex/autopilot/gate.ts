@@ -8,7 +8,7 @@
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-import { assignedAgent } from "./schema/validators";
+import { assignedAgent, isProductionCodingAdapter } from "./schema/validators";
 
 // ============================================
 // ACTION TYPES
@@ -94,6 +94,7 @@ const gateResultValidator = v.object({
 
 function isAgentEnabledInConfig(
   config: {
+    adapter?: string;
     ctoEnabled?: boolean;
     devEnabled?: boolean;
     growthEnabled?: boolean;
@@ -109,7 +110,10 @@ function isAgentEnabledInConfig(
     case "cto":
       return config.ctoEnabled !== false;
     case "dev":
-      return config.devEnabled !== false;
+      return (
+        isProductionCodingAdapter(config.adapter ?? "builtin") &&
+        config.devEnabled !== false
+      );
     case "growth":
       return config.growthEnabled !== false;
     case "support":
@@ -162,12 +166,19 @@ export const checkGate = internalQuery({
       return { proceed: false, reason: "agent_disabled" as const };
     }
 
-    // 4. Always-autonomous actions pass without rate limits
+    if (args.action === "create_task") {
+      const now = Date.now();
+      const effectiveUsed =
+        now >= config.tasksResetAt ? 0 : config.tasksUsedToday;
+      if (effectiveUsed >= config.maxTasksPerDay) {
+        return { proceed: false, reason: "plan_limit" as const };
+      }
+    }
+
     if (ALWAYS_AUTONOMOUS_ACTIONS.has(args.action)) {
       return { proceed: true, reason: "allowed" as const };
     }
 
-    // 5. Rate limit check — count recent actions by this agent
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
     const recentActivity = await ctx.db
       .query("autopilotActivityLog")
@@ -180,7 +191,6 @@ export const checkGate = internalQuery({
       (a) => a.agent === args.agent && a.createdAt >= oneHourAgo
     );
 
-    // Check rate limit based on action type
     const limit = ACTION_LIMIT_MAP[args.action];
     if (limit !== undefined) {
       const actionCount = recentByAgent.filter(
@@ -191,32 +201,18 @@ export const checkGate = internalQuery({
       }
     }
 
-    // 6. Cost limit check
-    const dailyCap = config.dailyCostCapUsd ?? 50;
     const costUsed = config.costUsedTodayUsd ?? 0;
-    if (costUsed >= dailyCap) {
+    if (
+      config.dailyCostCapUsd !== undefined &&
+      costUsed >= config.dailyCostCapUsd
+    ) {
       return { proceed: false, reason: "cost_limit" as const };
     }
 
-    // 7. Task throttle check (daily limit — kept as a safety cap)
-    if (args.action === "create_task") {
-      const now = Date.now();
-      const tasksUsedToday = config.tasksUsedToday;
-      const tasksResetAt = config.tasksResetAt;
-
-      // Reset counter if past the reset time
-      const effectiveUsed = now >= tasksResetAt ? 0 : tasksUsedToday;
-      if (effectiveUsed >= config.maxTasksPerDay) {
-        return { proceed: false, reason: "plan_limit" as const };
-      }
-    }
-
-    // 8. Actions that always require approval regardless of mode
     if (ALWAYS_APPROVAL_ACTIONS.has(args.action)) {
       return { proceed: true, reason: "requires_approval" as const };
     }
 
-    // 9. Destructive or external actions require approval in supervised mode
     if (mode === "supervised" && APPROVAL_REQUIRED_ACTIONS.has(args.action)) {
       return { proceed: true, reason: "requires_approval" as const };
     }

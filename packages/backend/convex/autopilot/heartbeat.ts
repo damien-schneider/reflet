@@ -658,7 +658,7 @@ export const runHeartbeat = internalAction({
         { organizationId: orgId }
       );
 
-      const enabledAgents = await ctx.runQuery(
+      const enabledAgents: string[] = await ctx.runQuery(
         internal.autopilot.config.getEnabledAgents,
         { organizationId: orgId }
       );
@@ -690,16 +690,20 @@ export const runHeartbeat = internalAction({
         enabledSet
       );
 
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.integrations.email.sendApprovedOutreach,
-        { organizationId: orgId }
-      );
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.integrations.social.publishApprovedContent,
-        { organizationId: orgId }
-      );
+      if (enabledSet.has("sales")) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.integrations.email.sendApprovedOutreach,
+          { organizationId: orgId }
+        );
+      }
+      if (enabledSet.has("growth")) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.integrations.social.publishApprovedContent,
+          { organizationId: orgId }
+        );
+      }
 
       // Log a single heartbeat summary per org
       const wokenStr = woken.length > 0 ? woken.join(", ") : "none";

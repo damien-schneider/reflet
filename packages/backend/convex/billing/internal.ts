@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { components } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { getEffectiveTier } from "./effective_tier";
 
 /**
  * Get membership for a user in an organization
@@ -84,13 +84,6 @@ export const getOrgEffectiveTier = internalQuery({
   args: { organizationId: v.id("organizations") },
   returns: v.union(v.literal("free"), v.literal("pro")),
   handler: async (ctx, args) => {
-    const subscription = await ctx.runQuery(
-      components.stripe.public.getSubscriptionByOrgId,
-      { orgId: args.organizationId }
-    );
-    const hasActiveSubscription =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
-    return hasActiveSubscription ? "pro" : "free";
+    return await getEffectiveTier(ctx, args.organizationId);
   },
 });

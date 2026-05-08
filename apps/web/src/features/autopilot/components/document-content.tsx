@@ -134,8 +134,12 @@ function SocialDraftContent({
   const PlatformIcon = SOCIAL_ICONS[type] ?? IconExternalLink;
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(content);
-    toast.success("Copied to clipboard");
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Could not copy to clipboard");
+    }
   };
 
   return (

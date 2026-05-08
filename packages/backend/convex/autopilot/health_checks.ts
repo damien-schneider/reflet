@@ -73,7 +73,7 @@ function checkAgentCount(
       severity: "critical",
       message: "No agents are enabled",
       resolution: "Enable at least one agent to start your autonomous team",
-      actionUrl: "",
+      actionUrl: "settings",
       actionLabel: "Enable Agents",
     });
   } else if (enabledCount <= 2) {

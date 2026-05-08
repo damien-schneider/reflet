@@ -1,26 +1,17 @@
-/**
- * CTO Agent — Technical Specification Generator
- *
- * Receives PM tasks and converts them into detailed technical specifications
- * using an LLM. The CTO understands the codebase architecture and generates
- * self-contained implementation prompts for the Dev agent.
- */
-
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
+import type { Id } from "../../_generated/dataModel";
 import {
+  type ActionCtx,
   internalAction,
   internalMutation,
   internalQuery,
 } from "../../_generated/server";
+import { activityLogLevel, priority } from "../schema/validators";
 import { QUALITY_MODELS } from "./models";
 import { buildAgentPrompt, CTO_SYSTEM_PROMPT } from "./prompts";
 import { generateObjectWithFallback } from "./shared_generation";
-
-// ============================================
-// ZOD SCHEMA
-// ============================================
 
 export const technicalSpecSchema = z.object({
   filesToModify: z.array(
@@ -60,13 +51,6 @@ export const technicalSpecSchema = z.object({
     ),
 });
 
-// ============================================
-// INTERNAL QUERIES
-// ============================================
-
-/**
- * Get repo analysis for technical context
- */
 export const getRepoAnalysisForCto = internalQuery({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -82,10 +66,6 @@ export const getRepoAnalysisForCto = internalQuery({
   },
 });
 
-/**
- * Get AGENTS.md content if available.
- * Loads from repo analysis data if the repo was analyzed.
- */
 export const getAgentsMd = internalQuery({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -97,132 +77,128 @@ export const getAgentsMd = internalQuery({
       .order("desc")
       .first();
 
-    // repoStructure may contain AGENTS.md content from analysis
-    // Return null if no analysis exists yet
     return analysis?.repoStructure ?? null;
   },
 });
 
-// ============================================
-// INTERNAL MUTATIONS
-// ============================================
-
-/**
- * Update work item with technical specification
- */
 export const updateTaskWithSpec = internalMutation({
   args: {
     taskId: v.id("autopilotWorkItems"),
     technicalSpec: v.string(),
     acceptanceCriteria: v.array(v.string()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.taskId, {
       acceptanceCriteria: args.acceptanceCriteria,
       updatedAt: Date.now(),
     });
+    return null;
   },
 });
 
-/**
- * Create a dev subtask from CTO specification
- */
-export const createDevSubtask = internalMutation({
-  args: {
-    organizationId: v.id("organizations"),
-    parentTaskId: v.id("autopilotWorkItems"),
-    title: v.string(),
-    description: v.string(),
-    implementationPrompt: v.string(),
-    priority: v.union(
-      v.literal("critical"),
-      v.literal("high"),
-      v.literal("medium"),
-      v.literal("low")
-    ),
-    estimatedComplexity: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    const workItemId = await ctx.db.insert("autopilotWorkItems", {
+interface CreateDevSubtaskArgs {
+  acceptanceCriteria: string[];
+  estimatedComplexity: string;
+  implementationPrompt: string;
+  organizationId: Id<"organizations">;
+  parentTaskId: Id<"autopilotWorkItems">;
+  priority: "critical" | "high" | "low" | "medium";
+  title: string;
+}
+
+const createDevSubtaskHandler = async (
+  ctx: ActionCtx,
+  args: CreateDevSubtaskArgs
+): Promise<Id<"autopilotWorkItems"> | null> => {
+  const workItemId: Id<"autopilotWorkItems"> | null = await ctx.runMutation(
+    internal.autopilot.task_mutations.createTask,
+    {
       organizationId: args.organizationId,
       type: "task",
       title: args.title,
       description: args.implementationPrompt,
-      status: "todo",
       priority: args.priority,
       assignedAgent: "dev",
       parentId: args.parentTaskId,
+      acceptanceCriteria: args.acceptanceCriteria,
       needsReview: false,
       createdBy: "cto",
-      createdAt: now,
-      updatedAt: now,
-    });
+    }
+  );
 
-    // Log subtask creation
-    await ctx.db.insert("autopilotActivityLog", {
+  if (!workItemId) {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      workItemId,
+      taskId: args.parentTaskId,
       agent: "cto",
       targetAgent: "dev",
-      level: "action",
-      message: `Technical spec ready: ${args.title}`,
-      details: `Complexity: ${args.estimatedComplexity}`,
-      createdAt: now,
+      level: "warning",
+      message: `Skipped dev subtask: ${args.title}`,
+      details: `Task caps prevented creation. Complexity: ${args.estimatedComplexity}`,
     });
+    return null;
+  }
 
-    return workItemId;
+  await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+    organizationId: args.organizationId,
+    taskId: workItemId,
+    agent: "cto",
+    targetAgent: "dev",
+    level: "action",
+    message: `Technical spec ready: ${args.title}`,
+    details: `Complexity: ${args.estimatedComplexity}`,
+  });
+
+  return workItemId;
+};
+
+export const createDevSubtask = internalAction({
+  args: {
+    organizationId: v.id("organizations"),
+    parentTaskId: v.id("autopilotWorkItems"),
+    title: v.string(),
+    implementationPrompt: v.string(),
+    priority,
+    estimatedComplexity: v.string(),
+    acceptanceCriteria: v.array(v.string()),
   },
+  returns: v.union(v.id("autopilotWorkItems"), v.null()),
+  handler: async (ctx, args): Promise<Id<"autopilotWorkItems"> | null> =>
+    createDevSubtaskHandler(ctx, args),
 });
 
-/**
- * Log CTO activity
- */
 export const logCtoActivity = internalMutation({
   args: {
     organizationId: v.id("organizations"),
     taskId: v.id("autopilotWorkItems"),
-    level: v.string(),
+    level: activityLogLevel,
     message: v.string(),
     details: v.optional(v.string()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: args.organizationId,
       workItemId: args.taskId,
       agent: "cto",
-      level: args.level as "info" | "action" | "success" | "warning" | "error",
+      level: args.level,
       message: args.message,
       details: args.details,
       createdAt: Date.now(),
     });
+    return null;
   },
 });
 
-// ============================================
-// MODEL CONSTANTS
-// ============================================
-
 const CTO_MODELS = QUALITY_MODELS;
 
-// ============================================
-// MAIN ACTION
-// ============================================
-
-/**
- * Run CTO specification generation for a task
- *
- * 1. Load the PM task
- * 2. Load repo analysis and coding guidelines
- * 3. Call LLM to generate technical spec
- * 4. Update task with spec and create dev subtask
- * 5. Mark CTO task as completed
- */
 export const runCTOSpecGeneration = internalAction({
   args: {
     organizationId: v.id("organizations"),
     taskId: v.id("autopilotWorkItems"),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     // Guard check: ensure budget/rate limits allow execution
     const guardResult = await ctx.runQuery(
@@ -230,7 +206,7 @@ export const runCTOSpecGeneration = internalAction({
       { organizationId: args.organizationId, agent: "cto" }
     );
     if (!guardResult.allowed) {
-      return;
+      return null;
     }
 
     // Load the PM task
@@ -331,18 +307,29 @@ Create a specification that a developer can execute without asking clarifying qu
       });
 
       // Create dev subtask
-      const devTaskId = await ctx.runMutation(
+      const devTaskId = await ctx.runAction(
         internal.autopilot.agents.cto.createDevSubtask,
         {
           organizationId: args.organizationId,
           parentTaskId: args.taskId,
           title: `Dev: ${task.title}`,
-          description: `Implementation of technical specification for: ${task.title}`,
           implementationPrompt: spec.implementationPrompt,
           priority: task.priority,
           estimatedComplexity: spec.estimatedComplexity,
+          acceptanceCriteria: spec.acceptanceCriteria,
         }
       );
+
+      if (!devTaskId) {
+        await ctx.runMutation(
+          internal.autopilot.task_mutations.updateTaskStatus,
+          {
+            taskId: args.taskId,
+            status: "todo",
+          }
+        );
+        return null;
+      }
 
       // Mark CTO task as completed
       await ctx.runMutation(
@@ -361,6 +348,7 @@ Create a specification that a developer can execute without asking clarifying qu
         message: "Technical specification completed",
         details: `Created dev subtask: ${devTaskId} | Risk: ${spec.riskLevel} | Complexity: ${spec.estimatedComplexity}`,
       });
+      return null;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);

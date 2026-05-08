@@ -1,5 +1,15 @@
+/// <reference types="vite/client" />
 import { describe, expect, it } from "vitest";
 
+import { createDevSubtask } from "../agents/cto";
+import {
+  markCredentialsValid,
+  reserveTaskExecution,
+  upsertAdapterCredentials,
+  validateAdapterCredentials,
+} from "../config_mutations";
+import { executeTask, retryTask } from "../execution";
+import { cancelTask, pollTaskStatus } from "../execution_lifecycle";
 import { getSystemHealth } from "../health";
 import {
   listActivity,
@@ -33,13 +43,29 @@ const PUBLIC_QUERY_CONTRACTS = [
 
 const INTERNAL_MUTATION_CONTRACTS = [
   ["createTask", createTask, "autopilotWorkItems"],
-  ["updateTaskStatus", updateTaskStatus, "null"],
+  ["updateTaskStatus", updateTaskStatus, '"type":"null"'],
   ["completeAgentTask", completeAgentTask, "boolean"],
   ["completeAgentTasks", completeAgentTasks, "number"],
-  ["updateTaskPriority", updateTaskPriority, "null"],
+  ["updateTaskPriority", updateTaskPriority, '"type":"null"'],
   ["createRun", createRun, "autopilotRuns"],
-  ["updateRun", updateRun, "null"],
-  ["logActivity", logActivity, "null"],
+  ["updateRun", updateRun, '"type":"null"'],
+  ["logActivity", logActivity, '"type":"null"'],
+  ["reserveTaskExecution", reserveTaskExecution, "allowed"],
+  [
+    "upsertAdapterCredentials",
+    upsertAdapterCredentials,
+    "autopilotAdapterCredentials",
+  ],
+  ["markCredentialsValid", markCredentialsValid, '"type":"null"'],
+] as const;
+
+const INTERNAL_ACTION_CONTRACTS = [
+  ["createDevSubtask", createDevSubtask, "autopilotWorkItems"],
+  ["validateAdapterCredentials", validateAdapterCredentials, "boolean"],
+  ["executeTask", executeTask, '"type":"null"'],
+  ["retryTask", retryTask, '"type":"null"'],
+  ["pollTaskStatus", pollTaskStatus, '"type":"null"'],
+  ["cancelTask", cancelTask, '"type":"null"'],
 ] as const;
 
 function getReturnContract(query: object): unknown {
@@ -63,7 +89,16 @@ describe("autopilot public query contracts", () => {
   it("declares precise internal mutation return validators", () => {
     const broadContractType = ["a", "n", "y"].join("");
     for (const [name, mutation, expectedField] of INTERNAL_MUTATION_CONTRACTS) {
-      const contract = JSON.stringify(getReturnContract(mutation));
+      const contract = String(getReturnContract(mutation));
+      expect(contract, name).toContain(expectedField);
+      expect(contract, name).not.toContain(`"type":"${broadContractType}"`);
+    }
+  });
+
+  it("declares precise internal action return validators", () => {
+    const broadContractType = ["a", "n", "y"].join("");
+    for (const [name, action, expectedField] of INTERNAL_ACTION_CONTRACTS) {
+      const contract = String(getReturnContract(action));
       expect(contract, name).toContain(expectedField);
       expect(contract, name).not.toContain(`"type":"${broadContractType}"`);
     }

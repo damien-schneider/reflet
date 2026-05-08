@@ -6,6 +6,7 @@
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
+import { getEffectiveTier } from "../billing/effective_tier";
 
 const MAX_EXECUTIONS_PER_HOUR = 10;
 const CIRCUIT_BREAKER_FAILURES = 5;
@@ -48,6 +49,15 @@ export const checkGuards = internalQuery({
       return {
         allowed: false,
         reason: "Autopilot is stopped",
+        autonomyMode,
+      };
+    }
+
+    const tier = await getEffectiveTier(ctx, args.organizationId);
+    if (tier !== "pro") {
+      return {
+        allowed: false,
+        reason: "Autopilot requires a Pro subscription.",
         autonomyMode,
       };
     }

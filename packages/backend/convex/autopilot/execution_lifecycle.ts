@@ -1,24 +1,18 @@
-/**
- * Task lifecycle management — polling, cancellation, and work item locking.
- *
- * These functions manage already-dispatched tasks: checking their status
- * with external providers, cancelling them, and locking/releasing work items.
- */
-
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import { internalAction, internalMutation } from "../_generated/server";
 import {
+  handleFailedPollingStatus,
+  handleTaskResult,
+  isAutopilotConfigStopped,
+  isTerminalRunStatus,
+  logAndReleasePollingTask,
   parseAdapterCredentials,
-  resolveCompletionStatus,
-  resolveRetryDelayMs,
+  persistProviderStatus,
 } from "./execution_policy";
 import { assignedAgent } from "./schema/validators";
 
-/**
- * Poll for async task completion (Copilot, Codex, Claude Code).
- */
 export const pollTaskStatus = internalAction({
   args: {
     organizationId: v.id("organizations"),
@@ -26,6 +20,7 @@ export const pollTaskStatus = internalAction({
     runId: v.id("autopilotRuns"),
     externalRef: v.string(),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const MAX_POLL_DURATION = 30 * 60 * 1000;
     const POLL_INTERVAL = 60_000;
@@ -35,7 +30,38 @@ export const pollTaskStatus = internalAction({
     });
 
     if (!task || task.status === "cancelled") {
-      return;
+      return null;
+    }
+    if (task.organizationId !== args.organizationId) {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+        organizationId: task.organizationId,
+        workItemId: args.taskId,
+        agent: "system",
+        level: "warning",
+        message: "Polling stopped: work item belongs to another organization",
+      });
+      return null;
+    }
+
+    const run = await ctx.runQuery(internal.autopilot.task_queries.getRun, {
+      runId: args.runId,
+    });
+    if (!run || isTerminalRunStatus(run.status)) {
+      return null;
+    }
+    if (
+      run.organizationId !== args.organizationId ||
+      run.workItemId !== args.taskId
+    ) {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+        organizationId: args.organizationId,
+        workItemId: args.taskId,
+        runId: args.runId,
+        agent: "system",
+        level: "warning",
+        message: "Polling stopped: run does not belong to this work item",
+      });
+      return null;
     }
 
     const startedAt = task.updatedAt;
@@ -53,131 +79,102 @@ export const pollTaskStatus = internalAction({
         errorMessage: "Timed out",
         completedAt: Date.now(),
       });
-      return;
+      return null;
     }
 
     const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
       organizationId: args.organizationId,
     });
     if (!config) {
-      return;
+      await logAndReleasePollingTask(ctx, {
+        organizationId: args.organizationId,
+        taskId: args.taskId,
+        runId: args.runId,
+        reason: "Polling stopped: autopilot config missing",
+        runStatus: "failed",
+        taskStatus: "backlog",
+      });
+      return null;
+    }
+
+    if (isAutopilotConfigStopped(config)) {
+      await logAndReleasePollingTask(ctx, {
+        organizationId: args.organizationId,
+        taskId: args.taskId,
+        runId: args.runId,
+        reason: "Polling stopped: autopilot is disabled",
+        runStatus: "cancelled",
+        taskStatus: "backlog",
+      });
+      return null;
     }
 
     const creds = await ctx.runQuery(
       internal.autopilot.config.getAdapterCredentials,
-      { organizationId: args.organizationId, adapter: config.adapter }
+      { organizationId: args.organizationId, adapter: run.adapter }
     );
     if (!creds) {
-      return;
+      await logAndReleasePollingTask(ctx, {
+        organizationId: args.organizationId,
+        taskId: args.taskId,
+        runId: args.runId,
+        reason: "Polling stopped: adapter credentials missing",
+        runStatus: "failed",
+        taskStatus: "backlog",
+      });
+      return null;
     }
 
     try {
       const { getAdapter } = await import("./adapters/registry");
-      const adapter = getAdapter(config.adapter);
+      const adapter = getAdapter(run.adapter);
       const credentials = parseAdapterCredentials(creds.credentials);
+      const externalRef = run.externalRef ?? args.externalRef;
 
-      const status = await adapter.getStatus(args.externalRef, credentials);
+      const status = await adapter.getStatus(externalRef, credentials);
 
-      for (const logEntry of status.activityLogs) {
-        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-          organizationId: args.organizationId,
-          workItemId: args.taskId,
-          runId: args.runId,
-          agent: logEntry.agent,
-          level: logEntry.level,
-          message: logEntry.message,
-          details: logEntry.details,
-        });
-      }
-
-      await ctx.runMutation(internal.autopilot.task_mutations.updateRun, {
+      await persistProviderStatus(ctx, {
+        organizationId: args.organizationId,
+        taskId: args.taskId,
         runId: args.runId,
-        prUrl: status.prUrl,
-        prNumber: status.prNumber,
-        ciStatus: status.ciStatus,
-        ciFailureLog: status.ciFailureLog,
-        tokensUsed: status.tokensUsed,
-        estimatedCostUsd: status.estimatedCostUsd,
+        status,
       });
 
       if (status.status === "completed") {
-        if (status.estimatedCostUsd > 0) {
-          await ctx.runMutation(internal.autopilot.cost_guard.recordCost, {
-            organizationId: args.organizationId,
-            taskId: args.taskId,
-            costUsd: status.estimatedCostUsd,
-          });
-        }
         await ctx.runMutation(internal.autopilot.task_mutations.updateRun, {
           runId: args.runId,
           status: "completed",
           completedAt: Date.now(),
         });
-        const completionStatus = resolveCompletionStatus({
+        await handleTaskResult(ctx, {
+          result: {
+            status: "success",
+            prUrl: status.prUrl,
+            prNumber: status.prNumber,
+            tokensUsed: status.tokensUsed,
+            estimatedCostUsd: status.estimatedCostUsd,
+          },
+          taskId: args.taskId,
+          organizationId: args.organizationId,
+          runId: args.runId,
+          adapter: run.adapter,
           autoMergePRs: config.autoMergePRs,
           autonomyLevel: config.autonomyLevel,
           autonomyMode: config.autonomyMode,
+          retryCount: 0,
+          maxRetries: 0,
         });
-        await ctx.runMutation(
-          internal.autopilot.task_mutations.updateTaskStatus,
-          {
-            taskId: args.taskId,
-            status: completionStatus,
-            prUrl: status.prUrl,
-            prNumber: status.prNumber,
-            needsReview: completionStatus === "in_review",
-            reviewType:
-              completionStatus === "in_review" ? "pr_review" : undefined,
-          }
-        );
-        return;
+        return null;
       }
 
       if (status.status === "failed") {
-        const previousRuns = await ctx.runQuery(
-          internal.autopilot.task_queries.getRunsForTask,
-          { taskId: args.taskId }
-        );
-        const retryCount = previousRuns.filter(
-          (run: { status: string }) => run.status === "failed"
-        ).length;
-        if (status.estimatedCostUsd > 0) {
-          await ctx.runMutation(internal.autopilot.cost_guard.recordCost, {
-            organizationId: args.organizationId,
-            taskId: args.taskId,
-            costUsd: status.estimatedCostUsd,
-          });
-        }
-        await ctx.runMutation(internal.autopilot.task_mutations.updateRun, {
+        await handleFailedPollingStatus(ctx, {
+          organizationId: args.organizationId,
+          taskId: args.taskId,
           runId: args.runId,
-          status: "failed",
-          completedAt: Date.now(),
+          status,
         });
-        await ctx.runMutation(
-          internal.autopilot.task_mutations.updateTaskStatus,
-          {
-            taskId: args.taskId,
-            status: "backlog",
-          }
-        );
-        const retryDelay = resolveRetryDelayMs({ retryCount });
-        if (retryDelay !== null) {
-          await ctx.scheduler.runAfter(
-            retryDelay,
-            internal.autopilot.execution.retryTask,
-            { organizationId: args.organizationId, taskId: args.taskId }
-          );
-          return;
-        }
-
-        await ctx.runMutation(
-          internal.autopilot.task_mutations.updateTaskStatus,
-          {
-            taskId: args.taskId,
-            status: "cancelled",
-          }
-        );
-        return;
+        return null;
       }
 
       await ctx.scheduler.runAfter(
@@ -185,6 +182,7 @@ export const pollTaskStatus = internalAction({
         internal.autopilot.execution_lifecycle.pollTaskStatus,
         args
       );
+      return null;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Poll error";
@@ -202,31 +200,37 @@ export const pollTaskStatus = internalAction({
         internal.autopilot.execution_lifecycle.pollTaskStatus,
         args
       );
+      return null;
     }
   },
 });
 
-/**
- * Cancel a running task.
- */
 export const cancelTask = internalAction({
   args: {
     organizationId: v.id("organizations"),
     taskId: v.id("autopilotWorkItems"),
+    finalStatus: v.optional(
+      v.union(v.literal("backlog"), v.literal("cancelled"))
+    ),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const task = await ctx.runQuery(internal.autopilot.task_queries.getTask, {
       taskId: args.taskId,
     });
     if (!task) {
-      return;
+      return null;
     }
-
-    const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
-      organizationId: args.organizationId,
-    });
-    if (!config) {
-      return;
+    if (task.organizationId !== args.organizationId) {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+        organizationId: task.organizationId,
+        workItemId: args.taskId,
+        agent: "system",
+        level: "warning",
+        message:
+          "Cancellation stopped: work item belongs to another organization",
+      });
+      return null;
     }
 
     const runs = await ctx.runQuery(
@@ -242,20 +246,30 @@ export const cancelTask = internalAction({
         r.status !== "cancelled"
     );
 
-    if (activeRun?.externalRef) {
+    if (activeRun) {
       try {
         const creds = await ctx.runQuery(
           internal.autopilot.config.getAdapterCredentials,
-          { organizationId: args.organizationId, adapter: config.adapter }
+          { organizationId: args.organizationId, adapter: activeRun.adapter }
         );
-        if (creds) {
+        if (creds && activeRun.externalRef) {
           const { getAdapter } = await import("./adapters/registry");
-          const adapter = getAdapter(config.adapter);
+          const adapter = getAdapter(activeRun.adapter);
           const credentials = parseAdapterCredentials(creds.credentials);
           await adapter.cancelTask(activeRun.externalRef, credentials);
         }
-      } catch {
-        // Best effort cancellation
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown cancellation error";
+        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+          organizationId: args.organizationId,
+          workItemId: args.taskId,
+          runId: activeRun._id,
+          agent: "system",
+          level: "warning",
+          message: "Provider cancellation failed",
+          details: errorMessage,
+        });
       }
 
       await ctx.runMutation(internal.autopilot.task_mutations.updateRun, {
@@ -267,18 +281,12 @@ export const cancelTask = internalAction({
 
     await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
       taskId: args.taskId,
-      status: "cancelled",
+      status: args.finalStatus ?? "cancelled",
     });
+    return null;
   },
 });
 
-// ============================================
-// Work item checkout / locking
-// ============================================
-
-/**
- * Atomically lock a work item for an agent.
- */
 export const checkoutTask = internalMutation({
   args: {
     taskId: v.id("autopilotWorkItems"),
@@ -291,8 +299,6 @@ export const checkoutTask = internalMutation({
       return false;
     }
 
-    // Work items don't have lock fields in the new schema,
-    // so we use status as the lock: only "todo" items can be checked out
     if (item.status !== "todo") {
       return false;
     }
@@ -307,9 +313,6 @@ export const checkoutTask = internalMutation({
   },
 });
 
-/**
- * Release a work item (set back to todo).
- */
 export const releaseTask = internalMutation({
   args: {
     taskId: v.id("autopilotWorkItems"),

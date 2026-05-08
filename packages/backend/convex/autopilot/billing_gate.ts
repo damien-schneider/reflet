@@ -6,8 +6,8 @@
  */
 
 import { v } from "convex/values";
-import { components } from "../_generated/api";
 import { internalQuery } from "../_generated/server";
+import { getEffectiveTier } from "../billing/effective_tier";
 
 /**
  * Check whether the org has an active subscription that includes autopilot.
@@ -22,14 +22,7 @@ export const checkAccess = internalQuery({
     reason: v.optional(v.string()),
   }),
   handler: async (ctx, args) => {
-    const subscription = await ctx.runQuery(
-      components.stripe.public.getSubscriptionByOrgId,
-      { orgId: args.organizationId }
-    );
-    const hasActiveSubscription =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
-    const tier = hasActiveSubscription ? ("pro" as const) : ("free" as const);
+    const tier = await getEffectiveTier(ctx, args.organizationId);
 
     if (tier === "pro") {
       return { allowed: true, tier };
@@ -50,16 +43,7 @@ export const isAutopilotAllowed = internalQuery({
   args: { organizationId: v.id("organizations") },
   returns: v.boolean(),
   handler: async (ctx, args) => {
-    const subscription = await ctx.runQuery(
-      components.stripe.public.getSubscriptionByOrgId,
-      { orgId: args.organizationId }
-    );
-    if (
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing")
-    ) {
-      return true;
-    }
-    return false;
+    const tier = await getEffectiveTier(ctx, args.organizationId);
+    return tier === "pro";
   },
 });

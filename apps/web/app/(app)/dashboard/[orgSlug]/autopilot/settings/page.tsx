@@ -49,7 +49,8 @@ export default function AutopilotSettingsPage() {
   const resetAll = useMutation(api.autopilot.mutations.routines.resetAllData);
 
   const [credentialInput, setCredentialInput] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingCredentials, setIsSavingCredentials] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
   if (config === undefined) {
@@ -106,23 +107,27 @@ export default function AutopilotSettingsPage() {
   }
 
   const handleToggle = async (field: string, value: boolean) => {
-    try {
-      await updateConfig({ configId: config._id, [field]: value });
-      toast.success("Setting updated");
-    } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to update setting"));
-    }
-  };
-
-  const handleUpdate = async (field: string, value: ConfigValue) => {
-    setIsSaving(true);
+    setIsSavingSettings(true);
     try {
       await updateConfig({ configId: config._id, [field]: value });
       toast.success("Setting updated");
     } catch (error) {
       toast.error(getErrorMessage(error, "Failed to update setting"));
     } finally {
-      setIsSaving(false);
+      setIsSavingSettings(false);
+    }
+  };
+
+  const handleUpdate = async (field: string, value: ConfigValue) => {
+    setIsSavingSettings(true);
+    try {
+      await updateConfig({ configId: config._id, [field]: value });
+      toast.success("Setting updated");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Failed to update setting"));
+      throw error;
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
@@ -137,6 +142,7 @@ export default function AutopilotSettingsPage() {
       return;
     }
 
+    setIsSavingCredentials(true);
     try {
       await upsertCreds({
         organizationId,
@@ -147,6 +153,8 @@ export default function AutopilotSettingsPage() {
       setCredentialInput("");
     } catch (error) {
       toast.error(getErrorMessage(error, "Failed to save credentials"));
+    } finally {
+      setIsSavingCredentials(false);
     }
   };
 
@@ -177,15 +185,15 @@ export default function AutopilotSettingsPage() {
 
       <GeneralSettings
         autoMergePRs={config.autoMergePRs}
-        disabled={!isAdmin}
+        disabled={!isAdmin || isSavingSettings}
         onAutoMergeChange={(value) => handleToggle("autoMergePRs", value)}
       />
 
       <AdapterSettings
         adapter={config.adapter ?? undefined}
         credentialInput={credentialInput}
-        disabled={!isAdmin}
-        isSaving={isSaving}
+        disabled={!isAdmin || isSavingSettings}
+        isSaving={isSavingCredentials}
         onAdapterChange={(value) => handleUpdate("adapter", value)}
         onCredentialInputChange={setCredentialInput}
         onSaveCredentials={handleSaveCredentials}
@@ -193,14 +201,15 @@ export default function AutopilotSettingsPage() {
 
       <LimitSettings
         dailyCostCapUsd={config.dailyCostCapUsd}
-        disabled={!isAdmin}
+        disabled={!isAdmin || isSavingSettings}
         emailDailyLimit={config.emailDailyLimit}
         maxTasksPerDay={config.maxTasksPerDay}
+        onInvalidValue={(message) => toast.error(message)}
         onUpdate={handleUpdate}
       />
 
       <BudgetSettings
-        disabled={!isAdmin}
+        disabled={!isAdmin || isSavingSettings}
         onSave={(json) => handleUpdate("perAgentDailyCapUsd", json)}
         storedValue={config.perAgentDailyCapUsd}
       />

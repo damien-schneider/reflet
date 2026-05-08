@@ -102,9 +102,19 @@ function getDescription(item: UnifiedInboxItem): string {
   return "";
 }
 
-function getTargetUrl(item: UnifiedInboxItem): string | undefined {
+function getExternalLink(
+  item: UnifiedInboxItem
+): { label: string; url: string } | undefined {
   if (item._source === "document") {
-    return item.targetUrl;
+    return item.targetUrl
+      ? {
+          label: `Replying to ${formatTargetLabel(item.targetUrl)}`,
+          url: item.targetUrl,
+        }
+      : undefined;
+  }
+  if (item._source === "work" && item.prUrl) {
+    return { label: "Open PR", url: item.prUrl };
   }
   return undefined;
 }
@@ -137,7 +147,7 @@ export function InboxItemCard({
   const isPending = item.needsReview;
   const agentName = getAgentName(item);
   const description = getDescription(item);
-  const targetUrl = getTargetUrl(item);
+  const externalLink = getExternalLink(item);
 
   return (
     <div
@@ -149,6 +159,7 @@ export function InboxItemCard({
     >
       <div className="min-w-0 flex-1">
         <Button
+          aria-current={selected ? "true" : undefined}
           className="h-auto w-full justify-start gap-3 whitespace-normal rounded-none border-0 bg-transparent p-0 text-left text-foreground hover:bg-transparent hover:text-foreground"
           onClick={onClick}
           variant="ghost"
@@ -189,17 +200,17 @@ export function InboxItemCard({
             </span>
           </span>
         </Button>
-        {targetUrl && (
+        {externalLink && (
           <div className="mt-1 ml-11 flex items-center gap-1">
             <a
               className="inline-flex items-center gap-1 rounded border bg-muted/50 px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              href={targetUrl}
+              href={externalLink.url}
               onClick={(event) => event.stopPropagation()}
               rel="noopener noreferrer"
               target="_blank"
             >
               <IconExternalLink className="size-2.5" />
-              Replying to {formatTargetLabel(targetUrl)}
+              {externalLink.label}
             </a>
           </div>
         )}

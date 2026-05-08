@@ -5,6 +5,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { internalQuery, type QueryCtx } from "../_generated/server";
+import { isProductionCodingAdapter } from "./schema/validators";
 
 // ============================================
 // TASK CAP DEFAULTS
@@ -12,6 +13,7 @@ import { internalQuery, type QueryCtx } from "../_generated/server";
 
 export const DEFAULT_MAX_PENDING_PER_AGENT = 4;
 export const DEFAULT_MAX_PENDING_TOTAL = 12;
+export const DEFAULT_DAILY_COST_CAP_USD = 50;
 
 /**
  * All agent names and their corresponding config fields.
@@ -38,9 +40,12 @@ async function fetchEnabledAgents(
     return [];
   }
 
-  return AGENT_CONFIG_FIELDS.filter(({ field }) => config[field] !== false).map(
-    ({ name }) => name
-  );
+  return AGENT_CONFIG_FIELDS.filter(({ field, name }) => {
+    if (name === "dev" && !isProductionCodingAdapter(config.adapter)) {
+      return false;
+    }
+    return config[field] !== false;
+  }).map(({ name }) => name);
 }
 
 /**

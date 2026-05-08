@@ -1,10 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import type React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockUseQuery = vi.fn();
 const mockUseMutation = vi.fn(() => vi.fn());
 const validTaskId = "a".repeat(32);
+const taskParams = vi.hoisted(() => ({ taskId: "a".repeat(32) }));
 
 vi.mock("convex/react", () => ({
   useMutation: () => mockUseMutation(),
@@ -34,7 +35,7 @@ vi.mock("react", async () => {
   const actual = await vi.importActual<typeof React>("react");
   return {
     ...actual,
-    use: () => ({ taskId: validTaskId }),
+    use: () => ({ taskId: taskParams.taskId }),
   };
 });
 
@@ -80,7 +81,12 @@ vi.mock("@/components/ui/typography", () => ({
 }));
 
 describe("TaskDetailPage", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
+    taskParams.taskId = validTaskId;
     mockUseQuery.mockReset();
     mockUseMutation.mockClear();
   });
@@ -108,5 +114,21 @@ describe("TaskDetailPage", () => {
     );
 
     expect(screen.getByText("Task not found")).toBeInTheDocument();
+  });
+
+  it("skips data queries for invalid task route params", async () => {
+    const { default: TaskDetailPage } = await import("./page");
+    taskParams.taskId = "not-a-convex-id";
+
+    render(
+      <TaskDetailPage params={Promise.resolve({ taskId: taskParams.taskId })} />
+    );
+
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      "autopilot.work.getWorkItem",
+      "skip"
+    );
+    expect(screen.getByText("Task not found")).toBeInTheDocument();
+    expect(screen.queryByTestId("task-skeleton")).not.toBeInTheDocument();
   });
 });
