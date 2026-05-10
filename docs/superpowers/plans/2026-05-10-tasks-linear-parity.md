@@ -143,16 +143,16 @@
 
 ### Tasks
 
-- [ ] **3.1 Identifier component** — renders `ORG-123` styled like Linear (mono font, muted). Click copies to clipboard with toast.
-- [ ] **3.2 Inline status popover** — opens on click of status icon. Lists all statuses including new `triage`. Optimistic mutation via `updateWorkItem`.
-- [ ] **3.3 Inline priority popover** — same pattern. Critical/High/Medium/Low/None.
-- [ ] **3.4 Inline assignee popover** — tab toggle "Agent" / "User". User list pulled from org members. Agent list from `assignedAgent` validator.
-- [ ] **3.5 Inline labels popover** — multi-select label list. Search field. "Create new" inline create.
-- [ ] **3.6 Update `STATUS_CONFIG`** — add `triage` row (icon `IconInbox`, color `text-amber-500`, label "Triage").
-- [ ] **3.7 Update `STATUS_ORDER`** — `["triage","backlog","todo","in_progress","in_review","done","cancelled"]`.
-- [ ] **3.8 TaskCard wiring** — replace static badges with inline popovers. Identifier shown left of title. Optimistic state via Convex mutation.
-- [ ] **3.9 Unit tests** — popover opens, mutation called, identifier copy works (mock clipboard).
-- [ ] **3.10 `bun run check-types` clean.**
+- [x] **3.1 Identifier component** — renders `ORG-123` styled like Linear (mono font, muted). Click copies to clipboard with toast.
+- [x] **3.2 Inline status popover** — opens on click of status icon. Lists all statuses including new `triage`. Optimistic mutation via `updateWorkItem`.
+- [x] **3.3 Inline priority popover** — same pattern. Critical/High/Medium/Low. **Deviation:** the `priority` validator does not include `none`, so it was omitted from the option list.
+- [x] **3.4 Inline assignee popover** — tab toggle "Agent" / "User". User list pulled from org members via `api.organizations.members.list` (the existing query is `members.list`, not `members.listMembers`). Agent list from `assignedAgent` validator.
+- [x] **3.5 Inline labels popover** — multi-select label list with search and inline "Create '<query>'" CTA. Wired directly to `setLabels` + `createLabel` mutations; Phase 6 may extend.
+- [x] **3.6 Update `STATUS_CONFIG`** — added `triage` row (icon `IconInbox`, color `text-amber-500`, label "Triage"). Lives in `inline-status-popover.tsx` and is the single source of truth for card + dialog rendering. `STATUS_LABELS` / `STATUS_COLORS` in `initiatives-board-constants.ts` updated to match.
+- [x] **3.7 Update `STATUS_ORDER`** — now `["triage","backlog","todo","in_progress","in_review","done","cancelled"]`.
+- [x] **3.8 TaskCard wiring** — replaced static badges with the four inline popovers, identifier shown next to title, label links queried via `listWorkItemLabels`. Detail dialog still wired here (Phase 4 will migrate).
+- [x] **3.9 Unit tests** — `work-item-identifier.test.tsx` (4 cases: render, fallback, copy, copy failure) and `inline-status-popover.test.tsx` (6 cases: render, full option list incl. triage, mutation, no-op on same status, click does not bubble, error toast).
+- [x] **3.10 `bun run check-types` clean.**
 - [ ] **3.11 Commit:** `feat(tasks): inline editing, identifiers, triage status`.
 
 **Acceptance:** Click status icon → popover updates without dialog. Identifier visible. Triage filterable.

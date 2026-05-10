@@ -10,6 +10,7 @@ export const QUICK_FILTERS = [
 ] satisfies Array<{ label: string; statuses: string[] }>;
 
 export const STATUS_ORDER = [
+  "triage",
   "backlog",
   "todo",
   "in_progress",
@@ -19,6 +20,7 @@ export const STATUS_ORDER = [
 ] as const;
 
 export const STATUS_LABELS: Record<string, string> = {
+  triage: "Triage",
   backlog: "Backlog",
   todo: "To Do",
   in_progress: "In Progress",
@@ -28,6 +30,7 @@ export const STATUS_LABELS: Record<string, string> = {
 };
 
 export const STATUS_COLORS: Record<string, string> = {
+  triage: "bg-amber-500",
   backlog: "bg-muted-foreground",
   todo: "bg-blue-500",
   in_progress: "bg-amber-500",

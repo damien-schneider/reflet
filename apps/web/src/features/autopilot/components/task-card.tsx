@@ -3,12 +3,8 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
 import {
-  IconCircleCheck,
-  IconCircleDashed,
-  IconCircleX,
   IconDots,
   IconExternalLink,
-  IconLoader2,
   IconRefresh,
   IconX,
 } from "@tabler/icons-react";
@@ -34,48 +30,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AgentIdentity } from "@/features/autopilot/components/agent-identity";
+import { InlineAssigneePopover } from "@/features/autopilot/components/tasks/inline-assignee-popover";
+import { InlineLabelsPopover } from "@/features/autopilot/components/tasks/inline-labels-popover";
+import {
+  getPriorityEntry,
+  InlinePriorityPopover,
+} from "@/features/autopilot/components/tasks/inline-priority-popover";
+import {
+  getStatusEntry,
+  InlineStatusPopover,
+} from "@/features/autopilot/components/tasks/inline-status-popover";
+import { WorkItemIdentifier } from "@/features/autopilot/components/tasks/work-item-identifier";
 import { TaskRunsList } from "@/features/autopilot/components/views/task-runs-list";
 import { cn } from "@/lib/utils";
-
-const STATUS_CONFIG = {
-  backlog: {
-    icon: IconCircleDashed,
-    color: "text-muted-foreground",
-    label: "Backlog",
-  },
-  todo: {
-    icon: IconCircleDashed,
-    color: "text-blue-400",
-    label: "To Do",
-  },
-  in_progress: {
-    icon: IconLoader2,
-    color: "text-blue-500",
-    label: "In Progress",
-  },
-  in_review: {
-    icon: IconCircleDashed,
-    color: "text-purple-500",
-    label: "In Review",
-  },
-  done: {
-    icon: IconCircleCheck,
-    color: "text-green-500",
-    label: "Done",
-  },
-  cancelled: {
-    icon: IconCircleX,
-    color: "text-muted-foreground",
-    label: "Cancelled",
-  },
-} as const;
-
-const PRIORITY_STYLES = {
-  critical: "bg-red-500/10 text-red-500 border-red-500/30",
-  high: "bg-orange-500/10 text-orange-500 border-orange-500/30",
-  medium: "bg-yellow-500/10 text-yellow-500 border-yellow-500/30",
-  low: "bg-muted text-muted-foreground border-border",
-} as const;
 
 function TaskDetailDialog({
   task,
@@ -91,32 +58,27 @@ function TaskDetailDialog({
     open ? { parentId: task._id } : "skip"
   );
 
-  const statusConfig =
-    STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ??
-    STATUS_CONFIG.backlog;
+  const statusEntry = getStatusEntry(task.status);
+  const priorityEntry = getPriorityEntry(task.priority);
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <div className="flex items-center gap-2">
+            <WorkItemIdentifier identifier={task.identifier} />
             <Badge
-              className={cn(
-                "text-xs",
-                PRIORITY_STYLES[
-                  task.priority as keyof typeof PRIORITY_STYLES
-                ] ?? PRIORITY_STYLES.low
-              )}
+              className={cn("text-xs", priorityEntry.badgeClass)}
               variant="outline"
             >
-              {task.priority}
+              {priorityEntry.label}
             </Badge>
             <AgentIdentity agent={task.assignedAgent ?? "system"} />
             <Badge
-              className={cn("text-xs", statusConfig.color)}
+              className={cn("text-xs", statusEntry.color)}
               variant="outline"
             >
-              {statusConfig.label}
+              {statusEntry.label}
             </Badge>
           </div>
           <DialogTitle>{task.title}</DialogTitle>
@@ -153,9 +115,7 @@ function TaskDetailDialog({
               <p className="mb-2 font-medium text-sm">Subtasks</p>
               <div className="space-y-1">
                 {subtasks.map((sub) => {
-                  const subStatus =
-                    STATUS_CONFIG[sub.status as keyof typeof STATUS_CONFIG] ??
-                    STATUS_CONFIG.backlog;
+                  const subStatus = getStatusEntry(sub.status);
                   const SubIcon = subStatus.icon;
                   return (
                     <div
@@ -187,77 +147,117 @@ function TaskDetailDialog({
 
 export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
   const [detailOpen, setDetailOpen] = useState(false);
-  const cancelTask = useMutation(api.autopilot.mutations.work.updateWorkItem);
-  const retryTask = useMutation(api.autopilot.mutations.work.updateWorkItem);
+  const updateWorkItem = useMutation(
+    api.autopilot.mutations.work.updateWorkItem
+  );
+  const labelLinks = useQuery(api.autopilot.queries.labels.listWorkItemLabels, {
+    workItemId: task._id,
+  });
 
-  const statusConfig =
-    STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ??
-    STATUS_CONFIG.backlog;
-  const StatusIcon = statusConfig.icon;
-  const priorityStyle =
-    PRIORITY_STYLES[task.priority as keyof typeof PRIORITY_STYLES] ??
-    PRIORITY_STYLES.low;
+  const statusEntry = getStatusEntry(task.status);
+  const StatusIcon = statusEntry.icon;
 
   const canCancel =
+    task.status === "triage" ||
     task.status === "backlog" ||
     task.status === "todo" ||
     task.status === "in_progress";
   const canRetry = task.status === "cancelled";
 
-  const handleCancel = async () => {
+  const handleCancel = async (event: React.MouseEvent) => {
+    event.stopPropagation();
     try {
-      await cancelTask({ workItemId: task._id, status: "cancelled" });
+      await updateWorkItem({ workItemId: task._id, status: "cancelled" });
       toast.success("Task cancelled");
     } catch {
       toast.error("Failed to cancel task");
     }
   };
 
-  const handleRetry = async () => {
+  const handleRetry = async (event: React.MouseEvent) => {
+    event.stopPropagation();
     try {
-      await retryTask({ workItemId: task._id, status: "todo" });
+      await updateWorkItem({ workItemId: task._id, status: "todo" });
       toast.success("Task re-queued");
     } catch {
       toast.error("Failed to retry task");
     }
   };
 
+  const handleViewDetails = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setDetailOpen(true);
+  };
+
+  const handleOpenPr = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (task.prUrl) {
+      window.open(task.prUrl, "_blank");
+    }
+  };
+
+  const labelIds = (labelLinks ?? []).map((label) => label._id);
+
   return (
     <>
-      <div className="group flex items-start gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50">
-        <Button
-          className="h-auto min-w-0 flex-1 cursor-pointer items-start justify-start gap-3 whitespace-normal rounded-none p-0 text-left hover:bg-transparent"
-          onClick={() => setDetailOpen(true)}
-          type="button"
-          variant="ghost"
-        >
-          <StatusIcon
-            className={cn("mt-0.5 size-5 shrink-0", statusConfig.color)}
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <Badge className={cn("text-xs", priorityStyle)} variant="outline">
-                {task.priority}
-              </Badge>
-              <AgentIdentity agent={task.assignedAgent ?? "system"} />
-              {task.prUrl && <Badge variant="outline">PR</Badge>}
-            </div>
-            <h3 className="mt-1.5 font-medium">{task.title}</h3>
+      {/* biome-ignore lint/a11y/useSemanticElements: card container with nested popovers and buttons cannot be a <button> */}
+      <div
+        className="group flex items-start gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50"
+        onClick={() => setDetailOpen(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setDetailOpen(true);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+      >
+        <StatusIcon
+          className={cn("mt-0.5 size-5 shrink-0", statusEntry.color)}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <WorkItemIdentifier identifier={task.identifier} />
+            <h3 className="font-medium">{task.title}</h3>
+          </div>
+          {task.description ? (
             <p className="mt-1 line-clamp-2 text-muted-foreground text-sm">
               {task.description}
             </p>
-            <div className="mt-2 flex items-center gap-3 text-muted-foreground text-xs">
-              <span>{statusConfig.label}</span>
-              <span>·</span>
-              <span suppressHydrationWarning>
-                {formatDistanceToNow(task.createdAt, { addSuffix: true })}
-              </span>
-            </div>
+          ) : null}
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <InlineStatusPopover status={task.status} workItemId={task._id} />
+            <InlinePriorityPopover
+              priority={task.priority}
+              workItemId={task._id}
+            />
+            <InlineAssigneePopover
+              assignedAgent={task.assignedAgent}
+              assigneeUserId={task.assigneeUserId}
+              organizationId={task.organizationId}
+              workItemId={task._id}
+            />
+            <InlineLabelsPopover
+              labelIds={labelIds}
+              organizationId={task.organizationId}
+              workItemId={task._id}
+            />
+            {task.prUrl ? <Badge variant="outline">PR</Badge> : null}
+            <span className="text-muted-foreground" suppressHydrationWarning>
+              {formatDistanceToNow(task.createdAt, { addSuffix: true })}
+            </span>
           </div>
-        </Button>
+        </div>
 
         {/* Inline actions */}
-        <div className="flex shrink-0 items-center gap-1">
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper traps bubbling clicks from nested buttons */}
+        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: wrapper traps bubbling clicks from nested buttons */}
+        <div
+          className="flex shrink-0 items-center gap-1"
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
           {canRetry && (
             <Button
               aria-label="Retry task"
@@ -296,17 +296,11 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
               <IconDots className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setDetailOpen(true)}>
+              <DropdownMenuItem onClick={handleViewDetails}>
                 View details
               </DropdownMenuItem>
               {task.prUrl && (
-                <DropdownMenuItem
-                  onClick={() => {
-                    if (task.prUrl) {
-                      window.open(task.prUrl, "_blank");
-                    }
-                  }}
-                >
+                <DropdownMenuItem onClick={handleOpenPr}>
                   <IconExternalLink className="size-4" />
                   Open PR
                 </DropdownMenuItem>
