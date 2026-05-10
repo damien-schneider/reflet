@@ -20,7 +20,7 @@
 | Phase 2 — UI page-client (filters/URL state/group-by/bulk) | ui-list-agent | ✅ |
 | Phase 3 — UI task-card (inline edit + identifier + triage) | ui-card-agent | ⬜ |
 | Phase 4 — Detail UI consolidation | ui-detail-agent | ⬜ |
-| Phase 5 — Command palette + keyboard shortcuts | ui-shortcuts-agent | ⬜ |
+| Phase 5 — Command palette + keyboard shortcuts | ui-shortcuts-agent | 🟡 (commit pending) |
 | Phase 6 — Labels CRUD + assignment UI | ui-labels-agent | ⬜ |
 | Phase 7 — E2E tests | e2e-agent | ⬜ |
 | Phase 8 — Final integration + regression sweep | orchestrator | ⬜ |
@@ -208,20 +208,13 @@
 
 ### Tasks
 
-- [ ] **5.1 Install `cmdk` and `react-hotkeys-hook`** if missing.
-- [ ] **5.2 Hotkeys hook:**
-  - `c` → quick create dialog
-  - `j` / `k` → navigate row up/down (focus row, scroll into view)
-  - `Enter` → open peek for focused row
-  - `Cmd/Ctrl+Enter` → submit forms
-  - `Cmd/Ctrl+K` → command palette
-  - `g t` → go tasks; `g r` → go roadmap; `g i` → go inbox
-  - `Esc` → clear selection / close peek
-- [ ] **5.3 Command palette** — `cmdk` based. Sections: Recent tasks, Create new, Switch view, Filters, Navigate. Async fetch tasks via `searchWorkItems`.
-- [ ] **5.4 Quick create dialog** — minimal form (title + Tab → type/priority slash menu like Linear). Submits immediately.
-- [ ] **5.5 Focus management** — `aria-activedescendant` on list, scroll focused into view. Skip when typing in input.
-- [ ] **5.6 Unit tests** — hotkey fires action, ignored in inputs, palette opens via Cmd+K.
-- [ ] **5.7 `bun run check-types` clean.**
+- [x] **5.1 Install `cmdk` and `react-hotkeys-hook`** — both already present (`cmdk@^1.1.1`, `react-hotkeys-hook@^5.2.4`). No install needed.
+- [x] **5.2 Hotkeys hook** — `use-tasks-hotkeys.ts` wires `c`, `j`, `k`, `Enter`, `Cmd/Ctrl+K`, `Esc`, and the `g <key>` chord (800ms window) with input-aware skipping. `Cmd/Ctrl+Enter` submission is handled inside `quick-create-dialog.tsx` via `onKeyDown` on the title input (form-local rather than global).
+- [x] **5.3 Command palette** — `command-palette.tsx` based on the existing shadcn `Command` primitives. Sections: Recent tasks (live `listWorkItems`), Create new, Switch view (list/board), Filters (status + priority shortcuts), Navigate. Search debounced at 200ms via `@tanstack/react-pacer`'s `useDebouncedValue`, hits `searchWorkItems`. Selecting a hit pushes `/dashboard/<slug>/tasks/<id>`. Cmd+K binding kept scoped: the global app palette is only mounted on the dashboard root, so the tasks palette claims Cmd+K within `/tasks`.
+- [x] **5.4 Quick create dialog** — `quick-create-dialog.tsx`. Title input + type tab pills (task/story/bug) + priority chips. Plain Enter and Cmd/Ctrl+Enter both submit; calls `createWorkItem` with `status: "todo"` defaults.
+- [x] **5.5 Focus management** — hook tracks `focusedIndex` and toggles `aria-selected` on each `[data-task-row]` element with `scrollIntoView` (guarded for jsdom). Typing-target check skips INPUT/TEXTAREA/SELECT/contentEditable.
+- [x] **5.6 Unit tests** — `use-tasks-hotkeys.test.ts`: 13 tests covering `c`, input-skip, Cmd+K, Ctrl+K, j/k nav (incl. clamping), Enter focus open, Esc clear, `g t` chord success, `t` standalone ignored, chord timeout expiry, and `enabled: false` no-op. All pass.
+- [x] **5.7 `bun run check-types` clean** on Phase 5 files (only pre-existing Phase 4 error in `autopilot/tasks/[taskId]/page.test.tsx`, untouched here).
 - [ ] **5.8 Commit:** `feat(tasks): command palette and keyboard shortcuts`.
 
 **Acceptance:** All shortcuts work. Palette searches. Keyboard nav focused row.

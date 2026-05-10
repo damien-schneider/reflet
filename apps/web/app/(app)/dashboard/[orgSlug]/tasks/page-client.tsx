@@ -5,7 +5,7 @@ import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { IconPlus } from "@tabler/icons-react";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useMutation, useQuery } from "convex/react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -33,11 +33,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { H2, H3, Muted } from "@/components/ui/typography";
 import { TaskCard } from "@/features/autopilot/components/task-card";
 import { BulkActionsBar } from "@/features/autopilot/components/tasks/bulk-actions-bar";
+import { CommandPalette } from "@/features/autopilot/components/tasks/command-palette";
 import {
   groupItems,
   readCollapsedSet,
   writeCollapsedSet,
 } from "@/features/autopilot/components/tasks/group-items";
+import { QuickCreateDialog } from "@/features/autopilot/components/tasks/quick-create-dialog";
 import { sortItems } from "@/features/autopilot/components/tasks/sort-items";
 import { TasksFilterBar } from "@/features/autopilot/components/tasks/tasks-filter-bar";
 import { TasksToolbar } from "@/features/autopilot/components/tasks/tasks-toolbar";
@@ -49,6 +51,7 @@ import {
   type TaskType,
   useTasksFilters,
 } from "@/features/autopilot/components/tasks/use-tasks-filters";
+import { useTasksHotkeys } from "@/features/autopilot/components/tasks/use-tasks-hotkeys";
 import { InitiativesBoard } from "@/features/autopilot/components/views/initiatives-board";
 import { cn } from "@/lib/utils";
 
@@ -103,8 +106,12 @@ function TasksPageBody({
   isAdmin,
   orgSlug,
 }: TasksPageBodyProps) {
+  const router = useRouter();
   const { filters, setFilters, reset, isDefault } = useTasksFilters();
   const [searchInput, setSearchInput] = useState(filters.q);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteQuery, setPaletteQuery] = useState("");
+  const [quickOpen, setQuickOpen] = useState(false);
   const [debouncedSearch] = useDebouncedValue(searchInput, {
     wait: DEBOUNCE_MS,
   });
@@ -336,6 +343,35 @@ function TasksPageBody({
 
   const selectedIds = useMemo(() => Array.from(selected), [selected]);
 
+  const handleOpenFocused = useCallback(
+    (rowIndex: number) => {
+      const id = flatOrder[rowIndex];
+      if (!id) {
+        return;
+      }
+      router.push(`/dashboard/${orgSlug}/tasks/${id as unknown as string}`);
+    },
+    [flatOrder, router, orgSlug]
+  );
+
+  const navigationTargets = useMemo(
+    () => ({
+      tasks: `/dashboard/${orgSlug}/tasks`,
+      roadmap: `/dashboard/${orgSlug}/autopilot/roadmap`,
+      inbox: `/dashboard/${orgSlug}/inbox`,
+    }),
+    [orgSlug]
+  );
+
+  useTasksHotkeys({
+    enabled: !(paletteOpen || quickOpen),
+    navigationTargets,
+    onClearSelection: clearSelection,
+    onOpenFocused: handleOpenFocused,
+    onPaletteOpen: () => setPaletteOpen(true),
+    onQuickCreate: () => setQuickOpen(true),
+  });
+
   return (
     <div className="space-y-4 p-6 pb-24">
       <div className="flex items-center justify-between">
@@ -392,6 +428,28 @@ function TasksPageBody({
         onClear={clearSelection}
         organizationId={organizationId}
         selectedIds={selectedIds}
+      />
+
+      <CommandPalette
+        filters={filters}
+        onCreate={() => setQuickOpen(true)}
+        onOpenChange={(next) => {
+          setPaletteOpen(next);
+          if (!next) {
+            setPaletteQuery("");
+          }
+        }}
+        open={paletteOpen}
+        organizationId={organizationId}
+        orgSlug={orgSlug}
+        query={paletteQuery}
+        setFilters={setFilters}
+        setQuery={setPaletteQuery}
+      />
+      <QuickCreateDialog
+        onOpenChange={setQuickOpen}
+        open={quickOpen}
+        organizationId={organizationId}
       />
     </div>
   );
@@ -575,6 +633,7 @@ function TaskRow({ task, index, isSelected, onToggle }: TaskRowProps) {
         isSelected && "bg-primary/5 ring-1 ring-primary/40"
       )}
       data-index={index}
+      data-task-row=""
     >
       <button
         aria-label={isSelected ? "Deselect task" : "Select task"}
