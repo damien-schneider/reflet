@@ -10,18 +10,12 @@ import {
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,124 +23,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AgentIdentity } from "@/features/autopilot/components/agent-identity";
 import { InlineAssigneePopover } from "@/features/autopilot/components/tasks/inline-assignee-popover";
 import { InlineLabelsPopover } from "@/features/autopilot/components/tasks/inline-labels-popover";
-import {
-  getPriorityEntry,
-  InlinePriorityPopover,
-} from "@/features/autopilot/components/tasks/inline-priority-popover";
+import { InlinePriorityPopover } from "@/features/autopilot/components/tasks/inline-priority-popover";
 import {
   getStatusEntry,
   InlineStatusPopover,
 } from "@/features/autopilot/components/tasks/inline-status-popover";
+import { TaskDetailSheet } from "@/features/autopilot/components/tasks/task-detail-sheet";
 import { WorkItemIdentifier } from "@/features/autopilot/components/tasks/work-item-identifier";
-import { TaskRunsList } from "@/features/autopilot/components/views/task-runs-list";
 import { cn } from "@/lib/utils";
-
-function TaskDetailDialog({
-  task,
-  open,
-  onOpenChange,
-}: {
-  task: Doc<"autopilotWorkItems">;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const subtasks = useQuery(
-    api.autopilot.queries.work.getChildren,
-    open ? { parentId: task._id } : "skip"
-  );
-
-  const statusEntry = getStatusEntry(task.status);
-  const priorityEntry = getPriorityEntry(task.priority);
-
-  return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <WorkItemIdentifier identifier={task.identifier} />
-            <Badge
-              className={cn("text-xs", priorityEntry.badgeClass)}
-              variant="outline"
-            >
-              {priorityEntry.label}
-            </Badge>
-            <AgentIdentity agent={task.assignedAgent ?? "system"} />
-            <Badge
-              className={cn("text-xs", statusEntry.color)}
-              variant="outline"
-            >
-              {statusEntry.label}
-            </Badge>
-          </div>
-          <DialogTitle>{task.title}</DialogTitle>
-          <DialogDescription>{task.description}</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {/* Metadata */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-xs">
-            <span suppressHydrationWarning>
-              Created {formatDistanceToNow(task.createdAt, { addSuffix: true })}
-            </span>
-            <span suppressHydrationWarning>
-              Updated {formatDistanceToNow(task.updatedAt, { addSuffix: true })}
-            </span>
-          </div>
-
-          {/* PR link */}
-          {task.prUrl && (
-            <a
-              className="inline-flex items-center gap-1.5 text-blue-500 text-sm underline"
-              href={task.prUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <IconExternalLink className="size-3.5" />
-              Pull Request {task.prNumber ? `#${task.prNumber}` : ""}
-            </a>
-          )}
-
-          {/* Subtasks */}
-          {subtasks && subtasks.length > 0 && (
-            <div>
-              <p className="mb-2 font-medium text-sm">Subtasks</p>
-              <div className="space-y-1">
-                {subtasks.map((sub) => {
-                  const subStatus = getStatusEntry(sub.status);
-                  const SubIcon = subStatus.icon;
-                  return (
-                    <div
-                      className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
-                      key={sub._id}
-                    >
-                      <SubIcon
-                        className={cn("size-4 shrink-0", subStatus.color)}
-                      />
-                      <span className="flex-1 truncate">{sub.title}</span>
-                      <Badge variant="outline">{subStatus.label}</Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Runs */}
-          <div>
-            <p className="mb-2 font-medium text-sm">Runs</p>
-            <TaskRunsList taskId={task._id} />
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const params = useParams();
+  const orgSlug = (params?.orgSlug as string | undefined) ?? "";
+
   const updateWorkItem = useMutation(
     api.autopilot.mutations.work.updateWorkItem
   );
@@ -196,6 +88,17 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
     }
   };
 
+  const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.metaKey || event.ctrlKey) {
+      event.preventDefault();
+      if (orgSlug) {
+        window.open(`/dashboard/${orgSlug}/tasks/${task._id}`, "_blank");
+      }
+      return;
+    }
+    setDetailOpen(true);
+  };
+
   const labelIds = (labelLinks ?? []).map((label) => label._id);
 
   return (
@@ -203,7 +106,7 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
       {/* biome-ignore lint/a11y/useSemanticElements: card container with nested popovers and buttons cannot be a <button> */}
       <div
         className="group flex items-start gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50"
-        onClick={() => setDetailOpen(true)}
+        onClick={handleCardClick}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
@@ -328,10 +231,10 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
         </div>
       </div>
 
-      <TaskDetailDialog
+      <TaskDetailSheet
         onOpenChange={setDetailOpen}
         open={detailOpen}
-        task={task}
+        workItemId={task._id}
       />
     </>
   );

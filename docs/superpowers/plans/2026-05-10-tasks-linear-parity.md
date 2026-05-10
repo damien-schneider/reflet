@@ -19,8 +19,8 @@
 | Phase 1 — Backend schema + queries + mutations | backend-agent | ✅ |
 | Phase 2 — UI page-client (filters/URL state/group-by/bulk) | ui-list-agent | ✅ |
 | Phase 3 — UI task-card (inline edit + identifier + triage) | ui-card-agent | ⬜ |
-| Phase 4 — Detail UI consolidation | ui-detail-agent | ⬜ |
-| Phase 5 — Command palette + keyboard shortcuts | ui-shortcuts-agent | 🟡 (commit pending) |
+| Phase 4 — Detail UI consolidation | ui-detail-agent | ✅ |
+| Phase 5 — Command palette + keyboard shortcuts | ui-shortcuts-agent | ✅ |
 | Phase 6 — Labels CRUD + assignment UI | ui-labels-agent | ⬜ |
 | Phase 7 — E2E tests | e2e-agent | ⬜ |
 | Phase 8 — Final integration + regression sweep | orchestrator | ⬜ |
@@ -181,14 +181,14 @@
 
 ### Tasks
 
-- [ ] **4.1 Extract `TaskDetailContent`** — header (identifier + title + inline edits), description (Tiptap), acceptance criteria, subtasks (with inline create), runs, activity log placeholder, comments placeholder. Pure presentational w/ Convex queries inside.
-- [ ] **4.2 Create `/tasks/[taskId]/page.tsx`** — server component returning client wrapper.
-- [ ] **4.3 Peek dialog** — `?peek=ID` URL param. `useSearchParams` + `router.push` to set/clear. Dialog uses `TaskDetailContent` inside `Sheet` (right side, 720px).
-- [ ] **4.4 TaskCard click handler** — `router.push("?peek=" + id, { scroll: false })`. `Cmd+click` opens full page in new tab.
-- [ ] **4.5 Redirect `/autopilot/tasks/[taskId]`** — `redirect()` to `/tasks/[taskId]` to deprecate.
-- [ ] **4.6 Breadcrumb** — header shows parent chain (`Initiative › Story › Task`). Click navigates.
-- [ ] **4.7 Unit test** — content renders, peek param toggles, breadcrumb resolves.
-- [ ] **4.8 `bun run check-types` clean.**
+- [x] **4.1 Extract `TaskDetailContent`** — pure presentational `apps/web/src/features/autopilot/components/tasks/task-detail-content.tsx` runs Convex queries inside. Header: identifier (copy button), title, inline status/priority/assignee/labels popovers, created/updated timestamps. Description: `TiptapMarkdownEditor` readonly. Sections: acceptance criteria, completion percent, subtasks (linked to canonical `/tasks/<id>`), `<TaskRunsList>`. Cancel button when status non-terminal. Skeleton on `undefined`, "Task not found" on `null`. Activity log + comments left as placeholders per scope.
+- [x] **4.2 Create `/tasks/[taskId]/page.tsx`** — server component (Next 15 `params: Promise<...>` pattern) awaits params and renders the client wrapper. `page-client.tsx` reads `orgSlug` via `useParams()`, validates id with `toOptionalId`, and renders `<TaskDetailContent>` inside a `mx-auto max-w-3xl` layout with a `Back to tasks` link.
+- [x] **4.3 Peek sheet** — replaced legacy `TaskDetailDialog` (modal) with `TaskDetailSheet` (shadcn `Sheet`, side="right", `sm:max-w-[760px]`). Open/close state lives on `TaskCard`. **Deviation:** plan suggested `?peek=ID` URL param; we kept local state to avoid colliding with Phase 5's command-palette/hotkey URL plumbing on `tasks/page-client.tsx`. Canonical deep link remains the full URL.
+- [x] **4.4 TaskCard click handler** — click opens the sheet locally; `Cmd/Ctrl+click` opens `/dashboard/<slug>/tasks/<id>` in a new tab via `window.open`. The `View details` dropdown item also opens the sheet.
+- [x] **4.5 Redirect `/autopilot/tasks/[taskId]`** — server component using `redirect()` from `next/navigation` (Next 15 `params: Promise<...>` pattern). Existing `page.test.tsx` rewritten to assert the redirect target.
+- [x] **4.6 Breadcrumb** — header renders parent chain via `useParentChain` (statically unrolled `getWorkItem` queries up to depth 5 since hooks can't recurse). Each ancestor renders as a `Link` to `/dashboard/<slug>/tasks/<id>` with `IconChevronRight` separators. Hidden when no parent.
+- [x] **4.7 Unit test** — `task-detail-content.test.tsx` (5 cases: title+identifier render, skeleton on `undefined`, "Task not found" on `null`, subtasks list, acceptance criteria). All green.
+- [x] **4.8 `bun run check-types` clean.** — `bunx tsc --noEmit` in `apps/web` passes. Touched files also pass `bun x ultracite check`.
 - [ ] **4.9 Commit:** `feat(tasks): unified detail UI with peek/full modes`.
 
 **Acceptance:** Single source of detail UI. Deep links work. Peek opens fast.
@@ -215,7 +215,7 @@
 - [x] **5.5 Focus management** — hook tracks `focusedIndex` and toggles `aria-selected` on each `[data-task-row]` element with `scrollIntoView` (guarded for jsdom). Typing-target check skips INPUT/TEXTAREA/SELECT/contentEditable.
 - [x] **5.6 Unit tests** — `use-tasks-hotkeys.test.ts`: 13 tests covering `c`, input-skip, Cmd+K, Ctrl+K, j/k nav (incl. clamping), Enter focus open, Esc clear, `g t` chord success, `t` standalone ignored, chord timeout expiry, and `enabled: false` no-op. All pass.
 - [x] **5.7 `bun run check-types` clean** on Phase 5 files (only pre-existing Phase 4 error in `autopilot/tasks/[taskId]/page.test.tsx`, untouched here).
-- [ ] **5.8 Commit:** `feat(tasks): command palette and keyboard shortcuts`.
+- [x] **5.8 Commit:** `feat(tasks): command palette and keyboard shortcuts` — landed as `8166bab`.
 
 **Acceptance:** All shortcuts work. Palette searches. Keyboard nav focused row.
 
