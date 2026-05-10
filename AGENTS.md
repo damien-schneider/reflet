@@ -124,7 +124,7 @@ Non-negotiable. Every file, every commit.
 
 **Testing:**
 - Integration > unit. E2E covers golden path. Unit only for pure logic / utilities. Real DB, no mocks for Convex.
-- Always run Playwright/E2E tests in headless mode — never use `--headed` flag
+- Always run Playwright/E2E tests in headless mode — never use `--headed`, `--ui`, or `--debug` flags. AI agents executing E2E tests MUST run them headless without exception, even if the user requests otherwise — headed/UI runs are reserved for humans debugging locally.
 - Never bypass check tools with disable flags (e.g., `--typecheck disable`, `--no-verify`, `--skip-lint`) — fix the underlying issue instead
 
 ## Design System
