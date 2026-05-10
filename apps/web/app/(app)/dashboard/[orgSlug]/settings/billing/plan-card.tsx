@@ -14,9 +14,14 @@ import type {
   SubscriptionData,
 } from "./billing-types";
 
-// ============================================
-// SUB-COMPONENTS
-// ============================================
+const SUBSCRIPTION_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeZone: "UTC",
+});
+
+function formatSubscriptionDate(timestamp: number) {
+  return SUBSCRIPTION_DATE_FORMATTER.format(timestamp);
+}
 
 function FeatureItem({
   label,
@@ -32,13 +37,13 @@ function FeatureItem({
       {included ? (
         <Check
           className={cn(
-            "h-4 w-4 shrink-0",
+            "size-4 shrink-0",
             highlight ? "text-green-500" : "text-muted-foreground"
           )}
           weight="bold"
         />
       ) : (
-        <span className="h-4 w-4 shrink-0" />
+        <span className="size-4 shrink-0" />
       )}
       <span className={included ? "" : "text-muted-foreground/50"}>
         {label}
@@ -192,7 +197,7 @@ function PlanActions({
             "Redirecting..."
           ) : (
             <>
-              <Crown className="mr-2 h-4 w-4" weight="fill" />
+              <Crown className="mr-2 size-4" weight="fill" />
               Upgrade to Pro
             </>
           )}
@@ -250,9 +255,9 @@ export function PlanCard({
       <div className="mb-4">
         <div className="flex items-center gap-2">
           {plan.id === "pro" ? (
-            <Crown className="h-5 w-5 text-amber-500" weight="fill" />
+            <Crown className="size-5 text-amber-500" weight="fill" />
           ) : (
-            <Sparkle className="h-5 w-5 text-muted-foreground" />
+            <Sparkle className="size-5 text-muted-foreground" />
           )}
           <H3 variant="section">{plan.name}</H3>
           {isCurrentPlan && (
@@ -286,16 +291,16 @@ export function PlanCard({
           <div className="rounded-lg border bg-muted/30 p-3">
             {subscription.cancelAtPeriodEnd ? (
               <div className="flex items-center gap-2 text-amber-600">
-                <Warning className="h-4 w-4" weight="fill" />
+                <Warning className="size-4" weight="fill" />
                 <Text variant="bodySmall">
                   Cancels on{" "}
-                  {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                  {formatSubscriptionDate(subscription.currentPeriodEnd)}
                 </Text>
               </div>
             ) : (
               <Text className="text-muted-foreground" variant="bodySmall">
                 Renews on{" "}
-                {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                {formatSubscriptionDate(subscription.currentPeriodEnd)}
               </Text>
             )}
           </div>

@@ -37,10 +37,14 @@ export function ConversationContent({
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(content);
-    setCopied(true);
-    toast.success("Copied to clipboard");
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Could not copy to clipboard");
+    }
   };
 
   return (
@@ -77,7 +81,12 @@ export function ConversationContent({
               Your Draft
             </span>
             <div className="flex items-center gap-1">
-              <Button onClick={handleCopy} size="icon-sm" variant="ghost">
+              <Button
+                aria-label="Copy draft reply"
+                onClick={handleCopy}
+                size="icon-sm"
+                variant="ghost"
+              >
                 {copied ? (
                   <IconCheck className="size-3.5 text-green-500" />
                 ) : (
@@ -102,7 +111,7 @@ export function ConversationContent({
             minimal={!isEditable}
             onChange={onContentChange}
             placeholder={
-              isEditable ? "Edit your reply before posting..." : undefined
+              isEditable ? "Edit your reply before posting\u2026" : undefined
             }
             value={content}
           />

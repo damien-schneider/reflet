@@ -67,7 +67,9 @@ vi.mock("./milestone-expanded-panel", () => ({
 }));
 
 vi.mock("motion/react", () => ({
-  motion: new Proxy(
+  domAnimation: {},
+  LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  m: new Proxy(
     {},
     {
       get: (_target, prop: string) => {

@@ -7,7 +7,6 @@ import {
   GitCommit,
   User,
 } from "@phosphor-icons/react";
-import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -39,6 +38,21 @@ interface ReleaseCommitsListProps {
   previousTag?: string;
 }
 
+const COMMIT_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+  year: "numeric",
+});
+
+function formatCommitDate(value: string) {
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) {
+    return value;
+  }
+  return COMMIT_DATE_FORMATTER.format(timestamp);
+}
+
 export function ReleaseCommitsList({
   commits,
   files,
@@ -62,11 +76,11 @@ export function ReleaseCommitsList({
     >
       <CollapsibleTrigger className="flex w-full items-center gap-2 px-6 py-3 text-left text-sm transition-colors hover:bg-muted/50">
         {isOpen ? (
-          <CaretDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <CaretDown className="size-3.5 shrink-0 text-muted-foreground" />
         ) : (
-          <CaretRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <CaretRight className="size-3.5 shrink-0 text-muted-foreground" />
         )}
-        <GitCommit className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <GitCommit className="size-4 shrink-0 text-muted-foreground" />
         <span className="font-medium text-muted-foreground">
           {commits.length} commit{commits.length === 1 ? "" : "s"} used
         </span>
@@ -77,7 +91,7 @@ export function ReleaseCommitsList({
         )}
         {files && files.length > 0 && (
           <span className="ml-auto flex items-center gap-1.5 text-muted-foreground text-xs">
-            <FileCode className="h-3.5 w-3.5" />
+            <FileCode className="size-3.5" />
             {files.length} file{files.length === 1 ? "" : "s"}
             {totalAdditions > 0 && (
               <span className="text-green-600 dark:text-green-400">
@@ -108,16 +122,14 @@ export function ReleaseCommitsList({
                   {commit.message}
                 </span>
                 <span className="flex shrink-0 items-center gap-1 text-muted-foreground text-xs">
-                  <User className="h-3 w-3" />
+                  <User className="size-3" />
                   {commit.author}
                 </span>
                 <span
                   className="shrink-0 text-muted-foreground text-xs"
                   title={commit.date}
                 >
-                  {formatDistanceToNow(new Date(commit.date), {
-                    addSuffix: true,
-                  })}
+                  {formatCommitDate(commit.date)}
                 </span>
               </li>
             ))}

@@ -38,8 +38,8 @@ function SaveButtonContent({
   if (isSaving) {
     return (
       <>
-        <Spinner className="mr-2 h-4 w-4 animate-spin" />
-        Saving...
+        <Spinner className="mr-2 size-4 animate-spin" />
+        Saving…
       </>
     );
   }
@@ -47,7 +47,7 @@ function SaveButtonContent({
   if (saved) {
     return (
       <>
-        <Check className="mr-2 h-4 w-4" />
+        <Check className="mr-2 size-4" />
         Saved
       </>
     );
@@ -67,7 +67,7 @@ export function OrganizationSection({
   organizationId,
   orgSlug,
 }: OrganizationSectionProps) {
-  const router = useRouter();
+  const { replace } = useRouter();
   const org = useQuery(api.organizations.queries.get, { id: organizationId });
   const updateOrg = useMutation(api.organizations.mutations.update);
 
@@ -119,7 +119,7 @@ export function OrganizationSection({
       setTimeout(() => setSaved(false), 2000);
 
       if (trimmedSlug !== orgSlug) {
-        router.replace(`/dashboard/${trimmedSlug}/project/general`);
+        replace(`/dashboard/${trimmedSlug}/project/general`);
       }
     } catch (err) {
       if (err instanceof Error) {
@@ -203,7 +203,7 @@ export function OrganizationSection({
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <CardTitle className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
+                <Globe className="size-4 text-muted-foreground" />
                 Visibility
               </CardTitle>
               <CardDescription>

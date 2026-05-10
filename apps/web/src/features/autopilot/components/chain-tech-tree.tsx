@@ -125,14 +125,17 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
     }
   }
 
-  const highlightTargets = new Set<ChainNodeKind>();
-  if (overview) {
-    for (const n of overview.nodes) {
-      if (n.actionable) {
-        highlightTargets.add(n.kind);
-      }
-    }
-  }
+  const highlightTargetKey = overview
+    ? overview.nodes
+        .reduce<ChainNodeKind[]>((kinds, node) => {
+          if (node.actionable) {
+            kinds.push(node.kind);
+          }
+          return kinds;
+        }, [])
+        .sort()
+        .join("|")
+    : "";
 
   if (!(overview && nodesByKind)) {
     return (
@@ -171,7 +174,7 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
           </Badge>
           {overview.gatedByOpenTasks && (
             <span className="text-muted-foreground">
-              Chain gated — clear tasks to resume
+              Chain gated, clear tasks to resume
             </span>
           )}
         </div>
@@ -223,7 +226,7 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
         <ChainTechTreeConnectors
           containerRef={containerRef}
           edges={DAG_EDGES}
-          highlightTargets={highlightTargets}
+          highlightTargetKey={highlightTargetKey}
           refMap={refMap}
         />
       </div>

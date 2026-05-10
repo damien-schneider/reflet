@@ -21,13 +21,16 @@ import type { z } from "zod";
 import {
   createProviderParseFailure,
   createProviderStatusFailure,
-  githubCheckRunsResponseSchema,
+  formatProviderHttpError,
+  getClosedPullRequestStatus,
+  getPullRequestCiStatus,
   githubIssueResponseSchema,
   githubPullsResponseSchema,
   isPullRequestLinkedToIssue,
-  parseGitHubCheckRuns,
+  log,
   parseResponseJson,
 } from "./adapter_helpers";
+import { buildHeaders, parseRepoUrl } from "./builtin_github";
 import type {
   ActivityLogEntry,
   CodingAdapter,
@@ -39,37 +42,8 @@ import type {
 const GITHUB_API = "https://api.github.com";
 const COPILOT_ASSIGNEE = "copilot-swe-agent";
 
-const GITHUB_REPO_URL_REGEX = /github\.com[/:](?<owner>[^/]+)\/(?<repo>[^/.]+)/;
 const COPILOT_REF_REGEX =
   /^copilot:(?<owner>[^/]+)\/(?<repo>[^#]+)#(?<issue>\d+)$/;
-
-const buildHeaders = (token: string): Record<string, string> => ({
-  Authorization: `Bearer ${token}`,
-  Accept: "application/vnd.github+json",
-  "X-GitHub-Api-Version": "2022-11-28",
-  "Content-Type": "application/json",
-});
-
-const parseRepoUrl = (repoUrl: string): { owner: string; repo: string } => {
-  const match = repoUrl.match(GITHUB_REPO_URL_REGEX);
-  if (!match?.groups) {
-    throw new Error(`Invalid GitHub repo URL: ${repoUrl}`);
-  }
-  return { owner: match.groups.owner, repo: match.groups.repo };
-};
-
-const log = (
-  agent: ActivityLogEntry["agent"],
-  level: ActivityLogEntry["level"],
-  message: string,
-  details?: string
-): ActivityLogEntry => ({
-  agent,
-  level,
-  message,
-  details,
-  timestamp: Date.now(),
-});
 
 export const copilotAdapter: CodingAdapter = {
   name: "copilot",
@@ -127,7 +101,7 @@ export const copilotAdapter: CodingAdapter = {
 
       if (!issueResponse.ok) {
         throw new Error(
-          `Failed to create issue: ${issueResponse.status} ${await issueResponse.text()}`
+          formatProviderHttpError("Create GitHub issue", issueResponse)
         );
       }
 
@@ -160,9 +134,8 @@ export const copilotAdapter: CodingAdapter = {
       );
 
       if (!assignResponse.ok) {
-        const errorBody = await assignResponse.text();
         throw new Error(
-          `Failed to assign Copilot: ${assignResponse.status} ${errorBody}. ` +
+          `${formatProviderHttpError("Assign Copilot", assignResponse)} ` +
             "Ensure Copilot coding agent is enabled for this repo and the PAT has Copilot access."
         );
       }
@@ -264,51 +237,26 @@ export const copilotAdapter: CodingAdapter = {
       )
     );
 
-    // Check CI on the PR
-    const ciResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/commits/${linkedPR.head.ref}/check-runs`,
-      { headers: buildHeaders(githubPat) }
-    );
-
-    if (!ciResponse.ok) {
-      return createProviderStatusFailure("Copilot CI", ciResponse, logs);
-    }
-
-    let ciData: z.infer<typeof githubCheckRunsResponseSchema>;
-    try {
-      ciData = await parseResponseJson(
-        ciResponse,
-        githubCheckRunsResponseSchema,
-        "GitHub check runs"
-      );
-    } catch (error) {
-      return createProviderParseFailure(
-        "Copilot CI",
-        "check runs",
-        error,
-        logs
-      );
-    }
-    const { ciStatus, ciFailureLog } = parseGitHubCheckRuns(ciData.check_runs);
-
-    const isCompleted = ciStatus === "passed" && !linkedPR.draft;
-    let status: TaskStatusResponse["status"] = isCompleted
-      ? "completed"
-      : "running";
-    if (ciStatus === "failed") {
-      status = "failed";
-    }
-
-    return {
-      status,
-      prUrl: linkedPR.html_url,
-      prNumber: linkedPR.number,
-      ciStatus,
-      ciFailureLog,
+    const closedStatus = await getClosedPullRequestStatus({
       activityLogs: logs,
-      tokensUsed: 0,
-      estimatedCostUsd: 0,
-    };
+      headers: buildHeaders(githubPat),
+      owner,
+      pull: linkedPR,
+      repo,
+    });
+    if (closedStatus) {
+      return closedStatus;
+    }
+
+    return getPullRequestCiStatus({
+      activityLogs: logs,
+      adapterName: "Copilot",
+      headers: buildHeaders(githubPat),
+      owner,
+      pull: linkedPR,
+      repo,
+      requireReadyForCompletion: true,
+    });
   },
 
   cancelTask: async (

@@ -195,6 +195,7 @@ export function BrandingSection({
                     alt="Logo preview"
                     className="object-contain"
                     fill
+                    sizes="96px"
                     src={logo}
                   />
                 </div>
@@ -232,13 +233,13 @@ export function BrandingSection({
         <div className="flex items-center justify-end gap-2 text-muted-foreground text-sm">
           {saveStatus === "saving" ? (
             <>
-              <Spinner className="h-3.5 w-3.5 animate-spin" />
-              <span>Saving...</span>
+              <Spinner className="size-3.5 animate-spin" />
+              <span>Saving…</span>
             </>
           ) : null}
           {saveStatus === "saved" ? (
             <>
-              <Check className="h-3.5 w-3.5" />
+              <Check className="size-3.5" />
               <span>Saved</span>
             </>
           ) : null}

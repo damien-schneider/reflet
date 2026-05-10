@@ -46,7 +46,7 @@ export function DeadlineDisplay({
             )}
             color={isOverdue ? "red" : "violet"}
           >
-            <CalendarCheck className="h-3 w-3" />
+            <CalendarCheck className="size-3" />
             <span>{format(deadlineDate, "MMM d")}</span>
           </Badge>
         </PopoverTrigger>
@@ -55,7 +55,7 @@ export function DeadlineDisplay({
           className="flex h-8 cursor-pointer select-none items-center gap-1.5 rounded-full border border-input border-dashed bg-transparent px-3 text-xs transition-colors"
           render={<button type="button" />}
         >
-          <CalendarCheck className="h-3 w-3 text-muted-foreground" />
+          <CalendarCheck className="size-3 text-muted-foreground" />
           <span className="text-muted-foreground">Deadline</span>
         </PopoverTrigger>
       )}
@@ -75,7 +75,7 @@ export function DeadlineDisplay({
             onClick={onClear}
             type="button"
           >
-            <X className="h-3 w-3" />
+            <X className="size-3" />
             Clear deadline
           </button>
         )}

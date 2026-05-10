@@ -5,7 +5,7 @@
 import { v } from "convex/values";
 import { mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
-import { requireOrgAdmin } from "./auth";
+import { requireAutopilotAccess, requireOrgAdmin } from "./auth";
 
 export const approveWorkItem = mutation({
   args: { workItemId: v.id("autopilotWorkItems") },
@@ -18,6 +18,7 @@ export const approveWorkItem = mutation({
     }
 
     await requireOrgAdmin(ctx, item.organizationId, user._id);
+    await requireAutopilotAccess(ctx, item.organizationId);
 
     const now = Date.now();
     const status =
@@ -56,6 +57,7 @@ export const rejectWorkItem = mutation({
     }
 
     await requireOrgAdmin(ctx, item.organizationId, user._id);
+    await requireAutopilotAccess(ctx, item.organizationId);
 
     const now = Date.now();
     await ctx.db.patch(args.workItemId, {
@@ -89,6 +91,7 @@ export const approveDocument = mutation({
     }
 
     await requireOrgAdmin(ctx, doc.organizationId, user._id);
+    await requireAutopilotAccess(ctx, doc.organizationId);
 
     const now = Date.now();
     await ctx.db.patch(args.documentId, {
@@ -121,6 +124,7 @@ export const rejectDocument = mutation({
     }
 
     await requireOrgAdmin(ctx, doc.organizationId, user._id);
+    await requireAutopilotAccess(ctx, doc.organizationId);
 
     const now = Date.now();
     await ctx.db.patch(args.documentId, {

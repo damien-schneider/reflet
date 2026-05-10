@@ -143,4 +143,9 @@ describe("MessageInput", () => {
     render(<MessageInput onSend={vi.fn()} />);
     expect(screen.getByText("Send message")).toBeInTheDocument();
   });
+
+  it("focuses the textarea when focus on mount is requested", () => {
+    render(<MessageInput focusOnMount={true} onSend={vi.fn()} />);
+    expect(screen.getByRole("textbox")).toHaveFocus();
+  });
 });

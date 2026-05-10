@@ -62,7 +62,7 @@ export function McpSetupGuide({ organizationId }: McpSetupGuideProps) {
         {hasExistingKey === false && !newSecretKey && (
           <div className="flex items-start gap-3 rounded-lg border bg-muted/30 p-4">
             <div className="rounded-full bg-primary/10 p-2">
-              <Key className="h-4 w-4 text-primary" />
+              <Key className="size-4 text-primary" />
             </div>
             <div className="flex-1">
               <Muted>Generate an API key to connect your IDE to Reflet.</Muted>
@@ -72,7 +72,7 @@ export function McpSetupGuide({ organizationId }: McpSetupGuideProps) {
                 onClick={handleGenerate}
                 size="sm"
               >
-                <Key className="mr-2 h-4 w-4" />
+                <Key className="mr-2 size-4" />
                 {isGenerating ? "Generating..." : "Generate API Key"}
               </Button>
             </div>
@@ -82,7 +82,7 @@ export function McpSetupGuide({ organizationId }: McpSetupGuideProps) {
         {newSecretKey && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
             <div className="flex items-start gap-3">
-              <Warning className="mt-0.5 h-5 w-5 text-amber-600" />
+              <Warning className="mt-0.5 size-5 text-amber-600" />
               <div className="flex-1">
                 <p className="font-medium text-amber-800 text-sm dark:text-amber-200">
                   Save your secret key now
@@ -112,7 +112,7 @@ export function McpSetupGuide({ organizationId }: McpSetupGuideProps) {
 
         {hasExistingKey && !newSecretKey && (
           <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-4">
-            <CheckCircle className="h-5 w-5 text-green-500" weight="fill" />
+            <CheckCircle className="size-5 text-green-500" weight="fill" />
             <Muted>
               API key configured. Paste your secret key in the config snippets
               below, or{" "}
@@ -224,7 +224,7 @@ export function McpSetupGuide({ organizationId }: McpSetupGuideProps) {
                       className="flex items-start gap-2 text-muted-foreground text-xs"
                       key={tool}
                     >
-                      <Check className="mt-0.5 h-3 w-3 shrink-0 text-green-500" />
+                      <Check className="mt-0.5 size-3 shrink-0 text-green-500" />
                       <span>{tool}</span>
                     </li>
                   ))}

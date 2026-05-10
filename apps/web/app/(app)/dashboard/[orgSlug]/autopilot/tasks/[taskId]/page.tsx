@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { H2, Muted } from "@/components/ui/typography";
+import { getAutopilotErrorMessage } from "@/features/autopilot/lib/error-messages";
 import { toOptionalId } from "@/lib/convex-helpers";
 import { cn } from "@/lib/utils";
 
@@ -79,10 +80,6 @@ function getStatusConfig(status: string) {
       return STATUS_CONFIG.backlog;
     }
   }
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
 }
 
 export default function TaskDetailPage({
@@ -149,7 +146,11 @@ export default function TaskDetailPage({
       await cancelTask({ workItemId: task._id, status: "cancelled" });
       toast.success("Task cancelled");
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to cancel task"));
+      toast.error(
+        getAutopilotErrorMessage(error, {
+          fallback: "Failed to cancel task",
+        })
+      );
     }
   };
 
@@ -160,7 +161,7 @@ export default function TaskDetailPage({
           <div className="flex items-center gap-3">
             <StatusIcon className={cn("size-6 shrink-0", statusConfig.color)} />
             <div>
-              <h1 className="font-bold text-xl">{task.title}</h1>
+              <h1 className="font-semibold text-xl">{task.title}</h1>
               <div className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
                 <Badge variant="outline">{task.priority}</Badge>
                 <Badge variant="secondary">{task.assignedAgent}</Badge>

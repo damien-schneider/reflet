@@ -221,7 +221,7 @@ export function DashboardStats({
           {baseUrl && (
             <Link
               className="text-muted-foreground text-xs hover:text-foreground"
-              href={baseUrl.replace("/autopilot", "/settings/billing")}
+              href={baseUrl.replace("/autopilot", "/project/billing")}
             >
               Manage billing
             </Link>
@@ -279,7 +279,7 @@ export function DashboardStats({
           <IconAlertTriangle className="size-4 shrink-0 text-red-500" />
           <div className="min-w-0 flex-1">
             <p className="font-medium text-red-600 text-sm dark:text-red-400">
-              Daily task limit reached — agents paused until tomorrow
+              Daily task limit reached, agents paused until tomorrow
             </p>
             <p className="text-muted-foreground text-xs">
               {stats.tasksUsedToday} / {stats.maxTasksPerDay} tasks used today
@@ -300,7 +300,7 @@ export function DashboardStats({
           <IconAlertTriangle className="size-4 shrink-0 text-red-500" />
           <div className="min-w-0 flex-1">
             <p className="font-medium text-red-600 text-sm dark:text-red-400">
-              Daily cost cap reached — agents paused until tomorrow
+              Daily cost cap reached, agents paused until tomorrow
             </p>
             <p className="text-muted-foreground text-xs">
               {formatCost(stats.costUsedTodayUsd)} /{" "}

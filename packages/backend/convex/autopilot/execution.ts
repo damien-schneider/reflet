@@ -8,7 +8,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import { internalAction } from "../_generated/server";
+import { type ActionCtx, internalAction } from "../_generated/server";
 import {
   fetchAgentsMd,
   getRequiredTask,
@@ -19,6 +19,28 @@ import {
   resolveRetryDelayMs,
   resolveRunStatus,
 } from "./execution_policy";
+
+async function pauseTaskForSetupIssue(
+  ctx: ActionCtx,
+  args: {
+    organizationId: Id<"organizations">;
+    taskId: Id<"autopilotWorkItems">;
+    message: string;
+  }
+) {
+  await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
+    taskId: args.taskId,
+    status: "backlog",
+    errorMessage: args.message,
+  });
+  await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+    organizationId: args.organizationId,
+    workItemId: args.taskId,
+    agent: "system",
+    level: "warning",
+    message: args.message,
+  });
+}
 
 /**
  * Execute a coding task using the org's configured adapter.
@@ -104,13 +126,12 @@ export const executeTask = internalAction({
     );
 
     if (!creds) {
-      await ctx.runMutation(
-        internal.autopilot.task_mutations.updateTaskStatus,
-        {
-          taskId: args.taskId,
-          status: "cancelled",
-        }
-      );
+      await pauseTaskForSetupIssue(ctx, {
+        organizationId: args.organizationId,
+        taskId: args.taskId,
+        message:
+          "Execution paused: adapter credentials missing. Add valid adapter credentials before retrying this task.",
+      });
       return null;
     }
 
@@ -123,13 +144,12 @@ export const executeTask = internalAction({
 
       const credentialsValid = await adapter.validateCredentials(credentials);
       if (!credentialsValid) {
-        await ctx.runMutation(
-          internal.autopilot.task_mutations.updateTaskStatus,
-          {
-            taskId: args.taskId,
-            status: "cancelled",
-          }
-        );
+        await pauseTaskForSetupIssue(ctx, {
+          organizationId: args.organizationId,
+          taskId: args.taskId,
+          message:
+            "Execution paused: adapter credentials are invalid. Reconnect the adapter credentials before retrying this task.",
+        });
         return null;
       }
 
@@ -221,9 +241,6 @@ export const executeTask = internalAction({
         organizationId: args.organizationId,
         runId: createdRunId,
         adapter: config.adapter,
-        autoMergePRs: config.autoMergePRs,
-        autonomyLevel: config.autonomyLevel,
-        autonomyMode: config.autonomyMode,
         retryCount,
         maxRetries: 3,
       });

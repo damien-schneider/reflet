@@ -4,7 +4,7 @@ import { CaretRight } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
 import { isTimeHorizon, TIME_HORIZON_CONFIG } from "@/lib/milestone-constants";
@@ -81,7 +81,7 @@ function OverallProgressRing({ percentage }: { percentage: number }) {
           r={radius}
           strokeWidth={strokeWidth}
         />
-        <motion.circle
+        <m.circle
           animate={{ strokeDashoffset: offset }}
           cx={center}
           cy={center}
@@ -117,13 +117,13 @@ function MultiSegmentBar({
 
   return (
     <div className="flex h-[3px] w-20 overflow-hidden rounded-full bg-muted/30">
-      <motion.div
+      <m.div
         animate={{ width: `${completedPct}%` }}
         className="h-full bg-emerald-500"
         initial={{ width: 0 }}
         transition={{ type: "spring", stiffness: 200, damping: 30 }}
       />
-      <motion.div
+      <m.div
         animate={{ width: `${inProgressPct}%` }}
         className="h-full bg-primary"
         initial={{ width: 0 }}
@@ -182,7 +182,7 @@ export function DashboardTimelineView({
   if (milestones === undefined) {
     return (
       <div className="flex min-h-[200px] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <div className="size-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
       </div>
     );
   }
@@ -198,169 +198,173 @@ export function DashboardTimelineView({
   }
 
   return (
-    <div className="space-y-4 px-4">
-      {/* KPI Header Bar */}
-      <div className="flex items-center gap-4 rounded-xl bg-secondary p-3">
-        <OverallProgressRing percentage={totals.percentage} />
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm">
-            {totals.completed}/{totals.total} items
-          </span>
-          <div className="flex items-center gap-1">
-            <span
-              className="inline-block h-2 w-2 rounded-full bg-emerald-500"
-              title={`${totals.completed} done`}
-            />
-            <span className="text-muted-foreground text-xs">
-              {totals.completed} done
+    <LazyMotion features={domAnimation}>
+      <div className="space-y-4 px-4">
+        {/* KPI Header Bar */}
+        <div className="flex items-center gap-4 rounded-xl bg-secondary p-3">
+          <OverallProgressRing percentage={totals.percentage} />
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-sm">
+              {totals.completed}/{totals.total} items
             </span>
-          </div>
-          {totals.inProgress > 0 && (
             <div className="flex items-center gap-1">
               <span
-                className="inline-block h-2 w-2 rounded-full bg-primary"
-                title={`${totals.inProgress} in progress`}
+                className="inline-block size-2 rounded-full bg-emerald-500"
+                title={`${totals.completed} done`}
               />
               <span className="text-muted-foreground text-xs">
-                {totals.inProgress} in progress
+                {totals.completed} done
               </span>
             </div>
-          )}
+            {totals.inProgress > 0 && (
+              <div className="flex items-center gap-1">
+                <span
+                  className="inline-block size-2 rounded-full bg-primary"
+                  title={`${totals.inProgress} in progress`}
+                />
+                <span className="text-muted-foreground text-xs">
+                  {totals.inProgress} in progress
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Vertical Timeline */}
-      <div className="relative pl-6">
-        {/* Left spine — centered under the 8px dots at -left-4 inside pl-6 */}
-        <div className="absolute top-0 bottom-0 left-[11.5px] w-px bg-border" />
+        {/* Vertical Timeline */}
+        <div className="relative pl-6">
+          {/* Left spine — centered under the 8px dots at -left-4 inside pl-6 */}
+          <div className="absolute top-0 bottom-0 left-[11.5px] w-px bg-border" />
 
-        {milestones.map((milestone) => {
-          const colorValues = getTagColorValues(milestone.color);
-          const colorHex = colorValues.text;
-          const horizonLabel = isTimeHorizon(milestone.timeHorizon)
-            ? TIME_HORIZON_CONFIG[milestone.timeHorizon].shortLabel
-            : milestone.timeHorizon;
-          const isActive = activeMilestoneId === milestone._id;
-          const isSweeping = sweepId === milestone._id;
+          {milestones.map((milestone) => {
+            const colorValues = getTagColorValues(milestone.color);
+            const colorHex = colorValues.text;
+            const horizonLabel = isTimeHorizon(milestone.timeHorizon)
+              ? TIME_HORIZON_CONFIG[milestone.timeHorizon].shortLabel
+              : milestone.timeHorizon;
+            const isActive = activeMilestoneId === milestone._id;
+            const isSweeping = sweepId === milestone._id;
 
-          return (
-            <div className="relative" key={milestone._id}>
-              {/* Colored dot */}
-              <div
-                className="absolute top-3 -left-4 h-2 w-2 rounded-full border-2 border-background"
-                style={{ backgroundColor: colorHex }}
-              />
+            return (
+              <div className="relative" key={milestone._id}>
+                {/* Colored dot */}
+                <div
+                  className="absolute top-3 -left-4 size-2 rounded-full border-2 border-background"
+                  style={{ backgroundColor: colorHex }}
+                />
 
-              {/* Milestone row button */}
-              <button
-                className={cn(
-                  "relative w-full overflow-hidden rounded-lg px-3 py-2 text-left transition-colors",
-                  isActive ? "bg-accent/50" : "hover:bg-accent/20"
-                )}
-                onClick={() => handleMilestoneClick(milestone._id)}
-                type="button"
-              >
-                {/* Sweep animation overlay */}
-                {isSweeping && (
-                  <motion.div
-                    animate={{ x: "100%" }}
-                    className="pointer-events-none absolute inset-0"
-                    initial={{ x: "-100%" }}
-                    style={{ backgroundColor: colorHex, opacity: 0.12 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                  />
-                )}
+                {/* Milestone row button */}
+                <button
+                  className={cn(
+                    "relative w-full overflow-hidden rounded-lg px-3 py-2 text-left transition-colors",
+                    isActive ? "bg-accent/50" : "hover:bg-accent/20"
+                  )}
+                  onClick={() => handleMilestoneClick(milestone._id)}
+                  type="button"
+                >
+                  {/* Sweep animation overlay */}
+                  {isSweeping && (
+                    <m.div
+                      animate={{ x: "100%" }}
+                      className="pointer-events-none absolute inset-0"
+                      initial={{ x: "-100%" }}
+                      style={{ backgroundColor: colorHex, opacity: 0.12 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    />
+                  )}
 
-                <div className="flex items-center gap-2">
-                  <CaretRight
-                    className={cn(
-                      "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform",
-                      isActive && "rotate-90"
+                  <div className="flex items-center gap-2">
+                    <CaretRight
+                      className={cn(
+                        "size-3.5 shrink-0 text-muted-foreground transition-transform",
+                        isActive && "rotate-90"
+                      )}
+                      weight="bold"
+                    />
+
+                    {milestone.emoji && (
+                      <span className="shrink-0 text-sm">
+                        {milestone.emoji}
+                      </span>
                     )}
-                    weight="bold"
-                  />
 
-                  {milestone.emoji && (
-                    <span className="shrink-0 text-sm">{milestone.emoji}</span>
-                  )}
-
-                  <span className="min-w-0 flex-1 truncate font-medium text-sm">
-                    {milestone.name}
-                  </span>
-
-                  <span
-                    className="shrink-0 rounded-full px-1.5 py-0.5 font-medium text-[10px]"
-                    style={{
-                      backgroundColor: `${colorHex}18`,
-                      color: colorHex,
-                    }}
-                  >
-                    {horizonLabel}
-                  </span>
-
-                  <MultiSegmentBar
-                    completed={milestone.progress.completed}
-                    inProgress={milestone.progress.inProgress}
-                    total={milestone.progress.total}
-                  />
-
-                  <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
-                    {milestone.progress.percentage}%
-                  </span>
-
-                  {milestone.targetDate && (
-                    <span className="shrink-0 text-muted-foreground text-xs">
-                      {formatTargetDate(milestone.targetDate)}
+                    <span className="min-w-0 flex-1 truncate font-medium text-sm">
+                      {milestone.name}
                     </span>
+
+                    <span
+                      className="shrink-0 rounded-full px-1.5 py-0.5 font-medium text-[10px]"
+                      style={{
+                        backgroundColor: `${colorHex}18`,
+                        color: colorHex,
+                      }}
+                    >
+                      {horizonLabel}
+                    </span>
+
+                    <MultiSegmentBar
+                      completed={milestone.progress.completed}
+                      inProgress={milestone.progress.inProgress}
+                      total={milestone.progress.total}
+                    />
+
+                    <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
+                      {milestone.progress.percentage}%
+                    </span>
+
+                    {milestone.targetDate && (
+                      <span className="shrink-0 text-muted-foreground text-xs">
+                        {formatTargetDate(milestone.targetDate)}
+                      </span>
+                    )}
+                  </div>
+                </button>
+
+                {/* Accordion Expansion */}
+                <AnimatePresence>
+                  {isActive && (
+                    <m.div
+                      animate={{ height: "auto", opacity: 1 }}
+                      className="overflow-hidden"
+                      exit={{ height: 0, opacity: 0 }}
+                      initial={{ height: 0, opacity: 0 }}
+                      key={`panel-${milestone._id}`}
+                      transition={{
+                        type: "spring",
+                        damping: 25,
+                        stiffness: 300,
+                      }}
+                    >
+                      <div className="ml-6 rounded-lg border bg-card p-3">
+                        <MilestoneExpandedPanel
+                          isAdmin={isAdmin}
+                          milestoneId={milestone._id}
+                          onFeedbackClick={onFeedbackClick}
+                          organizationId={organizationId}
+                        />
+                      </div>
+                    </m.div>
                   )}
-                </div>
-              </button>
-
-              {/* Accordion Expansion */}
-              <AnimatePresence>
-                {isActive && (
-                  <motion.div
-                    animate={{ height: "auto", opacity: 1 }}
-                    className="overflow-hidden"
-                    exit={{ height: 0, opacity: 0 }}
-                    initial={{ height: 0, opacity: 0 }}
-                    key={`panel-${milestone._id}`}
-                    transition={{
-                      type: "spring",
-                      damping: 25,
-                      stiffness: 300,
-                    }}
-                  >
-                    <div className="ml-6 rounded-lg border bg-card p-3">
-                      <MilestoneExpandedPanel
-                        isAdmin={isAdmin}
-                        milestoneId={milestone._id}
-                        onFeedbackClick={onFeedbackClick}
-                        organizationId={organizationId}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Admin: add milestone */}
-      {isAdmin && (
-        <div className="pl-6">
-          <MilestoneFormPopover
-            defaultTimeHorizon="now"
-            onCreated={() => setPopoverOpen(false)}
-            onOpenChange={handlePopoverOpenChange}
-            open={popoverOpen}
-            organizationId={organizationId}
-            showHorizonPicker
-            triggerClassName="flex h-8 w-full items-center justify-center rounded-lg border border-dashed border-muted-foreground/20 text-sm text-muted-foreground/40 transition-colors hover:border-muted-foreground/40 hover:text-muted-foreground/60"
-          />
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </div>
-      )}
-    </div>
+
+        {/* Admin: add milestone */}
+        {isAdmin && (
+          <div className="pl-6">
+            <MilestoneFormPopover
+              defaultTimeHorizon="now"
+              onCreated={() => setPopoverOpen(false)}
+              onOpenChange={handlePopoverOpenChange}
+              open={popoverOpen}
+              organizationId={organizationId}
+              showHorizonPicker
+              triggerClassName="flex h-8 w-full items-center justify-center rounded-lg border border-dashed border-muted-foreground/20 text-sm text-muted-foreground/40 transition-colors hover:border-muted-foreground/40 hover:text-muted-foreground/60"
+            />
+          </div>
+        )}
+      </div>
+    </LazyMotion>
   );
 }

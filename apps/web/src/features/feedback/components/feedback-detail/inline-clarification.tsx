@@ -50,7 +50,7 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
   return (
     <div className="rounded-lg border border-olive-200 bg-olive-50 px-4 py-3 dark:border-olive-800 dark:bg-olive-950/50">
       <div className="flex items-start gap-2">
-        <Sparkle className="mt-0.5 h-4 w-4 shrink-0 text-olive-600 dark:text-olive-400" />
+        <Sparkle className="mt-0.5 size-4 shrink-0 text-olive-600 dark:text-olive-400" />
         <div className="min-w-0 flex-1">
           <p className="whitespace-pre-wrap text-sm leading-relaxed">
             {isExpanded ? clarification : firstLine}
@@ -64,11 +64,11 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
               >
                 {isExpanded ? (
                   <>
-                    Show less <CaretUp className="ml-0.5 h-3 w-3" />
+                    Show less <CaretUp className="ml-0.5 size-3" />
                   </>
                 ) : (
                   <>
-                    Show more <CaretDown className="ml-0.5 h-3 w-3" />
+                    Show more <CaretDown className="ml-0.5 size-3" />
                   </>
                 )}
               </Button>
@@ -81,8 +81,8 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
             >
               {isRegenerating ? (
                 <>
-                  <ArrowsClockwise className="mr-0.5 h-3 w-3 animate-spin" />
-                  Regenerating...
+                  <ArrowsClockwise className="mr-0.5 size-3 animate-spin" />
+                  Regenerating…
                 </>
               ) : (
                 "Regenerate"

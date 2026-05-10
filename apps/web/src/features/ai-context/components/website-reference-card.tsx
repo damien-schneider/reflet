@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { ClientDate } from "@/shared/components/client-date";
 
 interface WebsiteReference {
   _id: Id<"websiteReferences">;
@@ -81,7 +82,7 @@ export function WebsiteReferenceCard({
                 target="_blank"
               >
                 {reference.title || new URL(reference.url).hostname}
-                <ArrowUpRight className="h-3 w-3" />
+                <ArrowUpRight className="size-3" />
               </a>
               <StatusBadge
                 errorMessage={reference.errorMessage}
@@ -101,8 +102,7 @@ export function WebsiteReferenceCard({
 
             {reference.lastFetchedAt && reference.status === "success" && (
               <p className="mt-2 text-muted-foreground/60 text-xs">
-                Last fetched:{" "}
-                {new Date(reference.lastFetchedAt).toLocaleDateString()}
+                Last fetched: <ClientDate value={reference.lastFetchedAt} />
               </p>
             )}
           </div>
@@ -118,7 +118,7 @@ export function WebsiteReferenceCard({
               >
                 <ArrowsClockwise
                   className={cn(
-                    "h-4 w-4",
+                    "size-4",
                     (isRefreshing || isLoading) && "animate-spin"
                   )}
                 />
@@ -131,9 +131,9 @@ export function WebsiteReferenceCard({
                 variant="ghost"
               >
                 {isDeleting ? (
-                  <Spinner className="h-4 w-4 animate-spin" />
+                  <Spinner className="size-4 animate-spin" />
                 ) : (
-                  <Trash className="h-4 w-4 text-destructive" />
+                  <Trash className="size-4 text-destructive" />
                 )}
               </Button>
             </div>
@@ -156,21 +156,21 @@ function StatusBadge({
     case "fetching":
       return (
         <Badge className="text-xs" variant="secondary">
-          <Spinner className="mr-1 h-3 w-3 animate-spin" />
-          Fetching...
+          <Spinner className="mr-1 size-3 animate-spin" />
+          Fetching…
         </Badge>
       );
     case "success":
       return (
         <Badge className="bg-olive-100 text-olive-700 text-xs dark:bg-olive-900 dark:text-olive-300">
-          <Check className="mr-1 h-3 w-3" />
+          <Check className="mr-1 size-3" />
           Success
         </Badge>
       );
     case "error":
       return (
         <Badge className="text-xs" title={errorMessage} variant="destructive">
-          <Warning className="mr-1 h-3 w-3" />
+          <Warning className="mr-1 size-3" />
           Error
         </Badge>
       );

@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 
 export function PulsingDot({ color }: { color: string }) {
   return (
-    <span className="relative flex h-2.5 w-2.5 shrink-0">
+    <span className="relative flex size-2.5 shrink-0">
       <span
         className={cn(
           "absolute inline-flex h-full w-full animate-ping rounded-full opacity-40",
@@ -32,7 +32,7 @@ export function PulsingDot({ color }: { color: string }) {
         )}
       />
       <span
-        className={cn("relative inline-flex h-2.5 w-2.5 rounded-full", color)}
+        className={cn("relative inline-flex size-2.5 rounded-full", color)}
       />
     </span>
   );
@@ -55,10 +55,10 @@ export function ProcessingIndicator({
         render={
           <div className="flex shrink-0 items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5">
             {/* Animated progress ring */}
-            <div className="relative h-4 w-4 shrink-0">
+            <div className="relative size-4 shrink-0">
               <svg
                 aria-label={`Progress: ${percentage}%`}
-                className="h-4 w-4 -rotate-90"
+                className="size-4 -rotate-90"
                 role="img"
                 viewBox="0 0 16 16"
               >
@@ -167,14 +167,14 @@ export function ResultsPopover({
             type="button"
           >
             {hasFailed ? (
-              <Warning className="h-3.5 w-3.5" weight="bold" />
+              <Warning className="size-3.5" weight="bold" />
             ) : (
-              <Check className="h-3.5 w-3.5" weight="bold" />
+              <Check className="size-3.5" weight="bold" />
             )}
             <span className="font-medium">
               {successful} tagged{hasFailed ? `, ${failed} failed` : ""}
             </span>
-            <CaretRight className="h-3 w-3 opacity-60" />
+            <CaretRight className="size-3 opacity-60" />
           </button>
         }
       />
@@ -182,7 +182,7 @@ export function ResultsPopover({
         {/* Header */}
         <div className="flex items-center justify-between border-b px-3 py-2">
           <div className="flex items-center gap-1.5">
-            <Sparkle className="h-3.5 w-3.5 text-primary" weight="fill" />
+            <Sparkle className="size-3.5 text-primary" weight="fill" />
             <span className="font-medium text-sm">Auto-tag results</span>
           </div>
           <Button
@@ -258,7 +258,7 @@ export function ResultsPopover({
               </p>
             )}
             {recentItems === undefined && (
-              <div className="space-y-3 px-3 py-3">
+              <div className="space-y-3 p-3">
                 <div className="space-y-1.5">
                   <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
                   <div className="flex gap-1">
@@ -274,7 +274,7 @@ export function ResultsPopover({
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+                  <div className="size-4/5 animate-pulse rounded bg-muted" />
                   <div className="flex gap-1">
                     <div className="h-4 w-12 animate-pulse rounded-full bg-muted" />
                   </div>

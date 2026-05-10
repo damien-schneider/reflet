@@ -23,7 +23,7 @@ export const githubPullSchema = z.object({
     .transform((value) => value ?? ""),
   draft: z.boolean().optional().default(false),
   state: z.string().optional().default(""),
-  head: z.object({ ref: z.string() }),
+  head: z.object({ ref: z.string(), sha: z.string() }),
 });
 
 export const githubPullsResponseSchema = z.array(githubPullSchema);
@@ -90,6 +90,15 @@ type GitHubCheckRun = z.infer<
   typeof githubCheckRunsResponseSchema
 >["check_runs"][number];
 
+const failedGitHubCheckConclusions = new Set([
+  "action_required",
+  "cancelled",
+  "failure",
+  "startup_failure",
+  "stale",
+  "timed_out",
+]);
+
 export const parseGitHubCheckRuns = (
   checkRuns: GitHubCheckRun[]
 ): {
@@ -97,14 +106,13 @@ export const parseGitHubCheckRuns = (
   ciStatus: "pending" | "running" | "passed" | "failed";
 } => {
   if (checkRuns.length === 0) {
-    return { ciStatus: "pending" };
+    return { ciStatus: "passed" };
   }
 
   const failedRun = checkRuns.find(
     (run) =>
-      run.conclusion === "failure" ||
-      run.conclusion === "cancelled" ||
-      run.conclusion === "timed_out"
+      run.conclusion !== null &&
+      failedGitHubCheckConclusions.has(run.conclusion)
   );
   if (failedRun) {
     return {
@@ -130,6 +138,183 @@ export const isPullRequestLinkedToIssue = (
   );
 };
 
+export const getGitHubPullMergeState = async ({
+  headers,
+  owner,
+  pullNumber,
+  repo,
+}: {
+  headers: Record<string, string>;
+  owner: string;
+  pullNumber: number;
+  repo: string;
+}): Promise<boolean | null> => {
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/pulls/${String(pullNumber)}`,
+    { headers }
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  try {
+    const pull = await parseResponseJson(
+      response,
+      githubPullDetailResponseSchema,
+      "GitHub pull request"
+    );
+    return pull.merged;
+  } catch (_error) {
+    return null;
+  }
+};
+
+export const getClosedPullRequestStatus = async ({
+  activityLogs,
+  headers,
+  owner,
+  pull,
+  repo,
+}: {
+  activityLogs: ActivityLogEntry[];
+  headers: Record<string, string>;
+  owner: string;
+  pull: z.infer<typeof githubPullSchema>;
+  repo: string;
+}): Promise<TaskStatusResponse | null> => {
+  if (pull.state !== "closed") {
+    return null;
+  }
+
+  const merged = await getGitHubPullMergeState({
+    headers,
+    owner,
+    pullNumber: pull.number,
+    repo,
+  });
+
+  if (merged === null) {
+    return {
+      status: "running",
+      prUrl: pull.html_url,
+      prNumber: pull.number,
+      activityLogs: [
+        ...activityLogs,
+        log(
+          "dev",
+          "warning",
+          `Could not check PR merge status for #${pull.number}`,
+          pull.html_url
+        ),
+      ],
+      tokensUsed: 0,
+      estimatedCostUsd: 0,
+    };
+  }
+
+  if (merged) {
+    return {
+      status: "completed",
+      prUrl: pull.html_url,
+      prNumber: pull.number,
+      merged: true,
+      ciStatus: "passed",
+      activityLogs,
+      tokensUsed: 0,
+      estimatedCostUsd: 0,
+    };
+  }
+
+  return {
+    status: "failed",
+    prUrl: pull.html_url,
+    prNumber: pull.number,
+    merged: false,
+    ciStatus: "failed",
+    activityLogs: [
+      ...activityLogs,
+      log(
+        "dev",
+        "error",
+        `PR #${pull.number} was closed without merge`,
+        pull.html_url
+      ),
+    ],
+    tokensUsed: 0,
+    estimatedCostUsd: 0,
+  };
+};
+
+export const getPullRequestCiStatus = async ({
+  activityLogs,
+  adapterName,
+  headers,
+  owner,
+  pull,
+  repo,
+  requireReadyForCompletion = false,
+}: {
+  activityLogs: ActivityLogEntry[];
+  adapterName: string;
+  headers: Record<string, string>;
+  owner: string;
+  pull: z.infer<typeof githubPullSchema>;
+  repo: string;
+  requireReadyForCompletion?: boolean;
+}): Promise<TaskStatusResponse> => {
+  const ciResponse = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/commits/${pull.head.sha}/check-runs`,
+    { headers }
+  );
+
+  if (!ciResponse.ok) {
+    return createProviderStatusFailure(
+      `${adapterName} CI`,
+      ciResponse,
+      activityLogs
+    );
+  }
+
+  let ciData: z.infer<typeof githubCheckRunsResponseSchema>;
+  try {
+    ciData = await parseResponseJson(
+      ciResponse,
+      githubCheckRunsResponseSchema,
+      "GitHub check runs"
+    );
+  } catch (error) {
+    return createProviderParseFailure(
+      `${adapterName} CI`,
+      "check runs",
+      error,
+      activityLogs
+    );
+  }
+
+  const { ciStatus, ciFailureLog } = parseGitHubCheckRuns(ciData.check_runs);
+  const isComplete =
+    ciStatus === "passed" && !(requireReadyForCompletion && pull.draft);
+
+  let status: TaskStatusResponse["status"] = isComplete
+    ? "completed"
+    : "running";
+  if (ciStatus === "failed") {
+    status = "failed";
+  }
+
+  return {
+    status,
+    prUrl: pull.html_url,
+    prNumber: pull.number,
+    ciStatus,
+    ciFailureLog,
+    activityLogs,
+    tokensUsed: 0,
+    estimatedCostUsd: 0,
+  };
+};
+
 export const log = (
   agent: ActivityLogEntry["agent"],
   level: ActivityLogEntry["level"],
@@ -143,27 +328,37 @@ export const log = (
   timestamp: Date.now(),
 });
 
-export const createProviderStatusFailure = async (
+export const createProviderStatusFailure = (
   adapterName: string,
   response: Response,
   existingLogs: ActivityLogEntry[] = []
-): Promise<TaskStatusResponse> => {
-  const details = (await response.text()).slice(0, 500);
-  return {
-    status: "running",
-    activityLogs: [
-      ...existingLogs,
-      log(
-        "system",
-        "warning",
-        `Could not check PR status for ${adapterName}: ${response.status}`,
-        details || response.statusText
-      ),
-    ],
-    tokensUsed: 0,
-    estimatedCostUsd: 0,
-  };
+): TaskStatusResponse => ({
+  status: "running",
+  activityLogs: [
+    ...existingLogs,
+    log(
+      "system",
+      "warning",
+      `Could not check PR status for ${adapterName}: ${response.status}`,
+      getProviderHttpStatusDetails(response)
+    ),
+  ],
+  tokensUsed: 0,
+  estimatedCostUsd: 0,
+});
+
+export const getProviderHttpStatusDetails = (response: Response): string => {
+  const statusText = response.statusText.trim();
+  const status = statusText
+    ? `HTTP ${response.status} ${statusText}`
+    : `HTTP ${response.status}`;
+  return `${status}. Check the stored provider credentials, permissions, or rate limits.`;
 };
+
+export const formatProviderHttpError = (
+  action: string,
+  response: Response
+): string => `${action} failed with ${getProviderHttpStatusDetails(response)}`;
 
 export const createProviderParseFailure = (
   adapterName: string,

@@ -3,6 +3,7 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { ClientDate } from "@/shared/components/client-date";
 
 interface MessageSender {
   email?: string;
@@ -33,6 +34,7 @@ interface MessageBubbleProps {
 }
 
 const INITIALS_SPLIT_PATTERN = /[\s@]/;
+const EMPTY_REACTIONS: MessageReaction[] = [];
 
 function getInitials(name?: string, email?: string): string {
   const source = name || email || "?";
@@ -54,7 +56,7 @@ export function MessageBubble({
   showAvatar = true,
   showTimestamp = false,
   messageId,
-  reactions = [],
+  reactions = EMPTY_REACTIONS,
   onAddReaction,
   onRemoveReaction,
   currentUserId,
@@ -85,7 +87,7 @@ export function MessageBubble({
       )}
     >
       {showAvatar ? (
-        <Avatar className="h-8 w-8 shrink-0">
+        <Avatar className="size-8 shrink-0">
           <AvatarImage alt={displayName} src={sender?.image} />
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         </Avatar>
@@ -180,10 +182,7 @@ export function MessageBubble({
 
         {showTimestamp && timestamp && (
           <span className="text-[10px] text-muted-foreground/70">
-            {new Date(timestamp).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            <ClientDate value={timestamp} variant="time" />
           </span>
         )}
       </div>

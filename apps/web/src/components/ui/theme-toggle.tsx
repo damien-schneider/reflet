@@ -2,10 +2,10 @@
 
 import { Desktop, Moon, Sun } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useClientHydrated } from "@/shared/components/client-hydration";
 
 export const themes = ["system", "light", "dark"] as const;
 export type Theme = (typeof themes)[number];
@@ -33,11 +33,7 @@ const getTheme = (theme: string | undefined): Theme =>
 
 export function useThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useClientHydrated();
 
   const cycleTheme = () => {
     const currentIndex = themes.indexOf(getTheme(theme));
@@ -54,11 +50,7 @@ export function useThemeToggle() {
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useClientHydrated();
 
   const cycleTheme = () => {
     const currentIndex = themes.indexOf(getTheme(theme));
@@ -70,12 +62,12 @@ export function ThemeToggle({ className }: { className?: string }) {
   if (!mounted) {
     return (
       <Button
-        className={cn("h-8 w-8", className)}
+        className={cn("size-8", className)}
         disabled
         size="icon"
         variant="ghost"
       >
-        <Desktop className="h-4 w-4" />
+        <Desktop className="size-4" />
         <span className="sr-only">Toggle theme</span>
       </Button>
     );
@@ -86,13 +78,13 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   return (
     <Button
-      className={cn("h-8 w-8", className)}
+      className={cn("size-8", className)}
       onClick={cycleTheme}
       size="icon"
       title={`Theme: ${themeLabels[currentTheme]}`}
       variant="ghost"
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="size-4" />
       <span className="sr-only">
         Theme: {themeLabels[currentTheme]}. Click to change.
       </span>
@@ -102,11 +94,7 @@ export function ThemeToggle({ className }: { className?: string }) {
 
 export function ThemeToggleWithLabel({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useClientHydrated();
 
   const cycleTheme = () => {
     const currentIndex = themes.indexOf(getTheme(theme));
@@ -121,7 +109,7 @@ export function ThemeToggleWithLabel({ className }: { className?: string }) {
         disabled
         variant="ghost"
       >
-        <Desktop className="h-4 w-4" />
+        <Desktop className="size-4" />
         <span className="text-sm">System</span>
       </Button>
     );
@@ -136,7 +124,7 @@ export function ThemeToggleWithLabel({ className }: { className?: string }) {
       onClick={cycleTheme}
       variant="ghost"
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="size-4" />
       <span className="text-sm">{themeLabels[currentTheme]}</span>
     </Button>
   );

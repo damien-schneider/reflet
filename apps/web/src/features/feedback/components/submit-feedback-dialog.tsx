@@ -131,7 +131,7 @@ export function SubmitFeedbackDialog({
               />
             }
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
             <span className="sr-only">Close</span>
           </SheetClose>
         </SheetHeader>
@@ -141,7 +141,6 @@ export function SubmitFeedbackDialog({
           {/* Title area */}
           <div className="px-6 pt-6 pb-2">
             <TiptapTitleEditor
-              autoFocus
               onChange={(value) =>
                 onFeedbackChange({ ...feedback, title: value })
               }
@@ -231,7 +230,7 @@ export function SubmitFeedbackDialog({
                         <div className="flex items-center gap-2">
                           <div
                             className={cn(
-                              "h-3 w-3 shrink-0 rounded-sm border",
+                              "size-3 shrink-0 rounded-sm border",
                               getTagSwatchClass(tag.color)
                             )}
                           />
@@ -261,7 +260,7 @@ export function SubmitFeedbackDialog({
                         />
                       ) : (
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <User className="h-3.5 w-3.5" />
+                          <User className="size-3.5" />
                           <span>Assignee</span>
                         </div>
                       )}
@@ -270,14 +269,14 @@ export function SubmitFeedbackDialog({
                   <SelectContent>
                     <SelectItem value="unassigned">
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <User className="h-4 w-4" />
+                        <User className="size-4" />
                         <span>Unassigned</span>
                       </div>
                     </SelectItem>
                     {members.map((member) => (
                       <SelectItem key={member.userId} value={member.userId}>
                         <div className="flex items-center gap-2">
-                          <Avatar className="h-5 w-5">
+                          <Avatar className="size-5">
                             <AvatarImage
                               src={member.user?.image ?? undefined}
                             />
@@ -346,14 +345,14 @@ function AssigneeTriggerContent({
   if (!selected) {
     return (
       <div className="flex items-center gap-2 text-muted-foreground">
-        <User className="h-3.5 w-3.5" />
+        <User className="size-3.5" />
         <span>Assignee</span>
       </div>
     );
   }
   return (
     <div className="flex items-center gap-2">
-      <Avatar className="h-4 w-4">
+      <Avatar className="size-4">
         <AvatarImage src={selected.user?.image ?? undefined} />
         <AvatarFallback className="text-[8px]">
           {selected.user?.name?.charAt(0) ?? "?"}

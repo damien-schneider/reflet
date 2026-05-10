@@ -140,7 +140,7 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
   if (allTriaged) {
     return (
       <div className="flex shrink-0 items-center gap-1.5 px-2 text-muted-foreground text-xs">
-        <span className={cn("h-2 w-2 rounded-full", dotColor)} />
+        <span className={cn("size-2 rounded-full", dotColor)} />
         <span>All caught up</span>
       </div>
     );
@@ -155,7 +155,7 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
       variant="outline"
     >
       <PulsingDot color={dotColor} />
-      <Sparkle className="h-3.5 w-3.5" />
+      <Sparkle className="size-3.5" />
       <span>
         {count} need{count === 1 ? "s" : ""} review
       </span>

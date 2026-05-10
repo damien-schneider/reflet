@@ -6,7 +6,7 @@ import { v } from "convex/values";
 import { api, internal } from "../../_generated/api";
 import { action, mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
-import { requireOrgAdmin } from "./auth";
+import { requireAutopilotAccess, requireOrgAdmin } from "./auth";
 
 const USER_EDIT_PROTECTION_MS = 72 * 60 * 60 * 1000;
 
@@ -19,6 +19,7 @@ export const upsertProductDefinition = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
 
     const now = Date.now();
     const summary = args.content.slice(0, 200).trimEnd();
@@ -95,6 +96,7 @@ export const updateKnowledgeDoc = mutation({
 
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, doc.organizationId, user._id);
+    await requireAutopilotAccess(ctx, doc.organizationId);
 
     const now = Date.now();
 
@@ -128,6 +130,7 @@ export const deleteProductDefinitionAndRegenerate = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
 
     const doc = await ctx.db
       .query("autopilotKnowledgeDocs")

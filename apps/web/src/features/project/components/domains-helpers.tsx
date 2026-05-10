@@ -51,7 +51,7 @@ export function DomainStatusBadge({
 
   return (
     <Badge variant={config.variant}>
-      <Icon className="mr-1 h-3 w-3" />
+      <Icon className="mr-1 size-3" />
       {config.label}
     </Badge>
   );
@@ -117,7 +117,7 @@ export function DnsInstructions({
                   size="sm"
                   variant="ghost"
                 >
-                  <Copy className="h-3.5 w-3.5" />
+                  <Copy className="size-3.5" />
                 </Button>
               </td>
             </tr>
@@ -144,7 +144,7 @@ export function DnsInstructions({
                     size="sm"
                     variant="ghost"
                   >
-                    <Copy className="h-3.5 w-3.5" />
+                    <Copy className="size-3.5" />
                   </Button>
                 </td>
               </tr>

@@ -170,8 +170,8 @@ export function FeedbackBoardContent({
     function ensureDefaultStatuses() {
       if (orgStatuses !== undefined && orgStatuses.length === 0 && isMember) {
         // No statuses exist, create defaults
-        ensureStatusDefaults({ organizationId }).catch(() => {
-          // Silently fail - user may not have permission
+        ensureStatusDefaults({ organizationId }).catch((error) => {
+          console.warn("Failed to ensure default feedback statuses", error);
         });
       }
     },

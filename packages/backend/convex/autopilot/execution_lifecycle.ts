@@ -29,7 +29,7 @@ export const pollTaskStatus = internalAction({
       taskId: args.taskId,
     });
 
-    if (!task || task.status === "cancelled") {
+    if (!task || task.status === "cancelled" || task.status === "done") {
       return null;
     }
     if (task.organizationId !== args.organizationId) {
@@ -64,7 +64,7 @@ export const pollTaskStatus = internalAction({
       return null;
     }
 
-    const startedAt = task.updatedAt;
+    const startedAt = run.startedAt;
     if (startedAt && Date.now() - startedAt > MAX_POLL_DURATION) {
       await ctx.runMutation(
         internal.autopilot.task_mutations.updateTaskStatus,
@@ -103,6 +103,24 @@ export const pollTaskStatus = internalAction({
         taskId: args.taskId,
         runId: args.runId,
         reason: "Polling stopped: autopilot is disabled",
+        runStatus: "cancelled",
+        taskStatus: "backlog",
+      });
+      return null;
+    }
+
+    const access = await ctx.runQuery(
+      internal.autopilot.billing_gate.checkAccess,
+      {
+        organizationId: args.organizationId,
+      }
+    );
+    if (!access.allowed) {
+      await logAndReleasePollingTask(ctx, {
+        organizationId: args.organizationId,
+        taskId: args.taskId,
+        runId: args.runId,
+        reason: access.reason ?? "Autopilot requires a Pro subscription.",
         runStatus: "cancelled",
         taskStatus: "backlog",
       });
@@ -151,6 +169,7 @@ export const pollTaskStatus = internalAction({
             status: "success",
             prUrl: status.prUrl,
             prNumber: status.prNumber,
+            merged: status.merged,
             tokensUsed: status.tokensUsed,
             estimatedCostUsd: status.estimatedCostUsd,
           },
@@ -158,9 +177,6 @@ export const pollTaskStatus = internalAction({
           organizationId: args.organizationId,
           runId: args.runId,
           adapter: run.adapter,
-          autoMergePRs: config.autoMergePRs,
-          autonomyLevel: config.autonomyLevel,
-          autonomyMode: config.autonomyMode,
           retryCount: 0,
           maxRetries: 0,
         });

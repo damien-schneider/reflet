@@ -2,20 +2,63 @@
  * @vitest-environment jsdom
  */
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { toId } from "@/lib/convex-helpers";
+
+const { mockUpdateStatus } = vi.hoisted(() => ({
+  mockUpdateStatus: vi.fn(() => Promise.resolve(null)),
+}));
 
 vi.mock("@phosphor-icons/react", () => ({
   CaretUp: () => <svg data-testid="caret-up-icon" />,
   ChatCircle: () => <svg data-testid="chat-icon" />,
+  Check: () => <svg data-testid="check-icon" />,
   DotsSixVertical: () => <svg data-testid="dots-icon" />,
+  Palette: () => <svg data-testid="palette-icon" />,
   Sparkle: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="sparkle-icon" />
+  ),
+  Trash: () => <svg data-testid="trash-icon" />,
+  X: () => <svg data-testid="x-icon" />,
+}));
+
+vi.mock("convex/react", () => ({
+  useMutation: () => mockUpdateStatus,
+}));
+
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ resolvedTheme: "light" }),
+}));
+
+vi.mock("@/components/ui/tiptap/title-editor", () => ({
+  TiptapTitleEditor: ({
+    disabled,
+    onChange,
+    placeholder,
+    style,
+    value,
+  }: {
+    disabled?: boolean;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    style?: React.CSSProperties;
+    value: string;
+  }) => (
+    <input
+      aria-label={placeholder}
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.value)}
+      style={style}
+      value={value}
+    />
   ),
 }));
 
 import type { FeedbackItem } from "../feed-feedback-view";
 import { FeedbackCardContent } from "./feedback-card-content";
+import { RoadmapColumnHeader } from "./roadmap-column-header";
 
 const makeItem = (overrides: Partial<FeedbackItem> = {}): FeedbackItem => ({
   _id: "fb1" as Id<"feedback">,
@@ -33,6 +76,7 @@ describe("FeedbackCardContent", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    mockUpdateStatus.mockResolvedValue(null);
   });
 
   it("renders feedback title", () => {
@@ -193,5 +237,69 @@ describe("FeedbackCardContent", () => {
   it("does not render milestones section when empty", () => {
     render(<FeedbackCardContent item={makeItem({ milestones: [] })} />);
     expect(screen.queryByText("🏁")).not.toBeInTheDocument();
+  });
+});
+
+describe("RoadmapColumnHeader", () => {
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    mockUpdateStatus.mockResolvedValue(null);
+  });
+
+  it("uses updated server name when no local draft exists", () => {
+    const { rerender } = render(
+      <RoadmapColumnHeader
+        color="gray"
+        count={2}
+        isAdmin
+        name="Planned"
+        onDelete={vi.fn()}
+        statusId={toId("organizationStatuses", "status-1")}
+      />
+    );
+
+    rerender(
+      <RoadmapColumnHeader
+        color="gray"
+        count={2}
+        isAdmin
+        name="In Progress"
+        onDelete={vi.fn()}
+        statusId={toId("organizationStatuses", "status-1")}
+      />
+    );
+
+    expect(screen.getByLabelText("Status name")).toHaveValue("In Progress");
+  });
+
+  it("keeps an active local draft when the server name changes", () => {
+    const { rerender } = render(
+      <RoadmapColumnHeader
+        color="gray"
+        count={2}
+        isAdmin
+        name="Planned"
+        onDelete={vi.fn()}
+        statusId={toId("organizationStatuses", "status-1")}
+      />
+    );
+    fireEvent.change(screen.getByLabelText("Status name"), {
+      target: { value: "Launch queue" },
+    });
+
+    rerender(
+      <RoadmapColumnHeader
+        color="gray"
+        count={2}
+        isAdmin
+        name="In Progress"
+        onDelete={vi.fn()}
+        statusId={toId("organizationStatuses", "status-1")}
+      />
+    );
+
+    expect(screen.getByLabelText("Status name")).toHaveValue("Launch queue");
+    expect(screen.getByTestId("check-icon")).toBeInTheDocument();
   });
 });

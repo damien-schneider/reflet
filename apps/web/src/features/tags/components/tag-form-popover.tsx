@@ -6,7 +6,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import type React from "react";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
@@ -40,6 +40,57 @@ interface TagFormPopoverProps {
 }
 
 export function TagFormPopover({
+  editingTag = null,
+  ...props
+}: TagFormPopoverProps) {
+  return (
+    <TagFormPopoverContent
+      editingTag={editingTag}
+      key={getTagFormKey(editingTag)}
+      {...props}
+    />
+  );
+}
+
+type EditableTag = NonNullable<TagFormPopoverProps["editingTag"]>;
+type TagFormPopoverContentProps = Omit<TagFormPopoverProps, "editingTag"> & {
+  editingTag: EditableTag | null;
+};
+
+interface TagFormData {
+  color: TagColor;
+  icon?: string;
+  name: string;
+}
+
+const getTagFormData = (editingTag: EditableTag | null): TagFormData => {
+  if (!editingTag) {
+    return {
+      name: "",
+      color: "blue",
+      icon: undefined,
+    };
+  }
+
+  const color = isValidTagColor(editingTag.color)
+    ? editingTag.color
+    : migrateHexToNamedColor(editingTag.color);
+
+  return {
+    name: editingTag.name,
+    color,
+    icon: editingTag.icon,
+  };
+};
+
+const getTagFormKey = (editingTag: EditableTag | null): string => {
+  if (!editingTag) {
+    return "create";
+  }
+  return `${editingTag._id}:${editingTag.name}:${editingTag.color}:${editingTag.icon ?? ""}`;
+};
+
+function TagFormPopoverContent({
   organizationId,
   editingTag,
   open,
@@ -47,41 +98,13 @@ export function TagFormPopover({
   onSuccess,
   trigger,
   disableTriggerClick = false,
-}: TagFormPopoverProps) {
+}: TagFormPopoverContentProps) {
   const createTag = useMutation(api.organizations.tag_manager_actions.create);
   const updateTag = useMutation(api.organizations.tag_manager_actions.update);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<{
-    name: string;
-    color: TagColor;
-    icon?: string;
-  }>({
-    name: "",
-    color: "blue",
-    icon: undefined,
-  });
-
-  useEffect(
-    function syncEditingTagToForm() {
-      if (editingTag) {
-        const color = isValidTagColor(editingTag.color)
-          ? editingTag.color
-          : migrateHexToNamedColor(editingTag.color);
-        setFormData({
-          name: editingTag.name,
-          color,
-          icon: editingTag.icon,
-        });
-      } else {
-        setFormData({
-          name: "",
-          color: "blue",
-          icon: undefined,
-        });
-      }
-    },
-    [editingTag]
+  const [formData, setFormData] = useState<TagFormData>(() =>
+    getTagFormData(editingTag)
   );
 
   const handleSubmit = async () => {
@@ -123,20 +146,24 @@ export function TagFormPopover({
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <EmojiPicker
-          onChange={(icon) => setFormData({ ...formData, icon })}
+          onChange={(icon) => setFormData((current) => ({ ...current, icon }))}
           value={formData.icon}
         />
         <Input
-          autoFocus
           className="h-8 flex-1"
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          onChange={(e) =>
+            setFormData((current) => ({
+              ...current,
+              name: e.target.value,
+            }))
+          }
           onKeyDown={handleKeyDown}
           placeholder="Tag name..."
           value={formData.name}
         />
       </div>
       <NotionColorPicker
-        onChange={(color) => setFormData({ ...formData, color })}
+        onChange={(color) => setFormData((current) => ({ ...current, color }))}
         value={formData.color}
       />
       <div className="flex justify-end gap-2 pt-1">
@@ -201,7 +228,7 @@ export function TagFormPopover({
             className="flex shrink-0 items-center justify-center rounded-full bg-muted px-2 py-1 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
             type="button"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="size-4" />
           </button>
         )}
       />

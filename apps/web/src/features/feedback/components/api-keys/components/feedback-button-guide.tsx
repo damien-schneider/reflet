@@ -95,11 +95,11 @@ function App() {
     <div className="space-y-6">
       <div>
         <h3 className="font-semibold text-lg">
-          FeedbackButton — Drop-in React Component
+          FeedbackButton: Drop-in React Component
         </h3>
         <p className="mt-1 text-muted-foreground">
           Add a feedback button to your app with a single line of code. Works
-          anonymously by default — no user login required.
+          anonymously by default, no user login required.
         </p>
       </div>
 
@@ -107,10 +107,10 @@ function App() {
         <AccordionItem value="anonymous">
           <AccordionTrigger>
             <span className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
                 1
               </span>
-              Simplest — Anonymous Feedback
+              Simplest: Anonymous Feedback
             </span>
           </AccordionTrigger>
           <AccordionContent className="space-y-4">
@@ -129,7 +129,7 @@ function App() {
         <AccordionItem value="user">
           <AccordionTrigger>
             <span className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
                 2
               </span>
               With User Identity
@@ -151,7 +151,7 @@ function App() {
         <AccordionItem value="provider">
           <AccordionTrigger>
             <span className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
                 3
               </span>
               With RefletProvider (Shared Config)
@@ -174,7 +174,7 @@ function App() {
         <AccordionItem value="custom">
           <AccordionTrigger>
             <span className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
                 4
               </span>
               Custom Trigger (asChild)
@@ -197,7 +197,7 @@ function App() {
         <AccordionItem value="themed">
           <AccordionTrigger>
             <span className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
                 5
               </span>
               Themed & Customized
@@ -218,34 +218,34 @@ function App() {
 
       <div className="rounded-lg border border-violet-200 bg-violet-50 p-4 dark:border-violet-900 dark:bg-violet-950">
         <h4 className="flex items-center gap-2 font-medium text-violet-800 dark:text-violet-200">
-          <PuzzlePiece className="h-4 w-4" />
+          <PuzzlePiece className="size-4" />
           FeedbackButton Props
         </h4>
         <ul className="mt-2 grid gap-1 text-sm text-violet-700 sm:grid-cols-2 dark:text-violet-300">
           <li>
-            <code>publicKey</code> — Your Reflet public key
+            <code>publicKey</code>: Your Reflet public key
           </li>
           <li>
-            <code>user</code> — Optional user identity
+            <code>user</code>: Optional user identity
           </li>
           <li>
-            <code>theme</code> — &quot;light&quot; | &quot;dark&quot; |
+            <code>theme</code>: &quot;light&quot; | &quot;dark&quot; |
             &quot;auto&quot;
           </li>
           <li>
-            <code>primaryColor</code> — Accent color (hex)
+            <code>primaryColor</code>: Accent color (hex)
           </li>
           <li>
-            <code>labels</code> — Custom UI text
+            <code>labels</code>: Custom UI text
           </li>
           <li>
-            <code>categories</code> — Feedback categories
+            <code>categories</code>: Feedback categories
           </li>
           <li>
-            <code>asChild</code> — Use your own trigger
+            <code>asChild</code>: Use your own trigger
           </li>
           <li>
-            <code>onSubmit</code> — Success callback
+            <code>onSubmit</code>: Success callback
           </li>
         </ul>
       </div>
@@ -270,7 +270,7 @@ function CodeBlock({
         size="sm"
         variant="ghost"
       >
-        <Copy className="h-4 w-4" />
+        <Copy className="size-4" />
       </Button>
       <pre className="overflow-x-auto text-sm">
         <code>{code}</code>

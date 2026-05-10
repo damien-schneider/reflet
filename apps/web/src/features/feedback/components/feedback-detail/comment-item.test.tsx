@@ -149,6 +149,19 @@ describe("CommentItem", () => {
     expect(screen.getByText("Cancel")).toBeInTheDocument();
   });
 
+  it("opens the edit form with the latest comment content", () => {
+    const { rerender } = render(
+      <CommentItem comment={makeComment({ content: "Original" })} />
+    );
+    rerender(<CommentItem comment={makeComment({ content: "Updated" })} />);
+
+    const dotsButton = screen.getByRole("button", { name: "" });
+    fireEvent.click(dotsButton);
+    fireEvent.click(screen.getByText("Edit"));
+
+    expect(screen.getByTestId("markdown-editor")).toHaveValue("Updated");
+  });
+
   it("cancels edit and restores original content", async () => {
     render(<CommentItem comment={makeComment({ content: "Original" })} />);
     const dotsButton = screen.getByRole("button", { name: "" });
@@ -246,8 +259,7 @@ describe("CommentItem", () => {
     const { container } = render(
       <CommentItem comment={makeComment()} isReply />
     );
-    // The avatar should have h-6 w-6 class for replies
-    const avatar = container.querySelector(".h-6.w-6");
+    const avatar = container.querySelector(".size-6");
     expect(avatar).toBeInTheDocument();
   });
 

@@ -62,7 +62,7 @@ export function StatusSummarySection({
         </div>
         <Link href={`/dashboard/${orgSlug}/status`}>
           <Button size="sm" variant="outline">
-            <ArrowSquareOut className="mr-2 h-4 w-4" />
+            <ArrowSquareOut className="mr-2 size-4" />
             View Status Page
           </Button>
         </Link>

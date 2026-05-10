@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 import { describe, expect, test } from "vitest";
-import { api, internal } from "../../_generated/api";
+import { api, internal } from "../../../_generated/api";
 import {
   createAutopilotConfig,
   createMemberSession,
@@ -12,7 +12,7 @@ import {
   getActivity,
   hasMessage,
   type TestContext,
-} from "./test-fixtures.helpers";
+} from "../test-fixtures.helpers";
 
 async function createOrgSnapshot(
   t: TestContext,
@@ -370,7 +370,7 @@ describe("autopilot production readiness", () => {
     ).toBe(false);
   });
 
-  test("execution does not consume daily task quota before credentials exist", async () => {
+  test("execution pauses tasks without consuming quota before credentials exist", async () => {
     const t = createTestContext();
     const organizationId = await createOrg(t);
     const configId = await createAutopilotConfig(t, organizationId);
@@ -390,8 +390,65 @@ describe("autopilot production readiness", () => {
       config: await ctx.db.get(configId),
       task: await ctx.db.get(taskId),
     }));
+    const activity = await getActivity(t);
 
     expect(rows.config?.tasksUsedToday).toBe(0);
-    expect(rows.task?.status).toBe("cancelled");
+    expect(rows.task?.status).toBe("backlog");
+    expect(
+      activity.some((entry) =>
+        entry.message.includes("Execution paused: adapter credentials missing")
+      )
+    ).toBe(true);
+  });
+
+  test("execution pauses tasks without consuming quota when credentials are invalid", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    const configId = await createAutopilotConfig(t, organizationId);
+    const taskId = await createParentTask(t, {
+      organizationId,
+      title: "Invalid credentials",
+      description: "Do not cancel tasks when adapter setup can be fixed.",
+      priority: "medium",
+    });
+
+    await t.mutation(
+      internal.autopilot.config_mutations.upsertAdapterCredentials,
+      {
+        organizationId,
+        adapter: "builtin",
+        credentials: JSON.stringify({ githubToken: "invalid-token" }),
+      }
+    );
+
+    const originalFetch = globalThis.fetch;
+    const invalidCredentialsFetch: typeof fetch = async () =>
+      new Response("{}", { status: 401 });
+    globalThis.fetch = invalidCredentialsFetch;
+
+    try {
+      await t.action(internal.autopilot.execution.executeTask, {
+        organizationId,
+        taskId,
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+
+    const rows = await t.run(async (ctx) => ({
+      config: await ctx.db.get(configId),
+      task: await ctx.db.get(taskId),
+    }));
+    const activity = await getActivity(t);
+
+    expect(rows.config?.tasksUsedToday).toBe(0);
+    expect(rows.task?.status).toBe("backlog");
+    expect(
+      activity.some((entry) =>
+        entry.message.includes(
+          "Execution paused: adapter credentials are invalid"
+        )
+      )
+    ).toBe(true);
   });
 });

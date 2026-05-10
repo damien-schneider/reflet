@@ -43,12 +43,12 @@ export const AutomationSection = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <GitBranch className="h-4 w-4 text-muted-foreground" />
+          <GitBranch className="size-4 text-muted-foreground" />
           <Label className="text-sm">Target branch</Label>
         </div>
         {isLoadingBranches ? (
           <div className="flex h-8 w-40 items-center gap-1.5 text-muted-foreground text-xs">
-            <Spinner className="h-3 w-3 animate-spin" />
+            <Spinner className="size-3 animate-spin" />
             Loading branches…
           </div>
         ) : (

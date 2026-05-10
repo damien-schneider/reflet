@@ -71,10 +71,7 @@ export function ActivityFeed({
         const agentColor = ACTIVITY_AGENT_BADGE_STYLES[entry.agent];
 
         return (
-          <div
-            className="relative rounded-md bg-card px-3 py-3"
-            key={entry._id}
-          >
+          <div className="relative rounded-md bg-card p-3" key={entry._id}>
             <div className="flex items-center gap-2">
               <div
                 className={cn(
@@ -85,7 +82,10 @@ export function ActivityFeed({
                 <LevelIcon className="size-3" />
               </div>
 
-              <span className="absolute right-1 bottom-px inline-flex gap-1 text-[11px] text-muted-foreground/50">
+              <span
+                className="absolute right-1 bottom-px inline-flex gap-1 text-[11px] text-muted-foreground/50"
+                suppressHydrationWarning
+              >
                 {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
               </span>
               <Badge

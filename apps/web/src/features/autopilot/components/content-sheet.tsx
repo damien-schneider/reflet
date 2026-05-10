@@ -63,6 +63,32 @@ export function ContentSheet({
   onOpenChange,
   open,
 }: ContentSheetProps) {
+  return (
+    <Sheet onOpenChange={onOpenChange} open={open}>
+      <SheetContent
+        className="md:w-[50vw] md:max-w-2xl"
+        side="right"
+        variant="panel"
+      >
+        {open && document ? (
+          <ContentSheetContent
+            document={document}
+            key={document._id}
+            onOpenChange={onOpenChange}
+          />
+        ) : null}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function ContentSheetContent({
+  document,
+  onOpenChange,
+}: {
+  document: Doc<"autopilotDocuments">;
+  onOpenChange: (open: boolean) => void;
+}) {
   const updateDoc = useMutation(
     api.autopilot.mutations.documents.updateDocument
   );
@@ -70,17 +96,21 @@ export function ContentSheet({
     api.autopilot.mutations.documents.archiveDocument
   );
 
-  const [editedContent, setEditedContent] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<{
+    content: string;
+    documentId: Doc<"autopilotDocuments">["_id"];
+  } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const isEditable = document !== null && document.status === "pending_review";
-  const hasEdits =
-    editedContent !== null && editedContent !== document?.content;
+  const isEditable = document.status === "pending_review";
+  const editedContent =
+    editDraft?.documentId === document._id ? editDraft.content : null;
+  const hasEdits = editedContent !== null && editedContent !== document.content;
+  const handleContentChange = (content: string) => {
+    setEditDraft({ documentId: document._id, content });
+  };
 
   const handleArchive = async () => {
-    if (!document) {
-      return;
-    }
     try {
       await archiveDoc({ documentId: document._id });
       toast.success("Archived");
@@ -91,13 +121,13 @@ export function ContentSheet({
   };
 
   const handleSaveEdits = async () => {
-    if (!(document && hasEdits) || editedContent === null) {
+    if (!hasEdits || editedContent === null) {
       return;
     }
     setIsSaving(true);
     try {
       await updateDoc({ documentId: document._id, content: editedContent });
-      setEditedContent(null);
+      setEditDraft(null);
       toast.success("Content updated");
     } catch {
       toast.error("Failed to save edits");
@@ -107,9 +137,6 @@ export function ContentSheet({
   };
 
   const handleStatusTransition = async () => {
-    if (!document) {
-      return;
-    }
     const nextStatus =
       document.status === "draft" ? "pending_review" : "published";
     try {
@@ -122,35 +149,18 @@ export function ContentSheet({
     }
   };
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      setEditedContent(null);
-    }
-    onOpenChange(open);
-  };
-
   return (
-    <Sheet onOpenChange={handleOpenChange} open={open}>
-      <SheetContent
-        className="md:w-[50vw] md:max-w-2xl"
-        side="right"
-        variant="panel"
-      >
-        {document ? (
-          <ContentSheetBody
-            document={document}
-            editedContent={editedContent}
-            hasEdits={hasEdits}
-            isEditable={isEditable}
-            isSaving={isSaving}
-            onArchive={handleArchive}
-            onContentChange={isEditable ? setEditedContent : undefined}
-            onSaveEdits={handleSaveEdits}
-            onStatusTransition={handleStatusTransition}
-          />
-        ) : null}
-      </SheetContent>
-    </Sheet>
+    <ContentSheetBody
+      document={document}
+      editedContent={editedContent}
+      hasEdits={hasEdits}
+      isEditable={isEditable}
+      isSaving={isSaving}
+      onArchive={handleArchive}
+      onContentChange={isEditable ? handleContentChange : undefined}
+      onSaveEdits={handleSaveEdits}
+      onStatusTransition={handleStatusTransition}
+    />
   );
 }
 
@@ -198,7 +208,10 @@ function ContentSheetBody({
           <Badge color={STATUS_COLOR_MAP[document.status]}>
             {STATUS_LABELS[document.status]}
           </Badge>
-          <span className="text-muted-foreground text-xs">
+          <span
+            className="text-muted-foreground text-xs"
+            suppressHydrationWarning
+          >
             {formatDistanceToNow(document.updatedAt ?? document.createdAt, {
               addSuffix: true,
             })}
@@ -255,7 +268,7 @@ function ContentSheetBody({
                 onClick={onSaveEdits}
                 variant="secondary"
               >
-                {isSaving ? "Saving..." : "Save Edits"}
+                {isSaving ? "Saving\u2026" : "Save Edits"}
               </Button>
             )}
             {!isBlogType && document.targetUrl && (
@@ -296,7 +309,9 @@ function BlogContent({
       editable={isEditable}
       minimal={!isEditable}
       onChange={onContentChange}
-      placeholder={isEditable ? "Edit content before approving..." : undefined}
+      placeholder={
+        isEditable ? "Edit content before approving\u2026" : undefined
+      }
       value={content}
     />
   );

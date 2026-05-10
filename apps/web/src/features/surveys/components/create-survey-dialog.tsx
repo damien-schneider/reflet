@@ -80,17 +80,19 @@ export function CreateSurveyDialog({
 
       if (selectedTemplate !== "blank") {
         const questions = createQuestionsFromTemplate(selectedTemplate);
-        for (const [index, q] of questions.entries()) {
-          await addQuestion({
-            surveyId,
-            type: q.type,
-            title: q.title,
-            description: q.description,
-            required: q.required,
-            order: index,
-            config: q.config,
-          });
-        }
+        await Promise.all(
+          questions.map((question, index) =>
+            addQuestion({
+              surveyId,
+              type: question.type,
+              title: question.title,
+              description: question.description,
+              required: question.required,
+              order: index,
+              config: question.config,
+            })
+          )
+        );
       }
 
       toast.success("Survey created");
@@ -186,7 +188,6 @@ export function CreateSurveyDialog({
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="survey-title">Title</Label>
                 <Input
-                  autoFocus
                   id="survey-title"
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Product Satisfaction"

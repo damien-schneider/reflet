@@ -40,7 +40,9 @@ vi.mock("@/components/ui/button", () => ({
     variant,
     className,
     size,
+    "aria-label": ariaLabel,
   }: {
+    "aria-label"?: string;
     children: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
@@ -49,6 +51,7 @@ vi.mock("@/components/ui/button", () => ({
     size?: string;
   }) => (
     <button
+      aria-label={ariaLabel}
       className={className}
       data-size={size}
       data-testid={
@@ -207,7 +210,12 @@ describe("InviteMemberDialog", () => {
     });
 
     // Should show the copy button (icon button)
-    expect(screen.getByTestId("copy-button")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Copy invitation link" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Close invitation" })
+    ).toBeInTheDocument();
   });
 
   it("shows copied confirmation after copying link", async () => {
@@ -238,13 +246,18 @@ describe("InviteMemberDialog", () => {
     });
 
     // Click copy button
-    const copyButton = screen.getByTestId("copy-button");
+    const copyButton = screen.getByRole("button", {
+      name: "Copy invitation link",
+    });
     await user.click(copyButton);
 
     // Should show copied confirmation text
     await waitFor(() => {
       expect(screen.getByText(COPIED_PATTERN)).toBeInTheDocument();
     });
+    expect(
+      screen.getByRole("button", { name: "Invitation link copied" })
+    ).toBeInTheDocument();
 
     // Verify clipboard was called
     expect(writeTextMock).toHaveBeenCalled();

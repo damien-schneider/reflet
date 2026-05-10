@@ -36,14 +36,22 @@ const createActiveStripeSubscription = async (
   t: TestContext,
   organizationId: Id<"organizations">
 ) => {
+  const stripeSubscriptionId = `sub_autopilot_${organizationId}`;
+  const stripeCustomerId = `cus_autopilot_${organizationId}`;
   await t.mutation(components.stripe.private.handleSubscriptionCreated, {
-    stripeSubscriptionId: `sub_autopilot_${organizationId}`,
-    stripeCustomerId: `cus_autopilot_${organizationId}`,
+    stripeSubscriptionId,
+    stripeCustomerId,
     status: "active",
     currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000,
     cancelAtPeriodEnd: false,
     priceId: "price_pro",
     metadata: { orgId: organizationId },
+  });
+  await t.run(async (ctx) => {
+    await ctx.db.patch(organizationId, {
+      stripeCustomerId,
+      stripeSubscriptionId,
+    });
   });
 };
 
@@ -262,7 +270,7 @@ const createReport = async (t: TestContext, input: ReportInput) =>
   });
 
 interface RoutineInput {
-  agent?: "pm" | "sales";
+  agent?: "cto" | "dev" | "growth" | "sales" | "support";
   organizationId: Id<"organizations">;
   taskTemplate?: string;
   title?: string;
@@ -275,7 +283,7 @@ const createRoutine = async (t: TestContext, input: RoutineInput) =>
       organizationId: input.organizationId,
       title: input.title ?? "Daily review",
       description: "Routine coverage",
-      agent: input.agent ?? "pm",
+      agent: input.agent ?? "cto",
       cronExpression: "* * * * *",
       taskTemplate:
         input.taskTemplate ??
@@ -922,30 +930,10 @@ describe("autopilot regressions", () => {
     expect(doc?.publishedAt).toBeUndefined();
   });
 
-  test("completion status follows autonomy mode when auto merge is enabled", () => {
-    expect(
-      resolveCompletionStatus({
-        autoMergePRs: true,
-        autonomyLevel: "review_required",
-        autonomyMode: "full_auto",
-      })
-    ).toBe("done");
-
-    expect(
-      resolveCompletionStatus({
-        autoMergePRs: true,
-        autonomyLevel: "review_required",
-        autonomyMode: "supervised",
-      })
-    ).toBe("in_review");
-
-    expect(
-      resolveCompletionStatus({
-        autoMergePRs: false,
-        autonomyLevel: "full_auto",
-        autonomyMode: "full_auto",
-      })
-    ).toBe("in_review");
+  test("completion status only marks work done after a merge is observed", () => {
+    expect(resolveCompletionStatus({ merged: true })).toBe("done");
+    expect(resolveCompletionStatus({ merged: false })).toBe("in_review");
+    expect(resolveCompletionStatus({})).toBe("in_review");
   });
 
   test("execution retries use bounded exponential backoff", () => {

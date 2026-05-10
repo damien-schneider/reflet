@@ -25,10 +25,7 @@ import type {
 } from "@/features/autopilot/components/inbox/types";
 import { useInboxKeyboard } from "@/features/autopilot/components/inbox/use-inbox-keyboard";
 import { ReportSheet } from "@/features/autopilot/components/report-sheet";
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
-}
+import { getAutopilotErrorMessage } from "@/features/autopilot/lib/error-messages";
 
 export default function AutopilotInboxPage() {
   const { organizationId, orgSlug } = useAutopilotContext();
@@ -123,7 +120,11 @@ export default function AutopilotInboxPage() {
       }
       return true;
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to update item"));
+      toast.error(
+        getAutopilotErrorMessage(error, {
+          fallback: "Failed to update item",
+        })
+      );
       return false;
     } finally {
       dispatchPageState({ itemId: item._id, kind: "removePendingItem" });

@@ -10,8 +10,8 @@ import { use, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { H1, Muted, Text } from "@/components/ui/typography";
 import { AddMonitorInput } from "@/features/status/components/add-monitor-input";
-import { IncidentCard } from "@/features/status/components/incident-card";
 import { IncidentComposer } from "@/features/status/components/incident-composer";
+import { IncidentCard } from "@/features/status/components/incidents/card";
 import { MonitorCard } from "@/features/status/components/monitor-card";
 import { StatusDot } from "@/features/status/components/status-dot";
 import { cn } from "@/lib/utils";
@@ -136,7 +136,6 @@ export default function StatusDashboardPage({
   const hasMonitors = monitors && monitors.length > 0;
   const status = aggregateStatus?.status ?? "no_monitors";
 
-  // Empty state
   if (!hasMonitors && monitors !== undefined) {
     return (
       <div className="admin-container">
@@ -148,7 +147,7 @@ export default function StatusDashboardPage({
         </div>
 
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
-          <Heartbeat className="mb-4 h-12 w-12 text-muted-foreground" />
+          <Heartbeat className="mb-4 size-12 text-muted-foreground" />
           <h2 className="font-semibold text-lg">
             Your users shouldn't have to guess if things are working
           </h2>
@@ -161,17 +160,13 @@ export default function StatusDashboardPage({
               organizationId={org._id}
               orgSlug={orgSlug}
             />
-            <AddMonitorInput
-              onAdd={handleAddMonitor}
-              organizationId={org._id}
-            />
+            <AddMonitorInput onAdd={handleAddMonitor} />
           </div>
         </div>
       </div>
     );
   }
 
-  // Group monitors by groupName
   const grouped = new Map<string, NonNullable<typeof monitors>>();
   for (const m of monitors ?? []) {
     const group = m.groupName ?? "Ungrouped";
@@ -182,7 +177,6 @@ export default function StatusDashboardPage({
 
   return (
     <div className="admin-container">
-      {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <H1>Status</H1>
@@ -193,7 +187,7 @@ export default function StatusDashboardPage({
         <div className="flex items-center gap-2">
           <Link href={`/${orgSlug}/status`} target="_blank">
             <Button size="sm" variant="outline">
-              <ArrowSquareOut className="mr-1.5 h-4 w-4" />
+              <ArrowSquareOut className="mr-1.5 size-4" />
               Public Page
             </Button>
           </Link>
@@ -202,13 +196,12 @@ export default function StatusDashboardPage({
             size="sm"
             variant={showComposer ? "outline" : "destructive"}
           >
-            <Warning className="mr-1.5 h-4 w-4" />
+            <Warning className="mr-1.5 size-4" />
             {showComposer ? "Cancel" : "Report Incident"}
           </Button>
         </div>
       </div>
 
-      {/* Overall status banner */}
       <div
         className={cn(
           "mb-6 flex items-center gap-3 rounded-lg p-4",
@@ -224,7 +217,6 @@ export default function StatusDashboardPage({
         )}
       </div>
 
-      {/* Incident composer */}
       {showComposer && (
         <div className="mb-6">
           <IncidentComposer
@@ -237,7 +229,6 @@ export default function StatusDashboardPage({
         </div>
       )}
 
-      {/* Active incidents */}
       {activeIncidents && activeIncidents.length > 0 && (
         <div className="mb-6 space-y-3">
           <h2 className="font-semibold text-sm">Active Incidents</h2>
@@ -251,7 +242,6 @@ export default function StatusDashboardPage({
         </div>
       )}
 
-      {/* Monitor groups */}
       <div className="space-y-6">
         {[...grouped.entries()].map(([groupName, groupMonitors]) => (
           <div key={groupName}>
@@ -278,9 +268,8 @@ export default function StatusDashboardPage({
         ))}
       </div>
 
-      {/* Add monitor */}
       <div className="mt-4">
-        <AddMonitorInput onAdd={handleAddMonitor} organizationId={org._id} />
+        <AddMonitorInput onAdd={handleAddMonitor} />
       </div>
     </div>
   );

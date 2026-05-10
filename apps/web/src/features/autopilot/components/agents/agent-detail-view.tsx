@@ -145,6 +145,7 @@ export function AgentDetailView({
           Autopilot is not configured yet.
         </p>
         <Button
+          nativeButton={false}
           render={<Link href={`${baseUrl}/settings`} />}
           variant="outline"
         >
@@ -189,6 +190,7 @@ export function AgentDetailView({
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button
+          nativeButton={false}
           render={<Link href={`${baseUrl}/agents`} />}
           size="icon"
           variant="ghost"
@@ -208,7 +210,9 @@ export function AgentDetailView({
 
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="font-bold text-xl tracking-tight">{meta.label}</h1>
+            <h1 className="font-semibold text-xl tracking-tight">
+              {meta.label}
+            </h1>
             <span
               className={cn(
                 "font-semibold text-[11px] uppercase tracking-[0.15em]",

@@ -11,12 +11,13 @@
 
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { internalAction, internalQuery } from "../_generated/server";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_AGENTS_PER_CYCLE = 3;
+const NO_OUTPUT_RETRY_COOLDOWN_MS = 30 * 60 * 1000;
 
 /**
  * Check if a "Dev task paused" message was logged in the last 24h.
@@ -30,17 +31,12 @@ export const hasRecentDevPauseLog = internalQuery({
     const recentLogs = await ctx.db
       .query("autopilotActivityLog")
       .withIndex("by_org_created", (q) =>
-        q.eq("organizationId", args.organizationId)
+        q.eq("organizationId", args.organizationId).gt("createdAt", cutoff)
       )
-      .order("desc")
-      .take(100);
+      .filter((q) => q.eq(q.field("agent"), "dev"))
+      .collect();
 
-    return recentLogs.some(
-      (log) =>
-        log.agent === "dev" &&
-        log.createdAt > cutoff &&
-        log.message.includes("Dev task paused")
-    );
+    return recentLogs.some((log) => log.message.includes("Dev task paused"));
   },
 });
 
@@ -61,17 +57,12 @@ export const isAgentRecentlyWoken = internalQuery({
     const recentLogs = await ctx.db
       .query("autopilotActivityLog")
       .withIndex("by_org_created", (q) =>
-        q.eq("organizationId", args.organizationId)
+        q.eq("organizationId", args.organizationId).gt("createdAt", cutoff)
       )
-      .order("desc")
-      .take(50);
+      .filter((q) => q.eq(q.field("agent"), args.agent))
+      .collect();
 
-    return recentLogs.some(
-      (log) =>
-        log.agent === args.agent &&
-        log.level === "action" &&
-        log.createdAt > cutoff
-    );
+    return recentLogs.some((log) => log.level === "action");
   },
 });
 
@@ -87,18 +78,18 @@ export const didAgentProduceOutput = internalQuery({
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
+    const cutoff = Date.now() - NO_OUTPUT_RETRY_COOLDOWN_MS;
     const recentLogs = await ctx.db
       .query("autopilotActivityLog")
       .withIndex("by_org_created", (q) =>
-        q.eq("organizationId", args.organizationId)
+        q.eq("organizationId", args.organizationId).gt("createdAt", cutoff)
       )
-      .order("desc")
-      .take(100);
+      .filter((q) => q.eq(q.field("agent"), args.agent))
+      .collect();
+    recentLogs.sort((a, b) => b.createdAt - a.createdAt);
 
     // Find the most recent action (wake) for this agent
-    const lastAction = recentLogs.find(
-      (log) => log.agent === args.agent && log.level === "action"
-    );
+    const lastAction = recentLogs.find((log) => log.level === "action");
 
     if (!lastAction) {
       return true; // No recent run — allow waking
@@ -106,10 +97,7 @@ export const didAgentProduceOutput = internalQuery({
 
     // Check if there's a success log after the last action
     return recentLogs.some(
-      (log) =>
-        log.agent === args.agent &&
-        log.level === "success" &&
-        log.createdAt >= lastAction.createdAt
+      (log) => log.level === "success" && log.createdAt >= lastAction.createdAt
     );
   },
 });
@@ -121,15 +109,45 @@ interface WakeContext {
   wakeThreshold: number;
 }
 
+const logChainProducerWake = async (
+  ctx: { runMutation: ActionCtx["runMutation"] },
+  params: {
+    agent: Doc<"autopilotActivityLog">["agent"];
+    organizationId: Id<"organizations">;
+    target: string;
+  }
+): Promise<void> => {
+  await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+    organizationId: params.organizationId,
+    agent: params.agent,
+    level: "action",
+    message: `Chain producer scheduled: ${params.target}`,
+  });
+};
+
+function isChainProducerAgent(
+  agent: string
+): agent is Doc<"autopilotActivityLog">["agent"] {
+  return agent === "cto" || agent === "growth" || agent === "pm";
+}
+
 /**
  * Dispatch the chain producer for an agent's next actionable node.
  * Returns true if a producer was dispatched; false if no chain work for this agent.
  */
 const dispatchChainProducer = async (
-  ctx: { scheduler: ActionCtx["scheduler"]; runQuery: ActionCtx["runQuery"] },
+  ctx: {
+    runMutation: ActionCtx["runMutation"];
+    runQuery: ActionCtx["runQuery"];
+    scheduler: ActionCtx["scheduler"];
+  },
   orgId: Id<"organizations">,
   agent: string
 ): Promise<boolean> => {
+  if (!isChainProducerAgent(agent)) {
+    return false;
+  }
+
   const chainState = await ctx.runQuery(
     internal.autopilot.chain.getChainState,
     { organizationId: orgId }
@@ -166,6 +184,11 @@ const dispatchChainProducer = async (
       chainState.app_description === "published" &&
       chainState.market_analysis === "missing"
     ) {
+      await logChainProducerWake(ctx, {
+        agent,
+        organizationId: orgId,
+        target: "market_analysis",
+      });
       await ctx.scheduler.runAfter(
         0,
         internal.autopilot.agents.chain_producers.produceMarketAnalysis,
@@ -178,6 +201,11 @@ const dispatchChainProducer = async (
       chainState.use_cases === "published" &&
       chainState.community_posts === "missing"
     ) {
+      await logChainProducerWake(ctx, {
+        agent,
+        organizationId: orgId,
+        target: "community_posts",
+      });
       await ctx.scheduler.runAfter(
         0,
         internal.autopilot.agents.community_discovery.runCommunityDiscovery,
@@ -189,6 +217,11 @@ const dispatchChainProducer = async (
       chainState.community_posts === "published" &&
       chainState.drafts === "missing"
     ) {
+      await logChainProducerWake(ctx, {
+        agent,
+        organizationId: orgId,
+        target: "drafts",
+      });
       await ctx.scheduler.runAfter(
         0,
         internal.autopilot.agents.growth.drafts.producer
@@ -223,6 +256,11 @@ const dispatchChainProducer = async (
 
   for (const { producer, condition } of candidates) {
     if (condition) {
+      await logChainProducerWake(ctx, {
+        agent,
+        organizationId: orgId,
+        target: "chain artifact",
+      });
       await ctx.scheduler.runAfter(0, producer, { organizationId: orgId });
       return true;
     }
@@ -236,7 +274,11 @@ const dispatchChainProducer = async (
  * Agents run in parallel, not blocking the heartbeat.
  */
 const wakeAgent = async (
-  ctx: { scheduler: ActionCtx["scheduler"]; runQuery: ActionCtx["runQuery"] },
+  ctx: {
+    runMutation: ActionCtx["runMutation"];
+    runQuery: ActionCtx["runQuery"];
+    scheduler: ActionCtx["scheduler"];
+  },
   orgId: Id<"organizations">,
   agent: string,
   wakeContext: WakeContext
@@ -514,7 +556,7 @@ const dispatchPendingTasks = async (
   enabledAgentSet: Set<string>
 ): Promise<number> => {
   const pendingTasks = await ctx.runQuery(
-    internal.autopilot.task_queries.getPendingTasks,
+    internal.autopilot.task_queries.getDispatchableTasks,
     { organizationId: orgId }
   );
 

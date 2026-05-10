@@ -145,7 +145,7 @@ describe("ReleaseSetupWizard", () => {
   it("shows step 1 of 3 description", () => {
     render(<ReleaseSetupWizard {...baseProps} />);
     expect(
-      screen.getByText(/Step 1 of 3 — Configure your release workflow/)
+      screen.getByText(/Step 1 of 3: Configure your release workflow/)
     ).toBeInTheDocument();
   });
 

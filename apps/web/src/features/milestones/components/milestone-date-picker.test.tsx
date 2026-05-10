@@ -2,6 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const SELECTED_DATE = new Date("2026-03-15T00:00:00.000Z");
+
 vi.mock("@phosphor-icons/react", () => ({
   CalendarBlank: () => <span data-testid="icon-calendar" />,
 }));
@@ -39,7 +41,7 @@ vi.mock("@/components/ui/calendar", () => ({
     <div data-testid="calendar">
       <button
         data-testid="select-date"
-        onClick={() => onSelect(new Date(2026, 2, 15))}
+        onClick={() => onSelect(SELECTED_DATE)}
         type="button"
       >
         Select Date

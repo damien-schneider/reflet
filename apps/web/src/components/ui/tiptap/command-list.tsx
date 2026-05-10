@@ -1,54 +1,87 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { CommandListProps } from "./command-items";
+
+type SelectionState = {
+  items: CommandListProps["items"] | null;
+  selectedIndex: number;
+};
+
+const initialSelectionState: SelectionState = {
+  items: null,
+  selectedIndex: 0,
+};
+
+function getVisibleSelectedIndex(
+  selectionState: SelectionState,
+  items: CommandListProps["items"]
+) {
+  if (items.length === 0) {
+    return 0;
+  }
+
+  if (selectionState.items !== items) {
+    return 0;
+  }
+
+  return Math.min(selectionState.selectedIndex, items.length - 1);
+}
 
 export function CommandList({
   items,
   command,
   onRegisterKeyHandler,
 }: CommandListProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectionState, setSelectionState] = useState(initialSelectionState);
+  const visibleSelectedIndex = getVisibleSelectedIndex(selectionState, items);
 
-  const selectItem = useCallback(
-    (index: number) => {
-      const item = items[index];
-      if (item) {
-        command(item);
-      }
+  useEffect(
+    function registerKeyHandler() {
+      const handleKeyDown = (event: KeyboardEvent): boolean => {
+        if (items.length === 0) {
+          return false;
+        }
+
+        if (event.key === "ArrowUp") {
+          setSelectionState((previous) => ({
+            items,
+            selectedIndex:
+              (getVisibleSelectedIndex(previous, items) + items.length - 1) %
+              items.length,
+          }));
+          return true;
+        }
+
+        if (event.key === "ArrowDown") {
+          setSelectionState((previous) => ({
+            items,
+            selectedIndex:
+              (getVisibleSelectedIndex(previous, items) + 1) % items.length,
+          }));
+          return true;
+        }
+
+        if (event.key === "Enter") {
+          const item = items[visibleSelectedIndex];
+          if (!item) {
+            return false;
+          }
+
+          event.preventDefault();
+          event.stopPropagation();
+          command(item);
+          return true;
+        }
+
+        return false;
+      };
+
+      onRegisterKeyHandler(handleKeyDown);
     },
-    [items, command]
+    [command, items, onRegisterKeyHandler, visibleSelectedIndex]
   );
-
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [items]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): boolean => {
-      if (event.key === "ArrowUp") {
-        setSelectedIndex((prev) => (prev + items.length - 1) % items.length);
-        return true;
-      }
-
-      if (event.key === "ArrowDown") {
-        setSelectedIndex((prev) => (prev + 1) % items.length);
-        return true;
-      }
-
-      if (event.key === "Enter") {
-        event.preventDefault();
-        event.stopPropagation();
-        selectItem(selectedIndex);
-        return true;
-      }
-
-      return false;
-    };
-
-    onRegisterKeyHandler(handleKeyDown);
-  }, [items.length, selectedIndex, selectItem, onRegisterKeyHandler]);
 
   if (items.length === 0) {
     return null;
@@ -66,21 +99,21 @@ export function CommandList({
             className={cn(
               "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm outline-none",
               "hover:bg-muted",
-              selectedIndex === index && "bg-muted"
+              visibleSelectedIndex === index && "bg-muted"
             )}
             key={item.title}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              selectItem(index);
+              command(item);
             }}
             onMouseDown={(e) => {
               e.preventDefault();
             }}
             type="button"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-md border bg-background">
-              <Icon className="h-4 w-4" />
+            <div className="flex size-8 items-center justify-center rounded-md border bg-background">
+              <Icon className="size-4" />
             </div>
             <div>
               <p className="font-medium">{item.title}</p>

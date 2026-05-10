@@ -29,7 +29,7 @@ interface PathInfo {
 interface ChainTechTreeConnectorsProps {
   containerRef: RefObject<HTMLElement | null>;
   edges: ConnectorEdge[];
-  highlightTargets: Set<ChainNodeKind>;
+  highlightTargetKey: string;
   refMap: RefObject<Map<ChainNodeKind, HTMLElement>>;
 }
 
@@ -37,7 +37,7 @@ const computePaths = (
   container: HTMLElement,
   refMap: Map<ChainNodeKind, HTMLElement>,
   edges: ConnectorEdge[],
-  highlightTargets: Set<ChainNodeKind>
+  highlightTargets: ReadonlySet<string>
 ): PathInfo[] => {
   const containerRect = container.getBoundingClientRect();
   const result: PathInfo[] = [];
@@ -73,11 +73,11 @@ export function ChainTechTreeConnectors({
   containerRef,
   refMap,
   edges,
-  highlightTargets,
+  highlightTargetKey,
 }: ChainTechTreeConnectorsProps) {
   const [paths, setPaths] = useState<PathInfo[]>([]);
 
-  // Recompute on mount, on highlightTargets identity change, and on resize.
+  // Recompute on mount, on highlight target changes, and on resize.
   useLayoutEffect(
     function syncConnectorPaths() {
       const container = containerRef.current;
@@ -88,6 +88,9 @@ export function ChainTechTreeConnectors({
       if (!refs) {
         return;
       }
+      const highlightTargets = new Set(
+        highlightTargetKey.split("|").filter(Boolean)
+      );
       const recompute = () => {
         setPaths(computePaths(container, refs, edges, highlightTargets));
       };
@@ -99,7 +102,7 @@ export function ChainTechTreeConnectors({
       }
       return () => observer.disconnect();
     },
-    [containerRef, refMap, edges, highlightTargets]
+    [containerRef, refMap, edges, highlightTargetKey]
   );
 
   // Also redraw on window resize for safety (font scaling, devtools, etc.).
@@ -113,13 +116,16 @@ export function ChainTechTreeConnectors({
       if (!refs) {
         return;
       }
+      const highlightTargets = new Set(
+        highlightTargetKey.split("|").filter(Boolean)
+      );
       const onResize = () => {
         setPaths(computePaths(container, refs, edges, highlightTargets));
       };
       window.addEventListener("resize", onResize, { passive: true });
       return () => window.removeEventListener("resize", onResize);
     },
-    [containerRef, refMap, edges, highlightTargets]
+    [containerRef, refMap, edges, highlightTargetKey]
   );
 
   return (

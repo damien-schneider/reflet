@@ -171,6 +171,13 @@ describe("CommentsSection", () => {
   });
 
   describe("submit button", () => {
+    it("should expose an accessible submit label", () => {
+      render(<CommentsSection {...defaultProps} newComment="Hello" />);
+      expect(
+        screen.getByRole("button", { name: "Post comment" })
+      ).toBeInTheDocument();
+    });
+
     it("should disable submit when comment is empty", () => {
       render(<CommentsSection {...defaultProps} newComment="" />);
       const sendButton = screen.getByTestId("send-icon").closest("button");
@@ -221,7 +228,7 @@ describe("CommentsSection", () => {
           isGeneratingDraft={true}
         />
       );
-      expect(screen.getByText("Generating...")).toBeInTheDocument();
+      expect(screen.getByText("Generating…")).toBeInTheDocument();
       expect(screen.getByTestId("spinner-icon")).toBeInTheDocument();
     });
 
@@ -233,7 +240,7 @@ describe("CommentsSection", () => {
           isGeneratingDraft={true}
         />
       );
-      const button = screen.getByText("Generating...").closest("button");
+      const button = screen.getByText("Generating…").closest("button");
       expect(button).toBeDisabled();
     });
 

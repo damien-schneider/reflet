@@ -60,43 +60,56 @@ vi.mock("convex/react", () => ({
 }));
 
 // Mock motion/react for faster tests - preserve structure for testing
-vi.mock("motion/react", () => ({
-  motion: {
-    div: ({
-      children,
-      initial,
-      animate,
-      exit,
-      transition,
-      className,
-      ...props
-    }: {
-      children: React.ReactNode;
-      initial?: Record<string, unknown>;
-      animate?: Record<string, unknown>;
-      exit?: Record<string, unknown>;
-      transition?: Record<string, unknown>;
-      className?: string;
-    }) => (
-      <div
-        className={className}
-        data-animate={JSON.stringify(animate)}
-        data-initial={JSON.stringify(initial)}
-        data-testid="motion-div"
-        data-transition={JSON.stringify(transition)}
-        {...props}
-      >
-        {children}
-      </div>
+vi.mock("motion/react", () => {
+  const MotionDiv = ({
+    children,
+    initial,
+    animate,
+    exit: _exit,
+    transition,
+    layoutId: _layoutId,
+    className,
+    ...props
+  }: {
+    children: React.ReactNode;
+    initial?: Record<string, unknown> | false;
+    animate?: Record<string, unknown>;
+    exit?: Record<string, unknown>;
+    transition?: Record<string, unknown>;
+    layoutId?: string;
+    className?: string;
+  }) => (
+    <div
+      className={className}
+      data-animate={JSON.stringify(animate)}
+      data-initial={JSON.stringify(initial)}
+      data-testid="motion-div"
+      data-transition={JSON.stringify(transition)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+
+  return {
+    domAnimation: {},
+    LazyMotion: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
     ),
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="animate-presence">{children}</div>
-  ),
-  LayoutGroup: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="layout-group">{children}</div>
-  ),
-}));
+    m: {
+      div: MotionDiv,
+    },
+    motion: {
+      div: MotionDiv,
+    },
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="animate-presence">{children}</div>
+    ),
+    LayoutGroup: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="layout-group">{children}</div>
+    ),
+  };
+});
 
 // Mock phosphor icons
 vi.mock("@phosphor-icons/react", () => ({

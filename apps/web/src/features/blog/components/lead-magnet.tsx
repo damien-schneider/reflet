@@ -54,8 +54,8 @@ export function LeadMagnet({
   if (variant === "inline") {
     return (
       <div className="my-6 flex items-center gap-4 rounded-lg border border-border bg-muted/50 p-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-olive-600/10">
-          <FileText className="h-6 w-6 text-olive-600" />
+        <div className="flex size-12 items-center justify-center rounded-lg bg-olive-600/10">
+          <FileText className="size-6 text-olive-600" />
         </div>
         <div className="flex-1">
           <Text className="font-medium">{title}</Text>
@@ -63,13 +63,13 @@ export function LeadMagnet({
         </div>
         {submitted ? (
           <Button disabled variant="outline">
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="mr-2 size-4" />
             Downloaded
           </Button>
         ) : (
           <a download={fileName} href={downloadUrl}>
             <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
+              <Download className="mr-2 size-4" />
               Download
             </Button>
           </a>
@@ -81,8 +81,8 @@ export function LeadMagnet({
   return (
     <div className="my-8 rounded-xl border border-olive-200 bg-olive-50/50 p-6 dark:border-olive-800 dark:bg-olive-950/20">
       <div className="mb-4 flex items-start gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-olive-600">
-          <FileText className="h-6 w-6 text-white" />
+        <div className="flex size-12 items-center justify-center rounded-lg bg-olive-600">
+          <FileText className="size-6 text-white" />
         </div>
         <div>
           <H3 className="mb-1" variant="card">
@@ -110,9 +110,9 @@ export function LeadMagnet({
           />
           <Button disabled={loading} type="submit">
             {loading ? (
-              <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+              <LoaderCircle className="mr-2 size-4 animate-spin" />
             ) : (
-              <Download className="mr-2 h-4 w-4" />
+              <Download className="mr-2 size-4" />
             )}
             Download {fileIcons[fileType]}
           </Button>

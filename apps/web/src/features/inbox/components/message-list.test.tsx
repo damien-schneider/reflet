@@ -91,7 +91,7 @@ const createMessage = (overrides = {}) => ({
 describe("MessageList", () => {
   it("renders loading state", () => {
     render(<MessageList isLoading={true} messages={undefined} />);
-    expect(screen.getByText("Loading messages...")).toBeInTheDocument();
+    expect(screen.getByText("Loading messages…")).toBeInTheDocument();
   });
 
   it("renders empty state when messages is undefined", () => {

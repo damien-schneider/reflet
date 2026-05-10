@@ -104,12 +104,12 @@ export function BoardCustomizePopover({ orgSlug }: BoardCustomizePopoverProps) {
         render={(props: React.ComponentProps<"button">) => (
           <Button
             {...props}
-            className="h-8 w-8 text-muted-foreground"
+            className="size-8 text-muted-foreground"
             size="icon"
             title="Customize appearance"
             variant="ghost"
           >
-            <PaintBrush className="h-4 w-4" />
+            <PaintBrush className="size-4" />
             <span className="sr-only">Customize board appearance</span>
           </Button>
         )}
@@ -176,13 +176,13 @@ export function BoardCustomizePopover({ orgSlug }: BoardCustomizePopoverProps) {
           <div className="flex items-center justify-end gap-1.5 text-muted-foreground text-xs">
             {saveStatus === "saving" && (
               <>
-                <Spinner className="h-3 w-3 animate-spin" />
+                <Spinner className="size-3 animate-spin" />
                 <span>Saving…</span>
               </>
             )}
             {saveStatus === "saved" && (
               <>
-                <Check className="h-3 w-3" />
+                <Check className="size-3" />
                 <span>Saved</span>
               </>
             )}

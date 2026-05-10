@@ -91,8 +91,8 @@ export function HealthBanner() {
                   approval
                 </p>
                 <p className="text-blue-600/80 text-xs dark:text-blue-400/70">
-                  Agents are blocked until you review — approve or reject to
-                  keep the pipeline flowing
+                  Agents are blocked until you review. Approve or reject to keep
+                  the pipeline flowing
                 </p>
               </div>
             </div>

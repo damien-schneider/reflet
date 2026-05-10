@@ -93,6 +93,11 @@ export const getExaCostUsd = (): number => _exaCostUsd;
 // CORE API
 // ============================================
 
+const formatExaHttpError = (operation: string, response: Response): string => {
+  const statusText = response.statusText ? ` ${response.statusText}` : "";
+  return `Exa ${operation} failed: HTTP ${response.status}${statusText}`;
+};
+
 /**
  * Search via Exa REST API. Returns results + cost.
  *
@@ -115,8 +120,7 @@ export const searchWithExa = async (
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Exa search failed (${response.status}): ${text}`);
+    throw new Error(formatExaHttpError("search", response));
   }
 
   const raw: unknown = await response.json();
@@ -151,8 +155,7 @@ export const fetchContentWithExa = async (
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Exa contents failed (${response.status}): ${text}`);
+    throw new Error(formatExaHttpError("contents", response));
   }
 
   const raw: unknown = await response.json();

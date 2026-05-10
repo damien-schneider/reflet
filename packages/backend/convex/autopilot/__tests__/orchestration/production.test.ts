@@ -107,7 +107,7 @@ describe("autopilot production orchestration", () => {
           {
             body: "Fixes #42",
             draft: false,
-            head: { ref: "autopilot/test" },
+            head: { ref: "autopilot/test", sha: "head-sha" },
             html_url: "https://github.com/acme/reflet/pull/7",
             number: 7,
             title: "Autopilot PR #42",
@@ -137,6 +137,123 @@ describe("autopilot production orchestration", () => {
     expect(rows.run?.status).toBe("completed");
     expect(rows.task?.status).toBe("in_review");
     expect(rows.task?.prNumber).toBe(7);
+  });
+
+  test("passing CI still leaves PR work in review until a real merge is observed", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createAutopilotConfig(t, organizationId, {
+      adapter: "codex",
+      autoMergePRs: true,
+      autonomyMode: "full_auto",
+    });
+    await upsertCodexCredentials(t, organizationId);
+    const taskId = await createDevTask(t, organizationId);
+    const runId = await createCodexRun(t, organizationId, taskId);
+    await t.mutation(internal.autopilot.task_mutations.updateRun, {
+      runId,
+      externalRef: "codex:acme/reflet#42",
+      status: "waiting_ci",
+    });
+
+    vi.stubGlobal("fetch", async (input: Parameters<typeof fetch>[0]) => {
+      const url = getRequestUrl(input);
+      if (url.includes("/pulls?")) {
+        return jsonResponse([
+          {
+            body: "Fixes #42",
+            draft: false,
+            head: { ref: "autopilot/test", sha: "head-sha" },
+            html_url: "https://github.com/acme/reflet/pull/7",
+            number: 7,
+            title: "Autopilot PR #42",
+          },
+        ]);
+      }
+      if (url.includes("/check-runs")) {
+        return jsonResponse({
+          check_runs: [{ conclusion: "success", status: "completed" }],
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
+
+    await t.action(internal.autopilot.execution_lifecycle.pollTaskStatus, {
+      organizationId,
+      taskId,
+      runId,
+      externalRef: "codex:acme/reflet#42",
+    });
+
+    const task = await t.run((ctx) => ctx.db.get(taskId));
+    expect(task?.status).toBe("in_review");
+    expect(task?.needsReview).toBe(true);
+  });
+
+  test("merged PR polling marks the work item done", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createAutopilotConfig(t, organizationId, {
+      adapter: "codex",
+      autoMergePRs: true,
+      autonomyMode: "full_auto",
+    });
+    await upsertCodexCredentials(t, organizationId);
+    const taskId = await createDevTask(t, organizationId);
+    const runId = await createCodexRun(t, organizationId, taskId);
+    await t.mutation(internal.autopilot.task_mutations.updateRun, {
+      runId,
+      externalRef: "codex:acme/reflet#42",
+      status: "waiting_ci",
+    });
+
+    vi.stubGlobal("fetch", async (input: Parameters<typeof fetch>[0]) => {
+      const url = getRequestUrl(input);
+      if (url.includes("/pulls?")) {
+        return jsonResponse([
+          {
+            body: "Fixes #42",
+            draft: false,
+            head: { ref: "autopilot/test", sha: "head-sha" },
+            html_url: "https://github.com/acme/reflet/pull/7",
+            number: 7,
+            state: "closed",
+            title: "Autopilot PR #42",
+          },
+        ]);
+      }
+      if (url.includes("/pulls/7")) {
+        return jsonResponse({
+          body: "Fixes #42",
+          draft: false,
+          head: { ref: "autopilot/test", sha: "head-sha" },
+          html_url: "https://github.com/acme/reflet/pull/7",
+          merged: true,
+          number: 7,
+          state: "closed",
+          title: "Autopilot PR #42",
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
+
+    await t.action(internal.autopilot.execution_lifecycle.pollTaskStatus, {
+      organizationId,
+      taskId,
+      runId,
+      externalRef: "codex:acme/reflet#42",
+    });
+
+    const rows = await t.run(async (ctx) => ({
+      run: await ctx.db.get(runId),
+      task: await ctx.db.get(taskId),
+    }));
+
+    expect(rows.run?.status).toBe("completed");
+    expect(rows.task?.status).toBe("done");
+    expect(rows.task?.needsReview).toBe(false);
+    expect(rows.task?.reviewType).toBeUndefined();
+    expect(rows.task?.reviewedAt).toBeTypeOf("number");
   });
 
   test("polling releases active runs while autopilot is stopped", async () => {

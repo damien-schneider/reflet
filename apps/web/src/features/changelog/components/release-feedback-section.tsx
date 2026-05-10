@@ -101,13 +101,18 @@ export function ReleaseFeedbackSection({
     [onLinkStatusChange]
   );
 
-  const linkedFeedback = (releaseData?.feedbackItems ?? [])
-    .filter((f): f is NonNullable<typeof f> => f !== null)
-    .map((f) => ({
-      _id: f._id,
-      title: f.title,
-      status: f.status,
-    }));
+  const linkedFeedback = (releaseData?.feedbackItems ?? []).flatMap(
+    (feedback) =>
+      feedback === null
+        ? []
+        : [
+            {
+              _id: feedback._id,
+              title: feedback.title,
+              status: feedback.status,
+            },
+          ]
+  );
 
   useAutoTriggerMatching({
     autoTriggerMatching,
@@ -132,9 +137,9 @@ export function ReleaseFeedbackSection({
       }
 
       const linkedIds = new Set(
-        (releaseData?.feedbackItems ?? [])
-          .filter((f): f is NonNullable<typeof f> => f !== null)
-          .map((f) => f._id)
+        (releaseData?.feedbackItems ?? []).flatMap((feedback) =>
+          feedback === null ? [] : [feedback._id]
+        )
       );
 
       const toLink = getMatchesToAutoLink(matches, linkedIds);

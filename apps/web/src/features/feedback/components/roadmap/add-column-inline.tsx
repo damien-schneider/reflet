@@ -78,7 +78,7 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
           onClick={handleStartAdding}
           variant="ghost"
         >
-          <Plus className="mr-2 h-5 w-5" />
+          <Plus className="mr-2 size-5" />
           Add Column
         </Button>
       </div>
@@ -91,7 +91,7 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
         {/* Color picker */}
         <Popover onOpenChange={setIsColorPickerOpen} open={isColorPickerOpen}>
           <PopoverTrigger
-            className="h-3 w-3 shrink-0 rounded-full transition-transform hover:scale-110"
+            className="size-3 shrink-0 rounded-full transition-transform hover:scale-110"
             style={{ backgroundColor: getTagDotColor(color) }}
             title="Choose color"
           />
@@ -118,20 +118,20 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
 
         {/* Action buttons */}
         <Button
-          className="h-6 w-6"
+          className="size-6"
           onClick={handleSave}
           size="icon"
           variant="ghost"
         >
-          <Check className="h-3 w-3" />
+          <Check className="size-3" />
         </Button>
         <Button
-          className="h-6 w-6"
+          className="size-6"
           onClick={handleCancel}
           size="icon"
           variant="ghost"
         >
-          <X className="h-3 w-3" />
+          <X className="size-3" />
         </Button>
       </div>
 

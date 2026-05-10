@@ -182,7 +182,10 @@ function ActivityEntry({ entry }: { entry: ActivityEntryData }) {
         <div className="min-w-0 flex-1">
           <p className="text-sm leading-snug">{entry.message}</p>
           <div className="mt-0.5 flex items-center gap-2">
-            <span className="text-[10px] text-muted-foreground/40">
+            <span
+              className="text-[10px] text-muted-foreground/40"
+              suppressHydrationWarning
+            >
               {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
             </span>
             {entry.action && (

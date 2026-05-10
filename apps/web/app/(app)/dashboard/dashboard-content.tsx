@@ -174,7 +174,7 @@ function DashboardBreadcrumb({
               ) : (
                 <BreadcrumbLink
                   href={item.href}
-                  render={(props) => <Link href={item.href} {...props} />}
+                  render={<Link href={item.href} />}
                 >
                   {item.label}
                 </BreadcrumbLink>
@@ -193,7 +193,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const rawOrgSlug = params?.orgSlug;
   const orgSlug = typeof rawOrgSlug === "string" ? rawOrgSlug : undefined;
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
   const organizations = useQuery(api.organizations.queries.list);
   const org = useQuery(
@@ -216,10 +216,10 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   useEffect(
     function handleDashboardRedirect() {
       if (redirectTo && !isNonOrgRoute) {
-        router.replace(redirectTo);
+        replace(redirectTo);
       }
     },
-    [router, redirectTo, isNonOrgRoute]
+    [replace, redirectTo, isNonOrgRoute]
   );
 
   return (

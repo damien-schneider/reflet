@@ -22,7 +22,7 @@ export default function CustomDomainChangelogPage() {
   if (!org) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div>Loading...</div>
+        <div>Loading…</div>
       </div>
     );
   }
@@ -53,7 +53,7 @@ export default function CustomDomainChangelogPage() {
               target="_blank"
               title="RSS Feed"
             >
-              <IconRss className="h-4 w-4" />
+              <IconRss className="size-4" />
               <span className="sr-only">RSS Feed</span>
             </a>
           )}

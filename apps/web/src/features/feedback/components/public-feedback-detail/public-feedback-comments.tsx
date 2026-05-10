@@ -34,6 +34,8 @@ interface PublicFeedbackCommentsProps {
   onSubmitComment: () => void;
 }
 
+const COMMENT_SKELETON_IDS = ["first", "second"];
+
 export function PublicFeedbackComments({
   comments,
   isAuthenticated,
@@ -84,7 +86,7 @@ export function PublicFeedbackComments({
             onClick={onSubmitComment}
             size="icon"
           >
-            <PaperPlaneRight className="h-4 w-4" />
+            <PaperPlaneRight className="size-4" />
           </Button>
         </div>
       ) : (
@@ -99,9 +101,9 @@ export function PublicFeedbackComments({
 
       {comments === undefined && (
         <div className="space-y-4">
-          {[1, 2].map((i) => (
-            <div className="flex gap-3" key={i}>
-              <Skeleton className="h-8 w-8 rounded-full" />
+          {COMMENT_SKELETON_IDS.map((id) => (
+            <div className="flex gap-3" key={id}>
+              <Skeleton className="size-8 rounded-full" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-1/4" />
                 <Skeleton className="h-12 w-full" />
@@ -143,7 +145,7 @@ function PublicCommentItem({
 
   return (
     <div className="group flex gap-3">
-      <Avatar className={isReply ? "h-6 w-6" : "h-8 w-8"}>
+      <Avatar className={isReply ? "size-6" : "size-8"}>
         <AvatarImage src={comment.author?.image} />
         <AvatarFallback className={isReply ? "text-xs" : ""}>
           {comment.author?.name?.charAt(0) || "?"}

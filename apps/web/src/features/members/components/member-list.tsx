@@ -103,7 +103,7 @@ export function MemberList({
             </div>
             <div className="flex items-center gap-2">
               <Badge className="gap-1" variant="outline">
-                <RoleIcon className="h-3 w-3" />
+                <RoleIcon className="size-3" />
                 {ROLE_LABELS[member.role as keyof typeof ROLE_LABELS]}
               </Badge>
               {isOwner && member.role !== "owner" && (
@@ -111,7 +111,7 @@ export function MemberList({
                   <DropdownMenuTrigger
                     render={(props: React.ComponentProps<"button">) => (
                       <Button {...props} size="icon" variant="ghost">
-                        <DotsThreeVertical className="h-4 w-4" />
+                        <DotsThreeVertical className="size-4" />
                       </Button>
                     )}
                   />
@@ -138,7 +138,7 @@ export function MemberList({
                         )
                       }
                     >
-                      <Trash className="mr-2 h-4 w-4" />
+                      <Trash className="mr-2 size-4" />
                       Remove
                     </DropdownMenuItem>
                   </DropdownMenuContent>

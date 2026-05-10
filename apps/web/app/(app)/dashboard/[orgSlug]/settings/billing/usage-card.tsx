@@ -70,7 +70,7 @@ function FeatureStatus({
     <div className="flex items-center gap-2">
       <CheckCircle
         className={cn(
-          "h-4 w-4",
+          "size-4",
           enabled ? "text-green-500" : "text-muted-foreground/30"
         )}
         weight="fill"
@@ -102,7 +102,7 @@ export function UsageSection({
     <section className="space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <ChartBar className="h-5 w-5" />
+          <ChartBar className="size-5" />
           <H3 variant="section">Usage</H3>
         </div>
         <Muted>Track your organization&apos;s usage against plan limits</Muted>

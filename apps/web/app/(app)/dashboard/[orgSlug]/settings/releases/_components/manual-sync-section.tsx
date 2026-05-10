@@ -70,7 +70,7 @@ function SyncStatusIndicator({
   if (lastSyncStatus === "syncing") {
     return (
       <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-        <ArrowsClockwise className="h-3 w-3 animate-spin" />
+        <ArrowsClockwise className="size-3 animate-spin" />
         Syncing…
       </span>
     );
@@ -79,7 +79,7 @@ function SyncStatusIndicator({
   if (lastSyncStatus === "error") {
     return (
       <span className="flex items-center gap-1.5 text-destructive text-xs">
-        <WarningCircle className="h-3 w-3" />
+        <WarningCircle className="size-3" />
         Sync failed
       </span>
     );
@@ -88,7 +88,7 @@ function SyncStatusIndicator({
   if (lastSyncAt) {
     return (
       <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-        <CheckCircle className="h-3 w-3" />
+        <CheckCircle className="size-3" />
         Synced {formatRelativeTime(lastSyncAt)}
       </span>
     );
@@ -211,7 +211,7 @@ export const ManualSyncSection = ({
           variant="outline"
         >
           <ArrowsClockwise
-            className={cn("mr-1.5 h-4 w-4", isSyncing && "animate-spin")}
+            className={cn("mr-1.5 size-4", isSyncing && "animate-spin")}
           />
           {isSyncing ? "Syncing…" : "Sync with GitHub"}
         </Button>
@@ -222,7 +222,7 @@ export const ManualSyncSection = ({
           {githubOnly.length > 0 && (
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-xs">
-                <CloudArrowDown className="mr-1 inline h-3.5 w-3.5" />
+                <CloudArrowDown className="mr-1 inline size-3.5" />
                 Available to import ({githubOnly.length})
               </Label>
               {githubOnly.map((gr) => (
@@ -249,9 +249,9 @@ export const ManualSyncSection = ({
                     variant="ghost"
                   >
                     {importingId === gr._id ? (
-                      <ArrowsClockwise className="mr-1 h-3 w-3 animate-spin" />
+                      <ArrowsClockwise className="mr-1 size-3 animate-spin" />
                     ) : (
-                      <CloudArrowDown className="mr-1 h-3 w-3" />
+                      <CloudArrowDown className="mr-1 size-3" />
                     )}
                     {importingId === gr._id ? "Importing…" : "Import"}
                   </Button>
@@ -263,7 +263,7 @@ export const ManualSyncSection = ({
           {refletOnly.length > 0 && (
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-xs">
-                <CloudArrowUp className="mr-1 inline h-3.5 w-3.5" />
+                <CloudArrowUp className="mr-1 inline size-3.5" />
                 Not on GitHub ({refletOnly.length})
               </Label>
               {refletOnly.map((r) => (
@@ -287,7 +287,7 @@ export const ManualSyncSection = ({
                           className="flex shrink-0 items-center gap-1 text-destructive text-xs"
                           render={<span />}
                         >
-                          <WarningCircle className="h-3 w-3" />
+                          <WarningCircle className="size-3" />
                           Failed
                         </TooltipTrigger>
                         <TooltipContent>
@@ -314,7 +314,7 @@ export const ManualSyncSection = ({
                       )}
                     {r.githubPushStatus === "pending" && (
                       <span className="flex shrink-0 items-center gap-1 text-muted-foreground text-xs">
-                        <Spinner className="h-3 w-3 animate-spin" />
+                        <Spinner className="size-3 animate-spin" />
                         Pending
                       </span>
                     )}
@@ -327,9 +327,9 @@ export const ManualSyncSection = ({
                     variant="ghost"
                   >
                     {pushingId === r._id ? (
-                      <ArrowsClockwise className="mr-1 h-3 w-3 animate-spin" />
+                      <ArrowsClockwise className="mr-1 size-3 animate-spin" />
                     ) : (
-                      <CloudArrowUp className="mr-1 h-3 w-3" />
+                      <CloudArrowUp className="mr-1 size-3" />
                     )}
                     {pushingId === r._id
                       ? "Pushing…"
@@ -343,7 +343,7 @@ export const ManualSyncSection = ({
           {synced.length > 0 && (
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-xs">
-                <CheckCircle className="mr-1 inline h-3.5 w-3.5" />
+                <CheckCircle className="mr-1 inline size-3.5" />
                 Linked ({synced.length})
               </Label>
               {synced.map((r) => (
@@ -369,7 +369,7 @@ export const ManualSyncSection = ({
                       rel="noopener noreferrer"
                       target="_blank"
                     >
-                      <ArrowSquareOut className="h-4 w-4" />
+                      <ArrowSquareOut className="size-4" />
                     </a>
                   )}
                 </div>

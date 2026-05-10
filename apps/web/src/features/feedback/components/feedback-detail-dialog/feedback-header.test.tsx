@@ -106,9 +106,9 @@ vi.mock("@/components/ui/select", () => ({
     children: React.ReactNode;
     value: string;
   }) => (
-    <option data-testid="select-item" value={value}>
+    <div data-testid="select-item" data-value={value}>
       {children}
-    </option>
+    </div>
   ),
   SelectTrigger: ({
     children,

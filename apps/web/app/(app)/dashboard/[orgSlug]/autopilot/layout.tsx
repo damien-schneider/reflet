@@ -40,7 +40,7 @@ export default function AutopilotLayout({
 
   const config = useQuery(
     api.autopilot.queries.config.getConfig,
-    org?._id ? { organizationId: org._id } : "skip"
+    org && currentMember ? { organizationId: org._id } : "skip"
   );
 
   if (org === undefined) {
@@ -91,16 +91,33 @@ export default function AutopilotLayout({
     );
   }
 
+  if (currentMember === null) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center px-4">
+        <div className="max-w-md text-center">
+          <H2 variant="card">Autopilot is private</H2>
+          <Muted className="mt-2">
+            You need to be a member of this organization to view its Autopilot
+            workspace.
+          </Muted>
+        </div>
+      </div>
+    );
+  }
+
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
   const baseUrl = `/dashboard/${orgSlug}/autopilot`;
+  const canUseCeoChat =
+    isAdmin && Boolean(config) && config?.autonomyMode !== "stopped";
+  const isCeoChatVisible = canUseCeoChat && isChatOpen;
 
   return (
     <AutopilotContext value={{ organizationId: org._id, isAdmin, orgSlug }}>
       <div
         className={cn(
           "transition-[padding] duration-300 ease-in-out",
-          isChatOpen && "lg:pr-[calc(var(--ceo-chat-width)+1.5rem)]"
+          isCeoChatVisible && "lg:pr-[calc(var(--ceo-chat-width)+1.5rem)]"
         )}
       >
         <div className="mx-auto max-w-6xl px-4 pt-12 pb-8">
@@ -136,9 +153,9 @@ export default function AutopilotLayout({
         </div>
       </div>
 
-      <CeoChatToggle />
+      {canUseCeoChat ? <CeoChatToggle /> : null}
 
-      {isChatOpen && (
+      {isCeoChatVisible && (
         <aside className="fixed inset-3 z-40 overflow-hidden rounded-xl border border-border bg-background shadow-lg sm:left-auto sm:w-[var(--ceo-chat-width)] sm:max-w-[calc(100vw-1.5rem)]">
           <CeoChatPanel organizationId={org._id} />
         </aside>

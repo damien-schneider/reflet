@@ -125,6 +125,39 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
+vi.mock("@/components/ui/select", () => ({
+  Select: ({
+    children,
+    onValueChange,
+    value,
+  }: {
+    children: React.ReactNode;
+    onValueChange: (value: string) => void;
+    value: string;
+  }) => (
+    <div data-testid="time-horizon-select" data-value={value}>
+      {children}
+      <button onClick={() => onValueChange("later")} type="button">
+        Select later
+      </button>
+    </div>
+  ),
+  SelectContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SelectItem: ({
+    children,
+    value,
+  }: {
+    children: React.ReactNode;
+    value: string;
+  }) => <div data-value={value}>{children}</div>,
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
+    <button type="button">{children}</button>
+  ),
+  SelectValue: () => <span>Select value</span>,
+}));
+
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { MilestoneFormPopover } from "./milestone-form-popover";
 
@@ -232,6 +265,31 @@ describe("MilestoneFormPopover", () => {
 
     const nameInput = screen.getByPlaceholderText("Milestone name...");
     fireEvent.change(nameInput, { target: { value: "Test" } });
+    fireEvent.click(screen.getByText("Create"));
+
+    await waitFor(() => {
+      expect(mockCreateMilestone).toHaveBeenCalledWith(
+        expect.objectContaining({ timeHorizon: "next_quarter" })
+      );
+    });
+  });
+
+  it("should use the latest defaultTimeHorizon when the parent changes it", async () => {
+    mockCreateMilestone.mockResolvedValue(undefined);
+    const { rerender } = render(
+      <MilestoneFormPopover {...defaultProps} showHorizonPicker />
+    );
+
+    rerender(
+      <MilestoneFormPopover
+        {...defaultProps}
+        defaultTimeHorizon="next_quarter"
+        showHorizonPicker
+      />
+    );
+
+    const nameInput = screen.getByPlaceholderText("Milestone name...");
+    fireEvent.change(nameInput, { target: { value: "Updated horizon" } });
     fireEvent.click(screen.getByText("Create"));
 
     await waitFor(() => {

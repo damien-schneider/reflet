@@ -48,7 +48,7 @@ export function TagDisplay({
             {tag.name}
             {tag.appliedByAi && (
               <span title="Applied by AI">
-                <Sparkle className="h-3 w-3 opacity-60" weight="fill" />
+                <Sparkle className="size-3 opacity-60" weight="fill" />
               </span>
             )}
             <button
@@ -57,7 +57,7 @@ export function TagDisplay({
               title={`Remove ${tag.name}`}
               type="button"
             >
-              <X className="h-2.5 w-2.5" />
+              <X className="size-2.5" />
             </button>
           </Badge>
         ))}
@@ -66,9 +66,9 @@ export function TagDisplay({
             className="flex h-8 w-auto cursor-pointer select-none items-center gap-1.5 rounded-full border border-input border-dashed bg-transparent px-3 text-sm transition-colors"
             render={<button type="button" />}
           >
-            <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+            <Tag className="size-3.5 text-muted-foreground" />
             <span className="text-muted-foreground text-xs">Tags</span>
-            <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <CaretDown className="size-3.5 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
             {availableTags.map((tag) => {
@@ -81,7 +81,7 @@ export function TagDisplay({
                 >
                   <div
                     className={cn(
-                      "h-3 w-3 shrink-0 rounded-sm border",
+                      "size-3 shrink-0 rounded-sm border",
                       getTagSwatchClass(tag.color)
                     )}
                   />
@@ -109,7 +109,7 @@ export function TagDisplay({
             {tag.name}
             {tag.appliedByAi && (
               <span title="Applied by AI">
-                <Sparkle className="h-3 w-3 opacity-60" weight="fill" />
+                <Sparkle className="size-3 opacity-60" weight="fill" />
               </span>
             )}
           </Badge>

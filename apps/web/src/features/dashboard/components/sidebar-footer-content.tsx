@@ -8,7 +8,6 @@ import {
   Globe,
 } from "@phosphor-icons/react";
 import Link from "next/link";
-import type * as React from "react";
 import {
   DropdownList,
   DropdownListContent,
@@ -39,25 +38,19 @@ export function SidebarFooterContent({
   return (
     <>
       <SidebarListItem>
-        <NotificationsPopover
-          render={(props: React.ComponentProps<"button">) => (
-            <SidebarListButton {...props}>
-              <Bell className="h-4 w-4" />
-              <span className="flex-1">Notifications</span>
-            </SidebarListButton>
-          )}
-        />
+        <NotificationsPopover render={<SidebarListButton />}>
+          <Bell className="size-4" />
+          <span className="flex-1">Notifications</span>
+        </NotificationsPopover>
       </SidebarListItem>
       <SidebarListItem>
         <DropdownList>
           <DropdownListTrigger
-            render={(props: React.ComponentProps<"button">) => (
-              <SidebarListButton {...props} disabled={!themeMounted}>
-                <CircleHalf className="h-4 w-4" />
-                <span className="flex-1">Theme</span>
-              </SidebarListButton>
-            )}
-          />
+            render={<SidebarListButton disabled={!themeMounted} />}
+          >
+            <CircleHalf className="size-4" />
+            <span className="flex-1">Theme</span>
+          </DropdownListTrigger>
           <DropdownListContent
             align="start"
             className="min-w-36"
@@ -68,9 +61,9 @@ export function SidebarFooterContent({
               const Icon = themeIcons[t];
               return (
                 <DropdownListItem key={t} onClick={() => setTheme(t)}>
-                  <Icon className="mr-2 h-4 w-4" />
+                  <Icon className="mr-2 size-4" />
                   <span className="flex-1">{themeLabels[t]}</span>
-                  {currentTheme === t && <Check className="ml-auto h-4 w-4" />}
+                  {currentTheme === t && <Check className="ml-auto size-4" />}
                 </DropdownListItem>
               );
             })}
@@ -80,19 +73,14 @@ export function SidebarFooterContent({
       {orgSlug && isPublic && (
         <SidebarListItem>
           <SidebarListButton
-            render={(props) => (
-              <Link
-                href={`/${orgSlug}`}
-                rel="noopener"
-                target="_blank"
-                {...props}
-              >
-                <Globe className="h-4 w-4" />
-                <span className="flex-1">Go to public page</span>
-                <ArrowUpRight className="ml-auto size-4" />
-              </Link>
-            )}
-          />
+            render={
+              <Link href={`/${orgSlug}`} rel="noopener" target="_blank" />
+            }
+          >
+            <Globe className="size-4" />
+            <span className="flex-1">Go to public page</span>
+            <ArrowUpRight className="ml-auto size-4" />
+          </SidebarListButton>
         </SidebarListItem>
       )}
     </>

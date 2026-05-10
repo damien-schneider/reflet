@@ -8,7 +8,40 @@
 
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { internalMutation } from "../_generated/server";
+import type { Doc } from "../_generated/dataModel";
+import { internalMutation, type MutationCtx } from "../_generated/server";
+
+const ACTIVE_RUN_STATUSES = [
+  "queued",
+  "sandbox_starting",
+  "cloning",
+  "exploring",
+  "coding",
+  "creating_pr",
+  "waiting_ci",
+  "ci_fixing",
+] satisfies Doc<"autopilotRuns">["status"][];
+
+const findActiveRunsByPrUrl = async (
+  ctx: Pick<MutationCtx, "db">,
+  params: {
+    organizationId: Doc<"organizations">["_id"];
+    prUrl: string;
+  }
+) => {
+  const runs: Doc<"autopilotRuns">[] = [];
+  for (const status of ACTIVE_RUN_STATUSES) {
+    const statusRuns = await ctx.db
+      .query("autopilotRuns")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", params.organizationId).eq("status", status)
+      )
+      .filter((q) => q.eq(q.field("prUrl"), params.prUrl))
+      .collect();
+    runs.push(...statusRuns);
+  }
+  return runs;
+};
 
 /**
  * Handle a merged PR event for autopilot.
@@ -42,6 +75,16 @@ export const handlePrMerged = internalMutation({
       return null;
     }
 
+    const access = await ctx.runQuery(
+      internal.autopilot.billing_gate.checkAccess,
+      {
+        organizationId: args.organizationId,
+      }
+    );
+    if (!access.allowed) {
+      return null;
+    }
+
     // Log the PR merge event
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
@@ -55,6 +98,51 @@ export const handlePrMerged = internalMutation({
         author: args.authorLogin,
       }),
     });
+
+    const workItems = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+    const activeRuns = await findActiveRunsByPrUrl(ctx, {
+      organizationId: args.organizationId,
+      prUrl: args.prUrl,
+    });
+    const runWorkItemIds = new Set(activeRuns.map((run) => run.workItemId));
+    const mergedWorkItem =
+      workItems.find((item) => item.prUrl === args.prUrl) ??
+      workItems.find((item) => runWorkItemIds.has(item._id));
+
+    if (
+      mergedWorkItem &&
+      mergedWorkItem.status !== "done" &&
+      mergedWorkItem.status !== "cancelled"
+    ) {
+      await ctx.runMutation(
+        internal.autopilot.task_mutations.updateTaskStatus,
+        {
+          taskId: mergedWorkItem._id,
+          status: "done",
+          needsReview: false,
+          prNumber: args.prNumber,
+          prUrl: args.prUrl,
+        }
+      );
+
+      const now = Date.now();
+      for (const run of activeRuns) {
+        if (run.workItemId === mergedWorkItem._id) {
+          await ctx.runMutation(internal.autopilot.task_mutations.updateRun, {
+            runId: run._id,
+            status: "completed",
+            completedAt: now,
+            prNumber: args.prNumber,
+            prUrl: args.prUrl,
+          });
+        }
+      }
+    }
 
     return null;
   },

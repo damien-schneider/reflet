@@ -44,6 +44,7 @@ export function RoadmapItemCard({
   return (
     <div
       aria-label={item.title}
+      aria-selected={isDragging}
       className={cn(
         "rounded-lg border bg-card p-3 shadow-sm transition-all",
         isDragging && "opacity-50 ring-2 ring-primary",
@@ -77,7 +78,7 @@ export function RoadmapItemCard({
 
           {/* Comment count */}
           <div className="mt-1 flex items-center gap-1 text-muted-foreground text-xs">
-            <Chat className="h-3 w-3" />
+            <Chat className="size-3" />
             <span>{item.commentCount}</span>
           </div>
         </div>

@@ -66,7 +66,7 @@ export function AssignMemberDropdown({
       >
         {assignedMember ? (
           <div className="flex items-center gap-2">
-            <Avatar className="h-5 w-5">
+            <Avatar className="size-5">
               <AvatarImage src={assignedMember.image} />
               <AvatarFallback className="text-[10px]">
                 {getInitials(assignedMember.name, assignedMember.email)}
@@ -76,11 +76,11 @@ export function AssignMemberDropdown({
           </div>
         ) : (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <UserCircle className="h-4 w-4" />
+            <UserCircle className="size-4" />
             <span className="text-sm">Unassigned</span>
           </div>
         )}
-        <CaretDown className="h-3 w-3 shrink-0 opacity-50" />
+        <CaretDown className="size-3 shrink-0 opacity-50" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start" className="w-56">
@@ -90,7 +90,7 @@ export function AssignMemberDropdown({
             className={cn(!assignedTo && "bg-accent")}
             onClick={() => onAssign(undefined)}
           >
-            <UserCircle className="h-4 w-4 text-muted-foreground" />
+            <UserCircle className="size-4 text-muted-foreground" />
             <span>Unassigned</span>
           </DropdownMenuItem>
 
@@ -106,7 +106,7 @@ export function AssignMemberDropdown({
                 key={member.id}
                 onClick={() => onAssign(member.id)}
               >
-                <Avatar className="h-5 w-5">
+                <Avatar className="size-5">
                   <AvatarImage src={member.image} />
                   <AvatarFallback className="text-[10px]">
                     {getInitials(member.name, member.email)}
@@ -127,7 +127,7 @@ export function AssignMemberDropdown({
 
         {members.length === 0 && (
           <div className="flex items-center justify-center gap-2 py-4 text-center text-muted-foreground">
-            <User className="h-4 w-4" />
+            <User className="size-4" />
             <span className="text-sm">No team members</span>
           </div>
         )}

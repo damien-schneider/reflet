@@ -5,13 +5,14 @@
 import { v } from "convex/values";
 import { mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
+import { requireOwnedWorkItem } from "../ownership";
 import {
   assignedAgent,
   priority,
   workItemStatus,
   workItemType,
 } from "../schema/validators";
-import { requireOrgAdmin } from "./auth";
+import { requireAutopilotAccess, requireOrgAdmin } from "./auth";
 
 export const createWorkItem = mutation({
   args: {
@@ -34,6 +35,10 @@ export const createWorkItem = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
+    if (args.parentId !== undefined) {
+      await requireOwnedWorkItem(ctx, args.organizationId, args.parentId);
+    }
 
     const now = Date.now();
     const workItemId = await ctx.db.insert("autopilotWorkItems", {
@@ -100,6 +105,7 @@ export const updateWorkItem = mutation({
     }
 
     await requireOrgAdmin(ctx, item.organizationId, user._id);
+    await requireAutopilotAccess(ctx, item.organizationId);
 
     const { workItemId, ...fields } = args;
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
@@ -130,6 +136,7 @@ export const deleteWorkItem = mutation({
     }
 
     await requireOrgAdmin(ctx, item.organizationId, user._id);
+    await requireAutopilotAccess(ctx, item.organizationId);
 
     await ctx.db.patch(args.workItemId, {
       status: "cancelled",

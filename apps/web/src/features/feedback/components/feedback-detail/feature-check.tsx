@@ -19,6 +19,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ClientDate } from "@/shared/components/client-date";
 
 interface FeatureCheckProps {
   feedbackId: Id<"feedback">;
@@ -106,7 +107,7 @@ export function FeatureCheck({
   return (
     <div className="rounded-lg border border-border bg-background px-4 py-3">
       <div className="flex items-start gap-2">
-        <GitBranch className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <GitBranch className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
         <div className="min-w-0 flex-1">
           <FeatureCheckHeader
             hasGithubConnection={hasGithubConnection}
@@ -154,12 +155,12 @@ function FeatureCheckHeader({
         >
           {isPending ? (
             <>
-              <ArrowsClockwise className="mr-1 h-3 w-3 animate-spin" />
-              Checking...
+              <ArrowsClockwise className="mr-1 size-3 animate-spin" />
+              Checking…
             </>
           ) : (
             <>
-              <MagnifyingGlass className="mr-1 h-3 w-3" />
+              <MagnifyingGlass className="mr-1 size-3" />
               {hasResult ? "Recheck" : "Check Codebase"}
             </>
           )}
@@ -204,7 +205,7 @@ function FeatureCheckBody({
   if (isPending) {
     return (
       <p className="mt-2 text-muted-foreground text-xs">
-        Searching the connected GitHub repository for this feature...
+        Searching the connected GitHub repository for this feature…
       </p>
     );
   }
@@ -262,7 +263,7 @@ function FeatureCheckResult({
 
       {featureCheck.generatedAt && (
         <p className="mt-2 text-muted-foreground/60 text-xs">
-          Checked {new Date(featureCheck.generatedAt).toLocaleDateString()}
+          Checked <ClientDate value={featureCheck.generatedAt} />
         </p>
       )}
     </div>
@@ -285,12 +286,12 @@ function EvidenceList({
         onClick={onToggle}
         variant="link"
       >
-        <Code className="h-3 w-3" />
+        <Code className="size-3" />
         {evidence.length} file{evidence.length === 1 ? "" : "s"} found
         {isExpanded ? (
-          <CaretUp className="h-3 w-3" />
+          <CaretUp className="size-3" />
         ) : (
-          <CaretDown className="h-3 w-3" />
+          <CaretDown className="size-3" />
         )}
       </Button>
 
@@ -329,7 +330,7 @@ function ResultBadge({ result }: { result: keyof typeof RESULT_CONFIG }) {
         config.className
       )}
     >
-      <Icon className={cn("h-3.5 w-3.5", config.iconClassName)} weight="fill" />
+      <Icon className={cn("size-3.5", config.iconClassName)} weight="fill" />
       {config.label}
     </span>
   );

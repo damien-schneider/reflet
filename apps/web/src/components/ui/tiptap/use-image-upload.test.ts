@@ -1,4 +1,4 @@
-import { act, cleanup, renderHook } from "@testing-library/react";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockGenerateUploadUrl = vi
@@ -33,7 +33,11 @@ describe("useImageUpload", () => {
   let useImageUpload: typeof import("./use-image-upload").useImageUpload;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
+    mockGenerateUploadUrl.mockReset();
+    mockGenerateUploadUrl.mockResolvedValue("https://upload.example.com");
+    mockGetStorageUrl.mockReset();
+    mockGetStorageUrl.mockResolvedValue("https://storage.example.com/img.png");
+    mockQuery.mockReset();
     mockQuery.mockReturnValue(null);
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -166,6 +170,56 @@ describe("useImageUpload", () => {
       expect(onError).toHaveBeenCalledWith(
         expect.objectContaining({ message: "Failed to upload image" })
       );
+    });
+
+    it("keeps uploading state true until all concurrent uploads settle", async () => {
+      const pendingUploads: Array<(response: Response) => void> = [];
+      global.fetch = vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            pendingUploads.push(resolve);
+          })
+      );
+      mockGetStorageUrl
+        .mockResolvedValueOnce("https://storage.example.com/one.png")
+        .mockResolvedValueOnce("https://storage.example.com/two.png");
+      const { result } = renderHook(() => useImageUpload());
+      let firstUpload: Promise<string | null> | undefined;
+      let secondUpload: Promise<string | null> | undefined;
+
+      await act(async () => {
+        firstUpload = result.current.uploadImage(
+          new File(["one"], "one.png", { type: "image/png" })
+        );
+        secondUpload = result.current.uploadImage(
+          new File(["two"], "two.png", { type: "image/png" })
+        );
+      });
+
+      if (!(firstUpload && secondUpload)) {
+        throw new Error("Uploads were not started");
+      }
+
+      await waitFor(() => {
+        expect(pendingUploads).toHaveLength(2);
+      });
+      await waitFor(() => {
+        expect(result.current.isUploading).toBe(true);
+      });
+
+      await act(async () => {
+        pendingUploads[0]?.(Response.json({ storageId: "storage-id-one" }));
+        await firstUpload;
+      });
+
+      expect(result.current.isUploading).toBe(true);
+
+      await act(async () => {
+        pendingUploads[1]?.(Response.json({ storageId: "storage-id-two" }));
+        await secondUpload;
+      });
+
+      expect(result.current.isUploading).toBe(false);
     });
   });
 

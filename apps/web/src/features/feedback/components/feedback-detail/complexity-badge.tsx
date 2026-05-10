@@ -82,13 +82,13 @@ export function ComplexityBadge({
       className="h-8 gap-1 rounded-full px-3 font-normal text-xs"
       color={config.color}
     >
-      <TreeStructure className="h-3 w-3" />
+      <TreeStructure className="size-3" />
       <span>C: {config.label}</span>
       <Tooltip>
         <TooltipTrigger onClick={(e) => e.stopPropagation()} render={<span />}>
           <Sparkle
             className={cn(
-              "h-2.5 w-2.5",
+              "size-2.5",
               isOverridden ? "opacity-80" : "opacity-50"
             )}
             weight={isOverridden ? "fill" : "regular"}
@@ -98,7 +98,7 @@ export function ComplexityBadge({
           <p className="text-xs">{tooltipContent}</p>
         </TooltipContent>
       </Tooltip>
-      {isAdmin && <CaretDown className="h-3 w-3 opacity-70" />}
+      {isAdmin && <CaretDown className="size-3 opacity-70" />}
     </Badge>
   );
 
@@ -131,7 +131,7 @@ export function ComplexityBadge({
             const optConfig = COMPLEXITY_CONFIG[option];
             return (
               <DropdownMenuRadioItem key={option} value={option}>
-                <TreeStructure className="h-3 w-3" />
+                <TreeStructure className="size-3" />
                 {optConfig.label}
               </DropdownMenuRadioItem>
             );
@@ -141,7 +141,7 @@ export function ComplexityBadge({
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleClear}>
-              <X className="h-3 w-3" />
+              <X className="size-3" />
               Reset to AI value
             </DropdownMenuItem>
           </>

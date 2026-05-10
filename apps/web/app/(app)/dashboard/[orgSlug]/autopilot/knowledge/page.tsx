@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { Muted } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
+import { getAutopilotErrorMessage } from "@/features/autopilot/lib/error-messages";
 import { cn } from "@/lib/utils";
 
 const LEVEL_ICONS = {
@@ -80,13 +81,12 @@ function ExplorationProgress({
     return (
       <div className="flex items-center gap-2 py-4 text-muted-foreground text-sm">
         <IconLoader2 className="size-4 animate-spin" />
-        <span>Starting exploration...</span>
+        <span>Starting exploration&hellip;</span>
       </div>
     );
   }
 
-  // Only show entries from the current analysis run
-  const cutoff = analysisSince ?? Date.now() - 5 * 60 * 1000;
+  const cutoff = analysisSince ?? 0;
   const explorationEntries = activity
     .filter((entry) => entry.agent === "system" && entry.createdAt >= cutoff)
     .reverse();
@@ -95,7 +95,7 @@ function ExplorationProgress({
     return (
       <div className="flex items-center gap-2 py-4 text-muted-foreground text-sm">
         <IconLoader2 className="size-4 animate-spin" />
-        <span>Agent is exploring the codebase...</span>
+        <span>Agent is exploring the codebase&hellip;</span>
       </div>
     );
   }
@@ -123,7 +123,10 @@ function ExplorationProgress({
                 </p>
               )}
             </div>
-            <span className="shrink-0 text-[10px] text-muted-foreground/40">
+            <span
+              className="shrink-0 text-[10px] text-muted-foreground/40"
+              suppressHydrationWarning
+            >
               {formatDistanceToNow(entry.createdAt, { addSuffix: true })}
             </span>
           </div>
@@ -241,9 +244,11 @@ export default function ProductPage() {
       await regenerate({ organizationId });
       toast.success("Product exploration started");
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to start analysis";
-      toast.error(message);
+      toast.error(
+        getAutopilotErrorMessage(error, {
+          fallback: "Failed to start analysis",
+        })
+      );
     } finally {
       setIsRegenerating(false);
     }
@@ -254,8 +259,8 @@ export default function ProductPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <Muted>
-          Your product definition — the single source of truth that all AI
-          agents use to understand your product.
+          Your product definition, the single source of truth that all AI agents
+          use to understand your product.
         </Muted>
         <div className="flex shrink-0 gap-2">
           {isEditing ? (

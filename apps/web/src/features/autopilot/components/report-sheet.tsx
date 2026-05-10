@@ -167,7 +167,10 @@ function ReportPropertyGrid({ report }: { report: Report }) {
       )}
 
       <ReportPropertyRow label="Created">
-        <span className="text-muted-foreground text-xs">
+        <span
+          className="text-muted-foreground text-xs"
+          suppressHydrationWarning
+        >
           {formatDistanceToNow(report.createdAt, { addSuffix: true })}
         </span>
       </ReportPropertyRow>
@@ -330,7 +333,10 @@ export function ReportSheet({ onOpenChange, open, report }: ReportSheetProps) {
                     Needs Review
                   </Badge>
                 )}
-                <span className="text-muted-foreground text-xs">
+                <span
+                  className="text-muted-foreground text-xs"
+                  suppressHydrationWarning
+                >
                   {formatDistanceToNow(report.createdAt, { addSuffix: true })}
                 </span>
               </div>
@@ -350,7 +356,7 @@ export function ReportSheet({ onOpenChange, open, report }: ReportSheetProps) {
                 onClick={handleArchive}
                 variant="outline"
               >
-                {pendingAction === "archive" ? "Archiving..." : "Archive"}
+                {pendingAction === "archive" ? "Archiving\u2026" : "Archive"}
               </Button>
               {report.needsReview && (
                 <Button
@@ -358,7 +364,7 @@ export function ReportSheet({ onOpenChange, open, report }: ReportSheetProps) {
                   onClick={handleAcknowledge}
                 >
                   {pendingAction === "acknowledge"
-                    ? "Acknowledging..."
+                    ? "Acknowledging\u2026"
                     : "Acknowledge"}
                 </Button>
               )}

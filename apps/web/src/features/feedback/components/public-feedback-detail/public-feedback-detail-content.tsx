@@ -157,18 +157,20 @@ export function PublicFeedbackDetailContent({
           <div className="mb-6">
             <h3 className="mb-2 font-medium">Tags</h3>
             <div className="flex flex-wrap gap-2">
-              {feedback.tags
-                .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
-                .map((tag) => (
-                  <Badge
-                    className="font-normal"
-                    color={tag.color}
-                    key={tag._id}
-                  >
-                    {tag.icon && <span>{tag.icon}</span>}
-                    {tag.name}
-                  </Badge>
-                ))}
+              {feedback.tags.flatMap((tag) =>
+                tag === null
+                  ? []
+                  : [
+                      <Badge
+                        className="font-normal"
+                        color={tag.color}
+                        key={tag._id}
+                      >
+                        {tag.icon && <span>{tag.icon}</span>}
+                        {tag.name}
+                      </Badge>,
+                    ]
+              )}
             </div>
           </div>
         )}

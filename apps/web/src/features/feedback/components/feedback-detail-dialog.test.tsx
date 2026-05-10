@@ -537,7 +537,7 @@ describe("FeedbackDetailDialog", () => {
     expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
   });
 
-  it("should not render when feedback is loading (undefined)", () => {
+  it("should keep the dialog open with skeletons while feedback is loading", () => {
     const onClose = vi.fn();
     mockUseQuery.mockImplementation((queryName) => {
       if (queryName === "feedback.get") {
@@ -553,8 +553,8 @@ describe("FeedbackDetailDialog", () => {
       />
     );
 
-    // Component returns null when feedback is still loading
-    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getAllByTestId("skeleton").length).toBeGreaterThan(0);
   });
 
   it("should display feedback title and description", async () => {
@@ -697,7 +697,7 @@ describe("FeedbackDetailDialog", () => {
     });
   });
 
-  it("should not render when feedback is null (not found)", () => {
+  it("should show a not-found state when feedback is null", () => {
     const onClose = vi.fn();
     mockUseQuery.mockImplementation((queryName) => {
       if (queryName === "feedback.get") {
@@ -713,8 +713,8 @@ describe("FeedbackDetailDialog", () => {
       />
     );
 
-    // Component returns null when feedback is not found
-    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+    expect(screen.getByText("Feedback not found")).toBeInTheDocument();
   });
 
   it("should display comment count", async () => {

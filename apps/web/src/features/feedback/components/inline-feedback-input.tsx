@@ -4,6 +4,7 @@ import { ArrowRight, Lightning, X } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import { useImperativeHandle, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -117,8 +118,10 @@ export function InlineFeedbackInput({
       setIsExpanded(false);
       setJustSubmitted(true);
       setTimeout(() => setJustSubmitted(false), 1500);
-    } catch {
-      // Error is handled by the parent (Convex client shows it)
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to submit feedback"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -161,23 +164,23 @@ export function InlineFeedbackInput({
         >
           {isExpanded ? (
             // Expanded state
-            <div className="relative px-3 py-3">
+            <div className="relative p-3">
               {/* Close button — top right */}
               <Button
-                className="absolute top-2 right-2 h-7 w-7"
+                className="absolute top-2 right-2 size-7"
                 disabled={isSubmitting}
                 onClick={handleCancel}
                 size="icon"
                 variant="ghost"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="size-3.5" />
                 <span className="sr-only">Cancel</span>
               </Button>
 
               {/* Title row */}
               <div className="flex items-center gap-3 pr-8">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Lightning className="h-4 w-4" weight="fill" />
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Lightning className="size-4" weight="fill" />
                 </div>
                 <Input
                   className="h-9 flex-1 border-0 bg-transparent px-0 font-medium text-sm shadow-none focus-visible:ring-0"
@@ -291,7 +294,7 @@ export function InlineFeedbackInput({
                             <div className="flex items-center gap-2">
                               <div
                                 className={cn(
-                                  "h-2.5 w-2.5 shrink-0 rounded-sm border",
+                                  "size-2.5 shrink-0 rounded-sm border",
                                   getTagSwatchClass(tag.color)
                                 )}
                               />
@@ -305,7 +308,7 @@ export function InlineFeedbackInput({
                   )}
                 </div>
                 <Button disabled={!canSubmit} onClick={handleSubmit} size="sm">
-                  <ArrowRight className="mr-1 h-3 w-3" />
+                  <ArrowRight className="mr-1 size-3" />
                   {isSubmitting ? "Submitting..." : "Submit"}
                 </Button>
               </div>
@@ -313,15 +316,15 @@ export function InlineFeedbackInput({
           ) : (
             // Ghost state
             <button
-              className="flex w-full items-center gap-3 px-4 py-4 text-left"
+              className="flex w-full items-center gap-3 p-4 text-left"
               onClick={handleGhostClick}
               type="button"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Lightning className="h-4 w-4" weight="fill" />
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Lightning className="size-4" weight="fill" />
               </div>
               <span className="text-muted-foreground text-sm">
-                Share an idea or suggestion...
+                Share an idea or suggestion…
               </span>
             </button>
           )}

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/typography";
+import { ClientDate } from "@/shared/components/client-date";
 
 import { GitHubPermissionErrorAlert } from "./github-permission-error-alert";
 
@@ -28,6 +29,63 @@ interface SyncSettingsCardProps {
   onToggleAutoSync: (enabled: boolean) => void;
 }
 
+function SyncSettingsError({
+  error,
+  onClearError,
+  onResyncGitHub,
+}: {
+  error?: { code: string; message: string } | null;
+  onClearError?: () => void;
+  onResyncGitHub?: () => void;
+}) {
+  if (!error) {
+    return null;
+  }
+
+  const isPermissionError = error.code === "GITHUB_PERMISSION_DENIED";
+  const isLocalhostError = error.code === "LOCALHOST_NOT_SUPPORTED";
+
+  if (isPermissionError && onResyncGitHub) {
+    return (
+      <GitHubPermissionErrorAlert
+        message="The GitHub App is missing the required webhook permissions."
+        onDismiss={onClearError}
+        onResync={onResyncGitHub}
+        title="Auto-sync setup failed"
+      />
+    );
+  }
+
+  return (
+    <Alert className="mb-4" variant="destructive">
+      <Warning className="size-4" />
+      <AlertTitle>Auto-sync setup failed</AlertTitle>
+      <AlertDescription>
+        <p>{error.message}</p>
+        {isLocalhostError ? (
+          <p className="mt-2 text-muted-foreground">
+            Try again in a deployed environment or use a tunneling service like
+            ngrok for local development.
+          </p>
+        ) : null}
+      </AlertDescription>
+      {onClearError ? (
+        <AlertAction>
+          <Button
+            className="size-6"
+            onClick={onClearError}
+            size="icon"
+            variant="ghost"
+          >
+            <X className="size-4" />
+            <span className="sr-only">Dismiss</span>
+          </Button>
+        </AlertAction>
+      ) : null}
+    </Alert>
+  );
+}
+
 export function SyncSettingsSection({
   autoSyncEnabled,
   lastSyncAt,
@@ -40,58 +98,13 @@ export function SyncSettingsSection({
   onClearError,
   onResyncGitHub,
 }: SyncSettingsCardProps) {
-  const renderError = () => {
-    if (!error) {
-      return null;
-    }
-
-    const isPermissionError = error.code === "GITHUB_PERMISSION_DENIED";
-    const isLocalhostError = error.code === "LOCALHOST_NOT_SUPPORTED";
-
-    if (isPermissionError && onResyncGitHub) {
-      return (
-        <GitHubPermissionErrorAlert
-          message="The GitHub App is missing the required webhook permissions."
-          onDismiss={onClearError}
-          onResync={onResyncGitHub}
-          title="Auto-sync setup failed"
-        />
-      );
-    }
-
-    return (
-      <Alert className="mb-4" variant="destructive">
-        <Warning className="h-4 w-4" />
-        <AlertTitle>Auto-sync setup failed</AlertTitle>
-        <AlertDescription>
-          <p>{error.message}</p>
-          {isLocalhostError ? (
-            <p className="mt-2 text-muted-foreground">
-              Try again in a deployed environment or use a tunneling service
-              like ngrok for local development.
-            </p>
-          ) : null}
-        </AlertDescription>
-        {onClearError ? (
-          <AlertAction>
-            <Button
-              className="h-6 w-6"
-              onClick={onClearError}
-              size="icon"
-              variant="ghost"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Dismiss</span>
-            </Button>
-          </AlertAction>
-        ) : null}
-      </Alert>
-    );
-  };
-
   return (
     <div className="space-y-4">
-      {renderError()}
+      <SyncSettingsError
+        error={error}
+        onClearError={onClearError}
+        onResyncGitHub={onResyncGitHub}
+      />
 
       <div className="flex items-center justify-between">
         <div className="flex-1">
@@ -102,7 +115,7 @@ export function SyncSettingsSection({
         </div>
         <div className="flex items-center gap-2">
           {isSettingUp ? (
-            <Spinner className="h-4 w-4 animate-spin text-muted-foreground" />
+            <Spinner className="size-4 animate-spin text-muted-foreground" />
           ) : null}
           <Switch
             checked={autoSyncEnabled}
@@ -117,16 +130,16 @@ export function SyncSettingsSection({
         {isAdmin ? (
           <Button disabled={isSyncing} onClick={onSyncNow} variant="outline">
             {isSyncing ? (
-              <Spinner className="mr-2 h-4 w-4 animate-spin" />
+              <Spinner className="mr-2 size-4 animate-spin" />
             ) : (
-              <ArrowsClockwise className="mr-2 h-4 w-4" />
+              <ArrowsClockwise className="mr-2 size-4" />
             )}
             Sync Now
           </Button>
         ) : null}
         {lastSyncAt ? (
           <Text className="text-muted-foreground text-sm">
-            Last synced: {new Date(lastSyncAt).toLocaleString()}
+            Last synced: <ClientDate value={lastSyncAt} variant="dateTime" />
           </Text>
         ) : null}
       </div>

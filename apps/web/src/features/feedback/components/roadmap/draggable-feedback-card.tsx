@@ -1,5 +1,5 @@
 import { useDraggable } from "@dnd-kit/core";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 
 import { FeedbackCardContent } from "./feedback-card-content";
 import type { DraggableFeedbackCardProps } from "./roadmap-types";
@@ -14,7 +14,7 @@ export function DraggableFeedbackCard({
     disabled: !isAdmin,
   });
 
-  const handleClick = () => {
+  const handleFeedbackOpen = () => {
     if (!isDragging) {
       onFeedbackClick(item._id);
     }
@@ -28,19 +28,18 @@ export function DraggableFeedbackCard({
   };
 
   return (
-    <motion.div
+    <m.div
       animate={{ opacity: isDragging ? 0.4 : 1, scale: isDragging ? 0.98 : 1 }}
       className="cursor-pointer"
       initial={false}
       layoutId={`feedback-card-${item._id}`}
-      onClick={handleClick}
+      onClick={handleFeedbackOpen}
       onKeyDown={handleKeyDown}
       ref={setNodeRef}
       role="button"
       tabIndex={0}
       transition={{ type: "spring", damping: 25, stiffness: 300 }}
     >
-      {/* On mobile, apply touch listeners to the whole card for long press */}
       <div
         {...(isAdmin ? listeners : {})}
         className="md:pointer-events-none md:contents"
@@ -53,6 +52,6 @@ export function DraggableFeedbackCard({
           item={item}
         />
       </div>
-    </motion.div>
+    </m.div>
   );
 }

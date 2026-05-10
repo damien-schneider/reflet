@@ -98,9 +98,9 @@ export default function CustomDomainSupportPage() {
         {submitted ? (
           <Card>
             <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
                 <CheckCircle
-                  className="h-6 w-6 text-green-600 dark:text-green-400"
+                  className="size-6 text-green-600 dark:text-green-400"
                   weight="fill"
                 />
               </div>

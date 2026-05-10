@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { UseFormSetValue, UseFormTrigger } from "react-hook-form";
 import { AuthEmailField, AuthPasswordField } from "./auth-fields";
 import {
   AuthConfirmPassword,
@@ -22,8 +23,7 @@ function isFormValid(
   watchedPassword: string,
   watchedConfirmPassword: string
 ): boolean {
-  const hasErrors = Object.keys(errors).length > 0;
-  if (hasErrors) {
+  if (!mode || errors.email) {
     return false;
   }
 
@@ -64,36 +64,49 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
     handleSubmit,
     errors,
     isSubmitting,
-    watch,
     setValue,
     trigger,
     onSubmit,
     handleEmailChange,
     isCheckingEmail,
     resetMode,
+    watchedConfirmPassword,
+    watchedPassword,
   } = useAuthForm(onSuccess);
-
-  const watchedPassword = watch("password");
-  const watchedConfirmPassword = watch("confirmPassword");
+  const passwordValue = watchedPassword ?? "";
+  const confirmPasswordValue = watchedConfirmPassword ?? "";
 
   const handlePasswordChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    setFormValue: (name: keyof SignUpFormData, value: string) => void,
-    triggerValidation: (name: keyof SignUpFormData) => Promise<boolean>
+    setFormValue: UseFormSetValue<SignUpFormData>,
+    triggerValidation: UseFormTrigger<SignUpFormData>
   ) => {
     setApiError(null);
-    setFormValue("password", e.target.value);
-    triggerValidation("password");
+    setFormValue("password", e.target.value, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    triggerValidation("confirmPassword").catch((error: unknown) => {
+      setApiError(
+        error instanceof Error
+          ? error.message
+          : "Could not validate password confirmation"
+      );
+    });
   };
 
   const handleConfirmPasswordChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    setFormValue: (name: keyof SignUpFormData, value: string) => void,
-    triggerValidation: (name: keyof SignUpFormData) => Promise<boolean>
+    setFormValue: UseFormSetValue<SignUpFormData>,
+    _triggerValidation: UseFormTrigger<SignUpFormData>
   ) => {
     setApiError(null);
-    setFormValue("confirmPassword", e.target.value);
-    triggerValidation("confirmPassword");
+    setFormValue("confirmPassword", e.target.value, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
   };
 
   const confirmPasswordErrors = getConfirmPasswordErrors(
@@ -104,8 +117,8 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
   const formIsValid = isFormValid(
     mode,
     errors,
-    watchedPassword,
-    watchedConfirmPassword
+    passwordValue,
+    confirmPasswordValue
   );
 
   return (
@@ -129,7 +142,7 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
           isSignUp={mode === "signUp"}
           isSubmitting={isSubmitting}
           onPasswordChange={handlePasswordChange}
-          passwordLength={watchedPassword.length}
+          passwordLength={passwordValue.length}
           register={register}
           setValue={setValue}
           trigger={trigger}

@@ -50,7 +50,7 @@ export default function EditReleasePage({
           </Muted>
           <Link href={`/dashboard/${orgSlug}/changelog`}>
             <Button className="mt-4" variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="mr-2 size-4" />
               Back to Changelog
             </Button>
           </Link>
@@ -69,7 +69,7 @@ export default function EditReleasePage({
           </Muted>
           <Link href={`/dashboard/${orgSlug}/changelog`}>
             <Button className="mt-4" variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="mr-2 size-4" />
               Back to Changelog
             </Button>
           </Link>
@@ -85,7 +85,7 @@ export default function EditReleasePage({
           className="mb-4 inline-flex items-center text-muted-foreground text-sm transition-colors hover:text-foreground"
           href={`/dashboard/${orgSlug}/changelog`}
         >
-          <ArrowLeft className="mr-1 h-4 w-4" />
+          <ArrowLeft className="mr-1 size-4" />
           Back to Changelog
         </Link>
         <H1>Edit Release</H1>

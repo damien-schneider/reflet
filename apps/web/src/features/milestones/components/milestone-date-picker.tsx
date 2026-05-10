@@ -53,7 +53,7 @@ export function MilestoneDatePicker({
           colorClass
         )}
       >
-        <CalendarBlank className="h-3.5 w-3.5" />
+        <CalendarBlank className="size-3.5" />
         {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Set deadline"}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto p-0">

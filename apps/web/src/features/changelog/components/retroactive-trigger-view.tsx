@@ -49,12 +49,12 @@ export function TriggerView({
         onClick={onDismiss}
         type="button"
       >
-        <X className="h-4 w-4" />
+        <X className="size-4" />
       </button>
 
       <div className="flex flex-col items-center gap-4 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-          <ClockCounterClockwise className="h-6 w-6 text-primary" />
+        <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
+          <ClockCounterClockwise className="size-6 text-primary" />
         </div>
 
         <div>
@@ -73,7 +73,7 @@ export function TriggerView({
 
         {repoName && (
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <GithubLogo className="h-4 w-4" />
+            <GithubLogo className="size-4" />
             <span>{repoName}</span>
           </div>
         )}
@@ -81,12 +81,12 @@ export function TriggerView({
         <Button disabled={isStarting} onClick={onStart} size="lg" type="button">
           {isStarting ? (
             <>
-              <Spinner className="h-4 w-4 animate-spin" />
-              Starting...
+              <Spinner className="size-4 animate-spin" />
+              Starting…
             </>
           ) : (
             <>
-              <Lightning className="h-4 w-4" />
+              <Lightning className="size-4" />
               Generate
             </>
           )}
@@ -95,7 +95,7 @@ export function TriggerView({
         <Collapsible>
           <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground">
             Options
-            <CaretDown className="h-3 w-3 transition-transform group-data-panel-open:rotate-180" />
+            <CaretDown className="size-3 transition-transform group-data-panel-open:rotate-180" />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="mt-3 flex w-full max-w-sm flex-col gap-3 text-left">

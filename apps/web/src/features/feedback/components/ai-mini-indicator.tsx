@@ -30,9 +30,7 @@ export function AiMiniIndicator({
       className="h-5 gap-0.5 rounded-full px-1.5 font-normal text-[10px]"
       color={color}
     >
-      {isAiValue && (
-        <Sparkle className="h-2.5 w-2.5 opacity-60" weight="fill" />
-      )}
+      {isAiValue && <Sparkle className="size-2.5 opacity-60" weight="fill" />}
       <span className="capitalize">{label}</span>
     </Badge>
   );

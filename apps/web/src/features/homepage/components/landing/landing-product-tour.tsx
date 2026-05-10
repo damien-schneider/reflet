@@ -13,7 +13,7 @@ import {
   Sparkle,
   Tag,
 } from "@phosphor-icons/react";
-import { motion, useInView } from "motion/react";
+import { domAnimation, LazyMotion, m, useInView } from "motion/react";
 import { useRef } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -223,58 +223,64 @@ export default function LandingProductTour() {
 
   return (
     <section className="py-24 sm:py-32" ref={ref}>
-      <div className="mx-auto max-w-300 px-5 sm:px-8">
-        {/* Section header */}
-        <motion.div
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="mb-20 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
-        >
-          <Text as="span" className="mb-3 block" variant="eyebrow">
-            Deep Dive
-          </Text>
-          <H2 className="mb-4" variant="landing">
-            How your AI company operates
-          </H2>
-          <Lead className="mx-auto max-w-120" size="sm">
-            From connecting your repo to autonomous product development, sales,
-            and support.
-          </Lead>
-        </motion.div>
+      <LazyMotion features={domAnimation}>
+        <div className="mx-auto max-w-300 px-5 sm:px-8">
+          {/* Section header */}
+          <m.div
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            className="mb-20 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
+          >
+            <Text as="span" className="mb-3 block" variant="eyebrow">
+              Deep Dive
+            </Text>
+            <H2 className="mb-4" variant="landing">
+              How your AI company operates
+            </H2>
+            <Lead className="mx-auto max-w-120" size="sm">
+              From connecting your repo to autonomous product development,
+              sales, and support.
+            </Lead>
+          </m.div>
 
-        {/* Feature blocks */}
-        <div className="space-y-28">
-          {TOUR_SECTIONS.map((section, idx) => (
-            <motion.div
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20"
-              initial={{ opacity: 0, y: 30 }}
-              key={section.id}
-              transition={{
-                delay: 0.15 + idx * 0.15,
-                duration: 0.7,
-                ease: EASE_OUT_EXPO,
-              }}
-            >
-              <div className={section.reverse ? "lg:order-2" : ""}>
-                <span className="mb-4 inline-block rounded-full bg-olive-600/10 px-3.5 py-1 font-semibold text-[11px] text-olive-600 uppercase tracking-widest dark:bg-olive-400/10 dark:text-olive-400">
-                  {section.badge}
-                </span>
-                <H3 className="mb-3" variant="landing">
-                  {section.title}
-                </H3>
-                <Lead className="max-w-md" size="sm">
-                  {section.description}
-                </Lead>
-              </div>
-              <div className={section.reverse ? "lg:order-1" : ""}>
-                {section.mockup === "widget" ? <WidgetMockup /> : <AIMockup />}
-              </div>
-            </motion.div>
-          ))}
+          {/* Feature blocks */}
+          <div className="space-y-28">
+            {TOUR_SECTIONS.map((section, idx) => (
+              <m.div
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20"
+                initial={{ opacity: 0, y: 30 }}
+                key={section.id}
+                transition={{
+                  delay: 0.15 + idx * 0.15,
+                  duration: 0.7,
+                  ease: EASE_OUT_EXPO,
+                }}
+              >
+                <div className={section.reverse ? "lg:order-2" : ""}>
+                  <span className="mb-4 inline-block rounded-full bg-olive-600/10 px-3.5 py-1 font-semibold text-[11px] text-olive-600 uppercase tracking-widest dark:bg-olive-400/10 dark:text-olive-400">
+                    {section.badge}
+                  </span>
+                  <H3 className="mb-3" variant="landing">
+                    {section.title}
+                  </H3>
+                  <Lead className="max-w-md" size="sm">
+                    {section.description}
+                  </Lead>
+                </div>
+                <div className={section.reverse ? "lg:order-1" : ""}>
+                  {section.mockup === "widget" ? (
+                    <WidgetMockup />
+                  ) : (
+                    <AIMockup />
+                  )}
+                </div>
+              </m.div>
+            ))}
+          </div>
         </div>
-      </div>
+      </LazyMotion>
     </section>
   );
 }

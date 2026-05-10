@@ -268,7 +268,7 @@ export async function GET(request: NextRequest) {
               fontFamily: "Inter SemiBold",
               fontSize: "14px",
               color: OLIVE_600,
-              letterSpacing: "0.08em",
+              letterSpacing: "0.04em",
             }}
           >
             COMPARISON

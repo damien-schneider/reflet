@@ -19,59 +19,77 @@ import {
 // INTERNAL QUERIES
 // ============================================
 
+const autopilotConfigValidator = v.object({
+  _creationTime: v.number(),
+  _id: v.id("autopilotConfig"),
+  activationOverrides: v.optional(v.string()),
+  adapter: codingAdapterType,
+  autoMergePRs: v.boolean(),
+  autoMergeThreshold: v.optional(v.number()),
+  autonomyLevel,
+  autonomyMode: v.optional(autonomyMode),
+  budgetHardStop: v.optional(v.boolean()),
+  budgetWarnPercent: v.optional(v.number()),
+  ceoChatThreadId: v.optional(v.string()),
+  chainEnabled: v.optional(v.boolean()),
+  costUsedTodayUsd: v.optional(v.number()),
+  createdAt: v.number(),
+  ctoEnabled: v.optional(v.boolean()),
+  dailyCostCapUsd: v.optional(v.number()),
+  devEnabled: v.optional(v.boolean()),
+  emailBlocklist: v.optional(v.array(v.string())),
+  emailDailyLimit: v.optional(v.number()),
+  enabled: v.boolean(),
+  fullAutoDelay: v.optional(v.number()),
+  growthEnabled: v.optional(v.boolean()),
+  intelligenceEnabled: v.optional(v.boolean()),
+  maxActiveInitiatives: v.optional(v.number()),
+  maxActiveStoriesPerInitiative: v.optional(v.number()),
+  maxPendingTasksPerAgent: v.optional(v.number()),
+  maxPendingTasksTotal: v.optional(v.number()),
+  maxSignalsPerDay: v.optional(v.number()),
+  maxTasksPerDay: v.number(),
+  organizationId: v.id("organizations"),
+  orgEmailAddress: v.optional(v.string()),
+  perAgentDailyCapUsd: v.optional(v.string()),
+  pmEnabled: v.optional(v.boolean()),
+  requireArchitectReview: v.boolean(),
+  salesEnabled: v.optional(v.boolean()),
+  stoppedAt: v.optional(v.number()),
+  supportEnabled: v.optional(v.boolean()),
+  tasksResetAt: v.number(),
+  tasksUsedToday: v.number(),
+  updatedAt: v.number(),
+  validatorWeights: v.optional(
+    v.object({
+      audienceBreadth: v.number(),
+      cost: v.number(),
+      devComplexity: v.number(),
+      maintainability: v.number(),
+      utility: v.number(),
+    })
+  ),
+  wakeThresholdOpenTasks: v.optional(v.number()),
+});
+
+const adapterCredentialsValidator = v.object({
+  _creationTime: v.number(),
+  _id: v.id("autopilotAdapterCredentials"),
+  adapter: codingAdapterType,
+  createdAt: v.number(),
+  credentials: v.string(),
+  isValid: v.boolean(),
+  lastValidatedAt: v.optional(v.number()),
+  organizationId: v.id("organizations"),
+  updatedAt: v.number(),
+});
+
 /**
  * Get the autopilot config for an organization.
  */
 export const getConfig = internalQuery({
   args: { organizationId: v.id("organizations") },
-  returns: v.union(
-    v.object({
-      _id: v.id("autopilotConfig"),
-      _creationTime: v.number(),
-      organizationId: v.id("organizations"),
-      enabled: v.boolean(),
-      intelligenceEnabled: v.optional(v.boolean()),
-      pmEnabled: v.optional(v.boolean()),
-      ctoEnabled: v.optional(v.boolean()),
-      devEnabled: v.optional(v.boolean()),
-      growthEnabled: v.optional(v.boolean()),
-      supportEnabled: v.optional(v.boolean()),
-      salesEnabled: v.optional(v.boolean()),
-      adapter: codingAdapterType,
-      autonomyLevel,
-      maxTasksPerDay: v.number(),
-      tasksUsedToday: v.number(),
-      tasksResetAt: v.number(),
-      autoMergePRs: v.boolean(),
-      requireArchitectReview: v.boolean(),
-      autonomyMode: v.optional(autonomyMode),
-      stoppedAt: v.optional(v.number()),
-      fullAutoDelay: v.optional(v.number()),
-      autoMergeThreshold: v.optional(v.number()),
-      maxPendingTasksPerAgent: v.optional(v.number()),
-      maxPendingTasksTotal: v.optional(v.number()),
-      ceoChatThreadId: v.optional(v.string()),
-      costUsedTodayUsd: v.optional(v.number()),
-      dailyCostCapUsd: v.optional(v.number()),
-      emailBlocklist: v.optional(v.array(v.string())),
-      emailDailyLimit: v.optional(v.number()),
-      orgEmailAddress: v.optional(v.string()),
-      chainEnabled: v.optional(v.boolean()),
-      wakeThresholdOpenTasks: v.optional(v.number()),
-      validatorWeights: v.optional(
-        v.object({
-          cost: v.number(),
-          devComplexity: v.number(),
-          maintainability: v.number(),
-          utility: v.number(),
-          audienceBreadth: v.number(),
-        })
-      ),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-    }),
-    v.null()
-  ),
+  returns: v.union(autopilotConfigValidator, v.null()),
   handler: async (ctx, args) => {
     const config = await ctx.db
       .query("autopilotConfig")
@@ -92,6 +110,7 @@ export const getAdapterCredentials = internalQuery({
     organizationId: v.id("organizations"),
     adapter: codingAdapterType,
   },
+  returns: v.union(adapterCredentialsValidator, v.null()),
   handler: async (ctx, args) => {
     const creds = await ctx.db
       .query("autopilotAdapterCredentials")
@@ -109,6 +128,7 @@ export const getAdapterCredentials = internalQuery({
  */
 export const canDispatchTask = internalQuery({
   args: { organizationId: v.id("organizations") },
+  returns: v.boolean(),
   handler: async (ctx, args) => {
     const config = await ctx.db
       .query("autopilotConfig")
@@ -133,8 +153,6 @@ export const canDispatchTask = internalQuery({
 
 /**
  * Check if a specific agent is enabled for an org.
- * Returns true if the agent's flag is explicitly true, OR
- * if the flag doesn't exist (backwards compat — agents default to enabled).
  */
 export const isAgentEnabled = internalQuery({
   args: {
@@ -179,14 +197,14 @@ function isConfigActive<T extends { autonomyMode?: string; enabled: boolean }>(
 }
 
 async function isOrgAutopilotAllowed(
-  ctx: Pick<QueryCtx, "runQuery">,
+  ctx: Pick<QueryCtx, "db" | "runQuery">,
   organizationId: Id<"organizations">
 ): Promise<boolean> {
   const tier = await getEffectiveTier(ctx, organizationId);
   return tier === "pro";
 }
 
-function isAgentEnabledInConfig(
+export function isAgentEnabledInConfig(
   agent: string,
   config: {
     adapter?: string;
@@ -206,14 +224,14 @@ function isAgentEnabledInConfig(
     case "dev":
       return (
         isProductionCodingAdapter(config.adapter ?? "builtin") &&
-        config.devEnabled !== false
+        config.devEnabled === true
       );
     case "growth":
-      return config.growthEnabled !== false;
+      return config.growthEnabled === true;
     case "support":
-      return config.supportEnabled !== false;
+      return config.supportEnabled === true;
     case "sales":
-      return config.salesEnabled !== false;
+      return config.salesEnabled === true;
     default:
       return true;
   }
@@ -281,5 +299,27 @@ export const getEnabledConfigs = internalQuery({
     }
 
     return enabledConfigs;
+  },
+});
+
+/**
+ * Get active configs for cleanup-only jobs.
+ * Unlike getEnabledConfigs, this intentionally does not require current Pro
+ * access because self-healing must cancel stale work after a downgrade.
+ */
+export const getSelfHealingConfigs = internalQuery({
+  args: {},
+  returns: v.array(
+    v.object({
+      organizationId: v.id("organizations"),
+      autonomyMode: v.optional(v.string()),
+    })
+  ),
+  handler: async (ctx) => {
+    const configs = await ctx.db.query("autopilotConfig").collect();
+    return configs.filter(isConfigActive).map((config) => ({
+      organizationId: config.organizationId,
+      autonomyMode: config.autonomyMode,
+    }));
   },
 });

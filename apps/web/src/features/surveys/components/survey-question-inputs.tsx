@@ -230,6 +230,7 @@ function BooleanInput({ answer, onAnswer }: Omit<QuestionInputProps, "type">) {
   return (
     <div className="flex gap-3">
       <button
+        aria-label="Answer yes"
         className={cn(
           "flex-1 rounded-lg border p-4 text-center transition-colors",
           answer === true
@@ -239,9 +240,11 @@ function BooleanInput({ answer, onAnswer }: Omit<QuestionInputProps, "type">) {
         onClick={() => onAnswer(true)}
         type="button"
       >
+        <span className="sr-only">Answer </span>
         Yes
       </button>
       <button
+        aria-label="Answer no"
         className={cn(
           "flex-1 rounded-lg border p-4 text-center transition-colors",
           answer === false
@@ -251,6 +254,7 @@ function BooleanInput({ answer, onAnswer }: Omit<QuestionInputProps, "type">) {
         onClick={() => onAnswer(false)}
         type="button"
       >
+        <span className="sr-only">Answer </span>
         No
       </button>
     </div>

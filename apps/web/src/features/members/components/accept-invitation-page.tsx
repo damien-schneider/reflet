@@ -17,7 +17,7 @@ interface AcceptInvitationContentProps {
 export function AcceptInvitationContent({
   token,
 }: AcceptInvitationContentProps) {
-  const router = useRouter();
+  const { push } = useRouter();
   const invitation = useQuery(api.organizations.invitation_queries.getByToken, {
     token,
   });
@@ -32,7 +32,7 @@ export function AcceptInvitationContent({
     setError(null);
     try {
       await acceptInvitation({ token });
-      router.push("/dashboard");
+      push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
       setIsAccepting(false);
@@ -44,8 +44,8 @@ export function AcceptInvitationContent({
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Spinner className="h-8 w-8" />
-          <Muted>Chargement de l'invitation...</Muted>
+          <Spinner className="size-8" />
+          <Muted>Chargement de l'invitation…</Muted>
         </div>
       </div>
     );
@@ -57,10 +57,10 @@ export function AcceptInvitationContent({
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md p-6 text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+            <div className="flex size-16 items-center justify-center rounded-full bg-red-100">
               <svg
                 aria-label="Icône erreur"
-                className="h-8 w-8 text-red-600"
+                className="size-8 text-red-600"
                 fill="none"
                 role="img"
                 stroke="currentColor"
@@ -81,7 +81,7 @@ export function AcceptInvitationContent({
           <Muted className="mb-6">
             Cette invitation n'existe pas ou a été annulée.
           </Muted>
-          <Button onClick={() => router.push("/")} variant="outline">
+          <Button onClick={() => push("/")} variant="outline">
             Retour à l'accueil
           </Button>
         </div>
@@ -96,10 +96,10 @@ export function AcceptInvitationContent({
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md p-6 text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+            <div className="flex size-16 items-center justify-center rounded-full bg-yellow-100">
               <svg
                 aria-label="Icône expirée"
-                className="h-8 w-8 text-yellow-600"
+                className="size-8 text-yellow-600"
                 fill="none"
                 role="img"
                 stroke="currentColor"
@@ -121,7 +121,7 @@ export function AcceptInvitationContent({
             Cette invitation a expiré. Veuillez demander une nouvelle invitation
             à l'administrateur de l'organisation.
           </Muted>
-          <Button onClick={() => router.push("/")} variant="outline">
+          <Button onClick={() => push("/")} variant="outline">
             Retour à l'accueil
           </Button>
         </div>
@@ -135,10 +135,10 @@ export function AcceptInvitationContent({
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md p-6 text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-olive-100">
+            <div className="flex size-16 items-center justify-center rounded-full bg-olive-100">
               <svg
                 aria-label="Icône information"
-                className="h-8 w-8 text-olive-600"
+                className="size-8 text-olive-600"
                 fill="none"
                 role="img"
                 stroke="currentColor"
@@ -160,7 +160,7 @@ export function AcceptInvitationContent({
             Cette invitation a déjà été acceptée. Vous êtes peut-être déjà
             membre de cette organisation.
           </Muted>
-          <Button onClick={() => router.push("/dashboard")} variant="default">
+          <Button onClick={() => push("/dashboard")} variant="default">
             Aller au tableau de bord
           </Button>
         </div>
@@ -174,10 +174,10 @@ export function AcceptInvitationContent({
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md p-6 text-center">
         <div className="mb-6 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+          <div className="flex size-16 items-center justify-center rounded-full bg-green-100">
             <svg
               aria-label="Icône invitation"
-              className="h-8 w-8 text-green-600"
+              className="size-8 text-green-600"
               fill="none"
               role="img"
               stroke="currentColor"
@@ -208,13 +208,11 @@ export function AcceptInvitationContent({
         {isAuthenticated ? (
           <div className="flex flex-col gap-3">
             <Button disabled={isAccepting} onClick={handleAcceptInvitation}>
-              {isAccepting
-                ? "Acceptation en cours..."
-                : "Accepter l'invitation"}
+              {isAccepting ? "Acceptation en cours…" : "Accepter l'invitation"}
             </Button>
             <Button
               disabled={isAccepting}
-              onClick={() => router.push("/")}
+              onClick={() => push("/")}
               variant="outline"
             >
               Refuser

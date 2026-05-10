@@ -126,10 +126,10 @@ function TaskDetailDialog({
         <div className="space-y-4">
           {/* Metadata */}
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-xs">
-            <span>
+            <span suppressHydrationWarning>
               Created {formatDistanceToNow(task.createdAt, { addSuffix: true })}
             </span>
-            <span>
+            <span suppressHydrationWarning>
               Updated {formatDistanceToNow(task.updatedAt, { addSuffix: true })}
             </span>
           </div>
@@ -249,7 +249,7 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
             <div className="mt-2 flex items-center gap-3 text-muted-foreground text-xs">
               <span>{statusConfig.label}</span>
               <span>·</span>
-              <span>
+              <span suppressHydrationWarning>
                 {formatDistanceToNow(task.createdAt, { addSuffix: true })}
               </span>
             </div>
@@ -260,6 +260,7 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
         <div className="flex shrink-0 items-center gap-1">
           {canRetry && (
             <Button
+              aria-label="Retry task"
               className="size-7"
               onClick={handleRetry}
               size="icon-sm"
@@ -271,6 +272,7 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
           )}
           {canCancel && (
             <Button
+              aria-label="Cancel task"
               className="size-7 text-destructive hover:text-destructive"
               onClick={handleCancel}
               size="icon-sm"
@@ -284,7 +286,8 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
             <DropdownMenuTrigger
               render={
                 <Button
-                  className="size-7 opacity-0 group-hover:opacity-100"
+                  aria-label="Open task actions"
+                  className="size-7"
                   size="icon-sm"
                   variant="ghost"
                 />

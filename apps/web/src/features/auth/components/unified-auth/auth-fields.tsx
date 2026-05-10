@@ -1,6 +1,11 @@
 "use client";
 
-import type { FieldErrors, UseFormRegister } from "react-hook-form";
+import type {
+  FieldErrors,
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormTrigger,
+} from "react-hook-form";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -28,7 +33,7 @@ export function AuthEmailField({
         {isCheckingEmail && (
           <div className="inline-flex w-fit! gap-1 text-muted-foreground text-xs">
             <Spinner />
-            <p className="">Checking email...</p>
+            <p className="">Checking email…</p>
           </div>
         )}
       </FieldLabel>
@@ -54,13 +59,13 @@ interface AuthPasswordFieldProps {
   isSubmitting: boolean;
   onPasswordChange: (
     e: React.ChangeEvent<HTMLInputElement>,
-    setValue: (name: keyof SignUpFormData, value: string) => void,
-    trigger: (name: keyof SignUpFormData) => Promise<boolean>
+    setValue: UseFormSetValue<SignUpFormData>,
+    trigger: UseFormTrigger<SignUpFormData>
   ) => void;
   passwordLength: number;
   register: UseFormRegister<SignUpFormData>;
-  setValue: (name: keyof SignUpFormData, value: string) => void;
-  trigger: (name: keyof SignUpFormData) => Promise<boolean>;
+  setValue: UseFormSetValue<SignUpFormData>;
+  trigger: UseFormTrigger<SignUpFormData>;
 }
 
 const MIN_PASSWORD_LENGTH = 8;

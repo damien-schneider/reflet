@@ -65,7 +65,7 @@ export function FeedbackHeader({
         className="mb-4 inline-flex items-center text-muted-foreground text-sm hover:text-foreground"
         href={`/dashboard/${orgSlug}`}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
+        <ArrowLeft className="mr-2 size-4" />
         Back
       </Link>
 
@@ -89,7 +89,7 @@ export function FeedbackHeader({
           }
           type="button"
         >
-          <CaretUp className="h-5 w-5" />
+          <CaretUp className="size-5" />
           <span className="font-semibold">{voteCount}</span>
         </button>
 
@@ -97,7 +97,7 @@ export function FeedbackHeader({
           <div className="flex items-start gap-2">
             {isPinned && (
               <PushPin
-                className="mt-1 h-5 w-5 shrink-0 text-primary"
+                className="mt-1 size-5 shrink-0 text-primary"
                 weight="fill"
               />
             )}
@@ -139,7 +139,7 @@ export function FeedbackHeader({
 
           <div className="mt-2 flex flex-wrap items-center gap-4 text-muted-foreground text-sm">
             <span className="flex items-center gap-1">
-              <ChatCircle className="h-4 w-4" />
+              <ChatCircle className="size-4" />
               {commentCount} comments
             </span>
             <span>{formatDistanceToNow(createdAt, { addSuffix: true })}</span>

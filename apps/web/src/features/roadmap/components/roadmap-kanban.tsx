@@ -112,14 +112,18 @@ export function RoadmapKanban({
         organizationStatusId: item.organizationStatusId ?? null,
         roadmapOrder: item.roadmapOrder ?? null,
         hasVoted: item.hasVoted,
-        tags: item.tags
-          ?.filter((tag): tag is NonNullable<typeof tag> => tag !== null)
-          .map((tag) => ({
-            _id: tag._id,
-            name: tag.name,
-            color: tag.color,
-            icon: tag.icon,
-          })),
+        tags: item.tags?.flatMap((tag) =>
+          tag === null
+            ? []
+            : [
+                {
+                  _id: tag._id,
+                  name: tag.name,
+                  color: tag.color,
+                  icon: tag.icon,
+                },
+              ]
+        ),
       };
       if (item.organizationStatusId && grouped[item.organizationStatusId]) {
         grouped[item.organizationStatusId].push(feedbackItem);
@@ -222,7 +226,7 @@ export function RoadmapKanban({
   if (!roadmapData) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <p className="text-muted-foreground">Loading roadmap...</p>
+        <p className="text-muted-foreground">Loading roadmap…</p>
       </div>
     );
   }
@@ -261,7 +265,7 @@ export function RoadmapKanban({
               onClick={() => setShowAddColumnModal(true)}
               type="button"
             >
-              <Plus className="h-8 w-8" />
+              <Plus className="size-8" />
               <span className="font-medium text-sm">Add Column</span>
             </button>
           )}

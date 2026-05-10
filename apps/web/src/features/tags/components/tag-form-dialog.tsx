@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +37,52 @@ interface TagFormDialogProps {
   organizationId: Id<"organizations">;
 }
 
-export function TagFormDialog({
+export function TagFormDialog({ editingTag, ...props }: TagFormDialogProps) {
+  return (
+    <TagFormDialogContent
+      editingTag={editingTag}
+      key={getTagFormKey(editingTag)}
+      {...props}
+    />
+  );
+}
+
+type EditableTag = NonNullable<TagFormDialogProps["editingTag"]>;
+
+interface TagFormData {
+  color: TagColor;
+  icon?: string;
+  name: string;
+}
+
+const getTagFormData = (editingTag: EditableTag | null): TagFormData => {
+  if (!editingTag) {
+    return {
+      name: "",
+      color: "blue",
+      icon: undefined,
+    };
+  }
+
+  const color = isValidTagColor(editingTag.color)
+    ? editingTag.color
+    : migrateHexToNamedColor(editingTag.color);
+
+  return {
+    name: editingTag.name,
+    color,
+    icon: editingTag.icon,
+  };
+};
+
+const getTagFormKey = (editingTag: EditableTag | null): string => {
+  if (!editingTag) {
+    return "create";
+  }
+  return `${editingTag._id}:${editingTag.name}:${editingTag.color}:${editingTag.icon ?? ""}`;
+};
+
+function TagFormDialogContent({
   organizationId,
   editingTag,
   open,
@@ -48,37 +93,8 @@ export function TagFormDialog({
   const updateTag = useMutation(api.organizations.tag_manager_actions.update);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<{
-    name: string;
-    color: TagColor;
-    icon?: string;
-  }>({
-    name: "",
-    color: "blue",
-    icon: undefined,
-  });
-
-  useEffect(
-    function syncEditingTagToForm() {
-      if (editingTag) {
-        // Migrate old hex colors to new named colors
-        const color = isValidTagColor(editingTag.color)
-          ? editingTag.color
-          : migrateHexToNamedColor(editingTag.color);
-        setFormData({
-          name: editingTag.name,
-          color,
-          icon: editingTag.icon,
-        });
-      } else {
-        setFormData({
-          name: "",
-          color: "blue",
-          icon: undefined,
-        });
-      }
-    },
-    [editingTag]
+  const [formData, setFormData] = useState<TagFormData>(() =>
+    getTagFormData(editingTag)
   );
 
   const handleCreateTag = async () => {
@@ -140,7 +156,9 @@ export function TagFormDialog({
         <div className="grid gap-4 py-4">
           <div className="flex items-center gap-3">
             <EmojiPicker
-              onChange={(icon) => setFormData({ ...formData, icon })}
+              onChange={(icon) =>
+                setFormData((current) => ({ ...current, icon }))
+              }
               value={formData.icon}
             />
             <div className="flex-1">
@@ -150,7 +168,10 @@ export function TagFormDialog({
               <Input
                 id="name"
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormData((current) => ({
+                    ...current,
+                    name: e.target.value,
+                  }))
                 }
                 placeholder="Tag name..."
                 value={formData.name}
@@ -158,7 +179,9 @@ export function TagFormDialog({
             </div>
           </div>
           <NotionColorPicker
-            onChange={(color) => setFormData({ ...formData, color })}
+            onChange={(color) =>
+              setFormData((current) => ({ ...current, color }))
+            }
             value={formData.color}
           />
         </div>

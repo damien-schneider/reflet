@@ -16,16 +16,11 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
   };
 
   return (
-    <Button
-      className="h-7 w-7"
-      onClick={handleCopy}
-      size="icon"
-      variant="ghost"
-    >
+    <Button className="size-7" onClick={handleCopy} size="icon" variant="ghost">
       {hasCopied ? (
-        <Check className="h-3.5 w-3.5 text-green-500" />
+        <Check className="size-3.5 text-green-500" />
       ) : (
-        <Copy className="h-3.5 w-3.5" />
+        <Copy className="size-3.5" />
       )}
     </Button>
   );

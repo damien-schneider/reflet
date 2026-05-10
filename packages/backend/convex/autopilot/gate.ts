@@ -8,11 +8,9 @@
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-import { assignedAgent, isProductionCodingAdapter } from "./schema/validators";
-
-// ============================================
-// ACTION TYPES
-// ============================================
+import { getEffectiveTier } from "../billing/effective_tier";
+import { isAgentEnabledInConfig } from "./config";
+import { assignedAgent } from "./schema/validators";
 
 export const gateActionType = v.union(
   v.literal("read"),
@@ -29,10 +27,6 @@ export const gateActionType = v.union(
   v.literal("sales_outreach"),
   v.literal("delete")
 );
-
-// ============================================
-// RATE LIMITS (per agent, per hour)
-// ============================================
 
 const AGENT_RATE_LIMITS = {
   max_inbox_items_per_hour: 10,
@@ -73,10 +67,6 @@ const APPROVAL_REQUIRED_ACTIONS = new Set([
 // Actions that always require approval regardless of mode.
 const ALWAYS_APPROVAL_ACTIONS = new Set(["sales_outreach", "delete"]);
 
-// ============================================
-// GATE RESULT TYPE
-// ============================================
-
 const gateResultValidator = v.object({
   proceed: v.boolean(),
   reason: v.optional(
@@ -91,43 +81,6 @@ const gateResultValidator = v.object({
     )
   ),
 });
-
-function isAgentEnabledInConfig(
-  config: {
-    adapter?: string;
-    ctoEnabled?: boolean;
-    devEnabled?: boolean;
-    growthEnabled?: boolean;
-    pmEnabled?: boolean;
-    salesEnabled?: boolean;
-    supportEnabled?: boolean;
-  },
-  agent: string
-): boolean {
-  switch (agent) {
-    case "pm":
-      return config.pmEnabled !== false;
-    case "cto":
-      return config.ctoEnabled !== false;
-    case "dev":
-      return (
-        isProductionCodingAdapter(config.adapter ?? "builtin") &&
-        config.devEnabled !== false
-      );
-    case "growth":
-      return config.growthEnabled !== false;
-    case "support":
-      return config.supportEnabled !== false;
-    case "sales":
-      return config.salesEnabled !== false;
-    default:
-      return true;
-  }
-}
-
-// ============================================
-// GATE CHECK
-// ============================================
 
 /**
  * Universal gate check. Every agent calls this before any action.
@@ -161,8 +114,13 @@ export const checkGate = internalQuery({
       return { proceed: false, reason: "stopped" as const };
     }
 
+    const tier = await getEffectiveTier(ctx, args.organizationId);
+    if (tier !== "pro") {
+      return { proceed: false, reason: "plan_limit" as const };
+    }
+
     // 3. Check if agent is enabled
-    if (!isAgentEnabledInConfig(config, args.agent)) {
+    if (!isAgentEnabledInConfig(args.agent, config)) {
       return { proceed: false, reason: "agent_disabled" as const };
     }
 
@@ -179,22 +137,21 @@ export const checkGate = internalQuery({
       return { proceed: true, reason: "allowed" as const };
     }
 
-    const oneHourAgo = Date.now() - 60 * 60 * 1000;
-    const recentActivity = await ctx.db
-      .query("autopilotActivityLog")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    const recentByAgent = recentActivity.filter(
-      (a) => a.agent === args.agent && a.createdAt >= oneHourAgo
-    );
-
     const limit = ACTION_LIMIT_MAP[args.action];
     if (limit !== undefined) {
-      const actionCount = recentByAgent.filter(
-        (a) => a.level === "action"
+      const oneHourAgo = Date.now() - 60 * 60 * 1000;
+      const recentMatchingActions = await ctx.db
+        .query("autopilotActivityLog")
+        .withIndex("by_org_action", (q) =>
+          q.eq("organizationId", args.organizationId).eq("action", args.action)
+        )
+        .collect();
+
+      const actionCount = recentMatchingActions.filter(
+        (a) =>
+          a.agent === args.agent &&
+          a.level === "action" &&
+          a.createdAt >= oneHourAgo
       ).length;
       if (actionCount >= limit) {
         return { proceed: false, reason: "rate_limit" as const };
@@ -246,7 +203,12 @@ export const isAgentActive = internalQuery({
       return false;
     }
 
-    return isAgentEnabledInConfig(config, args.agent);
+    const tier = await getEffectiveTier(ctx, args.organizationId);
+    if (tier !== "pro") {
+      return false;
+    }
+
+    return isAgentEnabledInConfig(args.agent, config);
   },
 });
 
@@ -265,8 +227,14 @@ export const isStopped = internalQuery({
       )
       .unique();
 
-    return (
-      !config?.enabled || (config.autonomyMode ?? "supervised") === "stopped"
-    );
+    if (
+      !config?.enabled ||
+      (config.autonomyMode ?? "supervised") === "stopped"
+    ) {
+      return true;
+    }
+
+    const tier = await getEffectiveTier(ctx, args.organizationId);
+    return tier !== "pro";
   },
 });

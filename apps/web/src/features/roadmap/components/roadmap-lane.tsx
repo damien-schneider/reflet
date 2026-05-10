@@ -76,7 +76,7 @@ export function RoadmapLaneColumn({
       >
         <div className="flex items-center gap-2">
           <div
-            className="h-3 w-3 rounded-full"
+            className="size-3 rounded-full"
             style={{
               backgroundColor: getTagDotColor(laneConfig.color),
             }}
@@ -89,12 +89,12 @@ export function RoadmapLaneColumn({
 
         {isAdmin && onAddItem && lane !== "backlog" && (
           <Button
-            className="h-7 w-7 p-0"
+            className="size-7 p-0"
             onClick={() => onAddItem(lane)}
             size="sm"
             variant="ghost"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="size-4" />
           </Button>
         )}
       </div>

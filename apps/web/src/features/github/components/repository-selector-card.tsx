@@ -82,7 +82,7 @@ export function RepositorySelectorSection({
     return (
       <div className="flex items-center justify-between rounded-lg border bg-muted/50 px-4 py-3">
         <div className="flex items-center gap-2">
-          <GitBranch className="h-4 w-4 text-muted-foreground" />
+          <GitBranch className="size-4 text-muted-foreground" />
           <Text className="font-medium">{repositoryFullName}</Text>
         </div>
         {isAdmin ? (
@@ -97,8 +97,8 @@ export function RepositorySelectorSection({
   if (loadingRepos) {
     return (
       <div className="flex items-center gap-2">
-        <Spinner className="h-4 w-4 animate-spin" />
-        <Text variant="bodySmall">Loading repositories...</Text>
+        <Spinner className="size-4 animate-spin" />
+        <Text variant="bodySmall">Loading repositories…</Text>
       </div>
     );
   }
@@ -139,9 +139,9 @@ export function RepositorySelectorSection({
               <ComboboxItem key={repo.id} value={repo}>
                 <div className="flex items-center gap-2">
                   {repo.isPrivate ? (
-                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    <Lock className="size-4 text-muted-foreground" />
                   ) : (
-                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    <Globe className="size-4 text-muted-foreground" />
                   )}
                   <div className="flex flex-col">
                     <span>{getRepositoryDisplayText(repo)}</span>
@@ -158,7 +158,7 @@ export function RepositorySelectorSection({
       </Combobox>
       {isAdmin ? (
         <Button disabled={!selectedRepo} onClick={onConnectRepository}>
-          <Plug className="mr-2 h-4 w-4" />
+          <Plug className="mr-2 size-4" />
           Connect Repository
         </Button>
       ) : null}

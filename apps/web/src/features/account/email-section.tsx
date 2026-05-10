@@ -66,7 +66,7 @@ export function EmailSection({
 
       <div className="flex items-center gap-4 rounded-lg bg-muted p-4">
         <div className="flex size-12 items-center justify-center rounded-none bg-background">
-          <Envelope className="h-5 w-5 text-muted-foreground" />
+          <Envelope className="size-5 text-muted-foreground" />
         </div>
         <div className="flex-1">
           <Muted>Current Email</Muted>

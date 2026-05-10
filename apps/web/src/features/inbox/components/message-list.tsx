@@ -152,8 +152,8 @@ export function MessageList({
     return (
       <div className={cn("flex flex-1 items-center justify-center", className)}>
         <div className="flex flex-col items-center gap-2 text-muted-foreground">
-          <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
-          <span className="text-sm">Loading messages...</span>
+          <div className="size-8 animate-pulse rounded-full bg-muted" />
+          <span className="text-sm">Loading messages…</span>
         </div>
       </div>
     );
@@ -163,8 +163,8 @@ export function MessageList({
     return (
       <div className={cn("flex flex-1 items-center justify-center", className)}>
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <ChatCircle className="h-6 w-6 text-muted-foreground" />
+          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+            <ChatCircle className="size-6 text-muted-foreground" />
           </div>
           <div>
             <Text variant="label">No messages yet</Text>

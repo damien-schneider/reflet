@@ -18,6 +18,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { H3 } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
+import { ClientDate } from "@/shared/components/client-date";
 
 interface FeedbackMainContentProps {
   children?: React.ReactNode;
@@ -73,7 +74,7 @@ export function FeedbackMainContent({
             onClick={handleToggleVote}
             type="button"
           >
-            <CaretUp className="h-5 w-5" />
+            <CaretUp className="size-5" />
             <span className="font-bold text-lg">{feedback.voteCount}</span>
           </button>
 
@@ -81,7 +82,7 @@ export function FeedbackMainContent({
             <div className="flex items-start justify-between">
               <H3 variant="card">
                 {feedback.isPinned && (
-                  <PushPin className="mr-2 inline h-5 w-5 text-olive-600" />
+                  <PushPin className="mr-2 inline size-5 text-olive-600" />
                 )}
                 {feedback.title}
               </H3>
@@ -90,13 +91,13 @@ export function FeedbackMainContent({
                   <DropdownListTrigger
                     render={(props: React.ComponentProps<"button">) => (
                       <Button {...props} size="icon" variant="ghost">
-                        <DotsThreeVertical className="h-4 w-4" />
+                        <DotsThreeVertical className="size-4" />
                       </Button>
                     )}
                   />
                   <DropdownListContent align="end">
                     <DropdownListItem onClick={handleTogglePin}>
-                      <PushPin className="mr-2 h-4 w-4" />
+                      <PushPin className="mr-2 size-4" />
                       {feedback.isPinned ? "Unpin" : "Pin"}
                     </DropdownListItem>
                     <DropdownListSeparator />
@@ -104,7 +105,7 @@ export function FeedbackMainContent({
                       className="text-destructive"
                       onClick={handleDeleteFeedback}
                     >
-                      <Trash className="mr-2 h-4 w-4" />
+                      <Trash className="mr-2 size-4" />
                       Delete
                     </DropdownListItem>
                   </DropdownListContent>
@@ -117,9 +118,7 @@ export function FeedbackMainContent({
                 {feedback.author?.name || feedback.author?.email || "Anonymous"}
               </span>
               <span>•</span>
-              <span>
-                {new Date(feedback._creationTime).toLocaleDateString()}
-              </span>
+              <ClientDate value={feedback._creationTime} />
             </div>
           </div>
         </div>
@@ -164,7 +163,7 @@ export function FeedbackMainContent({
                 size="icon"
                 variant="ghost"
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className="size-4" />
               </Button>
             )}
           </div>

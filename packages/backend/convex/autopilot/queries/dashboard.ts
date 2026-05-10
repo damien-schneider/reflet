@@ -10,6 +10,7 @@ import {
   DEFAULT_MAX_PENDING_TOTAL,
 } from "../config_task_caps";
 import {
+  assignedAgent,
   autonomyLevel,
   autonomyMode,
   codingAdapterType,
@@ -17,21 +18,69 @@ import {
 import { requireOrgMembership } from "./auth";
 
 const dashboardStatsValidator = v.object({
-  enabled: v.boolean(),
   adapter: codingAdapterType,
   autonomyLevel,
   autonomyMode,
-  tasksUsedToday: v.number(),
-  maxTasksPerDay: v.number(),
   costUsedTodayUsd: v.number(),
   dailyCostCapUsd: v.optional(v.number()),
-  todoCount: v.number(),
-  inProgressCount: v.number(),
   doneCount: v.number(),
-  pendingReviewCount: v.number(),
+  enabled: v.boolean(),
+  inProgressCount: v.number(),
   maxPendingTasksPerAgent: v.number(),
   maxPendingTasksTotal: v.number(),
+  maxTasksPerDay: v.number(),
+  pendingReviewCount: v.number(),
+  tasksUsedToday: v.number(),
+  todoCount: v.number(),
   itemsByAgent: v.record(v.string(), v.number()),
+});
+
+const agentPerformanceValidator = v.array(
+  v.object({
+    agent: assignedAgent,
+    approvalRate: v.number(),
+    documentsApproved: v.number(),
+    documentsCreated: v.number(),
+    errorCount: v.number(),
+    successCount: v.number(),
+    successRate: v.number(),
+    totalActions: v.number(),
+  })
+);
+
+const chartTimelinePointValidator = v.object({
+  actions: v.number(),
+  date: v.string(),
+  errors: v.number(),
+  successes: v.number(),
+});
+
+const costTimelinePointValidator = v.object({
+  cost: v.number(),
+  date: v.string(),
+});
+
+const chartDataValidator = v.object({
+  activityTimeline: v.array(chartTimelinePointValidator),
+  agentCounts: v.record(v.string(), v.number()),
+  costTimeline: v.array(costTimelinePointValidator),
+  statusCounts: v.record(v.string(), v.number()),
+  typeCounts: v.record(v.string(), v.number()),
+});
+
+const agentReadinessValidator = v.record(
+  v.string(),
+  v.object({
+    actionUrl: v.optional(v.string()),
+    ready: v.boolean(),
+    reason: v.optional(v.string()),
+  })
+);
+
+const contentQualityOverviewValidator = v.object({
+  byAgent: v.record(v.string(), v.number()),
+  shortContent: v.number(),
+  totalPending: v.number(),
 });
 
 export const getDashboardStats = query({
@@ -131,6 +180,7 @@ export const getDashboardStats = query({
  */
 export const getChartData = query({
   args: { organizationId: v.id("organizations") },
+  returns: chartDataValidator,
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgMembership(ctx, args.organizationId, user._id);
@@ -231,6 +281,7 @@ export const getChartData = query({
 
 export const getAgentReadiness = query({
   args: { organizationId: v.id("organizations") },
+  returns: agentReadinessValidator,
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgMembership(ctx, args.organizationId, user._id);
@@ -286,6 +337,7 @@ export const getAgentReadiness = query({
  */
 export const getAgentPerformance = query({
   args: { organizationId: v.id("organizations") },
+  returns: agentPerformanceValidator,
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgMembership(ctx, args.organizationId, user._id);
@@ -311,9 +363,7 @@ export const getAgentPerformance = query({
 
     return agents.map((agent) => {
       const agentLogs = logs.filter((l) => l.agent === agent);
-      const totalActions = agentLogs.filter(
-        (l) => l.action === "action"
-      ).length;
+      const totalActions = agentLogs.filter((l) => l.level === "action").length;
       const successCount = agentLogs.filter(
         (l) => l.level === "success"
       ).length;
@@ -348,6 +398,7 @@ export const getContentQualityOverview = query({
   args: {
     organizationId: v.id("organizations"),
   },
+  returns: contentQualityOverviewValidator,
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgMembership(ctx, args.organizationId, user._id);

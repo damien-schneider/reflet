@@ -1,9 +1,5 @@
 import { BASE_URL, DEFAULT_DESCRIPTION, SITE_NAME } from "./seo-config";
 
-/**
- * BreadcrumbList JSON-LD for navigation hierarchy.
- * Helps search engines understand page depth and display breadcrumbs in results.
- */
 export function getBreadcrumbJsonLd(items: { name: string; path: string }[]) {
   return {
     "@context": "https://schema.org",
@@ -17,9 +13,6 @@ export function getBreadcrumbJsonLd(items: { name: string; path: string }[]) {
   };
 }
 
-/**
- * JSON-LD structured data for the homepage
- */
 export function getHomePageJsonLd() {
   return {
     "@context": "https://schema.org",
@@ -164,9 +157,6 @@ function getHomePageFaqJsonLd() {
   };
 }
 
-/**
- * JSON-LD structured data for organization pages
- */
 export function getOrgPageJsonLd(options: {
   orgName: string;
   orgSlug: string;
@@ -193,9 +183,6 @@ export function getOrgPageJsonLd(options: {
   };
 }
 
-/**
- * JSON-LD structured data for blog posts (Article schema)
- */
 export function getBlogPostJsonLd(options: {
   title: string;
   description: string;
@@ -246,9 +233,6 @@ export function getBlogPostJsonLd(options: {
   };
 }
 
-/**
- * JSON-LD for comparison pages (ItemList schema)
- */
 export function getComparisonJsonLd(options: {
   title: string;
   description: string;
@@ -275,81 +259,5 @@ export function getComparisonJsonLd(options: {
         applicationCategory: "BusinessApplication",
       },
     ],
-  };
-}
-
-/**
- * JSON-LD for HowTo guides
- */
-export function getHowToJsonLd(options: {
-  title: string;
-  description: string;
-  slug: string;
-  steps: { name: string; text: string }[];
-  totalTime?: string;
-}) {
-  const { title, description, slug, steps, totalTime } = options;
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    name: title,
-    description,
-    url: `${BASE_URL}/blog/${slug}`,
-    totalTime: totalTime ?? "PT30M",
-    step: steps.map((step, index) => ({
-      "@type": "HowToStep",
-      position: index + 1,
-      name: step.name,
-      text: step.text,
-    })),
-  };
-}
-
-/**
- * JSON-LD structured data for individual feedback items.
- * Uses QAPage schema to represent user questions/requests.
- */
-export function getFeedbackItemJsonLd(options: {
-  title: string;
-  description?: string;
-  orgName: string;
-  orgSlug: string;
-  feedbackId: string;
-  status: string;
-  voteCount: number;
-}) {
-  const {
-    title,
-    description,
-    orgName,
-    orgSlug,
-    feedbackId,
-    status,
-    voteCount,
-  } = options;
-  const url = `${BASE_URL}/${orgSlug}/feedback/${feedbackId}`;
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "QAPage",
-    name: title,
-    description: description ?? `Feature request for ${orgName}: ${title}`,
-    url,
-    mainEntity: {
-      "@type": "Question",
-      name: title,
-      text: description ?? title,
-      answerCount: status === "completed" ? 1 : 0,
-      upvoteCount: voteCount,
-      author: {
-        "@type": "Organization",
-        name: orgName,
-      },
-    },
-    isPartOf: {
-      "@type": "WebSite",
-      "@id": `${BASE_URL}/#website`,
-    },
   };
 }

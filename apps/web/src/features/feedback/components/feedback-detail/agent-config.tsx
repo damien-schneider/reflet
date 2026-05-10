@@ -15,7 +15,7 @@ export const AGENTS: AgentTarget[] = [
   {
     id: "copy-generic",
     label: "Copy prompt",
-    icon: <Copy className="h-4 w-4" />,
+    icon: <Copy className="size-4" />,
     type: "copy",
     description: "Copy to clipboard for any AI assistant",
   },

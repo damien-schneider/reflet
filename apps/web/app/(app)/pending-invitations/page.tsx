@@ -19,7 +19,7 @@ import { H1, Muted } from "@/components/ui/typography";
 import { authClient } from "@/lib/auth-client";
 
 export default function PendingInvitationsPage() {
-  const router = useRouter();
+  const { push } = useRouter();
   const { data: session, isPending: isSessionLoading } =
     authClient.useSession();
   const invitations = useQuery(
@@ -38,20 +38,20 @@ export default function PendingInvitationsPage() {
   useEffect(
     function redirectToLoginIfUnauthenticated() {
       if (shouldRedirectToLogin) {
-        router.push("/auth/sign-in");
+        push("/auth/sign-in");
       }
     },
-    [shouldRedirectToLogin, router]
+    [push, shouldRedirectToLogin]
   );
 
   // Redirect to dashboard if no pending invitations
   useEffect(
     function redirectToDashboardIfNoInvitations() {
       if (shouldRedirectToDashboard) {
-        router.push("/dashboard");
+        push("/dashboard");
       }
     },
-    [shouldRedirectToDashboard, router]
+    [push, shouldRedirectToDashboard]
   );
 
   // Show loading state while checking auth or loading invitations
@@ -59,8 +59,8 @@ export default function PendingInvitationsPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Spinner className="h-8 w-8" />
-          <Muted>Chargement des invitations...</Muted>
+          <Spinner className="size-8" />
+          <Muted>Chargement des invitations&hellip;</Muted>
         </div>
       </div>
     );
@@ -71,8 +71,8 @@ export default function PendingInvitationsPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Spinner className="h-8 w-8" />
-          <Muted>Redirection...</Muted>
+          <Spinner className="size-8" />
+          <Muted>Redirection&hellip;</Muted>
         </div>
       </div>
     );
@@ -85,7 +85,7 @@ export default function PendingInvitationsPage() {
       await acceptInvitation({ token });
       // If this was the last invitation, redirect to dashboard
       if (invitations.length === 1) {
-        router.push("/dashboard");
+        push("/dashboard");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
@@ -94,15 +94,15 @@ export default function PendingInvitationsPage() {
   };
 
   const handleSkip = () => {
-    router.push("/dashboard");
+    push("/dashboard");
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-lg">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-olive-100">
-            <UserPlus className="h-8 w-8 text-olive-600" />
+          <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-olive-100">
+            <UserPlus className="size-8 text-olive-600" />
           </div>
           <H1 className="mb-2" variant="page">
             Invitations en attente
@@ -135,7 +135,7 @@ export default function PendingInvitationsPage() {
               <Card key={invitation._id}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="size-12">
                       <AvatarImage src={invitation.organizationLogo} />
                       <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
@@ -157,12 +157,12 @@ export default function PendingInvitationsPage() {
                       onClick={() => handleAccept(invitation.token)}
                     >
                       {acceptingToken === invitation.token
-                        ? "Acceptation..."
+                        ? "Acceptation…"
                         : "Accepter"}
                     </Button>
                     <Button
                       disabled={acceptingToken === invitation.token}
-                      onClick={() => router.push(`/invite/${invitation.token}`)}
+                      onClick={() => push(`/invite/${invitation.token}`)}
                       variant="outline"
                     >
                       Voir les détails

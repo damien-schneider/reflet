@@ -2,6 +2,10 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import {
+  BillingSection,
+  BillingUnavailableSection,
+} from "@/features/autopilot/components/settings/billing-section";
 import { LimitSettings } from "@/features/autopilot/components/settings/limit-settings";
 
 afterEach(() => {
@@ -40,7 +44,7 @@ describe("LimitSettings", () => {
 
     expect(onUpdate).not.toHaveBeenCalled();
     expect(onInvalidValue).toHaveBeenCalledWith(
-      "Tasks per day must be at least 1"
+      "Tasks per day must be a whole number of at least 1"
     );
     expect(maxTasksInput).toHaveValue(5);
   });
@@ -61,5 +65,23 @@ describe("LimitSettings", () => {
     await waitFor(() => expect(emailLimitInput).toHaveValue(20));
     expect(onUpdate).toHaveBeenCalledWith("emailDailyLimit", 30);
     expect(onInvalidValue).toHaveBeenCalledWith("Failed to save limit");
+  });
+});
+
+describe("BillingSection", () => {
+  it("links Autopilot upgrade actions to project billing", () => {
+    render(<BillingSection orgSlug="acme" tier="free" />);
+
+    for (const link of screen.getAllByRole("button")) {
+      expect(link).toHaveAttribute("href", "/dashboard/acme/project/billing");
+    }
+  });
+
+  it("links unavailable billing recovery to project billing", () => {
+    render(<BillingUnavailableSection orgSlug="acme" />);
+
+    expect(
+      screen.getByRole("button", { name: "Open Billing" })
+    ).toHaveAttribute("href", "/dashboard/acme/project/billing");
   });
 });

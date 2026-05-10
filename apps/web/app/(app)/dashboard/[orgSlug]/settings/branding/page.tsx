@@ -151,7 +151,7 @@ export default function BrandingSettingsPage({
     <div>
       <div className="mb-8">
         <div className="flex items-center gap-3">
-          <PaintBrush className="h-8 w-8 text-muted-foreground" />
+          <PaintBrush className="size-8 text-muted-foreground" />
           <div>
             <H1>Branding</H1>
             <Text variant="bodySmall">
@@ -192,7 +192,7 @@ export default function BrandingSettingsPage({
                 className="bg-olive-600/10 text-olive-600"
                 variant="secondary"
               >
-                <Sparkle className="mr-1 h-3 w-3" />
+                <Sparkle className="mr-1 size-3" />
                 Pro
               </Badge>
             )}
@@ -203,7 +203,7 @@ export default function BrandingSettingsPage({
                 Custom brand colors require the Pro plan.{" "}
                 <Link
                   className="font-medium text-olive-600 underline underline-offset-4"
-                  href={`/dashboard/${orgSlug}/settings/billing`}
+                  href={`/dashboard/${orgSlug}/project/billing`}
                 >
                   Upgrade to Pro
                 </Link>
@@ -255,6 +255,7 @@ export default function BrandingSettingsPage({
                         alt="Logo preview"
                         className="object-contain"
                         fill
+                        sizes="96px"
                         src={logo}
                       />
                     </div>
@@ -323,13 +324,13 @@ export default function BrandingSettingsPage({
           <div className="flex items-center justify-end gap-2 text-muted-foreground text-sm">
             {saveStatus === "saving" && (
               <>
-                <Spinner className="h-3.5 w-3.5 animate-spin" />
-                <Muted as="span">Saving...</Muted>
+                <Spinner className="size-3.5 animate-spin" />
+                <Muted as="span">Saving…</Muted>
               </>
             )}
             {saveStatus === "saved" && (
               <>
-                <Check className="h-3.5 w-3.5" />
+                <Check className="size-3.5" />
                 <Muted as="span">Saved</Muted>
               </>
             )}

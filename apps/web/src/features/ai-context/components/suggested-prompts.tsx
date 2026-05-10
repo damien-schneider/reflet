@@ -146,12 +146,12 @@ function PromptCopyButton({ text }: { text: string }) {
     <Button className="shrink-0" onClick={handleCopy} size="sm" variant="ghost">
       {hasCopied ? (
         <>
-          <Check className="mr-1 h-3.5 w-3.5 text-green-500" />
+          <Check className="mr-1 size-3.5 text-green-500" />
           <span className="text-green-500 text-xs">Copied</span>
         </>
       ) : (
         <>
-          <Copy className="mr-1 h-3.5 w-3.5" />
+          <Copy className="mr-1 size-3.5" />
           <span className="text-xs">Copy</span>
         </>
       )}
@@ -200,7 +200,7 @@ export function SuggestedPrompts() {
             <CardContent className="flex items-start gap-4 py-4">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
                   <h3 className="font-medium text-sm">{prompt.title}</h3>
                 </div>
                 <p className="mt-1 pl-5.5 text-muted-foreground text-xs">
@@ -226,38 +226,36 @@ export function SuggestedPrompts() {
         <ul className="mt-2 space-y-1.5 text-blue-800 text-xs dark:text-blue-200">
           <li className="flex items-start gap-2">
             <Badge
-              className="mt-0.5 h-4 w-4 shrink-0 items-center justify-center rounded-full p-0 text-[10px]"
+              className="mt-0.5 size-4 shrink-0 items-center justify-center rounded-full p-0 text-[10px]"
               variant="secondary"
             >
               1
             </Badge>
             <span>
-              Be specific — mention tags, statuses, or member names when
-              relevant
+              Be specific: mention tags, statuses, or member names when relevant
             </span>
           </li>
           <li className="flex items-start gap-2">
             <Badge
-              className="mt-0.5 h-4 w-4 shrink-0 items-center justify-center rounded-full p-0 text-[10px]"
+              className="mt-0.5 size-4 shrink-0 items-center justify-center rounded-full p-0 text-[10px]"
               variant="secondary"
             >
               2
             </Badge>
             <span>
-              Chain actions — ask the agent to read, analyze, then act in one
+              Chain actions: ask the agent to read, analyze, then act in one
               prompt
             </span>
           </li>
           <li className="flex items-start gap-2">
             <Badge
-              className="mt-0.5 h-4 w-4 shrink-0 items-center justify-center rounded-full p-0 text-[10px]"
+              className="mt-0.5 size-4 shrink-0 items-center justify-center rounded-full p-0 text-[10px]"
               variant="secondary"
             >
               3
             </Badge>
             <span>
-              Use with your codebase — combine feedback context with code
-              changes
+              Use with your codebase: combine feedback context with code changes
             </span>
           </li>
         </ul>

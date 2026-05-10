@@ -5,11 +5,7 @@ import { env } from "@reflet/env/web";
 import { useMutation } from "convex/react";
 import { useEffect, useState } from "react";
 
-/**
- * Convert a URL-safe base64 string to a Uint8Array.
- * Required for the applicationServerKey parameter of pushManager.subscribe().
- */
-export function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = atob(base64);
@@ -30,12 +26,6 @@ interface PushNotificationState {
   registration: ServiceWorkerRegistration | null;
 }
 
-/**
- * Hook to manage push notification subscription lifecycle.
- * - Registers the service worker
- * - Checks current permission and subscription state
- * - Provides subscribe/unsubscribe functions that sync with Convex
- */
 export function usePushNotifications() {
   const [state, setState] = useState<PushNotificationState>({
     isSupported: false,
@@ -52,7 +42,6 @@ export function usePushNotifications() {
     api.notifications.push_queries.unsubscribe
   );
 
-  // Register service worker and check initial state
   useEffect(function initPushNotificationState() {
     const init = async () => {
       const supported =
@@ -96,10 +85,6 @@ export function usePushNotifications() {
     init();
   }, []);
 
-  /**
-   * Request push permission and subscribe to push notifications.
-   * Sends the subscription keys to Convex for server-side push sending.
-   */
   const subscribe = async (): Promise<boolean> => {
     if (!state.registration) {
       return false;
@@ -119,9 +104,7 @@ export function usePushNotifications() {
       const reg = state.registration;
       const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: new Uint8Array(
-          urlBase64ToUint8Array(vapidPublicKey)
-        ),
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
       });
 
       const subscriptionJson = subscription.toJSON();
@@ -134,7 +117,6 @@ export function usePushNotifications() {
         return false;
       }
 
-      // Save to Convex
       await subscribeMutation({
         endpoint,
         p256dh,
@@ -150,9 +132,6 @@ export function usePushNotifications() {
     }
   };
 
-  /**
-   * Unsubscribe from push notifications and remove from Convex.
-   */
   const unsubscribeFromPush = async (): Promise<boolean> => {
     if (!state.registration) {
       return false;

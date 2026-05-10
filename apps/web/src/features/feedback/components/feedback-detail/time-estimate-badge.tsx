@@ -157,13 +157,13 @@ export function TimeEstimateBadge({
       className="h-8 gap-1 rounded-full px-3 font-normal text-xs"
       color="purple"
     >
-      <Clock className="h-3 w-3" />
+      <Clock className="size-3" />
       <span>{effectiveEstimate}</span>
       <Tooltip>
         <TooltipTrigger onClick={(e) => e.stopPropagation()} render={<span />}>
           <Sparkle
             className={cn(
-              "h-2.5 w-2.5",
+              "size-2.5",
               isOverridden ? "opacity-80" : "opacity-50"
             )}
             weight={isOverridden ? "fill" : "regular"}
@@ -173,7 +173,7 @@ export function TimeEstimateBadge({
           <p className="text-xs">{tooltipContent}</p>
         </TooltipContent>
       </Tooltip>
-      {isAdmin && <CaretDown className="h-3 w-3 opacity-70" />}
+      {isAdmin && <CaretDown className="size-3 opacity-70" />}
     </Badge>
   );
 
@@ -213,7 +213,7 @@ export function TimeEstimateBadge({
               render={<button type="button" />}
             >
               {amount}
-              <CaretDown className="h-3 w-3 opacity-60" />
+              <CaretDown className="size-3 opacity-60" />
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
@@ -237,7 +237,7 @@ export function TimeEstimateBadge({
               render={<button type="button" />}
             >
               {TIME_UNIT_LABELS[unit]}
-              <CaretDown className="h-3 w-3 opacity-60" />
+              <CaretDown className="size-3 opacity-60" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-28">
               <DropdownMenuRadioGroup
@@ -259,7 +259,7 @@ export function TimeEstimateBadge({
             onClick={handleClear}
             type="button"
           >
-            <X className="h-3 w-3" />
+            <X className="size-3" />
             Reset to AI value
           </button>
         )}

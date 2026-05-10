@@ -1,29 +1,38 @@
 "use client";
 
 import { PaperPlaneRight } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
-  autoFocus?: boolean;
   className?: string;
   disabled?: boolean;
+  focusOnMount?: boolean;
   onSend: (message: string) => void | Promise<void>;
   placeholder?: string;
 }
 
 export function MessageInput({
   onSend,
-  autoFocus = false,
   disabled = false,
+  focusOnMount = false,
   placeholder = "Type your message...",
   className,
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const hasFocusedTextarea = useRef(false);
+
+  const handleTextareaRef = (textarea: HTMLTextAreaElement | null) => {
+    if (!(textarea && focusOnMount && !hasFocusedTextarea.current)) {
+      return;
+    }
+    textarea.focus();
+    hasFocusedTextarea.current = true;
+  };
 
   const handleSend = async () => {
     const trimmedMessage = message.trim();
@@ -58,12 +67,12 @@ export function MessageInput({
       )}
     >
       <Textarea
-        autoFocus={autoFocus}
         className="max-h-32 min-h-10 resize-none"
         disabled={isDisabled}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
+        ref={handleTextareaRef}
         rows={1}
         value={message}
       />
@@ -73,7 +82,7 @@ export function MessageInput({
         onClick={handleSend}
         size="icon"
       >
-        <PaperPlaneRight className="h-4 w-4" weight="fill" />
+        <PaperPlaneRight className="size-4" weight="fill" />
         <span className="sr-only">Send message</span>
       </Button>
     </div>

@@ -34,7 +34,7 @@ function OrgIcon({
     return (
       <Image
         alt={org.name}
-        className="h-4 w-4 shrink-0 rounded object-contain"
+        className="size-4 shrink-0 rounded object-contain"
         height={16}
         src={org.logo}
         width={16}
@@ -44,14 +44,14 @@ function OrgIcon({
 
   if (org) {
     return (
-      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-olive-100 font-display font-medium text-[10px] text-olive-700 dark:bg-olive-800/40 dark:text-olive-300">
+      <span className="flex size-4 shrink-0 items-center justify-center rounded bg-olive-100 font-display font-medium text-[10px] text-olive-700 dark:bg-olive-800/40 dark:text-olive-300">
         {org.name.charAt(0).toUpperCase()}
       </span>
     );
   }
 
   return (
-    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-olive-100 dark:bg-olive-800/40" />
+    <span className="flex size-4 shrink-0 items-center justify-center rounded bg-olive-100 dark:bg-olive-800/40" />
   );
 }
 
@@ -62,7 +62,7 @@ interface OrganizationSwitcherProps {
 export function OrganizationSwitcher({
   currentOrgSlug,
 }: OrganizationSwitcherProps) {
-  const router = useRouter();
+  const { prefetch, push } = useRouter();
   const organizations = useQuery(api.organizations.queries.list);
   const createOrg = useMutation(api.organizations.mutations.create);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -77,12 +77,12 @@ export function OrganizationSwitcher({
       if (organizations) {
         for (const org of organizations) {
           if (org?.slug && org.slug !== currentOrgSlug) {
-            router.prefetch(`/dashboard/${org.slug}`);
+            prefetch(`/dashboard/${org.slug}`);
           }
         }
       }
     },
-    [organizations, currentOrgSlug, router]
+    [organizations, currentOrgSlug, prefetch]
   );
 
   const handleCreateOrg = async () => {
@@ -95,7 +95,7 @@ export function OrganizationSwitcher({
       await createOrg({ name: newOrgName.trim() });
       setShowCreateDialog(false);
       setNewOrgName("");
-      router.push("/dashboard");
+      push("/dashboard");
     } catch (error) {
       const message =
         error instanceof Error
@@ -114,8 +114,8 @@ export function OrganizationSwitcher({
         disabled
         variant="outline"
       >
-        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-olive-100 dark:bg-olive-800/40" />
-        <span className="group-data-[collapsible=icon]:hidden">Loading...</span>
+        <span className="flex size-4 shrink-0 items-center justify-center rounded bg-olive-100 dark:bg-olive-800/40" />
+        <span className="group-data-[collapsible=icon]:hidden">Loading…</span>
       </Button>
     );
   }
@@ -139,7 +139,7 @@ export function OrganizationSwitcher({
               {currentOrg?.name || "Select organization"}
             </span>
           </span>
-          <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 group-data-[collapsible=icon]:hidden" />
+          <CaretUpDown className="ml-2 size-4 shrink-0 opacity-50 group-data-[collapsible=icon]:hidden" />
         </DropdownListTrigger>
         <DropdownListContent align="start" className="w-50">
           {organizations.map((org) =>
@@ -154,7 +154,7 @@ export function OrganizationSwitcher({
                       <span className="truncate">{org.name}</span>
                     </span>
                     {org.slug === currentOrgSlug && (
-                      <Check className="h-4 w-4 shrink-0" />
+                      <Check className="size-4 shrink-0" />
                     )}
                   </Link>
                 )}
@@ -163,7 +163,7 @@ export function OrganizationSwitcher({
           )}
           {organizations.length > 0 && <DropdownListSeparator />}
           <DropdownListItem onClick={() => setShowCreateDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 size-4" />
             Create organization
           </DropdownListItem>
         </DropdownListContent>

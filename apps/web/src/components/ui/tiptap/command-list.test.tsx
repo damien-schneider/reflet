@@ -165,6 +165,32 @@ describe("CommandList", () => {
     expect(onRegisterKeyHandler).toHaveBeenCalledWith(expect.any(Function));
   });
 
+  it("does not capture keyboard events when no items are available", () => {
+    const command = vi.fn();
+    let keyHandler: (event: KeyboardEvent) => boolean = () => false;
+    const onRegisterKeyHandler = (
+      handler: (event: KeyboardEvent) => boolean
+    ) => {
+      keyHandler = handler;
+    };
+
+    render(
+      <CommandList
+        command={command}
+        items={[]}
+        onRegisterKeyHandler={onRegisterKeyHandler}
+      />
+    );
+
+    expect(keyHandler(new KeyboardEvent("keydown", { key: "ArrowDown" }))).toBe(
+      false
+    );
+    expect(keyHandler(new KeyboardEvent("keydown", { key: "Enter" }))).toBe(
+      false
+    );
+    expect(command).not.toHaveBeenCalled();
+  });
+
   describe("keyboard navigation", () => {
     it("ArrowDown moves selection down", () => {
       const items = createMockItems();

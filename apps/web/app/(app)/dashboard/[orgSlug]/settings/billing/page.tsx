@@ -71,8 +71,8 @@ export default function BillingPage({
       const result = await createCheckoutSession({
         organizationId: org._id,
         priceKey: priceKey as "proMonthly" | "proYearly",
-        successUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing?success=true`,
-        cancelUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing?canceled=true`,
+        successUrl: `${window.location.origin}/dashboard/${orgSlug}/project/billing?success=true`,
+        cancelUrl: `${window.location.origin}/dashboard/${orgSlug}/project/billing?canceled=true`,
       });
 
       if (result.url) {
@@ -94,7 +94,7 @@ export default function BillingPage({
     try {
       const result = await createPortalSession({
         organizationId: org._id,
-        returnUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing`,
+        returnUrl: `${window.location.origin}/dashboard/${orgSlug}/project/billing`,
       });
 
       if (result.url) {

@@ -21,7 +21,40 @@ export interface DeadlineInfo {
   status: DeadlineStatus;
 }
 
+interface DeadlineBadgeStyles {
+  bg: string;
+  border: string;
+  text: string;
+}
+
 const DUE_SOON_THRESHOLD_DAYS = 7;
+const DEADLINE_BADGE_STYLES: Record<DeadlineStatus, DeadlineBadgeStyles> = {
+  overdue: {
+    bg: "bg-red-500/10",
+    border: "border-red-500/20",
+    text: "text-red-500",
+  },
+  due_today: {
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/20",
+    text: "text-amber-500",
+  },
+  due_soon: {
+    bg: "bg-amber-400/10",
+    border: "border-amber-400/20",
+    text: "text-amber-400",
+  },
+  upcoming: {
+    bg: "bg-muted",
+    border: "border-border",
+    text: "text-muted-foreground",
+  },
+  none: {
+    bg: "bg-muted",
+    border: "border-border",
+    text: "text-muted-foreground",
+  },
+};
 
 export function getDeadlineInfo(
   targetDate: number | undefined,
@@ -62,47 +95,11 @@ export function getDeadlineInfo(
 }
 
 export function getDeadlineColor(status: DeadlineStatus): string {
-  switch (status) {
-    case "overdue":
-      return "text-red-500";
-    case "due_today":
-      return "text-amber-500";
-    case "due_soon":
-      return "text-amber-400";
-    default:
-      return "text-muted-foreground";
-  }
+  return DEADLINE_BADGE_STYLES[status].text;
 }
 
-export function getDeadlineBadgeStyles(status: DeadlineStatus): {
-  bg: string;
-  text: string;
-  border: string;
-} {
-  switch (status) {
-    case "overdue":
-      return {
-        bg: "bg-red-500/10",
-        text: "text-red-500",
-        border: "border-red-500/20",
-      };
-    case "due_today":
-      return {
-        bg: "bg-amber-500/10",
-        text: "text-amber-500",
-        border: "border-amber-500/20",
-      };
-    case "due_soon":
-      return {
-        bg: "bg-amber-400/10",
-        text: "text-amber-400",
-        border: "border-amber-400/20",
-      };
-    default:
-      return {
-        bg: "bg-muted",
-        text: "text-muted-foreground",
-        border: "border-border",
-      };
-  }
+export function getDeadlineBadgeStyles(
+  status: DeadlineStatus
+): DeadlineBadgeStyles {
+  return DEADLINE_BADGE_STYLES[status];
 }

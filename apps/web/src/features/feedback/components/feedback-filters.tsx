@@ -35,6 +35,7 @@ const SORT_OPTIONS: readonly SortOption[] = [
   "most_votes",
   "most_comments",
 ] as const;
+const EMPTY_TAGS: Doc<"tags">[] = [];
 
 const isSortOption = (value: string): value is SortOption =>
   SORT_OPTIONS.some((o) => o === value);
@@ -63,7 +64,7 @@ export function FeedbackFunnels({
   organizationId,
   className,
   showSubmitButton = true,
-  tags = [],
+  tags = EMPTY_TAGS,
   onSubmitClick,
 }: FeedbackFunnelsProps) {
   const [filterOpen, setFunnelOpen] = useState(false);
@@ -116,7 +117,7 @@ export function FeedbackFunnels({
         <div className="flex items-center gap-2">
           {/* MagnifyingGlass */}
           <div className="relative max-w-sm flex-1">
-            <MagnifyingGlass className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <MagnifyingGlass className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="pl-9"
               onChange={(e) => setSearch(e.target.value)}
@@ -130,11 +131,11 @@ export function FeedbackFunnels({
           <Popover onOpenChange={setFunnelOpen} open={filterOpen}>
             <PopoverTrigger>
               <Button className="gap-2" variant="outline">
-                <Funnel className="h-4 w-4" />
+                <Funnel className="size-4" />
                 Funnel
                 {filterCount > 0 && (
                   <Badge
-                    className="ml-1 flex h-5 w-5 items-center justify-center p-0"
+                    className="ml-1 flex size-5 items-center justify-center p-0"
                     variant="secondary"
                   >
                     {filterCount}
@@ -165,7 +166,7 @@ export function FeedbackFunnels({
                     ))}
                     {!organizationStatuses && (
                       <span className="text-muted-foreground text-sm">
-                        Loading...
+                        Loading…
                       </span>
                     )}
                   </div>
@@ -229,9 +230,9 @@ export function FeedbackFunnels({
           >
             <SelectTrigger className="w-40">
               {sortBy === "newest" || sortBy === "oldest" ? (
-                <SortDescending className="mr-2 h-4 w-4" />
+                <SortDescending className="mr-2 size-4" />
               ) : (
-                <SortAscending className="mr-2 h-4 w-4" />
+                <SortAscending className="mr-2 size-4" />
               )}
               <SelectValue />
             </SelectTrigger>
@@ -246,7 +247,7 @@ export function FeedbackFunnels({
 
         {showSubmitButton && onSubmitClick && (
           <Button onClick={onSubmitClick}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 size-4" />
             Submit Feedback
           </Button>
         )}
@@ -263,7 +264,7 @@ export function FeedbackFunnels({
               variant="secondary"
             >
               Completed hidden
-              <X className="h-3 w-3" />
+              <X className="size-3" />
             </Badge>
           )}
           {selectedStatusIds.map((statusId) => {
@@ -281,7 +282,7 @@ export function FeedbackFunnels({
                 onClick={() => toggleStatus(statusId)}
               >
                 {status.name}
-                <X className="h-3 w-3" />
+                <X className="size-3" />
               </Badge>
             );
           })}
@@ -298,7 +299,7 @@ export function FeedbackFunnels({
                 onClick={() => toggleTag(tagId)}
               >
                 {tag.name}
-                <X className="h-3 w-3" />
+                <X className="size-3" />
               </Badge>
             );
           })}

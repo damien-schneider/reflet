@@ -11,6 +11,11 @@ export const getTasksForFeedback = query({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      return [];
+    }
+    await requireOrgMembership(ctx, feedback.organizationId, user._id);
 
     const links = await ctx.db
       .query("feedbackTaskLinks")
@@ -21,14 +26,17 @@ export const getTasksForFeedback = query({
       return [];
     }
 
-    await requireOrgMembership(ctx, links[0].organizationId, user._id);
-
     const tasks = await Promise.all(
-      links.map((link) => ctx.db.get(link.workItemId))
+      links
+        .filter((link) => link.organizationId === feedback.organizationId)
+        .map((link) => ctx.db.get(link.workItemId))
     );
 
     return tasks.filter(
-      (t): t is NonNullable<typeof t> => t !== null && t.status !== "cancelled"
+      (t): t is NonNullable<typeof t> =>
+        t !== null &&
+        t.organizationId === feedback.organizationId &&
+        t.status !== "cancelled"
     );
   },
 });
@@ -51,9 +59,14 @@ export const getFeedbackForTask = query({
       .collect();
 
     const feedbackItems = await Promise.all(
-      links.map((link) => ctx.db.get(link.feedbackId))
+      links
+        .filter((link) => link.organizationId === item.organizationId)
+        .map((link) => ctx.db.get(link.feedbackId))
     );
 
-    return feedbackItems.filter((f): f is NonNullable<typeof f> => f !== null);
+    return feedbackItems.filter(
+      (f): f is NonNullable<typeof f> =>
+        f !== null && f.organizationId === item.organizationId
+    );
   },
 });

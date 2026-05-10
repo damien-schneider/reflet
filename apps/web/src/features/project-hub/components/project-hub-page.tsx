@@ -75,7 +75,11 @@ export function ProjectHubPage({
                 and more.
               </Text>
             </div>
-            <Button render={<Link href={`${basePath}/setup`} />} size="sm">
+            <Button
+              nativeButton={false}
+              render={<Link href={`${basePath}/setup`} />}
+              size="sm"
+            >
               Connect
               <ArrowRight className="ml-1 size-3.5" />
             </Button>
@@ -154,6 +158,7 @@ export function ProjectHubPage({
       {setupStatus?.setupCompleted && setupStatus.hasGitHub && (
         <div className="mt-6 flex items-center justify-center">
           <Button
+            nativeButton={false}
             render={<Link href={`${basePath}/setup`} />}
             size="sm"
             variant="ghost"

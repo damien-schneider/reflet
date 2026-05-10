@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { ClientDate } from "@/shared/components/client-date";
 
 interface AIClarificationProps {
   feedbackId: Id<"feedback">;
@@ -96,7 +97,7 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
     <div className="mb-6">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="flex items-center gap-2 font-medium">
-          <Sparkle className="h-4 w-4 text-olive-600" />
+          <Sparkle className="size-4 text-olive-600" />
           AI Clarification
         </h3>
         <div className="flex gap-2">
@@ -105,7 +106,7 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
             size="sm"
             variant="outline"
           >
-            <Code className="mr-1 h-3 w-3" />
+            <Code className="mr-1 size-3" />
             Coding Prompt
           </Button>
           <Button
@@ -115,9 +116,9 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
             variant="outline"
           >
             {isGenerating ? (
-              <ArrowsClockwise className="mr-1 h-3 w-3 animate-spin" />
+              <ArrowsClockwise className="mr-1 size-3 animate-spin" />
             ) : (
-              <Sparkle className="mr-1 h-3 w-3" />
+              <Sparkle className="mr-1 size-3" />
             )}
             {hasExisting ? "Regenerate" : "Generate"}
           </Button>
@@ -129,7 +130,7 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
           <CardContent className="pt-4">
             <div className="space-y-2">
               <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-4/5" />
+              <Skeleton className="size-4/5" />
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-2/3" />
@@ -154,7 +155,7 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
                 size="xs"
                 variant="ghost"
               >
-                <Copy className="h-3 w-3" />
+                <Copy className="size-3" />
                 {copied ? "Copied" : "Copy"}
               </Button>
             </div>
@@ -166,9 +167,9 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
             {clarificationStatus.aiClarificationGeneratedAt && (
               <p className="mt-2 text-muted-foreground/60 text-xs">
                 Generated{" "}
-                {new Date(
-                  clarificationStatus.aiClarificationGeneratedAt
-                ).toLocaleDateString()}
+                <ClientDate
+                  value={clarificationStatus.aiClarificationGeneratedAt}
+                />
               </p>
             )}
           </CardContent>
@@ -187,7 +188,7 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Code className="h-5 w-5" />
+              <Code className="size-5" />
               Coding Prompt
             </DialogTitle>
             <DialogDescription>
@@ -212,7 +213,7 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
                     size="sm"
                     variant="secondary"
                   >
-                    <Copy className="mr-1 h-3 w-3" />
+                    <Copy className="mr-1 size-3" />
                     {promptCopied ? "Copied!" : "Copy Prompt"}
                   </Button>
                 </div>

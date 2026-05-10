@@ -14,9 +14,9 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import Link from "next/link";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -107,7 +107,7 @@ export function OnboardingChecklist({
   );
 
   const [isMinimized, setIsMinimized] = useState(true);
-  const [hasSynced, setHasSynced] = useState(false);
+  const hasSynced = useRef(false);
 
   // Initialize minimized state from localStorage
   useEffect(
@@ -122,12 +122,12 @@ export function OnboardingChecklist({
   // Sync auto-detected progress once on mount
   useEffect(
     function syncAutoDetectedProgress() {
-      if (!hasSynced) {
+      if (!hasSynced.current) {
+        hasSynced.current = true;
         syncMutation({ organizationId });
-        setHasSynced(true);
       }
     },
-    [hasSynced, organizationId, syncMutation]
+    [organizationId, syncMutation]
   );
 
   const toggleMinimized = () => {
@@ -163,117 +163,114 @@ export function OnboardingChecklist({
 
   return (
     <div className="fixed right-4 bottom-4 z-[60] md:right-6 md:bottom-6">
-      <AnimatePresence mode="wait">
-        {isMinimized ? (
-          <motion.button
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center gap-2 rounded-full border bg-card px-4 py-2.5 shadow-lg transition-colors hover:bg-accent"
-            exit={{ opacity: 0, scale: 0.9 }}
-            initial={{ opacity: 0, scale: 0.9 }}
-            key="pill"
-            onClick={toggleMinimized}
-            type="button"
-          >
-            <ListChecks className="text-primary" size={18} weight="bold" />
-            <span className="font-medium text-sm">
-              {completedCount}/{steps.length}
-            </span>
-            <div className="h-1.5 w-12 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
-          </motion.button>
-        ) : (
-          <motion.div
-            animate={{ opacity: 1, y: 0 }}
-            className="w-[calc(100vw-2rem)] rounded-xl border bg-card shadow-xl md:w-[380px]"
-            exit={{ opacity: 0, y: 20 }}
-            initial={{ opacity: 0, y: 20 }}
-            key="card"
-          >
-            <div className="flex items-start justify-between p-4 pb-2">
-              <div>
-                <h3 className="font-semibold text-sm">
-                  Get started with Reflet
-                </h3>
-                <p className="text-muted-foreground text-xs">
-                  Complete these steps to set up your workspace
-                </p>
+      <LazyMotion features={domAnimation}>
+        <AnimatePresence mode="wait">
+          {isMinimized ? (
+            <m.button
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-2 rounded-full border bg-card px-4 py-2.5 shadow-lg transition-colors hover:bg-accent"
+              exit={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              key="pill"
+              onClick={toggleMinimized}
+              type="button"
+            >
+              <ListChecks className="text-primary" size={18} weight="bold" />
+              <span className="font-medium text-sm">
+                {completedCount}/{steps.length}
+              </span>
+              <Progress className="h-1.5 w-12" value={percentage} />
+            </m.button>
+          ) : (
+            <m.div
+              animate={{ opacity: 1, y: 0 }}
+              className="w-[calc(100vw-2rem)] rounded-xl border bg-card shadow-xl md:w-[380px]"
+              exit={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 20 }}
+              key="card"
+            >
+              <div className="flex items-start justify-between p-4 pb-2">
+                <div>
+                  <h3 className="font-semibold text-sm">
+                    Get started with Reflet
+                  </h3>
+                  <p className="text-muted-foreground text-xs">
+                    Complete these steps to set up your workspace
+                  </p>
+                </div>
+                <Button
+                  className="shrink-0"
+                  onClick={toggleMinimized}
+                  size="icon"
+                  variant="ghost"
+                >
+                  <CaretDown size={16} />
+                  <span className="sr-only">Minimize</span>
+                </Button>
               </div>
-              <Button
-                className="shrink-0"
-                onClick={toggleMinimized}
-                size="icon"
-                variant="ghost"
-              >
-                <CaretDown size={16} />
-                <span className="sr-only">Minimize</span>
-              </Button>
-            </div>
 
-            <div className="px-4">
-              <div className="flex items-center gap-3">
-                <Progress className="flex-1" value={percentage} />
-                <span className="text-muted-foreground text-xs">
-                  {completedCount}/{steps.length}
-                </span>
+              <div className="px-4">
+                <div className="flex items-center gap-3">
+                  <Progress className="flex-1" value={percentage} />
+                  <span className="text-muted-foreground text-xs">
+                    {completedCount}/{steps.length}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <ul className="max-h-[50vh] space-y-0.5 overflow-y-auto p-2">
-              {steps.map((step) => {
-                const done = progress.steps[step.key] ?? false;
-                return (
-                  <li key={step.key}>
-                    <Link
-                      className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted"
-                      href={step.href}
-                    >
-                      {done ? (
-                        <CheckCircle
-                          className="shrink-0 text-primary"
-                          size={18}
-                          weight="fill"
-                        />
-                      ) : (
-                        <Circle
-                          className="shrink-0 text-muted-foreground"
-                          size={18}
-                        />
-                      )}
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">
-                          {step.icon}
-                        </span>
-                        <span
-                          className={cn(
-                            "text-sm",
-                            done && "text-muted-foreground line-through"
-                          )}
-                        >
-                          {step.label}
-                        </span>
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+              <ul className="max-h-[50vh] space-y-0.5 overflow-y-auto p-2">
+                {steps.map((step) => {
+                  const done = progress.steps[step.key] ?? false;
+                  return (
+                    <li key={step.key}>
+                      <Link
+                        className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted"
+                        href={step.href}
+                      >
+                        {done ? (
+                          <CheckCircle
+                            className="shrink-0 text-primary"
+                            size={18}
+                            weight="fill"
+                          />
+                        ) : (
+                          <Circle
+                            className="shrink-0 text-muted-foreground"
+                            size={18}
+                          />
+                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">
+                            {step.icon}
+                          </span>
+                          <span
+                            className={cn(
+                              "text-sm",
+                              done && "text-muted-foreground line-through"
+                            )}
+                          >
+                            {step.label}
+                          </span>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
 
-            <div className="border-t px-4 py-2.5">
-              <button
-                className="text-muted-foreground text-xs transition-colors hover:text-foreground"
-                onClick={handleDismiss}
-                type="button"
-              >
-                Don't show again
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <div className="border-t px-4 py-2.5">
+                <button
+                  className="text-muted-foreground text-xs transition-colors hover:text-foreground"
+                  onClick={handleDismiss}
+                  type="button"
+                >
+                  Don't show again
+                </button>
+              </div>
+            </m.div>
+          )}
+        </AnimatePresence>
+      </LazyMotion>
     </div>
   );
 }

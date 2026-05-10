@@ -27,7 +27,10 @@ export function ResponseSparkline({
     );
   }
 
-  const values = data.map((d) => d.responseTimeMs ?? 0).filter((v) => v > 0);
+  const values = data.flatMap((item) => {
+    const responseTimeMs = item.responseTimeMs ?? 0;
+    return responseTimeMs > 0 ? [responseTimeMs] : [];
+  });
 
   if (values.length === 0) {
     return null;

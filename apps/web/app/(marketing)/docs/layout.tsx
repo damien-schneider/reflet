@@ -25,7 +25,7 @@ export default function DocsLayout({
             className="flex items-center gap-1.5 text-muted-foreground text-sm transition-colors hover:text-foreground"
             href="/"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="size-4" />
             <span>Back to Reflet</span>
           </Link>
           <div className="h-4 w-px bg-border" />

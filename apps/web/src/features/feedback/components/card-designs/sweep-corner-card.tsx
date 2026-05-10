@@ -47,7 +47,7 @@ export function SweepCornerFeedCard({
     [authGuard, toggleVote, feedback._id]
   );
 
-  const handleClick = useCallback(() => {
+  const openFeedbackDetail = useCallback(() => {
     onClick?.(feedback._id);
   }, [onClick, feedback._id]);
 
@@ -55,11 +55,11 @@ export function SweepCornerFeedCard({
     // biome-ignore lint/a11y/useSemanticElements: card container with nested interactive buttons cannot be a <button>
     <div
       className={cn("cursor-pointer", className)}
-      onClick={handleClick}
+      onClick={openFeedbackDetail}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          handleClick();
+          openFeedbackDetail();
         }
       }}
       role="button"
@@ -77,7 +77,7 @@ export function SweepCornerFeedCard({
           <SweepCornerContent>
             <SweepCornerTitle>
               {feedback.isPinned && (
-                <PushPin className="mr-1 inline h-3.5 w-3.5 text-primary" />
+                <PushPin className="mr-1 inline size-3.5 text-primary" />
               )}
               {feedback.title}
             </SweepCornerTitle>
@@ -96,7 +96,7 @@ export function SweepCornerFeedCard({
                         {tag.name}
                         {tag.appliedByAi && (
                           <Sparkle
-                            className="h-2.5 w-2.5 opacity-60"
+                            className="size-2.5 opacity-60"
                             weight="fill"
                           />
                         )}

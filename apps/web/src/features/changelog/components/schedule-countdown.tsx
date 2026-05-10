@@ -53,8 +53,8 @@ export function ScheduleCountdown({
           className
         )}
       >
-        <Clock className="h-3.5 w-3.5" />
-        Publishing...
+        <Clock className="size-3.5" />
+        Publishing…
       </span>
     );
   }
@@ -72,7 +72,7 @@ export function ScheduleCountdown({
         className
       )}
     >
-      <Clock className="h-3.5 w-3.5" />
+      <Clock className="size-3.5" />
       Publishing in {formatCountdown(remaining)}
     </span>
   );

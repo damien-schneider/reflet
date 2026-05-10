@@ -7,7 +7,7 @@
 
 import NumberFlow from "@number-flow/react";
 import { ArrowRight, Check } from "@phosphor-icons/react";
-import { motion, useInView } from "motion/react";
+import { domAnimation, LazyMotion, m, useInView } from "motion/react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 
@@ -86,156 +86,160 @@ export default function LandingPricing() {
       id="pricing"
       ref={ref}
     >
-      <div className="mx-auto max-w-300 px-5 sm:px-8">
-        {/* Header */}
-        <motion.div
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
-        >
-          <Text as="span" className="mb-3 block" variant="eyebrow">
-            Pricing
-          </Text>
-          <H2 className="mb-4 max-w-120" variant="landing">
-            Free to start.{" "}
-            <span className="text-muted-foreground">Scale when ready.</span>
-          </H2>
+      <LazyMotion features={domAnimation}>
+        <div className="mx-auto max-w-300 px-5 sm:px-8">
+          {/* Header */}
+          <m.div
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            className="mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
+          >
+            <Text as="span" className="mb-3 block" variant="eyebrow">
+              Pricing
+            </Text>
+            <H2 className="mb-4 max-w-120" variant="landing">
+              Free to start.{" "}
+              <span className="text-muted-foreground">Scale when ready.</span>
+            </H2>
 
-          {/* Toggle */}
-          <div className="flex items-center gap-2">
-            <button
-              className={cn(
-                "rounded-lg px-3.5 py-1.5 font-medium text-[13px] transition-colors",
-                isYearly
-                  ? "text-muted-foreground hover:text-foreground"
-                  : "bg-card text-foreground shadow-sm"
-              )}
-              onClick={() => {
-                setBillingInterval("monthly");
-                capture("pricing_billing_toggled", { interval: "monthly" });
-              }}
-              type="button"
-            >
-              Monthly
-            </button>
-            <button
-              className={cn(
-                "rounded-lg px-3.5 py-1.5 font-medium text-[13px] transition-colors",
-                isYearly
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              onClick={() => {
-                setBillingInterval("yearly");
-                capture("pricing_billing_toggled", { interval: "yearly" });
-              }}
-              type="button"
-            >
-              Yearly
-            </button>
-            <span
-              className={cn(
-                "ml-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 font-medium text-[11px] text-emerald-600 transition-opacity dark:text-emerald-400",
-                isYearly ? "opacity-100" : "opacity-0"
-              )}
-            >
-              Save 2 months
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          {TIERS.map((tier, idx) => {
-            const price = isYearly ? tier.yearlyPrice / 12 : tier.monthlyPrice;
-            return (
-              <motion.div
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
+            {/* Toggle */}
+            <div className="flex items-center gap-2">
+              <button
                 className={cn(
-                  "relative flex flex-col overflow-hidden rounded-2xl border p-6 transition-colors",
-                  tier.highlighted
-                    ? "border-olive-600/30 bg-card shadow-lg dark:border-olive-400/30"
-                    : "border-border bg-card"
+                  "rounded-lg px-3.5 py-1.5 font-medium text-[13px] transition-colors",
+                  isYearly
+                    ? "text-muted-foreground hover:text-foreground"
+                    : "bg-card text-foreground shadow-sm"
                 )}
-                initial={{ opacity: 0, y: 24 }}
-                key={tier.name}
-                transition={{
-                  delay: 0.15 + idx * 0.1,
-                  duration: 0.6,
-                  ease: EASE_OUT_EXPO,
+                onClick={() => {
+                  setBillingInterval("monthly");
+                  capture("pricing_billing_toggled", { interval: "monthly" });
                 }}
+                type="button"
               >
-                {/* Badge */}
-                {tier.highlighted && (
-                  <div className="absolute top-0 right-0 rounded-bl-xl bg-olive-600 px-3 py-1 font-semibold text-[10px] text-olive-100">
-                    {tier.badge}
-                  </div>
+                Monthly
+              </button>
+              <button
+                className={cn(
+                  "rounded-lg px-3.5 py-1.5 font-medium text-[13px] transition-colors",
+                  isYearly
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
+                onClick={() => {
+                  setBillingInterval("yearly");
+                  capture("pricing_billing_toggled", { interval: "yearly" });
+                }}
+                type="button"
+              >
+                Yearly
+              </button>
+              <span
+                className={cn(
+                  "ml-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 font-medium text-[11px] text-emerald-600 transition-opacity dark:text-emerald-400",
+                  isYearly ? "opacity-100" : "opacity-0"
+                )}
+              >
+                Save 2 months
+              </span>
+            </div>
+          </m.div>
 
-                {/* Name */}
-                <h3 className="mb-1 font-semibold text-[16px] text-foreground">
-                  {tier.name}
-                </h3>
-                <p className="mb-5 text-[13px] text-muted-foreground">
-                  {tier.description}
-                </p>
-
-                {/* Price */}
-                <div className="mb-6 flex items-baseline gap-1">
-                  <span className="font-display text-[2.5rem] text-olive-950 tracking-[-0.02em] dark:text-olive-100">
-                    $<NumberFlow value={Math.round(price)} />
-                  </span>
-                  <span className="text-[13px] text-muted-foreground">
-                    /month
-                  </span>
-                </div>
-
-                {/* Features */}
-                <ul className="mb-8 flex-1 space-y-2.5">
-                  {tier.features.map((feature) => (
-                    <li
-                      className="flex items-start gap-2 text-[13px] text-foreground"
-                      key={feature}
-                    >
-                      <Check
-                        className="mt-0.5 shrink-0 text-olive-600 dark:text-olive-400"
-                        size={14}
-                        weight="bold"
-                      />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA */}
-                <Link
-                  href="/dashboard"
-                  onClick={() =>
-                    capture("pricing_tier_clicked", {
-                      tier: tier.name,
-                      interval,
-                    })
-                  }
+          {/* Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
+            {TIERS.map((tier, idx) => {
+              const price = isYearly
+                ? tier.yearlyPrice / 12
+                : tier.monthlyPrice;
+              return (
+                <m.div
+                  animate={isInView ? { opacity: 1, y: 0 } : {}}
+                  className={cn(
+                    "relative flex flex-col overflow-hidden rounded-2xl border p-6 transition-colors",
+                    tier.highlighted
+                      ? "border-olive-600/30 bg-card shadow-lg dark:border-olive-400/30"
+                      : "border-border bg-card"
+                  )}
+                  initial={{ opacity: 0, y: 24 }}
+                  key={tier.name}
+                  transition={{
+                    delay: 0.15 + idx * 0.1,
+                    duration: 0.6,
+                    ease: EASE_OUT_EXPO,
+                  }}
                 >
-                  <Button
-                    className={cn(
-                      "h-10 w-full rounded-xl text-[13px]",
-                      tier.highlighted && "rounded-full"
-                    )}
-                    variant={tier.ctaVariant}
+                  {/* Badge */}
+                  {tier.highlighted && (
+                    <div className="absolute top-0 right-0 rounded-bl-xl bg-olive-600 px-3 py-1 font-semibold text-[10px] text-olive-100">
+                      {tier.badge}
+                    </div>
+                  )}
+
+                  {/* Name */}
+                  <h3 className="mb-1 font-semibold text-[16px] text-foreground">
+                    {tier.name}
+                  </h3>
+                  <p className="mb-5 text-[13px] text-muted-foreground">
+                    {tier.description}
+                  </p>
+
+                  {/* Price */}
+                  <div className="mb-6 flex items-baseline gap-1">
+                    <span className="font-display text-[2.5rem] text-olive-950 tracking-[-0.02em] dark:text-olive-100">
+                      $<NumberFlow value={Math.round(price)} />
+                    </span>
+                    <span className="text-[13px] text-muted-foreground">
+                      /month
+                    </span>
+                  </div>
+
+                  {/* Features */}
+                  <ul className="mb-8 flex-1 space-y-2.5">
+                    {tier.features.map((feature) => (
+                      <li
+                        className="flex items-start gap-2 text-[13px] text-foreground"
+                        key={feature}
+                      >
+                        <Check
+                          className="mt-0.5 shrink-0 text-olive-600 dark:text-olive-400"
+                          size={14}
+                          weight="bold"
+                        />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA */}
+                  <Link
+                    href="/dashboard"
+                    onClick={() =>
+                      capture("pricing_tier_clicked", {
+                        tier: tier.name,
+                        interval,
+                      })
+                    }
                   >
-                    {tier.cta}
-                    {tier.highlighted && (
-                      <ArrowRight className="ml-1" size={14} />
-                    )}
-                  </Button>
-                </Link>
-              </motion.div>
-            );
-          })}
+                    <Button
+                      className={cn(
+                        "h-10 w-full rounded-xl text-[13px]",
+                        tier.highlighted && "rounded-full"
+                      )}
+                      variant={tier.ctaVariant}
+                    >
+                      {tier.cta}
+                      {tier.highlighted && (
+                        <ArrowRight className="ml-1" size={14} />
+                      )}
+                    </Button>
+                  </Link>
+                </m.div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </LazyMotion>
     </section>
   );
 }

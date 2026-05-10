@@ -8,6 +8,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { toOrgId } from "@/lib/convex-helpers";
+import AutopilotSettingsPage from "./page";
 
 type ResetScopeForTest = Array<{
   description: string;
@@ -127,9 +128,8 @@ const resetScope = [
   },
 ];
 
-async function renderSettingsPage() {
-  const module = await import("./page");
-  render(<module.default />);
+function renderSettingsPage() {
+  render(<AutopilotSettingsPage />);
 }
 
 beforeEach(() => {
@@ -158,6 +158,91 @@ afterEach(() => {
 });
 
 describe("AutopilotSettingsPage", () => {
+  it("does not call initialization for non-pro organizations", async () => {
+    const initConfig = vi.fn(() => Promise.resolve("config_123"));
+    mutationHandlers.set("autopilot.config.initConfig", initConfig);
+    mockUseQuery.mockImplementation((queryName: unknown) => {
+      if (queryName === "autopilot.config.getConfig") {
+        return null;
+      }
+      if (queryName === "billing.getStatus") {
+        return { tier: "free" };
+      }
+      return undefined;
+    });
+
+    await renderSettingsPage();
+
+    expect(
+      screen.queryByRole("button", { name: /initialize autopilot/i })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Autopilot requires Pro")).toBeInTheDocument();
+    expect(initConfig).not.toHaveBeenCalled();
+  });
+
+  it("locks existing settings when billing access is no longer Pro", async () => {
+    const updateConfig = vi.fn(() => Promise.resolve(null));
+    mutationHandlers.set("autopilot.config.updateConfig", updateConfig);
+    mockUseQuery.mockImplementation((queryName: unknown) => {
+      if (queryName === "autopilot.config.getConfig") {
+        return config;
+      }
+      if (queryName === "billing.getStatus") {
+        return { tier: "free" };
+      }
+      if (queryName === "autopilot.routines.getResetScope") {
+        return resetScope;
+      }
+      return undefined;
+    });
+
+    await renderSettingsPage();
+    const input = screen.getByLabelText("Maximum tasks per day");
+
+    expect(screen.getByText("Autopilot requires Pro")).toBeInTheDocument();
+    expect(input).toBeDisabled();
+    fireEvent.change(input, { target: { value: "8" } });
+    fireEvent.blur(input);
+
+    expect(updateConfig).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("danger-zone")).not.toBeInTheDocument();
+  });
+
+  it("saves exponent integer limits as the entered numeric value", async () => {
+    const updateConfig = vi.fn(() => Promise.resolve(null));
+    mutationHandlers.set("autopilot.config.updateConfig", updateConfig);
+
+    await renderSettingsPage();
+    const input = screen.getByLabelText("Maximum tasks per day");
+
+    fireEvent.change(input, { target: { value: "1e2" } });
+    fireEvent.blur(input);
+
+    await waitFor(() =>
+      expect(updateConfig).toHaveBeenCalledWith({
+        configId: config._id,
+        maxTasksPerDay: 100,
+      })
+    );
+  });
+
+  it("rejects decimal task limits instead of truncating them", async () => {
+    const updateConfig = vi.fn(() => Promise.resolve(null));
+    mutationHandlers.set("autopilot.config.updateConfig", updateConfig);
+
+    await renderSettingsPage();
+    const input = screen.getByLabelText("Maximum tasks per day");
+
+    fireEvent.change(input, { target: { value: "1.9" } });
+    fireEvent.blur(input);
+
+    await waitFor(() => expect(input).toHaveValue(5));
+    expect(updateConfig).not.toHaveBeenCalled();
+    expect(mockToastError).toHaveBeenCalledWith(
+      "Tasks per day must be a whole number of at least 1"
+    );
+  });
+
   it("passes the backend reset scope into the danger zone", async () => {
     await renderSettingsPage();
 

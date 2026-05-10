@@ -61,7 +61,7 @@ export function DangerZone({
                   variant="destructive"
                 >
                   <IconTrash className="mr-1.5 size-4" />
-                  {isResetting ? "Resetting..." : "Reset All Data"}
+                  {isResetting ? "Resetting\u2026" : "Reset All Data"}
                 </Button>
               }
             />
@@ -80,7 +80,7 @@ export function DangerZone({
               <div className="max-h-72 overflow-y-auto rounded-lg border bg-muted/30 p-3">
                 {isResetScopeLoading ? (
                   <p className="text-muted-foreground text-sm">
-                    Loading reset scope...
+                    Loading reset scope&hellip;
                   </p>
                 ) : (
                   <ul className="space-y-3">
@@ -107,7 +107,7 @@ export function DangerZone({
                   onClick={onReset}
                   variant="destructive"
                 >
-                  {isResetting ? "Resetting..." : "Reset Everything"}
+                  {isResetting ? "Resetting\u2026" : "Reset Everything"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

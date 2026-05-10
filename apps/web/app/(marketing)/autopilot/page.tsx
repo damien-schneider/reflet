@@ -150,7 +150,7 @@ export default function AutopilotPage() {
             </h1>
             <p className="mx-auto mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
               Connect your GitHub repo and Reflet generates your Company Brief
-              in 5 minutes. Then 7 AI agents start running your product —
+              in 5 minutes. Then 7 AI agents start running your product,
               discovering opportunities, shipping code, finding leads, and
               handling support.
             </p>

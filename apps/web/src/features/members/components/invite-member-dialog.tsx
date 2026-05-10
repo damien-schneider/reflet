@@ -2,7 +2,7 @@ import { Check, Copy, Shield, User } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,71 @@ interface InviteMemberDialogProps {
 }
 
 type DialogState = "form" | "success";
+type InviteRole = "admin" | "member";
+
+interface InviteFormState {
+  copied: boolean;
+  dialogState: DialogState;
+  email: string;
+  invitationToken: string | null;
+  isSubmitting: boolean;
+  role: InviteRole;
+}
+
+type InviteFormAction =
+  | { type: "copyReset" }
+  | { type: "copySucceeded" }
+  | { email: string; type: "emailChanged" }
+  | { role: InviteRole; type: "roleChanged" }
+  | { token: string; type: "submitSucceeded" }
+  | { type: "reset" }
+  | { type: "submitFinished" }
+  | { type: "submitStarted" };
+
+const initialInviteFormState: InviteFormState = {
+  copied: false,
+  dialogState: "form",
+  email: "",
+  invitationToken: null,
+  isSubmitting: false,
+  role: "member",
+};
+
+const inviteFormReducer = (
+  state: InviteFormState,
+  action: InviteFormAction
+): InviteFormState => {
+  switch (action.type) {
+    case "copyReset":
+      return { ...state, copied: false };
+    case "copySucceeded":
+      return { ...state, copied: true };
+    case "emailChanged":
+      return { ...state, email: action.email };
+    case "reset":
+      return initialInviteFormState;
+    case "roleChanged":
+      return { ...state, role: action.role };
+    case "submitFinished":
+      return { ...state, isSubmitting: false };
+    case "submitStarted":
+      return { ...state, isSubmitting: true };
+    case "submitSucceeded":
+      return {
+        ...state,
+        copied: false,
+        dialogState: "success",
+        invitationToken: action.token,
+      };
+    default: {
+      const exhaustiveAction: never = action;
+      return exhaustiveAction;
+    }
+  }
+};
+
+const parseInviteRole = (value: string | null): InviteRole =>
+  value === "admin" ? "admin" : "member";
 
 export function InviteMemberDialog({
   organizationId,
@@ -38,54 +103,60 @@ export function InviteMemberDialog({
   onOpenChange,
 }: InviteMemberDialogProps) {
   const inviteMember = useMutation(api.organizations.invitations.create);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [dialogState, setDialogState] = useState<DialogState>("form");
-  const [invitationToken, setInvitationToken] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [state, dispatch] = useReducer(
+    inviteFormReducer,
+    initialInviteFormState
+  );
+  const copyResetTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const { copied, dialogState, email, invitationToken, isSubmitting, role } =
+    state;
 
   // Reset state when dialog closes
   useEffect(
     function resetStateOnDialogClose() {
       if (!open) {
-        setInviteEmail("");
-        setInviteRole("member");
-        setIsSubmitting(false);
-        setDialogState("form");
-        setInvitationToken(null);
-        setCopied(false);
+        dispatch({ type: "reset" });
       }
     },
     [open]
   );
 
-  const handleInvite = async () => {
-    if (!inviteEmail.trim()) {
+  useEffect(function clearCopyResetTimeoutOnUnmount() {
+    return () => {
+      if (copyResetTimeoutIdRef.current !== null) {
+        clearTimeout(copyResetTimeoutIdRef.current);
+      }
+    };
+  }, []);
+
+  const sendInvitation = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
       return;
     }
 
-    setIsSubmitting(true);
+    dispatch({ type: "submitStarted" });
     try {
       const result = await inviteMember({
         organizationId,
-        email: inviteEmail.trim().toLowerCase(),
-        role: inviteRole,
+        email: normalizedEmail,
+        role,
       });
-      capture("member_invited", { role: inviteRole });
-      setInvitationToken(result.token);
-      setDialogState("success");
+      capture("member_invited", { role });
+      dispatch({ token: result.token, type: "submitSucceeded" });
     } catch (error) {
       console.error("Failed to invite member:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to invite member"
       );
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: "submitFinished" });
     }
   };
 
-  const handleCopyLink = async () => {
+  const copyInvitationLink = async () => {
     if (!invitationToken) {
       return;
     }
@@ -93,14 +164,20 @@ export function InviteMemberDialog({
     const inviteUrl = `${window.location.origin}/invite/${invitationToken}`;
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      dispatch({ type: "copySucceeded" });
+      if (copyResetTimeoutIdRef.current !== null) {
+        clearTimeout(copyResetTimeoutIdRef.current);
+      }
+      copyResetTimeoutIdRef.current = setTimeout(() => {
+        dispatch({ type: "copyReset" });
+        copyResetTimeoutIdRef.current = null;
+      }, 2000);
     } catch (error) {
       console.error("Failed to copy link:", error);
     }
   };
 
-  const handleClose = () => {
+  const closeInvitation = () => {
     onOpenChange(false);
   };
 
@@ -113,8 +190,8 @@ export function InviteMemberDialog({
           <DialogHeader>
             <DialogTitle>Invitation sent!</DialogTitle>
             <DialogDescription>
-              An invitation has been sent to {inviteEmail}. You can also share
-              the link below.
+              An invitation has been sent to {email}. You can also share the
+              link below.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -127,11 +204,18 @@ export function InviteMemberDialog({
                   readOnly
                   value={inviteUrl}
                 />
-                <Button onClick={handleCopyLink} size="icon" variant="outline">
+                <Button
+                  aria-label={
+                    copied ? "Invitation link copied" : "Copy invitation link"
+                  }
+                  onClick={copyInvitationLink}
+                  size="icon"
+                  variant="outline"
+                >
                   {copied ? (
-                    <Check className="h-4 w-4" />
+                    <Check className="size-4" />
                   ) : (
-                    <Copy className="h-4 w-4" />
+                    <Copy className="size-4" />
                   )}
                 </Button>
               </div>
@@ -141,7 +225,7 @@ export function InviteMemberDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleClose}>Done</Button>
+            <Button onClick={closeInvitation}>Close invitation</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -162,17 +246,27 @@ export function InviteMemberDialog({
             <Label htmlFor="email">Email address</Label>
             <Input
               id="email"
-              onChange={(e) => setInviteEmail(e.target.value)}
+              onChange={(event) =>
+                dispatch({
+                  email: event.target.value,
+                  type: "emailChanged",
+                })
+              }
               placeholder="colleague@example.com"
               type="email"
-              value={inviteEmail}
+              value={email}
             />
           </div>
           <div className="grid gap-2">
             <Label>Role</Label>
             <Select
-              onValueChange={(v) => setInviteRole(v as "admin" | "member")}
-              value={inviteRole}
+              onValueChange={(value) =>
+                dispatch({
+                  role: parseInviteRole(value),
+                  type: "roleChanged",
+                })
+              }
+              value={role}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -180,13 +274,13 @@ export function InviteMemberDialog({
               <SelectContent>
                 <SelectItem value="member">
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
+                    <User className="size-4" />
                     Member
                   </div>
                 </SelectItem>
                 <SelectItem value="admin">
                   <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4" />
+                    <Shield className="size-4" />
                     Admin
                   </div>
                 </SelectItem>
@@ -202,7 +296,7 @@ export function InviteMemberDialog({
           <Button onClick={() => onOpenChange(false)} variant="outline">
             Cancel
           </Button>
-          <Button disabled={isSubmitting} onClick={handleInvite}>
+          <Button disabled={isSubmitting} onClick={sendInvitation}>
             {isSubmitting ? "Sending..." : "Send invitation"}
           </Button>
         </DialogFooter>

@@ -55,7 +55,7 @@ export default function PublicRoadmapPageClient({
   if (!(org && roadmapConfig)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div>Loading...</div>
+        <div>Loading…</div>
       </div>
     );
   }
@@ -81,7 +81,7 @@ export default function PublicRoadmapPageClient({
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col items-center justify-center py-12">
-          <h1 className="font-bold text-2xl">Roadmap</h1>
+          <h1 className="font-semibold text-2xl">Roadmap</h1>
           <p className="mt-2 text-muted-foreground">
             No roadmap has been configured yet.
           </p>
@@ -102,7 +102,7 @@ export default function PublicRoadmapPageClient({
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 text-center">
-        <h1 className="font-bold text-3xl">Roadmap</h1>
+        <h1 className="font-semibold text-3xl">Roadmap</h1>
         <p className="mt-2 text-muted-foreground">
           See what we&apos;re working on and what&apos;s coming next.
         </p>
@@ -116,7 +116,7 @@ export default function PublicRoadmapPageClient({
           >
             <div className="mb-4 flex items-center gap-2">
               <div
-                className="h-3 w-3 rounded"
+                className="size-3 rounded"
                 style={{ backgroundColor: lane.color }}
               />
               <h3 className="font-semibold">{lane.name}</h3>
@@ -161,7 +161,7 @@ function TaskBasedRoadmap({
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 text-center">
-        <h1 className="font-bold text-3xl">Roadmap</h1>
+        <h1 className="font-semibold text-3xl">Roadmap</h1>
         <p className="mt-2 text-muted-foreground">
           See what we&apos;re working on and what&apos;s coming next.
         </p>
@@ -273,7 +273,7 @@ function RoadmapCard({ feedback, primaryColor }: RoadmapCardProps) {
             className="flex items-center gap-1 text-xs"
             style={{ color: primaryColor }}
           >
-            <ChevronUp className="h-3 w-3" />
+            <ChevronUp className="size-3" />
             {feedback.voteCount}
           </div>
         </div>

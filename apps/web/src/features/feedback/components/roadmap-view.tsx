@@ -16,7 +16,13 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import {
+  AnimatePresence,
+  domAnimation,
+  LayoutGroup,
+  LazyMotion,
+  m,
+} from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -55,7 +61,6 @@ export function RoadmapView({
     api.feedback.actions_manage.updateOrganizationStatus
   );
 
-  // Apply optimistic updates to feedback
   const optimisticFeedback = useMemo(() => {
     if (optimisticUpdates.size === 0) {
       return feedback;
@@ -119,7 +124,6 @@ export function RoadmapView({
       const targetItem = feedback.find((f) => f._id === over.id);
       const targetStatusId = targetItem?.organizationStatusId;
 
-      // Check if dropped on a column (status._id)
       const droppedOnColumn = statuses.find((s) => s._id === over.id);
       const finalStatusId = droppedOnColumn?._id ?? targetStatusId;
 
@@ -127,13 +131,11 @@ export function RoadmapView({
         return;
       }
 
-      // Get current item
       const currentItem = feedback.find((f) => f._id === feedbackId);
       if (currentItem?.organizationStatusId === finalStatusId) {
         return;
       }
 
-      // Apply optimistic update immediately
       setOptimisticUpdates((prev) => {
         const next = new Map(prev);
         next.set(feedbackId, { feedbackId, newStatusId: finalStatusId });
@@ -146,8 +148,6 @@ export function RoadmapView({
           organizationStatusId: finalStatusId,
         });
       } finally {
-        // Clear optimistic update after server responds
-        // The real data from Convex will take over
         setOptimisticUpdates((prev) => {
           const next = new Map(prev);
           next.delete(feedbackId);
@@ -172,70 +172,72 @@ export function RoadmapView({
 
   return (
     <>
-      <LayoutGroup>
-        <DndContext
-          accessibility={{ announcements }}
-          collisionDetection={closestCorners}
-          onDragEnd={handleDragEnd}
-          onDragStart={handleDragStart}
-          sensors={sensors}
-        >
-          <ScrollArea
-            className=""
-            classNameViewport="flex gap-4 pb-4 min-h-[70vh]"
-            styleViewport={{
-              paddingLeft: "max(1rem, calc(50vw - 35rem))",
-              paddingRight: "1rem",
-            }}
+      <LazyMotion features={domAnimation}>
+        <LayoutGroup>
+          <DndContext
+            accessibility={{ announcements }}
+            collisionDetection={closestCorners}
+            onDragEnd={handleDragEnd}
+            onDragStart={handleDragStart}
+            sensors={sensors}
           >
-            {statuses.map((status) => {
-              const statusFeedback = optimisticFeedback.filter(
-                (f) => f.organizationStatusId === status._id
-              );
+            <ScrollArea
+              className=""
+              classNameViewport="flex gap-4 pb-4 min-h-[70vh]"
+              styleViewport={{
+                paddingLeft: "max(1rem, calc(50vw - 35rem))",
+                paddingRight: "1rem",
+              }}
+            >
+              {statuses.map((status) => {
+                const statusFeedback = optimisticFeedback.filter(
+                  (f) => f.organizationStatusId === status._id
+                );
 
-              return (
-                <DroppableColumn
-                  isAdmin={isAdmin}
-                  isDragging={activeItem !== null}
-                  items={statusFeedback}
-                  key={status._id}
-                  onDeleteClick={() =>
-                    setDeleteDialogStatus({
-                      id: status._id,
-                      name: status.name,
-                      color: status.color,
-                    })
-                  }
-                  onFeedbackClick={onFeedbackClick}
-                  status={status}
-                />
-              );
-            })}
+                return (
+                  <DroppableColumn
+                    isAdmin={isAdmin}
+                    isDragging={activeItem !== null}
+                    items={statusFeedback}
+                    key={status._id}
+                    onDeleteClick={() =>
+                      setDeleteDialogStatus({
+                        id: status._id,
+                        name: status.name,
+                        color: status.color,
+                      })
+                    }
+                    onFeedbackClick={onFeedbackClick}
+                    status={status}
+                  />
+                );
+              })}
 
-            {isAdmin && <AddColumnInline organizationId={organizationId} />}
-          </ScrollArea>
+              {isAdmin && <AddColumnInline organizationId={organizationId} />}
+            </ScrollArea>
 
-          <DragOverlay dropAnimation={null}>
-            <AnimatePresence mode="popLayout">
-              {activeItem && (
-                <motion.div
-                  animate={{
-                    scale: 1.05,
-                    rotate: 3,
-                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                  }}
-                  className="w-64"
-                  exit={{ scale: 1, rotate: 0, opacity: 0 }}
-                  initial={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                >
-                  <FeedbackCardContent isOverlay item={activeItem} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </DragOverlay>
-        </DndContext>
-      </LayoutGroup>
+            <DragOverlay dropAnimation={null}>
+              <AnimatePresence mode="popLayout">
+                {activeItem && (
+                  <m.div
+                    animate={{
+                      scale: 1.05,
+                      rotate: 3,
+                      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                    }}
+                    className="w-64"
+                    exit={{ scale: 1, rotate: 0, opacity: 0 }}
+                    initial={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  >
+                    <FeedbackCardContent isOverlay item={activeItem} />
+                  </m.div>
+                )}
+              </AnimatePresence>
+            </DragOverlay>
+          </DndContext>
+        </LayoutGroup>
+      </LazyMotion>
 
       <ColumnDeleteDialog
         feedbackCount={

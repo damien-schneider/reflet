@@ -17,22 +17,10 @@ export const parseAdapterCredentials = (
   adapterCredentialsSchema.parse(JSON.parse(credentialsJson));
 
 export const resolveCompletionStatus = ({
-  autoMergePRs,
-  autonomyLevel,
-  autonomyMode,
+  merged,
 }: {
-  autoMergePRs: boolean;
-  autonomyLevel: string;
-  autonomyMode?: string;
-}): "done" | "in_review" => {
-  if (
-    autoMergePRs &&
-    (autonomyMode === "full_auto" || autonomyLevel === "full_auto")
-  ) {
-    return "done";
-  }
-  return "in_review";
-};
+  merged?: boolean;
+}): "done" | "in_review" => (merged === true ? "done" : "in_review");
 
 export const resolveRetryDelayMs = ({
   maxRetries = MAX_EXECUTION_RETRIES,
@@ -134,15 +122,13 @@ export const handleTaskResult = async (
   ctx: ActionCtx,
   params: {
     adapter: string;
-    autoMergePRs: boolean;
-    autonomyLevel: string;
-    autonomyMode?: string;
     maxRetries: number;
     organizationId: Id<"organizations">;
     result: {
       errorMessage?: string;
       estimatedCostUsd?: number;
       externalRef?: string;
+      merged?: boolean;
       prNumber?: number;
       prUrl?: string;
       status: string;
@@ -155,9 +141,6 @@ export const handleTaskResult = async (
 ) => {
   const {
     adapter,
-    autoMergePRs,
-    autonomyLevel,
-    autonomyMode,
     maxRetries,
     organizationId,
     result,
@@ -173,9 +156,7 @@ export const handleTaskResult = async (
       costUsd: result.estimatedCostUsd,
     });
     const status = resolveCompletionStatus({
-      autoMergePRs,
-      autonomyLevel,
-      autonomyMode,
+      merged: result.merged,
     });
     await ctx.runMutation(internal.autopilot.task_mutations.updateTaskStatus, {
       taskId,

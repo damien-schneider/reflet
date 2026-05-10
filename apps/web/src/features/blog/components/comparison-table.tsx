@@ -21,29 +21,29 @@ function FeatureCell({ value }: { value: FeatureValue }) {
   if (value === "yes") {
     return (
       <span className="flex items-center justify-center text-emerald-600">
-        <Check className="h-5 w-5" />
+        <Check className="size-5" />
       </span>
     );
   }
   if (value === "strong") {
     return (
       <span className="flex items-center justify-center text-emerald-600">
-        <Check className="h-5 w-5 stroke-[3]" />
-        <Check className="-ml-2 h-5 w-5 stroke-[3]" />
+        <Check className="size-5 stroke-[3]" />
+        <Check className="-ml-2 size-5 stroke-[3]" />
       </span>
     );
   }
   if (value === "no") {
     return (
       <span className="flex items-center justify-center text-red-500">
-        <X className="h-5 w-5" />
+        <X className="size-5" />
       </span>
     );
   }
   if (value === "partial") {
     return (
       <span className="flex items-center justify-center text-amber-500">
-        <Minus className="h-5 w-5" />
+        <Minus className="size-5" />
       </span>
     );
   }
@@ -63,7 +63,7 @@ export function ComparisonTable({
               <th className="px-6 py-4 text-left font-semibold">Feature</th>
               <th className="w-32 px-6 py-4 text-center font-semibold">
                 <span className="flex items-center justify-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded bg-olive-600 font-bold text-[10px] text-olive-100">
+                  <span className="flex size-6 items-center justify-center rounded bg-olive-600 font-bold text-[10px] text-olive-100">
                     R
                   </span>
                   Reflet
@@ -128,7 +128,7 @@ export function PricingComparison({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border-2 border-olive-600 bg-card p-6">
           <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded bg-olive-600 font-bold text-olive-100 text-sm">
+            <span className="flex size-8 items-center justify-center rounded bg-olive-600 font-bold text-olive-100 text-sm">
               R
             </span>
             <span className="font-semibold text-lg">Reflet</span>

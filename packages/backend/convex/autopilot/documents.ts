@@ -8,6 +8,7 @@
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { requireOwnedDocumentRelations } from "./ownership";
 import { autopilotDocumentRecord } from "./schema/documents.tables";
 import {
   assignedAgent,
@@ -174,6 +175,8 @@ export const createDocument = internalMutation({
   },
   returns: v.id("autopilotDocuments"),
   handler: async (ctx, args) => {
+    await requireOwnedDocumentRelations(ctx, args);
+
     const now = Date.now();
     const status =
       args.status ?? (args.needsReview ? "pending_review" : "draft");
@@ -237,6 +240,12 @@ export const updateDocument = internalMutation({
 
     const now = Date.now();
     const updates: DocumentPatch = { updatedAt: now };
+    await requireOwnedDocumentRelations(ctx, {
+      organizationId: doc.organizationId,
+      linkedWorkItemId: args.linkedWorkItemId,
+      linkedCompetitorId: args.linkedCompetitorId,
+      linkedLeadId: args.linkedLeadId,
+    });
     applyDocumentContentPatch(args, updates);
     applyDocumentRelationPatch(args, updates);
 

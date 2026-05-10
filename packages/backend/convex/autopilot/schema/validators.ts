@@ -47,6 +47,25 @@ export const assignedAgent = v.union(
   v.literal("validator")
 );
 
+export type RoutineDispatchAgent =
+  | "cto"
+  | "dev"
+  | "growth"
+  | "sales"
+  | "support";
+
+export function isRoutineDispatchAgent(
+  agent: string
+): agent is RoutineDispatchAgent {
+  return (
+    agent === "cto" ||
+    agent === "dev" ||
+    agent === "growth" ||
+    agent === "sales" ||
+    agent === "support"
+  );
+}
+
 export const agentThreadRole = v.union(v.literal("user"), v.literal("agent"));
 
 export const communityPlatform = v.union(

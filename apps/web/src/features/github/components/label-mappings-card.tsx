@@ -2,7 +2,7 @@
 
 import { Plus, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useState } from "react";
+import { useReducer } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,57 @@ interface LabelMappingsCardProps {
   tags: RefletTag[];
 }
 
+interface MappingDialogState {
+  autoSync: boolean;
+  isOpen: boolean;
+  selectedLabel: string;
+  selectedTag: string;
+  syncClosedIssues: boolean;
+}
+
+type MappingDialogAction =
+  | { type: "close" }
+  | { type: "open" }
+  | { type: "setAutoSync"; checked: boolean }
+  | { type: "setSelectedLabel"; label: string }
+  | { type: "setSelectedTag"; tagId: string }
+  | { type: "setSyncClosedIssues"; checked: boolean };
+
+const initialMappingDialogState: MappingDialogState = {
+  autoSync: true,
+  isOpen: false,
+  selectedLabel: "",
+  selectedTag: "",
+  syncClosedIssues: false,
+};
+
+function mappingDialogReducer(
+  state: MappingDialogState,
+  action: MappingDialogAction
+): MappingDialogState {
+  if (action.type === "open") {
+    return { ...state, isOpen: true };
+  }
+  if (action.type === "close") {
+    return initialMappingDialogState;
+  }
+  if (action.type === "setAutoSync") {
+    return { ...state, autoSync: action.checked };
+  }
+  if (action.type === "setSelectedLabel") {
+    return { ...state, selectedLabel: action.label };
+  }
+  if (action.type === "setSelectedTag") {
+    return { ...state, selectedTag: action.tagId };
+  }
+  if (action.type === "setSyncClosedIssues") {
+    return { ...state, syncClosedIssues: action.checked };
+  }
+
+  const exhaustive: never = action;
+  return exhaustive;
+}
+
 export function LabelMappingsSection({
   mappings,
   githubLabels,
@@ -86,40 +137,36 @@ export function LabelMappingsSection({
   onDeleteMapping,
   onFetchLabels,
 }: LabelMappingsCardProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedLabel, setSelectedLabel] = useState<string>("");
-  const [selectedTag, setSelectedTag] = useState<string>("");
-  const [autoSync, setAutoSync] = useState(true);
-  const [syncClosedIssues, setSyncClosedIssues] = useState(false);
+  const [dialogState, dispatchDialog] = useReducer(
+    mappingDialogReducer,
+    initialMappingDialogState
+  );
 
   const handleOpenDialog = () => {
     if (githubLabels.length === 0) {
       onFetchLabels();
     }
-    setIsDialogOpen(true);
+    dispatchDialog({ type: "open" });
   };
 
   const handleAddMapping = () => {
-    if (!selectedLabel) {
+    if (!dialogState.selectedLabel) {
       return;
     }
 
-    const label = githubLabels.find((l) => l.name === selectedLabel);
+    const label = githubLabels.find(
+      (item) => item.name === dialogState.selectedLabel
+    );
 
     onAddMapping({
-      githubLabelName: selectedLabel,
+      githubLabelName: dialogState.selectedLabel,
       githubLabelColor: label?.color,
-      targetTagId: tags.find((t) => t._id === selectedTag)?._id,
-      autoSync,
-      syncClosedIssues,
+      targetTagId: tags.find((tag) => tag._id === dialogState.selectedTag)?._id,
+      autoSync: dialogState.autoSync,
+      syncClosedIssues: dialogState.syncClosedIssues,
     });
 
-    // Reset form
-    setSelectedLabel("");
-    setSelectedTag("");
-    setAutoSync(true);
-    setSyncClosedIssues(false);
-    setIsDialogOpen(false);
+    dispatchDialog({ type: "close" });
   };
 
   return (
@@ -128,7 +175,7 @@ export function LabelMappingsSection({
         {isAdmin ? (
           <div className="flex justify-end">
             <Button onClick={handleOpenDialog} size="sm" variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 size-4" />
               Add Mapping
             </Button>
           </div>
@@ -179,7 +226,7 @@ export function LabelMappingsSection({
                       size="icon"
                       variant="ghost"
                     >
-                      <Trash className="h-4 w-4" />
+                      <Trash className="size-4" />
                     </Button>
                   ) : null}
                 </div>
@@ -195,7 +242,12 @@ export function LabelMappingsSection({
         )}
       </div>
 
-      <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
+      <Dialog
+        onOpenChange={(open) =>
+          dispatchDialog({ type: open ? "open" : "close" })
+        }
+        open={dialogState.isOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Label Mapping</DialogTitle>
@@ -209,8 +261,13 @@ export function LabelMappingsSection({
             <div className="space-y-2">
               <Label>GitHub Label</Label>
               <Select
-                onValueChange={(value) => setSelectedLabel(value ?? "")}
-                value={selectedLabel}
+                onValueChange={(value) =>
+                  dispatchDialog({
+                    type: "setSelectedLabel",
+                    label: value ?? "",
+                  })
+                }
+                value={dialogState.selectedLabel}
               >
                 <SelectTrigger>
                   <SelectValue
@@ -224,7 +281,7 @@ export function LabelMappingsSection({
                     <SelectItem key={label.id} value={label.name}>
                       <div className="flex items-center gap-2">
                         <div
-                          className="h-3 w-3 rounded-full"
+                          className="size-3 rounded-full"
                           style={{ backgroundColor: `#${label.color}` }}
                         />
                         {label.name}
@@ -238,8 +295,13 @@ export function LabelMappingsSection({
             <div className="space-y-2">
               <Label>Tag (optional)</Label>
               <Select
-                onValueChange={(value) => setSelectedTag(value ?? "")}
-                value={selectedTag}
+                onValueChange={(value) =>
+                  dispatchDialog({
+                    type: "setSelectedTag",
+                    tagId: value ?? "",
+                  })
+                }
+                value={dialogState.selectedTag}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a tag (optional)" />
@@ -250,7 +312,7 @@ export function LabelMappingsSection({
                     <SelectItem key={tag._id} value={tag._id}>
                       <div className="flex items-center gap-2">
                         <div
-                          className="h-3 w-3 rounded-full"
+                          className="size-3 rounded-full"
                           style={{ backgroundColor: tag.color }}
                         />
                         {tag.name}
@@ -269,9 +331,11 @@ export function LabelMappingsSection({
                 </Text>
               </div>
               <Switch
-                checked={autoSync}
+                checked={dialogState.autoSync}
                 id="auto-sync-mapping"
-                onCheckedChange={setAutoSync}
+                onCheckedChange={(checked) =>
+                  dispatchDialog({ type: "setAutoSync", checked })
+                }
               />
             </div>
 
@@ -283,18 +347,26 @@ export function LabelMappingsSection({
                 </Text>
               </div>
               <Switch
-                checked={syncClosedIssues}
+                checked={dialogState.syncClosedIssues}
                 id="sync-closed"
-                onCheckedChange={setSyncClosedIssues}
+                onCheckedChange={(checked) =>
+                  dispatchDialog({ type: "setSyncClosedIssues", checked })
+                }
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button onClick={() => setIsDialogOpen(false)} variant="outline">
+            <Button
+              onClick={() => dispatchDialog({ type: "close" })}
+              variant="outline"
+            >
               Cancel
             </Button>
-            <Button disabled={!selectedLabel} onClick={handleAddMapping}>
+            <Button
+              disabled={!dialogState.selectedLabel}
+              onClick={handleAddMapping}
+            >
               Add Mapping
             </Button>
           </DialogFooter>

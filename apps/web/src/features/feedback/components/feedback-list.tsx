@@ -15,6 +15,8 @@ import {
   selectedTagIdsAtom,
 } from "@/store/feedback";
 
+const FEEDBACK_LIST_SKELETON_IDS = ["first", "second", "third"];
+
 interface FeedbackListProps {
   className?: string;
   isAdmin?: boolean;
@@ -91,8 +93,8 @@ export function FeedbackList({
       {/* Loading state */}
       {isLoading && (
         <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div className="flex gap-4 rounded-lg border p-4" key={i}>
+          {FEEDBACK_LIST_SKELETON_IDS.map((id) => (
+            <div className="flex gap-4 rounded-lg border p-4" key={id}>
               <Skeleton className="h-10 w-12" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-5 w-3/4" />

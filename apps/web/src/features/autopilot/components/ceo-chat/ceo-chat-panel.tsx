@@ -15,9 +15,17 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { getAutopilotErrorMessage } from "@/features/autopilot/lib/error-messages";
 import { ceoChatOpenAtom } from "@/store/ui";
 
 import { CeoChatMessage } from "./ceo-chat-message";
+
+function getCeoChatErrorMessage(error: unknown) {
+  return getAutopilotErrorMessage(error, {
+    fallback: "Failed to send message. Try again.",
+    proAccessMessage: "CEO chat requires an active Autopilot Pro workspace.",
+  });
+}
 
 export function CeoChatPanel({
   organizationId,
@@ -83,9 +91,7 @@ export function CeoChatPanel({
       });
     } catch (error) {
       setInput(trimmed);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to send message"
-      );
+      toast.error(getCeoChatErrorMessage(error));
     } finally {
       setIsSending(false);
     }
@@ -149,7 +155,7 @@ export function CeoChatPanel({
           ))}
           {status === "LoadingMore" && (
             <div className="flex justify-center py-2">
-              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary/30" />
+              <div className="size-1.5 animate-pulse rounded-full bg-primary/30" />
             </div>
           )}
           <div ref={bottomRef} />
@@ -177,7 +183,7 @@ export function CeoChatPanel({
           </Button>
         </div>
         <p className="mt-1.5 text-center text-[10px] text-muted-foreground/40">
-          ⌘+Enter to send
+          Command+Enter to send
         </p>
       </div>
     </div>

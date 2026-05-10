@@ -199,7 +199,7 @@ export default function NavbarDesktop() {
               rel="noopener noreferrer"
               target="_blank"
             >
-              <GithubLogo className="h-5 w-5" />
+              <GithubLogo className="size-5" />
             </a>
 
             <Link

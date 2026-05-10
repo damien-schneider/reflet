@@ -87,7 +87,7 @@ export function ColumnDeleteDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Warning className="h-5 w-5 text-destructive" />
+            <Warning className="size-5 text-destructive" />
             Delete Column
           </DialogTitle>
           <DialogDescription>
@@ -121,7 +121,7 @@ export function ColumnDeleteDialog({
                   <SelectItem key={status._id} value={status._id}>
                     <div className="flex items-center gap-2">
                       <div
-                        className="h-2 w-2 rounded-full"
+                        className="size-2 rounded-full"
                         style={{
                           backgroundColor: getTagDotColor(status.color),
                         }}

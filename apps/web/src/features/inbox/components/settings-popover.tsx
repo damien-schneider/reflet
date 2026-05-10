@@ -27,7 +27,7 @@ export function SettingsPopover({
   return (
     <Popover>
       <PopoverTrigger render={<Button size="sm" variant="outline" />}>
-        <Gear className="h-4 w-4" />
+        <Gear className="size-4" />
         Settings
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80">

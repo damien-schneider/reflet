@@ -62,7 +62,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/components/ui/spinner", () => ({
-  Spinner: () => <div data-testid="spinner">Loading...</div>,
+  Spinner: () => <div data-testid="spinner">Loading…</div>,
 }));
 
 vi.mock("@/components/ui/button", () => ({

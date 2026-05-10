@@ -86,11 +86,11 @@ function NotificationItem({ notification }: NotificationItemProps) {
     >
       <div
         className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted",
+          "flex size-8 shrink-0 items-center justify-center rounded-full bg-muted",
           iconColor
         )}
       >
-        <Icon className="h-4 w-4" />
+        <Icon className="size-4" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="font-medium text-sm leading-tight">
@@ -104,7 +104,7 @@ function NotificationItem({ notification }: NotificationItemProps) {
         </p>
       </div>
       {!notification.isRead && (
-        <div className="h-2 w-2 shrink-0 rounded-full bg-olive-500" />
+        <div className="size-2 shrink-0 rounded-full bg-olive-500" />
       )}
     </div>
   );
@@ -120,9 +120,11 @@ function NotificationItem({ notification }: NotificationItemProps) {
 }
 
 export function NotificationsPopover({
+  children,
   className,
   render,
 }: {
+  children?: React.ReactNode;
   className?: string;
   render?: React.ComponentProps<typeof PopoverTrigger>["render"];
 }) {
@@ -132,15 +134,15 @@ export function NotificationsPopover({
   return (
     <Popover>
       {render ? (
-        <PopoverTrigger render={render} />
+        <PopoverTrigger render={render}>{children}</PopoverTrigger>
       ) : (
         <PopoverTrigger
           className={cn(
-            "relative inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+            "relative inline-flex size-8 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
             className
           )}
         >
-          <Bell className="h-4 w-4" />
+          <Bell className="size-4" />
           {unreadCount && unreadCount > 0 ? (
             <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-olive-500 px-1 font-medium text-[10px] text-white">
               {unreadCount > 9 ? "9+" : unreadCount}
@@ -182,7 +184,7 @@ export function NotificationsPopover({
           ) : (
             <div className="flex h-full items-center justify-center p-8 text-center">
               <div>
-                <Bell className="mx-auto h-8 w-8 text-muted-foreground/50" />
+                <Bell className="mx-auto size-8 text-muted-foreground/50" />
                 <p className="mt-2 text-muted-foreground text-sm">
                   Aucune notification
                 </p>

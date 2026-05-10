@@ -1,22 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useRouter } from "next/navigation";
-import { use, useEffect } from "react";
-
-export default function AIPage({
+export default async function AIPage({
   params,
 }: {
   params: Promise<{ orgSlug: string }>;
 }) {
-  const { orgSlug } = use(params);
-  const router = useRouter();
-
-  useEffect(
-    function redirectToProject() {
-      router.replace(`/dashboard/${orgSlug}/project`);
-    },
-    [orgSlug, router]
-  );
-
-  return null;
+  const { orgSlug } = await params;
+  redirect(`/dashboard/${orgSlug}/project`);
 }

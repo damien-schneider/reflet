@@ -46,7 +46,7 @@ export const CurrentConfigSection = ({
       )}
       {settings.targetBranch && (
         <Badge variant="outline">
-          <GitBranch className="mr-1 h-3 w-3" />
+          <GitBranch className="mr-1 size-3" />
           {settings.targetBranch}
         </Badge>
       )}

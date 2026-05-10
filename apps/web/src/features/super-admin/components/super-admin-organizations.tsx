@@ -154,7 +154,7 @@ export function SuperAdminOrganizations() {
       )}
       {status === "LoadingMore" && (
         <div className="flex justify-center py-2">
-          <span className="text-muted-foreground text-sm">Loading...</span>
+          <span className="text-muted-foreground text-sm">Loading…</span>
         </div>
       )}
     </div>

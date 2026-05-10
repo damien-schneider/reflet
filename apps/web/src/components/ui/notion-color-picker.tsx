@@ -31,12 +31,12 @@ export function NotionColorPicker({ value, onChange }: NotionColorPickerProps) {
           >
             <div
               className={cn(
-                "h-4 w-4 rounded-sm border",
+                "size-4 rounded-sm border",
                 getTagSwatchClass(color)
               )}
             />
             <span className="flex-1 text-left">{TAG_COLOR_LABELS[color]}</span>
-            {value === color && <Check className="h-4 w-4" />}
+            {value === color && <Check className="size-4" />}
           </button>
         ))}
       </div>

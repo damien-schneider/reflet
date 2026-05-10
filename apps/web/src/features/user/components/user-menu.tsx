@@ -28,7 +28,7 @@ export default function UserList() {
         }
       >
         <span className="flex items-center gap-2 truncate">
-          <User className="h-4 w-4 shrink-0" />
+          <User className="size-4 shrink-0" />
           <span className="truncate group-data-[collapsible=icon]:hidden">
             {user?.name}
           </span>
@@ -45,12 +45,17 @@ export default function UserList() {
           onClick={() => {
             capture("sign_out");
             posthog.reset();
-            authClient.signOut();
-            window.location.href = "/";
+            authClient.signOut({
+              fetchOptions: {
+                onSuccess: () => {
+                  window.location.href = "/";
+                },
+              },
+            });
           }}
           variant="destructive"
         >
-          <SignOut className="mr-2 h-4 w-4" />
+          <SignOut className="mr-2 size-4" />
           Sign Out
         </DropdownListItem>
       </DropdownListContent>

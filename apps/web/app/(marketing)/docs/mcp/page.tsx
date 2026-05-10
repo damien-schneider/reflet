@@ -62,7 +62,7 @@ export default function McpDocsPage() {
             )
           </li>
           <li>
-            An API secret key — generate one in{" "}
+            An API secret key, generate one in{" "}
             <strong className="text-foreground">Dashboard → In-App</strong>
           </li>
           <li>

@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ImageBubbleMenuEditor } from "./image-bubble-menu";
 
 vi.mock("@/lib/utils", () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
@@ -17,8 +18,26 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-const createMockEditor = (overrides: Record<string, unknown> = {}) => {
-  const mockRun = vi.fn();
+interface MockImageBubbleEditor extends ImageBubbleMenuEditor {
+  _mockRun: ReturnType<typeof vi.fn>;
+  _mockUpdateAttributes: ReturnType<typeof vi.fn>;
+}
+
+const createImageContainer = () => {
+  const imgElement = document.createElement("img");
+  Object.defineProperty(imgElement, "getBoundingClientRect", {
+    value: () => new DOMRect(100, 200, 300, 150),
+  });
+
+  const parentDiv = document.createElement("div");
+  parentDiv.appendChild(imgElement);
+  return parentDiv;
+};
+
+const createMockEditor = (
+  overrides: Partial<MockImageBubbleEditor> = {}
+): MockImageBubbleEditor => {
+  const mockRun = vi.fn(() => true);
   const mockUpdateAttributes = vi.fn(() => ({ run: mockRun }));
   const mockFocus = vi.fn(() => ({ updateAttributes: mockUpdateAttributes }));
   const mockChain = vi.fn(() => ({ focus: mockFocus }));
@@ -35,7 +54,7 @@ const createMockEditor = (overrides: Record<string, unknown> = {}) => {
         getBoundingClientRect: () => new DOMRect(0, 0, 800, 600),
       }),
       domAtPos: vi.fn(() => ({
-        node: document.createElement("div"),
+        node: createImageContainer(),
       })),
     },
     _mockRun: mockRun,
@@ -62,7 +81,7 @@ describe("ImageBubbleMenu", () => {
       isActive: vi.fn(() => false),
     });
 
-    const { container } = render(<ImageBubbleMenu editor={editor as never} />);
+    const { container } = render(<ImageBubbleMenu editor={editor} />);
 
     expect(
       container.querySelector(".tiptap-image-bubble-menu")
@@ -74,11 +93,32 @@ describe("ImageBubbleMenu", () => {
       isActive: vi.fn(() => true),
     });
 
-    render(<ImageBubbleMenu editor={editor as never} />);
+    render(<ImageBubbleMenu editor={editor} />);
 
     expect(screen.getByTitle("Align left")).toBeInTheDocument();
     expect(screen.getByTitle("Align center")).toBeInTheDocument();
     expect(screen.getByTitle("Align right")).toBeInTheDocument();
+  });
+
+  it("stays hidden when an active image cannot be located in the editor DOM", () => {
+    const editor = createMockEditor({
+      isActive: vi.fn(() => true),
+      view: {
+        state: { selection: { from: 0 } },
+        dom: Object.assign(document.createElement("div"), {
+          getBoundingClientRect: () => new DOMRect(0, 0, 800, 600),
+        }),
+        domAtPos: vi.fn(() => ({
+          node: document.createElement("div"),
+        })),
+      },
+    });
+
+    const { container } = render(<ImageBubbleMenu editor={editor} />);
+
+    expect(
+      container.querySelector(".tiptap-image-bubble-menu")
+    ).not.toBeInTheDocument();
   });
 
   it("renders alignment icons", () => {
@@ -86,7 +126,7 @@ describe("ImageBubbleMenu", () => {
       isActive: vi.fn(() => true),
     });
 
-    render(<ImageBubbleMenu editor={editor as never} />);
+    render(<ImageBubbleMenu editor={editor} />);
 
     expect(screen.getByTestId("icon-align-left")).toBeInTheDocument();
     expect(screen.getByTestId("icon-align-center")).toBeInTheDocument();
@@ -99,7 +139,7 @@ describe("ImageBubbleMenu", () => {
       getAttributes: vi.fn(() => ({ align: "center" })),
     });
 
-    render(<ImageBubbleMenu editor={editor as never} />);
+    render(<ImageBubbleMenu editor={editor} />);
 
     const centerButton = screen.getByTitle("Align center");
     expect(centerButton.className).toContain("bg-muted");
@@ -111,7 +151,7 @@ describe("ImageBubbleMenu", () => {
       isActive: vi.fn(() => true),
     });
 
-    render(<ImageBubbleMenu editor={editor as never} />);
+    render(<ImageBubbleMenu editor={editor} />);
 
     fireEvent.click(screen.getByTitle("Align left"));
     expect(editor.chain).toHaveBeenCalled();
@@ -126,7 +166,7 @@ describe("ImageBubbleMenu", () => {
       isActive: vi.fn(() => true),
     });
 
-    render(<ImageBubbleMenu editor={editor as never} />);
+    render(<ImageBubbleMenu editor={editor} />);
 
     fireEvent.click(screen.getByTitle("Align right"));
     expect(editor._mockUpdateAttributes).toHaveBeenCalledWith("image", {
@@ -139,7 +179,7 @@ describe("ImageBubbleMenu", () => {
       isActive: vi.fn(() => true),
     });
 
-    render(<ImageBubbleMenu editor={editor as never} />);
+    render(<ImageBubbleMenu editor={editor} />);
 
     fireEvent.click(screen.getByTitle("Align center"));
     expect(editor._mockUpdateAttributes).toHaveBeenCalledWith("image", {
@@ -152,7 +192,7 @@ describe("ImageBubbleMenu", () => {
       isActive: vi.fn(() => false),
     });
 
-    render(<ImageBubbleMenu editor={editor as never} />);
+    render(<ImageBubbleMenu editor={editor} />);
 
     expect(editor.on).toHaveBeenCalledWith(
       "selectionUpdate",
@@ -166,7 +206,7 @@ describe("ImageBubbleMenu", () => {
       isActive: vi.fn(() => false),
     });
 
-    const { unmount } = render(<ImageBubbleMenu editor={editor as never} />);
+    const { unmount } = render(<ImageBubbleMenu editor={editor} />);
 
     unmount();
 
@@ -186,7 +226,7 @@ describe("ImageBubbleMenu", () => {
       getAttributes: vi.fn(() => ({ align: "invalid" })),
     });
 
-    render(<ImageBubbleMenu editor={editor as never} />);
+    render(<ImageBubbleMenu editor={editor} />);
 
     const centerButton = screen.getByTitle("Align center");
     expect(centerButton.className).toContain("bg-muted");
@@ -214,11 +254,10 @@ describe("ImageBubbleMenu", () => {
       },
     });
 
-    render(<ImageBubbleMenu editor={editor as never} />);
+    render(<ImageBubbleMenu editor={editor} />);
 
     const menu = document.querySelector(".tiptap-image-bubble-menu");
     expect(menu).toBeInTheDocument();
-    // The menu should have style props set
     expect(menu).toHaveStyle({ top: "160px", left: "250px" });
   });
 });

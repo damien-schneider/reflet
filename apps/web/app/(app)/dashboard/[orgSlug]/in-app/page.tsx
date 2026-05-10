@@ -82,7 +82,7 @@ export default function WidgetsPage({
         </div>
         <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
           <DialogTrigger render={<Button />}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 size-4" />
             Add Live Chat
           </DialogTrigger>
           <DialogContent>
@@ -129,7 +129,7 @@ export default function WidgetsPage({
       ) : (
         <Card>
           <CardContent className="py-12 text-center">
-            <ChatCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+            <ChatCircle className="mx-auto mb-4 size-12 text-muted-foreground" />
             <H3 className="mb-2" variant="card">
               No integrations yet
             </H3>
@@ -138,11 +138,11 @@ export default function WidgetsPage({
             </Muted>
             <div className="flex flex-col items-center gap-2">
               <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 size-4" />
                 Add Live Chat
               </Button>
               <div className="mt-4 flex items-center gap-2 text-muted-foreground">
-                <Code className="h-4 w-4" />
+                <Code className="size-4" />
                 <Text variant="bodySmall">
                   Just add one script tag to your website
                 </Text>

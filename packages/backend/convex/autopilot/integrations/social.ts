@@ -15,6 +15,7 @@ import {
   internalMutation,
   internalQuery,
 } from "../../_generated/server";
+import { formatProviderHttpError } from "../adapters/adapter_helpers";
 
 const typefullyResponseSchema = z.object({
   share_url: z.string().optional(),
@@ -227,8 +228,7 @@ const publishViaTypefully = async (
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Typefully API error: ${response.status} ${error}`);
+    throw new Error(formatProviderHttpError("Typefully API request", response));
   }
 
   const result = typefullyResponseSchema.parse(await response.json());
@@ -252,7 +252,9 @@ const publishViaBuffer = async (
   );
 
   if (!profilesResponse.ok) {
-    throw new Error(`Buffer API error: ${profilesResponse.status}`);
+    throw new Error(
+      formatProviderHttpError("Buffer profiles request", profilesResponse)
+    );
   }
 
   const profiles = bufferProfilesResponseSchema.parse(
@@ -281,8 +283,9 @@ const publishViaBuffer = async (
   );
 
   if (!createResponse.ok) {
-    const error = await createResponse.text();
-    throw new Error(`Buffer create error: ${createResponse.status} ${error}`);
+    throw new Error(
+      formatProviderHttpError("Buffer create request", createResponse)
+    );
   }
 
   return undefined; // Buffer doesn't return a direct post URL

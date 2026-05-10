@@ -1,11 +1,6 @@
-// Top-level regex for hex color parsing
 const HEX_COLOR_REGEX = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
-// Regex for validating hex colors (3 or 6 digit)
 const HEX_VALIDATION_REGEX = /^#?([a-f\d]{3}|[a-f\d]{6})$/i;
 
-/**
- * Converts a hex color to HSL values
- */
 function hexToHsl(hex: string): { h: number; s: number; l: number } {
   const result = HEX_COLOR_REGEX.exec(hex);
   if (!result) {
@@ -41,9 +36,6 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } {
   };
 }
 
-/**
- * Converts HSL values to a hex color
- */
 function hslToHex(h: number, s: number, l: number): string {
   const sNorm = s / 100;
   const lNorm = l / 100;
@@ -90,9 +82,6 @@ function hslToHex(h: number, s: number, l: number): string {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
-/**
- * Determines if a color is light or dark based on relative luminance
- */
 function isLightColor(hex: string): boolean {
   const result = HEX_COLOR_REGEX.exec(hex);
   if (!result) {
@@ -103,7 +92,6 @@ function isLightColor(hex: string): boolean {
   const g = Number.parseInt(result[2] ?? "0", 16);
   const b = Number.parseInt(result[3] ?? "0", 16);
 
-  // Calculate relative luminance using sRGB formula
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.5;
 }
@@ -115,28 +103,17 @@ export interface ColorPalette {
   primaryLight: string;
 }
 
-/**
- * Generates a color palette from a primary hex color
- * Returns CSS custom property values for theming
- */
 export function generateColorPalette(primaryHex: string): ColorPalette {
   const normalizedHex = primaryHex.startsWith("#")
     ? primaryHex
     : `#${primaryHex}`;
   const hsl = hexToHsl(normalizedHex);
 
-  // Primary: the original color
   const primary = normalizedHex;
-
-  // Hover: 10% darker
   const hoverLightness = Math.max(0, hsl.l - 10);
   const primaryHover = hslToHex(hsl.h, hsl.s, hoverLightness);
-
-  // Light: very light version for backgrounds (90-95% lightness)
   const lightLightness = Math.min(95, Math.max(90, 95 - hsl.s * 0.1));
   const primaryLight = hslToHex(hsl.h, Math.min(hsl.s, 30), lightLightness);
-
-  // Foreground: white for dark colors, black for light colors
   const primaryForeground = isLightColor(normalizedHex) ? "#000000" : "#ffffff";
 
   return {
@@ -147,9 +124,6 @@ export function generateColorPalette(primaryHex: string): ColorPalette {
   };
 }
 
-/**
- * Generates CSS custom properties object from a color palette
- */
 export function generateColorCssVars(
   palette: ColorPalette
 ): Record<string, string> {
@@ -161,16 +135,10 @@ export function generateColorCssVars(
   };
 }
 
-/**
- * Validates a hex color string
- */
 export function isValidHexColor(color: string): boolean {
   return HEX_VALIDATION_REGEX.test(color);
 }
 
-/**
- * Normalizes a hex color to 6-digit format with #
- */
 export function normalizeHexColor(color: string): string {
   let hex = color.replace("#", "");
   if (hex.length === 3) {

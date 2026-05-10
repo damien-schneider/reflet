@@ -79,7 +79,7 @@ export default function MembersGearPage({
         </div>
         {isAdmin ? (
           <Button onClick={() => setIsInviteDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 size-4" />
             Invite Member
           </Button>
         ) : null}
@@ -89,7 +89,7 @@ export default function MembersGearPage({
         <section className="space-y-4">
           <div>
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
+              <Users className="size-5" />
               <H3 variant="section">Team Members</H3>
             </div>
             <Muted>

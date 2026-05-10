@@ -129,7 +129,7 @@ export function MyApp() {
       {!hasApiKeys && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
           <div className="flex items-start gap-3">
-            <Warning className="mt-0.5 h-5 w-5 text-amber-600" />
+            <Warning className="mt-0.5 size-5 text-amber-600" />
             <div className="flex-1">
               <h4 className="font-medium text-amber-800 dark:text-amber-200">
                 API keys required
@@ -150,7 +150,7 @@ export function MyApp() {
                   onClick={handleGenerateKeys}
                   size="sm"
                 >
-                  <Key className="mr-2 h-4 w-4" />
+                  <Key className="mr-2 size-4" />
                   {isGenerating ? "Generating..." : "Generate API Keys"}
                 </Button>
               </div>
@@ -250,7 +250,7 @@ export function MyApp() {
         {/* Brand color indicator */}
         <div className="mt-4 flex items-center gap-2 text-muted-foreground text-sm">
           <div
-            className="h-4 w-4 rounded-full border"
+            className="size-4 rounded-full border"
             style={{ backgroundColor: brandColor }}
           />
           <span>
@@ -281,7 +281,7 @@ export function MyApp() {
             size="sm"
             variant="secondary"
           >
-            <Copy className="mr-2 h-4 w-4" />
+            <Copy className="mr-2 size-4" />
             Copy
           </Button>
           <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm">
@@ -303,7 +303,7 @@ export function MyApp() {
             size="sm"
             variant="secondary"
           >
-            <Copy className="mr-2 h-4 w-4" />
+            <Copy className="mr-2 size-4" />
             Copy
           </Button>
           <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm">
@@ -327,7 +327,7 @@ export function MyApp() {
               size="sm"
               variant="secondary"
             >
-              <Copy className="mr-2 h-4 w-4" />
+              <Copy className="mr-2 size-4" />
               Copy
             </Button>
             <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm">
@@ -341,7 +341,7 @@ export function MyApp() {
       <div>
         <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-900 dark:bg-purple-950">
           <div className="flex items-start gap-3">
-            <Robot className="mt-0.5 h-5 w-5 text-purple-600" />
+            <Robot className="mt-0.5 size-5 text-purple-600" />
             <div className="flex-1">
               <h4 className="font-medium text-purple-800 dark:text-purple-200">
                 AI Integration Prompt
@@ -362,7 +362,7 @@ export function MyApp() {
             size="sm"
             variant="secondary"
           >
-            <Copy className="mr-2 h-4 w-4" />
+            <Copy className="mr-2 size-4" />
             Copy Prompt
           </Button>
           <div className="max-h-64 overflow-auto rounded-lg bg-muted p-4 font-mono text-sm">
@@ -375,7 +375,7 @@ export function MyApp() {
           onClick={() => copyToClipboard(aiPrompt, "AI prompt")}
           variant="default"
         >
-          <Copy className="mr-2 h-4 w-4" />
+          <Copy className="mr-2 size-4" />
           Copy Full AI Prompt
         </Button>
       </div>

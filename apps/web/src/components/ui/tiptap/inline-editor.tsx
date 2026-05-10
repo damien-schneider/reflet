@@ -5,18 +5,29 @@ import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { Markdown } from "tiptap-markdown";
 import { cn } from "@/lib/utils";
 import "./styles.css";
 
-// Helper to get markdown from tiptap-markdown storage
-// The tiptap-markdown extension adds a `markdown` storage that TypeScript doesn't know about
-const getMarkdown = (storage: unknown): string => {
-  const storageWithMarkdown = storage as {
-    markdown?: { getMarkdown?: () => string };
+interface MarkdownStorage {
+  markdown?: {
+    getMarkdown?: () => string;
   };
-  return storageWithMarkdown?.markdown?.getMarkdown?.() ?? "";
+}
+
+function hasMarkdownStorage(storage: unknown): storage is MarkdownStorage {
+  return (
+    typeof storage === "object" && storage !== null && "markdown" in storage
+  );
+}
+
+const getMarkdown = (storage: unknown): string => {
+  if (!hasMarkdownStorage(storage)) {
+    return "";
+  }
+  const getValue = storage.markdown?.getMarkdown;
+  return typeof getValue === "function" ? getValue() : "";
 };
 
 interface TiptapInlineEditorProps {
@@ -50,6 +61,7 @@ export function TiptapInlineEditor({
         bulletList: false,
         orderedList: false,
         codeBlock: false,
+        link: false,
         horizontalRule: false,
         hardBreak: {
           keepMarks: true,
@@ -65,7 +77,7 @@ export function TiptapInlineEditor({
           class: "tiptap-link",
         },
       }),
-      ...(maxLength
+      ...(typeof maxLength === "number" && maxLength > 0
         ? [
             CharacterCount.configure({
               limit: maxLength,
@@ -101,29 +113,37 @@ export function TiptapInlineEditor({
     },
   });
 
-  // Sync external value changes
-  useEffect(() => {
-    if (!editor) return;
+  useEffect(
+    function syncExternalValue() {
+      if (!editor) return;
 
-    const currentMarkdown = getMarkdown(editor.storage);
-    if (value !== currentMarkdown) {
-      editor.commands.setContent(value);
-    }
-  }, [editor, value]);
+      const currentMarkdown = getMarkdown(editor.storage);
+      if (value !== currentMarkdown) {
+        editor.commands.setContent(value);
+      }
+    },
+    [editor, value]
+  );
 
-  // Update editable state
-  useEffect(() => {
-    if (!editor) return;
-    editor.setEditable(!disabled);
-  }, [editor, disabled]);
+  useEffect(
+    function syncEditableState() {
+      if (!editor) return;
+      editor.setEditable(!disabled);
+    },
+    [editor, disabled]
+  );
 
   const characterCount = editor?.storage.characterCount?.characters() ?? 0;
-  const isNearLimit = maxLength && characterCount > maxLength * 0.9;
-  const isAtLimit = maxLength && characterCount >= maxLength;
+  const hasCharacterLimit = typeof maxLength === "number" && maxLength > 0;
+  const isNearLimit = hasCharacterLimit && characterCount > maxLength * 0.9;
+  const isAtLimit = hasCharacterLimit && characterCount >= maxLength;
 
-  const handleContainerClick = useCallback(() => {
+  const handleContainerPointerDown = () => {
+    if (disabled) {
+      return;
+    }
     editor?.commands.focus();
-  }, [editor]);
+  };
 
   return (
     <div
@@ -135,11 +155,11 @@ export function TiptapInlineEditor({
         className
       )}
       data-slot="tiptap-inline-editor"
-      onClick={handleContainerClick}
+      onPointerDown={handleContainerPointerDown}
     >
       <EditorContent editor={editor} />
 
-      {maxLength && (
+      {hasCharacterLimit && (
         <div
           className={cn(
             "mt-1 text-right text-xs",

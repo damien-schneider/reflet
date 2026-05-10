@@ -71,7 +71,7 @@ export function CommentItem({
   return (
     <div className="group">
       <div className="flex gap-3">
-        <Avatar className="h-8 w-8">
+        <Avatar className="size-8">
           <AvatarImage src={comment.authorImage} />
           <AvatarFallback>
             {comment.authorName?.charAt(0) || "?"}
@@ -96,7 +96,6 @@ export function CommentItem({
           {isEditing ? (
             <div className="mt-2 space-y-2">
               <TiptapMarkdownEditor
-                autoFocus
                 minimal
                 onChange={onEditContentChange}
                 placeholder="Edit your comment..."
@@ -135,21 +134,21 @@ export function CommentItem({
                         className="h-auto p-0 text-muted-foreground opacity-0 group-hover:opacity-100"
                         variant="link"
                       >
-                        <DotsThreeVertical className="h-4 w-4" />
+                        <DotsThreeVertical className="size-4" />
                       </Button>
                     </DropdownListTrigger>
                     <DropdownListContent>
                       <DropdownListItem
                         onClick={() => onEdit(comment._id, comment.body)}
                       >
-                        <Pencil className="mr-2 h-4 w-4" />
+                        <Pencil className="mr-2 size-4" />
                         Edit
                       </DropdownListItem>
                       <DropdownListItem
                         className="text-destructive"
                         onClick={() => onDelete(comment._id)}
                       >
-                        <Trash className="mr-2 h-4 w-4" />
+                        <Trash className="mr-2 size-4" />
                         Delete
                       </DropdownListItem>
                     </DropdownListContent>
@@ -163,7 +162,6 @@ export function CommentItem({
           {isReplying && (
             <div className="mt-3 space-y-2">
               <TiptapMarkdownEditor
-                autoFocus
                 minimal
                 onChange={onReplyContentChange}
                 placeholder="Write a reply..."
@@ -234,7 +232,7 @@ function ReplyItem({
 }: ReplyItemProps) {
   return (
     <div className="group flex gap-3">
-      <Avatar className="h-6 w-6">
+      <Avatar className="size-6">
         <AvatarImage src={reply.authorImage} />
         <AvatarFallback className="text-xs">
           {reply.authorName?.charAt(0) || "?"}
@@ -261,7 +259,6 @@ function ReplyItem({
         {editingCommentId === reply._id ? (
           <div className="mt-2 space-y-2">
             <TiptapMarkdownEditor
-              autoFocus
               minimal
               onChange={onEditContentChange}
               placeholder="Edit your reply..."
@@ -291,21 +288,21 @@ function ReplyItem({
                       className="h-auto p-0 text-muted-foreground opacity-0 group-hover:opacity-100"
                       variant="link"
                     >
-                      <DotsThreeVertical className="h-4 w-4" />
+                      <DotsThreeVertical className="size-4" />
                     </Button>
                   </DropdownListTrigger>
                   <DropdownListContent>
                     <DropdownListItem
                       onClick={() => onEdit(reply._id, reply.body)}
                     >
-                      <Pencil className="mr-2 h-4 w-4" />
+                      <Pencil className="mr-2 size-4" />
                       Edit
                     </DropdownListItem>
                     <DropdownListItem
                       className="text-destructive"
                       onClick={() => onDelete(reply._id)}
                     >
-                      <Trash className="mr-2 h-4 w-4" />
+                      <Trash className="mr-2 size-4" />
                       Delete
                     </DropdownListItem>
                   </DropdownListContent>

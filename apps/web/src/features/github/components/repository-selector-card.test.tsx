@@ -505,7 +505,7 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
           selectedRepo=""
         />
       );
-      expect(screen.getByText("Loading repositories...")).toBeInTheDocument();
+      expect(screen.getByText("Loading repositories…")).toBeInTheDocument();
     });
 
     it("shows Loading repositories text when loadingRepos", () => {
@@ -521,7 +521,7 @@ describe("RepositorySelectorSection - Combobox Filtering", () => {
           selectedRepo=""
         />
       );
-      expect(screen.getByText("Loading repositories...")).toBeInTheDocument();
+      expect(screen.getByText("Loading repositories…")).toBeInTheDocument();
     });
 
     it("does not show combobox when loading", () => {

@@ -1,7 +1,6 @@
 "use client";
 
 import { EditorContent } from "@tiptap/react";
-import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useTiptapMarkdownEditor } from "./hooks/use-editor";
 import { ImageBubbleMenu } from "./image-bubble-menu";
@@ -57,12 +56,17 @@ export function TiptapMarkdownEditor({
     debounceMs,
     onSubmit,
   });
+  const characterLimit =
+    typeof maxLength === "number" && maxLength > 0 ? maxLength : undefined;
+  const shouldShowCharacterCount = characterLimit !== undefined;
+  const shouldShowStatusRow = isUploading || shouldShowCharacterCount;
 
-  const handleContainerClick = useCallback(() => {
-    if (editable && !disabled) {
-      editor?.commands.focus();
+  const handleContainerPointerDown = () => {
+    if (!(editable && !disabled)) {
+      return;
     }
-  }, [editor, editable, disabled]);
+    editor?.commands.focus();
+  };
 
   if (minimal) {
     return (
@@ -73,7 +77,7 @@ export function TiptapMarkdownEditor({
           className
         )}
         data-slot="tiptap-markdown-editor"
-        onClick={handleContainerClick}
+        onPointerDown={handleContainerPointerDown}
       >
         <div className="relative">
           <EditorContent editor={editor} />
@@ -97,14 +101,14 @@ export function TiptapMarkdownEditor({
           type="file"
         />
 
-        {(isUploading || maxLength) && (
+        {shouldShowStatusRow && (
           <div className="mt-2 flex items-center justify-between text-xs">
             {isUploading && (
               <span className="text-muted-foreground">{uploadProgress}</span>
             )}
             {!isUploading && <span />}
 
-            {maxLength && (
+            {shouldShowCharacterCount ? (
               <span
                 className={cn(
                   isAtLimit
@@ -114,9 +118,9 @@ export function TiptapMarkdownEditor({
                       : "text-muted-foreground"
                 )}
               >
-                {characterCount}/{maxLength}
+                {characterCount}/{characterLimit}
               </span>
-            )}
+            ) : null}
           </div>
         )}
       </div>
@@ -135,7 +139,7 @@ export function TiptapMarkdownEditor({
         className
       )}
       data-slot="tiptap-markdown-editor"
-      onClick={handleContainerClick}
+      onPointerDown={handleContainerPointerDown}
     >
       <div className="relative">
         <EditorContent editor={editor} />
@@ -163,7 +167,7 @@ export function TiptapMarkdownEditor({
         )}
         {!isUploading && <span />}
 
-        {maxLength && (
+        {shouldShowCharacterCount ? (
           <span
             className={cn(
               isAtLimit
@@ -173,9 +177,9 @@ export function TiptapMarkdownEditor({
                   : "text-muted-foreground"
             )}
           >
-            {characterCount}/{maxLength}
+            {characterCount}/{characterLimit}
           </span>
-        )}
+        ) : null}
       </div>
     </div>
   );

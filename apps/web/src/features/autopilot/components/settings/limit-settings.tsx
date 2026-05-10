@@ -6,7 +6,7 @@ import {
   IconRobot,
   IconShieldCheck,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import {
   Card,
@@ -19,24 +19,46 @@ import { Input } from "@/components/ui/input";
 import { SectionHeader } from "@/features/autopilot/components/settings/section-header";
 
 function parsePositiveInteger(value: string): number | undefined {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) && Number.isInteger(parsed) && parsed > 0
+    ? parsed
+    : undefined;
 }
 
 function parseNonNegativeFloat(value: string): number | undefined {
-  const parsed = Number(value);
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+  const parsed = Number(trimmed);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
 function parseNonNegativeInteger(value: string): number | undefined {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) && Number.isInteger(parsed) && parsed >= 0
+    ? parsed
+    : undefined;
 }
 
 interface LimitInputValues {
   costCap: string;
   emailLimit: string;
   maxTasks: string;
+}
+
+interface LimitInputDraft {
+  inputKey: keyof LimitInputValues;
+  sourceValues: LimitInputValues;
+  value: string;
 }
 
 function getLimitInputValues({
@@ -55,6 +77,34 @@ function getLimitInputValues({
   };
 }
 
+function areLimitInputValuesEqual(
+  left: LimitInputValues,
+  right: LimitInputValues
+): boolean {
+  return (
+    left.costCap === right.costCap &&
+    left.emailLimit === right.emailLimit &&
+    left.maxTasks === right.maxTasks
+  );
+}
+
+function applyDraft(
+  savedValues: LimitInputValues,
+  draft: LimitInputDraft | null
+): LimitInputValues {
+  if (!(draft && areLimitInputValuesEqual(savedValues, draft.sourceValues))) {
+    return savedValues;
+  }
+
+  if (draft.inputKey === "costCap") {
+    return { ...savedValues, costCap: draft.value };
+  }
+  if (draft.inputKey === "emailLimit") {
+    return { ...savedValues, emailLimit: draft.value };
+  }
+  return { ...savedValues, maxTasks: draft.value };
+}
+
 export function LimitSettings({
   dailyCostCapUsd,
   disabled,
@@ -70,32 +120,30 @@ export function LimitSettings({
   onInvalidValue: (message: string) => void;
   onUpdate: (field: string, value: number) => Promise<void>;
 }) {
-  const [values, setValues] = useState(() =>
-    getLimitInputValues({ dailyCostCapUsd, emailDailyLimit, maxTasksPerDay })
-  );
+  const [draft, setDraft] = useState<LimitInputDraft | null>(null);
+  const savedValues = getLimitInputValues({
+    dailyCostCapUsd,
+    emailDailyLimit,
+    maxTasksPerDay,
+  });
+  const values = applyDraft(savedValues, draft);
 
-  useEffect(
-    function syncLimitInputsFromConfig() {
-      setValues(
-        getLimitInputValues({
-          dailyCostCapUsd,
-          emailDailyLimit,
-          maxTasksPerDay,
-        })
-      );
-    },
-    [dailyCostCapUsd, emailDailyLimit, maxTasksPerDay]
-  );
+  const updateDraft = (inputKey: keyof LimitInputValues, value: string) =>
+    setDraft({
+      inputKey,
+      sourceValues: savedValues,
+      value,
+    });
+
+  const clearDraft = () => setDraft(null);
 
   const commitLimitValue = async ({
-    currentValue,
     field,
     inputKey,
     invalidMessage,
     parse,
     value,
   }: {
-    currentValue: string;
     field: string;
     inputKey: keyof LimitInputValues;
     invalidMessage: string;
@@ -104,15 +152,15 @@ export function LimitSettings({
   }) => {
     const parsed = parse(value);
     if (parsed === undefined) {
-      setValues((current) => ({ ...current, [inputKey]: currentValue }));
+      clearDraft();
       onInvalidValue(invalidMessage);
       return;
     }
     try {
       await onUpdate(field, parsed);
-      setValues((current) => ({ ...current, [inputKey]: String(parsed) }));
+      updateDraft(inputKey, String(parsed));
     } catch {
-      setValues((current) => ({ ...current, [inputKey]: currentValue }));
+      clearDraft();
       onInvalidValue("Failed to save limit");
     }
   };
@@ -145,20 +193,15 @@ export function LimitSettings({
               min={1}
               onBlur={async (event) => {
                 await commitLimitValue({
-                  currentValue: String(maxTasksPerDay),
                   field: "maxTasksPerDay",
                   inputKey: "maxTasks",
-                  invalidMessage: "Tasks per day must be at least 1",
+                  invalidMessage:
+                    "Tasks per day must be a whole number of at least 1",
                   parse: parsePositiveInteger,
                   value: event.target.value,
                 });
               }}
-              onChange={(event) =>
-                setValues((current) => ({
-                  ...current,
-                  maxTasks: event.target.value,
-                }))
-              }
+              onChange={(event) => updateDraft("maxTasks", event.target.value)}
               type="number"
               value={values.maxTasks}
             />
@@ -184,10 +227,6 @@ export function LimitSettings({
               min={0}
               onBlur={async (event) => {
                 await commitLimitValue({
-                  currentValue:
-                    dailyCostCapUsd === undefined
-                      ? ""
-                      : String(dailyCostCapUsd),
                   field: "dailyCostCapUsd",
                   inputKey: "costCap",
                   invalidMessage: "Daily cost cap must be 0 or greater",
@@ -195,12 +234,7 @@ export function LimitSettings({
                   value: event.target.value,
                 });
               }}
-              onChange={(event) =>
-                setValues((current) => ({
-                  ...current,
-                  costCap: event.target.value,
-                }))
-              }
+              onChange={(event) => updateDraft("costCap", event.target.value)}
               step="0.01"
               type="number"
               value={values.costCap}
@@ -227,7 +261,6 @@ export function LimitSettings({
               min={0}
               onBlur={async (event) => {
                 await commitLimitValue({
-                  currentValue: String(emailDailyLimit ?? 20),
                   field: "emailDailyLimit",
                   inputKey: "emailLimit",
                   invalidMessage: "Email limit must be 0 or greater",
@@ -236,10 +269,7 @@ export function LimitSettings({
                 });
               }}
               onChange={(event) =>
-                setValues((current) => ({
-                  ...current,
-                  emailLimit: event.target.value,
-                }))
+                updateDraft("emailLimit", event.target.value)
               }
               type="number"
               value={values.emailLimit}

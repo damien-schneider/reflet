@@ -32,7 +32,7 @@ export function TagCard({ tag, isAdmin, onEdit, onDelete }: TagCardProps) {
           <div className="flex items-center gap-2">
             <div
               className={cn(
-                "h-4 w-4 rounded border",
+                "size-4 rounded border",
                 getTagSwatchClass(tag.color)
               )}
             />
@@ -44,11 +44,11 @@ export function TagCard({ tag, isAdmin, onEdit, onDelete }: TagCardProps) {
                 render={(props: React.ComponentProps<"button">) => (
                   <Button
                     {...props}
-                    className="h-8 w-8"
+                    className="size-8"
                     size="icon"
                     variant="ghost"
                   >
-                    <DotsThreeVertical className="h-4 w-4" />
+                    <DotsThreeVertical className="size-4" />
                   </Button>
                 )}
               />
@@ -58,7 +58,7 @@ export function TagCard({ tag, isAdmin, onEdit, onDelete }: TagCardProps) {
                   className="text-destructive"
                   onClick={onDelete}
                 >
-                  <Trash className="mr-2 h-4 w-4" />
+                  <Trash className="mr-2 size-4" />
                   Delete
                 </DropdownListItem>
               </DropdownListContent>

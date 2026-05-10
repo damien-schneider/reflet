@@ -85,7 +85,6 @@ export function IncidentComposer({
 
       <div className="space-y-3">
         <Input
-          autoFocus
           onChange={(e) => setTitle(e.target.value)}
           placeholder="What's happening?"
           value={title}

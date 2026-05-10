@@ -23,7 +23,7 @@ import { internalAction, mutation, query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 import { ceoAgent } from "./agents/ceo/agent";
 import { makeCeoToolsForOrg } from "./agents/ceo_tools";
-import { requireOrgAdmin } from "./mutations/auth";
+import { requireAutopilotAccess, requireOrgAdmin } from "./mutations/auth";
 import { requireOrgMembership } from "./queries/auth";
 
 interface ChatConfigOptions {
@@ -138,6 +138,7 @@ export const getOrCreateThread = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
     const config = await requireAuthorizedConfig(ctx, {
       organizationId: args.organizationId,
       userId: user._id,
@@ -172,6 +173,7 @@ export const sendMessage = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
     await requireOwnedThread(ctx, {
       organizationId: args.organizationId,
       threadId: args.threadId,
@@ -213,6 +215,16 @@ export const generateCEOResponseAsync = internalAction({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const access = await ctx.runQuery(
+      internal.autopilot.billing_gate.checkAccess,
+      {
+        organizationId: args.organizationId,
+      }
+    );
+    if (!access.allowed) {
+      return null;
+    }
+
     // Get aggregate context
     const ceoContext = await ctx.runQuery(
       internal.autopilot.agents.ceo.queries.getCEOContext,

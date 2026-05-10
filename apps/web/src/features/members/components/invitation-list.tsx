@@ -4,6 +4,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ClientDate } from "@/shared/components/client-date";
 
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds - must match backend
 
@@ -37,7 +38,7 @@ function ResendButtonContent({
   if (justSent) {
     return (
       <>
-        <Check className="mr-1 h-4 w-4" />
+        <Check className="mr-1 size-4" />
         Sent
       </>
     );
@@ -46,8 +47,8 @@ function ResendButtonContent({
   if (isResending) {
     return (
       <>
-        <ArrowClockwise className="mr-1 h-4 w-4 animate-spin" />
-        Sending...
+        <ArrowClockwise className="mr-1 size-4 animate-spin" />
+        Sending…
       </>
     );
   }
@@ -58,7 +59,7 @@ function ResendButtonContent({
 
   return (
     <>
-      <ArrowClockwise className="mr-1 h-4 w-4" />
+      <ArrowClockwise className="mr-1 size-4" />
       Resend
     </>
   );
@@ -109,7 +110,7 @@ function InvitationItem({
         <p className="font-medium">{invitation.email}</p>
         <p className="text-muted-foreground text-sm">
           Invited as {invitation.role} •{" "}
-          {new Date(invitation._creationTime).toLocaleDateString()}
+          <ClientDate value={invitation._creationTime} />
         </p>
       </div>
       <div className="flex items-center gap-2">

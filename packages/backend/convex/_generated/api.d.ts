@@ -119,6 +119,7 @@ import type * as autopilot_mutations_use_cases from "../autopilot/mutations/use_
 import type * as autopilot_mutations_work from "../autopilot/mutations/work.js";
 import type * as autopilot_onboarding from "../autopilot/onboarding.js";
 import type * as autopilot_onboarding_tasks from "../autopilot/onboarding_tasks.js";
+import type * as autopilot_ownership from "../autopilot/ownership.js";
 import type * as autopilot_priorities from "../autopilot/priorities.js";
 import type * as autopilot_queries_activity from "../autopilot/queries/activity.js";
 import type * as autopilot_queries_agent_detail from "../autopilot/queries/agent_detail.js";
@@ -462,6 +463,7 @@ declare const fullApi: ApiFromModules<{
   "autopilot/mutations/work": typeof autopilot_mutations_work;
   "autopilot/onboarding": typeof autopilot_onboarding;
   "autopilot/onboarding_tasks": typeof autopilot_onboarding_tasks;
+  "autopilot/ownership": typeof autopilot_ownership;
   "autopilot/priorities": typeof autopilot_priorities;
   "autopilot/queries/activity": typeof autopilot_queries_activity;
   "autopilot/queries/agent_detail": typeof autopilot_queries_agent_detail;

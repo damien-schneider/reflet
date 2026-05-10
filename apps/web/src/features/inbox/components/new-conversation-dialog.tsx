@@ -111,7 +111,7 @@ export function NewConversationDialog({
             Cancel
           </Button>
           <Button disabled={!canSubmit} onClick={handleSubmit}>
-            <PaperPlaneRight className="h-4 w-4" weight="fill" />
+            <PaperPlaneRight className="size-4" weight="fill" />
             Send message
           </Button>
         </DialogFooter>

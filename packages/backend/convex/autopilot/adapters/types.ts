@@ -59,6 +59,7 @@ export interface TaskStatusResponse {
   ciFailureLog?: string;
   ciStatus?: "pending" | "running" | "passed" | "failed";
   estimatedCostUsd: number;
+  merged?: boolean;
   prNumber?: number;
   prUrl?: string;
   status: "pending" | "running" | "completed" | "failed" | "cancelled";

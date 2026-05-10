@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { BASE_URL, DEFAULT_DESCRIPTION, SITE_NAME } from "./seo-config";
 import {
   getBlogPostJsonLd,
+  getBreadcrumbJsonLd,
   getComparisonJsonLd,
   getHomePageJsonLd,
-  getHowToJsonLd,
   getOrgPageJsonLd,
 } from "./seo-json-ld";
 
@@ -82,6 +82,37 @@ describe("getHomePageJsonLd", () => {
     const webSite = findGraphEntry(ld, "WebSite");
     // potentialAction is omitted to avoid misleading structured data
     expect(webSite.potentialAction).toBeUndefined();
+  });
+});
+
+describe("getBreadcrumbJsonLd", () => {
+  it("returns a BreadcrumbList with schema.org context", () => {
+    const ld = getBreadcrumbJsonLd([{ name: "Home", path: "/" }]);
+
+    expect(ld["@context"]).toBe("https://schema.org");
+    expect(ld["@type"]).toBe("BreadcrumbList");
+  });
+
+  it("maps items with one-based positions and absolute URLs", () => {
+    const ld = getBreadcrumbJsonLd([
+      { name: "Home", path: "/" },
+      { name: "Blog", path: "/blog" },
+    ]);
+
+    expect(ld.itemListElement).toEqual([
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: `${BASE_URL}/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Blog",
+        item: `${BASE_URL}/blog`,
+      },
+    ]);
   });
 });
 
@@ -232,50 +263,5 @@ describe("getComparisonJsonLd", () => {
     expect(ld.about[1].name).toBe("Productboard");
     expect(ld.about[0]["@type"]).toBe("SoftwareApplication");
     expect(ld.about[1]["@type"]).toBe("SoftwareApplication");
-  });
-});
-
-describe("getHowToJsonLd", () => {
-  const baseArgs = {
-    title: "How to Collect Feedback",
-    description: "A guide",
-    slug: "how-to-collect-feedback",
-    steps: [
-      { name: "Step 1", text: "Do first thing" },
-      { name: "Step 2", text: "Do second thing" },
-    ],
-  };
-
-  it("returns HowTo type", () => {
-    const ld = getHowToJsonLd(baseArgs);
-    expect(ld["@context"]).toBe("https://schema.org");
-    expect(ld["@type"]).toBe("HowTo");
-    expect(ld.name).toBe("How to Collect Feedback");
-    expect(ld.url).toBe(`${BASE_URL}/blog/how-to-collect-feedback`);
-  });
-
-  it("maps steps with position starting at 1", () => {
-    const ld = getHowToJsonLd(baseArgs);
-    expect(ld.step).toHaveLength(2);
-    expect(ld.step[0]["@type"]).toBe("HowToStep");
-    expect(ld.step[0].position).toBe(1);
-    expect(ld.step[0].name).toBe("Step 1");
-    expect(ld.step[0].text).toBe("Do first thing");
-    expect(ld.step[1].position).toBe(2);
-  });
-
-  it("defaults totalTime to PT30M", () => {
-    const ld = getHowToJsonLd(baseArgs);
-    expect(ld.totalTime).toBe("PT30M");
-  });
-
-  it("uses custom totalTime when provided", () => {
-    const ld = getHowToJsonLd({ ...baseArgs, totalTime: "PT1H" });
-    expect(ld.totalTime).toBe("PT1H");
-  });
-
-  it("handles empty steps array", () => {
-    const ld = getHowToJsonLd({ ...baseArgs, steps: [] });
-    expect(ld.step).toHaveLength(0);
   });
 });

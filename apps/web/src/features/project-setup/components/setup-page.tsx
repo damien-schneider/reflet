@@ -31,7 +31,7 @@ interface SetupPageProps {
 }
 
 export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
-  const router = useRouter();
+  const { push, replace } = useRouter();
   const [isStarting, setIsStarting] = useState(false);
 
   const setupStatus = useQuery(
@@ -54,7 +54,7 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
 
   // If setup is already completed, redirect to project hub
   if (setupStatus?.setupCompleted) {
-    router.replace(`/dashboard/${orgSlug}/project`);
+    replace(`/dashboard/${orgSlug}/project`);
     return null;
   }
 
@@ -79,12 +79,12 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
 
   const handleManualSetup = async () => {
     await skipSetup({ organizationId, method: "manual" });
-    router.push(`/dashboard/${orgSlug}`);
+    push(`/dashboard/${orgSlug}`);
   };
 
   const handleSkip = async () => {
     await skipSetup({ organizationId, method: "skipped" });
-    router.push(`/dashboard/${orgSlug}`);
+    push(`/dashboard/${orgSlug}`);
   };
 
   // Show analyzing view

@@ -126,7 +126,7 @@ export function PublishConfirmDialog({
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="now">Publish Now</TabsTrigger>
               <TabsTrigger value="schedule">
-                <CalendarBlank className="mr-1.5 h-3.5 w-3.5" />
+                <CalendarBlank className="mr-1.5 size-3.5" />
                 Schedule
               </TabsTrigger>
             </TabsList>
@@ -153,7 +153,7 @@ export function PublishConfirmDialog({
             </p>
 
             <div className="flex items-center gap-2 text-sm">
-              <PaperPlaneTilt className="h-4 w-4 text-muted-foreground" />
+              <PaperPlaneTilt className="size-4 text-muted-foreground" />
               <span>
                 {subCount > 0
                   ? `Notify ${subCount} subscriber${subCount === 1 ? "" : "s"} via email`
@@ -163,7 +163,7 @@ export function PublishConfirmDialog({
 
             {willPushToGithub && (
               <div className="flex items-center gap-2 text-sm">
-                <GithubLogo className="h-4 w-4 text-muted-foreground" />
+                <GithubLogo className="size-4 text-muted-foreground" />
                 <span>
                   Create GitHub Release on {githubStatus?.repositoryFullName}
                 </span>
@@ -172,7 +172,7 @@ export function PublishConfirmDialog({
 
             {linkedFeedbackCount > 0 && feedbackLinkStatus !== "keep" && (
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                <CheckCircle className="size-4 text-muted-foreground" />
                 <span>
                   Set {linkedFeedbackCount} linked feedback
                   {linkedFeedbackCount === 1 ? "" : "s"} to{" "}
@@ -183,7 +183,7 @@ export function PublishConfirmDialog({
 
             {pushToGithub && !hasGithub && (
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <GithubLogo className="h-4 w-4" />
+                <GithubLogo className="size-4" />
                 <span>
                   GitHub push enabled but no repo connected.{" "}
                   <Link

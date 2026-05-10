@@ -54,7 +54,7 @@ export function MilestoneFeedbackPreview({
           type="button"
         >
           <span className="flex shrink-0 items-center gap-0.5 text-muted-foreground tabular-nums">
-            <CaretUp className="h-2.5 w-2.5" />
+            <CaretUp className="size-2.5" />
             {item.voteCount}
           </span>
           <span className="truncate text-foreground/80">{item.title}</span>

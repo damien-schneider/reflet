@@ -89,7 +89,7 @@ export function FeedbackListItem({
     setShowDeleteDialog(false);
   }, [canDelete, feedback._id, deleteFeedback]);
 
-  const handleClick = useCallback(() => {
+  const openFeedbackDetail = useCallback(() => {
     onClick?.(feedback._id);
   }, [onClick, feedback._id]);
 
@@ -104,7 +104,7 @@ export function FeedbackListItem({
               priorityBorderClass,
               className
             )}
-            onClick={handleClick}
+            onClick={openFeedbackDetail}
             type="button"
           >
             {/* Vote button */}
@@ -122,7 +122,7 @@ export function FeedbackListItem({
                   {/* Title */}
                   <h3 className="line-clamp-2 font-semibold text-base transition-colors group-hover:text-olive-600">
                     {feedback.isPinned && (
-                      <PushPin className="mr-1 inline h-4 w-4 text-olive-600" />
+                      <PushPin className="mr-1 inline size-4 text-olive-600" />
                     )}
                     {feedback.title}
                   </h3>
@@ -138,7 +138,7 @@ export function FeedbackListItem({
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
-                      <Chat className="h-3 w-3" />
+                      <Chat className="size-3" />
                       {feedback.commentCount}
                     </span>
                   </div>
@@ -157,7 +157,7 @@ export function FeedbackListItem({
                           {tag.appliedByAi && (
                             <span title="Applied by AI">
                               <Sparkle
-                                className="h-3 w-3 opacity-60"
+                                className="size-3 opacity-60"
                                 weight="fill"
                               />
                             </span>
@@ -216,7 +216,7 @@ export function FeedbackListItem({
               className="text-destructive focus:text-destructive"
               onClick={() => setShowDeleteDialog(true)}
             >
-              <Trash className="mr-2 h-4 w-4" />
+              <Trash className="mr-2 size-4" />
               Delete
             </ContextListItem>
           </ContextListContent>

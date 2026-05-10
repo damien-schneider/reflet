@@ -6,7 +6,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
-import { requireOrgAdmin } from "./mutations/auth";
+import { requireAutopilotAccess, requireOrgAdmin } from "./mutations/auth";
 
 /**
  * Trigger lead discovery — schedules the sales prospecting action.
@@ -17,6 +17,7 @@ export const triggerLeadDiscovery = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
 
     await ctx.scheduler.runAfter(
       0,

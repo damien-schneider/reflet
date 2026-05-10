@@ -10,6 +10,7 @@ import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import type { SaveStatus } from "../hooks/use-auto-save-release";
 import { useAutoSaveRelease } from "../hooks/use-auto-save-release";
 import { useReleaseActions } from "../hooks/use-release-actions";
 import { useReleaseAiStream } from "../hooks/use-release-ai-stream";
@@ -30,13 +31,47 @@ interface ReleaseEditorProps {
   release?: Doc<"releases">; // If provided, edit mode
 }
 
+function SaveStatusIndicator({
+  isPublished,
+  releaseId,
+  saveStatus,
+}: {
+  isPublished: boolean;
+  releaseId: Id<"releases"> | null;
+  saveStatus: SaveStatus;
+}) {
+  if (saveStatus === "saving") {
+    return (
+      <span className="flex items-center gap-1 text-muted-foreground text-sm">
+        <Spinner className="size-4 animate-spin" />
+        Saving…
+      </span>
+    );
+  }
+
+  if (saveStatus === "saved") {
+    return (
+      <span className="flex items-center gap-1 text-green-600 text-sm dark:text-green-400">
+        <Check className="size-4" />
+        Saved
+      </span>
+    );
+  }
+
+  if (releaseId && !isPublished) {
+    return <span className="text-muted-foreground text-sm">Draft</span>;
+  }
+
+  return null;
+}
+
 export function ReleaseEditor({
   organizationId,
   orgSlug,
   release,
   className,
 }: ReleaseEditorProps) {
-  const router = useRouter();
+  const { push } = useRouter();
   const { data: sessionData } = authClient.useSession();
 
   const [title, setTitle] = useState(release?.title ?? "");
@@ -80,7 +115,7 @@ export function ReleaseEditor({
   const linkedFeedbackCount = releaseData?.feedbackItems?.length ?? 0;
 
   const navigateToChangelog = () => {
-    router.push(`/dashboard/${orgSlug}/changelog`);
+    push(`/dashboard/${orgSlug}/changelog`);
   };
 
   // Release actions (publish, schedule, unpublish, github push)
@@ -110,33 +145,7 @@ export function ReleaseEditor({
   });
 
   const handleCancel = () => {
-    router.push(`/dashboard/${orgSlug}/changelog`);
-  };
-
-  const renderSaveStatus = () => {
-    if (saveStatus === "saving") {
-      return (
-        <span className="flex items-center gap-1 text-muted-foreground text-sm">
-          <Spinner className="h-4 w-4 animate-spin" />
-          Saving...
-        </span>
-      );
-    }
-
-    if (saveStatus === "saved") {
-      return (
-        <span className="flex items-center gap-1 text-green-600 text-sm dark:text-green-400">
-          <Check className="h-4 w-4" />
-          Saved
-        </span>
-      );
-    }
-
-    if (releaseId && !isPublished) {
-      return <span className="text-muted-foreground text-sm">Draft</span>;
-    }
-
-    return null;
+    push(`/dashboard/${orgSlug}/changelog`);
   };
 
   return (
@@ -178,7 +187,7 @@ export function ReleaseEditor({
           {isScheduled && !isPublished && release?.scheduledPublishAt && (
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 text-xs dark:bg-amber-900/30 dark:text-amber-400">
-                <Clock className="h-3 w-3" />
+                <Clock className="size-3" />
                 Scheduled
               </span>
               <ScheduleCountdown scheduledAt={release.scheduledPublishAt} />
@@ -189,17 +198,22 @@ export function ReleaseEditor({
                 title="Cancel schedule"
                 variant="ghost"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="size-3.5" />
               </Button>
             </div>
           )}
-          <div className="ml-auto">{renderSaveStatus()}</div>
+          <div className="ml-auto">
+            <SaveStatusIndicator
+              isPublished={isPublished}
+              releaseId={releaseId}
+              saveStatus={saveStatus}
+            />
+          </div>
         </div>
 
         {/* Title area */}
         <div className="px-6 pt-4 pb-2">
           <TiptapTitleEditor
-            autoFocus
             disabled={isSubmitting || isStreaming}
             onChange={setTitle}
             placeholder="What's New in v1.0"

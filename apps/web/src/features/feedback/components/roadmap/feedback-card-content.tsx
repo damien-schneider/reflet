@@ -45,14 +45,14 @@ export function FeedbackCardContent({
           className={cn(
             "absolute top-1/2 right-1 -translate-y-1/2",
             "hidden items-center justify-center md:flex",
-            "h-6 w-6 rounded text-muted-foreground/50",
+            "size-6 rounded text-muted-foreground/50",
             "hover:bg-muted hover:text-muted-foreground",
             "cursor-grab active:cursor-grabbing",
             "pointer-events-auto touch-none"
           )}
           type="button"
         >
-          <DotsSixVertical className="h-4 w-4" weight="bold" />
+          <DotsSixVertical className="size-4" weight="bold" />
         </button>
       )}
       <h4 className="pr-6 font-medium text-sm">{item.title}</h4>
@@ -70,10 +70,7 @@ export function FeedbackCardContent({
                   {tag.name}
                   {tag.appliedByAi && (
                     <span title="Applied by AI">
-                      <Sparkle
-                        className="h-2.5 w-2.5 opacity-60"
-                        weight="fill"
-                      />
+                      <Sparkle className="size-2.5 opacity-60" weight="fill" />
                     </span>
                   )}
                 </Badge>
@@ -96,9 +93,9 @@ export function FeedbackCardContent({
         </div>
       )}
       <div className="mt-2 flex items-center gap-2 text-muted-foreground text-xs">
-        <CaretUp className="h-3 w-3" />
+        <CaretUp className="size-3" />
         <span>{item.voteCount}</span>
-        <ChatCircle className="ml-2 h-3 w-3" />
+        <ChatCircle className="ml-2 size-3" />
         <span>{item.commentCount}</span>
       </div>
     </Card>

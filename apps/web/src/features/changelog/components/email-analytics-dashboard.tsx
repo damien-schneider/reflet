@@ -91,8 +91,8 @@ function StatCard({
   return (
     <Card>
       <CardContent className="flex items-center gap-4 p-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-          <Icon className="h-5 w-5 text-muted-foreground" />
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+          <Icon className="size-5 text-muted-foreground" />
         </div>
         <div className="min-w-0">
           <p className="truncate text-muted-foreground text-sm">{title}</p>
@@ -106,9 +106,9 @@ function StatCard({
                 )}
               >
                 {trend === "up" ? (
-                  <ArrowUp className="h-3 w-3" />
+                  <ArrowUp className="size-3" />
                 ) : (
-                  <ArrowDown className="h-3 w-3" />
+                  <ArrowDown className="size-3" />
                 )}
               </span>
             )}
@@ -218,7 +218,7 @@ export function EmailAnalyticsDashboard({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <ChartBar className="h-4 w-4" />
+              <ChartBar className="size-4" />
               By Email Type
             </CardTitle>
             <CardDescription>
@@ -266,7 +266,7 @@ export function EmailAnalyticsDashboard({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <EnvelopeSimple className="h-4 w-4" />
+            <EnvelopeSimple className="size-4" />
             Recent Emails
           </CardTitle>
           <CardDescription>

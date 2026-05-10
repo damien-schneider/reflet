@@ -65,19 +65,19 @@ export function PublicFeedbackHeader({
     <div className="flex items-start justify-between border-b p-6">
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          {isPinned && isAdmin && <PushPin className="h-4 w-4 text-primary" />}
+          {isPinned && isAdmin && <PushPin className="size-4 text-primary" />}
           <h2 className="font-semibold text-xl">{title}</h2>
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
           <span className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
+            <Calendar className="size-3" />
             {formatDistanceToNow(createdAt, {
               addSuffix: true,
             })}
           </span>
           <span className="flex items-center gap-1">
-            <Chat className="h-3 w-3" />
+            <Chat className="size-3" />
             {commentCount} comments
           </span>
         </div>
@@ -99,7 +99,7 @@ export function PublicFeedbackHeader({
                 <SelectItem key={status._id} value={status._id}>
                   <div className="flex items-center gap-2">
                     <div
-                      className="h-2 w-2 rounded-full"
+                      className="size-2 rounded-full"
                       style={{ backgroundColor: getTagDotColor(status.color) }}
                     />
                     {status.name}
@@ -119,13 +119,13 @@ export function PublicFeedbackHeader({
             <DropdownListTrigger
               render={(props) => (
                 <Button {...props} size="icon" variant="ghost">
-                  <DotsThreeVertical className="h-4 w-4" />
+                  <DotsThreeVertical className="size-4" />
                 </Button>
               )}
             />
             <DropdownListContent align="end">
               <DropdownListItem onClick={onTogglePin}>
-                <PushPin className="mr-2 h-4 w-4" />
+                <PushPin className="mr-2 size-4" />
                 {isPinned ? "Unpin" : "Pin"}
               </DropdownListItem>
             </DropdownListContent>

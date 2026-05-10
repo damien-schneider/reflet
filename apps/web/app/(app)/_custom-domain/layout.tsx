@@ -3,20 +3,16 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { H1, Muted } from "@/components/ui/typography";
 import { PublicOrgShell } from "@/features/public-org/components/public-org-shell";
+import { useClientHostname } from "@/shared/components/client-hydration";
 
 export default function CustomDomainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [hostname, setHostname] = useState<string | null>(null);
-
-  useEffect(function syncHostname() {
-    setHostname(window.location.hostname);
-  }, []);
+  const hostname = useClientHostname();
 
   const org = useQuery(
     api.domains.queries.getByCustomDomain,
@@ -26,7 +22,7 @@ export default function CustomDomainLayout({
   if (!hostname || org === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div>Loading...</div>
+        <div>Loading…</div>
       </div>
     );
   }

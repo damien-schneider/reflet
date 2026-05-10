@@ -21,15 +21,15 @@ export function SubscribeButton({
     <Tooltip>
       <TooltipTrigger render={<span />}>
         <Button
-          className={cn("h-8 w-8", isSubscribed === true && "text-primary")}
+          className={cn("size-8", isSubscribed === true && "text-primary")}
           onClick={onToggle}
           size="icon-sm"
           variant="ghost"
         >
           {isSubscribed === true ? (
-            <Bell className="h-4 w-4" weight="fill" />
+            <Bell className="size-4" weight="fill" />
           ) : (
-            <BellSlash className="h-4 w-4" />
+            <BellSlash className="size-4" />
           )}
           <span className="sr-only">
             {isSubscribed === true ? "Unsubscribe" : "Subscribe"} to updates

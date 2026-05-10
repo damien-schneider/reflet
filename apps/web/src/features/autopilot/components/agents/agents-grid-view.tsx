@@ -145,7 +145,11 @@ export function AgentsGridView({
           <p className="text-muted-foreground text-sm">
             Finish setup before reviewing agent readiness.
           </p>
-          <Button render={<Link href={`${baseUrl}/settings`} />} size="sm">
+          <Button
+            nativeButton={false}
+            render={<Link href={`${baseUrl}/settings`} />}
+            size="sm"
+          >
             Open settings
           </Button>
         </div>
@@ -328,7 +332,7 @@ function AgentTile({
             {taskCount} active task{taskCount === 1 ? "" : "s"}
           </span>
           {lastActivity ? (
-            <span>
+            <span suppressHydrationWarning>
               Last activity{" "}
               {formatDistanceToNow(lastActivity.createdAt, {
                 addSuffix: true,

@@ -158,7 +158,8 @@ export const updateTaskStatus = internalMutation({
       needsReview?: boolean;
       prNumber?: number;
       prUrl?: string;
-      reviewType?: string;
+      reviewedAt?: number;
+      reviewType?: string | undefined;
       status: typeof args.status;
       updatedAt: number;
     } = {
@@ -180,6 +181,10 @@ export const updateTaskStatus = internalMutation({
     }
     if (args.reviewType !== undefined) {
       updates.reviewType = args.reviewType;
+    }
+    if (args.status === "done" && args.needsReview === false) {
+      updates.reviewedAt = now;
+      updates.reviewType = undefined;
     }
 
     await ctx.db.patch(args.taskId, updates);

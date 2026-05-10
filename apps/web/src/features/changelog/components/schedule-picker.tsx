@@ -32,6 +32,12 @@ function formatTimeInTimezone(date: Date, offsetHours: number): string {
   return format(targetDate, "h:mm a");
 }
 
+function getTodayStartMs() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today.getTime();
+}
+
 export function SchedulePicker({
   value,
   onChange,
@@ -43,6 +49,7 @@ export function SchedulePicker({
   const [timeValue, setTimeValue] = useState(
     value ? format(value, "HH:mm") : "09:00"
   );
+  const [todayStartMs] = useState(getTodayStartMs);
 
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -95,14 +102,12 @@ export function SchedulePicker({
             )}
             disabled={disabled}
           >
-            <CalendarBlank className="mr-2 h-4 w-4" />
+            <CalendarBlank className="mr-2 size-4" />
             {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Pick date"}
           </PopoverTrigger>
           <PopoverContent align="start" className="w-auto p-0">
             <Calendar
-              disabled={(date) =>
-                date < new Date(new Date().setHours(0, 0, 0, 0))
-              }
+              disabled={(date) => date.getTime() < todayStartMs}
               mode="single"
               onSelect={handleDateSelect}
               selected={selectedDate}
@@ -111,7 +116,7 @@ export function SchedulePicker({
         </Popover>
 
         <div className="relative">
-          <Clock className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Clock className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="w-28 pl-8"
             disabled={disabled}
@@ -124,7 +129,7 @@ export function SchedulePicker({
 
       {/* Timezone info */}
       <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-        <Globe className="h-3.5 w-3.5" />
+        <Globe className="size-3.5" />
         <span>{userTimezone}</span>
       </div>
 

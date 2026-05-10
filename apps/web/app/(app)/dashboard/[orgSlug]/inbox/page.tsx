@@ -36,14 +36,18 @@ function formatTeamMembers(members: Member[] | undefined) {
   if (!members) {
     return [];
   }
-  return members
-    .filter((m) => m.role === "admin" || m.role === "owner")
-    .map((m) => ({
-      id: m.userId,
-      name: m.user?.name ?? undefined,
-      email: m.user?.email ?? "",
-      image: m.user?.image ?? undefined,
-    }));
+  return members.flatMap((member) =>
+    member.role === "admin" || member.role === "owner"
+      ? [
+          {
+            id: member.userId,
+            name: member.user?.name ?? undefined,
+            email: member.user?.email ?? "",
+            image: member.user?.image ?? undefined,
+          },
+        ]
+      : []
+  );
 }
 
 export default function InboxPage({
@@ -284,7 +288,7 @@ export default function InboxPage({
 
       {supportSettings?.supportEnabled === false && (
         <Alert className="mx-4 mt-3 w-auto">
-          <EyeSlash className="h-4 w-4" />
+          <EyeSlash className="size-4" />
           <AlertTitle>
             Your inbox is private &mdash; users can&apos;t see it yet.
           </AlertTitle>

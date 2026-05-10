@@ -1,7 +1,12 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
-import type { UseFormRegister } from "react-hook-form";
+import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
+import Link from "next/link";
+import type {
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormTrigger,
+} from "react-hook-form";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import type { AuthMode } from "./hooks/use-auth-form";
@@ -14,25 +19,27 @@ interface AuthForgotPasswordLinkProps {
 
 export function AuthForgotPasswordLink({ mode }: AuthForgotPasswordLinkProps) {
   return (
-    <AnimatePresence>
-      {mode === "signIn" && (
-        <motion.div
-          animate="animate"
-          className="text-right"
-          exit="exit"
-          initial="initial"
-          transition={{ duration: 0.2, ease: "easeInOut" }}
-          variants={animationVariants}
-        >
-          <a
-            className="font-medium text-olive-600 text-sm hover:underline"
-            href="/auth/forgot-password"
+    <LazyMotion features={domAnimation}>
+      <AnimatePresence>
+        {mode === "signIn" && (
+          <m.div
+            animate="animate"
+            className="text-right"
+            exit="exit"
+            initial="initial"
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            variants={animationVariants}
           >
-            Forgot password?
-          </a>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <Link
+              className="font-medium text-olive-600 text-sm hover:underline"
+              href="/auth/forgot-password"
+            >
+              Forgot password?
+            </Link>
+          </m.div>
+        )}
+      </AnimatePresence>
+    </LazyMotion>
   );
 }
 
@@ -42,12 +49,12 @@ interface AuthConfirmPasswordProps {
   mode: AuthMode;
   onConfirmPasswordChange: (
     e: React.ChangeEvent<HTMLInputElement>,
-    setValue: (name: keyof SignUpFormData, value: string) => void,
-    trigger: (name: keyof SignUpFormData) => Promise<boolean>
+    setValue: UseFormSetValue<SignUpFormData>,
+    trigger: UseFormTrigger<SignUpFormData>
   ) => void;
   register: UseFormRegister<SignUpFormData>;
-  setValue: (name: keyof SignUpFormData, value: string) => void;
-  trigger: (name: keyof SignUpFormData) => Promise<boolean>;
+  setValue: UseFormSetValue<SignUpFormData>;
+  trigger: UseFormTrigger<SignUpFormData>;
 }
 
 export function AuthConfirmPassword({
@@ -60,33 +67,37 @@ export function AuthConfirmPassword({
   trigger,
 }: AuthConfirmPasswordProps) {
   return (
-    <AnimatePresence>
-      {mode === "signUp" && (
-        <motion.div
-          animate="animate"
-          exit="exit"
-          initial="initial"
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          variants={animationVariants}
-        >
-          <Field className="relative">
-            <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
-            <Input
-              data-testid="confirm-password-input"
-              id="confirmPassword"
-              type="password"
-              {...register("confirmPassword")}
-              disabled={isSubmitting}
-              onChange={(e) => onConfirmPasswordChange(e, setValue, trigger)}
-            />
-            <FieldError
-              className="absolute top-full left-0"
-              data-testid="confirm-password-error"
-              errors={confirmPasswordErrors}
-            />
-          </Field>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <LazyMotion features={domAnimation}>
+      <AnimatePresence>
+        {mode === "signUp" && (
+          <m.div
+            animate="animate"
+            exit="exit"
+            initial="initial"
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            variants={animationVariants}
+          >
+            <Field className="relative">
+              <FieldLabel htmlFor="confirmPassword">
+                Confirm password
+              </FieldLabel>
+              <Input
+                data-testid="confirm-password-input"
+                id="confirmPassword"
+                type="password"
+                {...register("confirmPassword")}
+                disabled={isSubmitting}
+                onChange={(e) => onConfirmPasswordChange(e, setValue, trigger)}
+              />
+              <FieldError
+                className="absolute top-full left-0"
+                data-testid="confirm-password-error"
+                errors={confirmPasswordErrors}
+              />
+            </Field>
+          </m.div>
+        )}
+      </AnimatePresence>
+    </LazyMotion>
   );
 }

@@ -5,12 +5,13 @@
 import { v } from "convex/values";
 import { mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
+import { requireOwnedDocumentRelations } from "../ownership";
 import {
   documentStatus,
   documentType,
   impactLevel,
 } from "../schema/validators";
-import { requireOrgAdmin } from "./auth";
+import { requireAutopilotAccess, requireOrgAdmin } from "./auth";
 
 type DocumentStatus = "archived" | "draft" | "pending_review" | "published";
 
@@ -66,6 +67,8 @@ export const createDocument = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
+    await requireOwnedDocumentRelations(ctx, args);
 
     const now = Date.now();
     return ctx.db.insert("autopilotDocuments", {
@@ -114,6 +117,7 @@ export const updateDocument = mutation({
 
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, doc.organizationId, user._id);
+    await requireAutopilotAccess(ctx, doc.organizationId);
 
     const { documentId, ...fields } = args;
     const now = Date.now();
@@ -156,6 +160,7 @@ export const archiveDocument = mutation({
 
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, doc.organizationId, user._id);
+    await requireAutopilotAccess(ctx, doc.organizationId);
 
     const now = Date.now();
     await ctx.db.patch(args.documentId, {

@@ -15,7 +15,7 @@ export function PrivateOrgMessage() {
     <div className="px-4 py-8">
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <Globe className="mb-4 h-12 w-12 text-muted-foreground" />
+          <Globe className="mb-4 size-12 text-muted-foreground" />
           <h3 className="font-semibold text-lg">Private organization</h3>
           <p className="text-muted-foreground">
             This organization&apos;s feedback is not publicly accessible.

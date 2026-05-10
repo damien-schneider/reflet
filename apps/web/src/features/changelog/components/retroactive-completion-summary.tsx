@@ -62,7 +62,7 @@ export function CompletionSummary({ job, onDismiss }: CompletionSummaryProps) {
         onClick={onDismiss}
         type="button"
       >
-        <X className="h-4 w-4" />
+        <X className="size-4" />
       </button>
 
       <div className="flex items-start gap-3">
@@ -98,14 +98,14 @@ export function CompletionSummary({ job, onDismiss }: CompletionSummaryProps) {
 function CompletionIcon({ hasResults }: { hasResults: boolean }) {
   if (hasResults) {
     return (
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/10">
-        <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-green-500/10">
+        <Check className="size-4 text-green-600 dark:text-green-400" />
       </div>
     );
   }
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
-      <Warning className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
+      <Warning className="size-4 text-amber-600 dark:text-amber-400" />
     </div>
   );
 }

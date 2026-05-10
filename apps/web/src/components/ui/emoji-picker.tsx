@@ -33,16 +33,11 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
         render={(props) => (
-          <Button
-            {...props}
-            className="h-8 w-8 p-0"
-            size="sm"
-            variant="outline"
-          >
+          <Button {...props} className="size-8 p-0" size="sm" variant="outline">
             {value ? (
               <span className="text-base">{value}</span>
             ) : (
-              <Smiley className="h-4 w-4 text-muted-foreground" />
+              <Smiley className="size-4 text-muted-foreground" />
             )}
           </Button>
         )}
@@ -68,7 +63,7 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
             />
             <FrimousseEmojiPicker.Viewport className="h-[calc(300px-48px)] overflow-y-auto px-2 pb-2">
               <FrimousseEmojiPicker.Loading className="flex h-full items-center justify-center text-muted-foreground text-sm">
-                Loading...
+                Loading…
               </FrimousseEmojiPicker.Loading>
               <FrimousseEmojiPicker.Empty className="flex h-full items-center justify-center text-muted-foreground text-sm">
                 No emoji found.
@@ -83,7 +78,7 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
                   ),
                   Emoji: ({ emoji, onClick }) => (
                     <button
-                      className="flex h-8 w-8 items-center justify-center rounded hover:bg-accent"
+                      className="flex size-8 items-center justify-center rounded hover:bg-accent"
                       onClick={onClick}
                       type="button"
                     >

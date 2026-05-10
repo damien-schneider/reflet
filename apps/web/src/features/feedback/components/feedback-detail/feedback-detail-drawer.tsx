@@ -24,6 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ClientDate } from "@/shared/components/client-date";
 import { ScreenshotGallery } from "../screenshot-gallery";
 import { CommentsSection } from "./comments-section";
 import { FeatureCheck } from "./feature-check";
@@ -77,13 +78,17 @@ export function FeedbackDetailDrawer({
           _id: feedbackId,
           title: listItem.title,
           description: listItem.description ?? null,
-          tags: listItem.tags
-            ?.filter((t): t is NonNullable<typeof t> => t !== null)
-            .map((t) => ({
-              _id: t._id,
-              name: t.name,
-              color: t.color,
-            })),
+          tags: listItem.tags?.flatMap((tag) =>
+            tag === null
+              ? []
+              : [
+                  {
+                    _id: tag._id,
+                    name: tag.name,
+                    color: tag.color,
+                  },
+                ]
+          ),
           hasVoted: listItem.hasVoted,
           userVoteType: listItem.userVoteType,
           voteCount: listItem.voteCount,
@@ -167,7 +172,7 @@ export function FeedbackDetailDrawer({
               <Tooltip>
                 <TooltipTrigger>
                   <div className="flex items-center gap-1.5">
-                    <Avatar className="h-5 w-5">
+                    <Avatar className="size-5">
                       <AvatarImage src={feedback.author.image ?? undefined} />
                       <AvatarFallback className="text-[10px]">
                         {feedback.author.name?.charAt(0) ?? "?"}
@@ -189,7 +194,7 @@ export function FeedbackDetailDrawer({
               <Tooltip>
                 <TooltipTrigger>
                   <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                    <CalendarBlank className="h-3.5 w-3.5" />
+                    <CalendarBlank className="size-3.5" />
                     <span>
                       {formatDistanceToNow(feedback.createdAt, {
                         addSuffix: true,
@@ -198,13 +203,7 @@ export function FeedbackDetailDrawer({
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {new Date(feedback.createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
+                  <ClientDate value={feedback.createdAt} variant="dateTime" />
                 </TooltipContent>
               </Tooltip>
             )}
@@ -224,7 +223,7 @@ export function FeedbackDetailDrawer({
                   title="Previous (k or Up arrow)"
                   variant="ghost"
                 >
-                  <CaretLeft className="h-4 w-4" />
+                  <CaretLeft className="size-4" />
                   <span className="sr-only">Previous feedback</span>
                 </Button>
                 <span className="min-w-12 text-center text-muted-foreground text-xs tabular-nums">
@@ -238,7 +237,7 @@ export function FeedbackDetailDrawer({
                   title="Next (j or Down arrow)"
                   variant="ghost"
                 >
-                  <CaretRight className="h-4 w-4" />
+                  <CaretRight className="size-4" />
                   <span className="sr-only">Next feedback</span>
                 </Button>
               </>
@@ -249,7 +248,7 @@ export function FeedbackDetailDrawer({
           <SheetClose
             render={<Button onClick={onClose} size="icon-sm" variant="ghost" />}
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
             <span className="sr-only">Close</span>
           </SheetClose>
         </SheetHeader>
@@ -347,7 +346,7 @@ function FeedbackDetailContent({
         </div>
 
         {/* Comments */}
-        <div className="border-t px-6 py-6">
+        <div className="border-t p-6">
           <CommentsSection feedbackId={feedbackId} isAdmin={isAdmin} />
         </div>
       </div>

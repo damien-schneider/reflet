@@ -96,7 +96,6 @@ export default function SurveyDetailPage({
           {isEditingTitle ? (
             <div className="flex items-center gap-2">
               <Input
-                autoFocus
                 className="font-bold text-2xl"
                 onChange={(e) => setEditTitle(e.target.value)}
                 onKeyDown={(e) => {

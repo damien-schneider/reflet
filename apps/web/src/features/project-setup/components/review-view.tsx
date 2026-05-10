@@ -49,7 +49,7 @@ export function ReviewView({
   orgSlug,
   setup,
 }: ReviewViewProps) {
-  const router = useRouter();
+  const { push } = useRouter();
   const [isApplying, setIsApplying] = useState(false);
 
   const [monitors, setMonitors] = useState<SuggestedMonitor[]>(
@@ -108,15 +108,15 @@ export function ReviewView({
       await applySetupResults({
         organizationId,
         setupId: setup._id,
-        acceptedMonitors: monitors
-          .filter((m) => m.accepted)
-          .map(({ url, name }) => ({ url, name })),
-        acceptedKeywords: keywords
-          .filter((k) => k.accepted)
-          .map(({ keyword }) => ({ keyword, source: "both" as const })),
-        acceptedTags: tags
-          .filter((t) => t.accepted)
-          .map(({ name, color }) => ({ name, color })),
+        acceptedMonitors: monitors.flatMap(({ accepted, url, name }) =>
+          accepted ? [{ url, name }] : []
+        ),
+        acceptedKeywords: keywords.flatMap(({ accepted, keyword }) =>
+          accepted ? [{ keyword, source: "both" as const }] : []
+        ),
+        acceptedTags: tags.flatMap(({ accepted, name, color }) =>
+          accepted ? [{ name, color }] : []
+        ),
         changelogSettings: setup.changelogConfig
           ? {
               syncDirection: setup.changelogConfig.syncDirection,
@@ -128,7 +128,7 @@ export function ReviewView({
       });
 
       toast.success("Project configured successfully!");
-      router.push(`/dashboard/${orgSlug}/project`);
+      push(`/dashboard/${orgSlug}/project`);
     } catch (error: unknown) {
       toast.error("Failed to apply setup", {
         description:
@@ -148,7 +148,7 @@ export function ReviewView({
       <div className="mb-8">
         <H1 className="mb-2">Review your project setup</H1>
         <Muted>
-          We analyzed your repository — review and customize, then launch.
+          We analyzed your repository. Review and customize, then launch.
         </Muted>
       </div>
 

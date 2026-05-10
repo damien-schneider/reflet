@@ -174,7 +174,7 @@ function AutomatedConfig({ config, onChange }: ConfigureStepProps) {
           target="_blank"
         >
           Learn more
-          <ArrowSquareOut className="h-3 w-3" />
+          <ArrowSquareOut className="size-3" />
         </a>
       </div>
 

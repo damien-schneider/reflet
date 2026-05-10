@@ -44,7 +44,7 @@ export function StatusDisplay({
               color={currentStatus.color}
             >
               {currentStatus.name}
-              <CaretDown className="h-3 w-3 opacity-70" />
+              <CaretDown className="size-3 opacity-70" />
             </Badge>
           </DropdownMenuTrigger>
         ) : (
@@ -53,7 +53,7 @@ export function StatusDisplay({
             render={<button type="button" />}
           >
             <span className="text-muted-foreground text-xs">Status</span>
-            <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <CaretDown className="size-3.5 text-muted-foreground" />
           </DropdownMenuTrigger>
         )}
         <DropdownMenuContent align="start" className="w-48">
@@ -67,7 +67,7 @@ export function StatusDisplay({
               <DropdownMenuRadioItem key={status._id} value={status._id}>
                 <div
                   className={cn(
-                    "h-3 w-3 shrink-0 rounded-full border",
+                    "size-3 shrink-0 rounded-full border",
                     getTagSwatchClass(status.color)
                   )}
                 />

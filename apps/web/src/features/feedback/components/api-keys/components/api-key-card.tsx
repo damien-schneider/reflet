@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ClientDate } from "@/shared/components/client-date";
 
 interface ApiKey {
   allowedDomains?: string[];
@@ -61,7 +62,7 @@ export function ApiKeyCard({
         <div>
           <h4 className="font-medium">{apiKey.name}</h4>
           <p className="text-muted-foreground text-sm">
-            Created {new Date(apiKey.createdAt).toLocaleDateString()}
+            Created <ClientDate value={apiKey.createdAt} />
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -79,7 +80,7 @@ export function ApiKeyCard({
             size="icon"
             variant="ghost"
           >
-            <Trash className="h-4 w-4 text-destructive" />
+            <Trash className="size-4 text-destructive" />
           </Button>
         </div>
       </div>
@@ -93,7 +94,7 @@ export function ApiKeyCard({
             size="icon"
             variant="outline"
           >
-            <Copy className="h-4 w-4" />
+            <Copy className="size-4" />
           </Button>
         </div>
       </div>
@@ -114,9 +115,9 @@ export function ApiKeyCard({
             variant="outline"
           >
             {showSecretKey ? (
-              <EyeSlash className="h-4 w-4" />
+              <EyeSlash className="size-4" />
             ) : (
-              <Eye className="h-4 w-4" />
+              <Eye className="size-4" />
             )}
           </Button>
           <Button
@@ -170,14 +171,14 @@ export function ApiKeyCard({
             size="icon"
             variant="outline"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="size-4" />
           </Button>
         </div>
       </div>
 
       {apiKey.lastUsedAt && (
         <div className="text-muted-foreground text-sm">
-          Last used: {new Date(apiKey.lastUsedAt).toLocaleDateString()}
+          Last used: <ClientDate value={apiKey.lastUsedAt} />
         </div>
       )}
     </div>

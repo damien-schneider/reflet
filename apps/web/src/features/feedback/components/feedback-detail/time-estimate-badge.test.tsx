@@ -188,10 +188,10 @@ vi.mock("@/components/ui/tooltip", () => ({
     onClick?: (e: React.MouseEvent) => void;
     render?: React.ReactNode;
   }) => (
-    <span data-testid="tooltip-trigger" onClick={onClick} onKeyDown={() => {}}>
+    <button data-testid="tooltip-trigger" onClick={onClick} type="button">
       {renderProp}
       {children}
-    </span>
+    </button>
   ),
 }));
 

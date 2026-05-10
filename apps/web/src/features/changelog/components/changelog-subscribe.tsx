@@ -77,12 +77,12 @@ export function ChangelogSubscribe({
       >
         {isSubscribed ? (
           <>
-            <BellSlash className="h-4 w-4" />
+            <BellSlash className="size-4" />
             Unsubscribe
           </>
         ) : (
           <>
-            <Bell className="h-4 w-4" />
+            <Bell className="size-4" />
             Subscribe
           </>
         )}

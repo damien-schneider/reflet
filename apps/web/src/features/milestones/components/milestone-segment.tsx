@@ -2,7 +2,7 @@
 
 import { CheckCircle, PencilSimple, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { motion } from "motion/react";
+import { domAnimation, LazyMotion, m } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -104,119 +104,121 @@ export function MilestoneSegment({
   const isOverdue = deadlineInfo?.status === "overdue";
 
   const segment = (
-    <div className={cn("group/seg relative", className)}>
-      <motion.button
-        aria-label={`${milestone.name}: ${percentage}% complete (${completed} of ${total})`}
-        className={cn(
-          "relative h-10 w-full overflow-hidden rounded-sm",
-          "text-left font-medium text-white text-xs",
-          "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-          "cursor-pointer select-none transition-shadow duration-200"
-          // isActive && "ring-1 ring-white/40"
-        )}
-        onClick={onClick}
-        style={{
-          backgroundColor: colorValues.text,
-          boxShadow: isActive ? `0 1px 8px ${colorValues.text}50` : undefined,
-          ...style,
-        }}
-        type="button"
-      >
-        {/* Diagonal hatching overlay */}
-        <svg
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 h-full w-full"
-        >
-          <defs>
-            <pattern
-              height="6"
-              id={`${HATCH_PATTERN_ID}-${milestone._id}`}
-              patternTransform="rotate(45)"
-              patternUnits="userSpaceOnUse"
-              width="6"
-            >
-              <line
-                stroke="rgba(255,255,255,0.08)"
-                strokeWidth="1"
-                x1="0"
-                x2="0"
-                y1="0"
-                y2="6"
-              />
-            </pattern>
-          </defs>
-          <rect
-            fill={`url(#${HATCH_PATTERN_ID}-${milestone._id})`}
-            height="100%"
-            width="100%"
-          />
-        </svg>
-
-        {/* Default state: emoji + name */}
-        <span
+    <LazyMotion features={domAnimation}>
+      <div className={cn("group/seg relative", className)}>
+        <m.button
+          aria-label={`${milestone.name}: ${percentage}% complete (${completed} of ${total})`}
           className={cn(
-            "absolute inset-0 flex items-center gap-1.5 truncate px-2.5 leading-none",
-            "transition-opacity duration-150",
-            "group-hover/seg:opacity-0"
+            "relative h-10 w-full overflow-hidden rounded-sm",
+            "text-left font-medium text-white text-xs",
+            "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+            "cursor-pointer select-none transition-shadow duration-200"
+            // isActive && "ring-1 ring-white/40"
           )}
+          onClick={onClick}
+          style={{
+            backgroundColor: colorValues.text,
+            boxShadow: isActive ? `0 1px 8px ${colorValues.text}50` : undefined,
+            ...style,
+          }}
+          type="button"
         >
-          {milestone.emoji && (
-            <span className="shrink-0 text-sm">{milestone.emoji}</span>
-          )}
-          <span className="truncate">{milestone.name}</span>
-        </span>
+          {/* Diagonal hatching overlay */}
+          <svg
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 h-full w-full"
+          >
+            <defs>
+              <pattern
+                height="6"
+                id={`${HATCH_PATTERN_ID}-${milestone._id}`}
+                patternTransform="rotate(45)"
+                patternUnits="userSpaceOnUse"
+                width="6"
+              >
+                <line
+                  stroke="rgba(255,255,255,0.08)"
+                  strokeWidth="1"
+                  x1="0"
+                  x2="0"
+                  y1="0"
+                  y2="6"
+                />
+              </pattern>
+            </defs>
+            <rect
+              fill={`url(#${HATCH_PATTERN_ID}-${milestone._id})`}
+              height="100%"
+              width="100%"
+            />
+          </svg>
 
-        {/* Hover state: inline details */}
-        <span
-          className={cn(
-            "absolute inset-0 flex items-center justify-between px-2.5 leading-none",
-            "opacity-0 transition-opacity duration-150",
-            "group-hover/seg:opacity-100"
-          )}
-        >
-          <span className="flex items-center gap-1.5 truncate">
+          {/* Default state: emoji + name */}
+          <span
+            className={cn(
+              "absolute inset-0 flex items-center gap-1.5 truncate px-2.5 leading-none",
+              "transition-opacity duration-150",
+              "group-hover/seg:opacity-0"
+            )}
+          >
             {milestone.emoji && (
               <span className="shrink-0 text-sm">{milestone.emoji}</span>
             )}
             <span className="truncate">{milestone.name}</span>
           </span>
-          <span className="ml-2 flex shrink-0 items-center gap-1.5">
-            {deadlineInfo && (
-              <span className="text-[10px] opacity-80">
-                {deadlineInfo.relativeLabel}
-              </span>
+
+          {/* Hover state: inline details */}
+          <span
+            className={cn(
+              "absolute inset-0 flex items-center justify-between px-2.5 leading-none",
+              "opacity-0 transition-opacity duration-150",
+              "group-hover/seg:opacity-100"
             )}
-            <span className="rounded bg-white/20 px-1.5 py-0.5 font-mono text-[10px] tabular-nums">
-              {percentage}%
+          >
+            <span className="flex items-center gap-1.5 truncate">
+              {milestone.emoji && (
+                <span className="shrink-0 text-sm">{milestone.emoji}</span>
+              )}
+              <span className="truncate">{milestone.name}</span>
+            </span>
+            <span className="ml-2 flex shrink-0 items-center gap-1.5">
+              {deadlineInfo && (
+                <span className="text-[10px] opacity-80">
+                  {deadlineInfo.relativeLabel}
+                </span>
+              )}
+              <span className="rounded bg-white/20 px-1.5 py-0.5 font-mono text-[10px] tabular-nums">
+                {percentage}%
+              </span>
             </span>
           </span>
-        </span>
 
-        {/* Progress fill at the bottom */}
-        <motion.div
-          animate={{ width: `${percentage}%` }}
-          className="absolute bottom-0 left-0 h-[2px] bg-white/30"
-          initial={false}
-          transition={{ type: "spring", stiffness: 200, damping: 30 }}
-        />
-      </motion.button>
+          {/* Progress fill at the bottom */}
+          <m.div
+            animate={{ width: `${percentage}%` }}
+            className="absolute bottom-0 left-0 h-[2px] bg-white/30"
+            initial={false}
+            transition={{ type: "spring", stiffness: 200, damping: 30 }}
+          />
+        </m.button>
 
-      {/* Overdue dot indicator */}
-      {isOverdue && (
-        <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
-      )}
+        {/* Overdue dot indicator */}
+        {isOverdue && (
+          <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-red-500" />
+        )}
 
-      {/* Active state: subtle bottom highlight line */}
-      {isActive && (
-        <motion.div
-          animate={{ width: "60%" }}
-          className="absolute bottom-0.5 left-1/2 h-0.5 -translate-x-1/2 rounded-full"
-          initial={{ width: 0 }}
-          style={{ backgroundColor: colorValues.text }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        />
-      )}
-    </div>
+        {/* Active state: subtle bottom highlight line */}
+        {isActive && (
+          <m.div
+            animate={{ width: "60%" }}
+            className="absolute bottom-0.5 left-1/2 h-0.5 -translate-x-1/2 rounded-full"
+            initial={{ width: 0 }}
+            style={{ backgroundColor: colorValues.text }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          />
+        )}
+      </div>
+    </LazyMotion>
   );
 
   if (!isAdmin) {
@@ -255,7 +257,6 @@ export function MilestoneSegment({
             <div className="flex items-center gap-2">
               <EmojiPicker onChange={setEditEmoji} value={editEmoji} />
               <Input
-                autoFocus
                 className="h-8 flex-1"
                 onChange={(e) => setEditName(e.target.value)}
                 onKeyDown={handleEditKeyDown}

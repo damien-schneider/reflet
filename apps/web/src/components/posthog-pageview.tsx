@@ -2,10 +2,10 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { hasAnalyticsConsent } from "@/components/cookie-consent-banner";
 
-export function PostHogPageView() {
+function PostHogPageViewTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isFirstRender = useRef(true);
@@ -30,4 +30,12 @@ export function PostHogPageView() {
   );
 
   return null;
+}
+
+export function PostHogPageView() {
+  return (
+    <Suspense fallback={null}>
+      <PostHogPageViewTracker />
+    </Suspense>
+  );
 }

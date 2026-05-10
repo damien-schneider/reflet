@@ -91,7 +91,7 @@ export default function FeedbackDetailPage({
           </Muted>
           <Link href={`/dashboard/${orgSlug}`}>
             <Button className="mt-4" variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="mr-2 size-4" />
               Back to dashboard
             </Button>
           </Link>
@@ -103,7 +103,7 @@ export default function FeedbackDetailPage({
   if (feedback === undefined) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Muted>Loading...</Muted>
+        <Muted>Loading…</Muted>
       </div>
     );
   }

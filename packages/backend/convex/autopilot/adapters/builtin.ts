@@ -8,12 +8,13 @@
 import type { z } from "zod";
 import {
   createProviderParseFailure,
+  createProviderStatusFailure,
   githubPullDetailResponseSchema,
+  log,
   parseResponseJson,
 } from "./adapter_helpers";
 import { BUILTIN_REF_REGEX, buildHeaders, getCIStatus } from "./builtin_github";
 import type {
-  ActivityLogEntry,
   CodingAdapter,
   CodingTaskInput,
   CodingTaskOutput,
@@ -23,19 +24,6 @@ import type {
 const GITHUB_API = "https://api.github.com";
 const BUILTIN_EXECUTION_UNAVAILABLE =
   "Built-in adapter does not implement code. Configure Codex, Claude Code, or Copilot before dispatching production dev work.";
-
-const log = (
-  agent: ActivityLogEntry["agent"],
-  level: ActivityLogEntry["level"],
-  message: string,
-  details?: string
-): ActivityLogEntry => ({
-  agent,
-  level,
-  message,
-  details,
-  timestamp: Date.now(),
-});
 
 export const builtinAdapter: CodingAdapter = {
   name: "builtin",
@@ -83,12 +71,7 @@ export const builtinAdapter: CodingAdapter = {
     );
 
     if (!prResponse.ok) {
-      return {
-        status: "failed",
-        activityLogs: [],
-        tokensUsed: 0,
-        estimatedCostUsd: 0,
-      };
+      return createProviderStatusFailure("Built-in", prResponse);
     }
 
     let prData: z.infer<typeof githubPullDetailResponseSchema>;
@@ -107,6 +90,7 @@ export const builtinAdapter: CodingAdapter = {
         status: "completed",
         prUrl: prData.html_url,
         prNumber: prData.number,
+        merged: true,
         ciStatus: "passed",
         activityLogs: [],
         tokensUsed: 0,
@@ -114,11 +98,49 @@ export const builtinAdapter: CodingAdapter = {
       };
     }
 
-    // Check CI
-    const ci = await getCIStatus(owner, repo, prData.head.ref, githubToken);
+    if (prData.state === "closed") {
+      return {
+        status: "failed",
+        prUrl: prData.html_url,
+        prNumber: prData.number,
+        merged: false,
+        ciStatus: "failed",
+        activityLogs: [
+          log(
+            "dev",
+            "error",
+            `PR #${prData.number} was closed without merge`,
+            prData.html_url
+          ),
+        ],
+        tokensUsed: 0,
+        estimatedCostUsd: 0,
+      };
+    }
+
+    let ci: Awaited<ReturnType<typeof getCIStatus>>;
+    try {
+      ci = await getCIStatus(owner, repo, prData.head.sha, githubToken);
+    } catch (error) {
+      return {
+        ...createProviderParseFailure("Built-in CI", "check runs", error),
+        prUrl: prData.html_url,
+        prNumber: prData.number,
+      };
+    }
+
+    const hasCompleted = ci.status === "passed" && !prData.draft;
+    const hasFailed = ci.status === "failed";
+    let status: TaskStatusResponse["status"] = "running";
+    if (hasCompleted) {
+      status = "completed";
+    }
+    if (hasFailed) {
+      status = "failed";
+    }
 
     return {
-      status: ci.status === "failed" ? "failed" : "running",
+      status,
       prUrl: prData.html_url,
       prNumber: prData.number,
       ciStatus: ci.status,
@@ -142,10 +164,7 @@ export const builtinAdapter: CodingAdapter = {
       `${GITHUB_API}/repos/${owner}/${repo}/pulls/${pr}`,
       {
         method: "PATCH",
-        headers: {
-          ...buildHeaders(credentials.githubToken),
-          "Content-Type": "application/json",
-        },
+        headers: buildHeaders(credentials.githubToken),
         body: JSON.stringify({ state: "closed" }),
       }
     );

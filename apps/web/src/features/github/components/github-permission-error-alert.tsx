@@ -25,7 +25,7 @@ export function GitHubPermissionErrorAlert({
 }: GitHubPermissionErrorAlertProps) {
   return (
     <Alert className="mb-4" variant="destructive">
-      <Warning className="h-4 w-4" />
+      <Warning className="size-4" />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>
         <p>{message}</p>
@@ -34,19 +34,19 @@ export function GitHubPermissionErrorAlert({
           connection to grant these permissions.
         </p>
         <Button className="mt-3" onClick={onResync} size="sm" variant="outline">
-          <ArrowsClockwise className="mr-2 h-4 w-4" />
+          <ArrowsClockwise className="mr-2 size-4" />
           Resync GitHub Connection
         </Button>
       </AlertDescription>
       {onDismiss ? (
         <AlertAction>
           <Button
-            className="h-6 w-6"
+            className="size-6"
             onClick={onDismiss}
             size="icon"
             variant="ghost"
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
             <span className="sr-only">Dismiss</span>
           </Button>
         </AlertAction>

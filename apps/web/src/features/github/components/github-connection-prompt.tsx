@@ -55,7 +55,7 @@ export function GitHubConnectionPrompt({
     <section className="space-y-4">
       <div>
         <H3 className="flex items-center gap-2" variant="section">
-          <GithubLogo className="h-5 w-5" />
+          <GithubLogo className="size-5" />
           Connect GitHub to Enhance AI
         </H3>
         <Muted>
@@ -66,7 +66,7 @@ export function GitHubConnectionPrompt({
       <div className="grid gap-4 sm:grid-cols-2">
         {BENEFITS.map((benefit) => (
           <div className="flex gap-3" key={benefit.title}>
-            <benefit.icon className="mt-0.5 h-5 w-5 shrink-0 text-olive-600" />
+            <benefit.icon className="mt-0.5 size-5 shrink-0 text-olive-600" />
             <div>
               <Text className="font-medium text-sm">{benefit.title}</Text>
               <Text className="text-muted-foreground text-xs">
@@ -77,8 +77,12 @@ export function GitHubConnectionPrompt({
         ))}
       </div>
       {isAdmin && connectHref ? (
-        <Button onClick={onConnectClick} render={<Link href={connectHref} />}>
-          <GithubLogo className="mr-2 h-4 w-4" />
+        <Button
+          nativeButton={false}
+          onClick={onConnectClick}
+          render={<Link href={connectHref} />}
+        >
+          <GithubLogo className="mr-2 size-4" />
           Connect GitHub
         </Button>
       ) : null}

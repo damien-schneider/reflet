@@ -145,7 +145,7 @@ function AvailableCard({ integration }: { integration: Integration }) {
 
   const content = (
     <div className="rounded-2xl border border-border bg-card p-8 shadow-sm transition-shadow hover:shadow-md">
-      <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-foreground">
+      <div className="mb-6 flex size-12 items-center justify-center rounded-xl bg-muted text-foreground">
         <Icon size={24} />
       </div>
       <H3 className="mb-3" variant="card">
@@ -175,7 +175,7 @@ function ComingSoonCard({ integration }: { integration: Integration }) {
   return (
     <div className="rounded-2xl border border-border bg-card/50 p-8 opacity-70 shadow-sm">
       <div className="mb-6 flex items-center justify-between">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+        <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
           <Icon size={24} />
         </div>
         <span className="rounded-full bg-muted px-3 py-1 font-medium text-muted-foreground text-xs">

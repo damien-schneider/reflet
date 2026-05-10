@@ -90,19 +90,16 @@ export const checkGuards = internalQuery({
     // Rate limit: max executions per hour per agent
     const now = Date.now();
     const oneHourAgo = now - 60 * 60 * 1000;
-    const recentActivity = await ctx.db
+    const agentActivity = await ctx.db
       .query("autopilotActivityLog")
       .withIndex("by_org_created", (q) =>
-        q.eq("organizationId", args.organizationId)
+        q.eq("organizationId", args.organizationId).gt("createdAt", oneHourAgo)
       )
-      .order("desc")
-      .take(100);
+      .filter((q) => q.eq(q.field("agent"), args.agent))
+      .collect();
 
-    const agentExecutions = recentActivity.filter(
-      (a) =>
-        a.agent === args.agent &&
-        a.level === "action" &&
-        a.createdAt > oneHourAgo
+    const agentExecutions = agentActivity.filter(
+      (entry) => entry.level === "action"
     );
 
     if (agentExecutions.length >= MAX_EXECUTIONS_PER_HOUR) {
@@ -115,11 +112,8 @@ export const checkGuards = internalQuery({
 
     // Circuit breaker: 5 failures in 10 min → 30 min cooldown
     const windowStart = now - CIRCUIT_BREAKER_WINDOW_MS;
-    const recentErrors = recentActivity.filter(
-      (a) =>
-        a.agent === args.agent &&
-        a.level === "error" &&
-        a.createdAt > windowStart
+    const recentErrors = agentActivity.filter(
+      (entry) => entry.level === "error" && entry.createdAt > windowStart
     );
 
     if (recentErrors.length >= CIRCUIT_BREAKER_FAILURES) {

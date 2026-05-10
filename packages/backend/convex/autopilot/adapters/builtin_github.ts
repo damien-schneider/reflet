@@ -9,12 +9,14 @@
  */
 
 import {
+  formatProviderHttpError,
   githubCheckRunsResponseSchema,
   githubCodeSearchResponseSchema,
   githubContentFileResponseSchema,
   githubDirectoryResponseSchema,
   githubIssueResponseSchema,
   githubRefResponseSchema,
+  parseGitHubCheckRuns,
   parseResponseJson,
 } from "./adapter_helpers";
 
@@ -29,6 +31,7 @@ export const buildHeaders = (token: string): Record<string, string> => ({
   Authorization: `Bearer ${token}`,
   Accept: "application/vnd.github+json",
   "X-GitHub-Api-Version": "2022-11-28",
+  "Content-Type": "application/json",
 });
 
 /**
@@ -165,10 +168,7 @@ export const createBranch = async (
     `${GITHUB_API}/repos/${owner}/${repo}/git/refs`,
     {
       method: "POST",
-      headers: {
-        ...buildHeaders(token),
-        "Content-Type": "application/json",
-      },
+      headers: buildHeaders(token),
       body: JSON.stringify({
         ref: `refs/heads/${branchName}`,
         sha: refData.object.sha,
@@ -180,9 +180,7 @@ export const createBranch = async (
     const errorBody = await createResponse.text();
     // Branch may already exist — that's OK for retries
     if (!errorBody.includes("Reference already exists")) {
-      throw new Error(
-        `Failed to create branch: ${createResponse.status} ${errorBody}`
-      );
+      throw new Error(formatProviderHttpError("Create branch", createResponse));
     }
   }
 };
@@ -201,10 +199,7 @@ export const createPullRequest = async (
 ): Promise<{ prUrl: string; prNumber: number }> => {
   const response = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/pulls`, {
     method: "POST",
-    headers: {
-      ...buildHeaders(token),
-      "Content-Type": "application/json",
-    },
+    headers: buildHeaders(token),
     body: JSON.stringify({
       title,
       body,
@@ -215,8 +210,7 @@ export const createPullRequest = async (
   });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Failed to create PR: ${response.status} ${errorBody}`);
+    throw new Error(formatProviderHttpError("Create pull request", response));
   }
 
   const data = await parseResponseJson(
@@ -233,14 +227,14 @@ export const createPullRequest = async (
 export const getCIStatus = async (
   owner: string,
   repo: string,
-  branch: string,
+  commitSha: string,
   token: string
 ): Promise<{
   status: "pending" | "running" | "passed" | "failed";
   failureLog?: string;
 }> => {
   const response = await fetch(
-    `${GITHUB_API}/repos/${owner}/${repo}/commits/${branch}/check-runs`,
+    `${GITHUB_API}/repos/${owner}/${repo}/commits/${commitSha}/check-runs`,
     { headers: buildHeaders(token) }
   );
 
@@ -254,33 +248,6 @@ export const getCIStatus = async (
     "GitHub check runs"
   );
 
-  if (data.check_runs.length === 0) {
-    return { status: "pending" };
-  }
-
-  const hasRunning = data.check_runs.some((run) => run.status !== "completed");
-  if (hasRunning) {
-    return { status: "running" };
-  }
-
-  const hasFailed = data.check_runs.some(
-    (run) =>
-      run.conclusion === "failure" ||
-      run.conclusion === "cancelled" ||
-      run.conclusion === "timed_out"
-  );
-  if (hasFailed) {
-    const failedRun = data.check_runs.find(
-      (run) =>
-        run.conclusion === "failure" ||
-        run.conclusion === "cancelled" ||
-        run.conclusion === "timed_out"
-    );
-    return {
-      status: "failed",
-      failureLog: failedRun?.output?.summary?.slice(0, 2000),
-    };
-  }
-
-  return { status: "passed" };
+  const { ciFailureLog, ciStatus } = parseGitHubCheckRuns(data.check_runs);
+  return { status: ciStatus, failureLog: ciFailureLog };
 };

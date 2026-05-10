@@ -30,7 +30,7 @@ export function AiPromptSection({ publicKey }: AiPromptSectionProps) {
 
       <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-900 dark:bg-purple-950">
         <div className="flex items-start gap-3">
-          <Robot className="mt-0.5 h-5 w-5 text-purple-600" />
+          <Robot className="mt-0.5 size-5 text-purple-600" />
           <div className="flex-1">
             <h4 className="font-medium text-purple-800 dark:text-purple-200">
               How to use this prompt
@@ -52,7 +52,7 @@ export function AiPromptSection({ publicKey }: AiPromptSectionProps) {
           size="sm"
           variant="secondary"
         >
-          <Copy className="mr-2 h-4 w-4" />
+          <Copy className="mr-2 size-4" />
           Copy Prompt
         </Button>
         <div className="max-h-96 overflow-auto rounded-lg bg-muted p-4 font-mono text-sm">
@@ -66,7 +66,7 @@ export function AiPromptSection({ publicKey }: AiPromptSectionProps) {
           onClick={() => copyToClipboard(prompt, "AI prompt")}
           variant="default"
         >
-          <Copy className="mr-2 h-4 w-4" />
+          <Copy className="mr-2 size-4" />
           Copy Full Prompt
         </Button>
       </div>

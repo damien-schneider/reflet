@@ -50,11 +50,11 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Spinner className="h-5 w-5 animate-spin text-primary" />
+            <Spinner className="size-5 animate-spin text-primary" />
             <div>
-              <h3 className="font-medium text-sm">Generating changelog...</h3>
+              <h3 className="font-medium text-sm">Generating changelog…</h3>
               <p className="text-muted-foreground text-xs">
-                {job.currentStep ?? "Processing..."}
+                {job.currentStep ?? "Processing…"}
               </p>
             </div>
           </div>
@@ -108,7 +108,7 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
               <div className="flex items-center gap-1" key={step.key}>
                 <div
                   className={cn(
-                    "h-2 w-2 rounded-full transition-colors",
+                    "size-2 rounded-full transition-colors",
                     isCompleted && "bg-green-500",
                     isActive && "bg-primary",
                     !(isCompleted || isActive) && "bg-muted-foreground/20"
@@ -133,7 +133,7 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
           <Collapsible>
             <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground">
               View groups
-              <CaretDown className="h-3 w-3 transition-transform group-data-panel-open:rotate-180" />
+              <CaretDown className="size-3 transition-transform group-data-panel-open:rotate-180" />
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
@@ -183,7 +183,7 @@ function GroupStatusDot({ status }: { status: string }) {
   return (
     <div
       className={cn(
-        "h-2 w-2 rounded-full",
+        "size-2 rounded-full",
         status === "created" && "bg-green-500",
         status === "generated" && "bg-green-500",
         status === "generating" && "animate-pulse bg-primary",

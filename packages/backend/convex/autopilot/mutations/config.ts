@@ -5,9 +5,8 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
-import type { Doc, Id } from "../../_generated/dataModel";
-import { type MutationCtx, mutation } from "../../_generated/server";
-import { getEffectiveTier } from "../../billing/effective_tier";
+import type { Doc } from "../../_generated/dataModel";
+import { mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
 import { DEFAULT_DAILY_COST_CAP_USD } from "../config_task_caps";
 import {
@@ -16,17 +15,7 @@ import {
   codingAdapterType,
   isProductionCodingAdapter,
 } from "../schema/validators";
-import { requireOrgAdmin } from "./auth";
-
-async function requireAutopilotAccess(
-  ctx: Pick<MutationCtx, "runQuery">,
-  organizationId: Id<"organizations">
-): Promise<void> {
-  const tier = await getEffectiveTier(ctx, organizationId);
-  if (tier !== "pro") {
-    throw new Error("Autopilot requires a Pro subscription.");
-  }
-}
+import { requireAutopilotAccess, requireOrgAdmin } from "./auth";
 
 export const initConfig = mutation({
   args: { organizationId: v.id("organizations") },
@@ -53,6 +42,12 @@ export const initConfig = mutation({
     return ctx.db.insert("autopilotConfig", {
       organizationId: args.organizationId,
       enabled: false,
+      intelligenceEnabled: false,
+      pmEnabled: true,
+      ctoEnabled: true,
+      growthEnabled: false,
+      supportEnabled: false,
+      salesEnabled: false,
       adapter: "builtin",
       autonomyLevel: "review_required",
       autonomyMode: "stopped",
@@ -93,6 +88,26 @@ type ConfigPatch = Partial<
     | "supportEnabled"
   >
 > & { updatedAt: number };
+
+interface ConfigUpdateArgs {
+  adapter?: Doc<"autopilotConfig">["adapter"];
+  autoMergePRs?: boolean;
+  autonomyLevel?: Doc<"autopilotConfig">["autonomyLevel"];
+  ctoEnabled?: boolean;
+  dailyCostCapUsd?: number;
+  devEnabled?: boolean;
+  emailDailyLimit?: number;
+  growthEnabled?: boolean;
+  intelligenceEnabled?: boolean;
+  maxPendingTasksPerAgent?: number;
+  maxPendingTasksTotal?: number;
+  maxTasksPerDay?: number;
+  perAgentDailyCapUsd?: string;
+  pmEnabled?: boolean;
+  requireArchitectReview?: boolean;
+  salesEnabled?: boolean;
+  supportEnabled?: boolean;
+}
 
 const perAgentDailyCapUsdSchema = z
   .object({
@@ -142,6 +157,84 @@ function validateConfigUpdate(args: {
   }
 }
 
+function applyAdapterUpdate(
+  args: ConfigUpdateArgs,
+  currentAdapter: Doc<"autopilotConfig">["adapter"],
+  updates: ConfigPatch
+): void {
+  const adapter = args.adapter ?? currentAdapter;
+
+  if (args.adapter !== undefined) {
+    updates.adapter = args.adapter;
+  }
+
+  if (args.devEnabled !== undefined) {
+    updates.devEnabled = args.devEnabled && isProductionCodingAdapter(adapter);
+    return;
+  }
+
+  if (!isProductionCodingAdapter(adapter)) {
+    updates.devEnabled = false;
+  }
+}
+
+function applyGeneralUpdates(
+  args: ConfigUpdateArgs,
+  updates: ConfigPatch
+): void {
+  if (args.autonomyLevel !== undefined) {
+    updates.autonomyLevel = args.autonomyLevel;
+  }
+  if (args.autoMergePRs !== undefined) {
+    updates.autoMergePRs = args.autoMergePRs;
+  }
+  if (args.requireArchitectReview !== undefined) {
+    updates.requireArchitectReview = args.requireArchitectReview;
+  }
+}
+
+function applyAgentUpdates(args: ConfigUpdateArgs, updates: ConfigPatch): void {
+  if (args.intelligenceEnabled !== undefined) {
+    updates.intelligenceEnabled = args.intelligenceEnabled;
+  }
+  if (args.pmEnabled !== undefined) {
+    updates.pmEnabled = args.pmEnabled;
+  }
+  if (args.ctoEnabled !== undefined) {
+    updates.ctoEnabled = args.ctoEnabled;
+  }
+  if (args.growthEnabled !== undefined) {
+    updates.growthEnabled = args.growthEnabled;
+  }
+  if (args.supportEnabled !== undefined) {
+    updates.supportEnabled = args.supportEnabled;
+  }
+  if (args.salesEnabled !== undefined) {
+    updates.salesEnabled = args.salesEnabled;
+  }
+}
+
+function applyLimitUpdates(args: ConfigUpdateArgs, updates: ConfigPatch): void {
+  if (args.maxTasksPerDay !== undefined) {
+    updates.maxTasksPerDay = args.maxTasksPerDay;
+  }
+  if (args.dailyCostCapUsd !== undefined) {
+    updates.dailyCostCapUsd = args.dailyCostCapUsd;
+  }
+  if (args.emailDailyLimit !== undefined) {
+    updates.emailDailyLimit = args.emailDailyLimit;
+  }
+  if (args.maxPendingTasksPerAgent !== undefined) {
+    updates.maxPendingTasksPerAgent = args.maxPendingTasksPerAgent;
+  }
+  if (args.maxPendingTasksTotal !== undefined) {
+    updates.maxPendingTasksTotal = args.maxPendingTasksTotal;
+  }
+  if (args.perAgentDailyCapUsd !== undefined) {
+    updates.perAgentDailyCapUsd = args.perAgentDailyCapUsd;
+  }
+}
+
 export const updateConfig = mutation({
   args: {
     configId: v.id("autopilotConfig"),
@@ -172,63 +265,14 @@ export const updateConfig = mutation({
     }
 
     await requireOrgAdmin(ctx, config.organizationId, user._id);
+    await requireAutopilotAccess(ctx, config.organizationId);
     validateConfigUpdate(args);
 
     const updates: ConfigPatch = { updatedAt: Date.now() };
-    if (args.adapter !== undefined) {
-      updates.adapter = args.adapter;
-      if (!isProductionCodingAdapter(args.adapter)) {
-        updates.devEnabled = false;
-      }
-    }
-    if (args.autonomyLevel !== undefined) {
-      updates.autonomyLevel = args.autonomyLevel;
-    }
-    if (args.maxTasksPerDay !== undefined) {
-      updates.maxTasksPerDay = args.maxTasksPerDay;
-    }
-    if (args.autoMergePRs !== undefined) {
-      updates.autoMergePRs = args.autoMergePRs;
-    }
-    if (args.requireArchitectReview !== undefined) {
-      updates.requireArchitectReview = args.requireArchitectReview;
-    }
-    if (args.intelligenceEnabled !== undefined) {
-      updates.intelligenceEnabled = args.intelligenceEnabled;
-    }
-    if (args.pmEnabled !== undefined) {
-      updates.pmEnabled = args.pmEnabled;
-    }
-    if (args.ctoEnabled !== undefined) {
-      updates.ctoEnabled = args.ctoEnabled;
-    }
-    if (args.devEnabled !== undefined) {
-      updates.devEnabled = args.devEnabled;
-    }
-    if (args.growthEnabled !== undefined) {
-      updates.growthEnabled = args.growthEnabled;
-    }
-    if (args.supportEnabled !== undefined) {
-      updates.supportEnabled = args.supportEnabled;
-    }
-    if (args.salesEnabled !== undefined) {
-      updates.salesEnabled = args.salesEnabled;
-    }
-    if (args.dailyCostCapUsd !== undefined) {
-      updates.dailyCostCapUsd = args.dailyCostCapUsd;
-    }
-    if (args.emailDailyLimit !== undefined) {
-      updates.emailDailyLimit = args.emailDailyLimit;
-    }
-    if (args.maxPendingTasksPerAgent !== undefined) {
-      updates.maxPendingTasksPerAgent = args.maxPendingTasksPerAgent;
-    }
-    if (args.maxPendingTasksTotal !== undefined) {
-      updates.maxPendingTasksTotal = args.maxPendingTasksTotal;
-    }
-    if (args.perAgentDailyCapUsd !== undefined) {
-      updates.perAgentDailyCapUsd = args.perAgentDailyCapUsd;
-    }
+    applyAdapterUpdate(args, config.adapter, updates);
+    applyGeneralUpdates(args, updates);
+    applyAgentUpdates(args, updates);
+    applyLimitUpdates(args, updates);
 
     await ctx.db.patch(args.configId, updates);
     return null;
@@ -364,6 +408,7 @@ export const upsertCredentials = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
 
     const existing = await ctx.db
       .query("autopilotAdapterCredentials")
@@ -420,6 +465,7 @@ export const raiseBudgetCap = mutation({
     assertNonNegative(args.newCapUsd, "newCapUsd");
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
 
     const config = await ctx.db
       .query("autopilotConfig")

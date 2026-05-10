@@ -65,18 +65,18 @@ export function LinkedFeedbackList({
           className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/50"
           key={item._id}
         >
-          <Check className="h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-400" />
+          <Check className="size-3.5 shrink-0 text-green-600 dark:text-green-400" />
           <span className="min-w-0 flex-1 truncate">{item.title}</span>
           <StatusBadge status={item.status} />
           {releaseId && (
             <Button
-              className="h-5 w-5 shrink-0 p-0 text-muted-foreground hover:text-destructive"
+              className="size-5 shrink-0 p-0 text-muted-foreground hover:text-destructive"
               onClick={() => onUnlink(item._id)}
               size="sm"
               type="button"
               variant="ghost"
             >
-              <X className="h-3 w-3" />
+              <X className="size-3" />
             </Button>
           )}
         </div>
@@ -107,7 +107,7 @@ export function FeedbackSearchInput({
   return (
     <div className="relative">
       <div className="relative">
-        <MagnifyingGlass className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <MagnifyingGlass className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
           className="h-8 border-transparent bg-transparent pl-8 text-sm shadow-none focus-visible:border-input"
           onChange={(e) => setSearchQuery(e.target.value)}

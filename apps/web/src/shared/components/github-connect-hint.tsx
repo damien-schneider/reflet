@@ -38,6 +38,7 @@ export function GitHubConnectHint({
         <Muted className="text-xs">{description}</Muted>
       </div>
       <Button
+        nativeButton={false}
         render={<Link href={`/dashboard/${orgSlug}/setup`} />}
         size="sm"
         variant="outline"

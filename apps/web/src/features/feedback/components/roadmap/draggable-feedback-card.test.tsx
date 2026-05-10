@@ -18,7 +18,7 @@ vi.mock("@dnd-kit/core", () => ({
 }));
 
 vi.mock("motion/react", () => ({
-  motion: {
+  m: {
     div: ({
       children,
       onClick,
@@ -33,17 +33,18 @@ vi.mock("motion/react", () => ({
       transition: _t,
       ...rest
     }: Record<string, unknown>) => (
-      <div
+      <button
         className={className as string}
         data-testid="motion-div"
         onClick={onClick as React.MouseEventHandler}
         onKeyDown={onKeyDown as React.KeyboardEventHandler}
         role={role as string}
         tabIndex={tabIndex as number}
+        type="button"
         {...rest}
       >
         {children as React.ReactNode}
-      </div>
+      </button>
     ),
   },
 }));

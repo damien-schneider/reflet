@@ -74,7 +74,7 @@ export function FeedbackSuggestionList({
     <div className="rounded-lg border bg-muted/20 p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="flex items-center gap-1.5 font-medium text-xs">
-          <Sparkle className="h-3.5 w-3.5 text-purple-500" />
+          <Sparkle className="size-3.5 text-purple-500" />
           AI Suggestions
           <Badge className="text-xs" variant="secondary">
             {items.length}
@@ -99,7 +99,7 @@ export function FeedbackSuggestionList({
               type="button"
               variant="default"
             >
-              {isLinking ? <Spinner className="h-3 w-3 animate-spin" /> : null}
+              {isLinking ? <Spinner className="size-3 animate-spin" /> : null}
               Link {selectedIds.size}
             </Button>
           )}
@@ -137,14 +137,14 @@ export function FeedbackSuggestionList({
                   render={
                     <span
                       className={cn(
-                        "h-2 w-2 shrink-0 rounded-full",
+                        "size-2 shrink-0 rounded-full",
                         conf?.dot ?? "bg-gray-400"
                       )}
                     />
                   }
                 />
                 <TooltipContent>
-                  {conf?.label ?? "Unknown"} — {item.match.reason}
+                  {conf?.label ?? "Unknown"}: {item.match.reason}
                 </TooltipContent>
               </Tooltip>
               <span className="min-w-0 flex-1 truncate">{item.title}</span>

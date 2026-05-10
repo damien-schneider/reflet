@@ -1,24 +1,4 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { atom } from "jotai";
-
-// ============================================
-// SURVEY LIST STORE
-// ============================================
-
-export type SurveyStatusFilter =
-  | "all"
-  | "draft"
-  | "active"
-  | "paused"
-  | "closed";
-
-export const surveyStatusFilterAtom = atom<SurveyStatusFilter>("all");
-
-export const surveySearchAtom = atom<string>("");
-
-// ============================================
-// SURVEY BUILDER STORE
-// ============================================
 
 export type QuestionType =
   | "rating"
@@ -47,7 +27,7 @@ export interface QuestionConfig {
   placeholder?: string;
 }
 
-export interface ConditionalLogic {
+interface ConditionalLogic {
   condition?:
     | "equals"
     | "not_equals"
@@ -70,41 +50,3 @@ export interface SurveyQuestion {
   title: string;
   type: QuestionType;
 }
-
-export interface SurveyDraft {
-  description?: string;
-  questions: SurveyQuestion[];
-  title: string;
-  triggerConfig?: {
-    delayMs?: number;
-    pageUrl?: string;
-    sampleRate?: number;
-  };
-  triggerType: TriggerType;
-}
-
-// Builder editing state
-export const builderActiveQuestionIdAtom = atom<Id<"surveyQuestions"> | null>(
-  null
-);
-export const builderPreviewModeAtom = atom(false);
-
-// Undo/redo history
-interface HistoryEntry {
-  questions: SurveyQuestion[];
-  timestamp: number;
-}
-
-export const builderHistoryAtom = atom<HistoryEntry[]>([]);
-export const builderHistoryIndexAtom = atom<number>(-1);
-
-// Derived atoms for undo/redo
-export const canUndoAtom = atom((get) => get(builderHistoryIndexAtom) > 0);
-export const canRedoAtom = atom(
-  (get) => get(builderHistoryIndexAtom) < get(builderHistoryAtom).length - 1
-);
-
-// Auto-save state
-export const builderDirtyAtom = atom(false);
-export const builderSavingAtom = atom(false);
-export const builderLastSavedAtom = atom<number | null>(null);

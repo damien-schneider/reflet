@@ -9,6 +9,8 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+import type { ActionCtx } from "../_generated/server";
 import { internalAction, internalQuery } from "../_generated/server";
 import { FAST_MODELS } from "./agents/models";
 import { generateObjectWithFallback } from "./agents/shared_generation";
@@ -34,6 +36,30 @@ Rules:
 - contentFull: detailed markdown product definition (as long as needed, be thorough)
 - Focus on user-facing value, not technical implementation`;
 
+async function canRunPaidProductDefinitionPipeline(
+  ctx: ActionCtx,
+  organizationId: Id<"organizations">
+) {
+  const access = await ctx.runQuery(
+    internal.autopilot.billing_gate.checkAccess,
+    {
+      organizationId,
+    }
+  );
+
+  if (access.allowed) {
+    return true;
+  }
+
+  await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+    organizationId,
+    agent: "system",
+    level: "warning",
+    message: access.reason ?? "Autopilot requires a Pro subscription.",
+  });
+  return false;
+}
+
 /**
  * Generate the product definition from repo analysis — seeds the knowledge doc.
  *
@@ -43,6 +69,14 @@ Rules:
 export const generateCompanyBrief = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
+    const canRun = await canRunPaidProductDefinitionPipeline(
+      ctx,
+      args.organizationId
+    );
+    if (!canRun) {
+      return;
+    }
+
     const repoAnalysis = await ctx.runQuery(
       internal.autopilot.agents.cto.getRepoAnalysisForCto,
       { organizationId: args.organizationId }
@@ -156,6 +190,14 @@ function extractSummary(analysis: string): string {
 export const triggerProductDefinitionPipeline = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
+    const canRun = await canRunPaidProductDefinitionPipeline(
+      ctx,
+      args.organizationId
+    );
+    if (!canRun) {
+      return;
+    }
+
     try {
       await ctx.runMutation(
         internal.integrations.github.repo_analysis.startAnalysisInternal,

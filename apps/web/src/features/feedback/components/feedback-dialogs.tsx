@@ -72,7 +72,10 @@ export function CreateFeedbackDialog({
             <Input
               id="title"
               onChange={(e) =>
-                setNewFeedback({ ...newFeedback, title: e.target.value })
+                setNewFeedback((current) => ({
+                  ...current,
+                  title: e.target.value,
+                }))
               }
               placeholder="Short summary of your feedback"
               value={newFeedback.title}
@@ -83,7 +86,10 @@ export function CreateFeedbackDialog({
             <Textarea
               id="description"
               onChange={(e) =>
-                setNewFeedback({ ...newFeedback, description: e.target.value })
+                setNewFeedback((current) => ({
+                  ...current,
+                  description: e.target.value,
+                }))
               }
               placeholder="Provide more details..."
               rows={4}

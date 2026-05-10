@@ -24,9 +24,9 @@ const colorMap: Record<StatusType, string> = {
 };
 
 const sizeMap = {
-  sm: "h-2 w-2",
-  md: "h-2.5 w-2.5",
-  lg: "h-3 w-3",
+  sm: "size-2",
+  md: "size-2.5",
+  lg: "size-3",
 };
 
 export function StatusDot({

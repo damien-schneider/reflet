@@ -39,11 +39,34 @@ interface CommentsSectionProps {
   topLevelComments: CommentData[];
 }
 
+interface CommentsListProps {
+  commentReplies: (parentId: Id<"comments">) => CommentData[];
+  comments: CommentData[] | undefined;
+  editCommentContent: string;
+  editingCommentId: Id<"comments"> | null;
+  effectiveIsAdmin: boolean;
+  isSubmittingComment: boolean;
+  onDelete: (id: Id<"comments">) => void;
+  onEdit: (id: Id<"comments">, content: string) => void;
+  onEditCancel: () => void;
+  onEditContentChange: (content: string) => void;
+  onReply: (id: Id<"comments">) => void;
+  onReplyCancel: () => void;
+  onReplyContentChange: (content: string) => void;
+  onSubmitReply: (parentId: Id<"comments">) => Promise<void>;
+  onUpdateComment: (id: Id<"comments">) => Promise<void>;
+  replyContent: string;
+  replyingTo: Id<"comments"> | null;
+  topLevelComments: CommentData[];
+}
+
+const COMMENT_SKELETON_IDS = ["first", "second"];
+
 const renderLoadingSkeleton = () => (
   <div className="space-y-4">
-    {[1, 2].map((i) => (
-      <div className="flex gap-3" key={i}>
-        <Skeleton className="h-8 w-8 rounded-full" />
+    {COMMENT_SKELETON_IDS.map((id) => (
+      <div className="flex gap-3" key={id}>
+        <Skeleton className="size-8 rounded-full" />
         <div className="flex-1 space-y-2">
           <Skeleton className="h-4 w-1/4" />
           <Skeleton className="h-12 w-full" />
@@ -58,6 +81,62 @@ const emptyState = (
     No comments yet. Be the first to comment!
   </p>
 );
+
+function CommentsList({
+  comments,
+  topLevelComments,
+  commentReplies,
+  editCommentContent,
+  editingCommentId,
+  effectiveIsAdmin,
+  isSubmittingComment,
+  onDelete,
+  onEdit,
+  onEditCancel,
+  onEditContentChange,
+  onReply,
+  onReplyCancel,
+  onReplyContentChange,
+  onSubmitReply,
+  onUpdateComment,
+  replyContent,
+  replyingTo,
+}: CommentsListProps) {
+  if (comments === undefined) {
+    return renderLoadingSkeleton();
+  }
+
+  if (topLevelComments.length === 0) {
+    return emptyState;
+  }
+
+  return (
+    <div className="space-y-4">
+      {topLevelComments.map((comment) => (
+        <CommentItem
+          comment={comment}
+          editCommentContent={editCommentContent}
+          editingCommentId={editingCommentId}
+          isAdmin={effectiveIsAdmin}
+          isSubmittingComment={isSubmittingComment}
+          key={comment._id}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          onEditCancel={onEditCancel}
+          onEditContentChange={onEditContentChange}
+          onReply={onReply}
+          onReplyCancel={onReplyCancel}
+          onReplyContentChange={onReplyContentChange}
+          onSubmitReply={onSubmitReply}
+          onUpdate={onUpdateComment}
+          replies={commentReplies(comment._id)}
+          replyContent={replyContent}
+          replyingTo={replyingTo}
+        />
+      ))}
+    </div>
+  );
+}
 
 export function CommentsSection({
   comments,
@@ -84,46 +163,9 @@ export function CommentsSection({
   onSubmitReply,
   onUpdateComment,
 }: CommentsSectionProps) {
-  const renderCommentsList = () => {
-    if (comments === undefined) {
-      return renderLoadingSkeleton();
-    }
-
-    if (topLevelComments.length === 0) {
-      return emptyState;
-    }
-
-    return (
-      <div className="space-y-4">
-        {topLevelComments.map((comment) => (
-          <CommentItem
-            comment={comment}
-            editCommentContent={editCommentContent}
-            editingCommentId={editingCommentId}
-            isAdmin={effectiveIsAdmin}
-            isSubmittingComment={isSubmittingComment}
-            key={comment._id}
-            onDelete={onDelete}
-            onEdit={onEdit}
-            onEditCancel={onEditCancel}
-            onEditContentChange={onEditContentChange}
-            onReply={onReply}
-            onReplyCancel={onReplyCancel}
-            onReplyContentChange={onReplyContentChange}
-            onSubmitReply={onSubmitReply}
-            onUpdate={onUpdateComment}
-            replies={commentReplies(comment._id)}
-            replyContent={replyContent}
-            replyingTo={replyingTo}
-          />
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div>
-      <h3 className="mb-4 font-medium">Comments ({comments?.length || 0})</h3>
+      <h3 className="mb-4 font-medium">Comments ({comments?.length ?? 0})</h3>
 
       {/* Comment input */}
       <div className="mb-6 space-y-2">
@@ -137,12 +179,12 @@ export function CommentsSection({
             >
               {isGeneratingDraft ? (
                 <>
-                  <ArrowsClockwise className="mr-1 h-3 w-3 animate-spin" />
-                  Generating...
+                  <ArrowsClockwise className="mr-1 size-3 animate-spin" />
+                  Generating…
                 </>
               ) : (
                 <>
-                  <Sparkle className="mr-1 h-3 w-3" />
+                  <Sparkle className="mr-1 size-3" />
                   Draft Reply with AI
                 </>
               )}
@@ -158,18 +200,38 @@ export function CommentsSection({
             value={newComment}
           />
           <Button
+            aria-label="Post comment"
             className="self-end"
             disabled={!newComment.trim() || isSubmittingComment}
             onClick={onSubmitComment}
             size="icon"
           >
-            <PaperPlaneRight className="h-4 w-4" />
+            <PaperPlaneRight className="size-4" />
           </Button>
         </div>
       </div>
 
       {/* Comments list */}
-      {renderCommentsList()}
+      <CommentsList
+        commentReplies={commentReplies}
+        comments={comments}
+        editCommentContent={editCommentContent}
+        editingCommentId={editingCommentId}
+        effectiveIsAdmin={effectiveIsAdmin}
+        isSubmittingComment={isSubmittingComment}
+        onDelete={onDelete}
+        onEdit={onEdit}
+        onEditCancel={onEditCancel}
+        onEditContentChange={onEditContentChange}
+        onReply={onReply}
+        onReplyCancel={onReplyCancel}
+        onReplyContentChange={onReplyContentChange}
+        onSubmitReply={onSubmitReply}
+        onUpdateComment={onUpdateComment}
+        replyContent={replyContent}
+        replyingTo={replyingTo}
+        topLevelComments={topLevelComments}
+      />
     </div>
   );
 }

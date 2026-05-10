@@ -30,6 +30,94 @@ interface WebhookSetupCardProps {
   onSetup: () => void;
 }
 
+function WebhookSetupError({
+  error,
+  onClearError,
+  onResync,
+}: {
+  error?: { code: string; message: string } | null;
+  onClearError?: () => void;
+  onResync?: () => void;
+}) {
+  if (!error) {
+    return null;
+  }
+
+  const isPermissionError = error.code === "GITHUB_PERMISSION_DENIED";
+
+  if (isPermissionError && onResync) {
+    return (
+      <GitHubPermissionErrorAlert
+        message="The GitHub App is missing the required webhook permissions."
+        onDismiss={onClearError}
+        onResync={onResync}
+        title="Webhook setup failed"
+      />
+    );
+  }
+
+  return (
+    <Alert className="mb-4" variant="destructive">
+      <Warning className="size-4" />
+      <AlertTitle>Webhook setup failed</AlertTitle>
+      <AlertDescription>
+        <p>{error.message}</p>
+      </AlertDescription>
+      {onClearError ? (
+        <AlertAction>
+          <Button
+            className="size-6"
+            onClick={onClearError}
+            size="icon"
+            variant="ghost"
+          >
+            <X className="size-4" />
+            <span className="sr-only">Dismiss</span>
+          </Button>
+        </AlertAction>
+      ) : null}
+    </Alert>
+  );
+}
+
+function WebhookSetupAction({
+  hasWebhook,
+  isAdmin,
+  isSettingUp,
+  onSetup,
+}: {
+  hasWebhook: boolean;
+  isAdmin: boolean;
+  isSettingUp: boolean;
+  onSetup: () => void;
+}) {
+  if (hasWebhook) {
+    return (
+      <Badge variant="secondary">
+        <Check className="mr-1 size-3" />
+        Webhook Active
+      </Badge>
+    );
+  }
+
+  if (isAdmin) {
+    return (
+      <Button disabled={isSettingUp} onClick={onSetup}>
+        {isSettingUp ? (
+          <Spinner className="mr-2 size-4 animate-spin" />
+        ) : (
+          <WebhooksLogo className="mr-2 size-4" />
+        )}
+        Setup Webhook
+      </Button>
+    );
+  }
+
+  return (
+    <Text variant="bodySmall">Contact an admin to setup the webhook.</Text>
+  );
+}
+
 export function WebhookSetupSection({
   hasWebhook,
   isSettingUp,
@@ -39,76 +127,6 @@ export function WebhookSetupSection({
   error,
   onClearError,
 }: WebhookSetupCardProps) {
-  const renderError = () => {
-    if (!error) {
-      return null;
-    }
-
-    const isPermissionError = error.code === "GITHUB_PERMISSION_DENIED";
-
-    if (isPermissionError && onResync) {
-      return (
-        <GitHubPermissionErrorAlert
-          message="The GitHub App is missing the required webhook permissions."
-          onDismiss={onClearError}
-          onResync={onResync}
-          title="Webhook setup failed"
-        />
-      );
-    }
-
-    return (
-      <Alert className="mb-4" variant="destructive">
-        <Warning className="h-4 w-4" />
-        <AlertTitle>Webhook setup failed</AlertTitle>
-        <AlertDescription>
-          <p>{error.message}</p>
-        </AlertDescription>
-        {onClearError ? (
-          <AlertAction>
-            <Button
-              className="h-6 w-6"
-              onClick={onClearError}
-              size="icon"
-              variant="ghost"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Dismiss</span>
-            </Button>
-          </AlertAction>
-        ) : null}
-      </Alert>
-    );
-  };
-
-  const renderContent = () => {
-    if (hasWebhook) {
-      return (
-        <Badge variant="secondary">
-          <Check className="mr-1 h-3 w-3" />
-          Webhook Active
-        </Badge>
-      );
-    }
-
-    if (isAdmin) {
-      return (
-        <Button disabled={isSettingUp} onClick={onSetup}>
-          {isSettingUp ? (
-            <Spinner className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <WebhooksLogo className="mr-2 h-4 w-4" />
-          )}
-          Setup Webhook
-        </Button>
-      );
-    }
-
-    return (
-      <Text variant="bodySmall">Contact an admin to setup the webhook.</Text>
-    );
-  };
-
   const getDescription = () => {
     if (hasWebhook) {
       return "Webhook is active. Releases published on GitHub will automatically sync to your changelog.";
@@ -120,13 +138,22 @@ export function WebhookSetupSection({
     <section className="space-y-4">
       <div>
         <H3 className="flex items-center gap-2" variant="section">
-          <WebhooksLogo className="h-5 w-5" />
+          <WebhooksLogo className="size-5" />
           Webhook Setup
         </H3>
         <Muted>{getDescription()}</Muted>
       </div>
-      {renderError()}
-      {renderContent()}
+      <WebhookSetupError
+        error={error}
+        onClearError={onClearError}
+        onResync={onResync}
+      />
+      <WebhookSetupAction
+        hasWebhook={hasWebhook}
+        isAdmin={isAdmin}
+        isSettingUp={isSettingUp}
+        onSetup={onSetup}
+      />
     </section>
   );
 }

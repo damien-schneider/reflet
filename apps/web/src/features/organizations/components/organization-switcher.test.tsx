@@ -35,7 +35,7 @@ vi.mock("next/image", () => ({
     className?: string;
     width?: number;
     height?: number;
-  }) => <img alt={alt} src={src} />,
+  }) => <span aria-label={alt} data-src={src} role="img" />,
 }));
 
 vi.mock("next/link", () => ({
@@ -222,7 +222,7 @@ describe("OrganizationSwitcher", () => {
   it("renders loading state when organizations is undefined", () => {
     vi.mocked(useQuery).mockReturnValue(undefined);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByText("Loading…")).toBeInTheDocument();
   });
 
   it("shows create dialog when Create organization is clicked", async () => {
@@ -255,7 +255,7 @@ describe("OrganizationSwitcher", () => {
       },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="beta" />);
-    const images = screen.getAllByAltText("Beta Corp");
+    const images = screen.getAllByRole("img", { name: "Beta Corp" });
     expect(images.length).toBeGreaterThanOrEqual(1);
   });
 

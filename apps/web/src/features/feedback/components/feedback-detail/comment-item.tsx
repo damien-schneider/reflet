@@ -32,10 +32,8 @@ interface CommentItemOwnProps {
 
 export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
   const feedbackId = useFeedbackId();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(comment.content);
-  const [isReplying, setIsReplying] = useState(false);
-  const [replyContent, setReplyContent] = useState("");
+  const [editingContent, setEditingContent] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateComment = useMutation(api.feedback.comments.update);
@@ -43,16 +41,17 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
   const addReply = useMutation(api.feedback.comments.create);
 
   const handleEdit = async () => {
-    if (!editContent.trim()) {
+    const trimmedContent = editingContent?.trim();
+    if (!trimmedContent) {
       return;
     }
     setIsSubmitting(true);
     try {
       await updateComment({
         id: comment.id,
-        body: editContent.trim(),
+        body: trimmedContent,
       });
-      setIsEditing(false);
+      setEditingContent(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -63,27 +62,30 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
   };
 
   const handleReply = async () => {
-    if (!replyContent.trim()) {
+    const trimmedContent = replyContent?.trim();
+    if (!trimmedContent) {
       return;
     }
     setIsSubmitting(true);
     try {
       await addReply({
         feedbackId,
-        body: replyContent.trim(),
+        body: trimmedContent,
         parentId: comment.id,
       });
-      setReplyContent("");
-      setIsReplying(false);
+      setReplyContent(null);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const isEditing = editingContent !== null;
+  const isReplying = replyContent !== null;
+
   return (
     <div className="group rounded-lg p-3 transition-colors hover:bg-muted/30">
       <div className="flex gap-3">
-        <Avatar className={isReply ? "h-6 w-6" : "h-8 w-8"}>
+        <Avatar className={isReply ? "size-6" : "size-8"}>
           <AvatarImage src={comment.author?.image} />
           <AvatarFallback className="text-xs">
             {comment.author?.name?.charAt(0) ?? "?"}
@@ -106,24 +108,26 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                 render={(props: React.ComponentProps<"button">) => (
                   <Button
                     {...props}
-                    className="ml-auto h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
+                    className="ml-auto size-6 opacity-0 transition-opacity group-hover:opacity-100"
                     size="icon-sm"
                     variant="ghost"
                   >
-                    <DotsThree className="h-4 w-4" />
+                    <DotsThree className="size-4" />
                   </Button>
                 )}
               />
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                  <Pencil className="mr-2 h-4 w-4" />
+                <DropdownMenuItem
+                  onClick={() => setEditingContent(comment.content)}
+                >
+                  <Pencil className="mr-2 size-4" />
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={handleDelete}
                 >
-                  <Trash className="mr-2 h-4 w-4" />
+                  <Trash className="mr-2 size-4" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -135,28 +139,24 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
             <div className="mt-2">
               <div className="overflow-hidden rounded-lg border">
                 <TiptapMarkdownEditor
-                  autoFocus
                   className="min-h-[60px]"
                   editable
                   minimal
-                  onChange={setEditContent}
+                  onChange={setEditingContent}
                   onSubmit={handleEdit}
-                  value={editContent}
+                  value={editingContent}
                 />
               </div>
               <div className="mt-2 flex gap-2">
                 <Button
-                  onClick={() => {
-                    setIsEditing(false);
-                    setEditContent(comment.content);
-                  }}
+                  onClick={() => setEditingContent(null)}
                   size="sm"
                   variant="ghost"
                 >
                   Cancel
                 </Button>
                 <Button
-                  disabled={!editContent.trim() || isSubmitting}
+                  disabled={!editingContent.trim() || isSubmitting}
                   onClick={handleEdit}
                   size="sm"
                 >
@@ -173,10 +173,10 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
               {/* Reply button */}
               <button
                 className="mt-2 flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground"
-                onClick={() => setIsReplying(true)}
+                onClick={() => setReplyContent("")}
                 type="button"
               >
-                <ArrowBendDownRight className="h-3 w-3" />
+                <ArrowBendDownRight className="size-3" />
                 Reply
               </button>
             </>
@@ -187,7 +187,6 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
             <div className="mt-3">
               <div className="overflow-hidden rounded-lg border bg-muted/30">
                 <TiptapMarkdownEditor
-                  autoFocus
                   className="min-h-[60px]"
                   editable
                   minimal
@@ -198,10 +197,7 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                 />
                 <div className="flex items-center justify-end gap-2 border-t bg-muted/50 px-3 py-2">
                   <Button
-                    onClick={() => {
-                      setIsReplying(false);
-                      setReplyContent("");
-                    }}
+                    onClick={() => setReplyContent(null)}
                     size="sm"
                     variant="ghost"
                   >
@@ -213,7 +209,7 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                     onClick={handleReply}
                     size="sm"
                   >
-                    <PaperPlaneTilt className="h-3.5 w-3.5" />
+                    <PaperPlaneTilt className="size-3.5" />
                     {isSubmitting ? "Posting..." : "Reply"}
                   </Button>
                 </div>

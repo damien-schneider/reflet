@@ -4,8 +4,8 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { StatusDot } from "@/features/status/components/status-dot";
 import { cn } from "@/lib/utils";
-import { StatusDot } from "./status-dot";
 
 interface IncidentUpdate {
   createdAt: number;
@@ -61,8 +61,22 @@ const formatRelativeTime = (timestamp: number): string => {
 
 export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
   const [showUpdateForm, setShowUpdateForm] = useState(false);
-  const [updateStatus, setUpdateStatus] = useState(incident.status);
+  const [draftStatus, setDraftStatus] = useState<
+    IncidentCardProps["incident"]["status"] | null
+  >(null);
   const [updateMessage, setUpdateMessage] = useState("");
+
+  const updateStatus = draftStatus ?? incident.status;
+
+  const handleToggleUpdateForm = () => {
+    if (showUpdateForm) {
+      setShowUpdateForm(false);
+      return;
+    }
+
+    setDraftStatus(incident.status);
+    setShowUpdateForm(true);
+  };
 
   const handlePostUpdate = () => {
     if (!updateMessage.trim()) {
@@ -70,6 +84,7 @@ export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
     }
     onPostUpdate(incident._id, updateStatus, updateMessage.trim());
     setUpdateMessage("");
+    setDraftStatus(null);
     setShowUpdateForm(false);
   };
 
@@ -99,27 +114,22 @@ export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
             </span>
           </div>
         </div>
-        <Button
-          onClick={() => setShowUpdateForm(!showUpdateForm)}
-          size="sm"
-          variant="outline"
-        >
+        <Button onClick={handleToggleUpdateForm} size="sm" variant="outline">
           Post Update
         </Button>
       </div>
 
       <div className="mt-2 flex flex-wrap gap-1">
-        {incident.affectedMonitors.map((m) => (
+        {incident.affectedMonitors.map((monitor) => (
           <span
             className="rounded-full bg-red-50 px-2 py-0.5 text-red-700 text-xs dark:bg-red-950 dark:text-red-300"
-            key={m.name}
+            key={monitor.name}
           >
-            {m.name}
+            {monitor.name}
           </span>
         ))}
       </div>
 
-      {/* Timeline */}
       <div className="mt-3 space-y-2 border-t pt-3">
         {incident.updates.map((update) => (
           <div
@@ -131,37 +141,35 @@ export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
             </span>
             <div>
               <span className="font-medium capitalize">{update.status}</span>
-              <span className="text-muted-foreground"> — {update.message}</span>
+              <span className="text-muted-foreground">: {update.message}</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Inline update form */}
       {showUpdateForm && (
         <div className="mt-3 space-y-2 border-t pt-3">
           <div className="flex gap-1.5">
-            {statusOptions.map((opt) => (
+            {statusOptions.map((option) => (
               <button
                 className={cn(
                   "rounded-full px-3 py-1 text-xs transition-colors",
-                  updateStatus === opt.value
+                  updateStatus === option.value
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:text-foreground"
                 )}
-                key={opt.value}
-                onClick={() => setUpdateStatus(opt.value)}
+                key={option.value}
+                onClick={() => setDraftStatus(option.value)}
                 type="button"
               >
-                {opt.label}
+                {option.label}
               </button>
             ))}
           </div>
           <Textarea
-            autoFocus
-            onChange={(e) => setUpdateMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            onChange={(event) => setUpdateMessage(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
                 handlePostUpdate();
               }
             }}

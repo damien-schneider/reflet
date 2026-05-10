@@ -12,6 +12,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const VERSION_PLACEHOLDER_REGEX = /v1\.0\.0/i;
 const PUBLISH_BUTTON_REGEX = /publish/i;
 const CANCEL_BUTTON_REGEX = /cancel/i;
+const RELEASE_PUBLISHED_AT = 1_805_587_200_000;
+type ReleaseMutation = (...args: unknown[]) => Promise<unknown>;
 
 // Mock next/navigation
 const {
@@ -24,10 +26,10 @@ const {
 } = vi.hoisted(() => ({
   mockPush: vi.fn(),
   mockToast: { success: vi.fn(), error: vi.fn() },
-  mockCreateRelease: vi.fn(),
-  mockUpdateRelease: vi.fn(),
-  mockPublishRelease: vi.fn(),
-  mockUnpublishRelease: vi.fn(),
+  mockCreateRelease: vi.fn<ReleaseMutation>(),
+  mockUpdateRelease: vi.fn<ReleaseMutation>(),
+  mockPublishRelease: vi.fn<ReleaseMutation>(),
+  mockUnpublishRelease: vi.fn<ReleaseMutation>(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -112,7 +114,7 @@ vi.mock("@/components/ui/tiptap/use-media-upload", () => ({
 
 vi.mock("convex/react", () => ({
   useMutation: (ref: string) => {
-    const mockMap: Record<string, ReturnType<typeof vi.fn>> = {
+    const mockMap: Record<string, ReleaseMutation> = {
       "changelog.mutations.create": mockCreateRelease,
       "changelog.mutations.update": mockUpdateRelease,
       "changelog.release_lifecycle.publish": mockPublishRelease,
@@ -332,7 +334,7 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 vi.mock("date-fns", () => ({
-  format: (date: unknown, fmt: string) => String(date),
+  format: (date: unknown) => String(date),
 }));
 
 vi.mock("./release-commits-list", () => ({
@@ -517,7 +519,7 @@ describe("ReleaseEditor", () => {
             title: "Test Release",
             version: "v1.0.0",
             description: "Test description",
-            publishedAt: Date.now(),
+            publishedAt: RELEASE_PUBLISHED_AT,
           } as never
         }
       />
@@ -535,7 +537,7 @@ describe("ReleaseEditor", () => {
             title: "Published Release",
             version: "v2.0.0",
             description: "Published desc",
-            publishedAt: Date.now(),
+            publishedAt: RELEASE_PUBLISHED_AT,
           } as never
         }
       />
@@ -788,7 +790,7 @@ describe("ReleaseEditor", () => {
               title: "Published",
               version: "1.0.0",
               description: "desc",
-              publishedAt: Date.now(),
+              publishedAt: RELEASE_PUBLISHED_AT,
             } as never
           }
         />
@@ -814,7 +816,7 @@ describe("ReleaseEditor", () => {
               title: "Published",
               version: "1.0.0",
               description: "desc",
-              publishedAt: Date.now(),
+              publishedAt: RELEASE_PUBLISHED_AT,
             } as never
           }
         />
@@ -907,7 +909,7 @@ describe("ReleaseEditor", () => {
         vi.advanceTimersByTime(600);
       });
 
-      expect(screen.getByText("Saving...")).toBeInTheDocument();
+      expect(screen.getByText("Saving…")).toBeInTheDocument();
     });
 
     it("shows saved indicator after auto-save completes", async () => {

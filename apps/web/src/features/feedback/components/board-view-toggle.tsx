@@ -39,15 +39,15 @@ export function BoardViewToggle({
     >
       <TabsList className="h-10">
         <TabsTrigger className="h-8 gap-2 px-4" value="feed">
-          <List className="h-4 w-4" />
+          <List className="size-4" />
           <span>List</span>
         </TabsTrigger>
         <TabsTrigger className="h-8 gap-2 px-4" value="roadmap">
-          <GridFour className="h-4 w-4" />
+          <GridFour className="size-4" />
           <span>Roadmap</span>
         </TabsTrigger>
         <TabsTrigger className="h-8 gap-2 px-4" value="milestones">
-          <Flag className="h-4 w-4" />
+          <Flag className="size-4" />
           <span>Timeline</span>
         </TabsTrigger>
       </TabsList>

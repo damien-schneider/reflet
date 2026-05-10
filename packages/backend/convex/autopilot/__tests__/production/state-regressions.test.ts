@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 
 import { describe, expect, test } from "vitest";
-import { api, internal } from "../../_generated/api";
-import type { Id } from "../../_generated/dataModel";
+import { api, internal } from "../../../_generated/api";
+import type { Id } from "../../../_generated/dataModel";
 import {
   createAutopilotConfig,
   createMemberSession,
@@ -10,7 +10,7 @@ import {
   createParentTask,
   createTestContext,
   createValidatorScore,
-} from "./test-fixtures.helpers";
+} from "../test-fixtures.helpers";
 
 describe("autopilot production state regressions", () => {
   test("self-healing only preserves the stuck task with recent activity", async () => {
@@ -274,6 +274,7 @@ describe("autopilot production state regressions", () => {
     const organizationId = await createOrg(t);
     await createAutopilotConfig(t, organizationId, {
       costUsedTodayUsd: 75,
+      growthEnabled: true,
     });
 
     const result = await t.query(internal.autopilot.gate.checkGate, {
@@ -283,6 +284,54 @@ describe("autopilot production state regressions", () => {
     });
 
     expect(result.reason).not.toBe("cost_limit");
+  });
+
+  test("autonomy gate rate limits only count the matching action", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    const configId = await createAutopilotConfig(t, organizationId);
+    const now = Date.now();
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(configId, { salesEnabled: true });
+      for (let index = 0; index < 3; index += 1) {
+        await ctx.db.insert("autopilotActivityLog", {
+          organizationId,
+          agent: "sales",
+          level: "action",
+          action: "manual_lead_discovery",
+          message: `Lead discovery action ${index}`,
+          createdAt: now - index,
+        });
+      }
+    });
+
+    const allowed = await t.query(internal.autopilot.gate.checkGate, {
+      organizationId,
+      agent: "sales",
+      action: "send_email",
+    });
+    expect(allowed).toEqual({ proceed: true, reason: "requires_approval" });
+
+    await t.run(async (ctx) => {
+      for (let index = 0; index < 3; index += 1) {
+        await ctx.db.insert("autopilotActivityLog", {
+          organizationId,
+          agent: "sales",
+          level: "action",
+          action: "send_email",
+          message: `Email action ${index}`,
+          createdAt: now + index,
+        });
+      }
+    });
+
+    const blocked = await t.query(internal.autopilot.gate.checkGate, {
+      organizationId,
+      agent: "sales",
+      action: "send_email",
+    });
+    expect(blocked).toEqual({ proceed: false, reason: "rate_limit" });
   });
 
   test("validator publication advances use cases out of pending review", async () => {

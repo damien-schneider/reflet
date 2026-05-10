@@ -1,12 +1,17 @@
 "use client";
 
 import { IconCurrencyDollar } from "@tabler/icons-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SectionHeader } from "@/features/autopilot/components/settings/section-header";
 import { UpgradeBanner } from "@/features/autopilot/components/upgrade-banner";
+
+function getBillingUrl(orgSlug: string) {
+  return `/dashboard/${orgSlug}/project/billing`;
+}
 
 function getBillingTier(tier: string): "free" | "pro" {
   return tier === "pro" ? "pro" : "free";
@@ -19,7 +24,7 @@ export function BillingSection({
   orgSlug: string;
   tier: string;
 }) {
-  const billingUrl = `/dashboard/${orgSlug}/settings/billing`;
+  const billingUrl = getBillingUrl(orgSlug);
   const isPro = tier === "pro";
 
   return (
@@ -43,7 +48,8 @@ export function BillingSection({
           </div>
           <Button
             className="shrink-0"
-            onClick={() => window.location.assign(billingUrl)}
+            nativeButton={false}
+            render={<Link href={billingUrl} />}
             size="sm"
             variant={isPro ? "outline" : "default"}
           >
@@ -70,7 +76,7 @@ export function BillingSectionSkeleton() {
 }
 
 export function BillingUnavailableSection({ orgSlug }: { orgSlug: string }) {
-  const billingUrl = `/dashboard/${orgSlug}/settings/billing`;
+  const billingUrl = getBillingUrl(orgSlug);
 
   return (
     <section className="space-y-5">
@@ -84,13 +90,14 @@ export function BillingUnavailableSection({ orgSlug }: { orgSlug: string }) {
           <div className="min-w-0">
             <p className="font-medium text-sm">Billing unavailable</p>
             <p className="text-muted-foreground text-xs">
-              Plan status could not be loaded. Autopilot settings remain
-              editable for admins.
+              Plan status could not be loaded. Autopilot settings stay locked
+              until billing access is confirmed.
             </p>
           </div>
           <Button
             className="shrink-0"
-            onClick={() => window.location.assign(billingUrl)}
+            nativeButton={false}
+            render={<Link href={billingUrl} />}
             size="sm"
             variant="outline"
           >

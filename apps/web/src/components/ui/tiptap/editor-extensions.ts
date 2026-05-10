@@ -334,6 +334,7 @@ export function createExtensions(options: CreateExtensionsOptions) {
       heading: {
         levels: [1, 2, 3],
       },
+      link: false,
     }),
     Placeholder.configure({
       placeholder,

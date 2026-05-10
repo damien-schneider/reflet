@@ -396,6 +396,17 @@ describe("TiptapMarkdownEditor", () => {
       );
       expect(screen.getByText("90/100")).toHaveClass("text-amber-500");
     });
+
+    it("does not render a raw zero when maxLength is zero", () => {
+      render(
+        <TiptapMarkdownEditor
+          maxLength={0}
+          onChange={() => {}}
+          value="content"
+        />
+      );
+      expect(screen.queryByText("0")).not.toBeInTheDocument();
+    });
   });
 
   describe("upload progress", () => {
@@ -415,19 +426,21 @@ describe("TiptapMarkdownEditor", () => {
     });
   });
 
-  describe("container click", () => {
-    it("focuses editor on container click when editable", () => {
+  describe("container pointer focus", () => {
+    it("focuses editor on pointer down when editable", () => {
       render(
         <TiptapMarkdownEditor editable onChange={() => {}} value="content" />
       );
       const container = document.querySelector(
         '[data-slot="tiptap-markdown-editor"]'
       );
-      container?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      container?.dispatchEvent(
+        new PointerEvent("pointerdown", { bubbles: true })
+      );
       expect(mockFocus).toHaveBeenCalled();
     });
 
-    it("does not focus editor on container click when disabled", () => {
+    it("does not focus editor on pointer down when disabled", () => {
       mockFocus.mockClear();
       render(
         <TiptapMarkdownEditor disabled onChange={() => {}} value="content" />
@@ -435,7 +448,27 @@ describe("TiptapMarkdownEditor", () => {
       const container = document.querySelector(
         '[data-slot="tiptap-markdown-editor"]'
       );
-      container?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      container?.dispatchEvent(
+        new PointerEvent("pointerdown", { bubbles: true })
+      );
+      expect(mockFocus).not.toHaveBeenCalled();
+    });
+
+    it("does not focus editor on pointer down when read only", () => {
+      mockFocus.mockClear();
+      render(
+        <TiptapMarkdownEditor
+          editable={false}
+          onChange={() => {}}
+          value="content"
+        />
+      );
+      const container = document.querySelector(
+        '[data-slot="tiptap-markdown-editor"]'
+      );
+      container?.dispatchEvent(
+        new PointerEvent("pointerdown", { bubbles: true })
+      );
       expect(mockFocus).not.toHaveBeenCalled();
     });
   });

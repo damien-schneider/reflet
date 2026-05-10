@@ -282,7 +282,7 @@ export function GenerateFromCommits({
         className="flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground"
         href={`/dashboard/${orgSlug}/settings/github`}
       >
-        <Info className="h-3 w-3" />
+        <Info className="size-3" />
         Connect a repository to generate
       </Link>
     );
@@ -302,12 +302,12 @@ export function GenerateFromCommits({
     >
       {isFetchingCommits || isStreaming ? (
         <>
-          <Spinner className="h-3 w-3 animate-spin" />
+          <Spinner className="size-3 animate-spin" />
           {isFetchingCommits ? "Fetching..." : "Generating..."}
         </>
       ) : (
         <>
-          <Lightning className="h-3 w-3" />
+          <Lightning className="size-3" />
           AI Generate
         </>
       )}

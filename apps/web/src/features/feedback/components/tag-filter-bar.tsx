@@ -83,12 +83,12 @@ function TagButton({
       </ContextListTrigger>
       <ContextListContent>
         <ContextListItem onClick={() => setIsEditOpen(true)}>
-          <Pencil className="mr-2 h-4 w-4" />
+          <Pencil className="mr-2 size-4" />
           Edit tag
         </ContextListItem>
         <ContextListSeparator />
         <ContextListItem onClick={onDelete} variant="destructive">
-          <Trash className="mr-2 h-4 w-4" />
+          <Trash className="mr-2 size-4" />
           Delete tag
         </ContextListItem>
       </ContextListContent>

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockUpdateMilestone = vi.fn().mockResolvedValue(undefined);
 const mockRemoveMilestone = vi.fn().mockResolvedValue(undefined);
+const OVERDUE_TARGET_DATE = 1_805_500_800_000;
 
 vi.mock("convex/react", () => ({
   useMutation: (ref: string) => {
@@ -39,7 +40,9 @@ vi.mock("@phosphor-icons/react", () => ({
 }));
 
 vi.mock("motion/react", () => ({
-  motion: {
+  domAnimation: {},
+  LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  m: {
     button: ({
       children,
       onClick,
@@ -654,7 +657,7 @@ describe("MilestoneSegment", () => {
     const { container } = render(
       <MilestoneSegment
         isActive={false}
-        milestone={makeMilestone({ targetDate: Date.now() - 86_400_000 })}
+        milestone={makeMilestone({ targetDate: OVERDUE_TARGET_DATE })}
         onClick={vi.fn()}
       />
     );

@@ -87,7 +87,7 @@ export function CompactFeedbackPreview() {
               type="button"
             >
               <ArrowUp size={10} weight="bold" />
-              <span className="font-bold text-[10px] leading-none">
+              <span className="font-semibold text-[10px] leading-none">
                 {isVoted ? item.votes + 1 : item.votes}
               </span>
             </button>
@@ -100,7 +100,7 @@ export function CompactFeedbackPreview() {
               <div className="mb-1.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
                 <div
                   className={cn(
-                    "flex size-3.5 items-center justify-center rounded-full font-bold text-[6px] text-white",
+                    "flex size-3.5 items-center justify-center rounded-full font-semibold text-[6px] text-white",
                     item.authorColor
                   )}
                 >
@@ -141,7 +141,7 @@ export function CompactRoadmapPreview() {
         <div className="flex flex-1 items-center justify-center gap-1.5">
           <Kanban className="text-[#999] dark:text-[#666]" size={10} />
           <span className="font-medium text-[#999] text-[10px] dark:text-[#666]">
-            Roadmap — Reflet
+            Roadmap: Reflet
           </span>
         </div>
         <div className="w-10" />
@@ -185,11 +185,11 @@ export function CompactRoadmapPreview() {
                         {item.votes}
                       </span>
                     </div>
-                    <div className="flex -space-x-1">
+                    <div className="flex -gap-x-1">
                       {item.assignees.map((initial, i) => (
                         <div
                           className={cn(
-                            "flex size-4 items-center justify-center rounded-full border-2 border-card font-bold text-[6px] text-white",
+                            "flex size-4 items-center justify-center rounded-full border-2 border-card font-semibold text-[6px] text-white",
                             item.colors[i]
                           )}
                           key={initial}

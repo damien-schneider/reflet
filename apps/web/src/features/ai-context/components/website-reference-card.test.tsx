@@ -162,7 +162,7 @@ describe("WebsiteReferenceCard", () => {
         reference={{ ...baseReference, status: "pending" }}
       />
     );
-    expect(screen.getByText("Fetching...")).toBeInTheDocument();
+    expect(screen.getByText("Fetching…")).toBeInTheDocument();
   });
 
   it("renders Fetching badge for fetching status", () => {
@@ -172,7 +172,7 @@ describe("WebsiteReferenceCard", () => {
         reference={{ ...baseReference, status: "fetching" }}
       />
     );
-    expect(screen.getByText("Fetching...")).toBeInTheDocument();
+    expect(screen.getByText("Fetching…")).toBeInTheDocument();
   });
 
   it("renders Error badge for error status", () => {

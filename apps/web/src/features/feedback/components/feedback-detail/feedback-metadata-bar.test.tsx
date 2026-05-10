@@ -7,6 +7,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockUseQuery = vi.fn();
 const mockUseMutation = vi.fn(() => vi.fn());
+const MOCK_DEADLINE_DATE = new Date("2027-01-01T00:00:00.000Z");
+const FUTURE_DEADLINE_MS = 1_800_000_000_000;
 
 vi.mock("convex/react", () => ({
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
@@ -102,7 +104,7 @@ vi.mock("./deadline-display", () => ({
   }) => {
     return (
       <div data-testid="deadline-display">
-        <button onClick={() => onChange(new Date(2027, 0, 1))} type="button">
+        <button onClick={() => onChange(MOCK_DEADLINE_DATE)} type="button">
           set-deadline
         </button>
         <button onClick={onClear} type="button">
@@ -323,7 +325,7 @@ describe("FeedbackMetadataBar", () => {
 
   it("renders with deadline", () => {
     render(
-      <FeedbackMetadataBar {...baseProps} deadline={Date.now() + 86_400_000} />
+      <FeedbackMetadataBar {...baseProps} deadline={FUTURE_DEADLINE_MS} />
     );
     expect(screen.getByTestId("ai-analysis")).toBeInTheDocument();
   });

@@ -2,14 +2,17 @@ import type { z } from "zod";
 import {
   createProviderParseFailure,
   createProviderStatusFailure,
-  githubCheckRunsResponseSchema,
+  formatProviderHttpError,
+  getClosedPullRequestStatus,
+  getPullRequestCiStatus,
   githubIssueResponseSchema,
   githubPullsResponseSchema,
   githubWorkflowRunsResponseSchema,
   isPullRequestLinkedToIssue,
-  parseGitHubCheckRuns,
+  log,
   parseResponseJson,
 } from "./adapter_helpers";
+import { buildHeaders, parseRepoUrl } from "./builtin_github";
 import type {
   ActivityLogEntry,
   CodingAdapter,
@@ -20,36 +23,7 @@ import type {
 
 const GITHUB_API = "https://api.github.com";
 
-const GITHUB_REPO_URL_REGEX = /github\.com[/:](?<owner>[^/]+)\/(?<repo>[^/.]+)/;
 const CODEX_REF_REGEX = /^codex:(?<owner>[^/]+)\/(?<repo>[^#]+)#(?<issue>\d+)$/;
-
-const buildHeaders = (token: string): Record<string, string> => ({
-  Authorization: `Bearer ${token}`,
-  Accept: "application/vnd.github+json",
-  "X-GitHub-Api-Version": "2022-11-28",
-  "Content-Type": "application/json",
-});
-
-const parseRepoUrl = (repoUrl: string): { owner: string; repo: string } => {
-  const match = repoUrl.match(GITHUB_REPO_URL_REGEX);
-  if (!match?.groups) {
-    throw new Error(`Invalid GitHub repo URL: ${repoUrl}`);
-  }
-  return { owner: match.groups.owner, repo: match.groups.repo };
-};
-
-const log = (
-  agent: ActivityLogEntry["agent"],
-  level: ActivityLogEntry["level"],
-  message: string,
-  details?: string
-): ActivityLogEntry => ({
-  agent,
-  level,
-  message,
-  details,
-  timestamp: Date.now(),
-});
 
 const getNoPrStatus = async ({
   githubToken,
@@ -159,7 +133,7 @@ export const codexAdapter: CodingAdapter = {
 
       if (!issueResponse.ok) {
         throw new Error(
-          `Failed to create issue: ${issueResponse.status} ${await issueResponse.text()}`
+          formatProviderHttpError("Create GitHub issue", issueResponse)
         );
       }
 
@@ -290,45 +264,25 @@ export const codexAdapter: CodingAdapter = {
       )
     );
 
-    // Check CI status
-    const ciResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/commits/${linkedPR.head.ref}/check-runs`,
-      { headers: buildHeaders(githubToken) }
-    );
-
-    if (!ciResponse.ok) {
-      return createProviderStatusFailure("Codex CI", ciResponse, logs);
-    }
-
-    let ciData: z.infer<typeof githubCheckRunsResponseSchema>;
-    try {
-      ciData = await parseResponseJson(
-        ciResponse,
-        githubCheckRunsResponseSchema,
-        "GitHub check runs"
-      );
-    } catch (error) {
-      return createProviderParseFailure("Codex CI", "check runs", error, logs);
-    }
-
-    const { ciStatus, ciFailureLog } = parseGitHubCheckRuns(ciData.check_runs);
-
-    let status: TaskStatusResponse["status"] =
-      ciStatus === "passed" ? "completed" : "running";
-    if (ciStatus === "failed") {
-      status = "failed";
-    }
-
-    return {
-      status,
-      prUrl: linkedPR.html_url,
-      prNumber: linkedPR.number,
-      ciStatus,
-      ciFailureLog,
+    const closedStatus = await getClosedPullRequestStatus({
       activityLogs: logs,
-      tokensUsed: 0,
-      estimatedCostUsd: 0,
-    };
+      headers: buildHeaders(githubToken),
+      owner,
+      pull: linkedPR,
+      repo,
+    });
+    if (closedStatus) {
+      return closedStatus;
+    }
+
+    return getPullRequestCiStatus({
+      activityLogs: logs,
+      adapterName: "Codex",
+      headers: buildHeaders(githubToken),
+      owner,
+      pull: linkedPR,
+      repo,
+    });
   },
 
   cancelTask: async (

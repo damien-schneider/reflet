@@ -34,7 +34,7 @@ export function PublicFeedbackVoting({
       }
       type="button"
     >
-      <CaretUp className="h-5 w-5" />
+      <CaretUp className="size-5" />
       <span className="font-bold text-lg">{voteCount}</span>
     </button>
   );

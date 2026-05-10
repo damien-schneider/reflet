@@ -111,7 +111,7 @@ function ConversationItem({
       onClick={onSelect}
       type="button"
     >
-      <Avatar className="h-10 w-10 shrink-0">
+      <Avatar className="size-10 shrink-0">
         <AvatarImage alt={displayName} src={user?.image} />
         <AvatarFallback>{initials}</AvatarFallback>
       </Avatar>
@@ -219,7 +219,7 @@ export function ConversationList({
                 className="flex animate-pulse items-start gap-3 rounded-lg p-3"
                 key={skeletonId}
               >
-                <div className="h-10 w-10 shrink-0 rounded-full bg-muted" />
+                <div className="size-10 shrink-0 rounded-full bg-muted" />
                 <div className="flex-1 space-y-2">
                   <div className="h-4 w-3/4 rounded bg-muted" />
                   <div className="h-3 w-1/2 rounded bg-muted" />
@@ -236,8 +236,8 @@ export function ConversationList({
     return (
       <div className={cn("flex flex-1 items-center justify-center", className)}>
         <div className="flex flex-col items-center gap-3 p-4 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <ChatCircle className="h-6 w-6 text-muted-foreground" />
+          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+            <ChatCircle className="size-6 text-muted-foreground" />
           </div>
           <div>
             <Text variant="label">No conversations</Text>

@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -164,211 +164,215 @@ export function TrackView({
   if (milestones === undefined) {
     return (
       <div className="flex min-h-[200px] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <div className="size-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 px-4">
-      {/* Desktop: horizontal track with pinch-to-zoom */}
-      <div className="hidden md:block">
-        <ScrollArea
-          className="rounded-xl bg-secondary"
-          classNameViewport="px-4"
-          direction="horizontal"
-          ref={trackRef}
-        >
-          <div className="py-2">
-            <div className="flex w-full items-stretch gap-0.5 p-0.5">
-              {activeHorizons.map((horizon, zoneIndex) => {
-                const zoneMilestones = groupedMilestones.get(horizon) ?? [];
-                const isEmpty = zoneMilestones.length === 0;
+    <LazyMotion features={domAnimation}>
+      <div className="space-y-3 px-4">
+        {/* Desktop: horizontal track with pinch-to-zoom */}
+        <div className="hidden md:block">
+          <ScrollArea
+            className="rounded-xl bg-secondary"
+            classNameViewport="px-4"
+            direction="horizontal"
+            ref={trackRef}
+          >
+            <div className="py-2">
+              <div className="flex w-full items-stretch gap-0.5 p-0.5">
+                {activeHorizons.map((horizon, zoneIndex) => {
+                  const zoneMilestones = groupedMilestones.get(horizon) ?? [];
+                  const isEmpty = zoneMilestones.length === 0;
 
-                return (
+                  return (
+                    <div
+                      className="relative flex items-stretch gap-0.5"
+                      key={horizon}
+                      style={{
+                        flexGrow: getZoneFlexGrow(zoneIndex),
+                        minWidth: zoneMinWidth,
+                      }}
+                    >
+                      {zoneMilestones.length > 0 && (
+                        <div className="flex flex-1 flex-col gap-0.5">
+                          {zoneMilestones.map((milestone) => (
+                            <MilestoneSegment
+                              isActive={activeMilestoneId === milestone._id}
+                              isAdmin={isAdmin}
+                              key={milestone._id}
+                              milestone={milestone}
+                              onClick={() =>
+                                handleMilestoneClick(milestone._id)
+                              }
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {isAdmin && !isEmpty && !isMobile && (
+                        <MilestoneFormPopover
+                          defaultTimeHorizon={horizon}
+                          onCreated={() => setPopoverOpenHorizon(null)}
+                          onOpenChange={(open) =>
+                            handlePopoverOpenChange(horizon, open)
+                          }
+                          open={popoverOpenHorizon === horizon}
+                          organizationId={organizationId}
+                          triggerClassName="flex w-8 shrink-0 items-center justify-center self-stretch rounded-sm text-sm text-muted-foreground/30 transition-colors hover:bg-muted-foreground/10 hover:text-muted-foreground/60"
+                        />
+                      )}
+
+                      {isEmpty && (
+                        <div className="flex flex-1">
+                          {isAdmin && !isMobile ? (
+                            <MilestoneFormPopover
+                              defaultTimeHorizon={horizon}
+                              onCreated={() => setPopoverOpenHorizon(null)}
+                              onOpenChange={(open) =>
+                                handlePopoverOpenChange(horizon, open)
+                              }
+                              open={popoverOpenHorizon === horizon}
+                              organizationId={organizationId}
+                              triggerClassName="flex h-10 w-full items-center justify-center rounded-sm border border-muted-foreground/20 border-dashed text-lg text-muted-foreground/40 transition-colors hover:border-muted-foreground/40 hover:text-muted-foreground/60"
+                            />
+                          ) : (
+                            <div className="h-10 w-full rounded-sm bg-muted/20" />
+                          )}
+                        </div>
+                      )}
+
+                      {zoneIndex < activeHorizons.length - 1 && (
+                        <div className="w-[1px] shrink-0 self-stretch bg-border/30" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-2 flex w-full">
+                {activeHorizons.map((horizon, zoneIndex) => (
                   <div
-                    className="relative flex items-stretch gap-0.5"
+                    className="text-center"
                     key={horizon}
                     style={{
                       flexGrow: getZoneFlexGrow(zoneIndex),
                       minWidth: zoneMinWidth,
                     }}
                   >
-                    {zoneMilestones.length > 0 && (
-                      <div className="flex flex-1 flex-col gap-0.5">
-                        {zoneMilestones.map((milestone) => (
-                          <MilestoneSegment
-                            isActive={activeMilestoneId === milestone._id}
-                            isAdmin={isAdmin}
-                            key={milestone._id}
-                            milestone={milestone}
-                            onClick={() => handleMilestoneClick(milestone._id)}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {isAdmin && !isEmpty && !isMobile && (
-                      <MilestoneFormPopover
-                        defaultTimeHorizon={horizon}
-                        onCreated={() => setPopoverOpenHorizon(null)}
-                        onOpenChange={(open) =>
-                          handlePopoverOpenChange(horizon, open)
-                        }
-                        open={popoverOpenHorizon === horizon}
-                        organizationId={organizationId}
-                        triggerClassName="flex w-8 shrink-0 items-center justify-center self-stretch rounded-sm text-sm text-muted-foreground/30 transition-colors hover:bg-muted-foreground/10 hover:text-muted-foreground/60"
-                      />
-                    )}
-
-                    {isEmpty && (
-                      <div className="flex flex-1">
-                        {isAdmin && !isMobile ? (
-                          <MilestoneFormPopover
-                            defaultTimeHorizon={horizon}
-                            onCreated={() => setPopoverOpenHorizon(null)}
-                            onOpenChange={(open) =>
-                              handlePopoverOpenChange(horizon, open)
-                            }
-                            open={popoverOpenHorizon === horizon}
-                            organizationId={organizationId}
-                            triggerClassName="flex h-10 w-full items-center justify-center rounded-sm border border-muted-foreground/20 border-dashed text-lg text-muted-foreground/40 transition-colors hover:border-muted-foreground/40 hover:text-muted-foreground/60"
-                          />
-                        ) : (
-                          <div className="h-10 w-full rounded-sm bg-muted/20" />
-                        )}
-                      </div>
-                    )}
-
-                    {zoneIndex < activeHorizons.length - 1 && (
-                      <div className="w-[1px] shrink-0 self-stretch bg-border/30" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-2 flex w-full">
-              {activeHorizons.map((horizon, zoneIndex) => (
-                <div
-                  className="text-center"
-                  key={horizon}
-                  style={{
-                    flexGrow: getZoneFlexGrow(zoneIndex),
-                    minWidth: zoneMinWidth,
-                  }}
-                >
-                  <span className="text-[11px] text-muted-foreground">
-                    {TIME_HORIZON_CONFIG[horizon].label}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <div className="relative mt-1">
-              <div className="flex items-center gap-1">
-                <div className="h-2 w-[2px] rounded-full bg-primary" />
-                <span className="text-[10px] text-primary">Today</span>
-              </div>
-            </div>
-          </div>
-        </ScrollArea>
-      </div>
-
-      {/* Mobile: vertical stacked layout */}
-      <div className="block px-4 md:hidden">
-        {activeHorizons.map((horizon) => {
-          const zoneMilestones = groupedMilestones.get(horizon) ?? [];
-
-          return (
-            <div className="mb-6" key={horizon}>
-              <div className="mb-2 flex items-center gap-2">
-                <div className="h-px flex-1 bg-border" />
-                <span className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  {TIME_HORIZON_CONFIG[horizon].label}
-                </span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-
-              <div className="space-y-1">
-                {zoneMilestones.map((milestone) => (
-                  <div key={milestone._id}>
-                    <MilestoneSegment
-                      isActive={activeMilestoneId === milestone._id}
-                      isAdmin={isAdmin}
-                      milestone={milestone}
-                      onClick={() => handleMilestoneClick(milestone._id)}
-                    />
-                    <AnimatePresence>
-                      {activeMilestoneId === milestone._id && (
-                        <motion.div
-                          animate={{ height: "auto", opacity: 1 }}
-                          className="overflow-hidden"
-                          exit={{ height: 0, opacity: 0 }}
-                          initial={{ height: 0, opacity: 0 }}
-                          key={`panel-${milestone._id}`}
-                          transition={{
-                            type: "spring",
-                            damping: 25,
-                            stiffness: 300,
-                          }}
-                        >
-                          <div className="pt-2">
-                            <MilestoneExpandedPanel
-                              isAdmin={isAdmin}
-                              milestoneId={milestone._id}
-                              onFeedbackClick={onFeedbackClick}
-                              organizationId={organizationId}
-                            />
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    <span className="text-[11px] text-muted-foreground">
+                      {TIME_HORIZON_CONFIG[horizon].label}
+                    </span>
                   </div>
                 ))}
+              </div>
 
-                {zoneMilestones.length === 0 && isAdmin && isMobile && (
-                  <MilestoneFormPopover
-                    defaultTimeHorizon={horizon}
-                    onCreated={() => setPopoverOpenHorizon(null)}
-                    onOpenChange={(open) =>
-                      handlePopoverOpenChange(horizon, open)
-                    }
-                    open={popoverOpenHorizon === horizon}
-                    organizationId={organizationId}
-                    triggerClassName="flex h-10 w-full items-center justify-center rounded-sm border border-muted-foreground/20 border-dashed text-lg text-muted-foreground/40 transition-colors hover:border-muted-foreground/40 hover:text-muted-foreground/60"
-                  />
-                )}
+              <div className="relative mt-1">
+                <div className="flex items-center gap-1">
+                  <div className="h-2 w-[2px] rounded-full bg-primary" />
+                  <span className="text-[10px] text-primary">Today</span>
+                </div>
               </div>
             </div>
-          );
-        })}
-      </div>
+          </ScrollArea>
+        </div>
 
-      {/* Desktop: expanded panel below track */}
-      <div className="mx-auto max-w-3xl">
-        <AnimatePresence>
-          {activeMilestoneId && (
-            <motion.div
-              animate={{ height: "auto", opacity: 1 }}
-              className="overflow-hidden"
-              exit={{ height: 0, opacity: 0 }}
-              initial={{ height: 0, opacity: 0 }}
-              key={activeMilestoneId}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            >
-              <div className="pt-2">
-                <MilestoneExpandedPanel
-                  isAdmin={isAdmin}
-                  milestoneId={activeMilestoneId}
-                  onFeedbackClick={onFeedbackClick}
-                  organizationId={organizationId}
-                />
+        {/* Mobile: vertical stacked layout */}
+        <div className="block px-4 md:hidden">
+          {activeHorizons.map((horizon) => {
+            const zoneMilestones = groupedMilestones.get(horizon) ?? [];
+
+            return (
+              <div className="mb-6" key={horizon}>
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    {TIME_HORIZON_CONFIG[horizon].label}
+                  </span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+
+                <div className="space-y-1">
+                  {zoneMilestones.map((milestone) => (
+                    <div key={milestone._id}>
+                      <MilestoneSegment
+                        isActive={activeMilestoneId === milestone._id}
+                        isAdmin={isAdmin}
+                        milestone={milestone}
+                        onClick={() => handleMilestoneClick(milestone._id)}
+                      />
+                      <AnimatePresence>
+                        {activeMilestoneId === milestone._id && (
+                          <m.div
+                            animate={{ height: "auto", opacity: 1 }}
+                            className="overflow-hidden"
+                            exit={{ height: 0, opacity: 0 }}
+                            initial={{ height: 0, opacity: 0 }}
+                            key={`panel-${milestone._id}`}
+                            transition={{
+                              type: "spring",
+                              damping: 25,
+                              stiffness: 300,
+                            }}
+                          >
+                            <div className="pt-2">
+                              <MilestoneExpandedPanel
+                                isAdmin={isAdmin}
+                                milestoneId={milestone._id}
+                                onFeedbackClick={onFeedbackClick}
+                                organizationId={organizationId}
+                              />
+                            </div>
+                          </m.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+
+                  {zoneMilestones.length === 0 && isAdmin && isMobile && (
+                    <MilestoneFormPopover
+                      defaultTimeHorizon={horizon}
+                      onCreated={() => setPopoverOpenHorizon(null)}
+                      onOpenChange={(open) =>
+                        handlePopoverOpenChange(horizon, open)
+                      }
+                      open={popoverOpenHorizon === horizon}
+                      organizationId={organizationId}
+                      triggerClassName="flex h-10 w-full items-center justify-center rounded-sm border border-muted-foreground/20 border-dashed text-lg text-muted-foreground/40 transition-colors hover:border-muted-foreground/40 hover:text-muted-foreground/60"
+                    />
+                  )}
+                </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            );
+          })}
+        </div>
+
+        {/* Desktop: expanded panel below track */}
+        <div className="mx-auto max-w-3xl">
+          <AnimatePresence>
+            {activeMilestoneId && (
+              <m.div
+                animate={{ height: "auto", opacity: 1 }}
+                className="overflow-hidden"
+                exit={{ height: 0, opacity: 0 }}
+                initial={{ height: 0, opacity: 0 }}
+                key={activeMilestoneId}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              >
+                <div className="pt-2">
+                  <MilestoneExpandedPanel
+                    isAdmin={isAdmin}
+                    milestoneId={activeMilestoneId}
+                    onFeedbackClick={onFeedbackClick}
+                    organizationId={organizationId}
+                  />
+                </div>
+              </m.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
+    </LazyMotion>
   );
 }

@@ -145,7 +145,7 @@ function CommentInput({
             variant="ghost"
           >
             <Sparkle
-              className={cn("h-3.5 w-3.5", isGeneratingDraft && "animate-spin")}
+              className={cn("size-3.5", isGeneratingDraft && "animate-spin")}
             />
             {isGeneratingDraft ? "Drafting..." : "AI Draft"}
           </Button>
@@ -156,7 +156,7 @@ function CommentInput({
           onClick={onSubmit}
           size="sm"
         >
-          <PaperPlaneTilt className="h-3.5 w-3.5" />
+          <PaperPlaneTilt className="size-3.5" />
           {isSubmitting ? "Posting..." : "Post"}
         </Button>
       </div>

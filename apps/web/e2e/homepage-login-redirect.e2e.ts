@@ -1,7 +1,5 @@
 import { expect, test } from "@playwright/test";
-
-// Auth form heading (French UI)
-const AUTH_INITIAL_HEADING = "Authentification";
+import { expectAuthForm } from "./helpers/auth";
 
 // URL pattern for dashboard
 const DASHBOARD_URL_PATTERN = /\/dashboard/;
@@ -34,9 +32,6 @@ test.describe("Homepage Login Redirect", () => {
     await expect(page).toHaveURL(DASHBOARD_URL_PATTERN, { timeout: 5000 });
 
     // Verify the auth form is displayed (user is not logged in)
-    await page.waitForSelector("h1", { state: "visible", timeout: 15_000 });
-    await expect(page.locator("h1")).toContainText(AUTH_INITIAL_HEADING, {
-      timeout: 10_000,
-    });
+    await expectAuthForm(page);
   });
 });

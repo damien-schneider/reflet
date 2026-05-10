@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/typography";
+import { ClientDate } from "@/shared/components/client-date";
 
 interface IssuesSyncCardProps {
   autoSync: boolean;
@@ -100,9 +101,9 @@ export function IssuesSyncSection({
                 variant="outline"
               >
                 {isSyncing ? (
-                  <Spinner className="mr-2 h-4 w-4 animate-spin" />
+                  <Spinner className="mr-2 size-4 animate-spin" />
                 ) : (
-                  <ArrowsClockwise className="mr-2 h-4 w-4" />
+                  <ArrowsClockwise className="mr-2 size-4" />
                 )}
                 Sync Issues Now
               </Button>
@@ -110,7 +111,8 @@ export function IssuesSyncSection({
             <div className="flex items-center gap-2">
               {lastSyncAt ? (
                 <Text className="text-muted-foreground text-sm">
-                  Last synced: {new Date(lastSyncAt).toLocaleString()}
+                  Last synced:{" "}
+                  <ClientDate value={lastSyncAt} variant="dateTime" />
                 </Text>
               ) : null}
               {lastSyncStatus === "error" ? (

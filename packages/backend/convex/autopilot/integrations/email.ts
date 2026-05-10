@@ -17,6 +17,7 @@ import {
   internalMutation,
   internalQuery,
 } from "../../_generated/server";
+import { formatProviderHttpError } from "../adapters/adapter_helpers";
 
 // ============================================
 // EMAIL CONFIG
@@ -50,8 +51,7 @@ async function sendOutreachEmail(
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Resend API error: ${response.status} ${error}`);
+      throw new Error(formatProviderHttpError("Resend API request", response));
     }
 
     await ctx.runMutation(
@@ -101,6 +101,15 @@ async function sendOutreachBatch(
     if (!lead?.email) {
       continue;
     }
+    if (lead.organizationId !== params.organizationId) {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+        organizationId: params.organizationId,
+        agent: "sales",
+        level: "warning",
+        message: "Email skipped — linked lead belongs to another organization",
+      });
+      continue;
+    }
     if (params.blocklist.has(lead.email.toLowerCase())) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: params.organizationId,
@@ -141,13 +150,25 @@ export const getApprovedOutreach = internalQuery({
       )
       .take(50);
 
-    // Approved = published status + linked to a lead + not yet sent (no publishedAt)
-    return docs.filter(
+    const approvedDocs = docs.filter(
       (d) =>
         d.status === "published" &&
         d.linkedLeadId !== undefined &&
         d.publishedAt === undefined
     );
+    const docsWithLeads = await Promise.all(
+      approvedDocs.map(async (doc) => ({
+        doc,
+        lead:
+          doc.linkedLeadId === undefined
+            ? null
+            : await ctx.db.get(doc.linkedLeadId),
+      }))
+    );
+
+    return docsWithLeads
+      .filter(({ lead }) => lead?.organizationId === args.organizationId)
+      .map(({ doc }) => doc);
   },
 });
 
@@ -207,7 +228,12 @@ export const markLeadContacted = internalMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const lead = await ctx.db.get(args.leadId);
-    if (!lead) {
+    const document = await ctx.db.get(args.documentId);
+    if (
+      !(lead && document) ||
+      document.organizationId !== lead.organizationId ||
+      document.linkedLeadId !== args.leadId
+    ) {
       return null;
     }
 

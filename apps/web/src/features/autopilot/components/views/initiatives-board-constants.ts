@@ -82,10 +82,18 @@ export function getStoredView(): ViewMode {
   if (typeof window === "undefined") {
     return "list";
   }
-  const stored = localStorage.getItem(STORAGE_KEY_VIEW);
-  return isViewMode(stored) ? stored : "list";
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_VIEW);
+    return isViewMode(stored) ? stored : "list";
+  } catch {
+    return "list";
+  }
 }
 
 export function persistView(mode: ViewMode): void {
-  localStorage.setItem(STORAGE_KEY_VIEW, mode);
+  try {
+    localStorage.setItem(STORAGE_KEY_VIEW, mode);
+  } catch {
+    return;
+  }
 }

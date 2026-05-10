@@ -25,7 +25,7 @@ export function useWebsiteReferenceDialog() {
 export function WebsiteReferenceAddButton({ onOpen }: { onOpen: () => void }) {
   return (
     <Button onClick={onOpen} size="sm" variant="outline">
-      <Plus className="mr-1.5 h-4 w-4" />
+      <Plus className="mr-1.5 size-4" />
       Add Website
     </Button>
   );
@@ -45,7 +45,7 @@ export function WebsiteReferenceList({
   if (references === undefined) {
     return (
       <div className="flex justify-center py-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-olive-600 border-t-transparent" />
+        <div className="size-8 animate-spin rounded-full border-2 border-olive-600 border-t-transparent" />
       </div>
     );
   }

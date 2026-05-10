@@ -34,6 +34,7 @@ import {
   DomainStatusBadge,
 } from "@/features/project/components/domains-helpers";
 import { cn } from "@/lib/utils";
+import { ClientDate } from "@/shared/components/client-date";
 
 interface DomainsSectionProps {
   isAdmin: boolean;
@@ -126,7 +127,7 @@ export function DomainsSection({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-muted-foreground" />
+            <Globe className="size-5 text-muted-foreground" />
             <CardTitle>Automatic Subdomain</CardTitle>
           </div>
           <CardDescription>
@@ -147,7 +148,7 @@ export function DomainsSection({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-muted-foreground" />
+            <Globe className="size-5 text-muted-foreground" />
             <CardTitle>Custom Domain</CardTitle>
           </div>
           <CardDescription>
@@ -189,10 +190,7 @@ export function DomainsSection({
                         variant="outline"
                       >
                         <ArrowsClockwise
-                          className={cn(
-                            "h-4 w-4",
-                            isChecking && "animate-spin"
-                          )}
+                          className={cn("size-4", isChecking && "animate-spin")}
                         />
                         Check Verification
                       </Button>
@@ -205,7 +203,7 @@ export function DomainsSection({
                         domainStatus.customDomainStatus === "removing"
                       }
                     >
-                      <Trash className="h-4 w-4" />
+                      <Trash className="size-4" />
                       Remove
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -255,9 +253,10 @@ export function DomainsSection({
               {domainStatus.customDomainLastCheckedAt && (
                 <Muted className="text-xs">
                   Last checked:{" "}
-                  {new Date(
-                    domainStatus.customDomainLastCheckedAt
-                  ).toLocaleString()}
+                  <ClientDate
+                    value={domainStatus.customDomainLastCheckedAt}
+                    variant="dateTime"
+                  />
                 </Muted>
               )}
             </div>

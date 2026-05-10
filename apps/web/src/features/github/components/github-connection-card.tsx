@@ -35,7 +35,7 @@ export function GitHubConnectionSection({
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-3">
-          <Warning className="h-5 w-5 text-amber-500" />
+          <Warning className="size-5 text-amber-500" />
           <Text className="font-medium">GitHub connection lost</Text>
           <Badge variant="outline">Disconnected</Badge>
         </div>
@@ -44,8 +44,12 @@ export function GitHubConnectionSection({
           organization. An admin with GitHub connected can re-link it.
         </Muted>
         {isAdmin && connectHref ? (
-          <Button onClick={onConnectClick} render={<Link href={connectHref} />}>
-            <GithubLogo className="mr-2 h-4 w-4" />
+          <Button
+            nativeButton={false}
+            onClick={onConnectClick}
+            render={<Link href={connectHref} />}
+          >
+            <GithubLogo className="mr-2 size-4" />
             Re-link GitHub
           </Button>
         ) : null}
@@ -68,7 +72,7 @@ export function GitHubConnectionSection({
           ) : null}
           <Text className="font-medium">{accountLogin}</Text>
           <Badge variant="secondary">
-            <Check className="mr-1 h-3 w-3" />
+            <Check className="mr-1 size-3" />
             Connected
           </Badge>
         </div>
@@ -80,9 +84,9 @@ export function GitHubConnectionSection({
             variant="ghost"
           >
             {isDisconnecting ? (
-              <Spinner className="mr-2 h-4 w-4 animate-spin" />
+              <Spinner className="mr-2 size-4 animate-spin" />
             ) : (
-              <X className="mr-2 h-4 w-4" />
+              <X className="mr-2 size-4" />
             )}
             Disconnect
           </Button>
@@ -94,8 +98,12 @@ export function GitHubConnectionSection({
   return (
     <div>
       {isAdmin && connectHref ? (
-        <Button onClick={onConnectClick} render={<Link href={connectHref} />}>
-          <GithubLogo className="mr-2 h-4 w-4" />
+        <Button
+          nativeButton={false}
+          onClick={onConnectClick}
+          render={<Link href={connectHref} />}
+        >
+          <GithubLogo className="mr-2 size-4" />
           Connect GitHub
         </Button>
       ) : null}

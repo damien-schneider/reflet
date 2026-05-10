@@ -10,7 +10,9 @@ vi.mock("@/components/ui/avatar", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <div className={className}>{children}</div>,
-  AvatarImage: ({ src }: { src?: string }) => <img alt="" src={src} />,
+  AvatarImage: ({ src }: { src?: string }) => (
+    <span data-src={src} role="img" />
+  ),
   AvatarFallback: ({
     children,
     className,

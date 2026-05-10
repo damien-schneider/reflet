@@ -31,7 +31,7 @@ export function ReleaseTimeline<T extends ReleaseData>({
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <Megaphone className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <Megaphone className="mx-auto mb-4 size-12 text-muted-foreground" />
           <H3 className="mb-2" variant="card">
             No releases yet
           </H3>

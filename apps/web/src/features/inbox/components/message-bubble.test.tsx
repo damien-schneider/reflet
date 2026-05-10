@@ -10,7 +10,9 @@ vi.mock("@/components/ui/avatar", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <div className={className}>{children}</div>,
-  AvatarImage: ({ alt }: { alt?: string }) => <img alt={alt} />,
+  AvatarImage: ({ alt }: { alt?: string }) => (
+    <span aria-label={alt ?? ""} role="img" />
+  ),
   AvatarFallback: ({
     children,
     className,
@@ -112,7 +114,7 @@ describe("MessageBubble", () => {
         timestamp={timestamp}
       />
     );
-    expect(screen.getByText(/\d{2}:\d{2}/)).toBeInTheDocument();
+    expect(screen.getByText("2:30 PM")).toBeInTheDocument();
   });
 
   it("does not show timestamp when showTimestamp is false", () => {

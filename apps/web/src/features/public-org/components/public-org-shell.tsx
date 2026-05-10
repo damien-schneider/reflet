@@ -50,7 +50,7 @@ export function PublicOrgShell({
   orgSlug,
 }: PublicOrgShellProps) {
   const pathname = usePathname();
-  const router = useRouter();
+  const { prefetch, push } = useRouter();
 
   const supportSettings = useQuery(
     api.support.conversation_queries.getSupportSettings,
@@ -75,16 +75,16 @@ export function PublicOrgShell({
 
   useEffect(
     function prefetchPublicRoutes() {
-      router.prefetch(`${basePath}/`);
-      router.prefetch(`${basePath}/changelog`);
+      prefetch(`${basePath}/`);
+      prefetch(`${basePath}/changelog`);
       if (supportEnabled) {
-        router.prefetch(`${basePath}/support`);
+        prefetch(`${basePath}/support`);
       }
       if (statusEnabled) {
-        router.prefetch(`${basePath}/status`);
+        prefetch(`${basePath}/status`);
       }
     },
-    [router, basePath, supportEnabled, statusEnabled]
+    [prefetch, basePath, supportEnabled, statusEnabled]
   );
 
   const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
@@ -98,15 +98,15 @@ export function PublicOrgShell({
       return;
     }
     if (value === "feedback") {
-      router.push(basePath || "/");
+      push(basePath || "/");
     } else {
-      router.push(`${basePath}/${value}`);
+      push(`${basePath}/${value}`);
     }
   };
 
   return (
     <div className="min-h-screen" style={colorCssVars}>
-      <header className="fixed z-40 mx-auto flex w-full items-center justify-between px-4 py-4">
+      <header className="fixed z-40 mx-auto flex w-full items-center justify-between p-4">
         <div className="flex items-center gap-3">
           {org.logo ? (
             <Image
@@ -128,22 +128,22 @@ export function PublicOrgShell({
         >
           <TabsList>
             <TabsTrigger value="feedback">
-              <MessageSquare className="h-4 w-4" />
+              <MessageSquare className="size-4" />
               Feedback
             </TabsTrigger>
             <TabsTrigger value="changelog">
-              <FileText className="h-4 w-4" />
+              <FileText className="size-4" />
               Changelog
             </TabsTrigger>
             {statusEnabled && (
               <TabsTrigger value="status">
-                <Heartbeat className="h-4 w-4" />
+                <Heartbeat className="size-4" />
                 Status
               </TabsTrigger>
             )}
             {supportEnabled && (
               <TabsTrigger value="support">
-                <ChatCircle className="h-4 w-4" />
+                <ChatCircle className="size-4" />
                 Support
               </TabsTrigger>
             )}
@@ -164,7 +164,7 @@ export function PublicOrgShell({
             )}
             href={basePath || "/"}
           >
-            <MessageSquare className="h-5 w-5" />
+            <MessageSquare className="size-5" />
             Feedback
           </Link>
           <Link
@@ -176,7 +176,7 @@ export function PublicOrgShell({
             )}
             href={`${basePath}/changelog`}
           >
-            <FileText className="h-5 w-5" />
+            <FileText className="size-5" />
             Changelog
           </Link>
           {statusEnabled && (
@@ -189,7 +189,7 @@ export function PublicOrgShell({
               )}
               href={`${basePath}/status`}
             >
-              <Heartbeat className="h-5 w-5" />
+              <Heartbeat className="size-5" />
               Status
             </Link>
           )}
@@ -203,7 +203,7 @@ export function PublicOrgShell({
               )}
               href={`${basePath}/support`}
             >
-              <ChatCircle className="h-5 w-5" />
+              <ChatCircle className="size-5" />
               Support
             </Link>
           )}

@@ -206,7 +206,7 @@ function WorkflowCard({
       >
         <option.icon
           className={cn(
-            "mt-0.5 h-5 w-5 flex-shrink-0",
+            "mt-0.5 size-5 flex-shrink-0",
             selected ? "text-primary" : "text-muted-foreground"
           )}
           weight={selected ? "fill" : "regular"}
@@ -231,7 +231,7 @@ function WorkflowCard({
           <CollapsibleTrigger className="flex w-full items-center gap-1 border-t px-3 py-2 text-muted-foreground text-xs transition-colors hover:text-foreground">
             <CaretDown
               className={cn(
-                "h-3 w-3 transition-transform",
+                "size-3 transition-transform",
                 howItWorksOpen && "rotate-180"
               )}
             />
@@ -244,7 +244,7 @@ function WorkflowCard({
                   className="flex items-start gap-2 text-muted-foreground text-xs"
                   key={step}
                 >
-                  <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-muted font-medium text-[10px]">
+                  <span className="mt-0.5 flex size-4 flex-shrink-0 items-center justify-center rounded-full bg-muted font-medium text-[10px]">
                     {i + 1}
                   </span>
                   {step}
@@ -274,14 +274,14 @@ function ConnectedBranchSelector({
   return (
     <div className="space-y-2 rounded-lg border border-green-200 bg-green-50/50 p-3 dark:border-green-900 dark:bg-green-950/20">
       <div className="flex items-center gap-2">
-        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+        <CheckCircle className="size-4 text-green-600 dark:text-green-400" />
         <p className="font-medium text-green-700 text-xs dark:text-green-300">
           Connected to {repoFullName}
         </p>
       </div>
 
       <div className="flex items-center gap-3">
-        <GitBranch className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+        <GitBranch className="size-4 flex-shrink-0 text-muted-foreground" />
         <div className="flex flex-1 items-center gap-2">
           <Label className="whitespace-nowrap text-xs" htmlFor="target-branch">
             Target branch
@@ -312,7 +312,7 @@ function BranchInput({
   if (isLoading) {
     return (
       <div className="flex h-7 flex-1 items-center gap-1.5 text-muted-foreground text-xs">
-        <Spinner className="h-3 w-3 animate-spin" />
+        <Spinner className="size-3 animate-spin" />
         Loading branches…
       </div>
     );

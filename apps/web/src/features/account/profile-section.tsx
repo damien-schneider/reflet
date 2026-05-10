@@ -142,12 +142,12 @@ export function ProfileSection({
 
         <div className="flex items-center gap-4 rounded-lg bg-muted p-4">
           <div className="flex size-12 items-center justify-center rounded-none bg-background">
-            <User className="h-5 w-5 text-muted-foreground" />
+            <User className="size-5 text-muted-foreground" />
           </div>
           <div className="flex-1">
             <Text variant="label">{user?.name ?? "User"}</Text>
             <div className="flex items-center gap-1 text-muted-foreground text-sm">
-              <Envelope className="h-3 w-3" />
+              <Envelope className="size-3" />
               <Muted as="span">{user?.email ?? ""}</Muted>
             </div>
           </div>

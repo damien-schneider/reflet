@@ -147,7 +147,7 @@ export default function ReleaseSettingsPage({
           <div className="rounded-lg border p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <MagicWand className="h-5 w-5 text-muted-foreground" />
+                <MagicWand className="size-5 text-muted-foreground" />
                 <div>
                   <p className="font-medium text-sm">GitHub Sync Wizard</p>
                   <Muted className="text-xs">
@@ -210,7 +210,7 @@ export default function ReleaseSettingsPage({
         <div className="rounded-lg border border-dashed p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <GithubLogo className="h-5 w-5 text-muted-foreground" />
+              <GithubLogo className="size-5 text-muted-foreground" />
               <div>
                 <p className="font-medium text-sm">GitHub Sync</p>
                 <Muted className="text-xs">
@@ -223,7 +223,7 @@ export default function ReleaseSettingsPage({
               className={buttonVariants({ variant: "outline", size: "sm" })}
               href={`/dashboard/${orgSlug}/settings/github`}
             >
-              <GithubLogo className="mr-1.5 h-4 w-4" />
+              <GithubLogo className="mr-1.5 size-4" />
               Connect GitHub
             </Link>
           </div>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -18,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChartTooltipContent } from "@/components/ui/chart";
+import { useClientHydrated } from "@/shared/components/client-hydration";
 
 const data = [
   { month: "Jan", desktop: 186, mobile: 80 },
@@ -29,11 +29,7 @@ const data = [
 ];
 
 export function ChartAreaInteractive() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(function markChartReady() {
-    setMounted(true);
-  }, []);
+  const mounted = useClientHydrated();
 
   return (
     <Card>

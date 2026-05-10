@@ -60,7 +60,7 @@ export function StatusCard({ aggregateStatus, basePath }: StatusCardProps) {
               </Muted>
             </>
           ) : (
-            <Muted className="text-xs">Loading...</Muted>
+            <Muted className="text-xs">Loading…</Muted>
           )}
         </CardContent>
       </Card>

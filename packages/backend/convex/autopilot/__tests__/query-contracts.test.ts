@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createDevSubtask } from "../agents/cto";
+import { canDispatchTask, getAdapterCredentials } from "../config";
 import {
   markCredentialsValid,
   reserveTaskExecution,
@@ -17,7 +18,13 @@ import {
   listActivityFiltered,
   listTickerActivity,
 } from "../queries/activity";
-import { getDashboardStats } from "../queries/dashboard";
+import {
+  getAgentPerformance,
+  getAgentReadiness,
+  getChartData,
+  getContentQualityOverview,
+  getDashboardStats,
+} from "../queries/dashboard";
 import { getInboxCounts, listInboxItems } from "../queries/inbox";
 import {
   completeAgentTask,
@@ -29,10 +36,25 @@ import {
   updateTaskPriority,
   updateTaskStatus,
 } from "../task_mutations";
+import {
+  getDispatchableTasks,
+  getOrganization,
+  getPendingTasks,
+  getRecentActivity,
+  getRun,
+  getRunsForTask,
+  getSubtasks,
+  getTask,
+  getTasksByOrg,
+} from "../task_queries";
 
 const PUBLIC_QUERY_CONTRACTS = [
   ["getSystemHealth", getSystemHealth, "pendingApprovalCount"],
   ["getDashboardStats", getDashboardStats, "maxPendingTasksTotal"],
+  ["getChartData", getChartData, "activityTimeline"],
+  ["getAgentReadiness", getAgentReadiness, "ready"],
+  ["getAgentPerformance", getAgentPerformance, "successRate"],
+  ["getContentQualityOverview", getContentQualityOverview, "totalPending"],
   ["listActivity", listActivity, "autopilotActivityLog"],
   ["listActivityByType", listActivityByType, "autopilotActivityLog"],
   ["listActivityFiltered", listActivityFiltered, "autopilotActivityLog"],
@@ -68,6 +90,20 @@ const INTERNAL_ACTION_CONTRACTS = [
   ["cancelTask", cancelTask, '"type":"null"'],
 ] as const;
 
+const INTERNAL_QUERY_CONTRACTS = [
+  ["getAdapterCredentials", getAdapterCredentials, "credentials"],
+  ["canDispatchTask", canDispatchTask, "boolean"],
+  ["getDispatchableTasks", getDispatchableTasks, "autopilotWorkItems"],
+  ["getOrganization", getOrganization, "organizations"],
+  ["getPendingTasks", getPendingTasks, "autopilotWorkItems"],
+  ["getTask", getTask, "autopilotWorkItems"],
+  ["getSubtasks", getSubtasks, "autopilotWorkItems"],
+  ["getTasksByOrg", getTasksByOrg, "autopilotWorkItems"],
+  ["getRunsForTask", getRunsForTask, "autopilotRuns"],
+  ["getRun", getRun, "autopilotRuns"],
+  ["getRecentActivity", getRecentActivity, "autopilotActivityLog"],
+] as const;
+
 function getReturnContract(query: object): unknown {
   const exportReturns = Reflect.get(query, "exportReturns");
   if (typeof exportReturns !== "function") {
@@ -99,6 +135,15 @@ describe("autopilot public query contracts", () => {
     const broadContractType = ["a", "n", "y"].join("");
     for (const [name, action, expectedField] of INTERNAL_ACTION_CONTRACTS) {
       const contract = String(getReturnContract(action));
+      expect(contract, name).toContain(expectedField);
+      expect(contract, name).not.toContain(`"type":"${broadContractType}"`);
+    }
+  });
+
+  it("declares precise internal query return validators", () => {
+    const broadContractType = ["a", "n", "y"].join("");
+    for (const [name, query, expectedField] of INTERNAL_QUERY_CONTRACTS) {
+      const contract = String(getReturnContract(query));
       expect(contract, name).toContain(expectedField);
       expect(contract, name).not.toContain(`"type":"${broadContractType}"`);
     }

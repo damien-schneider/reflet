@@ -107,9 +107,9 @@ export function ReleaseEditorFooter({
               variant="outline"
             >
               {release?.githubPushStatus === "pending" ? (
-                <Spinner className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                <Spinner className="mr-1.5 size-3.5 animate-spin" />
               ) : (
-                <CloudArrowUp className="mr-1.5 h-3.5 w-3.5" />
+                <CloudArrowUp className="mr-1.5 size-3.5" />
               )}
               {pushButtonLabel(release?.githubPushStatus)}
             </Button>
@@ -122,7 +122,7 @@ export function ReleaseEditorFooter({
               rel="noopener noreferrer"
               target="_blank"
             >
-              <Check className="h-3.5 w-3.5" />
+              <Check className="size-3.5" />
               Linked to GitHub
             </a>
           )}
@@ -141,7 +141,7 @@ export function ReleaseEditorFooter({
 
       {isPermissionError && (
         <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5">
-          <WarningCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <WarningCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
           <div className="text-sm">
             <p className="font-medium text-destructive">
               GitHub permissions insufficient

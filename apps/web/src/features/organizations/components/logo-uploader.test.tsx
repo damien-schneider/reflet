@@ -7,12 +7,22 @@ vi.mock("next/image", () => ({
     alt,
     src,
     className,
+    sizes,
   }: {
     alt: string;
     src: string;
     className?: string;
     fill?: boolean;
-  }) => <img alt={alt} className={className} src={src} />,
+    sizes?: string;
+  }) => (
+    <span
+      aria-label={alt}
+      className={className}
+      data-sizes={sizes}
+      data-src={src}
+      role="img"
+    />
+  ),
 }));
 
 vi.mock("@/components/ui/button", () => ({
@@ -103,7 +113,9 @@ describe("LogoUploader", () => {
         onLogoChange={vi.fn()}
       />
     );
-    expect(screen.getByAltText("Organization logo")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Organization logo" })
+    ).toBeInTheDocument();
   });
 
   it("shows replace hint when logo exists", () => {
@@ -167,6 +179,34 @@ describe("LogoUploader", () => {
     expect(dropZone).toBeDisabled();
   });
 
+  it("opens file input when drop zone is clicked", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<LogoUploader onLogoChange={vi.fn()} />);
+    const input = container.querySelector('input[type="file"]');
+    const openFilePicker = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(() => {});
+
+    await user.click(screen.getByRole("button"));
+
+    expect(input).toBeInTheDocument();
+    expect(openFilePicker).toHaveBeenCalledOnce();
+    openFilePicker.mockRestore();
+  });
+
+  it("does not open file input when disabled drop zone is clicked", async () => {
+    const user = userEvent.setup();
+    render(<LogoUploader disabled onLogoChange={vi.fn()} />);
+    const openFilePicker = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(() => {});
+
+    await user.click(screen.getByRole("button"));
+
+    expect(openFilePicker).not.toHaveBeenCalled();
+    openFilePicker.mockRestore();
+  });
+
   it("has accessible file input label", () => {
     const { container } = render(<LogoUploader onLogoChange={vi.fn()} />);
     const fileInput = container.querySelector('input[type="file"]');
@@ -214,10 +254,12 @@ describe("LogoUploader", () => {
         onLogoChange={vi.fn()}
       />
     );
-    expect(screen.getByAltText("Organization logo")).toHaveAttribute(
-      "src",
-      "https://example.com/logo.png"
-    );
+    expect(
+      screen.getByRole("img", { name: "Organization logo" })
+    ).toHaveAttribute("data-src", "https://example.com/logo.png");
+    expect(
+      screen.getByRole("img", { name: "Organization logo" })
+    ).toHaveAttribute("data-sizes", "128px");
   });
 
   it("does not show Remove button when disabled", () => {
@@ -308,7 +350,7 @@ describe("LogoUploader", () => {
       />
     );
     const img = screen.getByRole("img");
-    expect(img).toHaveAttribute("src", "https://example.com/logo.png");
+    expect(img).toHaveAttribute("data-src", "https://example.com/logo.png");
   });
 
   it("renders remove button when currentLogo is set", () => {

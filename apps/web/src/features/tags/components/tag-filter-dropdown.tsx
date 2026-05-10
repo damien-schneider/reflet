@@ -62,10 +62,8 @@ interface TagEditButtonProps {
 
 function TagEditButton({ tag }: TagEditButtonProps) {
   const [open, setOpen] = useState(false);
-  const [editedName, setEditedName] = useState(tag.name);
-  const [editedColor, setEditedColor] = useState<TagColor>(
-    isValidTagColor(tag.color) ? tag.color : migrateHexToNamedColor(tag.color)
-  );
+  const [editedName, setEditedName] = useState("");
+  const [editedColor, setEditedColor] = useState<TagColor>("blue");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const updateTag = useMutation(api.organizations.tag_manager_actions.update);
@@ -120,16 +118,15 @@ function TagEditButton({ tag }: TagEditButtonProps) {
     <>
       <Popover onOpenChange={handleOpenChange} open={open}>
         <PopoverTrigger
-          className="flex h-5 w-5 items-center justify-center rounded opacity-0 hover:bg-accent hover:opacity-100 group-data-[selected=true]/command-item:opacity-100"
+          className="flex size-5 items-center justify-center rounded opacity-0 hover:bg-accent hover:opacity-100 group-data-[selected=true]/command-item:opacity-100"
           onClick={(e) => e.stopPropagation()}
           render={(props) => <button {...props} type="button" />}
         >
-          <Pencil className="h-3 w-3" />
+          <Pencil className="size-3" />
         </PopoverTrigger>
         <PopoverContent align="start" className="w-56 p-3" side="right">
           <div className="space-y-3">
             <Input
-              autoFocus
               className="h-8"
               onChange={(e) => setEditedName(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -146,7 +143,7 @@ function TagEditButton({ tag }: TagEditButtonProps) {
                 size="sm"
                 variant="ghost"
               >
-                <Trash className="mr-1 h-3.5 w-3.5" />
+                <Trash className="mr-1 size-3.5" />
                 Delete
               </Button>
               <div className="flex gap-1">
@@ -234,7 +231,7 @@ export function TagFilterDropdown({
         className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 font-medium text-sm hover:bg-accent hover:text-accent-foreground"
         render={(props) => <button {...props} type="button" />}
       >
-        <TagIcon className="h-4 w-4" />
+        <TagIcon className="size-4" />
         Tags
         {selectedTagIds.length > 0 && (
           <Badge className="ml-1" variant="secondary">
@@ -273,16 +270,16 @@ export function TagFilterDropdown({
                   >
                     <div
                       className={cn(
-                        "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                        "flex size-4 shrink-0 items-center justify-center rounded border",
                         isSelected
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-muted-foreground/30"
                       )}
                     >
-                      {isSelected && <Check className="h-3 w-3" />}
+                      {isSelected && <Check className="size-3" />}
                     </div>
                     <div
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      className="size-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: getTagDotColor(tag.color) }}
                     />
                     <span className="flex-1 truncate">
@@ -305,7 +302,7 @@ export function TagFilterDropdown({
                     onSelect={handleCreateTag}
                     value={`create-${searchValue}`}
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="size-4" />
                     <span>Create &quot;{searchValue.trim()}&quot;</span>
                   </CommandItem>
                 </CommandGroup>

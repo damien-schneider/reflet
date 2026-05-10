@@ -5,8 +5,9 @@
 import { v } from "convex/values";
 import { mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
+import { requireOwnedFeedback, requireOwnedWorkItem } from "../ownership";
 import { priority } from "../schema/validators";
-import { requireOrgAdmin } from "./auth";
+import { requireAutopilotAccess, requireOrgAdmin } from "./auth";
 
 export const linkFeedbackToTask = mutation({
   args: {
@@ -18,6 +19,9 @@ export const linkFeedbackToTask = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
+    await requireOwnedFeedback(ctx, args.organizationId, args.feedbackId);
+    await requireOwnedWorkItem(ctx, args.organizationId, args.workItemId);
 
     const existing = await ctx.db
       .query("feedbackTaskLinks")
@@ -61,6 +65,7 @@ export const unlinkFeedbackFromTask = mutation({
     }
 
     await requireOrgAdmin(ctx, link.organizationId, user._id);
+    await requireAutopilotAccess(ctx, link.organizationId);
     await ctx.db.delete(link._id);
     return null;
   },
@@ -77,11 +82,13 @@ export const createTaskFromFeedback = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
 
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
-      throw new Error("Feedback not found");
-    }
+    const feedback = await requireOwnedFeedback(
+      ctx,
+      args.organizationId,
+      args.feedbackId
+    );
 
     const now = Date.now();
     const workItemId = await ctx.db.insert("autopilotWorkItems", {

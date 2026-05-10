@@ -91,10 +91,10 @@ export function QuestionCard({
   };
 
   const handleSaveChoices = () => {
-    const choices = editChoices
-      .split("\n")
-      .map((c) => c.trim())
-      .filter(Boolean);
+    const choices = editChoices.split("\n").flatMap((choice) => {
+      const trimmed = choice.trim();
+      return trimmed ? [trimmed] : [];
+    });
     if (choices.length > 0) {
       onUpdate({ config: { ...question.config, choices } });
     }
@@ -128,7 +128,6 @@ export function QuestionCard({
             <div className="min-w-0 flex-1">
               {isActive ? (
                 <Input
-                  autoFocus
                   className="font-medium"
                   onBlur={handleSaveTitle}
                   onChange={(e) => setEditTitle(e.target.value)}

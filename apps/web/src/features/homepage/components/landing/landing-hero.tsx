@@ -69,7 +69,7 @@ export default function LandingHero() {
 
         {/* Subheadline */}
         <Lead className="mb-10 max-w-140" size="lg">
-          7 AI agents — CEO, PM, CTO, Dev, Growth, Sales, Support — that
+          7 AI agents (CEO, PM, CTO, Dev, Growth, Sales, Support) that
           autonomously run your product. From market research to shipped code to
           paying customers.
         </Lead>

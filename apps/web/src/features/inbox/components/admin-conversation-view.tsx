@@ -94,8 +94,8 @@ export function AdminConversationView({
       <MessageList isLoading={messagesLoading} messages={messages} />
 
       <MessageInput
-        autoFocus
         disabled={isConversationClosed}
+        focusOnMount={true}
         onSend={onSendMessage}
         placeholder="Type your reply..."
       />
@@ -112,7 +112,7 @@ export function EmptyConversationState({
 }: EmptyConversationStateProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-      <ChatCircle className="h-12 w-12 text-muted-foreground" />
+      <ChatCircle className="size-12 text-muted-foreground" />
       <H3>{hasConversations ? "Select a conversation" : "No conversations"}</H3>
       <Muted>
         {hasConversations

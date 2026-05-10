@@ -30,10 +30,11 @@ export function ConversationComposer({
   guestEmail = "",
   onGuestEmailChange,
 }: ConversationComposerProps) {
-  const [expanded, setExpanded] = useState(alwaysExpanded);
+  const [isInteractionExpanded, setIsInteractionExpanded] = useState(false);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
+  const expanded = alwaysExpanded || isInteractionExpanded;
   const hasValidEmail = !isGuest || guestEmail.includes("@");
   const canSend = message.trim().length > 0 && !isSubmitting && hasValidEmail;
 
@@ -49,7 +50,7 @@ export function ConversationComposer({
     setSubject("");
     setMessage("");
     if (!alwaysExpanded) {
-      setExpanded(false);
+      setIsInteractionExpanded(false);
     }
   };
 
@@ -95,7 +96,7 @@ export function ConversationComposer({
         )}
         disabled={isSubmitting}
         onChange={(e) => setMessage(e.target.value)}
-        onFocus={() => setExpanded(true)}
+        onFocus={() => setIsInteractionExpanded(true)}
         onKeyDown={handleKeyDown}
         placeholder="What do you need help with?"
         rows={expanded ? 3 : 1}
@@ -105,7 +106,7 @@ export function ConversationComposer({
       {expanded && (
         <div className="mt-2 flex items-center justify-end">
           <Button disabled={!canSend} onClick={handleSubmit} size="sm">
-            <PaperPlaneRight className="h-4 w-4" weight="fill" />
+            <PaperPlaneRight className="size-4" weight="fill" />
             Send
           </Button>
         </div>

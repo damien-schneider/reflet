@@ -51,12 +51,12 @@ export function InboxCommandPalette({
           {hasSelectedConversation && (
             <CommandGroup heading="Actions">
               <CommandItem onSelect={() => runAndClose(onResolve)}>
-                <CheckCircle className="h-4 w-4 text-emerald-500" />
+                <CheckCircle className="size-4 text-emerald-500" />
                 Resolve conversation
                 <CommandShortcut>E</CommandShortcut>
               </CommandItem>
               <CommandItem onSelect={() => runAndClose(onClose)}>
-                <XCircle className="h-4 w-4 text-zinc-500" />
+                <XCircle className="size-4 text-zinc-500" />
                 Close conversation
                 <CommandShortcut>C</CommandShortcut>
               </CommandItem>
@@ -65,7 +65,7 @@ export function InboxCommandPalette({
 
           <CommandGroup heading="Settings">
             <CommandItem onSelect={() => runAndClose(onToggleSupport)}>
-              <Gear className="h-4 w-4" />
+              <Gear className="size-4" />
               {supportEnabled
                 ? "Disable public support page"
                 : "Enable public support page"}

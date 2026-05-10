@@ -22,7 +22,6 @@ export function DroppableColumn({
     },
   });
 
-  // Background opacity: 8% normally, 28% when dragging over
   const bgOpacity = isOver ? "28" : "08";
 
   return (

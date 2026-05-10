@@ -73,9 +73,9 @@ export function RepoAnalysisPanel({
               variant="outline"
             >
               {isAnalyzing || isStarting ? (
-                <ArrowsClockwise className="mr-1.5 h-4 w-4 animate-spin" />
+                <ArrowsClockwise className="mr-1.5 size-4 animate-spin" />
               ) : (
-                <Sparkle className="mr-1.5 h-4 w-4" />
+                <Sparkle className="mr-1.5 size-4" />
               )}
               {latestAnalysis ? "Re-analyse" : "Analyse Repo"}
             </Button>

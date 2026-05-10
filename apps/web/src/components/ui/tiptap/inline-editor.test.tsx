@@ -113,6 +113,11 @@ describe("TiptapInlineEditor", () => {
     expect(screen.queryByText(/\/\d+/)).not.toBeInTheDocument();
   });
 
+  it("does not render a raw zero when maxLength is zero", () => {
+    render(<TiptapInlineEditor maxLength={0} onChange={vi.fn()} value="" />);
+    expect(screen.queryByText("0")).not.toBeInTheDocument();
+  });
+
   it("shows destructive color when at limit", () => {
     mockEditor.storage.characterCount.characters.mockReturnValue(100);
     render(<TiptapInlineEditor maxLength={100} onChange={vi.fn()} value="" />);
@@ -205,17 +210,31 @@ describe("TiptapInlineEditor", () => {
     }
   });
 
-  it("focuses editor when container is clicked", () => {
+  it("focuses editor when container receives pointer down", () => {
     render(<TiptapInlineEditor onChange={vi.fn()} value="" />);
     const container = document.querySelector(
       '[data-slot="tiptap-inline-editor"]'
     );
-    container?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    container?.dispatchEvent(
+      new PointerEvent("pointerdown", { bubbles: true })
+    );
     expect(mockFocus).toHaveBeenCalled();
   });
 
+  it("does not focus disabled editor on pointer down", () => {
+    render(<TiptapInlineEditor disabled onChange={vi.fn()} value="" />);
+    const container = document.querySelector(
+      '[data-slot="tiptap-inline-editor"]'
+    );
+    container?.dispatchEvent(
+      new PointerEvent("pointerdown", { bubbles: true })
+    );
+    expect(mockFocus).not.toHaveBeenCalled();
+  });
+
   it("passes autoFocus to useEditor config", () => {
-    render(<TiptapInlineEditor autoFocus onChange={vi.fn()} value="" />);
+    const props = { autoFocus: true, onChange: vi.fn(), value: "" };
+    render(<TiptapInlineEditor {...props} />);
     expect(useEditorConfig).toMatchObject({ autofocus: true });
   });
 });

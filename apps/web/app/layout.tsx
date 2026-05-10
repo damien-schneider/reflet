@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Inter } from "next/font/google";
 import Script from "next/script";
-import { Suspense } from "react";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { PostHogPageView } from "@/components/posthog-pageview";
 import { defaultMetadata, viewport as seoViewport } from "@/lib/seo-config";
@@ -52,9 +51,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Suspense fallback={null}>
-          <PostHogPageView />
-        </Suspense>
+        <PostHogPageView />
         <ThemeProvider>{children}</ThemeProvider>
         <CookieConsentBanner />
       </body>

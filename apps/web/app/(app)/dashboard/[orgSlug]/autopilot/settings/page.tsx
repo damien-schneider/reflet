@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import { IconPower, IconRobot } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
+import { useReducer, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -24,11 +24,158 @@ import { BudgetSettings } from "@/features/autopilot/components/settings/budget-
 import { DangerZone } from "@/features/autopilot/components/settings/danger-zone";
 import { GeneralSettings } from "@/features/autopilot/components/settings/general-settings";
 import { LimitSettings } from "@/features/autopilot/components/settings/limit-settings";
+import {
+  AUTOPILOT_PRO_REQUIRED_MESSAGE,
+  getAutopilotErrorMessage,
+} from "@/features/autopilot/lib/error-messages";
 
 type ConfigValue = number | string | undefined;
+type BillingStatus = { tier: string } | null | undefined;
+type PendingKey =
+  | "initializing"
+  | "savingCredentials"
+  | "savingSettings"
+  | "resetting";
 
-function getErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
+type PendingState = Record<PendingKey, boolean>;
+
+const INITIAL_PENDING_STATE: PendingState = {
+  initializing: false,
+  savingCredentials: false,
+  savingSettings: false,
+  resetting: false,
+};
+
+function pendingReducer(
+  state: PendingState,
+  action: { key: PendingKey; value: boolean }
+) {
+  return {
+    ...state,
+    [action.key]: action.value,
+  };
+}
+
+interface UnconfiguredAutopilotSettingsProps {
+  billing: BillingStatus;
+  isAdmin: boolean;
+  isInitializing: boolean;
+  onInitialize: () => Promise<void>;
+  orgSlug: string;
+}
+
+function getSetupCopy(billing: BillingStatus) {
+  if (billing === undefined) {
+    return {
+      canInitialize: false,
+      description:
+        "Plan status is loading before Autopilot can be initialized.",
+      title: "Checking billing access",
+    };
+  }
+
+  if (billing?.tier === "pro") {
+    return {
+      canInitialize: true,
+      description:
+        "Initialize Autopilot to start your AI-powered product team.",
+      title: "Autopilot not configured",
+    };
+  }
+
+  return {
+    canInitialize: false,
+    description:
+      "Upgrade or restore billing access before initializing Autopilot.",
+    title: "Autopilot requires Pro",
+  };
+}
+
+function BillingStatusSection({
+  billing,
+  orgSlug,
+}: {
+  billing: BillingStatus;
+  orgSlug: string;
+}) {
+  if (billing === undefined) {
+    return <BillingSectionSkeleton />;
+  }
+
+  if (billing === null) {
+    return <BillingUnavailableSection orgSlug={orgSlug} />;
+  }
+
+  return <BillingSection orgSlug={orgSlug} tier={billing.tier} />;
+}
+
+function UnconfiguredAutopilotSettings({
+  billing,
+  isAdmin,
+  isInitializing,
+  onInitialize,
+  orgSlug,
+}: UnconfiguredAutopilotSettingsProps) {
+  const setup = getSetupCopy(billing);
+
+  return (
+    <div className="space-y-6">
+      <H2 variant="card">Settings</H2>
+      <BillingStatusSection billing={billing} orgSlug={orgSlug} />
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center gap-4 py-16">
+          <div className="rounded-2xl bg-muted p-4">
+            <IconRobot className="size-8 text-muted-foreground" />
+          </div>
+          <div className="text-center">
+            <p className="font-medium">{setup.title}</p>
+            <p className="mt-1 text-muted-foreground text-sm">
+              {setup.description}
+            </p>
+          </div>
+          {isAdmin && setup.canInitialize && (
+            <Button
+              className="mt-2"
+              disabled={isInitializing}
+              onClick={onInitialize}
+              size="lg"
+            >
+              <IconPower className="mr-2 size-4" />
+              {isInitializing ? "Initializing\u2026" : "Initialize Autopilot"}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function LockedSettingsNotice({ billing }: { billing: BillingStatus }) {
+  if (billing?.tier === "pro") {
+    return null;
+  }
+
+  const copy =
+    billing === undefined
+      ? {
+          title: "Checking billing access",
+          description:
+            "Autopilot controls stay locked until your plan status is confirmed.",
+        }
+      : {
+          title: "Autopilot requires Pro",
+          description:
+            "Upgrade or restore billing access to edit Autopilot settings.",
+        };
+
+  return (
+    <Card>
+      <CardContent className="py-4">
+        <p className="font-medium text-sm">{copy.title}</p>
+        <p className="mt-1 text-muted-foreground text-xs">{copy.description}</p>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function AutopilotSettingsPage() {
@@ -53,9 +200,13 @@ export default function AutopilotSettingsPage() {
   const resetAll = useMutation(api.autopilot.mutations.routines.resetAllData);
 
   const [credentialInput, setCredentialInput] = useState("");
-  const [isSavingCredentials, setIsSavingCredentials] = useState(false);
-  const [isSavingSettings, setIsSavingSettings] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
+  const [pending, setPending] = useReducer(
+    pendingReducer,
+    INITIAL_PENDING_STATE
+  );
+  const setPendingFlag = (key: PendingKey, value: boolean) => {
+    setPending({ key, value });
+  };
 
   if (config === undefined) {
     return (
@@ -76,66 +227,79 @@ export default function AutopilotSettingsPage() {
 
   if (!config) {
     const handleInit = async () => {
+      setPendingFlag("initializing", true);
       try {
         await initConfig({ organizationId });
         toast.success("Autopilot configured");
       } catch (error) {
-        toast.error(getErrorMessage(error, "Failed to initialize autopilot"));
+        toast.error(
+          getAutopilotErrorMessage(error, {
+            fallback: "Failed to initialize autopilot",
+          })
+        );
+      } finally {
+        setPendingFlag("initializing", false);
       }
     };
 
     return (
-      <div className="space-y-6">
-        <H2 variant="card">Settings</H2>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center gap-4 py-16">
-            <div className="rounded-2xl bg-muted p-4">
-              <IconRobot className="size-8 text-muted-foreground" />
-            </div>
-            <div className="text-center">
-              <p className="font-medium">Autopilot not configured</p>
-              <p className="mt-1 text-muted-foreground text-sm">
-                Initialize Autopilot to start your AI-powered product team.
-              </p>
-            </div>
-            {isAdmin && (
-              <Button className="mt-2" onClick={handleInit} size="lg">
-                <IconPower className="mr-2 size-4" />
-                Initialize Autopilot
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <UnconfiguredAutopilotSettings
+        billing={billing}
+        isAdmin={isAdmin}
+        isInitializing={pending.initializing}
+        onInitialize={handleInit}
+        orgSlug={orgSlug}
+      />
     );
   }
 
+  const canEditSettings = isAdmin && billing?.tier === "pro";
+
   const handleToggle = async (field: string, value: boolean) => {
-    setIsSavingSettings(true);
+    if (!canEditSettings) {
+      toast.error(AUTOPILOT_PRO_REQUIRED_MESSAGE);
+      return;
+    }
+    setPendingFlag("savingSettings", true);
     try {
       await updateConfig({ configId: config._id, [field]: value });
       toast.success("Setting updated");
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to update setting"));
+      toast.error(
+        getAutopilotErrorMessage(error, {
+          fallback: "Failed to update setting",
+        })
+      );
     } finally {
-      setIsSavingSettings(false);
+      setPendingFlag("savingSettings", false);
     }
   };
 
   const handleUpdate = async (field: string, value: ConfigValue) => {
-    setIsSavingSettings(true);
+    if (!canEditSettings) {
+      throw new Error(AUTOPILOT_PRO_REQUIRED_MESSAGE);
+    }
+    setPendingFlag("savingSettings", true);
     try {
       await updateConfig({ configId: config._id, [field]: value });
       toast.success("Setting updated");
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to update setting"));
+      toast.error(
+        getAutopilotErrorMessage(error, {
+          fallback: "Failed to update setting",
+        })
+      );
       throw error;
     } finally {
-      setIsSavingSettings(false);
+      setPendingFlag("savingSettings", false);
     }
   };
 
   const handleSaveCredentials = async () => {
+    if (!canEditSettings) {
+      toast.error(AUTOPILOT_PRO_REQUIRED_MESSAGE);
+      return;
+    }
     if (!credentialInput.trim()) {
       toast.error("Credentials required");
       return;
@@ -146,7 +310,7 @@ export default function AutopilotSettingsPage() {
       return;
     }
 
-    setIsSavingCredentials(true);
+    setPendingFlag("savingCredentials", true);
     try {
       await upsertCreds({
         organizationId,
@@ -156,24 +320,35 @@ export default function AutopilotSettingsPage() {
       toast.success("Credentials saved");
       setCredentialInput("");
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to save credentials"));
+      toast.error(
+        getAutopilotErrorMessage(error, {
+          fallback: "Failed to save credentials",
+        })
+      );
     } finally {
-      setIsSavingCredentials(false);
+      setPendingFlag("savingCredentials", false);
     }
   };
 
   const handleResetAll = async () => {
-    setIsResetting(true);
+    if (!canEditSettings) {
+      toast.error(AUTOPILOT_PRO_REQUIRED_MESSAGE);
+      return;
+    }
+    setPendingFlag("resetting", true);
     try {
       await resetAll({ organizationId });
       toast.success("Autopilot data has been reset");
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to reset autopilot data"));
+      toast.error(
+        getAutopilotErrorMessage(error, {
+          fallback: "Failed to reset autopilot data",
+        })
+      );
     } finally {
-      setIsResetting(false);
+      setPendingFlag("resetting", false);
     }
   };
-
   return (
     <div className="space-y-10">
       <div>
@@ -183,21 +358,20 @@ export default function AutopilotSettingsPage() {
         </Muted>
       </div>
 
-      {billing === undefined && <BillingSectionSkeleton />}
-      {billing === null && <BillingUnavailableSection orgSlug={orgSlug} />}
-      {billing && <BillingSection orgSlug={orgSlug} tier={billing.tier} />}
+      <BillingStatusSection billing={billing} orgSlug={orgSlug} />
+      <LockedSettingsNotice billing={billing} />
 
       <GeneralSettings
         autoMergePRs={config.autoMergePRs}
-        disabled={!isAdmin || isSavingSettings}
+        disabled={!canEditSettings || pending.savingSettings}
         onAutoMergeChange={(value) => handleToggle("autoMergePRs", value)}
       />
 
       <AdapterSettings
         adapter={config.adapter ?? undefined}
         credentialInput={credentialInput}
-        disabled={!isAdmin || isSavingSettings}
-        isSaving={isSavingCredentials}
+        disabled={!canEditSettings || pending.savingSettings}
+        isSaving={pending.savingCredentials}
         onAdapterChange={(value) => handleUpdate("adapter", value)}
         onCredentialInputChange={setCredentialInput}
         onSaveCredentials={handleSaveCredentials}
@@ -205,7 +379,7 @@ export default function AutopilotSettingsPage() {
 
       <LimitSettings
         dailyCostCapUsd={config.dailyCostCapUsd}
-        disabled={!isAdmin || isSavingSettings}
+        disabled={!canEditSettings || pending.savingSettings}
         emailDailyLimit={config.emailDailyLimit}
         maxTasksPerDay={config.maxTasksPerDay}
         onInvalidValue={(message) => toast.error(message)}
@@ -213,14 +387,14 @@ export default function AutopilotSettingsPage() {
       />
 
       <BudgetSettings
-        disabled={!isAdmin || isSavingSettings}
+        disabled={!canEditSettings || pending.savingSettings}
         onSave={(json) => handleUpdate("perAgentDailyCapUsd", json)}
         storedValue={config.perAgentDailyCapUsd}
       />
 
-      {isAdmin && (
+      {canEditSettings && (
         <DangerZone
-          isResetting={isResetting}
+          isResetting={pending.resetting}
           onReset={handleResetAll}
           resetScope={resetScope}
         />

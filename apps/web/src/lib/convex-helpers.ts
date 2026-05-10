@@ -3,12 +3,14 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 type ConvexTableName =
   | "organizations"
   | "organizationStatuses"
+  | "autopilotDocuments"
   | "autopilotLeads"
   | "autopilotWorkItems"
   | "feedback"
   | "tags"
   | "widgets"
-  | "githubLabelMappings";
+  | "githubLabelMappings"
+  | "statusIncidents";
 
 /**
  * Validates that a value is a non-empty string suitable for use as a Convex ID.

@@ -68,7 +68,7 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
         <div className="rounded-lg border bg-muted/30 p-6">
           <div className="flex items-start gap-4">
             <div className="rounded-full bg-primary/10 p-3">
-              <Key className="h-6 w-6 text-primary" />
+              <Key className="size-6 text-primary" />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-lg">Enable SDK Integration</h3>
@@ -94,7 +94,7 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
                   disabled={isGenerating || !newKeyName.trim()}
                   onClick={handleGenerateKeys}
                 >
-                  <Key className="mr-2 h-4 w-4" />
+                  <Key className="mr-2 size-4" />
                   {isGenerating ? "Generating..." : "Generate API Keys"}
                 </Button>
               </div>
@@ -105,15 +105,15 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
         <Tabs defaultValue="ai">
           <TabsList>
             <TabsTrigger value="react">
-              <PuzzlePiece className="mr-2 h-4 w-4" />
+              <PuzzlePiece className="mr-2 size-4" />
               React
             </TabsTrigger>
             <TabsTrigger value="docs">
-              <BookOpen className="mr-2 h-4 w-4" />
+              <BookOpen className="mr-2 size-4" />
               Documentation
             </TabsTrigger>
             <TabsTrigger value="ai">
-              <Robot className="mr-2 h-4 w-4" />
+              <Robot className="mr-2 size-4" />
               AI Prompt
             </TabsTrigger>
           </TabsList>
@@ -141,7 +141,7 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
       {newSecretKey && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
           <div className="flex items-start gap-3">
-            <Warning className="mt-0.5 h-5 w-5 text-amber-600" />
+            <Warning className="mt-0.5 size-5 text-amber-600" />
             <div className="flex-1">
               <h4 className="font-medium text-amber-800 dark:text-amber-200">
                 Save your secret key now
@@ -159,7 +159,7 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
                   size="sm"
                   variant="outline"
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy className="size-4" />
                 </Button>
               </div>
               <Button
@@ -178,19 +178,19 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
       <Tabs defaultValue="keys">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="keys">
-            <Key className="mr-2 h-4 w-4" />
+            <Key className="mr-2 size-4" />
             API Keys
           </TabsTrigger>
           <TabsTrigger value="react">
-            <PuzzlePiece className="mr-2 h-4 w-4" />
+            <PuzzlePiece className="mr-2 size-4" />
             React
           </TabsTrigger>
           <TabsTrigger value="docs">
-            <BookOpen className="mr-2 h-4 w-4" />
+            <BookOpen className="mr-2 size-4" />
             Documentation
           </TabsTrigger>
           <TabsTrigger value="ai">
-            <Robot className="mr-2 h-4 w-4" />
+            <Robot className="mr-2 size-4" />
             AI Prompt
           </TabsTrigger>
         </TabsList>

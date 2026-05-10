@@ -25,7 +25,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 
 vi.mock("next/image", () => ({
   default: ({ alt, src }: { alt: string; src: string }) => (
-    <img alt={alt} src={src} />
+    <span aria-label={alt} data-src={src} role="img" />
   ),
 }));
 
@@ -115,8 +115,12 @@ describe("FeedbackContent", () => {
         title="Title"
       />
     );
-    expect(screen.getByAltText("Attachment 1")).toBeInTheDocument();
-    expect(screen.getByAltText("Attachment 2")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Attachment 1" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Attachment 2" })
+    ).toBeInTheDocument();
   });
 
   it("does not render attachments section when empty", () => {
@@ -129,7 +133,9 @@ describe("FeedbackContent", () => {
         title="Title"
       />
     );
-    expect(screen.queryByAltText("Attachment 1")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: "Attachment 1" })
+    ).not.toBeInTheDocument();
   });
 
   it("attachment links have noopener rel", () => {
@@ -185,8 +191,6 @@ describe("FeedbackContent", () => {
         title="Title"
       />
     );
-    // Non-admin won't be able to trigger changes in practice, but
-    // even if the value changes, buttons should not show because isAdmin is false
     expect(screen.queryByText("Save changes")).not.toBeInTheDocument();
   });
 
@@ -203,7 +207,6 @@ describe("FeedbackContent", () => {
     fireEvent.change(titleEditor, { target: { value: "Changed Title" } });
     expect(screen.getByText("Save changes")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Cancel"));
-    // Values should be restored
     expect(screen.getByTestId("title-editor")).toHaveValue("Original Title");
     expect(screen.queryByText("Save changes")).not.toBeInTheDocument();
   });
@@ -227,6 +230,26 @@ describe("FeedbackContent", () => {
         title: "New Title",
       });
     });
+  });
+
+  it("clears local dirty state after a successful save", async () => {
+    mockUpdateFeedback.mockResolvedValue(undefined);
+    render(
+      <FeedbackContent
+        description="desc"
+        feedbackId={feedbackId}
+        isAdmin
+        title="Title"
+      />
+    );
+    const titleEditor = screen.getByTestId("title-editor");
+    fireEvent.change(titleEditor, { target: { value: "Saved Title" } });
+    fireEvent.click(screen.getByText("Save changes"));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Save changes")).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId("title-editor")).toHaveValue("Saved Title");
   });
 
   it("calls updateFeedback with description changes on save", async () => {
@@ -259,7 +282,6 @@ describe("FeedbackContent", () => {
         title="Title"
       />
     );
-    // No changes, save/cancel buttons aren't visible
     expect(screen.queryByText("Save changes")).not.toBeInTheDocument();
   });
 });

@@ -103,17 +103,17 @@ export function WidgetCard({ widget }: WidgetCardProps) {
               <DropdownMenuTrigger
                 render={(props: React.ComponentProps<"button">) => (
                   <Button {...props} size="icon" variant="ghost">
-                    <Gear className="h-4 w-4" />
+                    <Gear className="size-4" />
                   </Button>
                 )}
               />
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
-                  <Gear className="mr-2 h-4 w-4" />
+                  <Gear className="mr-2 size-4" />
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={toggleActive}>
-                  <Power className="mr-2 h-4 w-4" />
+                  <Power className="mr-2 size-4" />
                   {widget.isActive ? "Deactivate" : "Activate"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -121,7 +121,7 @@ export function WidgetCard({ widget }: WidgetCardProps) {
                   className="text-destructive"
                   onClick={() => setShowDeleteDialog(true)}
                 >
-                  <Trash className="mr-2 h-4 w-4" />
+                  <Trash className="mr-2 size-4" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -148,9 +148,9 @@ export function WidgetCard({ widget }: WidgetCardProps) {
                 variant="ghost"
               >
                 {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
+                  <Check className="size-4 text-green-500" />
                 ) : (
-                  <Copy className="h-4 w-4" />
+                  <Copy className="size-4" />
                 )}
               </Button>
             </div>
@@ -166,7 +166,7 @@ export function WidgetCard({ widget }: WidgetCardProps) {
                 style={{ backgroundColor: `${widget.settings.primaryColor}20` }}
               >
                 <div
-                  className="h-3 w-3 rounded-full"
+                  className="size-3 rounded-full"
                   style={{ backgroundColor: widget.settings.primaryColor }}
                 />
                 <span>{widget.settings.primaryColor}</span>

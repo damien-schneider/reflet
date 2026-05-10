@@ -3,6 +3,21 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { H1, H3, Lead, Muted, Text } from "@/components/ui/typography";
 import { formatDate, getAllBlogPosts, getCategoryLabel } from "@/lib/blog";
+import { generatePageMetadata } from "@/lib/seo-config";
+
+export const metadata = generatePageMetadata({
+  title: "Reflet Blog — Product Feedback Guides and Best Practices",
+  description:
+    "Guides, tutorials, and best practices for product feedback management, roadmaps, changelogs, and customer communication.",
+  path: "/blog",
+  keywords: [
+    "product feedback blog",
+    "feedback management",
+    "roadmap best practices",
+    "changelog best practices",
+    "customer feedback",
+  ],
+});
 
 export default async function BlogIndexPage() {
   const posts = await getAllBlogPosts();
@@ -48,7 +63,7 @@ export default async function BlogIndexPage() {
                   {post.meta.description}
                 </Text>
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-olive-600/10 font-bold text-olive-600 text-xs">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-olive-600/10 font-bold text-olive-600 text-xs">
                     {post.meta.author
                       .split(" ")
                       .map((n) => n[0])

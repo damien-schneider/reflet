@@ -26,7 +26,6 @@ export const TAG_COLOR_LABELS: Record<TagColor, string> = {
   red: "Red",
 };
 
-// Color values matching Notion's tag palette (used by badge variants)
 interface ColorValue {
   bg: string;
   darkBg: string;
@@ -101,8 +100,6 @@ export function isValidTagColor(color: string): color is TagColor {
   return TAG_COLORS.some((c) => c === color);
 }
 
-// Resolve any color (named or legacy hex) to a TagColor.
-// Tries named match first, then hex-to-named migration, then falls back to "default".
 function resolveTagColor(color: string): TagColor {
   if (isValidTagColor(color)) {
     return color;
@@ -110,37 +107,17 @@ function resolveTagColor(color: string): TagColor {
   return migrateHexToNamedColor(color);
 }
 
-function getValidColor(color: string): TagColor {
-  return resolveTagColor(color);
-}
-
-// Get color values for a tag color
 export function getTagColorValues(
   color: string,
   isDark = false
 ): { bg: string; text: string } {
-  const validColor = getValidColor(color);
+  const validColor = resolveTagColor(color);
   const values = COLOR_VALUES[validColor];
   return isDark
     ? { bg: values.darkBg, text: values.darkText }
     : { bg: values.bg, text: values.text };
 }
 
-// Get CSS styles for inline styling (used by components that can't use Tailwind classes)
-export function getTagColorStyles(
-  color: string,
-  isDark = false
-): React.CSSProperties {
-  const { bg, text } = getTagColorValues(color, isDark);
-  return {
-    backgroundColor: bg,
-    color: text,
-    borderColor: `${text}4d`,
-  };
-}
-
-// Get badge-style CSS properties for any color (named tag color or hex).
-// Named colors and known hex colors use the Notion palette; unknown hex colors fall back to alpha variants.
 export function getColorBadgeStyles(color: string): React.CSSProperties {
   const resolved = resolveTagColor(color);
   if (resolved !== "default" || isValidTagColor(color)) {
@@ -158,18 +135,10 @@ export function getColorBadgeStyles(color: string): React.CSSProperties {
   };
 }
 
-// Get just the background color
-export function getTagBgColor(color: string, isDark = false): string {
-  return getTagColorValues(color, isDark).bg;
-}
-
-// Get just the text color
 export function getTagTextColor(color: string, isDark = false): string {
   return getTagColorValues(color, isDark).text;
 }
 
-// Get a solid representative color for small dots/indicators
-// Works with named colors, legacy hex values, and unknown hex values
 export function getTagDotColor(color: string, isDark = false): string {
   const resolved = resolveTagColor(color);
   if (resolved !== "default" || isValidTagColor(color)) {
@@ -178,13 +147,11 @@ export function getTagDotColor(color: string, isDark = false): string {
   return color;
 }
 
-// Get a random named tag color (excludes "default")
 export function getRandomTagColor(): TagColor {
   const colors = TAG_COLORS.filter((c) => c !== "default");
   return colors[Math.floor(Math.random() * colors.length)] ?? "default";
 }
 
-// Tailwind classes for tag text colors (Notion-style)
 const TAG_TEXT_CLASSES: Record<TagColor, string> = {
   default: "text-[#787774] dark:text-[#9b9a97]",
   gray: "text-[#787774] dark:text-[#9b9a97]",
@@ -198,7 +165,6 @@ const TAG_TEXT_CLASSES: Record<TagColor, string> = {
   brown: "text-[#64473a] dark:text-[#b4836d]",
 };
 
-// Tailwind classes for color swatches (Notion-style)
 const TAG_SWATCH_CLASSES: Record<TagColor, string> = {
   default:
     "bg-[#f1f1ef] border-[#78777433] dark:bg-[#ffffff0f] dark:border-[#9b9a9733]",
@@ -218,19 +184,16 @@ const TAG_SWATCH_CLASSES: Record<TagColor, string> = {
     "bg-[#eee0da] border-[#64473a33] dark:bg-[#93726426] dark:border-[#b4836d33]",
 };
 
-// Get Tailwind class for tag text color
 export function getTagTextClass(color: string): string {
-  const validColor = getValidColor(color);
+  const validColor = resolveTagColor(color);
   return TAG_TEXT_CLASSES[validColor];
 }
 
-// Get Tailwind class for color swatch
 export function getTagSwatchClass(color: string): string {
-  const validColor = getValidColor(color);
+  const validColor = resolveTagColor(color);
   return TAG_SWATCH_CLASSES[validColor];
 }
 
-// Migration helper: convert old hex colors to new named colors
 export function migrateHexToNamedColor(hexColor: string): TagColor {
   const hexMap: Record<string, TagColor> = {
     "#ef4444": "red",

@@ -112,7 +112,9 @@ export function DocumentContent({
       editable={isEditable}
       minimal={!isEditable}
       onChange={onContentChange}
-      placeholder={isEditable ? "Edit content before approving..." : undefined}
+      placeholder={
+        isEditable ? "Edit content before approving\u2026" : undefined
+      }
       value={editedContent ?? document.content}
     />
   );
@@ -165,7 +167,12 @@ function SocialDraftContent({
             Draft Reply
           </span>
           <div className="flex gap-1">
-            <Button onClick={handleCopy} size="icon-sm" variant="ghost">
+            <Button
+              aria-label="Copy draft reply"
+              onClick={handleCopy}
+              size="icon-sm"
+              variant="ghost"
+            >
               <IconCopy className="size-3.5" />
             </Button>
             {targetUrl && (
@@ -186,7 +193,7 @@ function SocialDraftContent({
           minimal={!isEditable}
           onChange={onContentChange}
           placeholder={
-            isEditable ? "Edit your reply before posting..." : undefined
+            isEditable ? "Edit your reply before posting\u2026" : undefined
           }
           value={content}
         />
@@ -255,7 +262,7 @@ function ResearchContent({
         minimal={!isEditable}
         onChange={onContentChange}
         placeholder={
-          isEditable ? "Edit content before approving..." : undefined
+          isEditable ? "Edit content before approving\u2026" : undefined
         }
         value={content}
       />

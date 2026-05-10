@@ -10,7 +10,8 @@ import {
   getAutopilotResetScope,
   resetScopeGroup,
 } from "../reset/scope";
-import { requireOrgAdmin } from "./auth";
+import { isRoutineDispatchAgent } from "../schema/validators";
+import { requireAutopilotAccess, requireOrgAdmin } from "./auth";
 
 export const createRoutine = mutation({
   args: {
@@ -35,6 +36,12 @@ export const createRoutine = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
+    if (!isRoutineDispatchAgent(args.agent)) {
+      throw new Error(
+        `Routine agent ${args.agent} cannot dispatch routine tasks`
+      );
+    }
 
     const now = Date.now();
 
@@ -71,6 +78,7 @@ export const updateRoutine = mutation({
       throw new Error("Routine not found");
     }
     await requireOrgAdmin(ctx, routine.organizationId, user._id);
+    await requireAutopilotAccess(ctx, routine.organizationId);
 
     const { routineId, ...updates } = args;
     const cleanUpdates: Record<string, unknown> = { updatedAt: Date.now() };
@@ -98,6 +106,7 @@ export const deleteRoutine = mutation({
       throw new Error("Routine not found");
     }
     await requireOrgAdmin(ctx, routine.organizationId, user._id);
+    await requireAutopilotAccess(ctx, routine.organizationId);
 
     await ctx.db.delete(args.routineId);
     return null;

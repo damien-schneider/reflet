@@ -31,7 +31,11 @@ export function UpgradeBanner({
           </p>
         </div>
       </div>
-      <Button render={<Link href={billingUrl} />} size="sm">
+      <Button
+        nativeButton={false}
+        render={<Link href={billingUrl} />}
+        size="sm"
+      >
         Upgrade
         <IconArrowRight className="ml-1 size-3.5" />
       </Button>

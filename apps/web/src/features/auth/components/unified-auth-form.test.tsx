@@ -15,7 +15,7 @@ vi.mock("@/lib/auth-client", () => ({
 }));
 
 vi.mock("@/components/ui/spinner", () => ({
-  Spinner: () => <div data-testid="spinner">Loading...</div>,
+  Spinner: () => <div data-testid="spinner">Loading…</div>,
 }));
 
 vi.mock("@/components/ui/button", () => ({
@@ -165,6 +165,9 @@ interface AuthHookReturn {
   setValue: typeof mockSetValue;
   trigger: typeof mockTrigger;
   watch: typeof mockWatch;
+  watchedConfirmPassword: string;
+  watchedEmail: string;
+  watchedPassword: string;
 }
 
 const defaultWatch: WatchField = (field) => {
@@ -198,6 +201,9 @@ const defaultHookReturn: AuthHookReturn = {
   handleEmailChange: mockHandleEmailChange,
   isCheckingEmail: false,
   resetMode: mockResetMode,
+  watchedConfirmPassword: "password123",
+  watchedEmail: "",
+  watchedPassword: "password123",
 };
 
 vi.mock("./unified-auth/hooks/use-auth-form", () => ({
@@ -213,6 +219,9 @@ describe("UnifiedAuthForm", () => {
     defaultHookReturn.errors = {};
     defaultHookReturn.isSubmitting = false;
     defaultHookReturn.isCheckingEmail = false;
+    defaultHookReturn.watchedConfirmPassword = "password123";
+    defaultHookReturn.watchedEmail = "";
+    defaultHookReturn.watchedPassword = "password123";
     mockWatch.mockImplementation(defaultWatch);
   });
 

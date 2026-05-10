@@ -122,7 +122,7 @@ export function SetupMethodStep({
       {config.workflow === "ai_powered" && (
         <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 dark:border-blue-900 dark:bg-blue-950/20">
           <p className="text-blue-800 text-xs dark:text-blue-200">
-            No additional setup needed for AI release notes — Reflet handles
+            No additional setup needed for AI release notes. Reflet handles
             release note generation automatically when you click &quot;New
             Release&quot;. The workflow below enables real-time sync with
             GitHub.
@@ -134,16 +134,16 @@ export function SetupMethodStep({
         <TabsList className="w-full">
           {isWebhookSetup && (
             <TabsTrigger value="done">
-              <Check className="mr-1 h-3 w-3" />
+              <Check className="mr-1 size-3" />
               Active
             </TabsTrigger>
           )}
           <TabsTrigger value="ai-prompt">
-            <Robot className="mr-1 h-3 w-3" />
+            <Robot className="mr-1 size-3" />
             AI Prompt
           </TabsTrigger>
           <TabsTrigger value="github-action">
-            <ClipboardText className="mr-1 h-3 w-3" />
+            <ClipboardText className="mr-1 size-3" />
             GitHub Action
           </TabsTrigger>
         </TabsList>
@@ -151,7 +151,7 @@ export function SetupMethodStep({
         {isWebhookSetup && (
           <TabsContent className="mt-3" value="done">
             <div className="flex flex-col items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/30">
-              <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
+              <Check className="size-8 text-green-600 dark:text-green-400" />
               <p className="font-medium text-sm">Webhook already configured</p>
               <p className="text-center text-muted-foreground text-xs">
                 Real-time sync is active. GitHub events will automatically flow
@@ -191,12 +191,12 @@ export function SetupMethodStep({
               >
                 {copiedTab === "ai" ? (
                   <>
-                    <Check className="mr-1 h-3 w-3" />
+                    <Check className="mr-1 size-3" />
                     Copied
                   </>
                 ) : (
                   <>
-                    <ClipboardText className="mr-1 h-3 w-3" />
+                    <ClipboardText className="mr-1 size-3" />
                     Copy
                   </>
                 )}
@@ -234,12 +234,12 @@ export function SetupMethodStep({
               >
                 {copiedTab === "yaml" ? (
                   <>
-                    <Check className="mr-1 h-3 w-3" />
+                    <Check className="mr-1 size-3" />
                     Copied
                   </>
                 ) : (
                   <>
-                    <ClipboardText className="mr-1 h-3 w-3" />
+                    <ClipboardText className="mr-1 size-3" />
                     Copy
                   </>
                 )}

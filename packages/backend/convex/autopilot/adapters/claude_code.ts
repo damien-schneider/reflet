@@ -2,13 +2,14 @@ import type { z } from "zod";
 import {
   createProviderParseFailure,
   createProviderStatusFailure,
-  githubCheckRunsResponseSchema,
+  formatProviderHttpError,
+  getClosedPullRequestStatus,
+  getPullRequestCiStatus,
   githubCommentsResponseSchema,
   githubIssueResponseSchema,
   githubPullsResponseSchema,
   isPullRequestLinkedToIssue,
   log,
-  parseGitHubCheckRuns,
   parseResponseJson,
 } from "./adapter_helpers";
 import { buildHeaders, parseRepoUrl } from "./builtin_github";
@@ -72,10 +73,7 @@ export const claudeCodeAdapter: CodingAdapter = {
         `${GITHUB_API}/repos/${owner}/${repo}/issues`,
         {
           method: "POST",
-          headers: {
-            ...buildHeaders(githubToken),
-            "Content-Type": "application/json",
-          },
+          headers: buildHeaders(githubToken),
           body: JSON.stringify({
             title: `[autopilot] ${input.title}`,
             body: issueBody,
@@ -86,7 +84,7 @@ export const claudeCodeAdapter: CodingAdapter = {
 
       if (!issueResponse.ok) {
         throw new Error(
-          `Failed to create issue: ${issueResponse.status} ${await issueResponse.text()}`
+          formatProviderHttpError("Create GitHub issue", issueResponse)
         );
       }
 
@@ -110,10 +108,7 @@ export const claudeCodeAdapter: CodingAdapter = {
         `${GITHUB_API}/repos/${owner}/${repo}/actions/workflows/claude.yml/dispatches`,
         {
           method: "POST",
-          headers: {
-            ...buildHeaders(githubToken),
-            "Content-Type": "application/json",
-          },
+          headers: buildHeaders(githubToken),
           body: JSON.stringify({
             ref: input.baseBranch,
             inputs: {
@@ -265,49 +260,25 @@ export const claudeCodeAdapter: CodingAdapter = {
       )
     );
 
-    const ciResponse = await fetch(
-      `${GITHUB_API}/repos/${owner}/${repo}/commits/${linkedPR.head.ref}/check-runs`,
-      { headers: buildHeaders(githubToken) }
-    );
-
-    if (!ciResponse.ok) {
-      return createProviderStatusFailure("Claude Code CI", ciResponse, logs);
-    }
-
-    let ciData: z.infer<typeof githubCheckRunsResponseSchema>;
-    try {
-      ciData = await parseResponseJson(
-        ciResponse,
-        githubCheckRunsResponseSchema,
-        "GitHub check runs"
-      );
-    } catch (error) {
-      return createProviderParseFailure(
-        "Claude Code CI",
-        "check runs",
-        error,
-        logs
-      );
-    }
-
-    const { ciStatus, ciFailureLog } = parseGitHubCheckRuns(ciData.check_runs);
-
-    let status: TaskStatusResponse["status"] =
-      ciStatus === "passed" ? "completed" : "running";
-    if (ciStatus === "failed") {
-      status = "failed";
-    }
-
-    return {
-      status,
-      prUrl: linkedPR.html_url,
-      prNumber: linkedPR.number,
-      ciStatus,
-      ciFailureLog,
+    const closedStatus = await getClosedPullRequestStatus({
       activityLogs: logs,
-      tokensUsed: 0,
-      estimatedCostUsd: 0,
-    };
+      headers: buildHeaders(githubToken),
+      owner,
+      pull: linkedPR,
+      repo,
+    });
+    if (closedStatus) {
+      return closedStatus;
+    }
+
+    return getPullRequestCiStatus({
+      activityLogs: logs,
+      adapterName: "Claude Code",
+      headers: buildHeaders(githubToken),
+      owner,
+      pull: linkedPR,
+      repo,
+    });
   },
 
   cancelTask: async (
@@ -324,10 +295,7 @@ export const claudeCodeAdapter: CodingAdapter = {
 
     await fetch(`${GITHUB_API}/repos/${owner}/${repo}/issues/${issue}`, {
       method: "PATCH",
-      headers: {
-        ...buildHeaders(githubToken),
-        "Content-Type": "application/json",
-      },
+      headers: buildHeaders(githubToken),
       body: JSON.stringify({ state: "closed" }),
     });
   },

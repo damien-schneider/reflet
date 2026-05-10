@@ -129,16 +129,17 @@ vi.mock("@/components/ui/command", () => ({
     disabled?: boolean;
     "data-checked"?: boolean;
   }) => (
-    <div
+    <button
       className={className}
       data-disabled={disabled}
       data-testid="command-item"
       data-value={value}
       onClick={onSelect}
+      type="button"
       {...rest}
     >
       {children}
-    </div>
+    </button>
   ),
   CommandList: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="command-list">{children}</div>

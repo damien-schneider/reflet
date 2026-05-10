@@ -18,7 +18,7 @@ export default function AutopilotChainPage() {
     return (
       <div className="text-muted-foreground text-sm">
         Admin-only view. The document chain is the underlying mechanism that
-        drives the autopilot — it stays under the hood for non-admin users.
+        drives the autopilot. It stays under the hood for non-admin users.
       </div>
     );
   }

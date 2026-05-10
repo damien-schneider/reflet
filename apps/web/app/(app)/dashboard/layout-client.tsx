@@ -1,9 +1,9 @@
 "use client";
 
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
-import { useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import UnifiedAuthForm from "@/features/auth/components/unified-auth/unified-auth-form";
+import { useClientHydrated } from "@/shared/components/client-hydration";
 import { DashboardContent } from "./dashboard-content";
 
 export default function DashboardLayoutClient({
@@ -11,11 +11,7 @@ export default function DashboardLayoutClient({
 }: {
   children: React.ReactNode;
 }) {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(function markClientSideReady() {
-    setIsClient(true);
-  }, []);
+  const isClient = useClientHydrated();
 
   return (
     <div className="min-h-svh bg-background">
@@ -24,7 +20,7 @@ export default function DashboardLayoutClient({
           <DashboardContent>{children}</DashboardContent>
         ) : (
           <div className="flex min-h-svh items-center justify-center">
-            <Spinner className="h-8 w-8 animate-spin text-muted-foreground" />
+            <Spinner className="size-8 animate-spin text-muted-foreground" />
           </div>
         )}
       </Authenticated>

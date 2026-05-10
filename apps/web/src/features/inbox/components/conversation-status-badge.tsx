@@ -66,7 +66,7 @@ export function ConversationStatusBadge({
 
   return (
     <Badge className={cn(config.className, className)} variant="secondary">
-      {showIcon && <Icon className="h-3 w-3" weight="fill" />}
+      {showIcon && <Icon className="size-3" weight="fill" />}
       {config.label}
     </Badge>
   );

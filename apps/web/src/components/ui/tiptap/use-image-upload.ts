@@ -16,7 +16,7 @@ export function useImageUpload({
 }: UseImageUploadOptions = {}) {
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
   const getStorageUrl = useMutation(api.storage.getStorageUrlMutation);
-  const [isUploading, setIsUploading] = useState(false);
+  const [activeUploadCount, setActiveUploadCount] = useState(0);
   const [lastStorageId, setLastStorageId] = useState<Id<"_storage"> | null>(
     null
   );
@@ -43,7 +43,7 @@ export function useImageUpload({
         return null;
       }
 
-      setIsUploading(true);
+      setActiveUploadCount((count) => count + 1);
 
       try {
         // Step 1: Generate upload URL
@@ -83,7 +83,7 @@ export function useImageUpload({
         onError?.(error);
         return null;
       } finally {
-        setIsUploading(false);
+        setActiveUploadCount((count) => Math.max(0, count - 1));
       }
     },
     [generateUploadUrl, getStorageUrl, onSuccess, onError]
@@ -153,7 +153,7 @@ export function useImageUpload({
     handlePaste,
     handleDrop,
     openFilePicker,
-    isUploading,
+    isUploading: activeUploadCount > 0,
     storageUrl,
   };
 }

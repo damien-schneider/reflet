@@ -60,22 +60,18 @@ vi.mock("motion/react", () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
-  motion: {
+  domAnimation: {},
+  LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  m: {
     div: ({
       children,
       className,
-      onClick,
     }: {
       children?: React.ReactNode;
       className?: string;
-      onClick?: () => void;
       animate?: unknown;
       [key: string]: unknown;
-    }) => (
-      <div className={className} onClick={onClick}>
-        {children}
-      </div>
-    ),
+    }) => <div className={className}>{children}</div>,
   },
 }));
 

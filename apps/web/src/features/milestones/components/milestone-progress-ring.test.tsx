@@ -2,7 +2,9 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("motion/react", () => ({
-  motion: {
+  domAnimation: {},
+  LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  m: {
     circle: ({
       style: _style,
       ...props

@@ -221,8 +221,10 @@ describe("EmailSection", () => {
   });
 
   it("shows error toast on failure", async () => {
-    const { authClient } = await import("@/lib/auth-client");
-    const { toast } = await import("sonner");
+    const [{ authClient }, { toast }] = await Promise.all([
+      import("@/lib/auth-client"),
+      import("sonner"),
+    ]);
     vi.mocked(authClient.changeEmail).mockRejectedValueOnce(
       new Error("Email taken")
     );

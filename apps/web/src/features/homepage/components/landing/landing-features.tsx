@@ -12,7 +12,7 @@ import {
   Shield,
   Sliders,
 } from "@phosphor-icons/react";
-import { motion, useInView } from "motion/react";
+import { domAnimation, LazyMotion, m, useInView } from "motion/react";
 import type { JSX } from "react";
 import { useRef } from "react";
 
@@ -252,80 +252,82 @@ export default function LandingFeatures() {
 
   return (
     <section className="py-24 sm:py-32" ref={ref}>
-      <div className="mx-auto max-w-300 px-5 sm:px-8">
-        {/* Section header */}
-        <motion.div
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          className="mb-16 max-w-135"
-          initial={{ opacity: 0, y: 24 }}
-          transition={{ duration: 0.8, ease: EASE_OUT_EXPO }}
-        >
-          <Text as="span" className="mb-3 block" variant="eyebrow">
-            Your autonomous AI company
-          </Text>
-          <H2 className="mb-4" variant="landing">
-            7 agents.{" "}
-            <span className="text-muted-foreground">
-              Zero employees needed.
-            </span>
-          </H2>
-        </motion.div>
+      <LazyMotion features={domAnimation}>
+        <div className="mx-auto max-w-300 px-5 sm:px-8">
+          {/* Section header */}
+          <m.div
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            className="mb-16 max-w-135"
+            initial={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.8, ease: EASE_OUT_EXPO }}
+          >
+            <Text as="span" className="mb-3 block" variant="eyebrow">
+              Your autonomous AI company
+            </Text>
+            <H2 className="mb-4" variant="landing">
+              7 agents.{" "}
+              <span className="text-muted-foreground">
+                Zero employees needed.
+              </span>
+            </H2>
+          </m.div>
 
-        {/* Bento grid */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((feature, idx) => {
-            const Icon = feature.icon;
-            const MiniUI = MINI_UI_MAP[feature.id];
-            return (
-              <motion.div
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                className={cn(
-                  "group relative overflow-hidden rounded-2xl border border-border/40 bg-card/90 p-5 backdrop-blur-sm",
-                  "transition-[border-color,box-shadow] duration-500 hover:border-border/80 hover:shadow-lg dark:hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.5)]",
-                  feature.span
-                )}
-                initial={{ opacity: 0, y: 32 }}
-                key={feature.id}
-                transition={{
-                  delay: 0.1 + idx * 0.07,
-                  duration: 0.7,
-                  ease: EASE_OUT_EXPO,
-                }}
-              >
-                {/* Header */}
-                <div className="mb-3 flex items-center gap-2">
+          {/* Bento grid */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((feature, idx) => {
+              const Icon = feature.icon;
+              const MiniUI = MINI_UI_MAP[feature.id];
+              return (
+                <m.div
+                  animate={isInView ? { opacity: 1, y: 0 } : {}}
+                  className={cn(
+                    "group relative overflow-hidden rounded-2xl border border-border/40 bg-card/90 p-5 backdrop-blur-sm",
+                    "transition-[border-color,box-shadow] duration-500 hover:border-border/80 hover:shadow-lg dark:hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.5)]",
+                    feature.span
+                  )}
+                  initial={{ opacity: 0, y: 32 }}
+                  key={feature.id}
+                  transition={{
+                    delay: 0.1 + idx * 0.07,
+                    duration: 0.7,
+                    ease: EASE_OUT_EXPO,
+                  }}
+                >
+                  {/* Header */}
+                  <div className="mb-3 flex items-center gap-2">
+                    <div
+                      className={cn(
+                        "flex size-6 items-center justify-center rounded-lg",
+                        feature.accentBg
+                      )}
+                    >
+                      <Icon
+                        className={feature.accent}
+                        size={13}
+                        weight="duotone"
+                      />
+                    </div>
+                    <h3 className="font-semibold text-[13px] text-foreground">
+                      {feature.title}
+                    </h3>
+                  </div>
+
+                  {/* Mini UI */}
+                  {MiniUI && <MiniUI />}
+
+                  {/* Hover glow */}
                   <div
                     className={cn(
-                      "flex size-6 items-center justify-center rounded-lg",
+                      "pointer-events-none absolute -right-12 -bottom-12 size-32 rounded-full opacity-0 blur-3xl transition-opacity duration-700 group-hover:opacity-50",
                       feature.accentBg
                     )}
-                  >
-                    <Icon
-                      className={feature.accent}
-                      size={13}
-                      weight="duotone"
-                    />
-                  </div>
-                  <h3 className="font-semibold text-[13px] text-foreground">
-                    {feature.title}
-                  </h3>
-                </div>
-
-                {/* Mini UI */}
-                {MiniUI && <MiniUI />}
-
-                {/* Hover glow */}
-                <div
-                  className={cn(
-                    "pointer-events-none absolute -right-12 -bottom-12 size-32 rounded-full opacity-0 blur-3xl transition-opacity duration-700 group-hover:opacity-50",
-                    feature.accentBg
-                  )}
-                />
-              </motion.div>
-            );
-          })}
+                  />
+                </m.div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </LazyMotion>
     </section>
   );
 }

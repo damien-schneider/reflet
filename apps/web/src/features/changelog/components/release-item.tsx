@@ -15,7 +15,6 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { format } from "date-fns";
 import Link from "next/link";
 import type * as React from "react";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +60,29 @@ interface ReleaseItemProps {
   release: ReleaseData;
 }
 
+const PUBLISHED_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "long",
+  timeZone: "UTC",
+  year: "numeric",
+});
+
+const SCHEDULED_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  month: "short",
+  timeZone: "UTC",
+});
+
+function formatPublishedDate(timestamp: number) {
+  return PUBLISHED_DATE_FORMATTER.format(timestamp);
+}
+
+function formatScheduledDate(timestamp: number) {
+  return SCHEDULED_DATE_FORMATTER.format(timestamp);
+}
+
 export function ReleaseItem({
   release,
   orgSlug,
@@ -72,8 +94,15 @@ export function ReleaseItem({
   const isPublished = release.publishedAt !== undefined;
   const isScheduled = !isPublished && release.scheduledPublishAt !== undefined;
   const publishDate = release.publishedAt
-    ? format(release.publishedAt, "MMMM d, yyyy")
+    ? formatPublishedDate(release.publishedAt)
     : null;
+  const linkedFeedback =
+    release.feedback?.reduce<LinkedFeedback[]>((items, item) => {
+      if (item !== null) {
+        items.push(item);
+      }
+      return items;
+    }, []) ?? [];
 
   return (
     <article className="relative">
@@ -97,29 +126,21 @@ export function ReleaseItem({
                 className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
                 variant="outline"
               >
-                <Clock className="mr-1 h-3 w-3" />
+                <Clock className="mr-1 size-3" />
                 Scheduled{" "}
-                {format(release.scheduledPublishAt as number, "MMM d, h:mm a")}
+                {formatScheduledDate(release.scheduledPublishAt as number)}
               </Badge>
             )}
             {!(isPublished || isScheduled) && (
               <Badge variant="secondary">
-                <EyeSlash className="mr-1 h-3 w-3" />
+                <EyeSlash className="mr-1 size-3" />
                 Draft
               </Badge>
             )}
             {publishDate && (
               <span className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                <Calendar className="h-4 w-4" />
-                <time
-                  dateTime={
-                    release.publishedAt
-                      ? new Date(release.publishedAt).toISOString()
-                      : undefined
-                  }
-                >
-                  {publishDate}
-                </time>
+                <Calendar className="size-4" />
+                <time>{publishDate}</time>
               </span>
             )}
 
@@ -134,7 +155,7 @@ export function ReleaseItem({
                 href={`/dashboard/${orgSlug}/changelog/${release._id}/edit`}
               >
                 <Button size="sm" variant="ghost">
-                  <PencilSimple className="h-4 w-4" />
+                  <PencilSimple className="size-4" />
                   <span className="ml-1.5 hidden sm:inline">Edit</span>
                 </Button>
               </Link>
@@ -142,19 +163,19 @@ export function ReleaseItem({
                 <DropdownListTrigger
                   render={(props: React.ComponentProps<"button">) => (
                     <Button {...props} size="icon" variant="ghost">
-                      <DotsThreeVertical className="h-4 w-4" />
+                      <DotsThreeVertical className="size-4" />
                     </Button>
                   )}
                 />
                 <DropdownListContent align="end">
                   {isPublished ? (
                     <DropdownListItem onClick={onUnpublish}>
-                      <EyeSlash className="mr-2 h-4 w-4" />
+                      <EyeSlash className="mr-2 size-4" />
                       Unpublish
                     </DropdownListItem>
                   ) : (
                     <DropdownListItem onClick={onPublish}>
-                      <Eye className="mr-2 h-4 w-4" />
+                      <Eye className="mr-2 size-4" />
                       Publish
                     </DropdownListItem>
                   )}
@@ -163,7 +184,7 @@ export function ReleaseItem({
                     className="text-destructive"
                     onClick={onDelete}
                   >
-                    <Trash className="mr-2 h-4 w-4" />
+                    <Trash className="mr-2 size-4" />
                     Delete
                   </DropdownListItem>
                 </DropdownListContent>
@@ -188,24 +209,19 @@ export function ReleaseItem({
         )}
 
         {/* Shipped features */}
-        {release.feedback && release.feedback.length > 0 && (
+        {linkedFeedback.length > 0 && (
           <div className="mt-8">
             <h3 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
               Shipped Features
             </h3>
             <ul className="space-y-2">
-              {release.feedback
-                .filter((item): item is LinkedFeedback => item !== null)
-                .map((item) => (
-                  <li
-                    className="flex items-center gap-2 text-sm"
-                    key={item._id}
-                  >
-                    <Check className="h-4 w-4 shrink-0 text-olive-500" />
-                    <span className="min-w-0 flex-1">{item.title}</span>
-                    {item.status && <FeedbackStatusDot status={item.status} />}
-                  </li>
-                ))}
+              {linkedFeedback.map((item) => (
+                <li className="flex items-center gap-2 text-sm" key={item._id}>
+                  <Check className="size-4 shrink-0 text-olive-500" />
+                  <span className="min-w-0 flex-1">{item.title}</span>
+                  {item.status && <FeedbackStatusDot status={item.status} />}
+                </li>
+              ))}
             </ul>
           </div>
         )}
@@ -215,7 +231,7 @@ export function ReleaseItem({
           release.commitCount !== undefined &&
           release.commitCount > 0 && (
             <div className="mt-4 flex items-center gap-1.5 text-muted-foreground text-xs">
-              <GitCommit className="h-3.5 w-3.5" />
+              <GitCommit className="size-3.5" />
               <span>
                 {release.commitCount} commit
                 {release.commitCount === 1 ? "" : "s"} used
@@ -249,7 +265,7 @@ function FeedbackStatusDot({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        "inline-block h-2 w-2 shrink-0 rounded-full",
+        "inline-block size-2 shrink-0 rounded-full",
         STATUS_DOT_COLORS[status] ?? "bg-gray-400"
       )}
       title={STATUS_LABELS[status] ?? status}
@@ -266,8 +282,8 @@ function GitHubStatusIndicator({ release }: { release: ReleaseData }) {
         rel="noopener noreferrer"
         target="_blank"
       >
-        <GithubLogo className="h-3.5 w-3.5" />
-        <Check className="h-3 w-3" />
+        <GithubLogo className="size-3.5" />
+        <Check className="size-3" />
       </a>
     );
   }
@@ -275,8 +291,8 @@ function GitHubStatusIndicator({ release }: { release: ReleaseData }) {
   if (release.githubPushStatus === "pending") {
     return (
       <span className="flex items-center gap-1 text-muted-foreground text-xs">
-        <GithubLogo className="h-3.5 w-3.5" />
-        <Spinner className="h-3 w-3 animate-spin" />
+        <GithubLogo className="size-3.5" />
+        <Spinner className="size-3 animate-spin" />
       </span>
     );
   }
@@ -284,8 +300,8 @@ function GitHubStatusIndicator({ release }: { release: ReleaseData }) {
   if (release.githubPushStatus === "failed") {
     return (
       <span className="flex items-center gap-1 text-destructive text-xs">
-        <GithubLogo className="h-3.5 w-3.5" />
-        <WarningCircle className="h-3 w-3" />
+        <GithubLogo className="size-3.5" />
+        <WarningCircle className="size-3" />
       </span>
     );
   }

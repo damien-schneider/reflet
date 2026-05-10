@@ -4,7 +4,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
@@ -18,6 +18,27 @@ interface FeedbackContentProps {
   title: string;
 }
 
+interface FeedbackDraft {
+  baselineDescription: string;
+  baselineTitle: string;
+  description: string;
+  title: string;
+}
+
+const EMPTY_ATTACHMENTS: string[] = [];
+
+function createFeedbackDraft(
+  title: string,
+  description: string
+): FeedbackDraft {
+  return {
+    baselineDescription: description,
+    baselineTitle: title,
+    description,
+    title,
+  };
+}
+
 function AttachmentThumbnail({ src, alt }: { src: string; alt: string }) {
   return (
     <Image alt={alt} className="object-cover" fill sizes="80px" src={src} />
@@ -29,71 +50,71 @@ export function FeedbackContent({
   title,
   description,
   isAdmin,
-  attachments = [],
+  attachments = EMPTY_ATTACHMENTS,
 }: FeedbackContentProps) {
+  return (
+    <FeedbackContentEditor
+      attachments={attachments}
+      description={description}
+      feedbackId={feedbackId}
+      isAdmin={isAdmin}
+      key={`${feedbackId}:${title}:${description}`}
+      title={title}
+    />
+  );
+}
+
+function FeedbackContentEditor({
+  feedbackId,
+  title,
+  description,
+  isAdmin,
+  attachments,
+}: Required<FeedbackContentProps>) {
   const updateFeedback = useMutation(api.feedback.mutations.update);
-
-  // Local state for unsaved changes
-  const [editedTitle, setEditedTitle] = useState(title);
-  const [editedDescription, setEditedDescription] = useState(description);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-  // Sync local state when props change
-  useEffect(
-    function syncLocalStateWithProps() {
-      setEditedTitle(title);
-      setEditedDescription(description);
-      setHasUnsavedChanges(false);
-    },
-    [title, description]
+  const [draft, setDraft] = useState(() =>
+    createFeedbackDraft(title, description)
   );
 
-  const handleTitleChange = useCallback(
-    (newTitle: string) => {
-      setEditedTitle(newTitle);
-      setHasUnsavedChanges(
-        newTitle !== title || editedDescription !== description
-      );
-    },
-    [title, description, editedDescription]
-  );
+  const hasUnsavedChanges =
+    draft.title !== draft.baselineTitle ||
+    draft.description !== draft.baselineDescription;
 
-  const handleDescriptionChange = useCallback(
-    (newDescription: string) => {
-      setEditedDescription(newDescription);
-      setHasUnsavedChanges(
-        editedTitle !== title || newDescription !== description
-      );
-    },
-    [title, description, editedTitle]
-  );
+  const handleTitleChange = (newTitle: string) => {
+    setDraft((current) => ({ ...current, title: newTitle }));
+  };
 
-  const handleSave = useCallback(async () => {
+  const handleDescriptionChange = (newDescription: string) => {
+    setDraft((current) => ({ ...current, description: newDescription }));
+  };
+
+  const handleSave = async () => {
     const updates: { title?: string; description?: string } = {};
-    if (editedTitle.trim() !== title) {
-      updates.title = editedTitle.trim();
+    const savedTitle = draft.title.trim();
+    if (savedTitle !== draft.baselineTitle) {
+      updates.title = savedTitle;
     }
-    if (editedDescription !== description) {
-      updates.description = editedDescription;
+    if (draft.description !== draft.baselineDescription) {
+      updates.description = draft.description;
     }
     if (Object.keys(updates).length > 0) {
       await updateFeedback({ id: feedbackId, ...updates });
     }
-    setHasUnsavedChanges(false);
-  }, [
-    feedbackId,
-    editedTitle,
-    editedDescription,
-    title,
-    description,
-    updateFeedback,
-  ]);
+    setDraft((current) => ({
+      baselineDescription: current.description,
+      baselineTitle: savedTitle,
+      description: current.description,
+      title: savedTitle,
+    }));
+  };
 
-  const handleCancel = useCallback(() => {
-    setEditedTitle(title);
-    setEditedDescription(description);
-    setHasUnsavedChanges(false);
-  }, [title, description]);
+  const handleCancel = () => {
+    setDraft((current) => ({
+      ...current,
+      description: current.baselineDescription,
+      title: current.baselineTitle,
+    }));
+  };
 
   return (
     <div className="space-y-4">
@@ -103,7 +124,7 @@ export function FeedbackContent({
         disabled={!isAdmin}
         onChange={handleTitleChange}
         placeholder="Untitled"
-        value={editedTitle}
+        value={draft.title}
       />
 
       {/* Description */}
@@ -116,7 +137,7 @@ export function FeedbackContent({
           placeholder={
             isAdmin ? "Add a description..." : "No description provided."
           }
-          value={editedDescription}
+          value={draft.description}
         />
       </div>
 
@@ -125,7 +146,7 @@ export function FeedbackContent({
         <div className="flex flex-wrap gap-2">
           {attachments.map((url, index) => (
             <a
-              className="relative block h-20 w-20 overflow-hidden rounded-md border bg-muted transition-opacity hover:opacity-80"
+              className="relative block size-20 overflow-hidden rounded-md border bg-muted transition-opacity hover:opacity-80"
               href={url}
               key={url}
               rel="noopener noreferrer"

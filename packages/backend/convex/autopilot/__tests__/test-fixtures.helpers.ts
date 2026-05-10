@@ -21,14 +21,22 @@ const createActiveStripeSubscription = async (
   t: TestContext,
   organizationId: Id<"organizations">
 ) => {
+  const stripeSubscriptionId = `sub_autopilot_${organizationId}`;
+  const stripeCustomerId = `cus_autopilot_${organizationId}`;
   await t.mutation(components.stripe.private.handleSubscriptionCreated, {
-    stripeSubscriptionId: `sub_autopilot_${organizationId}`,
-    stripeCustomerId: `cus_autopilot_${organizationId}`,
+    stripeSubscriptionId,
+    stripeCustomerId,
     status: "active",
     currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000,
     cancelAtPeriodEnd: false,
     priceId: "price_pro",
     metadata: { orgId: organizationId },
+  });
+  await t.run(async (ctx) => {
+    await ctx.db.patch(organizationId, {
+      stripeCustomerId,
+      stripeSubscriptionId,
+    });
   });
 };
 
@@ -103,9 +111,12 @@ export const createAutopilotConfig = async (
   overrides: {
     adapter?: Doc<"autopilotConfig">["adapter"];
     autonomyMode?: Doc<"autopilotConfig">["autonomyMode"];
+    autoMergePRs?: boolean;
+    ceoChatThreadId?: string;
     costUsedTodayUsd?: number;
     dailyCostCapUsd?: number;
     enabled?: boolean;
+    growthEnabled?: boolean;
     maxTasksPerDay?: number;
     tasksResetAt?: number;
     tasksUsedToday?: number;

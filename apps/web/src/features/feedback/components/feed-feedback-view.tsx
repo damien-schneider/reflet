@@ -140,14 +140,14 @@ export function FeedFeedbackView({
           />
           {hasActiveFilters && (
             <div className="flex flex-col items-center justify-center py-8">
-              <MagnifyingGlassIcon className="mb-4 h-12 w-12 text-muted-foreground" />
+              <MagnifyingGlassIcon className="mb-4 size-12 text-muted-foreground" />
               <h3 className="font-semibold text-lg">No matching feedback</h3>
               <p className="text-muted-foreground">
                 Try adjusting your filters or search query.
               </p>
               {hideCompleted && (
                 <p className="mt-2 text-muted-foreground text-sm">
-                  Completed items are hidden — use the filter to show them.
+                  Completed items are hidden. Use the filter to show them.
                 </p>
               )}
             </div>
@@ -163,7 +163,7 @@ export function FeedFeedbackView({
                 No open feedback yet.
               </p>
               <p className="text-muted-foreground text-sm">
-                Completed items are hidden — use the filter to show them.
+                Completed items are hidden. Use the filter to show them.
               </p>
             </div>
           )}

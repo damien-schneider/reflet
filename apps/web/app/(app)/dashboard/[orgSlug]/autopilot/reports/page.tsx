@@ -201,7 +201,10 @@ export default function ReportsPage() {
                   >
                     {REPORT_TYPE_LABELS[report.reportType]}
                   </Badge>
-                  <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">
+                  <span
+                    className="ml-auto shrink-0 text-[11px] text-muted-foreground"
+                    suppressHydrationWarning
+                  >
                     {formatDistanceToNow(report.createdAt, { addSuffix: true })}
                   </span>
                   {report.needsReview && (

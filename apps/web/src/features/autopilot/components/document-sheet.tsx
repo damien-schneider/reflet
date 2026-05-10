@@ -268,7 +268,7 @@ function CreateMode({
         <div className="space-y-4">
           <Input
             onChange={(e) => onTitleChange(e.target.value)}
-            placeholder="Document title..."
+            placeholder="Document title\u2026"
             value={title}
           />
           <Select
@@ -292,7 +292,7 @@ function CreateMode({
           </Select>
           <TiptapMarkdownEditor
             onChange={onContentChange}
-            placeholder="Write something... Type '/' for commands"
+            placeholder="Write something\u2026 Type '/' for commands"
             value={content}
           />
         </div>
@@ -302,7 +302,7 @@ function CreateMode({
           Cancel
         </Button>
         <Button disabled={pending || !title.trim()} onClick={onCreate}>
-          {pending ? "Creating..." : "Create"}
+          {pending ? "Creating\u2026" : "Create"}
         </Button>
       </SheetFooter>
     </>

@@ -53,23 +53,16 @@ const OWNER_LABELS: Record<Owner, string> = {
   sales: "Sales",
 };
 
-const HOUR_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * HOUR_MS;
 const TRAILING_S = /s$/;
 
-const formatRelative = (ts: number): string => {
-  const diff = Date.now() - ts;
-  if (diff < 60_000) {
-    return "just now";
-  }
-  if (diff < HOUR_MS) {
-    return `${Math.floor(diff / 60_000)}m ago`;
-  }
-  if (diff < DAY_MS) {
-    return `${Math.floor(diff / HOUR_MS)}h ago`;
-  }
-  return `${Math.floor(diff / DAY_MS)}d ago`;
-};
+const UPDATED_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+});
+
+const formatUpdatedDate = (timestamp: number): string =>
+  UPDATED_DATE_FORMATTER.format(timestamp);
 
 const computeBadge = (
   status: ChainNodeStatus,
@@ -105,7 +98,7 @@ const computeSubtitle = (
     return "In progress";
   }
   if (actionable) {
-    return `Ready — Agent: ${OWNER_LABELS[owner]}`;
+    return `Ready, Agent: ${OWNER_LABELS[owner]}`;
   }
   return "Locked";
 };
@@ -168,7 +161,7 @@ export function ChainTechTreeCard({
             </span>
           )}
           {lastUpdatedAt !== null && (
-            <span>Updated {formatRelative(lastUpdatedAt)}</span>
+            <span>Updated {formatUpdatedDate(lastUpdatedAt)}</span>
           )}
           {avgValidationScore !== null && (
             <span>Score: {avgValidationScore}/100</span>

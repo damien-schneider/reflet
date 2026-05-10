@@ -8,7 +8,7 @@ import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
@@ -41,6 +41,9 @@ export interface UseAuthFormReturn {
   setValue: ReturnType<typeof useForm<SignUpFormData>>["setValue"];
   trigger: ReturnType<typeof useForm<SignUpFormData>>["trigger"];
   watch: ReturnType<typeof useForm<SignUpFormData>>["watch"];
+  watchedConfirmPassword: string;
+  watchedEmail: string;
+  watchedPassword: string;
 }
 
 export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
@@ -67,6 +70,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
     watch,
     setValue,
     trigger,
+    control,
   } = useForm<SignUpFormData>({
     // Pass mode via context so resolver always gets current value
     context: { mode },
@@ -94,9 +98,21 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
     },
   });
 
-  const watchedEmail = watch("email");
-  const watchedPassword = watch("password");
-  const watchedConfirmPassword = watch("confirmPassword");
+  const watchedEmail =
+    useWatch({
+      control,
+      name: "email",
+    }) ?? "";
+  const watchedPassword =
+    useWatch({
+      control,
+      name: "password",
+    }) ?? "";
+  const watchedConfirmPassword =
+    useWatch({
+      control,
+      name: "confirmPassword",
+    }) ?? "";
   const [debouncedEmail] = useDebouncedValue(watchedEmail, { wait: 800 });
 
   useEffect(
@@ -154,7 +170,11 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setApiError(null);
-    setValue("email", e.target.value);
+    setValue("email", e.target.value, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
   };
 
   const onSubmit = async (data: SignUpFormData) => {
@@ -255,6 +275,9 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
     errors,
     isSubmitting,
     watch,
+    watchedEmail,
+    watchedPassword,
+    watchedConfirmPassword,
     setValue,
     trigger,
     onSubmit,

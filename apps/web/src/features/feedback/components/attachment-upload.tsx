@@ -36,8 +36,8 @@ function DropzoneLabel({
   if (isUploading) {
     return (
       <>
-        <Spinner className="h-4 w-4 animate-spin" />
-        <span>Uploading...</span>
+        <Spinner className="size-4 animate-spin" />
+        <span>Uploading…</span>
       </>
     );
   }
@@ -45,7 +45,7 @@ function DropzoneLabel({
   if (isDragging) {
     return (
       <>
-        <ImageIcon className="h-4 w-4" />
+        <ImageIcon className="size-4" />
         <span>Drop images here</span>
       </>
     );
@@ -53,7 +53,7 @@ function DropzoneLabel({
 
   return (
     <>
-      <Paperclip className="h-4 w-4" />
+      <Paperclip className="size-4" />
       <span>Attach images</span>
       {attachmentsCount > 0 && (
         <span className="text-muted-foreground/60 text-xs">
@@ -75,10 +75,6 @@ export function AttachmentUpload({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { uploadImage, isUploading } = useImageUpload({
-    onSuccess: (url) => {
-      onAttachmentsChange([...attachments, url]);
-      setError(null);
-    },
     onError: (err) => {
       setError(err.message);
     },
@@ -91,16 +87,28 @@ export function AttachmentUpload({
       const fileArray = Array.from(files);
       const remaining = maxAttachments - attachments.length;
       const filesToUpload = fileArray.slice(0, remaining);
+      const uploadResults = await Promise.all(filesToUpload.map(uploadImage));
+      const uploadedUrls = uploadResults.filter((url) => url !== null);
 
-      for (const file of filesToUpload) {
-        await uploadImage(file);
+      if (uploadedUrls.length > 0) {
+        onAttachmentsChange([...attachments, ...uploadedUrls]);
+      }
+
+      if (uploadedUrls.length === filesToUpload.length) {
+        setError(null);
       }
 
       if (fileArray.length > remaining) {
         setError(`Maximum ${maxAttachments} attachments allowed`);
       }
     },
-    [attachments.length, maxAttachments, uploadImage]
+    [
+      attachments.length,
+      maxAttachments,
+      uploadImage,
+      attachments,
+      onAttachmentsChange,
+    ]
   );
 
   const handleInputChange = useCallback(
@@ -156,7 +164,7 @@ export function AttachmentUpload({
     [attachments, onAttachmentsChange]
   );
 
-  const handleClick = useCallback(() => {
+  const openFilePicker = useCallback(() => {
     if (canAddMore && inputRef.current) {
       inputRef.current.click();
     }
@@ -179,7 +187,7 @@ export function AttachmentUpload({
         <div className="flex flex-wrap gap-2">
           {attachments.map((url, index) => (
             <div
-              className="group relative h-16 w-16 overflow-hidden rounded-md border bg-muted"
+              className="group relative size-16 overflow-hidden rounded-md border bg-muted"
               key={url}
             >
               <NextImage
@@ -191,11 +199,11 @@ export function AttachmentUpload({
               />
               <button
                 aria-label={`Remove attachment ${index + 1}`}
-                className="absolute top-0.5 right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
+                className="absolute top-0.5 right-0.5 flex size-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
                 onClick={() => handleRemove(index)}
                 type="button"
               >
-                <X className="h-3 w-3" weight="bold" />
+                <X className="size-3" weight="bold" />
               </button>
             </div>
           ))}
@@ -213,7 +221,7 @@ export function AttachmentUpload({
             disabled && "cursor-not-allowed opacity-60"
           )}
           disabled={disabled}
-          onClick={handleClick}
+          onClick={openFilePicker}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}

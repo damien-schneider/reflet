@@ -87,7 +87,7 @@ export function LiveTicker({
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-linear-to-l from-card via-card/90 to-transparent" />
 
       <div className="flex items-center">
-        <div className="flex shrink-0 items-center gap-2 border-border/60 border-r bg-background/50 px-3 py-3">
+        <div className="flex shrink-0 items-center gap-2 border-border/60 border-r bg-background/50 p-3">
           <span className="relative flex size-2.5">
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500/70 motion-reduce:animate-none" />
             <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />

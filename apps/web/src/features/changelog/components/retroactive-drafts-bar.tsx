@@ -56,12 +56,12 @@ export function RetroactiveDraftsBar({
       <div className="flex items-center gap-2">
         <Link href={`/dashboard/${orgSlug}/changelog/review-drafts`}>
           <Button size="sm" variant="outline">
-            <Eye className="h-4 w-4" />
+            <Eye className="size-4" />
             Review First
           </Button>
         </Link>
         <Button onClick={handlePublishAll} size="sm" type="button">
-          <CloudArrowUp className="h-4 w-4" />
+          <CloudArrowUp className="size-4" />
           Publish All
         </Button>
       </div>

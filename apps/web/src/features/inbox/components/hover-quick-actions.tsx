@@ -39,14 +39,14 @@ export function HoverQuickActions({
         <TooltipTrigger
           render={
             <Button
-              className="h-7 w-7"
+              className="size-7"
               onClick={(e) => handleClick(e, onResolve)}
               size="icon"
               variant="ghost"
             />
           }
         >
-          <CheckCircle className="h-4 w-4 text-emerald-500" />
+          <CheckCircle className="size-4 text-emerald-500" />
           <span className="sr-only">Resolve</span>
         </TooltipTrigger>
         <TooltipContent>Resolve</TooltipContent>
@@ -56,14 +56,14 @@ export function HoverQuickActions({
         <TooltipTrigger
           render={
             <Button
-              className="h-7 w-7"
+              className="size-7"
               onClick={(e) => handleClick(e, onClose)}
               size="icon"
               variant="ghost"
             />
           }
         >
-          <XCircle className="h-4 w-4 text-zinc-500" />
+          <XCircle className="size-4 text-zinc-500" />
           <span className="sr-only">Close</span>
         </TooltipTrigger>
         <TooltipContent>Close</TooltipContent>
@@ -73,14 +73,14 @@ export function HoverQuickActions({
         <TooltipTrigger
           render={
             <Button
-              className="h-7 w-7"
+              className="size-7"
               onClick={(e) => handleClick(e, onAssignToMe)}
               size="icon"
               variant="ghost"
             />
           }
         >
-          <UserCirclePlus className="h-4 w-4 text-olive-500" />
+          <UserCirclePlus className="size-4 text-olive-500" />
           <span className="sr-only">Assign to me</span>
         </TooltipTrigger>
         <TooltipContent>Assign to me</TooltipContent>

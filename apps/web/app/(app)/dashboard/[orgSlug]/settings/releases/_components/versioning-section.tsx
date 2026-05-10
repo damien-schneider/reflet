@@ -31,7 +31,7 @@ export const VersioningSection = ({
 }: VersioningSectionProps) => (
   <div className="space-y-4 rounded-lg border p-4">
     <div className="flex items-center gap-3">
-      <Tag className="h-5 w-5 text-muted-foreground" />
+      <Tag className="size-5 text-muted-foreground" />
       <p className="font-medium text-sm">Versioning</p>
     </div>
 

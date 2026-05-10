@@ -20,7 +20,7 @@ export function GoProBanner({ orgSlug }: GoProBannerProps) {
         </p>
         <Link
           className="flex h-7 w-full items-center justify-center rounded-md bg-violet-600 font-medium text-white text-xs hover:bg-violet-700"
-          href={`/dashboard/${orgSlug}/settings/billing`}
+          href={`/dashboard/${orgSlug}/project/billing`}
         >
           Go Pro
         </Link>

@@ -96,6 +96,7 @@ export default function LeadDetailPage({
       <div className="flex items-center gap-3">
         <Button
           aria-label="Back to sales"
+          nativeButton={false}
           render={<Link href={`/dashboard/${orgSlug}/autopilot/sales`} />}
           size="icon"
           variant="ghost"

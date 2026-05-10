@@ -60,7 +60,7 @@ export function BlogPostLayout({ meta, slug, children }: BlogPostLayoutProps) {
         <Lead className="mb-6">{meta.description}</Lead>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-olive-600/10 font-bold text-olive-600">
+            <div className="flex size-10 items-center justify-center rounded-full bg-olive-600/10 font-bold text-olive-600">
               {meta.author
                 .split(" ")
                 .map((n) => n[0])

@@ -102,7 +102,7 @@ export function AutoTagButton({ organizationId }: AutoTagButtonProps) {
     const processed = Math.min(job.processedItems, job.totalItems);
     return (
       <Button className="shrink-0 gap-1.5" disabled size="sm" variant="outline">
-        <ArrowsClockwise className="h-4 w-4 animate-spin" />
+        <ArrowsClockwise className="size-4 animate-spin" />
         <span>
           Tagging {processed}/{job.totalItems}...
         </span>
@@ -122,7 +122,7 @@ export function AutoTagButton({ organizationId }: AutoTagButtonProps) {
       size="sm"
       variant="outline"
     >
-      <Sparkle className="h-4 w-4" />
+      <Sparkle className="size-4" />
       <span>Auto-tag {untaggedCount}</span>
     </Button>
   );

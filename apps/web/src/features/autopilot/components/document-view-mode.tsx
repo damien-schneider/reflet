@@ -42,26 +42,40 @@ const STATUS_DOT_COLORS = {
   archived: "bg-red-500",
 } as const;
 
-export function ViewMode({
-  actionPending = false,
-  document,
-  onArchive,
-  onStatusTransition,
-}: {
+interface ViewModeProps {
   actionPending?: boolean;
   document: Doc<"autopilotDocuments">;
   onArchive: () => void;
   onStatusTransition: () => void;
-}) {
+}
+
+export function ViewMode(props: ViewModeProps) {
+  return <ViewModeContent key={props.document._id} {...props} />;
+}
+
+function ViewModeContent({
+  actionPending = false,
+  document,
+  onArchive,
+  onStatusTransition,
+}: ViewModeProps) {
   const { orgSlug } = useAutopilotContext();
   const updateDoc = useMutation(
     api.autopilot.mutations.documents.updateDocument
   );
-  const [editedContent, setEditedContent] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<{
+    content: string;
+    documentId: Doc<"autopilotDocuments">["_id"];
+  } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const isEditable = document.status === "pending_review";
+  const editedContent =
+    editDraft?.documentId === document._id ? editDraft.content : null;
   const hasEdits = editedContent !== null && editedContent !== document.content;
+  const handleContentChange = (content: string) => {
+    setEditDraft({ documentId: document._id, content });
+  };
 
   const handleSaveEdits = async () => {
     if (!hasEdits || editedContent === null) {
@@ -70,7 +84,7 @@ export function ViewMode({
     setIsSaving(true);
     try {
       await updateDoc({ documentId: document._id, content: editedContent });
-      setEditedContent(null);
+      setEditDraft(null);
       toast.success("Content updated");
     } catch {
       toast.error("Failed to save edits");
@@ -104,7 +118,10 @@ export function ViewMode({
               Editable
             </Badge>
           )}
-          <span className="text-muted-foreground text-xs">
+          <span
+            className="text-muted-foreground text-xs"
+            suppressHydrationWarning
+          >
             {formatDistanceToNow(document.createdAt, { addSuffix: true })}
           </span>
         </div>
@@ -120,12 +137,12 @@ export function ViewMode({
           document={document}
           editedContent={editedContent}
           isEditable={isEditable}
-          onContentChange={isEditable ? setEditedContent : undefined}
+          onContentChange={isEditable ? handleContentChange : undefined}
         />
       </ScrollArea>
       <SheetFooter className="flex-row justify-between gap-2">
         <Button disabled={actionPending} onClick={onArchive} variant="outline">
-          {actionPending ? "Saving..." : "Archive"}
+          {actionPending ? "Saving\u2026" : "Archive"}
         </Button>
         <div className="flex gap-2">
           {hasEdits && (
@@ -134,12 +151,12 @@ export function ViewMode({
               onClick={handleSaveEdits}
               variant="secondary"
             >
-              {isSaving ? "Saving..." : "Save Edits"}
+              {isSaving ? "Saving\u2026" : "Save Edits"}
             </Button>
           )}
           {statusAction && (
             <Button disabled={actionPending} onClick={onStatusTransition}>
-              {actionPending ? "Saving..." : statusAction}
+              {actionPending ? "Saving\u2026" : statusAction}
             </Button>
           )}
         </div>
@@ -254,7 +271,7 @@ function PropertyGrid({
 
       {document.publishedAt && (
         <PropertyRow label="Published">
-          <span>
+          <span suppressHydrationWarning>
             {formatDistanceToNow(document.publishedAt, { addSuffix: true })}
           </span>
         </PropertyRow>
@@ -325,7 +342,7 @@ function PropertyGrid({
       )}
 
       <PropertyRow label="Updated">
-        <span>
+        <span suppressHydrationWarning>
           {formatDistanceToNow(document.updatedAt, { addSuffix: true })}
         </span>
       </PropertyRow>

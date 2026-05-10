@@ -125,7 +125,7 @@ export function MonitorCard({
                   size="sm"
                   variant="ghost"
                 >
-                  <DotsThree className="h-4 w-4" />
+                  <DotsThree className="size-4" />
                 </Button>
               )}
             />
@@ -137,7 +137,7 @@ export function MonitorCard({
                     onResume(monitor._id);
                   }}
                 >
-                  <Play className="mr-2 h-4 w-4" />
+                  <Play className="mr-2 size-4" />
                   Resume
                 </DropdownListItem>
               ) : (
@@ -147,14 +147,14 @@ export function MonitorCard({
                     onPause(monitor._id);
                   }}
                 >
-                  <Pause className="mr-2 h-4 w-4" />
+                  <Pause className="mr-2 size-4" />
                   Pause
                 </DropdownListItem>
               )}
               {isPro && onUpdateInterval && (
                 <>
                   <div className="px-2 py-1.5 text-muted-foreground text-xs">
-                    <Lightning className="mr-1 inline h-3 w-3" />
+                    <Lightning className="mr-1 inline size-3" />
                     Check interval
                   </div>
                   {CHECK_INTERVALS.map((interval) => (
@@ -186,7 +186,7 @@ export function MonitorCard({
                   onDelete(monitor._id);
                 }}
               >
-                <Trash className="mr-2 h-4 w-4" />
+                <Trash className="mr-2 size-4" />
                 Delete
               </DropdownListItem>
             </DropdownListContent>

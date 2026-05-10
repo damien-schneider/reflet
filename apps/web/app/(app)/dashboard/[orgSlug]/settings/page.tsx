@@ -31,7 +31,7 @@ export default function GeneralSettingsPage({
 }: {
   params: Promise<{ orgSlug: string }>;
 }) {
-  const router = useRouter();
+  const { replace } = useRouter();
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const currentMember = useQuery(
@@ -104,7 +104,7 @@ export default function GeneralSettingsPage({
       setTimeout(() => setSaved(false), 2000);
 
       if (trimmedSlug !== orgSlug) {
-        router.replace(`/dashboard/${trimmedSlug}/settings`);
+        replace(`/dashboard/${trimmedSlug}/settings`);
       }
     } catch (err) {
       if (err instanceof Error) {
@@ -121,15 +121,15 @@ export default function GeneralSettingsPage({
     if (isSaving) {
       return (
         <>
-          <Spinner className="mr-2 h-4 w-4 animate-spin" />
-          Saving...
+          <Spinner className="mr-2 size-4 animate-spin" />
+          Saving…
         </>
       );
     }
     if (saved) {
       return (
         <>
-          <Check className="mr-2 h-4 w-4" />
+          <Check className="mr-2 size-4" />
           Saved
         </>
       );
@@ -150,7 +150,7 @@ export default function GeneralSettingsPage({
         <section className="space-y-4">
           <div>
             <div className="flex items-center gap-2">
-              <Buildings className="h-5 w-5" />
+              <Buildings className="size-5" />
               <H3 variant="section">Organization Details</H3>
             </div>
             <Muted>Update your organization name and URL</Muted>
@@ -169,7 +169,7 @@ export default function GeneralSettingsPage({
             <div className="space-y-2">
               <Label htmlFor="org-slug">
                 <span className="flex items-center gap-2">
-                  <LinkIcon className="h-4 w-4" />
+                  <LinkIcon className="size-4" />
                   Organization URL
                 </span>
               </Label>
@@ -199,7 +199,7 @@ export default function GeneralSettingsPage({
         <section className="space-y-4">
           <div>
             <div className="flex items-center gap-2">
-              <Globe className="h-5 w-5" />
+              <Globe className="size-5" />
               <H3 variant="section">Visibility</H3>
             </div>
             <Muted>

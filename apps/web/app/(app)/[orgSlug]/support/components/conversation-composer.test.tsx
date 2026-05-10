@@ -63,6 +63,26 @@ describe("ConversationComposer", () => {
     expect(screen.getByText("Send")).toBeInTheDocument();
   });
 
+  it("expands when alwaysExpanded changes after mount", () => {
+    const { rerender } = render(
+      <ConversationComposer isSubmitting={false} onSubmit={vi.fn()} />
+    );
+
+    expect(screen.queryByPlaceholderText("Subject (optional)")).toBeNull();
+
+    rerender(
+      <ConversationComposer
+        alwaysExpanded
+        isSubmitting={false}
+        onSubmit={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByPlaceholderText("Subject (optional)")
+    ).toBeInTheDocument();
+  });
+
   it("calls onSubmit with subject and message", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();

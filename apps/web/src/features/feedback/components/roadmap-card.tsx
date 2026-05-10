@@ -51,7 +51,7 @@ export function RoadmapCard({
                     {tag.appliedByAi && (
                       <span title="Applied by AI">
                         <Sparkle
-                          className="h-2.5 w-2.5 opacity-60"
+                          className="size-2.5 opacity-60"
                           weight="fill"
                         />
                       </span>
@@ -60,7 +60,7 @@ export function RoadmapCard({
                 ))}
             </div>
             <div className="flex items-center gap-1 text-muted-foreground text-xs">
-              <CaretUp className="h-3 w-3" />
+              <CaretUp className="size-3" />
               {feedback.voteCount}
             </div>
           </div>

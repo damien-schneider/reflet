@@ -5,7 +5,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { internalQuery, type QueryCtx } from "../_generated/server";
-import { isProductionCodingAdapter } from "./schema/validators";
+import { isAgentEnabledInConfig } from "./config";
 
 // ============================================
 // TASK CAP DEFAULTS
@@ -19,12 +19,12 @@ export const DEFAULT_DAILY_COST_CAP_USD = 50;
  * All agent names and their corresponding config fields.
  */
 const AGENT_CONFIG_FIELDS = [
-  { name: "pm", field: "pmEnabled" },
-  { name: "cto", field: "ctoEnabled" },
-  { name: "dev", field: "devEnabled" },
-  { name: "growth", field: "growthEnabled" },
-  { name: "support", field: "supportEnabled" },
-  { name: "sales", field: "salesEnabled" },
+  "pm",
+  "cto",
+  "dev",
+  "growth",
+  "support",
+  "sales",
 ] as const;
 
 async function fetchEnabledAgents(
@@ -40,12 +40,9 @@ async function fetchEnabledAgents(
     return [];
   }
 
-  return AGENT_CONFIG_FIELDS.filter(({ field, name }) => {
-    if (name === "dev" && !isProductionCodingAdapter(config.adapter)) {
-      return false;
-    }
-    return config[field] !== false;
-  }).map(({ name }) => name);
+  return AGENT_CONFIG_FIELDS.filter((name) =>
+    isAgentEnabledInConfig(name, config)
+  );
 }
 
 /**

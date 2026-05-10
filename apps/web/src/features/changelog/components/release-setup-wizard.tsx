@@ -206,11 +206,11 @@ export function ReleaseSetupWizard({
         <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="flex items-center gap-2">
-              <GithubLogo className="h-5 w-5" />
+              <GithubLogo className="size-5" />
               Release Setup
             </SheetTitle>
             <SheetDescription>
-              Step {step} of {TOTAL_STEPS} — Configure your release workflow
+              Step {step} of {TOTAL_STEPS}: Configure your release workflow
             </SheetDescription>
           </div>
           <SheetClose
@@ -222,7 +222,7 @@ export function ReleaseSetupWizard({
               />
             }
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
             <span className="sr-only">Close</span>
           </SheetClose>
         </SheetHeader>
@@ -242,7 +242,7 @@ export function ReleaseSetupWizard({
 
         {/* Step content */}
         <ScrollArea className="flex-1">
-          <div className="px-4 py-4">
+          <div className="p-4">
             {step === 1 && (
               <WorkflowStep
                 onBranchChange={(branch) =>
@@ -277,7 +277,7 @@ export function ReleaseSetupWizard({
             type="button"
             variant="ghost"
           >
-            <ArrowLeft className="mr-1 h-4 w-4" />
+            <ArrowLeft className="mr-1 size-4" />
             Back
           </Button>
 
@@ -288,7 +288,7 @@ export function ReleaseSetupWizard({
               size="sm"
               type="button"
             >
-              <Check className="mr-1 h-4 w-4" />
+              <Check className="mr-1 size-4" />
               Complete Setup
             </Button>
           ) : (
@@ -299,7 +299,7 @@ export function ReleaseSetupWizard({
               type="button"
             >
               Next
-              <ArrowRight className="ml-1 h-4 w-4" />
+              <ArrowRight className="ml-1 size-4" />
             </Button>
           )}
         </div>

@@ -4,7 +4,7 @@ import { useMutation } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-type SaveStatus = "idle" | "saving" | "saved";
+export type SaveStatus = "idle" | "saving" | "saved";
 
 const AUTO_SAVE_DEBOUNCE_MS = 500;
 const SAVED_DISPLAY_MS = 2000;

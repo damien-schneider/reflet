@@ -1,6 +1,13 @@
 "use client";
 
-import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import {
+  domAnimation,
+  LazyMotion,
+  m,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "motion/react";
 import { useEffect } from "react";
 
 import { cn } from "@/lib/utils";
@@ -160,83 +167,85 @@ export function MilestoneProgressRing({
   ] as const;
 
   return (
-    <div
-      className="relative inline-flex items-center justify-center"
-      style={{ width: size, height: size }}
-    >
-      <svg
-        aria-label={`Milestone progress: ${percentage}%`}
-        className={cn(
-          "overflow-visible",
-          isComplete && "drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]"
-        )}
-        height={size}
-        role="img"
-        viewBox={`0 0 ${size} ${size}`}
-        width={size}
+    <LazyMotion features={domAnimation}>
+      <div
+        className="relative inline-flex items-center justify-center"
+        style={{ width: size, height: size }}
       >
-        {/* Background track */}
-        <circle
-          className="stroke-muted/40"
-          cx={center}
-          cy={center}
-          fill="none"
-          r={radius}
-          strokeWidth={STROKE_WIDTH}
-        />
+        <svg
+          aria-label={`Milestone progress: ${percentage}%`}
+          className={cn(
+            "overflow-visible",
+            isComplete && "drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]"
+          )}
+          height={size}
+          role="img"
+          viewBox={`0 0 ${size} ${size}`}
+          width={size}
+        >
+          {/* Background track */}
+          <circle
+            className="stroke-muted/40"
+            cx={center}
+            cy={center}
+            fill="none"
+            r={radius}
+            strokeWidth={STROKE_WIDTH}
+          />
 
-        {/* Animated segments */}
-        {segmentConfigs.map(
-          (segment) =>
-            segment.visible && (
-              <motion.circle
-                className={segment.className}
-                cx={center}
-                cy={center}
-                fill="none"
-                key={segment.key}
-                r={radius}
-                strokeDasharray={`${segment.length} ${circumference}`}
-                strokeLinecap="round"
-                strokeWidth={STROKE_WIDTH}
-                style={{
-                  strokeDashoffset: segment.dashoffset,
-                  rotate: `${segment.rotation}deg`,
-                  transformOrigin: "center",
-                }}
-              />
-            )
+          {/* Animated segments */}
+          {segmentConfigs.map(
+            (segment) =>
+              segment.visible && (
+                <m.circle
+                  className={segment.className}
+                  cx={center}
+                  cy={center}
+                  fill="none"
+                  key={segment.key}
+                  r={radius}
+                  strokeDasharray={`${segment.length} ${circumference}`}
+                  strokeLinecap="round"
+                  strokeWidth={STROKE_WIDTH}
+                  style={{
+                    strokeDashoffset: segment.dashoffset,
+                    rotate: `${segment.rotation}deg`,
+                    transformOrigin: "center",
+                  }}
+                />
+              )
+          )}
+        </svg>
+
+        {/* Center percentage text */}
+        <m.span
+          className={cn(
+            "pointer-events-none absolute inset-0 flex items-center justify-center",
+            "font-semibold tabular-nums leading-none",
+            isComplete ? "text-emerald-500" : "text-foreground",
+            size <= 36 ? "text-[9px]" : "text-[11px]"
+          )}
+        >
+          <m.span>{displayPercentage}</m.span>
+          <span className="text-[0.6em] opacity-60">%</span>
+        </m.span>
+
+        {/* Completion pulse */}
+        {isComplete && (
+          <m.div
+            animate={{
+              scale: [1, 1.8, 1],
+              opacity: [0.6, 0, 0.6],
+            }}
+            className="pointer-events-none absolute inset-0 rounded-full border-2 border-emerald-500"
+            transition={{
+              duration: 2,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "easeInOut",
+            }}
+          />
         )}
-      </svg>
-
-      {/* Center percentage text */}
-      <motion.span
-        className={cn(
-          "pointer-events-none absolute inset-0 flex items-center justify-center",
-          "font-semibold tabular-nums leading-none",
-          isComplete ? "text-emerald-500" : "text-foreground",
-          size <= 36 ? "text-[9px]" : "text-[11px]"
-        )}
-      >
-        <motion.span>{displayPercentage}</motion.span>
-        <span className="text-[0.6em] opacity-60">%</span>
-      </motion.span>
-
-      {/* Completion pulse */}
-      {isComplete && (
-        <motion.div
-          animate={{
-            scale: [1, 1.8, 1],
-            opacity: [0.6, 0, 0.6],
-          }}
-          className="pointer-events-none absolute inset-0 rounded-full border-2 border-emerald-500"
-          transition={{
-            duration: 2,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "easeInOut",
-          }}
-        />
-      )}
-    </div>
+      </div>
+    </LazyMotion>
   );
 }

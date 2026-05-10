@@ -249,9 +249,9 @@ export function CopyForAgents({
                 size="sm"
                 variant="outline"
               >
-                <Terminal className="h-3.5 w-3.5" />
+                <Terminal className="size-3.5" />
                 <span className="hidden sm:inline">Agents</span>
-                <CaretDown className="h-3 w-3 opacity-50" />
+                <CaretDown className="size-3 opacity-50" />
               </Button>
             }
           />
@@ -267,9 +267,9 @@ export function CopyForAgents({
               key={agent.id}
               onClick={() => handleAgentAction(agent)}
             >
-              <span className="mr-2 flex h-4 w-4 items-center justify-center">
+              <span className="mr-2 flex size-4 items-center justify-center">
                 {copiedId === agent.id ? (
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="size-4 text-green-600" />
                 ) : (
                   agent.icon
                 )}
@@ -289,11 +289,11 @@ export function CopyForAgents({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={handleCopyCodingPrompt}>
-                <span className="mr-2 flex h-4 w-4 items-center justify-center">
+                <span className="mr-2 flex size-4 items-center justify-center">
                   {copiedId === "coding-prompt" ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="size-4 text-green-600" />
                   ) : (
-                    <Code className="h-4 w-4" />
+                    <Code className="size-4" />
                   )}
                 </span>
                 <div className="flex flex-col">
@@ -319,9 +319,9 @@ export function CopyForAgents({
                   key={agent.id}
                   onClick={() => handleAgentAction(agent)}
                 >
-                  <span className="mr-2 flex h-4 w-4 items-center justify-center">
+                  <span className="mr-2 flex size-4 items-center justify-center">
                     {copiedId === agent.id ? (
-                      <Check className="h-4 w-4 text-green-600" />
+                      <Check className="size-4 text-green-600" />
                     ) : (
                       agent.icon
                     )}
@@ -332,7 +332,7 @@ export function CopyForAgents({
                       {agent.description}
                     </span>
                   </div>
-                  <ArrowUpRight className="h-3 w-3 opacity-50" />
+                  <ArrowUpRight className="size-3 opacity-50" />
                 </DropdownMenuItem>
               ))}
             </DropdownMenuGroup>
@@ -351,7 +351,7 @@ export function CopyForAgents({
                   key={agent.id}
                   onClick={() => handleAgentAction(agent)}
                 >
-                  <span className="mr-2 flex h-4 w-4 items-center justify-center">
+                  <span className="mr-2 flex size-4 items-center justify-center">
                     {agent.icon}
                   </span>
                   <div className="flex flex-1 flex-col">
@@ -360,7 +360,7 @@ export function CopyForAgents({
                       {agent.description}
                     </span>
                   </div>
-                  <ArrowUpRight className="h-3 w-3 opacity-50" />
+                  <ArrowUpRight className="size-3 opacity-50" />
                 </DropdownMenuItem>
               ))}
             </DropdownMenuGroup>

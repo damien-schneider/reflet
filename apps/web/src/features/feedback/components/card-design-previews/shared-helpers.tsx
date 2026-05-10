@@ -83,7 +83,7 @@ export function CardMeta() {
   return (
     <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
       <span className="flex items-center gap-1">
-        <ChatIcon className="h-3 w-3" />
+        <ChatIcon className="size-3" />
         {MOCK.commentCount}
       </span>
       <span className="opacity-70">{MOCK.timeAgo}</span>
@@ -124,7 +124,7 @@ export function CardTitle() {
 export function MockCard({ voteSlot }: { voteSlot: React.ReactNode }) {
   return (
     <div className="group flex gap-3">
-      <div className="flex-1 rounded-xl border border-border/50 bg-card px-4 py-4 transition-all hover:border-border hover:shadow-sm">
+      <div className="flex-1 rounded-xl border border-border/50 bg-card p-4 transition-all hover:border-border hover:shadow-sm">
         <div className="space-y-3">
           <CardTitle />
           <CardTags />

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
+import { ClientDate } from "@/shared/components/client-date";
 import { LinkedTasksSection } from "./linked-tasks-section";
 
 interface FeedbackDetailSidebarProps {
@@ -68,7 +69,7 @@ export function FeedbackDetailSidebar({
                       onClick={() => handleRemoveTag(tag._id)}
                       type="button"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="size-3" />
                     </button>
                   )}
                 </Badge>
@@ -90,7 +91,7 @@ export function FeedbackDetailSidebar({
                       <div className="flex items-center gap-2">
                         <div
                           className={cn(
-                            "h-3 w-3 shrink-0 rounded-sm border",
+                            "size-3 shrink-0 rounded-sm border",
                             getTagSwatchClass(tag.color)
                           )}
                         />
@@ -122,9 +123,10 @@ export function FeedbackDetailSidebar({
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Created</span>
-              <span className="font-medium">
-                {new Date(feedback._creationTime).toLocaleDateString()}
-              </span>
+              <ClientDate
+                className="font-medium"
+                value={feedback._creationTime}
+              />
             </div>
           </div>
         </CardContent>

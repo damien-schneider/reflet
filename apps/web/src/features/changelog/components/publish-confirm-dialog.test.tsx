@@ -111,7 +111,12 @@ vi.mock("@/components/ui/dialog", () => ({
     onOpenChange: (val: boolean) => void;
   }) =>
     open ? (
-      <div data-testid="dialog" onClick={() => onOpenChange(false)}>
+      <div
+        data-testid="dialog"
+        onClick={() => onOpenChange(false)}
+        onKeyDown={() => onOpenChange(false)}
+        role="dialog"
+      >
         {children}
       </div>
     ) : null,
@@ -144,7 +149,6 @@ vi.mock("@/components/ui/tabs", () => ({
   Tabs: ({
     children,
     value,
-    onValueChange,
   }: {
     children: React.ReactNode;
     value: string;

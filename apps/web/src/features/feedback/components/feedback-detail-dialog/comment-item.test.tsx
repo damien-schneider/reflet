@@ -34,7 +34,7 @@ vi.mock("@/components/ui/avatar", () => ({
     </span>
   ),
   AvatarImage: ({ src }: { src?: string }) =>
-    src ? <img alt="" data-testid="avatar-image" src={src} /> : null,
+    src ? <span data-src={src} data-testid="avatar-image" role="img" /> : null,
 }));
 
 vi.mock("@/components/ui/badge", () => ({

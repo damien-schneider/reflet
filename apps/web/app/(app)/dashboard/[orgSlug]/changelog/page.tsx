@@ -142,8 +142,12 @@ export default function ChangelogPage({
       orgSlug,
     });
     githubAction = href ? (
-      <Button render={<Link href={href} />} variant="outline">
-        <GithubLogo className="mr-2 h-4 w-4" />
+      <Button
+        nativeButton={false}
+        render={<Link href={href} />}
+        variant="outline"
+      >
+        <GithubLogo className="mr-2 size-4" />
         <span className="hidden sm:inline">Connect GitHub</span>
         <span className="sm:hidden">GitHub</span>
       </Button>
@@ -155,7 +159,7 @@ export default function ChangelogPage({
         size="sm"
         variant="ghost"
       >
-        <GearSix className="mr-1 h-4 w-4" />
+        <GearSix className="mr-1 size-4" />
         <span className="hidden sm:inline">Settings</span>
       </Button>
     );
@@ -191,7 +195,7 @@ export default function ChangelogPage({
             {githubAction}
             <Link href={`/dashboard/${orgSlug}/changelog/new`}>
               <Button>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 size-4" />
                 <span className="hidden sm:inline">Create Release</span>
                 <span className="sm:hidden">New</span>
               </Button>
@@ -203,7 +207,7 @@ export default function ChangelogPage({
       {showSetupBanner && (
         <div className="mb-6 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/30">
           <div className="flex items-center gap-3">
-            <GithubLogo className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <GithubLogo className="size-5 text-blue-600 dark:text-blue-400" />
             <div>
               <p className="font-medium text-sm">Configure release sync</p>
               <p className="text-muted-foreground text-xs">
@@ -224,17 +228,17 @@ export default function ChangelogPage({
       <Tabs onValueChange={setActiveTab} value={activeTab}>
         <TabsList>
           <TabsTrigger value="releases">
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 size-4" />
             Releases
           </TabsTrigger>
           {isAdmin && (
             <TabsTrigger value="settings">
-              <GearSix className="mr-2 h-4 w-4" />
+              <GearSix className="mr-2 size-4" />
               Settings
             </TabsTrigger>
           )}
           <TabsTrigger value="widget">
-            <Code className="mr-2 h-4 w-4" />
+            <Code className="mr-2 size-4" />
             Embed
           </TabsTrigger>
         </TabsList>
@@ -251,7 +255,7 @@ export default function ChangelogPage({
               isAdmin && (
                 <Link href={`/dashboard/${orgSlug}/changelog/new`}>
                   <Button>
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="mr-2 size-4" />
                     Create Release
                   </Button>
                 </Link>

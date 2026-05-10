@@ -185,7 +185,7 @@ export default function ReviewDraftsPage({
         className="mb-4 inline-flex items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
         href={`/dashboard/${orgSlug}/changelog`}
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="size-4" />
         Back to Changelog
       </Link>
 

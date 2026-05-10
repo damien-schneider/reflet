@@ -55,7 +55,7 @@ export function FeedbackSectionHeader({
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h3 className="flex items-center gap-1.5 font-medium text-sm">
-          <Check className="h-4 w-4 text-muted-foreground" />
+          <Check className="size-4 text-muted-foreground" />
           Linked Feedback
           {linkedCount > 0 && (
             <Badge className="text-xs" variant="secondary">
@@ -80,12 +80,12 @@ export function FeedbackSectionHeader({
           >
             {isMatching ? (
               <>
-                <Spinner className="h-3 w-3 animate-spin" />
-                Finding...
+                <Spinner className="size-3 animate-spin" />
+                Finding…
               </>
             ) : (
               <>
-                <Sparkle className="h-3 w-3" />
+                <Sparkle className="size-3" />
                 Find related
               </>
             )}

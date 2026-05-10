@@ -85,10 +85,10 @@ export function AddQuestionPanel({ onAdd, onCancel }: AddQuestionPanelProps) {
     const hasChoices =
       selectedType === "single_choice" || selectedType === "multiple_choice";
     const parsedChoices = hasChoices
-      ? choices
-          .split("\n")
-          .map((c) => c.trim())
-          .filter(Boolean)
+      ? choices.split("\n").flatMap((choice) => {
+          const trimmed = choice.trim();
+          return trimmed ? [trimmed] : [];
+        })
       : undefined;
     const base = getDefaultConfig(selectedType, parsedChoices);
     if (!base) {
@@ -201,7 +201,6 @@ export function AddQuestionPanel({ onAdd, onCancel }: AddQuestionPanelProps) {
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="new-q-title">Question</Label>
             <Input
-              autoFocus
               id="new-q-title"
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. How satisfied are you?"

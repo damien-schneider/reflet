@@ -34,7 +34,7 @@ export function IntegrationGuide({ publicKey }: IntegrationGuideProps) {
         <AccordionItem value="install">
           <AccordionTrigger>
             <span className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
                 1
               </span>
               Install the SDK
@@ -53,7 +53,7 @@ export function IntegrationGuide({ publicKey }: IntegrationGuideProps) {
         <AccordionItem value="react">
           <AccordionTrigger>
             <span className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
                 2
               </span>
               React Integration
@@ -100,7 +100,7 @@ function FeedbackWidget() {
                 size="sm"
                 variant="ghost"
               >
-                <Copy className="h-4 w-4" />
+                <Copy className="size-4" />
               </Button>
               <pre className="overflow-x-auto text-sm">
                 <code>{`import { RefletProvider, useFeedbackList, useVote } from 'reflet-sdk/react';
@@ -137,7 +137,7 @@ function FeedbackWidget() {
         <AccordionItem value="vanilla">
           <AccordionTrigger>
             <span className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
                 3
               </span>
               Vanilla JavaScript
@@ -173,7 +173,7 @@ await reflet.vote('feedback_id');`,
                 size="sm"
                 variant="ghost"
               >
-                <Copy className="h-4 w-4" />
+                <Copy className="size-4" />
               </Button>
               <pre className="overflow-x-auto text-sm">
                 <code>{`import { Reflet } from 'reflet-sdk';
@@ -199,7 +199,7 @@ await reflet.vote('feedback_id');`}</code>
         <AccordionItem value="server">
           <AccordionTrigger>
             <span className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs">
                 4
               </span>
               Server-Side User Signing (Recommended)
@@ -236,7 +236,7 @@ const reflet = new Reflet({
                 size="sm"
                 variant="ghost"
               >
-                <Copy className="h-4 w-4" />
+                <Copy className="size-4" />
               </Button>
               <pre className="overflow-x-auto text-sm">
                 <code>{`// Server-side (API route, Express, etc.)
@@ -262,7 +262,7 @@ const reflet = new Reflet({
 
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
         <h4 className="flex items-center gap-2 font-medium text-blue-800 dark:text-blue-200">
-          <Code className="h-4 w-4" />
+          <Code className="size-4" />
           Available React Hooks
         </h4>
         <ul className="mt-2 grid gap-1 text-blue-700 text-sm sm:grid-cols-2 dark:text-blue-300">

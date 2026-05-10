@@ -40,7 +40,7 @@ export const FeedbackToolbar = ({
       <div className="flex min-w-0 items-center gap-4">
         {/* Search bar */}
         <div className="relative w-48 flex-shrink-0">
-          <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <MagnifyingGlassIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="h-10 rounded-full border-0 bg-muted pr-4 pl-10 focus-visible:ring-2"
             onChange={(e) => onSearchChange(e.target.value)}
@@ -59,7 +59,7 @@ export const FeedbackToolbar = ({
           onClick={onSubmitClick}
           size="lg"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="size-4" />
           Submit Feedback
         </Button>
       </div>

@@ -5,7 +5,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,8 +41,7 @@ export function RoadmapColumnHeader({
   onDelete,
 }: RoadmapColumnHeaderProps) {
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-  const [editedName, setEditedName] = useState(name);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [draftName, setDraftName] = useState<string | null>(null);
 
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
@@ -54,44 +53,29 @@ export function RoadmapColumnHeader({
     ? color
     : migrateHexToNamedColor(color);
   const textColor = getTagTextColor(displayColor, isDark);
+  const editedName = draftName ?? name;
+  const hasUnsavedChanges = draftName !== null && draftName !== name;
 
-  // Sync local state when prop changes
-  useEffect(
-    function syncEditedNameWithProp() {
-      setEditedName(name);
-      setHasUnsavedChanges(false);
-    },
-    [name]
-  );
+  const handleNameChange = (newName: string) => {
+    setDraftName(newName === name ? null : newName);
+  };
 
-  const handleNameChange = useCallback(
-    (newName: string) => {
-      setEditedName(newName);
-      setHasUnsavedChanges(newName !== name);
-    },
-    [name]
-  );
-
-  const handleSave = useCallback(async () => {
+  const handleSave = async () => {
     const trimmedName = editedName.trim();
     if (trimmedName && trimmedName !== name) {
       await updateStatus({ id: statusId, name: trimmedName });
     }
-    setHasUnsavedChanges(false);
-  }, [editedName, name, statusId, updateStatus]);
+    setDraftName(null);
+  };
 
-  const handleCancel = useCallback(() => {
-    setEditedName(name);
-    setHasUnsavedChanges(false);
-  }, [name]);
+  const handleCancel = () => {
+    setDraftName(null);
+  };
 
-  const handleColorChange = useCallback(
-    async (newColor: TagColor) => {
-      await updateStatus({ id: statusId, color: newColor });
-      setIsColorPickerOpen(false);
-    },
-    [statusId, updateStatus]
-  );
+  const handleColorChange = async (newColor: TagColor) => {
+    await updateStatus({ id: statusId, color: newColor });
+    setIsColorPickerOpen(false);
+  };
 
   return (
     <div className="mb-3 flex items-center gap-2">
@@ -102,12 +86,12 @@ export function RoadmapColumnHeader({
             render={(props) => (
               <button
                 {...props}
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded transition-opacity hover:opacity-70"
+                className="flex size-5 shrink-0 items-center justify-center rounded transition-opacity hover:opacity-70"
                 style={{ color: textColor }}
                 title="Change color"
                 type="button"
               >
-                <Palette className="h-4 w-4" weight="fill" />
+                <Palette className="size-4" weight="fill" />
               </button>
             )}
           />
@@ -134,20 +118,20 @@ export function RoadmapColumnHeader({
       {hasUnsavedChanges && isAdmin ? (
         <>
           <Button
-            className="h-6 w-6 shrink-0"
+            className="size-6 shrink-0"
             onClick={handleSave}
             size="icon"
             variant="ghost"
           >
-            <Check className="h-3 w-3" />
+            <Check className="size-3" />
           </Button>
           <Button
-            className="h-6 w-6 shrink-0"
+            className="size-6 shrink-0"
             onClick={handleCancel}
             size="icon"
             variant="ghost"
           >
-            <X className="h-3 w-3" />
+            <X className="size-3" />
           </Button>
         </>
       ) : (
@@ -160,12 +144,12 @@ export function RoadmapColumnHeader({
           {/* Admin actions - just delete */}
           {isAdmin && (
             <Button
-              className="h-6 w-6 shrink-0 text-destructive opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+              className="size-6 shrink-0 text-destructive opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
               onClick={onDelete}
               size="icon"
               variant="ghost"
             >
-              <Trash className="h-3 w-3" />
+              <Trash className="size-3" />
             </Button>
           )}
         </>

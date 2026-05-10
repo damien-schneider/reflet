@@ -2,6 +2,7 @@ import { PaperPlaneRight, Trash, X } from "@phosphor-icons/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ClientDate } from "@/shared/components/client-date";
 
 interface CommentItemProps {
   comment: {
@@ -50,7 +51,7 @@ export function CommentItem({
   return (
     <div className="space-y-3">
       <div className="flex gap-3">
-        <Avatar className="h-8 w-8">
+        <Avatar className="size-8">
           <AvatarImage src={comment.author?.image} />
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
@@ -58,9 +59,10 @@ export function CommentItem({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="font-medium text-sm">{authorName}</span>
-              <span className="text-muted-foreground text-xs">
-                {new Date(comment._creationTime).toLocaleDateString()}
-              </span>
+              <ClientDate
+                className="text-muted-foreground text-xs"
+                value={comment._creationTime}
+              />
             </div>
             <div className="flex items-center gap-1">
               <Button
@@ -72,12 +74,12 @@ export function CommentItem({
               </Button>
               {isAdmin && (
                 <Button
-                  className="h-8 w-8"
+                  className="size-8"
                   onClick={() => onDeleteComment(comment._id)}
                   size="icon"
                   variant="ghost"
                 >
-                  <Trash className="h-4 w-4" />
+                  <Trash className="size-4" />
                 </Button>
               )}
             </div>
@@ -100,14 +102,14 @@ export function CommentItem({
                   onClick={() => onSubmitReply(comment._id)}
                   size="icon"
                 >
-                  <PaperPlaneRight className="h-4 w-4" />
+                  <PaperPlaneRight className="size-4" />
                 </Button>
                 <Button
                   onClick={() => setReplyingTo(null)}
                   size="icon"
                   variant="ghost"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="size-4" />
                 </Button>
               </div>
             </div>
@@ -130,7 +132,7 @@ export function CommentItem({
 
             return (
               <div className="flex gap-3" key={reply._id}>
-                <Avatar className="h-6 w-6">
+                <Avatar className="size-6">
                   <AvatarImage src={reply.author?.image} />
                   <AvatarFallback className="text-xs">
                     {replyInitials}
@@ -140,18 +142,19 @@ export function CommentItem({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">{replyAuthor}</span>
-                      <span className="text-muted-foreground text-xs">
-                        {new Date(reply._creationTime).toLocaleDateString()}
-                      </span>
+                      <ClientDate
+                        className="text-muted-foreground text-xs"
+                        value={reply._creationTime}
+                      />
                     </div>
                     {isAdmin && (
                       <Button
-                        className="h-6 w-6"
+                        className="size-6"
                         onClick={() => onDeleteComment(reply._id)}
                         size="icon"
                         variant="ghost"
                       >
-                        <Trash className="h-3 w-3" />
+                        <Trash className="size-3" />
                       </Button>
                     )}
                   </div>

@@ -8,7 +8,9 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
-import { isProductionCodingAdapter } from "./schema/validators";
+import { getEffectiveTier } from "../billing/effective_tier";
+import { isAgentEnabledInConfig } from "./config";
+import { isRoutineDispatchAgent } from "./schema/validators";
 
 interface RoutineTemplate {
   description?: string;
@@ -117,38 +119,9 @@ function parseRoutineTemplate(template: string): RoutineTemplate | null {
 
 function isRoutineAgentEnabled(
   agent: string,
-  config: {
-    adapter?: string;
-    ctoEnabled?: boolean;
-    devEnabled?: boolean;
-    growthEnabled?: boolean;
-    pmEnabled?: boolean;
-    salesEnabled?: boolean;
-    supportEnabled?: boolean;
-  }
+  config: Parameters<typeof isAgentEnabledInConfig>[1]
 ): boolean {
-  if (agent === "pm") {
-    return config.pmEnabled !== false;
-  }
-  if (agent === "cto") {
-    return config.ctoEnabled !== false;
-  }
-  if (agent === "dev") {
-    return (
-      isProductionCodingAdapter(config.adapter ?? "builtin") &&
-      config.devEnabled !== false
-    );
-  }
-  if (agent === "growth") {
-    return config.growthEnabled !== false;
-  }
-  if (agent === "support") {
-    return config.supportEnabled !== false;
-  }
-  if (agent === "sales") {
-    return config.salesEnabled !== false;
-  }
-  return true;
+  return isRoutineDispatchAgent(agent) && isAgentEnabledInConfig(agent, config);
 }
 
 function isAutopilotConfigRunnable(
@@ -216,6 +189,24 @@ export const evaluateRoutines = internalMutation({
           q.eq("organizationId", routine.organizationId)
         )
         .unique();
+      const tier = await getEffectiveTier(ctx, routine.organizationId);
+      if (tier !== "pro") {
+        continue;
+      }
+      if (!isRoutineDispatchAgent(routine.agent)) {
+        await ctx.db.patch(routine._id, {
+          enabled: false,
+          updatedAt: now,
+        });
+        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+          organizationId: routine.organizationId,
+          agent: "system",
+          level: "warning",
+          message: `Routine "${routine.title}" disabled because agent ${routine.agent} cannot dispatch routine tasks`,
+          action: "routine.disabled",
+        });
+        continue;
+      }
       if (!(config && canRunRoutine({ config, currentDate, now, routine }))) {
         continue;
       }

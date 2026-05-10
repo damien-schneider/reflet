@@ -4,12 +4,12 @@ import { CloudArrowUp, PencilSimple, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { format } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ClientDate } from "@/shared/components/client-date";
 
 interface RetroactiveDraftItemProps {
   onSelect: (id: Id<"releases">, selected: boolean) => void;
@@ -79,7 +79,7 @@ export function RetroactiveDraftItem({
       <button
         aria-label={selected ? "Deselect release" : "Select release"}
         className={cn(
-          "mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors",
+          "mt-1 flex size-5 shrink-0 items-center justify-center rounded border transition-colors",
           selected
             ? "border-primary bg-primary text-primary-foreground"
             : "border-muted-foreground/30 hover:border-primary"
@@ -90,7 +90,7 @@ export function RetroactiveDraftItem({
         {selected && (
           <svg
             aria-hidden="true"
-            className="h-3 w-3"
+            className="size-3"
             fill="none"
             role="img"
             stroke="currentColor"
@@ -127,14 +127,14 @@ export function RetroactiveDraftItem({
           <span>
             {release.commitCount} commit{release.commitCount === 1 ? "" : "s"}
           </span>
-          <span>{format(new Date(release.createdAt), "MMM d, yyyy")}</span>
+          <ClientDate value={release.createdAt} />
         </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
         <Link href={`/dashboard/${orgSlug}/changelog/${release._id}/edit`}>
           <Button aria-label="Edit release" size="sm" variant="ghost">
-            <PencilSimple className="h-4 w-4" />
+            <PencilSimple className="size-4" />
           </Button>
         </Link>
 
@@ -144,7 +144,7 @@ export function RetroactiveDraftItem({
           size="sm"
           variant="ghost"
         >
-          <CloudArrowUp className="h-4 w-4" />
+          <CloudArrowUp className="size-4" />
         </Button>
 
         <Button
@@ -154,7 +154,7 @@ export function RetroactiveDraftItem({
           size="sm"
           variant="ghost"
         >
-          <Trash className="h-4 w-4" />
+          <Trash className="size-4" />
         </Button>
       </div>
     </div>

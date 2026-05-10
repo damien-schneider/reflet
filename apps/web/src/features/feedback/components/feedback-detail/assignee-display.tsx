@@ -48,7 +48,7 @@ export function AssigneeDisplay({
       >
         {assignee ? (
           <div className="flex items-center gap-1.5">
-            <Avatar className="h-4 w-4">
+            <Avatar className="size-4">
               <AvatarImage src={assignee.image ?? undefined} />
               <AvatarFallback className="text-[8px]">
                 {assignee.name?.charAt(0) ?? "?"}
@@ -61,7 +61,7 @@ export function AssigneeDisplay({
         ) : (
           <span className="text-muted-foreground text-xs">Assignee</span>
         )}
-        <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />
+        <CaretDown className="size-3.5 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-52">
         <DropdownMenuRadioGroup
@@ -69,12 +69,12 @@ export function AssigneeDisplay({
           value={assignee?.id ?? "unassigned"}
         >
           <DropdownMenuRadioItem value="unassigned">
-            <User className="h-4 w-4 text-muted-foreground" />
+            <User className="size-4 text-muted-foreground" />
             Unassigned
           </DropdownMenuRadioItem>
           {members.map((member) => (
             <DropdownMenuRadioItem key={member.userId} value={member.userId}>
-              <Avatar className="h-5 w-5">
+              <Avatar className="size-5">
                 <AvatarImage src={member.user?.image ?? undefined} />
                 <AvatarFallback className="text-[8px]">
                   {member.user?.name?.charAt(0) ?? "?"}

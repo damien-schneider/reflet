@@ -48,8 +48,8 @@ export function MakePublicBanner({ orgId }: MakePublicBannerProps) {
         >
           {isMakingPublic ? (
             <>
-              <Spinner className="mr-2 h-3 w-3 animate-spin" />
-              En cours...
+              <Spinner className="mr-2 size-3 animate-spin" />
+              En cours…
             </>
           ) : (
             "Rendre publique"

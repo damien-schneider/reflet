@@ -28,7 +28,7 @@ export function VoteButtons({
       >
         <ArrowUp
           className={cn(
-            "h-3.5 w-3.5",
+            "size-3.5",
             userVoteType === "upvote" && "fill-current"
           )}
           weight={userVoteType === "upvote" ? "fill" : "regular"}
@@ -47,7 +47,7 @@ export function VoteButtons({
       >
         <ArrowDown
           className={cn(
-            "h-3.5 w-3.5",
+            "size-3.5",
             userVoteType === "downvote" && "fill-current"
           )}
           weight={userVoteType === "downvote" ? "fill" : "regular"}
