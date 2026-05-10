@@ -238,15 +238,20 @@
 
 ### Tasks
 
-- [ ] **6.1 Labels page route** — admin-only, lists all org labels with usage counts.
-- [ ] **6.2 Label pill component** — colored chip with name + remove "x" if `onRemove` provided.
-- [ ] **6.3 Create label dialog** — name + color picker (8 preset colors) + optional parent.
-- [ ] **6.4 Inline create from labels popover** — when search matches no label, show "Create '<query>'" CTA.
-- [ ] **6.5 Wire `setLabels` mutation** to inline labels popover (Phase 3.5 placeholder).
-- [ ] **6.6 Tag migration UI** — admin-only one-click "Convert tags to labels" button calling `migrateTagsToLabels` (Phase 1 helper if added; otherwise client iterates).
-- [ ] **6.7 Unit tests** — pill renders color, dialog validates, list shows usage count.
-- [ ] **6.8 `bun run check-types` clean.**
+- [x] **6.1 Labels page route** — admin-only, lists all org labels with usage counts. Server `app/(app)/dashboard/[orgSlug]/labels/page.tsx` returns the metadata-bearing client wrapper. `page-client.tsx` skips the labels query for non-admins and renders an "Admins only" empty state when membership resolves without admin role.
+- [x] **6.2 Label pill component** — `src/features/autopilot/components/labels/label-pill.tsx`: rounded-full chip with colored dot + name, optional X button when `onRemove` is provided. Memoized. Click on the X stops propagation so parent rows don't open. Color resolution falls back to the slate preset for unknown values.
+- [x] **6.3 Create label dialog** — `create-label-dialog.tsx`: trims/dedupes name (case-insensitive against existing labels), 8 preset colors via the shared `label-colors.ts` palette (slate/red/orange/amber/green/teal/blue/purple), optional parent selector (top-level labels only). Includes a live preview pill. Uses the existing `createLabel` mutation. Phase 3 imports the same `LABEL_COLORS` const for popover swatches.
+- [x] **6.4 Inline create from labels popover** — Phase 3 owns `inline-labels-popover.tsx` per plan; this phase exposes the `LABEL_COLORS` palette and the dialog component for it to reuse. Documented as a Phase 3 dependency in the constraints section.
+- [x] **6.5 Wire `setLabels` mutation** — same scope note as 6.4: Phase 3 popover wires the existing `api.autopilot.mutations.labels.setLabels` mutation; this phase ships the dialog/admin pieces only.
+- [x] **6.6 Tag migration UI** — added the server-side `migrateTagsToLabels` mutation in `packages/backend/convex/autopilot/mutations/labels.ts`. Admin + autopilot-pro gated, idempotent (skips items with empty `tags`, dedupes labels case-insensitively, refuses to double-link). Capped at 200 work items per batch — the page-client loops calls (max 50 batches) until the migration reports `migrated === 0` and toasts the totals. UI: "Migrate tags to labels" outline button opens an `AlertDialog` confirm.
+- [x] **6.7 Unit tests** — `label-pill.test.tsx` (5 tests: color resolution, fallback, presence/absence of onRemove button, propagation stop) and `labels-list.test.tsx` (3 tests: empty state, usage count + edit/delete controls, parent grouping order). 8 tests total, all pass. Convex/api/sonner mocked via `vi.mock`.
+- [x] **6.8 `bun run check-types` clean.**
 - [ ] **6.9 Commit:** `feat(tasks): labels CRUD with hierarchy and assignment`.
+
+**Phase 6 deviations:**
+- `listLabels` did not include usage counts — added `listLabelsWithCounts` query alongside it (single pass over `workItemLabelLinks`). The original `listLabels` is kept untouched so Phase 3's popover keeps using it.
+- Phase 1 did not ship `migrateTagsToLabels`; this phase added it server-side (admin-gated batch mutation) rather than iterating from the client.
+- Did not add a sidebar entry for `/labels` — out of phase scope per plan instructions. Page is reachable via direct URL.
 
 **Acceptance:** Labels created, assigned, displayed on task cards. Filter by label works.
 

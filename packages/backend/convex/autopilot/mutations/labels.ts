@@ -190,6 +190,127 @@ export const removeLabel = mutation({
   },
 });
 
+const TAG_MIGRATION_BATCH_LIMIT = 200;
+const DEFAULT_MIGRATION_COLOR = "slate";
+
+/**
+ * Idempotent admin migration that converts the legacy free-form `tags`
+ * array on each work item into proper `workItemLabels` rows + links.
+ *
+ * Behavior:
+ *  - For each work item with a non-empty `tags` array, every tag string
+ *    is matched (case-insensitive) against existing labels in the org.
+ *    Missing labels are auto-created with a default color.
+ *  - A link row is created for any (workItemId, labelId) pair that
+ *    doesn't already exist. The work item's `tags` array is then cleared.
+ *  - Items with empty/missing tags are skipped — re-running is a no-op.
+ *
+ * Capped at {@link TAG_MIGRATION_BATCH_LIMIT} items per call so the caller
+ * can run repeatedly until `migrated === 0`.
+ */
+export const migrateTagsToLabels = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    limit: v.optional(v.number()),
+  },
+  returns: v.object({
+    migrated: v.number(),
+    scanned: v.number(),
+    labelsCreated: v.number(),
+    linksCreated: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, user._id);
+    await requireAutopilotAccess(ctx, args.organizationId);
+
+    const limit = Math.min(
+      args.limit ?? TAG_MIGRATION_BATCH_LIMIT,
+      TAG_MIGRATION_BATCH_LIMIT
+    );
+
+    const items = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .take(limit);
+
+    // Cache existing labels (case-insensitive) so we don't recreate.
+    const existingLabels = await ctx.db
+      .query("workItemLabels")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+    const labelByName = new Map<string, Id<"workItemLabels">>();
+    for (const label of existingLabels) {
+      labelByName.set(label.name.trim().toLowerCase(), label._id);
+    }
+
+    const now = Date.now();
+    let migrated = 0;
+    let scanned = 0;
+    let labelsCreated = 0;
+    let linksCreated = 0;
+
+    for (const item of items) {
+      scanned += 1;
+      const tags = item.tags;
+      if (!tags || tags.length === 0) {
+        continue;
+      }
+
+      const labelIds: Id<"workItemLabels">[] = [];
+      for (const rawTag of tags) {
+        const tag = rawTag.trim();
+        if (tag.length === 0) {
+          continue;
+        }
+        const key = tag.toLowerCase();
+        let labelId = labelByName.get(key);
+        if (!labelId) {
+          labelId = await ctx.db.insert("workItemLabels", {
+            organizationId: args.organizationId,
+            name: tag,
+            color: DEFAULT_MIGRATION_COLOR,
+            createdBy: user._id,
+            createdAt: now,
+            updatedAt: now,
+          });
+          labelByName.set(key, labelId);
+          labelsCreated += 1;
+        }
+        labelIds.push(labelId);
+      }
+
+      // Add missing links — checked individually to stay idempotent.
+      for (const labelId of labelIds) {
+        const existingLink = await ctx.db
+          .query("workItemLabelLinks")
+          .withIndex("by_work_item_label", (q) =>
+            q.eq("workItemId", item._id).eq("labelId", labelId)
+          )
+          .unique();
+        if (!existingLink) {
+          await ctx.db.insert("workItemLabelLinks", {
+            organizationId: args.organizationId,
+            workItemId: item._id,
+            labelId,
+            createdAt: now,
+          });
+          linksCreated += 1;
+        }
+      }
+
+      await ctx.db.patch(item._id, { tags: [], updatedAt: now });
+      migrated += 1;
+    }
+
+    return { migrated, scanned, labelsCreated, linksCreated };
+  },
+});
+
 export const setLabels = mutation({
   args: {
     workItemId: v.id("autopilotWorkItems"),
