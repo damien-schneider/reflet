@@ -17,7 +17,7 @@
 | Phase | Owner | Status |
 | ----- | ----- | ------ |
 | Phase 1 — Backend schema + queries + mutations | backend-agent | ✅ |
-| Phase 2 — UI page-client (filters/URL state/group-by/bulk) | ui-list-agent | ⬜ |
+| Phase 2 — UI page-client (filters/URL state/group-by/bulk) | ui-list-agent | ✅ |
 | Phase 3 — UI task-card (inline edit + identifier + triage) | ui-card-agent | ⬜ |
 | Phase 4 — Detail UI consolidation | ui-detail-agent | ⬜ |
 | Phase 5 — Command palette + keyboard shortcuts | ui-shortcuts-agent | ⬜ |
@@ -107,22 +107,27 @@
 
 ### Tasks
 
-- [ ] **2.1 Install `nuqs`** — `bun add nuqs` at workspace root if missing.
-- [ ] **2.2 `use-tasks-filters` hook** — wrap `useQueryStates` for `status[]`, `type[]`, `priority[]`, `assigneeUserId`, `assignedAgent`, `groupBy`, `sortKey`, `viewMode`, `q` (search). Default values + parsers as `parseAsArrayOf(parseAsString)`. Returns typed object + setters.
-- [ ] **2.3 Filter bar component** — render multi-select chips per facet. Click chip opens popover with checkbox list. Active filters shown as removable pills.
-- [ ] **2.4 Group-by select** — options: none, status, priority, assignee, parent, label.
-- [ ] **2.5 List grouping logic** — when `groupBy !== "none"`, group filtered items by key, render section headers with count + collapse toggle (persist collapse state in localStorage by org+groupBy).
-- [ ] **2.6 Bulk selection** — checkbox column added on hover/active. State: `Set<Id>`. Shift-click selects range. `Esc` clears.
-- [ ] **2.7 Bulk actions bar** — appears when selection > 0: change status, change priority, assign agent/user, add label, archive, delete. Uses `bulkUpdateWorkItems`.
-- [ ] **2.8 Saved views menu** — dropdown: list user views, "Save current view as…", switch view (writes filter state). Uses Phase 1 views API.
-- [ ] **2.9 Search field** — debounced 200ms, calls `searchWorkItems` if non-empty, otherwise local title filter.
-- [ ] **2.10 Empty state** — replace plain text with illustration + CTA "Create task" + "Import from feedback".
-- [ ] **2.11 Skeleton loading** — match real layout shape (filter bar + 8 row skeleton).
-- [ ] **2.12 Unit tests** — hook decodes URL correctly, filter bar toggles state, group-by partitions items.
-- [ ] **2.13 `bun run check-types` clean.**
-- [ ] **2.14 Commit:** `feat(tasks): URL-state filters, group-by, bulk actions, saved views`.
+- [x] **2.1 Install `nuqs`** — added via `bun add nuqs --filter web`. Mounted `<NuqsAdapter>` from `nuqs/adapters/next/app` in `apps/web/app/(app)/layout.tsx` (no existing adapter found).
+- [x] **2.2 `use-tasks-filters` hook** — `useQueryStates` over `status[]`, `type[]`, `priority[]`, `assigneeUserId`, `assignedAgent`, `labelIds[]`, `q`, `groupBy`, `sortKey`, `viewMode`. Returns `{ filters, setFilters, reset, isDefault }`.
+- [x] **2.3 Filter bar component** — `tasks-filter-bar.tsx`. Chip per facet opens popover with checkbox list. Active counts surfaced via badge; reset chip surfaces when filters non-default.
+- [x] **2.4 Group-by select** — `group-by-select.tsx` exposes none, status, priority, assignee, parent, label, type.
+- [x] **2.5 List grouping logic** — `groupItems(items, groupBy, ...)` returns ordered buckets per groupBy. Section headers click to collapse; collapsed set persisted to `localStorage` keyed by `tasks-collapsed:<orgId>:<groupBy>`.
+- [x] **2.6 Bulk selection** — `Set<Id>` in page-client; checkbox surfaces on hover and stays visible when selected. Shift-click selects ranges via `lastClickedIndexRef` against the flat row order. Esc clears.
+- [x] **2.7 Bulk actions bar** — `bulk-actions-bar.tsx` (sticky bottom). Status, Priority, Agent, Assignee menus + Archive (sets `cancelled`) + admin-only Delete with `AlertDialog` confirmation. Uses `bulkUpdateWorkItems`; toasts on success/error.
+- [x] **2.8 Saved views menu** — `saved-views-menu.tsx`. Lists views, applies via `JSON.parse(filtersJson)` → `setFilters`. "Save current view as…" dialog with name + scope (admin gets shared option). Active view detected by deep filter equality.
+- [x] **2.9 Search field** — input debounced 200ms via `useDebouncedValue` from `@tanstack/react-pacer`. When `q` non-empty switches `useQuery` to `searchWorkItems`; otherwise `listWorkItems`.
+- [x] **2.10 Empty state** — H3 + Muted + buttons (Create task / Import from feedback link → `/dashboard/{org}/feedback`). No new illustration files.
+- [x] **2.11 Skeleton loading** — `TasksLoadingSkeleton` (org bootstrap) and `TaskListSkeleton` (8-row) match the real layout: toolbar + filter row + rows.
+- [x] **2.12 Unit tests** — three suites added: `use-tasks-filters.test.ts` (defaults, URL hydrate, set, reset), `tasks-filter-bar.test.tsx` (chip render + toggle + reset visibility), `group-items.test.ts` (none/status/priority/assignee partitioning). 22 tests in `tasks/__tests__` pass; full web suite (193 files / 2756 tests) green.
+- [x] **2.13 `bun run check-types` clean.** — `bunx tsc --noEmit` in `apps/web` is clean for Phase 2 files. Pre-existing errors live in `labels/page-client.tsx` (Phase 6) and `inline-assignee-popover.tsx` (Phase 3); both out of scope.
+- [x] **2.14 Commit:** `feat(tasks): URL-state filters, group-by, bulk actions, saved views`.
 
 **Acceptance:** Reload preserves filters via URL. Bulk update mutates atomically. Tests green.
+
+**Deviations / notes**
+- TaskCard left untouched (Phase 3 owns it). Selection checkbox lives on a `TaskRow` wrapper so existing card click → dialog still works. Phase 3 can extend the card without merge conflicts.
+- `listWorkItems` accepts only a single equality hint, so multi-value chip filters fall back to client-side filtering after a single-hint server fetch.
+- Per-item label data is not yet exposed by a batch query, so `groupBy="label"` currently buckets all items under "No label". Phase 6 will add the per-item label query and wire grouping.
 
 ---
 
@@ -246,7 +251,7 @@
 - [x] **6.6 Tag migration UI** — added the server-side `migrateTagsToLabels` mutation in `packages/backend/convex/autopilot/mutations/labels.ts`. Admin + autopilot-pro gated, idempotent (skips items with empty `tags`, dedupes labels case-insensitively, refuses to double-link). Capped at 200 work items per batch — the page-client loops calls (max 50 batches) until the migration reports `migrated === 0` and toasts the totals. UI: "Migrate tags to labels" outline button opens an `AlertDialog` confirm.
 - [x] **6.7 Unit tests** — `label-pill.test.tsx` (5 tests: color resolution, fallback, presence/absence of onRemove button, propagation stop) and `labels-list.test.tsx` (3 tests: empty state, usage count + edit/delete controls, parent grouping order). 8 tests total, all pass. Convex/api/sonner mocked via `vi.mock`.
 - [x] **6.8 `bun run check-types` clean.**
-- [ ] **6.9 Commit:** `feat(tasks): labels CRUD with hierarchy and assignment`.
+- [x] **6.9 Commit:** `feat(tasks): labels CRUD with hierarchy and assignment` — landed as `b85ab7b`.
 
 **Phase 6 deviations:**
 - `listLabels` did not include usage counts — added `listLabelsWithCounts` query alongside it (single pass over `workItemLabelLinks`). The original `listLabels` is kept untouched so Phase 3's popover keeps using it.

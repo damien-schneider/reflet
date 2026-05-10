@@ -2,19 +2,15 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
-import {
-  IconChecklist,
-  IconLayoutKanban,
-  IconPlus,
-  IconSearch,
-} from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
+import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useMutation, useQuery } from "convex/react";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -34,57 +30,35 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { H2, Muted } from "@/components/ui/typography";
+import { H2, H3, Muted } from "@/components/ui/typography";
 import { TaskCard } from "@/features/autopilot/components/task-card";
+import { BulkActionsBar } from "@/features/autopilot/components/tasks/bulk-actions-bar";
+import {
+  groupItems,
+  readCollapsedSet,
+  writeCollapsedSet,
+} from "@/features/autopilot/components/tasks/group-items";
+import { sortItems } from "@/features/autopilot/components/tasks/sort-items";
+import { TasksFilterBar } from "@/features/autopilot/components/tasks/tasks-filter-bar";
+import { TasksToolbar } from "@/features/autopilot/components/tasks/tasks-toolbar";
+import {
+  type TaskAgent,
+  type TaskFilters,
+  type TaskPriority,
+  type TaskStatus,
+  type TaskType,
+  useTasksFilters,
+} from "@/features/autopilot/components/tasks/use-tasks-filters";
 import { InitiativesBoard } from "@/features/autopilot/components/views/initiatives-board";
 import { cn } from "@/lib/utils";
 
-type StatusFilter =
-  | "all"
-  | "backlog"
-  | "todo"
-  | "in_progress"
-  | "in_review"
-  | "done"
-  | "cancelled";
+type WorkItem = Doc<"autopilotWorkItems">;
 
-const STATUS_OPTIONS = [
-  { label: "All", value: "all" },
-  { label: "Backlog", value: "backlog" },
-  { label: "To Do", value: "todo" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "In Review", value: "in_review" },
-  { label: "Done", value: "done" },
-  { label: "Cancelled", value: "cancelled" },
-] as const;
-
-const TYPE_OPTIONS = [
-  { label: "All", value: "all" },
-  { label: "Initiative", value: "initiative" },
-  { label: "Story", value: "story" },
-  { label: "Task", value: "task" },
-  { label: "Spec", value: "spec" },
-  { label: "Bug", value: "bug" },
-] as const;
-
-const PRIORITY_OPTIONS = [
-  { label: "All", value: "all" },
-  { label: "Critical", value: "critical" },
-  { label: "High", value: "high" },
-  { label: "Medium", value: "medium" },
-  { label: "Low", value: "low" },
-] as const;
-
-const VIEW_TABS = [
-  { id: "list", label: "List", icon: IconChecklist },
-  { id: "board", label: "Board", icon: IconLayoutKanban },
-] as const;
-
-type ViewMode = "list" | "board";
+const DEBOUNCE_MS = 200;
 
 export default function TasksPageClient() {
   const params = useParams();
-  const orgSlug = params.orgSlug as string;
+  const orgSlug = (params?.orgSlug as string | undefined) ?? "";
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const membership = useQuery(
     api.organizations.members.getMembership,
@@ -92,60 +66,8 @@ export default function TasksPageClient() {
   );
   const isAdmin = membership?.role === "admin" || membership?.role === "owner";
 
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const tasks = useQuery(
-    api.autopilot.queries.work.listWorkItems,
-    org?._id
-      ? {
-          organizationId: org._id,
-          type:
-            typeFilter === "all"
-              ? undefined
-              : (typeFilter as
-                  | "initiative"
-                  | "story"
-                  | "task"
-                  | "spec"
-                  | "bug"),
-          status:
-            statusFilter === "all"
-              ? undefined
-              : (statusFilter as
-                  | "backlog"
-                  | "todo"
-                  | "in_progress"
-                  | "in_review"
-                  | "done"
-                  | "cancelled"),
-        }
-      : "skip"
-  );
-
   if (org === undefined) {
-    return (
-      <div className="space-y-6 p-6">
-        <Skeleton className="h-8 w-48" />
-        <div className="flex gap-2">
-          {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton className="h-9 w-28" key={`f-${String(i)}`} />
-          ))}
-        </div>
-        <div className="space-y-3">
-          {Array.from({ length: 5 }, (_, i) => (
-            <Skeleton
-              className="h-24 w-full rounded-lg"
-              key={`s-${String(i)}`}
-            />
-          ))}
-        </div>
-      </div>
-    );
+    return <TasksLoadingSkeleton />;
   }
 
   if (!org) {
@@ -161,150 +83,590 @@ export default function TasksPageClient() {
     );
   }
 
-  const filteredTasks = (tasks ?? []).filter((task) => {
-    if (priorityFilter !== "all" && task.priority !== priorityFilter) {
-      return false;
-    }
-    if (
-      searchQuery &&
-      !task.title.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
-      return false;
-    }
-    return true;
+  return (
+    <TasksPageBody
+      isAdmin={isAdmin}
+      organizationId={org._id}
+      orgSlug={orgSlug}
+    />
+  );
+}
+
+interface TasksPageBodyProps {
+  isAdmin: boolean;
+  organizationId: Id<"organizations">;
+  orgSlug: string;
+}
+
+function TasksPageBody({
+  organizationId,
+  isAdmin,
+  orgSlug,
+}: TasksPageBodyProps) {
+  const { filters, setFilters, reset, isDefault } = useTasksFilters();
+  const [searchInput, setSearchInput] = useState(filters.q);
+  const [debouncedSearch] = useDebouncedValue(searchInput, {
+    wait: DEBOUNCE_MS,
+  });
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  // Push debounced search into URL state.
+  useEffect(
+    function syncDebouncedSearch() {
+      if (debouncedSearch !== filters.q) {
+        setFilters({ q: debouncedSearch });
+      }
+    },
+    [debouncedSearch, filters.q, setFilters]
+  );
+
+  // Keep local input in sync when URL changes externally (e.g. saved view).
+  // searchInput intentionally read via ref to avoid a feedback loop.
+  const searchInputRef = useRef(searchInput);
+  searchInputRef.current = searchInput;
+  useEffect(
+    function syncFromFilters() {
+      if (
+        filters.q !== searchInputRef.current &&
+        filters.q !== debouncedSearch
+      ) {
+        setSearchInput(filters.q);
+      }
+    },
+    [filters.q, debouncedSearch]
+  );
+
+  const members = useQuery(api.organizations.members.list, { organizationId });
+  const labels = useQuery(api.autopilot.queries.labels.listLabels, {
+    organizationId,
   });
 
+  const memberOptions = useMemo(
+    () =>
+      (members ?? []).map((member) => ({
+        userId: member.userId,
+        name: member.user?.name ?? null,
+        email: member.user?.email ?? null,
+      })),
+    [members]
+  );
+
+  // Backend filters by single equality only; remaining filters apply client-side.
+  const queryArgs = useMemo(() => {
+    const args: {
+      assignedAgent?: TaskAgent;
+      assigneeUserId?: string;
+      organizationId: Id<"organizations">;
+      priority?: TaskPriority;
+      status?: TaskStatus;
+      type?: TaskType;
+    } = { organizationId };
+    if (filters.type.length === 1) {
+      args.type = filters.type[0] as TaskType;
+    }
+    if (filters.status.length === 1) {
+      args.status = filters.status[0] as TaskStatus;
+    }
+    if (filters.assignedAgent !== "") {
+      args.assignedAgent = filters.assignedAgent as TaskAgent;
+    }
+    if (filters.assigneeUserId !== "") {
+      args.assigneeUserId = filters.assigneeUserId;
+    }
+    if (filters.priority.length === 1) {
+      args.priority = filters.priority[0] as TaskPriority;
+    }
+    return args;
+  }, [filters, organizationId]);
+
+  const isSearching = filters.q.trim().length > 0;
+  const listed = useQuery(
+    api.autopilot.queries.work.listWorkItems,
+    isSearching ? "skip" : queryArgs
+  );
+  const searched = useQuery(
+    api.autopilot.queries.work.searchWorkItems,
+    isSearching ? { organizationId, query: filters.q.trim() } : "skip"
+  );
+
+  const tasks = isSearching ? searched : listed;
+  const isLoading = tasks === undefined;
+
+  const labelLookup = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const label of labels ?? []) {
+      map.set(label._id as unknown as string, label.name);
+    }
+    return map;
+  }, [labels]);
+
+  const filteredTasks = useMemo(() => {
+    if (!tasks) {
+      return [];
+    }
+    return tasks.filter((task) => {
+      if (filters.status.length > 0 && !filters.status.includes(task.status)) {
+        return false;
+      }
+      if (filters.type.length > 0 && !filters.type.includes(task.type)) {
+        return false;
+      }
+      if (
+        filters.priority.length > 0 &&
+        !filters.priority.includes(task.priority)
+      ) {
+        return false;
+      }
+      if (
+        filters.assignedAgent !== "" &&
+        task.assignedAgent !== filters.assignedAgent
+      ) {
+        return false;
+      }
+      if (
+        filters.assigneeUserId !== "" &&
+        task.assigneeUserId !== filters.assigneeUserId
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [tasks, filters]);
+
+  const sortedTasks = useMemo(
+    () => sortItems(filteredTasks, filters.sortKey),
+    [filteredTasks, filters.sortKey]
+  );
+
+  const grouped = useMemo(
+    () => groupItems(sortedTasks, filters.groupBy, undefined, labelLookup),
+    [sortedTasks, filters.groupBy, labelLookup]
+  );
+
+  // Selection state
+  const [selected, setSelected] = useState<Set<Id<"autopilotWorkItems">>>(
+    () => new Set()
+  );
+  const lastClickedIndexRef = useRef<number | null>(null);
+  const flatOrder = useMemo(
+    () => grouped.flatMap((group) => group.items.map((item) => item._id)),
+    [grouped]
+  );
+
+  const clearSelection = useCallback(() => {
+    setSelected(new Set());
+    lastClickedIndexRef.current = null;
+  }, []);
+
+  const toggleSelect = useCallback(
+    (id: Id<"autopilotWorkItems">, index: number) => {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        return next;
+      });
+      lastClickedIndexRef.current = index;
+    },
+    []
+  );
+
+  const toggleRangeSelect = useCallback(
+    (id: Id<"autopilotWorkItems">, index: number) => {
+      const last = lastClickedIndexRef.current;
+      if (last === null) {
+        toggleSelect(id, index);
+        return;
+      }
+      const start = Math.min(last, index);
+      const end = Math.max(last, index);
+      setSelected((prev) => {
+        const next = new Set(prev);
+        for (let i = start; i <= end; i += 1) {
+          const candidate = flatOrder[i];
+          if (candidate) {
+            next.add(candidate);
+          }
+        }
+        return next;
+      });
+    },
+    [flatOrder, toggleSelect]
+  );
+
+  // Esc clears selection.
+  useEffect(
+    function bindEscapeKey() {
+      function onKey(event: KeyboardEvent) {
+        if (event.key === "Escape" && selected.size > 0) {
+          clearSelection();
+        }
+      }
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    },
+    [selected.size, clearSelection]
+  );
+
+  // Reset selection when filtering hides selected ids.
+  useEffect(
+    function pruneStaleSelection() {
+      if (selected.size === 0) {
+        return;
+      }
+      const visible = new Set(flatOrder);
+      let mutated = false;
+      const next = new Set<Id<"autopilotWorkItems">>();
+      for (const id of selected) {
+        if (visible.has(id)) {
+          next.add(id);
+        } else {
+          mutated = true;
+        }
+      }
+      if (mutated) {
+        setSelected(next);
+      }
+    },
+    [flatOrder, selected]
+  );
+
+  const selectedIds = useMemo(() => Array.from(selected), [selected]);
+
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-6 pb-24">
       <div className="flex items-center justify-between">
         <H2 variant="card">Tasks</H2>
-        <div className="flex items-center gap-3">
-          {/* View toggle */}
-          <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
-            {VIEW_TABS.map((tab) => (
-              <button
-                className={cn(
-                  "flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium text-sm transition-colors",
-                  viewMode === tab.id
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                key={tab.id}
-                onClick={() => setViewMode(tab.id as ViewMode)}
-                type="button"
-              >
-                <tab.icon className="size-4" />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {isAdmin && (
-            <CreateTaskDialog
-              isOpen={isDialogOpen}
-              onOpenChange={setIsDialogOpen}
-              organizationId={org._id}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative max-w-xs flex-1">
-          <IconSearch className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="pl-8"
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search tasks..."
-            value={searchQuery}
+        {isAdmin && (
+          <CreateTaskDialog
+            isOpen={isCreateOpen}
+            onOpenChange={setIsCreateOpen}
+            organizationId={organizationId}
           />
-        </div>
-        <Select
-          onValueChange={(val) => setStatusFilter(val as StatusFilter)}
-          value={statusFilter}
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          onValueChange={(val) => setTypeFilter(val ?? "all")}
-          value={typeFilter}
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            {TYPE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          onValueChange={(val) => setPriorityFilter(val ?? "all")}
-          value={priorityFilter}
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Priority" />
-          </SelectTrigger>
-          <SelectContent>
-            {PRIORITY_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Badge variant="secondary">{filteredTasks.length} tasks</Badge>
+        )}
       </div>
 
-      {/* Content */}
-      {viewMode === "board" ? (
-        <InitiativesBoard organizationId={org._id} />
+      <TasksToolbar
+        filters={filters}
+        isAdmin={isAdmin}
+        onSearchChange={setSearchInput}
+        organizationId={organizationId}
+        searchValue={searchInput}
+        setFilters={setFilters}
+      />
+
+      <TasksFilterBar
+        filters={filters}
+        isDefault={isDefault}
+        labels={labels ?? undefined}
+        members={memberOptions}
+        onReset={() => {
+          setSearchInput("");
+          reset();
+        }}
+        setFilters={setFilters}
+      />
+
+      {filters.viewMode === "board" ? (
+        <InitiativesBoard organizationId={organizationId} />
       ) : (
-        <TaskListView tasks={filteredTasks} />
+        <TaskListView
+          groupBy={filters.groupBy}
+          grouped={grouped}
+          isLoading={isLoading}
+          onCreateClick={() => setIsCreateOpen(true)}
+          orgId={organizationId}
+          orgSlug={orgSlug}
+          selected={selected}
+          toggleRangeSelect={toggleRangeSelect}
+          toggleSelect={toggleSelect}
+        />
       )}
+
+      <BulkActionsBar
+        isAdmin={isAdmin}
+        members={memberOptions}
+        onClear={clearSelection}
+        organizationId={organizationId}
+        selectedIds={selectedIds}
+      />
     </div>
   );
 }
 
-function TaskListView({ tasks }: { tasks: Doc<"autopilotWorkItems">[] }) {
-  if (tasks.length === 0) {
-    return (
-      <div className="flex h-40 items-center justify-center rounded-lg border border-dashed text-muted-foreground text-sm">
-        No tasks found
-      </div>
-    );
+interface TaskListViewProps {
+  groupBy: TaskFilters["groupBy"];
+  grouped: ReturnType<typeof groupItems>;
+  isLoading: boolean;
+  onCreateClick: () => void;
+  orgId: Id<"organizations">;
+  orgSlug: string;
+  selected: Set<Id<"autopilotWorkItems">>;
+  toggleRangeSelect: (id: Id<"autopilotWorkItems">, index: number) => void;
+  toggleSelect: (id: Id<"autopilotWorkItems">, index: number) => void;
+}
+
+function TaskListView({
+  grouped,
+  groupBy,
+  isLoading,
+  onCreateClick,
+  orgId,
+  orgSlug: slug,
+  selected,
+  toggleRangeSelect,
+  toggleSelect,
+}: TaskListViewProps) {
+  const isEmpty = grouped.every((group) => group.items.length === 0);
+
+  if (isLoading) {
+    return <TaskListSkeleton />;
   }
 
+  if (isEmpty) {
+    return <TasksEmptyState onCreate={onCreateClick} orgSlug={slug} />;
+  }
+
+  // Pre-compute index offsets so range selection references stable indices.
+  let cursor = 0;
+  const groupOffsets = grouped.map((group) => {
+    const offset = cursor;
+    cursor += group.items.length;
+    return offset;
+  });
+
   return (
-    <div className="space-y-3">
-      {tasks.map((task) => (
-        <TaskCard key={task._id} task={task} />
+    <div className="space-y-4">
+      {grouped.map((group, groupIndex) => {
+        if (group.items.length === 0) {
+          return null;
+        }
+        return (
+          <TaskListGroup
+            groupBy={groupBy}
+            groupKey={group.key}
+            indexOffset={groupOffsets[groupIndex] ?? 0}
+            items={group.items}
+            key={group.key}
+            label={group.label}
+            orgId={orgId}
+            selected={selected}
+            toggleRangeSelect={toggleRangeSelect}
+            toggleSelect={toggleSelect}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+interface TaskListGroupProps {
+  groupBy: TaskFilters["groupBy"];
+  groupKey: string;
+  indexOffset: number;
+  items: WorkItem[];
+  label: string;
+  orgId: Id<"organizations">;
+  selected: Set<Id<"autopilotWorkItems">>;
+  toggleRangeSelect: (id: Id<"autopilotWorkItems">, index: number) => void;
+  toggleSelect: (id: Id<"autopilotWorkItems">, index: number) => void;
+}
+
+function TaskListGroup({
+  groupBy,
+  groupKey,
+  label,
+  items,
+  indexOffset,
+  orgId,
+  selected,
+  toggleSelect,
+  toggleRangeSelect,
+}: TaskListGroupProps) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(() =>
+    readCollapsedSet(orgId as unknown as string, groupBy)
+  );
+
+  useEffect(
+    function readPersistedCollapsed() {
+      setCollapsed(readCollapsedSet(orgId as unknown as string, groupBy));
+    },
+    [orgId, groupBy]
+  );
+
+  const isCollapsed = collapsed.has(groupKey);
+  const toggleCollapse = () => {
+    const next = new Set(collapsed);
+    if (next.has(groupKey)) {
+      next.delete(groupKey);
+    } else {
+      next.add(groupKey);
+    }
+    setCollapsed(next);
+    writeCollapsedSet(orgId as unknown as string, groupBy, next);
+  };
+
+  const isUngrouped = groupKey === "all";
+
+  return (
+    <section>
+      {!isUngrouped && (
+        <button
+          aria-expanded={!isCollapsed}
+          className="mb-2 flex items-center gap-2 rounded-md px-1 py-0.5 text-left hover:bg-muted/50"
+          onClick={toggleCollapse}
+          type="button"
+        >
+          <span
+            className={cn(
+              "transition-transform",
+              isCollapsed ? "rotate-0" : "rotate-90"
+            )}
+          >
+            ▸
+          </span>
+          <span className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+            {label}
+          </span>
+          <span className="text-muted-foreground text-xs">{items.length}</span>
+        </button>
+      )}
+      {!isCollapsed && (
+        <div className="space-y-2">
+          {items.map((task, idxInGroup) => {
+            const flatIndex = indexOffset + idxInGroup;
+            return (
+              <TaskRow
+                index={flatIndex}
+                isSelected={selected.has(task._id)}
+                key={task._id}
+                onToggle={(modifiers) => {
+                  if (modifiers.shift) {
+                    toggleRangeSelect(task._id, flatIndex);
+                  } else {
+                    toggleSelect(task._id, flatIndex);
+                  }
+                }}
+                task={task}
+              />
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+interface TaskRowProps {
+  index: number;
+  isSelected: boolean;
+  onToggle: (modifiers: { shift: boolean }) => void;
+  task: WorkItem;
+}
+
+function TaskRow({ task, index, isSelected, onToggle }: TaskRowProps) {
+  return (
+    <div
+      className={cn(
+        "group/task-row flex items-start gap-2 rounded-lg",
+        isSelected && "bg-primary/5 ring-1 ring-primary/40"
+      )}
+      data-index={index}
+    >
+      <button
+        aria-label={isSelected ? "Deselect task" : "Select task"}
+        aria-pressed={isSelected}
+        className={cn(
+          "mt-4 ml-2 shrink-0 transition-opacity",
+          isSelected
+            ? "opacity-100"
+            : "opacity-0 focus-visible:opacity-100 group-hover/task-row:opacity-100"
+        )}
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggle({ shift: event.shiftKey });
+        }}
+        type="button"
+      >
+        <Checkbox checked={isSelected} tabIndex={-1} />
+      </button>
+      <div className="min-w-0 flex-1">
+        <TaskCard task={task} />
+      </div>
+    </div>
+  );
+}
+
+function TaskListSkeleton() {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: 8 }, (_, i) => (
+        <Skeleton
+          className="h-20 w-full rounded-lg"
+          key={`task-skel-${String(i)}`}
+        />
       ))}
     </div>
   );
+}
+
+function TasksLoadingSkeleton() {
+  return (
+    <div className="space-y-4 p-6">
+      <Skeleton className="h-8 w-48" />
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: 5 }, (_, i) => (
+          <Skeleton className="h-8 w-28" key={`tb-${String(i)}`} />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Skeleton className="h-8 w-24" key={`fb-${String(i)}`} />
+        ))}
+      </div>
+      <TaskListSkeleton />
+    </div>
+  );
+}
+
+function TasksEmptyState({
+  onCreate,
+  orgSlug: slug,
+}: {
+  onCreate: () => void;
+  orgSlug: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16 text-center">
+      <H3 variant="card">No tasks match these filters</H3>
+      <Muted>Create a task or import existing feedback to get started.</Muted>
+      <div className="mt-2 flex gap-2">
+        <Button onClick={onCreate}>Create task</Button>
+        <a
+          className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-2.5 font-medium text-sm transition-colors hover:bg-muted"
+          href={`/dashboard/${slug}/feedback`}
+        >
+          Import from feedback
+        </a>
+      </div>
+    </div>
+  );
+}
+
+interface CreateTaskDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  organizationId: Id<"organizations">;
 }
 
 function CreateTaskDialog({
   isOpen,
   onOpenChange,
   organizationId,
-}: {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  organizationId: Id<"organizations">;
-}) {
+}: CreateTaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [taskType, setTaskType] = useState<"task" | "bug" | "story">("task");
