@@ -6,10 +6,12 @@ import { configTables } from "./config.tables";
 import { dataTables } from "./data.tables";
 import { documentsTables } from "./documents.tables";
 import { knowledgeTables } from "./knowledge.tables";
+import { labelsTables } from "./labels.tables";
 import { memoryTables } from "./memory.tables";
 import { personasTables } from "./personas.tables";
 import { reportsTables } from "./reports.tables";
 import { useCasesTables } from "./use_cases.tables";
+import { viewsTables } from "./views.tables";
 import { workTables } from "./work.tables";
 
 export const autopilotTables = {
@@ -21,6 +23,8 @@ export const autopilotTables = {
   ...documentsTables,
   ...competitorsTables,
   ...workTables,
+  ...labelsTables,
+  ...viewsTables,
   ...reportsTables,
   ...memoryTables,
   ...personasTables,

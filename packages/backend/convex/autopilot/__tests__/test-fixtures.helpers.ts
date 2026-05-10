@@ -40,11 +40,15 @@ const createActiveStripeSubscription = async (
   });
 };
 
+let createOrgCounter = 0;
+
 export const createOrg = async (t: TestContext) => {
+  createOrgCounter += 1;
+  const slug = `production-readiness-${Date.now()}-${createOrgCounter}`;
   const organizationId = await t.run(async (ctx) =>
     ctx.db.insert("organizations", {
       name: "Production Readiness Org",
-      slug: `production-readiness-${Date.now()}`,
+      slug,
       isPublic: false,
       subscriptionTier: "pro",
       subscriptionStatus: "active",
@@ -55,23 +59,31 @@ export const createOrg = async (t: TestContext) => {
   return organizationId;
 };
 
+let memberSessionCounter = 0;
+const betterAuthRegistered = new WeakSet<TestContext>();
+
 export const createMemberSession = async (
   t: TestContext,
   organizationId: Id<"organizations">,
   role: "admin" | "member" | "owner" = "admin"
 ) => {
-  t.registerComponent(
-    "betterAuth",
-    betterAuthTest.schema,
-    betterAuthTest.modules
-  );
+  if (!betterAuthRegistered.has(t)) {
+    t.registerComponent(
+      "betterAuth",
+      betterAuthTest.schema,
+      betterAuthTest.modules
+    );
+    betterAuthRegistered.add(t);
+  }
   const now = Date.now();
+  memberSessionCounter += 1;
+  const uniqueSuffix = `${now}-${memberSessionCounter}`;
   const user = await t.mutation(components.betterAuth.adapter.create, {
     input: {
       model: "user",
       data: {
         name: "Autopilot Reviewer",
-        email: `autopilot-reviewer-${now}@example.com`,
+        email: `autopilot-reviewer-${uniqueSuffix}@example.com`,
         emailVerified: true,
         createdAt: now,
         updatedAt: now,
@@ -84,7 +96,7 @@ export const createMemberSession = async (
       model: "session",
       data: {
         userId,
-        token: `session-${now}`,
+        token: `session-${uniqueSuffix}`,
         expiresAt: now + 24 * 60 * 60 * 1000,
         createdAt: now,
         updatedAt: now,

@@ -18,7 +18,24 @@ export const workTables = {
     priority,
     assignedAgent: v.optional(assignedAgent),
 
-    // Review/inbox — replaces autopilotInboxItems
+    // Human assignee (string user id from better-auth)
+    assigneeUserId: v.optional(v.string()),
+
+    // Dates
+    dueDate: v.optional(v.number()),
+    targetDate: v.optional(v.number()),
+    startDate: v.optional(v.number()),
+
+    // Estimation & confidence
+    estimate: v.optional(v.number()),
+    confidence: v.optional(v.number()),
+
+    // Linear-style human readable identifier (e.g. "ORG-123")
+    // Optional today during migration; required-on-create after backfill.
+    identifier: v.optional(v.string()),
+
+    // Review/inbox — DEPRECATED in favor of status === "triage".
+    // Kept for backward compatibility until UI migration completes.
     needsReview: v.boolean(),
     reviewType: v.optional(v.string()),
     reviewedAt: v.optional(v.number()),
@@ -50,9 +67,15 @@ export const workTables = {
     .index("by_org_type", ["organizationId", "type"])
     .index("by_org_status", ["organizationId", "status"])
     .index("by_org_agent", ["organizationId", "assignedAgent"])
+    .index("by_org_assignee", ["organizationId", "assigneeUserId"])
     .index("by_org_review", ["organizationId", "needsReview"])
     .index("by_org_public", ["organizationId", "isPublicRoadmap"])
-    .index("by_parent", ["parentId"]),
+    .index("by_org_identifier", ["organizationId", "identifier"])
+    .index("by_parent", ["parentId"])
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["organizationId"],
+    }),
 
   feedbackTaskLinks: defineTable({
     organizationId: v.id("organizations"),
@@ -64,4 +87,12 @@ export const workTables = {
     .index("by_feedback", ["feedbackId"])
     .index("by_work_item", ["workItemId"])
     .index("by_organization", ["organizationId"]),
+
+  // Per-org atomic counters (used for work item identifier allocation).
+  organizationCounters: defineTable({
+    organizationId: v.id("organizations"),
+    kind: v.string(),
+    value: v.number(),
+    updatedAt: v.number(),
+  }).index("by_org_kind", ["organizationId", "kind"]),
 };

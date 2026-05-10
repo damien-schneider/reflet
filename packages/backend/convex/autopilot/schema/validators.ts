@@ -105,6 +105,7 @@ export const workItemType = v.union(
 );
 
 export const workItemStatus = v.union(
+  v.literal("triage"),
   v.literal("backlog"),
   v.literal("todo"),
   v.literal("in_progress"),
