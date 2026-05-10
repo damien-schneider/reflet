@@ -38,12 +38,13 @@ export default function RootLayout({
     >
       <head>
         <link href="https://umami.damien-schneider.pro" rel="preconnect" />
-        {process.env.NODE_ENV === "development" && (
-          <Script
-            src="//unpkg.com/react-grab/dist/index.global.js"
-            strategy="lazyOnload"
-          />
-        )}
+        {process.env.NODE_ENV === "development" &&
+          process.env.AUTOPILOT_E2E_BYPASS !== "1" && (
+            <Script
+              src="//unpkg.com/react-grab/dist/index.global.js"
+              strategy="lazyOnload"
+            />
+          )}
         <Script
           data-website-id="f4232b19-0136-4892-95b5-05801c29715d"
           src="https://umami.damien-schneider.pro/script.js"

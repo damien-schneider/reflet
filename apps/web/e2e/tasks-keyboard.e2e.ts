@@ -1,9 +1,5 @@
 import { expect, test } from "@playwright/test";
-import {
-  createTaskViaUI,
-  signUpAndOpenTasks,
-  skipUnlessTasksE2E,
-} from "./helpers/tasks-fixtures";
+import { createTaskViaUI, signUpAndOpenTasks } from "./helpers/tasks-fixtures";
 
 const TASK_DETAIL_PATH_REGEX = /\/tasks\/[a-z0-9]+$/;
 const PALETTE_DIALOG_REGEX = /Tasks command palette/i;
@@ -11,10 +7,6 @@ const PALETTE_OPTION_REGEX = /Palette target alpha/i;
 const ORG_TASK_PATH_REGEX = /\/dashboard\/[^/]+\/tasks\/[a-z0-9]+/;
 
 test.describe("Tasks keyboard", () => {
-  test.beforeEach(() => {
-    skipUnlessTasksE2E();
-  });
-
   test("j/k focus rows, Enter opens detail, Esc closes", async ({ page }) => {
     await signUpAndOpenTasks(page, "tasks-kb-jk");
 
@@ -73,8 +65,9 @@ test.describe("Tasks keyboard", () => {
     await option.click();
 
     await expect(page).toHaveURL(ORG_TASK_PATH_REGEX, { timeout: 15_000 });
+    await page.waitForLoadState("networkidle");
     await expect(
-      page.getByRole("heading", { name: "Palette target alpha" })
+      page.getByRole("heading", { name: "Palette target alpha", level: 1 })
     ).toBeVisible({ timeout: 15_000 });
   });
 });

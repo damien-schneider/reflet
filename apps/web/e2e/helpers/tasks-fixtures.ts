@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import {
   createTestEmail,
   createTestName,
@@ -8,31 +8,34 @@ import {
 } from "./auth";
 
 /**
- * Tasks E2E suites depend on the org having Pro-tier autopilot access. Fresh
- * sign-ups default to the Free tier, and `createWorkItem` fails with
- * "Autopilot requires a Pro subscription." There is no UI affordance to
- * upgrade an org for testing today; the Convex unit tests bypass this by
- * patching `subscriptionTier` directly.
+ * Tasks E2E suites need the org to have Pro-tier autopilot access — fresh
+ * sign-ups default to Free, and `createWorkItem` would otherwise fail with
+ * "Autopilot requires a Pro subscription." Unit tests bypass this by
+ * patching `subscriptionTier` directly; the E2E flow can't reach Convex
+ * internals.
  *
- * Phase 7 needs a UI-driven (or test-only mutation) path to grant Pro to a
- * fresh org so these suites can drive the real product surface end-to-end.
- * Until then every Phase 7 suite is gated behind {@link skipUnlessTasksE2E}.
+ * The bypass is now an env-gated short-circuit inside `getEffectiveTier`
+ * (see `packages/backend/convex/billing/effective_tier.ts`). When
+ * `AUTOPILOT_E2E_BYPASS=1` is set on the Convex deployment, every org is
+ * reported as Pro. The `playwright.config.ts` forwards the var to the Next
+ * dev server, but Convex queries/mutations execute on the Convex
+ * deployment, so the deployment itself must also have the var set.
  *
- * Set `RUN_TASKS_E2E=1` in the environment to opt-in once an org-Pro
- * fixture exists.
+ * One-liner for local dev (run before `bun run test:e2e`):
+ *
+ *   cd packages/backend && bunx convex env set AUTOPILOT_E2E_BYPASS 1
+ *
+ * To clean up afterwards:
+ *
+ *   cd packages/backend && bunx convex env remove AUTOPILOT_E2E_BYPASS
+ *
+ * The bypass MUST NEVER be set on production deployments — it grants Pro to
+ * every org. `getEffectiveTier` emits a `console.warn` whenever it takes
+ * effect so misconfiguration is loud in deployment logs.
  */
-export const TASKS_E2E_ENV_FLAG = "RUN_TASKS_E2E";
-
-export function skipUnlessTasksE2E(): void {
-  test.skip(
-    !process.env[TASKS_E2E_ENV_FLAG],
-    `Tasks E2E suite skipped — set ${TASKS_E2E_ENV_FLAG}=1 once a Pro-tier seeding fixture lands.`
-  );
-}
 
 const DASHBOARD_SLUG_EXTRACT_REGEX = /\/dashboard\/([^/]+)/;
 const IDENTIFIER_REGEX = /[A-Z]{3,6}-\d+/;
-const COPY_IDENTIFIER_BUTTON_REGEX = /Copy identifier/i;
 
 export interface TasksTestUser {
   email: string;
@@ -67,6 +70,17 @@ export async function signUpAndOpenTasks(
     password: "password123",
   };
   const orgName = createTestName("Tasks Org");
+
+  // Pre-set cookie consent before any page renders. The cookie consent banner
+  // sits at z-50 and intercepts pointer events on the bulk action toolbar
+  // (z-40), causing flaky clicks when the banner is visible.
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem("cookie-consent", "rejected");
+    } catch {
+      /* localStorage may be unavailable in some contexts */
+    }
+  });
 
   await page.goto("/dashboard");
   await page.waitForLoadState("domcontentloaded", { timeout: 10_000 });
@@ -184,9 +198,12 @@ export async function extractIdentifier(
     .locator("[data-task-row]")
     .filter({ has: page.getByRole("heading", { name: title, level: 3 }) })
     .first();
-  const identifier = row.getByRole("button", {
-    name: COPY_IDENTIFIER_BUTTON_REGEX,
-  });
+  // The TaskCard wrapper is itself role="button" with an aria-label that
+  // includes "Copy identifier ...", so loose matching catches the wrapper too.
+  // Target the actual chip via its inner mono-font text content.
+  const identifier = row
+    .locator('button[aria-label^="Copy identifier "]')
+    .first();
   await expect(identifier).toBeVisible({ timeout: 10_000 });
   const text = (await identifier.textContent())?.trim() ?? "";
   expect(text, `Identifier should match ${IDENTIFIER_REGEX}`).toMatch(

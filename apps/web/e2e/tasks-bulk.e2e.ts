@@ -1,20 +1,12 @@
 import { expect, test } from "@playwright/test";
-import {
-  createTaskViaUI,
-  signUpAndOpenTasks,
-  skipUnlessTasksE2E,
-} from "./helpers/tasks-fixtures";
+import { createTaskViaUI, signUpAndOpenTasks } from "./helpers/tasks-fixtures";
 
 const SELECT_TOGGLE_BUTTON_REGEX = /Select task|Deselect task/;
-const PRIORITY_BUTTON_REGEX = /Priority/;
+const PRIORITY_BUTTON_NAME = "Priority";
 const PRIORITY_HIGH_TOAST_REGEX = /Updated priority to High/i;
-const PRIORITY_HIGH_BADGE_REGEX = /Priority: High/;
+const PRIORITY_HIGH_BADGE_NAME = "Priority: High. Click to change.";
 
 test.describe("Tasks bulk actions", () => {
-  test.beforeEach(() => {
-    skipUnlessTasksE2E();
-  });
-
   test("shift-click selects a range, bulk priority change updates every row", async ({
     page,
   }) => {
@@ -45,7 +37,9 @@ test.describe("Tasks bulk actions", () => {
     await expect(bar).toBeVisible({ timeout: 10_000 });
     await expect(bar.getByText("3 selected")).toBeVisible({ timeout: 10_000 });
 
-    await bar.getByRole("button", { name: PRIORITY_BUTTON_REGEX }).click();
+    await bar
+      .getByRole("button", { name: PRIORITY_BUTTON_NAME, exact: true })
+      .click();
     await page
       .getByRole("menuitem", { name: "High", exact: true })
       .first()
@@ -68,30 +62,33 @@ test.describe("Tasks bulk actions", () => {
         })
         .first();
       await expect(
-        row.getByRole("button", { name: PRIORITY_HIGH_BADGE_REGEX })
+        row.getByRole("button", {
+          name: PRIORITY_HIGH_BADGE_NAME,
+          exact: true,
+        })
       ).toBeVisible({ timeout: 10_000 });
     }
   });
 
-  test("Esc clears selection without mutating any task", async ({ page }) => {
-    await signUpAndOpenTasks(page, "tasks-bulk-esc");
+  test("clears selection without mutating any task", async ({ page }) => {
+    await signUpAndOpenTasks(page, "tasks-bulk-clear");
 
-    await createTaskViaUI(page, { title: "Esc clears alpha" });
-    await createTaskViaUI(page, { title: "Esc clears beta" });
+    await createTaskViaUI(page, { title: "Clear bulk delta" });
+    await createTaskViaUI(page, { title: "Clear bulk epsilon" });
+    await createTaskViaUI(page, { title: "Clear bulk zeta" });
 
     const rows = page.locator("[data-task-row]");
-    await expect(rows).toHaveCount(2, { timeout: 15_000 });
+    await expect(rows).toHaveCount(3, { timeout: 15_000 });
 
     await rows.nth(0).hover();
-    await rows
+    const selectBtn = rows
       .nth(0)
-      .getByRole("button", { name: SELECT_TOGGLE_BUTTON_REGEX })
-      .click();
+      .getByRole("button", { name: SELECT_TOGGLE_BUTTON_REGEX });
+    await selectBtn.evaluate((el) => (el as HTMLButtonElement).click());
 
     const bar = page.getByRole("toolbar", { name: "Bulk actions" });
     await expect(bar).toBeVisible({ timeout: 10_000 });
 
-    await page.locator("body").click();
     await page.keyboard.press("Escape");
     await expect(bar).not.toBeVisible({ timeout: 10_000 });
   });

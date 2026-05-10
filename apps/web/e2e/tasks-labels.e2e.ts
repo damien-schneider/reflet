@@ -1,9 +1,5 @@
 import { expect, test } from "@playwright/test";
-import {
-  createTaskViaUI,
-  signUpAndOpenTasks,
-  skipUnlessTasksE2E,
-} from "./helpers/tasks-fixtures";
+import { createTaskViaUI, signUpAndOpenTasks } from "./helpers/tasks-fixtures";
 
 const CREATE_LABEL_DIALOG_REGEX = /Create label/i;
 const RED_COLOR_BUTTON_REGEX = /Red/i;
@@ -11,10 +7,6 @@ const LABELS_FILTER_CHIP_REGEX = /^Labels(\s|$)/;
 const LABEL_IDS_URL_REGEX = /labelIds=/;
 
 test.describe("Tasks labels", () => {
-  test.beforeEach(() => {
-    skipUnlessTasksE2E();
-  });
-
   test("admin creates a label, assigns it to a task, then filters by it", async ({
     page,
   }) => {
@@ -62,7 +54,9 @@ test.describe("Tasks labels", () => {
       })
       .first();
 
-    await row.getByRole("button", { name: "Manage labels" }).click();
+    await row
+      .getByRole("button", { name: "Manage labels", exact: true })
+      .click();
     const popover = page
       .getByRole("button", { name: "bug-x", exact: false })
       .first();

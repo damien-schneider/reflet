@@ -11,7 +11,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {children}
         <Toaster richColors />
         <AuthDialog />
-        {process.env.NODE_ENV === "development" && <Agentation />}
+        {process.env.NODE_ENV === "development" &&
+          process.env.AUTOPILOT_E2E_BYPASS !== "1" && <Agentation />}
       </NuqsAdapter>
     </Providers>
   );

@@ -49,6 +49,9 @@ const routeLabels: Record<string, string> = {
 /** Routes under /dashboard/ that don't require an org slug */
 const NON_ORG_ROUTES = ["super-admin", "account"] as const;
 
+/** Tasks routes mount their own scoped command palette. */
+const TASKS_PATH_REGEX = /\/tasks(\/|$)/;
+
 function getRelevantPathSegments(pathname: string): string[] {
   const pathSegments = pathname.split("/").filter(Boolean);
   const dashboardIndex = pathSegments.indexOf("dashboard");
@@ -222,9 +225,16 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
     [replace, redirectTo, isNonOrgRoute]
   );
 
+  // The /tasks routes mount their own scoped command palette that owns Cmd+K.
+  // Skip mounting the global palette there so the two don't fight for the
+  // same hotkey.
+  const shouldRenderGlobalPalette = !pathname?.match(TASKS_PATH_REGEX);
+
   return (
     <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>
-      <CommandPalette isAdmin={isAdmin} orgSlug={orgSlug} />
+      {shouldRenderGlobalPalette && (
+        <CommandPalette isAdmin={isAdmin} orgSlug={orgSlug} />
+      )}
       <DashboardSidebar orgSlug={orgSlug} pathname={pathname ?? ""} />
       <SidebarInset>
         <header className="pointer-events-none sticky top-0 z-10 flex h-14 items-center gap-2 px-4 *:pointer-events-auto">

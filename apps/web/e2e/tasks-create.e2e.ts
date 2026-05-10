@@ -4,18 +4,13 @@ import {
   expectTaskInList,
   extractIdentifier,
   signUpAndOpenTasks,
-  skipUnlessTasksE2E,
   TASK_IDENTIFIER_REGEX,
 } from "./helpers/tasks-fixtures";
 
 const QUICK_CREATE_DIALOG_REGEX = /Quick create task/i;
-const PRIORITY_HIGH_BADGE_REGEX = /Priority: High/;
+const PRIORITY_HIGH_BADGE_NAME = "Priority: High. Click to change.";
 
 test.describe("Tasks create", () => {
-  test.beforeEach(() => {
-    skipUnlessTasksE2E();
-  });
-
   test("press 'c' opens quick-create dialog and Enter submits, identifier appears", async ({
     page,
   }) => {
@@ -66,7 +61,7 @@ test.describe("Tasks create", () => {
       })
       .first();
     await expect(
-      row.getByRole("button", { name: PRIORITY_HIGH_BADGE_REGEX })
+      row.getByRole("button", { name: PRIORITY_HIGH_BADGE_NAME, exact: true })
     ).toBeVisible({ timeout: 10_000 });
   });
 });

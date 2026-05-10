@@ -1,20 +1,11 @@
 import { expect, test } from "@playwright/test";
-import {
-  createTaskViaUI,
-  signUpAndOpenTasks,
-  skipUnlessTasksE2E,
-} from "./helpers/tasks-fixtures";
+import { createTaskViaUI, signUpAndOpenTasks } from "./helpers/tasks-fixtures";
 
 const PRIORITY_CHIP_REGEX = /^Priority(\s|$)/;
 const PRIORITY_HIGH_URL_REGEX = /priority=high/;
-const GROUP_BY_TRIGGER_TEXT_REGEX = /No grouping|Status|Priority|Assignee/;
-const TODO_HEADING_REGEX = /TO DO/i;
+const BACKLOG_HEADING_REGEX = /Backlog/i;
 
 test.describe("Tasks list", () => {
-  test.beforeEach(() => {
-    skipUnlessTasksE2E();
-  });
-
   test("creates tasks, filters by priority, preserves URL state on reload", async ({
     page,
   }) => {
@@ -91,17 +82,13 @@ test.describe("Tasks list", () => {
     await createTaskViaUI(page, { title: "Plan growth experiments" });
     await createTaskViaUI(page, { title: "Wire analytics dashboard" });
 
-    // Open the Group by select trigger (combobox).
-    await page
-      .getByRole("combobox")
-      .filter({ hasText: GROUP_BY_TRIGGER_TEXT_REGEX })
-      .first()
-      .click();
+    // Open the Group by select trigger.
+    await page.getByRole("combobox", { name: "Group by" }).first().click();
     await page.getByRole("option", { name: "Status", exact: true }).click();
 
-    // After grouping by status the freshly-created tasks land under "TO DO".
+    // After grouping by status the freshly-created tasks land under "Backlog".
     await expect(
-      page.getByRole("button", { name: TODO_HEADING_REGEX }).first()
+      page.getByRole("button", { name: BACKLOG_HEADING_REGEX }).first()
     ).toBeVisible({ timeout: 10_000 });
   });
 });

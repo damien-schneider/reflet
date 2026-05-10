@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
@@ -145,20 +146,22 @@ export function BulkActionsBar({
           }
         />
         <DropdownMenuContent align="start">
-          <DropdownMenuLabel>Set status</DropdownMenuLabel>
-          {TASK_STATUSES.map((status) => (
-            <DropdownMenuItem
-              key={status}
-              onClick={() =>
-                runBulk(
-                  { status },
-                  `Updated status to ${STATUS_LABELS[status] ?? status}`
-                )
-              }
-            >
-              {STATUS_LABELS[status] ?? status}
-            </DropdownMenuItem>
-          ))}
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Set status</DropdownMenuLabel>
+            {TASK_STATUSES.map((status) => (
+              <DropdownMenuItem
+                key={status}
+                onClick={() =>
+                  runBulk(
+                    { status },
+                    `Updated status to ${STATUS_LABELS[status] ?? status}`
+                  )
+                }
+              >
+                {STATUS_LABELS[status] ?? status}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -177,20 +180,22 @@ export function BulkActionsBar({
           }
         />
         <DropdownMenuContent align="start">
-          <DropdownMenuLabel>Set priority</DropdownMenuLabel>
-          {TASK_PRIORITIES.map((priority) => (
-            <DropdownMenuItem
-              key={priority}
-              onClick={() =>
-                runBulk(
-                  { priority },
-                  `Updated priority to ${PRIORITY_LABELS[priority] ?? priority}`
-                )
-              }
-            >
-              {PRIORITY_LABELS[priority] ?? priority}
-            </DropdownMenuItem>
-          ))}
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Set priority</DropdownMenuLabel>
+            {TASK_PRIORITIES.map((priority) => (
+              <DropdownMenuItem
+                key={priority}
+                onClick={() =>
+                  runBulk(
+                    { priority },
+                    `Updated priority to ${PRIORITY_LABELS[priority] ?? priority}`
+                  )
+                }
+              >
+                {PRIORITY_LABELS[priority] ?? priority}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -209,20 +214,22 @@ export function BulkActionsBar({
           }
         />
         <DropdownMenuContent align="start">
-          <DropdownMenuLabel>Assign agent</DropdownMenuLabel>
-          {TASK_AGENTS.map((agent) => (
-            <DropdownMenuItem
-              key={agent}
-              onClick={() =>
-                runBulk(
-                  { assignedAgent: agent },
-                  `Assigned to ${AGENT_LABELS[agent] ?? agent}`
-                )
-              }
-            >
-              {AGENT_LABELS[agent] ?? agent}
-            </DropdownMenuItem>
-          ))}
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Assign agent</DropdownMenuLabel>
+            {TASK_AGENTS.map((agent) => (
+              <DropdownMenuItem
+                key={agent}
+                onClick={() =>
+                  runBulk(
+                    { assignedAgent: agent },
+                    `Assigned to ${AGENT_LABELS[agent] ?? agent}`
+                  )
+                }
+              >
+                {AGENT_LABELS[agent] ?? agent}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -242,20 +249,22 @@ export function BulkActionsBar({
             }
           />
           <DropdownMenuContent align="start">
-            <DropdownMenuLabel>Assign teammate</DropdownMenuLabel>
-            {members.map((member) => (
-              <DropdownMenuItem
-                key={member.userId}
-                onClick={() =>
-                  runBulk(
-                    { assigneeUserId: member.userId },
-                    `Assigned to ${member.name ?? member.email ?? "member"}`
-                  )
-                }
-              >
-                {member.name ?? member.email ?? member.userId}
-              </DropdownMenuItem>
-            ))}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Assign teammate</DropdownMenuLabel>
+              {members.map((member) => (
+                <DropdownMenuItem
+                  key={member.userId}
+                  onClick={() =>
+                    runBulk(
+                      { assigneeUserId: member.userId },
+                      `Assigned to ${member.name ?? member.email ?? "member"}`
+                    )
+                  }
+                >
+                  {member.name ?? member.email ?? member.userId}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       )}

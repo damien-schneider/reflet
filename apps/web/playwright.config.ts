@@ -39,5 +39,12 @@ export default defineConfig({
     timeout: 120_000,
     stderr: "pipe",
     stdout: "pipe",
+    // Forwarded to the dev server so SSR-side Convex calls observe the
+    // bypass. The Convex deployment must also have the same env set
+    // (see `apps/web/e2e/helpers/tasks-fixtures.ts` for the one-liner).
+    env: {
+      ...process.env,
+      AUTOPILOT_E2E_BYPASS: "1",
+    },
   },
 });

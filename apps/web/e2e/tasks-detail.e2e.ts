@@ -1,20 +1,12 @@
 import { expect, test } from "@playwright/test";
-import {
-  createTaskViaUI,
-  signUpAndOpenTasks,
-  skipUnlessTasksE2E,
-} from "./helpers/tasks-fixtures";
+import { createTaskViaUI, signUpAndOpenTasks } from "./helpers/tasks-fixtures";
 
 const TASK_DETAILS_DIALOG_REGEX = /Task details/i;
-const STATUS_TODO_BUTTON_REGEX = /Status: To Do/;
-const STATUS_IN_PROGRESS_BUTTON_REGEX = /Status: In Progress/;
+const STATUS_BACKLOG_BUTTON_NAME = "Status: Backlog. Click to change.";
+const STATUS_IN_PROGRESS_BUTTON_NAME = "Status: In Progress. Click to change.";
 const TASK_DETAIL_PATH_REGEX = /\/dashboard\/[^/]+\/tasks\/[a-z0-9]+/;
 
 test.describe("Tasks detail", () => {
-  test.beforeEach(() => {
-    skipUnlessTasksE2E();
-  });
-
   test("clicking a row opens the peek sheet and inline status edit propagates", async ({
     page,
   }) => {
@@ -42,7 +34,7 @@ test.describe("Tasks detail", () => {
 
     // Inline status popover inside the sheet — pick "In Progress".
     await sheet
-      .getByRole("button", { name: STATUS_TODO_BUTTON_REGEX })
+      .getByRole("button", { name: STATUS_BACKLOG_BUTTON_NAME, exact: true })
       .first()
       .click();
     await page
@@ -53,7 +45,10 @@ test.describe("Tasks detail", () => {
     // Sheet's status badge should reflect the new value.
     await expect(
       sheet
-        .getByRole("button", { name: STATUS_IN_PROGRESS_BUTTON_REGEX })
+        .getByRole("button", {
+          name: STATUS_IN_PROGRESS_BUTTON_NAME,
+          exact: true,
+        })
         .first()
     ).toBeVisible({ timeout: 10_000 });
 
@@ -63,7 +58,10 @@ test.describe("Tasks detail", () => {
 
     // Row reflects the new status too.
     await expect(
-      row.getByRole("button", { name: STATUS_IN_PROGRESS_BUTTON_REGEX })
+      row.getByRole("button", {
+        name: STATUS_IN_PROGRESS_BUTTON_NAME,
+        exact: true,
+      })
     ).toBeVisible({ timeout: 10_000 });
   });
 
