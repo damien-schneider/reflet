@@ -19,7 +19,7 @@ function createWorkItem(id: string, title: string): InboxItem {
     _creationTime: 1,
     _id: toId("autopilotWorkItems", id),
     _source: "work",
-    assignedAgent: "dev",
+    assignedAgent: "cto",
     createdAt: 1,
     description: `${title} description`,
     needsReview: true,

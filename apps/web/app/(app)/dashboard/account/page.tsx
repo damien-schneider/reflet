@@ -6,7 +6,6 @@ import { useQuery } from "convex/react";
 import posthog from "posthog-js";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { H1, Muted } from "@/components/ui/typography";
 import { AccountNav, type AccountTab } from "@/features/account/account-nav";
 import { EmailSection } from "@/features/account/email-section";
 import { NotificationSettings } from "@/features/account/notification-settings";
@@ -32,11 +31,7 @@ export default function AccountPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <H1 variant="page">Account Settings</H1>
-          <Muted>Manage your personal account settings</Muted>
-        </div>
+      <div className="flex items-center justify-end">
         <Button className="gap-2" onClick={handleSignOut} variant="outline">
           <SignOut className="size-4" />
           Sign out

@@ -4,22 +4,6 @@ import { v } from "convex/values";
 // AUTOPILOT VALIDATORS — V11 Simplified
 // ============================================
 
-// Coding adapters
-export const codingAdapterType = v.union(
-  v.literal("builtin"),
-  v.literal("copilot"),
-  v.literal("codex"),
-  v.literal("claude_code"),
-  v.literal("open_swe"),
-  v.literal("openclaw")
-);
-
-export function isProductionCodingAdapter(adapter: string): boolean {
-  return (
-    adapter === "claude_code" || adapter === "codex" || adapter === "copilot"
-  );
-}
-
 // Autonomy
 export const autonomyLevel = v.union(
   v.literal("full_auto"),
@@ -33,11 +17,10 @@ export const autonomyMode = v.union(
   v.literal("stopped")
 );
 
-// Agents
+// Agents — analysis & planning only. Coding execution is delegated externally.
 export const assignedAgent = v.union(
   v.literal("pm"),
   v.literal("cto"),
-  v.literal("dev"),
   v.literal("growth"),
   v.literal("orchestrator"),
   v.literal("system"),
@@ -47,19 +30,13 @@ export const assignedAgent = v.union(
   v.literal("validator")
 );
 
-export type RoutineDispatchAgent =
-  | "cto"
-  | "dev"
-  | "growth"
-  | "sales"
-  | "support";
+export type RoutineDispatchAgent = "cto" | "growth" | "sales" | "support";
 
 export function isRoutineDispatchAgent(
   agent: string
 ): agent is RoutineDispatchAgent {
   return (
     agent === "cto" ||
-    agent === "dev" ||
     agent === "growth" ||
     agent === "sales" ||
     agent === "support"
@@ -67,6 +44,28 @@ export function isRoutineDispatchAgent(
 }
 
 export const agentThreadRole = v.union(v.literal("user"), v.literal("agent"));
+
+export const agentWorkStreamStatus = v.union(
+  v.literal("streaming"),
+  v.literal("completed"),
+  v.literal("failed")
+);
+
+export const agentWorkStreamRecord = v.object({
+  _id: v.id("autopilotAgentWorkStreams"),
+  _creationTime: v.number(),
+  organizationId: v.id("organizations"),
+  agent: assignedAgent,
+  workItemId: v.optional(v.id("autopilotWorkItems")),
+  title: v.string(),
+  status: agentWorkStreamStatus,
+  content: v.string(),
+  model: v.optional(v.string()),
+  error: v.optional(v.string()),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+  completedAt: v.optional(v.number()),
+});
 
 export const communityPlatform = v.union(
   v.literal("reddit"),
@@ -152,7 +151,10 @@ export const documentType = v.union(
 
 export const chainNodeKind = v.union(
   v.literal("codebase_understanding"),
-  v.literal("app_description"),
+  v.literal("identity"),
+  v.literal("brand_voice"),
+  v.literal("feature_catalog"),
+  v.literal("scope"),
   v.literal("market_analysis"),
   v.literal("target_definition"),
   v.literal("personas"),
@@ -183,23 +185,8 @@ export const impactLevel = v.union(
 );
 
 // ============================================
-// Runs & Activity
+// Activity
 // ============================================
-
-export const runStatus = v.union(
-  v.literal("queued"),
-  v.literal("sandbox_starting"),
-  v.literal("cloning"),
-  v.literal("exploring"),
-  v.literal("coding"),
-  v.literal("testing"),
-  v.literal("creating_pr"),
-  v.literal("waiting_ci"),
-  v.literal("ci_fixing"),
-  v.literal("completed"),
-  v.literal("failed"),
-  v.literal("cancelled")
-);
 
 export const activityLogLevel = v.union(
   v.literal("info"),
@@ -213,7 +200,6 @@ export const activityEntityType = v.union(
   v.literal("work_item"),
   v.literal("document"),
   v.literal("knowledge_doc"),
-  v.literal("run"),
   v.literal("lead"),
   v.literal("competitor")
 );
@@ -248,11 +234,13 @@ export const leadSource = v.union(
 // ============================================
 
 export const knowledgeDocType = v.union(
-  v.literal("product_definition"),
   v.literal("roadmap"),
   v.literal("brand_voice"),
   v.literal("team_processes"),
-  v.literal("target_audience")
+  v.literal("target_audience"),
+  v.literal("identity"),
+  v.literal("feature_catalog"),
+  v.literal("scope")
 );
 
 export const knowledgeEditedBy = v.union(v.literal("agent"), v.literal("user"));

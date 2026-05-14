@@ -77,17 +77,20 @@ export const STATUS_CONFIG: Record<WorkItemStatus, StatusEntry> = {
 };
 
 export function getStatusEntry(status: string): StatusEntry {
-  return STATUS_CONFIG[status as WorkItemStatus] ?? STATUS_CONFIG.backlog;
+  const knownStatus = STATUS_ORDER.find((value) => value === status);
+  return knownStatus ? STATUS_CONFIG[knownStatus] : STATUS_CONFIG.backlog;
 }
 
 export function InlineStatusPopover({
   workItemId,
   status,
   disabled,
+  showLabel = true,
 }: {
   workItemId: Id<"autopilotWorkItems">;
   status: string;
   disabled?: boolean;
+  showLabel?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const updateWorkItem = useMutation(
@@ -129,7 +132,9 @@ export function InlineStatusPopover({
         }
       >
         <Icon className={cn("size-4 shrink-0", current.color)} />
-        <span className="text-muted-foreground">{current.label}</span>
+        {showLabel ? (
+          <span className="text-muted-foreground">{current.label}</span>
+        ) : null}
       </PopoverTrigger>
       <PopoverContent
         align="start"

@@ -21,7 +21,6 @@ export const DEFAULT_DAILY_COST_CAP_USD = 50;
 const AGENT_CONFIG_FIELDS = [
   "pm",
   "cto",
-  "dev",
   "growth",
   "support",
   "sales",

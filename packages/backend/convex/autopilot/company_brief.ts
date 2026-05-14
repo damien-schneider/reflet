@@ -94,7 +94,7 @@ export const generateCompanyBrief = internalAction({
 
       await ctx.runMutation(internal.autopilot.knowledge.createKnowledgeDoc, {
         organizationId: args.organizationId,
-        docType: "product_definition",
+        docType: "identity",
         ownerAgent: "pm",
         title: "Product Definition",
         contentFull: analysis,
@@ -134,7 +134,7 @@ export const generateCompanyBrief = internalAction({
 
     await ctx.runMutation(internal.autopilot.knowledge.createKnowledgeDoc, {
       organizationId: args.organizationId,
-      docType: "product_definition",
+      docType: "identity",
       ownerAgent: "pm",
       title: brief.title,
       contentFull: brief.contentFull,
@@ -224,9 +224,7 @@ export const isCompanyBriefApproved = internalQuery({
     const doc = await ctx.db
       .query("autopilotKnowledgeDocs")
       .withIndex("by_org_docType", (q) =>
-        q
-          .eq("organizationId", args.organizationId)
-          .eq("docType", "product_definition")
+        q.eq("organizationId", args.organizationId).eq("docType", "identity")
       )
       .unique();
 

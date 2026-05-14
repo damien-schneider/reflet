@@ -62,6 +62,20 @@ function getSeverityDot(severity: string) {
   return SEVERITY_DOT.info;
 }
 
+function resolveIssueHref(
+  baseUrl: string,
+  orgSlug: string,
+  actionUrl: string | undefined
+): string {
+  if (!actionUrl) {
+    return baseUrl;
+  }
+  if (actionUrl.startsWith("/")) {
+    return `/dashboard/${orgSlug}${actionUrl}`;
+  }
+  return `${baseUrl}/${actionUrl}`;
+}
+
 export function HealthBanner() {
   const { organizationId, orgSlug } = useAutopilotContext();
   const health = useQuery(api.autopilot.health.getSystemHealth, {
@@ -159,9 +173,7 @@ export function HealthBanner() {
                 "actionUrl" in issue ? issue.actionUrl : undefined;
               const actionLabel =
                 "actionLabel" in issue ? issue.actionLabel : undefined;
-              const actionHref = actionUrl
-                ? `${baseUrl}/${actionUrl}`
-                : baseUrl;
+              const actionHref = resolveIssueHref(baseUrl, orgSlug, actionUrl);
 
               return (
                 <div className="flex items-start gap-2.5" key={issue.id}>

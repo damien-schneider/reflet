@@ -31,7 +31,10 @@ export function GroupBySelect({
 }) {
   return (
     <Select onValueChange={(v) => onChange(v as TaskGroupBy)} value={value}>
-      <SelectTrigger aria-label="Group by" className="h-8 w-36 gap-1.5">
+      <SelectTrigger
+        aria-label="Group by"
+        className="h-8 w-36 gap-1.5 rounded-full bg-muted/40"
+      >
         <IconLayersIntersect className="size-3.5 text-muted-foreground" />
         <SelectValue placeholder="Group by">
           {GROUP_BY_LABELS[value]}

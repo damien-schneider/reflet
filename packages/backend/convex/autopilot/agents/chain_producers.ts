@@ -51,6 +51,104 @@ const fetchPublishedDocByType = async (
   return docs.find((d) => d.status === "published") ?? null;
 };
 
+interface RepoAnalysisPrecondition {
+  githubConnected: boolean;
+  integrationError: string | null;
+  integrationStatus:
+    | "missing"
+    | "pending"
+    | "in_progress"
+    | "completed"
+    | "error";
+}
+
+const CONNECT_GITHUB_HINT =
+  "Connect a GitHub repository in Settings → GitHub to unblock the chain.";
+const RUN_ANALYSIS_HINT =
+  "Open Autopilot → Knowledge and click Recompute to run the first repo analysis.";
+const WAITING_HINT =
+  "A repo analysis is running. The chain will resume automatically when it completes.";
+
+function describeRepoAnalysisBlocker(precondition: RepoAnalysisPrecondition): {
+  message: string;
+  details: string;
+} {
+  if (!precondition.githubConnected) {
+    return {
+      message:
+        "Cannot produce codebase_understanding: no GitHub repository connected",
+      details: CONNECT_GITHUB_HINT,
+    };
+  }
+  if (precondition.integrationStatus === "missing") {
+    return {
+      message:
+        "Cannot produce codebase_understanding: no repo analysis has been run yet",
+      details: RUN_ANALYSIS_HINT,
+    };
+  }
+  if (
+    precondition.integrationStatus === "pending" ||
+    precondition.integrationStatus === "in_progress"
+  ) {
+    return {
+      message:
+        "Cannot produce codebase_understanding: repo analysis still running",
+      details: WAITING_HINT,
+    };
+  }
+  if (precondition.integrationStatus === "error") {
+    return {
+      message:
+        "Cannot produce codebase_understanding: last repo analysis failed",
+      details: `${precondition.integrationError ?? "Unknown analysis error"}. ${RUN_ANALYSIS_HINT}`,
+    };
+  }
+  return {
+    message:
+      "Cannot produce codebase_understanding: repo analysis completed but internal record is empty",
+    details: RUN_ANALYSIS_HINT,
+  };
+}
+
+export const getRepoAnalysisPrecondition = internalQuery({
+  args: { organizationId: v.id("organizations") },
+  returns: v.object({
+    githubConnected: v.boolean(),
+    integrationStatus: v.union(
+      v.literal("missing"),
+      v.literal("pending"),
+      v.literal("in_progress"),
+      v.literal("completed"),
+      v.literal("error")
+    ),
+    integrationError: v.union(v.string(), v.null()),
+  }),
+  handler: async (ctx, args): Promise<RepoAnalysisPrecondition> => {
+    const connection = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+    const githubConnected = Boolean(connection?.repositoryFullName);
+
+    const integration = await ctx.db
+      .query("repoAnalysis")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .first();
+
+    return {
+      githubConnected,
+      integrationStatus: integration?.status ?? "missing",
+      integrationError: integration?.error ?? null,
+    };
+  },
+});
+
 export const getChainContext = internalQuery({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -69,11 +167,20 @@ export const getChainContext = internalQuery({
       args.organizationId,
       "codebase_understanding"
     );
-    const appDescDoc = await fetchPublishedDocByType(
-      ctx,
-      args.organizationId,
-      "app_description"
-    );
+    const findKnowledgeDoc = async (
+      docType: "identity" | "brand_voice" | "feature_catalog" | "scope"
+    ) =>
+      await ctx.db
+        .query("autopilotKnowledgeDocs")
+        .withIndex("by_org_docType", (q) =>
+          q.eq("organizationId", args.organizationId).eq("docType", docType)
+        )
+        .unique();
+
+    const identityDoc = await findKnowledgeDoc("identity");
+    const brandVoiceDoc = await findKnowledgeDoc("brand_voice");
+    const featureCatalogDoc = await findKnowledgeDoc("feature_catalog");
+    const scopeDoc = await findKnowledgeDoc("scope");
     const marketDoc = await fetchPublishedDocByType(
       ctx,
       args.organizationId,
@@ -103,7 +210,10 @@ export const getChainContext = internalQuery({
       chainState,
       repoAnalysis,
       codebaseDoc,
-      appDescDoc,
+      identityDoc,
+      brandVoiceDoc,
+      featureCatalogDoc,
+      scopeDoc,
       marketDoc,
       targetDoc,
       personas,
@@ -117,7 +227,6 @@ export const writeChainDoc = internalMutation({
     organizationId: v.id("organizations"),
     type: v.union(
       v.literal("codebase_understanding"),
-      v.literal("app_description"),
       v.literal("market_research"),
       v.literal("target_definition"),
       v.literal("persona_brief")
@@ -151,6 +260,92 @@ export const writeChainDoc = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
+  },
+});
+
+const KNOWLEDGE_DOC_STALENESS_DAYS = 30;
+
+/**
+ * Chain producer write into autopilotKnowledgeDocs (single source of truth
+ * for user-facing canonical artifacts). Skips overwrite if user has edited
+ * the doc within the protection window — preserves human authorship.
+ */
+export const upsertChainKnowledgeDoc = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    docType: v.union(
+      v.literal("target_audience"),
+      v.literal("identity"),
+      v.literal("brand_voice"),
+      v.literal("feature_catalog"),
+      v.literal("scope")
+    ),
+    ownerAgent: v.string(),
+    title: v.string(),
+    contentFull: v.string(),
+    contentSummary: v.string(),
+  },
+  returns: v.id("autopilotKnowledgeDocs"),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    const existing = await ctx.db
+      .query("autopilotKnowledgeDocs")
+      .withIndex("by_org_docType", (q) =>
+        q.eq("organizationId", args.organizationId).eq("docType", args.docType)
+      )
+      .unique();
+
+    if (existing) {
+      if (
+        existing.userEditProtectedUntil &&
+        existing.userEditProtectedUntil > now
+      ) {
+        return existing._id;
+      }
+
+      const newVersion = existing.version + 1;
+      await ctx.db.patch(existing._id, {
+        title: args.title,
+        contentFull: args.contentFull,
+        contentSummary: args.contentSummary,
+        version: newVersion,
+        userEdited: false,
+        lastUpdatedAt: now,
+      });
+      await ctx.db.insert("autopilotKnowledgeDocVersions", {
+        docId: existing._id,
+        version: newVersion,
+        content: args.contentFull,
+        editedBy: "agent",
+        editingAgent: args.ownerAgent,
+        createdAt: now,
+      });
+      return existing._id;
+    }
+
+    const docId = await ctx.db.insert("autopilotKnowledgeDocs", {
+      organizationId: args.organizationId,
+      docType: args.docType,
+      ownerAgent: args.ownerAgent,
+      title: args.title,
+      contentFull: args.contentFull,
+      contentSummary: args.contentSummary,
+      version: 1,
+      userEdited: false,
+      stalenessAlertDays: KNOWLEDGE_DOC_STALENESS_DAYS,
+      lastUpdatedAt: now,
+      createdAt: now,
+    });
+    await ctx.db.insert("autopilotKnowledgeDocVersions", {
+      docId,
+      version: 1,
+      content: args.contentFull,
+      editedBy: "agent",
+      editingAgent: args.ownerAgent,
+      createdAt: now,
+    });
+    return docId;
   },
 });
 
@@ -192,12 +387,17 @@ export const produceCodebaseUnderstanding = internalAction({
       return null;
     }
     if (!context.repoAnalysis) {
+      const precondition = await ctx.runQuery(
+        internal.autopilot.agents.chain_producers.getRepoAnalysisPrecondition,
+        { organizationId: args.organizationId }
+      );
+      const { message, details } = describeRepoAnalysisBlocker(precondition);
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         agent: "cto",
         level: "warning",
-        message:
-          "Cannot produce codebase_understanding: no repo analysis available",
+        message,
+        details,
       });
       return null;
     }
@@ -234,33 +434,56 @@ export const produceCodebaseUnderstanding = internalAction({
 });
 
 // ============================================
-// PRODUCER: app_description (CTO)
+// SHARED: empty-doc validation
 // ============================================
 
-const appDescriptionSchema = z.object({
+export class EmptyChainArtifactError extends Error {
+  constructor(node: string, field: string) {
+    super(
+      `Chain producer for "${node}" returned an empty "${field}" — refusing to persist`
+    );
+    this.name = "EmptyChainArtifactError";
+  }
+}
+
+export const assertNonEmpty = (
+  node: string,
+  fields: Record<string, string | string[]>
+): void => {
+  for (const [field, value] of Object.entries(fields)) {
+    if (Array.isArray(value)) {
+      if (value.length === 0 || value.every((v) => v.trim() === "")) {
+        throw new EmptyChainArtifactError(node, field);
+      }
+      continue;
+    }
+    if (value.trim() === "") {
+      throw new EmptyChainArtifactError(node, field);
+    }
+  }
+};
+
+// ============================================
+// PRODUCER: identity (CTO)
+// ============================================
+
+const identitySchema = z.object({
   title: z.string(),
   oneLineSummary: z.string(),
   whatItDoes: z.string(),
-  primaryUserVerbs: z.array(z.string()),
+  primaryUserVerbs: z.array(z.string()).min(1),
   valueProposition: z.string(),
-  currentScope: z.string(),
-  outOfScope: z.string(),
-  keyFindings: z.array(z.string()),
 });
 
-const renderAppDescription = (
-  schema: z.infer<typeof appDescriptionSchema>
-): string =>
+const renderIdentity = (schema: z.infer<typeof identitySchema>): string =>
   [
     `## Summary\n${schema.oneLineSummary}`,
     `## What It Does\n${schema.whatItDoes}`,
     `## Primary User Verbs\n${schema.primaryUserVerbs.map((v) => `- ${v}`).join("\n")}`,
     `## Value Proposition\n${schema.valueProposition}`,
-    `## Current Scope\n${schema.currentScope}`,
-    `## Explicitly Out of Scope\n${schema.outOfScope}`,
   ].join("\n\n");
 
-export const produceAppDescription = internalAction({
+export const produceIdentity = internalAction({
   args: { organizationId: v.id("organizations") },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -269,7 +492,7 @@ export const produceAppDescription = internalAction({
       { organizationId: args.organizationId }
     );
 
-    if (!isNodeReadyToProduce(context.chainState, "app_description")) {
+    if (!isNodeReadyToProduce(context.chainState, "identity")) {
       return null;
     }
     if (!context.codebaseDoc) {
@@ -278,22 +501,28 @@ export const produceAppDescription = internalAction({
 
     const result = await generateObjectWithFallback({
       models: QUALITY_MODELS,
-      schema: appDescriptionSchema,
-      systemPrompt: `You are a senior CTO turning a codebase_understanding into a plain-language app description that downstream Growth and PM agents can consume. ${PRE_ANSWER}`,
-      prompt: `Codebase understanding:\n${context.codebaseDoc.content}\n\nProduce a structured app_description.`,
+      schema: identitySchema,
+      systemPrompt: `You are a senior CTO distilling the product identity from a codebase_understanding. Produce a tight, plain-language identity statement that downstream Growth and PM agents can ground on. ${PRE_ANSWER}`,
+      prompt: `Codebase understanding:\n${context.codebaseDoc.content}\n\nProduce a structured product identity (summary, what it does, user verbs, value prop).`,
       temperature: 0,
     });
 
+    assertNonEmpty("identity", {
+      oneLineSummary: result.oneLineSummary,
+      whatItDoes: result.whatItDoes,
+      valueProposition: result.valueProposition,
+      primaryUserVerbs: result.primaryUserVerbs,
+    });
+
     await ctx.runMutation(
-      internal.autopilot.agents.chain_producers.writeChainDoc,
+      internal.autopilot.agents.chain_producers.upsertChainKnowledgeDoc,
       {
         organizationId: args.organizationId,
-        type: "app_description",
+        docType: "identity",
+        ownerAgent: "cto",
         title: result.title,
-        content: renderAppDescription(result),
-        sourceAgent: "cto",
-        dependsOnDocIds: [context.codebaseDoc._id],
-        keyFindings: result.keyFindings,
+        contentFull: renderIdentity(result),
+        contentSummary: result.oneLineSummary.slice(0, 200),
       }
     );
 
@@ -301,11 +530,267 @@ export const produceAppDescription = internalAction({
       organizationId: args.organizationId,
       agent: "cto",
       level: "success",
-      message: "Produced app_description (pending review)",
+      message: "Produced identity (knowledge doc)",
     });
     return null;
   },
 });
+
+// ============================================
+// PRODUCER: brand_voice (CTO)
+// ============================================
+
+const brandVoiceSchema = z.object({
+  title: z.string(),
+  tone: z.string(),
+  audienceFraming: z.string(),
+  doList: z.array(z.string()).min(1),
+  dontList: z.array(z.string()).min(1),
+  vocabulary: z.array(z.string()),
+});
+
+const renderBrandVoice = (schema: z.infer<typeof brandVoiceSchema>): string =>
+  [
+    `## Tone\n${schema.tone}`,
+    `## Audience Framing\n${schema.audienceFraming}`,
+    `## Do\n${schema.doList.map((d) => `- ${d}`).join("\n")}`,
+    `## Don't\n${schema.dontList.map((d) => `- ${d}`).join("\n")}`,
+    `## Vocabulary\n${schema.vocabulary.map((v) => `- ${v}`).join("\n")}`,
+  ].join("\n\n");
+
+export const produceBrandVoice = internalAction({
+  args: { organizationId: v.id("organizations") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const context = await ctx.runQuery(
+      internal.autopilot.agents.chain_producers.getChainContext,
+      { organizationId: args.organizationId }
+    );
+
+    if (!isNodeReadyToProduce(context.chainState, "brand_voice")) {
+      return null;
+    }
+    if (!context.codebaseDoc) {
+      return null;
+    }
+
+    const result = await generateObjectWithFallback({
+      models: QUALITY_MODELS,
+      schema: brandVoiceSchema,
+      systemPrompt: `You are a senior CTO inferring brand voice cues from a codebase_understanding (UI copy, doc style, package naming, product surfaces). Be conservative — voice should match what the product actually communicates today, not aspirational. ${PRE_ANSWER}`,
+      prompt: `Codebase understanding:\n${context.codebaseDoc.content}\n\nProduce a structured brand voice (tone, audience framing, do/don't, vocabulary).`,
+      temperature: 0,
+    });
+
+    assertNonEmpty("brand_voice", {
+      tone: result.tone,
+      audienceFraming: result.audienceFraming,
+      doList: result.doList,
+      dontList: result.dontList,
+    });
+
+    await ctx.runMutation(
+      internal.autopilot.agents.chain_producers.upsertChainKnowledgeDoc,
+      {
+        organizationId: args.organizationId,
+        docType: "brand_voice",
+        ownerAgent: "cto",
+        title: result.title,
+        contentFull: renderBrandVoice(result),
+        contentSummary: result.tone.slice(0, 200),
+      }
+    );
+
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+      organizationId: args.organizationId,
+      agent: "cto",
+      level: "success",
+      message: "Produced brand_voice (knowledge doc)",
+    });
+    return null;
+  },
+});
+
+// ============================================
+// PRODUCER: feature_catalog (CTO)
+// ============================================
+
+const featureCatalogSchema = z.object({
+  title: z.string(),
+  features: z
+    .array(
+      z.object({
+        name: z.string(),
+        description: z.string(),
+        userBenefit: z.string(),
+        maturity: z.enum(["experimental", "beta", "stable", "deprecated"]),
+      })
+    )
+    .min(1),
+});
+
+const renderFeatureCatalog = (
+  schema: z.infer<typeof featureCatalogSchema>
+): string =>
+  schema.features
+    .map(
+      (f) =>
+        `### ${f.name} (${f.maturity})\n${f.description}\n\n**User benefit:** ${f.userBenefit}`
+    )
+    .join("\n\n");
+
+export const produceFeatureCatalog = internalAction({
+  args: { organizationId: v.id("organizations") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const context = await ctx.runQuery(
+      internal.autopilot.agents.chain_producers.getChainContext,
+      { organizationId: args.organizationId }
+    );
+
+    if (!isNodeReadyToProduce(context.chainState, "feature_catalog")) {
+      return null;
+    }
+    if (!context.codebaseDoc) {
+      return null;
+    }
+
+    const result = await generateObjectWithFallback({
+      models: QUALITY_MODELS,
+      schema: featureCatalogSchema,
+      systemPrompt: `You are a senior CTO enumerating the concrete user-facing features visible in the codebase. Only list features that have actual surface area today — no roadmap items. ${PRE_ANSWER}`,
+      prompt: `Codebase understanding:\n${context.codebaseDoc.content}\n\nProduce a typed feature catalog with maturity levels.`,
+      temperature: 0,
+    });
+
+    assertNonEmpty("feature_catalog", {
+      features: result.features.map((f) => f.name),
+    });
+
+    const summary = `${result.features.length} features cataloged`;
+
+    await ctx.runMutation(
+      internal.autopilot.agents.chain_producers.upsertChainKnowledgeDoc,
+      {
+        organizationId: args.organizationId,
+        docType: "feature_catalog",
+        ownerAgent: "cto",
+        title: result.title,
+        contentFull: renderFeatureCatalog(result),
+        contentSummary: summary,
+      }
+    );
+
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+      organizationId: args.organizationId,
+      agent: "cto",
+      level: "success",
+      message: `Produced feature_catalog with ${result.features.length} features`,
+    });
+    return null;
+  },
+});
+
+// ============================================
+// PRODUCER: scope (CTO)
+// ============================================
+
+const scopeSchema = z.object({
+  title: z.string(),
+  currentScope: z.string(),
+  outOfScope: z.string(),
+  boundaries: z.array(z.string()).min(1),
+});
+
+const renderScope = (schema: z.infer<typeof scopeSchema>): string =>
+  [
+    `## Current Scope\n${schema.currentScope}`,
+    `## Out of Scope\n${schema.outOfScope}`,
+    `## Boundaries\n${schema.boundaries.map((b) => `- ${b}`).join("\n")}`,
+  ].join("\n\n");
+
+export const produceScope = internalAction({
+  args: { organizationId: v.id("organizations") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const context = await ctx.runQuery(
+      internal.autopilot.agents.chain_producers.getChainContext,
+      { organizationId: args.organizationId }
+    );
+
+    if (!isNodeReadyToProduce(context.chainState, "scope")) {
+      return null;
+    }
+    if (!context.codebaseDoc) {
+      return null;
+    }
+
+    const result = await generateObjectWithFallback({
+      models: QUALITY_MODELS,
+      schema: scopeSchema,
+      systemPrompt: `You are a senior CTO defining what the product is — and explicitly is NOT. Strong boundaries help downstream agents refuse irrelevant work. ${PRE_ANSWER}`,
+      prompt: `Codebase understanding:\n${context.codebaseDoc.content}\n\nProduce a structured scope (current scope, out of scope, hard boundaries).`,
+      temperature: 0,
+    });
+
+    assertNonEmpty("scope", {
+      currentScope: result.currentScope,
+      outOfScope: result.outOfScope,
+      boundaries: result.boundaries,
+    });
+
+    await ctx.runMutation(
+      internal.autopilot.agents.chain_producers.upsertChainKnowledgeDoc,
+      {
+        organizationId: args.organizationId,
+        docType: "scope",
+        ownerAgent: "cto",
+        title: result.title,
+        contentFull: renderScope(result),
+        contentSummary: result.currentScope.slice(0, 200),
+      }
+    );
+
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+      organizationId: args.organizationId,
+      agent: "cto",
+      level: "success",
+      message: "Produced scope (knowledge doc)",
+    });
+    return null;
+  },
+});
+
+// ============================================
+// SHARED: typed-knowledge prompt context
+// ============================================
+// Downstream producers (market_analysis, target_definition, use_cases) used to
+// read a single synthesized `app_description` doc. They now read the four typed
+// knowledge docs directly so each producer can lean on the dimension(s) it
+// cares about most (e.g. brand_voice for content; feature_catalog for use
+// cases). This helper renders the relevant subset as a stable prompt block.
+
+const renderTypedKnowledgeContext = (parts: {
+  identity?: string | null;
+  brandVoice?: string | null;
+  featureCatalog?: string | null;
+  scope?: string | null;
+}): string => {
+  const sections: string[] = [];
+  if (parts.identity) {
+    sections.push(`## Identity\n${parts.identity}`);
+  }
+  if (parts.brandVoice) {
+    sections.push(`## Brand Voice\n${parts.brandVoice}`);
+  }
+  if (parts.featureCatalog) {
+    sections.push(`## Feature Catalog\n${parts.featureCatalog}`);
+  }
+  if (parts.scope) {
+    sections.push(`## Scope\n${parts.scope}`);
+  }
+  return sections.join("\n\n");
+};
 
 // ============================================
 // PRODUCER: market_analysis (Growth)
@@ -342,15 +827,23 @@ export const produceMarketAnalysis = internalAction({
     if (!isNodeReadyToProduce(context.chainState, "market_analysis")) {
       return null;
     }
-    if (!context.appDescDoc) {
+    const { identityDoc, brandVoiceDoc, featureCatalogDoc, scopeDoc } = context;
+    if (!(identityDoc && brandVoiceDoc && featureCatalogDoc && scopeDoc)) {
       return null;
     }
+
+    const knowledgeContext = renderTypedKnowledgeContext({
+      identity: identityDoc.contentFull,
+      brandVoice: brandVoiceDoc.contentFull,
+      featureCatalog: featureCatalogDoc.contentFull,
+      scope: scopeDoc.contentFull,
+    });
 
     const result = await generateObjectWithFallback({
       models: FAST_MODELS,
       schema: marketAnalysisSchema,
-      systemPrompt: `You are a Growth specialist producing a structured market analysis from the published app_description. Use only the inputs provided — do not invent competitors. ${PRE_ANSWER}`,
-      prompt: `App description:\n${context.appDescDoc.content}\n\nProduce a market_analysis.`,
+      systemPrompt: `You are a Growth specialist producing a structured market analysis from the published product knowledge. Use only the inputs provided — do not invent competitors. ${PRE_ANSWER}`,
+      prompt: `${knowledgeContext}\n\nProduce a market_analysis.`,
       temperature: 0,
     });
 
@@ -362,7 +855,7 @@ export const produceMarketAnalysis = internalAction({
         title: result.title,
         content: renderMarketAnalysis(result),
         sourceAgent: "growth",
-        dependsOnDocIds: [context.appDescDoc._id],
+        dependsOnDocIds: [],
         keyFindings: result.keyFindings,
       }
     );
@@ -410,15 +903,20 @@ export const produceTargetDefinition = internalAction({
     if (!isNodeReadyToProduce(context.chainState, "target_definition")) {
       return null;
     }
-    if (!(context.appDescDoc && context.marketDoc)) {
+    if (!(context.identityDoc && context.scopeDoc && context.marketDoc)) {
       return null;
     }
+
+    const knowledgeContext = renderTypedKnowledgeContext({
+      identity: context.identityDoc.contentFull,
+      scope: context.scopeDoc.contentFull,
+    });
 
     const result = await generateObjectWithFallback({
       models: FAST_MODELS,
       schema: targetDefinitionSchema,
-      systemPrompt: `You are a senior PM producing a strict target_definition. Be sharp about who we DO NOT serve — exclusion is as important as inclusion. ${PRE_ANSWER}`,
-      prompt: `App description:\n${context.appDescDoc.content}\n\nMarket analysis:\n${context.marketDoc.content}`,
+      systemPrompt: `You are a senior PM producing a strict target_definition. Be sharp about who we DO NOT serve — the scope's out-of-scope section is your strongest signal. ${PRE_ANSWER}`,
+      prompt: `${knowledgeContext}\n\nMarket analysis:\n${context.marketDoc.content}`,
       temperature: 0,
     });
 
@@ -430,7 +928,7 @@ export const produceTargetDefinition = internalAction({
         title: result.title,
         content: renderTargetDefinition(result),
         sourceAgent: "pm",
-        dependsOnDocIds: [context.appDescDoc._id, context.marketDoc._id],
+        dependsOnDocIds: [context.marketDoc._id],
         keyFindings: result.keyFindings,
       }
     );
@@ -564,11 +1062,16 @@ export const produceUseCases = internalAction({
       goals: p.goals,
     }));
 
+    const knowledgeContext = renderTypedKnowledgeContext({
+      identity: context.identityDoc?.contentFull,
+      featureCatalog: context.featureCatalogDoc?.contentFull,
+    });
+
     const result = await generateObjectWithFallback({
       models: FAST_MODELS,
       schema: useCasesSchema,
-      systemPrompt: `You are a senior PM enumerating concrete use cases. One use case per (persona × pain) combination. Trigger scenarios must be specific. ${PRE_ANSWER}`,
-      prompt: `Personas:\n${JSON.stringify(personasForPrompt, null, 2)}\n\nApp description:\n${context.appDescDoc?.content ?? ""}`,
+      systemPrompt: `You are a senior PM enumerating concrete use cases. One use case per (persona × pain) combination. Trigger scenarios must be specific and grounded in the feature catalog. ${PRE_ANSWER}`,
+      prompt: `Personas:\n${JSON.stringify(personasForPrompt, null, 2)}\n\n${knowledgeContext}`,
       temperature: 0,
     });
 

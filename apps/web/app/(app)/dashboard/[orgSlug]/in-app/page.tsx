@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { H1, H3, Muted, Text } from "@/components/ui/typography";
+import { H3, Muted, Text } from "@/components/ui/typography";
 import { WidgetCard } from "@/features/in-app/components/widget-card";
 
 export default function WidgetsPage({
@@ -73,13 +73,7 @@ export default function WidgetsPage({
 
   return (
     <div className="admin-container">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <H1>In-App</H1>
-          <Text variant="bodySmall">
-            Manage in-app integrations for your website and application
-          </Text>
-        </div>
+      <div className="mb-8 flex items-center justify-end">
         <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
           <DialogTrigger render={<Button />}>
             <Plus className="mr-2 size-4" />

@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
+import { H2, H3, Muted, Text } from "@/components/ui/typography";
 
 const generateSlug = (text: string): string => {
   return text
@@ -139,13 +139,6 @@ export default function GeneralSettingsPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <H1>General Gear</H1>
-        <Text variant="bodySmall">
-          Manage your organization&apos;s basic settings
-        </Text>
-      </div>
-
       <div className="space-y-8">
         <section className="space-y-4">
           <div>

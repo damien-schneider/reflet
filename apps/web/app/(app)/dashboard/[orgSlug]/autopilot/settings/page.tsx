@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import { IconPower, IconRobot } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
-import { useReducer, useState } from "react";
+import { useReducer } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,17 +12,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { H2, Muted } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
 import {
-  AdapterSettings,
-  isAdapterValue,
-} from "@/features/autopilot/components/settings/adapter-settings";
-import {
   BillingSection,
   BillingSectionSkeleton,
   BillingUnavailableSection,
 } from "@/features/autopilot/components/settings/billing-section";
 import { BudgetSettings } from "@/features/autopilot/components/settings/budget-settings";
 import { DangerZone } from "@/features/autopilot/components/settings/danger-zone";
-import { GeneralSettings } from "@/features/autopilot/components/settings/general-settings";
 import { LimitSettings } from "@/features/autopilot/components/settings/limit-settings";
 import {
   AUTOPILOT_PRO_REQUIRED_MESSAGE,
@@ -31,17 +26,12 @@ import {
 
 type ConfigValue = number | string | undefined;
 type BillingStatus = { tier: string } | null | undefined;
-type PendingKey =
-  | "initializing"
-  | "savingCredentials"
-  | "savingSettings"
-  | "resetting";
+type PendingKey = "initializing" | "savingSettings" | "resetting";
 
 type PendingState = Record<PendingKey, boolean>;
 
 const INITIAL_PENDING_STATE: PendingState = {
   initializing: false,
-  savingCredentials: false,
   savingSettings: false,
   resetting: false,
 };
@@ -141,7 +131,7 @@ function UnconfiguredAutopilotSettings({
               size="lg"
             >
               <IconPower className="mr-2 size-4" />
-              {isInitializing ? "Initializing\u2026" : "Initialize Autopilot"}
+              {isInitializing ? "Initializing…" : "Initialize Autopilot"}
             </Button>
           )}
         </CardContent>
@@ -194,12 +184,8 @@ export default function AutopilotSettingsPage() {
 
   const initConfig = useMutation(api.autopilot.mutations.config.initConfig);
   const updateConfig = useMutation(api.autopilot.mutations.config.updateConfig);
-  const upsertCreds = useMutation(
-    api.autopilot.mutations.config.upsertCredentials
-  );
   const resetAll = useMutation(api.autopilot.mutations.routines.resetAllData);
 
-  const [credentialInput, setCredentialInput] = useState("");
   const [pending, setPending] = useReducer(
     pendingReducer,
     INITIAL_PENDING_STATE
@@ -255,26 +241,6 @@ export default function AutopilotSettingsPage() {
 
   const canEditSettings = isAdmin && billing?.tier === "pro";
 
-  const handleToggle = async (field: string, value: boolean) => {
-    if (!canEditSettings) {
-      toast.error(AUTOPILOT_PRO_REQUIRED_MESSAGE);
-      return;
-    }
-    setPendingFlag("savingSettings", true);
-    try {
-      await updateConfig({ configId: config._id, [field]: value });
-      toast.success("Setting updated");
-    } catch (error) {
-      toast.error(
-        getAutopilotErrorMessage(error, {
-          fallback: "Failed to update setting",
-        })
-      );
-    } finally {
-      setPendingFlag("savingSettings", false);
-    }
-  };
-
   const handleUpdate = async (field: string, value: ConfigValue) => {
     if (!canEditSettings) {
       throw new Error(AUTOPILOT_PRO_REQUIRED_MESSAGE);
@@ -292,41 +258,6 @@ export default function AutopilotSettingsPage() {
       throw error;
     } finally {
       setPendingFlag("savingSettings", false);
-    }
-  };
-
-  const handleSaveCredentials = async () => {
-    if (!canEditSettings) {
-      toast.error(AUTOPILOT_PRO_REQUIRED_MESSAGE);
-      return;
-    }
-    if (!credentialInput.trim()) {
-      toast.error("Credentials required");
-      return;
-    }
-
-    if (!isAdapterValue(config.adapter)) {
-      toast.error("Choose a valid coding adapter before saving credentials");
-      return;
-    }
-
-    setPendingFlag("savingCredentials", true);
-    try {
-      await upsertCreds({
-        organizationId,
-        adapter: config.adapter,
-        credentials: credentialInput.trim(),
-      });
-      toast.success("Credentials saved");
-      setCredentialInput("");
-    } catch (error) {
-      toast.error(
-        getAutopilotErrorMessage(error, {
-          fallback: "Failed to save credentials",
-        })
-      );
-    } finally {
-      setPendingFlag("savingCredentials", false);
     }
   };
 
@@ -349,6 +280,7 @@ export default function AutopilotSettingsPage() {
       setPendingFlag("resetting", false);
     }
   };
+
   return (
     <div className="space-y-10">
       <div>
@@ -360,22 +292,6 @@ export default function AutopilotSettingsPage() {
 
       <BillingStatusSection billing={billing} orgSlug={orgSlug} />
       <LockedSettingsNotice billing={billing} />
-
-      <GeneralSettings
-        autoMergePRs={config.autoMergePRs}
-        disabled={!canEditSettings || pending.savingSettings}
-        onAutoMergeChange={(value) => handleToggle("autoMergePRs", value)}
-      />
-
-      <AdapterSettings
-        adapter={config.adapter ?? undefined}
-        credentialInput={credentialInput}
-        disabled={!canEditSettings || pending.savingSettings}
-        isSaving={pending.savingCredentials}
-        onAdapterChange={(value) => handleUpdate("adapter", value)}
-        onCredentialInputChange={setCredentialInput}
-        onSaveCredentials={handleSaveCredentials}
-      />
 
       <LimitSettings
         dailyCostCapUsd={config.dailyCostCapUsd}

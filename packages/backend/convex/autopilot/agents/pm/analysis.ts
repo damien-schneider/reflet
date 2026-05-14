@@ -7,7 +7,10 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../../_generated/api";
+import type { Id } from "../../../_generated/dataModel";
+import type { ActionCtx } from "../../../_generated/server";
 import { internalAction } from "../../../_generated/server";
+import { createWorkStreamCallbacks } from "../../agent_threads";
 import { QUALITY_MODELS } from "../models";
 import { buildAgentPrompt, PM_SYSTEM_PROMPT } from "../prompts";
 import {
@@ -21,14 +24,7 @@ import { bootstrapInitiativesIfNeeded } from "./initiatives";
 // SCHEMA
 // ============================================
 
-const VALID_AGENTS = [
-  "pm",
-  "cto",
-  "dev",
-  "growth",
-  "support",
-  "sales",
-] as const;
+const VALID_AGENTS = ["pm", "cto", "growth", "support", "sales"] as const;
 
 export const pmAnalysisSchema = z.object({
   tasks: z.array(
@@ -60,11 +56,49 @@ export const pmAnalysisSchema = z.object({
 });
 
 const PM_MODELS = QUALITY_MODELS;
-const PM_ASSIGNMENT_BLOCKLIST = new Set(["pm", "dev"]);
+const PM_ASSIGNMENT_BLOCKLIST = new Set(["pm"]);
 
 export function getPMAssignableAgents(enabledAgents: readonly string[]) {
   return enabledAgents.filter((agent) => !PM_ASSIGNMENT_BLOCKLIST.has(agent));
 }
+
+const checkPMChainGate = async (
+  ctx: ActionCtx,
+  organizationId: Id<"organizations">
+): Promise<boolean> => {
+  const chainGate = await ctx.runQuery(
+    internal.autopilot.chain.getAgentChainGate,
+    { organizationId, agent: "pm" }
+  );
+  if (chainGate.ready) {
+    return true;
+  }
+  await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+    organizationId,
+    agent: "pm",
+    level: "info",
+    message: `PM analysis skipped — chain not ready (waiting on: ${chainGate.missing.join(", ")})`,
+  });
+  return false;
+};
+
+/**
+ * Preflight checks before PM work: budget guards + chain readiness.
+ * Returns false if PM should not run this cycle.
+ */
+const preflightPMAnalysis = async (
+  ctx: ActionCtx,
+  organizationId: Id<"organizations">
+): Promise<boolean> => {
+  const guardResult = await ctx.runQuery(
+    internal.autopilot.guards.checkGuards,
+    { organizationId, agent: "pm" }
+  );
+  if (!guardResult.allowed) {
+    return false;
+  }
+  return await checkPMChainGate(ctx, organizationId);
+};
 
 // ============================================
 // ACTION
@@ -81,12 +115,13 @@ export const runPMAnalysis = internalAction({
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
-      // Guard check: ensure budget/rate limits allow execution
-      const guardResult = await ctx.runQuery(
-        internal.autopilot.guards.checkGuards,
-        { organizationId: args.organizationId, agent: "pm" }
+      // Preflight: budget guards + chain readiness gate. Chain gate ensures
+      // PM analysis only runs once personas are published (real users known).
+      const passesPreflight = await preflightPMAnalysis(
+        ctx,
+        args.organizationId
       );
-      if (!guardResult.allowed) {
+      if (!passesPreflight) {
         return null;
       }
 
@@ -241,6 +276,11 @@ For each task, provide:
         schema: pmAnalysisSchema,
         systemPrompt,
         prompt: userPrompt,
+        stream: await createWorkStreamCallbacks(ctx, {
+          organizationId: args.organizationId,
+          agent: "pm",
+          title: "Analyzing product signals",
+        }),
       });
 
       const assignableSet = new Set(assignableAgents);

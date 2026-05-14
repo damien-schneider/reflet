@@ -61,7 +61,6 @@ const AGENT_LABELS: Record<string, string> = {
   ceo: "CEO",
   pm: "PM",
   cto: "CTO",
-  dev: "Dev",
   growth: "Growth",
   orchestrator: "Orchestrator",
   sales: "Sales",

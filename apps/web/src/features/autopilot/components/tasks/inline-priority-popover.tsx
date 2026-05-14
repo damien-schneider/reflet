@@ -68,17 +68,20 @@ const PRIORITY_CONFIG: Record<WorkItemPriority, PriorityEntry> = {
 };
 
 export function getPriorityEntry(priority: string): PriorityEntry {
-  return PRIORITY_CONFIG[priority as WorkItemPriority] ?? PRIORITY_CONFIG.low;
+  const knownPriority = PRIORITY_ORDER.find((value) => value === priority);
+  return knownPriority ? PRIORITY_CONFIG[knownPriority] : PRIORITY_CONFIG.low;
 }
 
 export function InlinePriorityPopover({
   workItemId,
   priority,
   disabled,
+  showLabel = true,
 }: {
   workItemId: Id<"autopilotWorkItems">;
   priority: string;
   disabled?: boolean;
+  showLabel?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const updateWorkItem = useMutation(
@@ -120,7 +123,7 @@ export function InlinePriorityPopover({
         }
       >
         <Icon className="size-3.5 shrink-0" />
-        <span>{current.label}</span>
+        {showLabel ? <span>{current.label}</span> : null}
       </PopoverTrigger>
       <PopoverContent
         align="start"

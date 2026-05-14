@@ -201,24 +201,6 @@ export const getChildren = query({
   },
 });
 
-export const getWorkItemRuns = query({
-  args: { workItemId: v.id("autopilotWorkItems") },
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-    const item = await ctx.db.get(args.workItemId);
-    if (!item) {
-      return [];
-    }
-
-    await requireOrgMembership(ctx, item.organizationId, user._id);
-
-    return ctx.db
-      .query("autopilotRuns")
-      .withIndex("by_work_item", (q) => q.eq("workItemId", args.workItemId))
-      .collect();
-  },
-});
-
 export const searchWorkItems = query({
   args: {
     organizationId: v.id("organizations"),

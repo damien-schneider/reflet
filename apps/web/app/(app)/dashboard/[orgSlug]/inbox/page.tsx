@@ -21,6 +21,7 @@ import {
 import { SettingsPopover } from "@/features/inbox/components/settings-popover";
 import { ShortcutHintBar } from "@/features/inbox/components/shortcut-hint-bar";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { cn } from "@/lib/utils";
 
 interface Member {
   role: string;
@@ -48,6 +49,10 @@ function formatTeamMembers(members: Member[] | undefined) {
         ]
       : []
   );
+}
+
+function isAdminRole(role: string | undefined): boolean {
+  return role === "admin" || role === "owner";
 }
 
 export default function InboxPage({
@@ -145,7 +150,7 @@ export default function InboxPage({
     [conversations, selectedConversationId]
   );
 
-  const isAdmin = membership?.role === "admin" || membership?.role === "owner";
+  const isAdmin = isAdminRole(membership?.role);
 
   const handleSendMessage = async (body: string) => {
     if (!selectedConversationId) {
@@ -272,7 +277,7 @@ export default function InboxPage({
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-[calc(100dvh-3.5rem)] min-h-0 flex-col">
       <InboxFilterBar
         onSearchChange={setSearchQuery}
         onToggleStatusFilter={toggleStatusFilter}
@@ -304,8 +309,13 @@ export default function InboxPage({
         </Alert>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="w-80 shrink-0 border-r">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div
+          className={cn(
+            "shrink-0 border-r md:w-80",
+            selectedConversationId ? "hidden md:block" : "w-full"
+          )}
+        >
           <ConversationList
             activeIndex={activeIndex}
             conversations={conversations ?? []}
@@ -330,13 +340,19 @@ export default function InboxPage({
           />
         </div>
 
-        <div className="flex flex-1 flex-col">
+        <div
+          className={cn(
+            "min-w-0 flex-1 flex-col md:flex",
+            selectedConversationId ? "flex" : "hidden md:flex"
+          )}
+        >
           {selectedConversation ? (
             <AdminConversationView
               conversation={selectedConversation}
               messages={messages ?? []}
               messagesLoading={messages === undefined}
               onAssign={handleAssign}
+              onBack={() => setSelectedConversationId(null)}
               onSendMessage={handleSendMessage}
               onStatusChange={handleStatusChange}
               teamMembers={teamMembers}

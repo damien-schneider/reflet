@@ -1,11 +1,9 @@
 "use client";
-
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,12 +21,10 @@ interface AgentGroup {
   id: string;
   label: string;
 }
-
 interface AgentActivity {
   createdAt: number;
   level: string;
 }
-
 const AGENT_GROUPS: readonly AgentGroup[] = [
   {
     id: "command",
@@ -40,7 +36,7 @@ const AGENT_GROUPS: readonly AgentGroup[] = [
     id: "pipeline",
     label: "Core Pipeline",
     description: "Turns signals into scoped work and shipped changes",
-    agents: ["pm", "cto", "dev"],
+    agents: ["pm", "cto"],
   },
   {
     id: "specialists",
@@ -123,8 +119,8 @@ export function AgentsGridView({
     organizationId,
     status: "in_progress",
   });
-  const readiness = useQuery(
-    api.autopilot.queries.dashboard.getAgentReadiness,
+  const workStreams = useQuery(
+    api.autopilot.queries.threads.listLatestAgentWorkStreams,
     { organizationId }
   );
 
@@ -132,7 +128,7 @@ export function AgentsGridView({
     activity === undefined ||
     config === undefined ||
     tasks === undefined ||
-    readiness === undefined
+    workStreams === undefined
   ) {
     return <AgentsOverviewSkeleton />;
   }
@@ -177,6 +173,11 @@ export function AgentsGridView({
     }
   }
 
+  const agentWorkStream = new Map<string, (typeof workStreams)[number]>();
+  for (const stream of workStreams) {
+    agentWorkStream.set(stream.agent, stream);
+  }
+
   const getEnabled = (agentId: GridAgentId): boolean => {
     if (agentId === "orchestrator") {
       return true;
@@ -187,9 +188,6 @@ export function AgentsGridView({
     if (agentId === "cto") {
       return config.ctoEnabled !== false;
     }
-    if (agentId === "dev") {
-      return config.devEnabled !== false;
-    }
     if (agentId === "growth") {
       return config.growthEnabled !== false;
     }
@@ -199,20 +197,16 @@ export function AgentsGridView({
     return config.salesEnabled !== false;
   };
 
-  const getBlocked = (agentId: GridAgentId): boolean => {
-    if (agentId === "orchestrator") {
-      return false;
+  const getStatus = (agentId: GridAgentId): AgentStatus => {
+    if (agentWorkStream.get(agentId)?.status === "streaming") {
+      return "active";
     }
-    const agentReadiness = readiness[agentId];
-    return getEnabled(agentId) && agentReadiness?.ready === false;
-  };
-
-  const getStatus = (agentId: GridAgentId): AgentStatus =>
-    getAgentStatus(
+    return getAgentStatus(
       getEnabled(agentId),
       agentLastActivity.get(agentId),
-      getBlocked(agentId)
+      false
     );
+  };
 
   const activeCount = GRID_AGENT_IDS.filter(
     (agentId) => getStatus(agentId) === "active"
@@ -241,18 +235,28 @@ export function AgentsGridView({
             <p className="text-muted-foreground text-sm">{group.description}</p>
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {group.agents.map((agentId) => (
-              <AgentTile
-                agentId={agentId}
-                currentTaskTitle={agentCurrentTask.get(agentId)}
-                href={`${baseUrl}/agents/${agentId}`}
-                key={agentId}
-                lastActivity={agentLastActivity.get(agentId)}
-                readinessReason={readiness[agentId]?.reason}
-                status={getStatus(agentId)}
-                taskCount={agentTaskCount.get(agentId) ?? 0}
-              />
-            ))}
+            {group.agents.map((agentId) => {
+              const stream = agentWorkStream.get(agentId);
+              const streamTitle =
+                stream?.status === "streaming" ? stream.title : undefined;
+              const taskCount =
+                stream?.status === "streaming"
+                  ? -1
+                  : (agentTaskCount.get(agentId) ?? 0);
+              return (
+                <AgentTile
+                  agentId={agentId}
+                  currentTaskTitle={
+                    streamTitle ?? agentCurrentTask.get(agentId)
+                  }
+                  href={`${baseUrl}/agents/${agentId}`}
+                  key={agentId}
+                  lastActivity={agentLastActivity.get(agentId)}
+                  status={getStatus(agentId)}
+                  taskCount={taskCount}
+                />
+              );
+            })}
           </div>
         </section>
       ))}
@@ -265,7 +269,6 @@ function AgentTile({
   currentTaskTitle,
   href,
   lastActivity,
-  readinessReason,
   status,
   taskCount,
 }: {
@@ -273,7 +276,6 @@ function AgentTile({
   currentTaskTitle?: string;
   href: string;
   lastActivity?: AgentActivity;
-  readinessReason?: string;
   status: AgentStatus;
   taskCount: number;
 }) {
@@ -321,7 +323,6 @@ function AgentTile({
           >
             {getStatusMessage({
               currentTaskTitle,
-              readinessReason,
               status,
             })}
           </span>
@@ -329,7 +330,9 @@ function AgentTile({
 
         <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-xs">
           <span>
-            {taskCount} active task{taskCount === 1 ? "" : "s"}
+            {taskCount === -1
+              ? "Live stream active"
+              : `${taskCount} active task${taskCount === 1 ? "" : "s"}`}
           </span>
           {lastActivity ? (
             <span suppressHydrationWarning>
@@ -349,26 +352,21 @@ function AgentTile({
 
 function getStatusMessage({
   currentTaskTitle,
-  readinessReason,
   status,
 }: {
   currentTaskTitle?: string;
-  readinessReason?: string;
   status: AgentStatus;
 }) {
   if (status === "active") {
     return currentTaskTitle ?? "Working";
   }
   if (status === "blocked") {
-    return readinessReason ?? "Action required";
+    return "Action required";
   }
   if (status === "error") {
     return "Needs attention";
   }
-  if (status === "idle") {
-    return "Ready";
-  }
-  return "Disabled";
+  return status === "idle" ? "Ready" : "Disabled";
 }
 
 function StatusPill({ status }: { status: AgentStatus }) {

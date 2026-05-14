@@ -22,7 +22,7 @@ export const createPrimaryOnboardingTasks = internalMutation({
     const createWorkItem = async (item: {
       title: string;
       description: string;
-      assignedAgent: "dev" | "growth" | "pm";
+      assignedAgent: "cto" | "growth" | "pm";
       priority: "critical" | "high" | "medium" | "low";
     }) => {
       await ctx.db.insert("autopilotWorkItems", {
@@ -42,16 +42,16 @@ export const createPrimaryOnboardingTasks = internalMutation({
     };
 
     await createWorkItem({
-      title: "Implement Reflet Feedback Widget",
-      description: `Add the Reflet feedback widget to the product at ${args.repoUrl}. Users can submit feedback directly from the app.`,
-      assignedAgent: "dev",
+      title: "Spec the Reflet Feedback Widget integration",
+      description: `Draft a clear implementation spec for adding the Reflet feedback widget to the product at ${args.repoUrl}. The spec should be ready to delegate to engineering (e.g. as a GitHub issue).`,
+      assignedAgent: "cto",
       priority: "high",
     });
 
     await createWorkItem({
-      title: "Implement Reflet Changelog",
-      description: `Add the Reflet changelog component to the product at ${args.repoUrl}. Users see what shipped without leaving the product.`,
-      assignedAgent: "dev",
+      title: "Spec the Reflet Changelog integration",
+      description: `Draft a clear implementation spec for adding the Reflet changelog component to the product at ${args.repoUrl}. The spec should be ready to delegate to engineering (e.g. as a GitHub issue).`,
+      assignedAgent: "cto",
       priority: "high",
     });
 

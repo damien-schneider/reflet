@@ -254,12 +254,12 @@ describe("assignWorkItem", () => {
 
     await authed.mutation(api.autopilot.mutations.work.assignWorkItem, {
       workItemId: id,
-      assignedAgent: "dev",
+      assignedAgent: "cto",
       assigneeUserId: "user_123",
     });
 
     const doc = await t.run((ctx) => ctx.db.get(id));
-    expect(doc?.assignedAgent).toBe("dev");
+    expect(doc?.assignedAgent).toBe("cto");
     expect(doc?.assigneeUserId).toBe("user_123");
 
     await authed.mutation(api.autopilot.mutations.work.assignWorkItem, {

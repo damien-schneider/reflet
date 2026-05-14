@@ -5,7 +5,6 @@ import {
   isChainGated,
   shouldWakeCEO,
   shouldWakeCTO,
-  shouldWakeDev,
   shouldWakeGrowth,
   shouldWakePM,
   shouldWakeSales,
@@ -15,7 +14,10 @@ import {
 
 const emptyChain: ChainState = {
   codebase_understanding: "missing",
-  app_description: "missing",
+  identity: "missing",
+  brand_voice: "missing",
+  feature_catalog: "missing",
+  scope: "missing",
   market_analysis: "missing",
   target_definition: "missing",
   personas: "missing",
@@ -27,7 +29,10 @@ const emptyChain: ChainState = {
 
 const fullyPublishedChain: ChainState = {
   codebase_understanding: "published",
-  app_description: "published",
+  identity: "published",
+  brand_voice: "published",
+  feature_catalog: "published",
+  scope: "published",
   market_analysis: "published",
   target_definition: "published",
   personas: "published",
@@ -46,6 +51,7 @@ const BASE_SUMMARY: ActivitySummary = {
   stuckReviewCount: 0,
   recentErrorCount: 0,
   shippedFeaturesWithoutContent: 0,
+  repoAnalysisReady: true,
   now: Date.now(),
 };
 
@@ -65,7 +71,7 @@ describe("shouldWakeCTO", () => {
     expect(shouldWakeCTO(BASE_SUMMARY)).toBe(true);
   });
 
-  it("wakes when app_description ready to produce", () => {
+  it("wakes when knowledge nodes are ready to produce (codebase published)", () => {
     expect(
       shouldWakeCTO({
         ...BASE_SUMMARY,
@@ -83,6 +89,22 @@ describe("shouldWakeCTO", () => {
       shouldWakeCTO({ ...BASE_SUMMARY, chainState: fullyPublishedChain })
     ).toBe(false);
   });
+
+  it("does not wake for codebase_understanding when repo analysis not ready", () => {
+    expect(shouldWakeCTO({ ...BASE_SUMMARY, repoAnalysisReady: false })).toBe(
+      false
+    );
+  });
+
+  it("still wakes for knowledge nodes even if repo analysis flag is false", () => {
+    expect(
+      shouldWakeCTO({
+        ...BASE_SUMMARY,
+        repoAnalysisReady: false,
+        chainState: { ...emptyChain, codebase_understanding: "published" },
+      })
+    ).toBe(true);
+  });
 });
 
 describe("shouldWakePM", () => {
@@ -93,7 +115,10 @@ describe("shouldWakePM", () => {
         chainState: {
           ...emptyChain,
           codebase_understanding: "published",
-          app_description: "published",
+          identity: "published",
+          brand_voice: "published",
+          feature_catalog: "published",
+          scope: "published",
           market_analysis: "published",
         },
       })
@@ -112,7 +137,10 @@ describe("shouldWakePM", () => {
         chainState: {
           ...emptyChain,
           codebase_understanding: "published",
-          app_description: "published",
+          identity: "published",
+          brand_voice: "published",
+          feature_catalog: "published",
+          scope: "published",
           market_analysis: "published",
         },
       })
@@ -128,7 +156,10 @@ describe("shouldWakeGrowth", () => {
         chainState: {
           ...emptyChain,
           codebase_understanding: "published",
-          app_description: "published",
+          identity: "published",
+          brand_voice: "published",
+          feature_catalog: "published",
+          scope: "published",
         },
       })
     ).toBe(true);
@@ -176,7 +207,10 @@ describe("shouldWakeSales", () => {
         chainState: {
           ...emptyChain,
           codebase_understanding: "published",
-          app_description: "published",
+          identity: "published",
+          brand_voice: "published",
+          feature_catalog: "published",
+          scope: "published",
           market_analysis: "published",
           target_definition: "published",
           personas: "published",
@@ -235,12 +269,5 @@ describe("shouldWakeSupport", () => {
 
   it("does not wake when no conversations", () => {
     expect(shouldWakeSupport(BASE_SUMMARY)).toBe(false);
-  });
-});
-
-describe("shouldWakeDev", () => {
-  it("never wakes (disabled in chain architecture)", () => {
-    expect(shouldWakeDev(BASE_SUMMARY)).toBe(false);
-    expect(shouldWakeDev({ ...BASE_SUMMARY, openTaskCount: 0 })).toBe(false);
   });
 });

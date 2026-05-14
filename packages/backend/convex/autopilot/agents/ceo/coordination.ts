@@ -8,7 +8,16 @@ import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../../_generated/api";
 import type { Doc, Id } from "../../../_generated/dataModel";
-import { type ActionCtx, internalAction } from "../../../_generated/server";
+import {
+  type ActionCtx,
+  internalAction,
+  internalQuery,
+} from "../../../_generated/server";
+import {
+  AGENT_CHAIN_REQUIREMENTS,
+  type computeChainState,
+  getAgentMissingDependencies,
+} from "../../chain";
 import { generateObjectWithFallback } from "../shared_generation";
 import { CEO_MODELS } from "./agent";
 import { formatTaskStats } from "./reports";
@@ -75,9 +84,9 @@ function countTasksByAgent(tasks: CoordinationTask[]): Record<string, number> {
 }
 
 function buildPriorityOverrideCandidates(tasks: CoordinationTask[]) {
-  const validTaskIds = new Map<string, Id<"autopilotWorkItems">>();
+  const taskById = new Map<string, CoordinationTask>();
   for (const task of tasks) {
-    validTaskIds.set(task._id, task._id);
+    taskById.set(task._id, task);
   }
   const summary = tasks
     .map(
@@ -85,18 +94,18 @@ function buildPriorityOverrideCandidates(tasks: CoordinationTask[]) {
         `${task._id} | ${task.status} | ${task.priority} | ${task.assignedAgent} | ${task.title}`
     )
     .join("\n");
-  return { summary, validTaskIds };
+  return { summary, taskById };
 }
 
 async function applyPriorityOverrides(
   ctx: ActionCtx,
   organizationId: Id<"organizations">,
   overrides: CoordinationOutput["priorityOverrides"],
-  validTaskIds: Map<string, Id<"autopilotWorkItems">>
+  taskById: Map<string, CoordinationTask>
 ) {
   for (const override of overrides) {
-    const taskId = validTaskIds.get(override.taskId);
-    if (!taskId) {
+    const task = taskById.get(override.taskId);
+    if (!task) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId,
         agent: "system",
@@ -106,11 +115,19 @@ async function applyPriorityOverrides(
       continue;
     }
 
+    // Idempotency: if the task already sits at the requested priority, this
+    // override is a no-op. Skipping the mutation also skips the activity log,
+    // preventing the "reprioritized to critical" feedback loop where the LLM
+    // keeps re-suggesting the same priority every coordination tick.
+    if (task.priority === override.newPriority) {
+      continue;
+    }
+
     try {
       await ctx.runMutation(
         internal.autopilot.task_mutations.updateTaskPriority,
         {
-          taskId,
+          taskId: task._id,
           priority: override.newPriority,
         }
       );
@@ -149,11 +166,39 @@ async function createCoordinationAlerts(
 // STARVATION & BOTTLENECK DETECTION
 // ============================================
 
-function detectStarvedAgents(
-  activityByAgent: Record<string, number>,
+const COORDINATION_NOTE_DEDUP_WINDOW_MS = 6 * 60 * 60 * 1000;
+
+/**
+ * Identifies agents that are gated upstream by missing chain nodes. Chain-gated
+ * agents are expected to be idle until their dependencies publish — they should
+ * NOT be flagged as starved, otherwise the heartbeat creates a fresh "starvation
+ * detected" note every tick during bootstrap.
+ */
+export function getChainGatedAgents(
+  chainState: Awaited<ReturnType<typeof computeChainState>>,
   enabledAgents: string[]
+): Set<string> {
+  const gated = new Set<string>();
+  for (const agent of enabledAgents) {
+    if (!AGENT_CHAIN_REQUIREMENTS[agent]) {
+      continue;
+    }
+    if (getAgentMissingDependencies(chainState, agent).length > 0) {
+      gated.add(agent);
+    }
+  }
+  return gated;
+}
+
+export function detectStarvedAgents(
+  activityByAgent: Record<string, number>,
+  enabledAgents: string[],
+  chainGatedAgents: Set<string>
 ): string[] {
-  return enabledAgents.filter((agent) => (activityByAgent[agent] ?? 0) === 0);
+  return enabledAgents.filter(
+    (agent) =>
+      !chainGatedAgents.has(agent) && (activityByAgent[agent] ?? 0) === 0
+  );
 }
 
 function detectBottlenecks(
@@ -175,6 +220,63 @@ function detectBottlenecks(
   }
   return bottlenecks;
 }
+
+const STARVATION_TITLE_RE = /Starvation detected: (.+)/;
+const BOTTLENECK_TITLE_RE = /Bottleneck: (\S+) /;
+
+/**
+ * Returns the set of agents that already have a recent coordination note
+ * matching `tag` within the dedup window. The CEO uses this to skip creating
+ * duplicate notes, which is the root cause of the observed feedback loop
+ * (9+ identical starvation alerts within 2h on the same chain bootstrap).
+ */
+export const getRecentCoordinationFlags = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+  },
+  returns: v.object({
+    recentStarvationAgents: v.array(v.string()),
+    recentBottleneckAgents: v.array(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    const since = Date.now() - COORDINATION_NOTE_DEDUP_WINDOW_MS;
+    const recentNotes = await ctx.db
+      .query("autopilotDocuments")
+      .withIndex("by_org_type", (q) =>
+        q.eq("organizationId", args.organizationId).eq("type", "note")
+      )
+      .order("desc")
+      .take(100);
+
+    const starvation = new Set<string>();
+    const bottleneck = new Set<string>();
+    for (const note of recentNotes) {
+      if (note.createdAt < since) {
+        continue;
+      }
+      const tags = note.tags ?? [];
+      if (tags.includes("starvation")) {
+        const match = STARVATION_TITLE_RE.exec(note.title);
+        if (match) {
+          for (const agent of match[1].split(",").map((a) => a.trim())) {
+            starvation.add(agent);
+          }
+        }
+      }
+      if (tags.includes("bottleneck")) {
+        const match = BOTTLENECK_TITLE_RE.exec(note.title);
+        if (match) {
+          bottleneck.add(match[1]);
+        }
+      }
+    }
+
+    return {
+      recentStarvationAgents: Array.from(starvation),
+      recentBottleneckAgents: Array.from(bottleneck),
+    };
+  },
+});
 
 // ============================================
 // COORDINATION ACTION
@@ -282,7 +384,7 @@ Assess each agent, identify conflicts, suggest priority changes, and raise alert
         ctx,
         args.organizationId,
         coordination.priorityOverrides,
-        priorityOverrideCandidates.validTaskIds
+        priorityOverrideCandidates.taskById
       );
 
       await createCoordinationAlerts(
@@ -291,15 +393,37 @@ Assess each agent, identify conflicts, suggest priority changes, and raise alert
         coordination.proactiveAlerts
       );
 
-      // Detect starved agents (0 work for 3+ days via 7d window)
       const enabledAgents = await ctx.runQuery(
         internal.autopilot.config.getEnabledAgents,
         { organizationId: args.organizationId }
       );
+
+      // Dedup + chain-gate: agents that are blocked by missing upstream chain
+      // nodes are expected to be idle and must not be reported as starved. We
+      // also skip a fresh note if a matching one was logged in the last 6h —
+      // this prevents the observed feedback loop where the LLM reads its own
+      // past alerts and amplifies them at every 30-min coordination tick.
+      const chainState = await ctx.runQuery(
+        internal.autopilot.chain.getChainState,
+        { organizationId: args.organizationId }
+      );
+      const coordinationFlags = await ctx.runQuery(
+        internal.autopilot.agents.ceo.coordination.getRecentCoordinationFlags,
+        { organizationId: args.organizationId }
+      );
+      const chainGatedAgents = getChainGatedAgents(chainState, enabledAgents);
+      const recentStarvation = new Set(
+        coordinationFlags.recentStarvationAgents
+      );
+      const recentBottleneck = new Set(
+        coordinationFlags.recentBottleneckAgents
+      );
+
       const starvedAgents = detectStarvedAgents(
         ceoContext.activityByAgent,
-        enabledAgents
-      );
+        enabledAgents,
+        chainGatedAgents
+      ).filter((agent) => !recentStarvation.has(agent));
       if (starvedAgents.length > 0) {
         await ctx.runMutation(internal.autopilot.documents.createDocument, {
           organizationId: args.organizationId,
@@ -316,6 +440,9 @@ Assess each agent, identify conflicts, suggest priority changes, and raise alert
       // Detect bottlenecks (many pending, 0 in-progress)
       const bottlenecks = detectBottlenecks(pendingByAgent, inProgressByAgent);
       for (const bottleneck of bottlenecks) {
+        if (recentBottleneck.has(bottleneck.agent)) {
+          continue;
+        }
         await ctx.runMutation(internal.autopilot.documents.createDocument, {
           organizationId: args.organizationId,
           type: "note",

@@ -8,7 +8,7 @@ import Link from "next/link";
 import { use, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { H1, Muted, Text } from "@/components/ui/typography";
+import { Muted } from "@/components/ui/typography";
 import { ChangelogSettingsTab } from "@/features/changelog/components/changelog-settings-tab";
 import { ChangelogWidgetTab } from "@/features/changelog/components/changelog-widget-tab";
 import { DeleteReleaseDialog } from "@/features/changelog/components/delete-release-dialog";
@@ -183,26 +183,18 @@ export default function ChangelogPage({
 
   return (
     <div className="admin-container">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <H1>Changelog</H1>
-          <Text variant="bodySmall">
-            Manage release notes and product updates
-          </Text>
+      {isAdmin && (
+        <div className="mb-8 flex items-center justify-end gap-2">
+          {githubAction}
+          <Link href={`/dashboard/${orgSlug}/changelog/new`}>
+            <Button>
+              <Plus className="mr-2 size-4" />
+              <span className="hidden sm:inline">Create Release</span>
+              <span className="sm:hidden">New</span>
+            </Button>
+          </Link>
         </div>
-        {isAdmin && (
-          <div className="flex items-center gap-2">
-            {githubAction}
-            <Link href={`/dashboard/${orgSlug}/changelog/new`}>
-              <Button>
-                <Plus className="mr-2 size-4" />
-                <span className="hidden sm:inline">Create Release</span>
-                <span className="sm:hidden">New</span>
-              </Button>
-            </Link>
-          </div>
-        )}
-      </div>
+      )}
 
       {showSetupBanner && (
         <div className="mb-6 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/30">

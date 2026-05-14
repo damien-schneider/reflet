@@ -115,6 +115,23 @@ export const runSalesProspecting = internalAction({
         return null;
       }
 
+      // Chain gate: sales prospecting depends on personas being published.
+      // Without personas, lead generation lacks an ICP and produces noise.
+      const chainGate = await ctx.runQuery(
+        internal.autopilot.chain.getAgentChainGate,
+        { organizationId: args.organizationId, agent: "sales" }
+      );
+      if (!chainGate.ready) {
+        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+          organizationId: args.organizationId,
+          agent: "sales",
+          level: "info",
+          message: `Sales prospecting skipped — chain not ready (waiting on: ${chainGate.missing.join(", ")})`,
+        });
+        await markSalesTaskStatus(ctx, args.taskId, "todo");
+        return null;
+      }
+
       const marketNotes = await ctx.runQuery(
         internal.autopilot.documents.getDocumentsByOrg,
         { organizationId: args.organizationId, type: "note" }

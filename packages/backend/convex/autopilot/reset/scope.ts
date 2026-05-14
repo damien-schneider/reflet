@@ -10,11 +10,9 @@ export const resetScopeGroup = v.object({
 
 const AUTOPILOT_RESET_GROUPS = [
   {
-    title: "Execution and review history",
-    description:
-      "All Autopilot work, execution traces, review state, and activity.",
+    title: "Work and review history",
+    description: "All Autopilot work, review state, and activity.",
     steps: [
-      { kind: "byOrgStatus", label: "Runs", table: "autopilotRuns" },
       {
         kind: "byOrganization",
         label: "Feedback links",
@@ -109,6 +107,11 @@ const AUTOPILOT_RESET_GROUPS = [
       },
       {
         kind: "byOrganization",
+        label: "Agent work streams",
+        table: "autopilotAgentWorkStreams",
+      },
+      {
+        kind: "byOrganization",
         label: "Agent threads",
         table: "autopilotAgentThreads",
       },
@@ -121,18 +124,12 @@ const AUTOPILOT_RESET_GROUPS = [
   },
   {
     title: "Automation settings",
-    description:
-      "Schedules, adapter secrets, operating limits, and the Autopilot config.",
+    description: "Schedules, operating limits, and the Autopilot config.",
     steps: [
       {
         kind: "byOrganization",
         label: "Routines",
         table: "autopilotRoutines",
-      },
-      {
-        kind: "byOrganization",
-        label: "Adapter credentials",
-        table: "autopilotAdapterCredentials",
       },
       {
         kind: "byOrganization",
@@ -203,21 +200,6 @@ const deleteRowsByOrganization = async (
   }
 };
 
-const deleteRowsByOrgStatus = async (
-  ctx: MutationCtx,
-  organizationId: Id<"organizations">,
-  table: ResetStepByKind<"byOrgStatus">["table"]
-) => {
-  const rows = await ctx.db
-    .query(table)
-    .withIndex("by_org_status", (q) => q.eq("organizationId", organizationId))
-    .collect();
-
-  for (const row of rows) {
-    await ctx.db.delete(row._id);
-  }
-};
-
 const deleteRowsByOrgThread = async (
   ctx: MutationCtx,
   organizationId: Id<"organizations">,
@@ -261,10 +243,6 @@ const deleteResetStep = async (
 ) => {
   if (step.kind === "byOrganization") {
     await deleteRowsByOrganization(ctx, organizationId, step.table);
-    return;
-  }
-  if (step.kind === "byOrgStatus") {
-    await deleteRowsByOrgStatus(ctx, organizationId, step.table);
     return;
   }
   if (step.kind === "byOrgThread") {

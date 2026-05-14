@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, PaintBrush, Sparkle, Spinner } from "@phosphor-icons/react";
+import { Check, Sparkle, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import Image from "next/image";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
+import { H2, H3, Muted, Text } from "@/components/ui/typography";
 import { LogoUploader } from "@/features/organizations/components/logo-uploader";
 import {
   generateColorPalette,
@@ -149,18 +149,6 @@ export default function BrandingSettingsPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <div className="flex items-center gap-3">
-          <PaintBrush className="size-8 text-muted-foreground" />
-          <div>
-            <H1>Branding</H1>
-            <Text variant="bodySmall">
-              Customize how your organization appears on public pages
-            </Text>
-          </div>
-        </div>
-      </div>
-
       <div className="space-y-8">
         <section className="space-y-4">
           <div>

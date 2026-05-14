@@ -36,7 +36,6 @@ export const listAgentActivity = query({
           v.literal("work_item"),
           v.literal("document"),
           v.literal("knowledge_doc"),
-          v.literal("run"),
           v.literal("lead"),
           v.literal("competitor")
         )
@@ -44,7 +43,6 @@ export const listAgentActivity = query({
       entityId: v.optional(v.string()),
       createdAt: v.number(),
       workItemId: v.optional(v.id("autopilotWorkItems")),
-      runId: v.optional(v.id("autopilotRuns")),
       organizationId: v.id("organizations"),
     })
   ),

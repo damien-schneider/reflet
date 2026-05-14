@@ -32,7 +32,22 @@ interface QuickCreateDialogProps {
   onOpenChange: (open: boolean) => void;
   open: boolean;
   organizationId: Id<"organizations">;
+  parentId?: Id<"autopilotWorkItems">;
 }
+
+interface QuickCreateState {
+  priority: QuickPriority;
+  submitting: boolean;
+  title: string;
+  type: QuickType;
+}
+
+const INITIAL_QUICK_CREATE_STATE: QuickCreateState = {
+  title: "",
+  type: "task",
+  priority: "medium",
+  submitting: false,
+};
 
 const TYPE_OPTIONS: ReadonlyArray<{
   icon: typeof IconChecklist;
@@ -80,11 +95,9 @@ export function QuickCreateDialog({
   open,
   onOpenChange,
   organizationId,
+  parentId,
 }: QuickCreateDialogProps) {
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState<QuickType>("task");
-  const [priority, setPriority] = useState<QuickPriority>("medium");
-  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState(INITIAL_QUICK_CREATE_STATE);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const createWorkItem = useMutation(
@@ -94,10 +107,7 @@ export function QuickCreateDialog({
   useEffect(
     function resetOnClose() {
       if (!open) {
-        setTitle("");
-        setType("task");
-        setPriority("medium");
-        setSubmitting(false);
+        setForm(INITIAL_QUICK_CREATE_STATE);
       }
     },
     [open]
@@ -114,30 +124,31 @@ export function QuickCreateDialog({
     [open]
   );
 
-  const trimmed = title.trim();
-  const canSubmit = trimmed.length > 0 && !submitting;
+  const trimmed = form.title.trim();
+  const canSubmit = trimmed.length > 0 && !form.submitting;
 
   const handleSubmit = async () => {
     if (!canSubmit) {
       return;
     }
-    setSubmitting(true);
+    setForm((current) => ({ ...current, submitting: true }));
     try {
       await createWorkItem({
         organizationId,
-        type,
+        type: form.type,
+        parentId,
         title: trimmed,
         description: "",
-        priority,
+        priority: form.priority,
         status: "todo",
       });
-      toast.success("Task created");
+      toast.success(parentId ? "Sub-issue created" : "Task created");
       onOpenChange(false);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to create task";
       toast.error(message);
-      setSubmitting(false);
+      setForm((current) => ({ ...current, submitting: false }));
     }
   };
 
@@ -154,18 +165,25 @@ export function QuickCreateDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-w-lg p-0">
         <DialogHeader className="sr-only">
-          <DialogTitle>Quick create task</DialogTitle>
+          <DialogTitle>
+            {parentId ? "Quick create sub-issue" : "Quick create task"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 p-4">
           <Input
             aria-label="Task title"
             className="border-0 bg-transparent p-0! text-base shadow-none! focus-visible:ring-0!"
-            disabled={submitting}
-            onChange={(event) => setTitle(event.target.value)}
+            disabled={form.submitting}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                title: event.target.value,
+              }))
+            }
             onKeyDown={handleKeyDown}
-            placeholder="Issue title"
+            placeholder={parentId ? "Sub-issue title" : "Issue title"}
             ref={inputRef}
-            value={title}
+            value={form.title}
           />
           <div className="flex flex-wrap items-center gap-2">
             <div
@@ -174,7 +192,7 @@ export function QuickCreateDialog({
             >
               {TYPE_OPTIONS.map((option) => {
                 const Icon = option.icon;
-                const active = option.value === type;
+                const active = option.value === form.type;
                 return (
                   <button
                     aria-pressed={active}
@@ -185,7 +203,12 @@ export function QuickCreateDialog({
                         : "text-muted-foreground hover:bg-background/60"
                     )}
                     key={option.value}
-                    onClick={() => setType(option.value)}
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        type: option.value,
+                      }))
+                    }
                     type="button"
                   >
                     <Icon className="size-3.5" />
@@ -198,7 +221,7 @@ export function QuickCreateDialog({
               <legend className="sr-only">Priority</legend>
               {PRIORITY_OPTIONS.map((option) => {
                 const Icon = option.icon;
-                const active = option.value === priority;
+                const active = option.value === form.priority;
                 return (
                   <button
                     aria-label={`Priority: ${option.label}`}
@@ -210,7 +233,12 @@ export function QuickCreateDialog({
                         : "text-muted-foreground hover:bg-muted/60"
                     )}
                     key={option.value}
-                    onClick={() => setPriority(option.value)}
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        priority: option.value,
+                      }))
+                    }
                     type="button"
                   >
                     <Icon className={cn("size-3.5", option.className)} />
@@ -233,7 +261,7 @@ export function QuickCreateDialog({
               Cancel
             </Button>
             <Button disabled={!canSubmit} onClick={handleSubmit} size="sm">
-              Create task
+              {parentId ? "Create sub-issue" : "Create task"}
             </Button>
           </div>
         </div>

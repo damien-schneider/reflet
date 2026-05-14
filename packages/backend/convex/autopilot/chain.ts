@@ -12,11 +12,14 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalQuery, type QueryCtx } from "../_generated/server";
-import { chainNodeStatus } from "./schema/validators";
+import { chainNodeKind, chainNodeStatus } from "./schema/validators";
 
 const chainStateValidator = v.object({
   codebase_understanding: chainNodeStatus,
-  app_description: chainNodeStatus,
+  identity: chainNodeStatus,
+  brand_voice: chainNodeStatus,
+  feature_catalog: chainNodeStatus,
+  scope: chainNodeStatus,
   market_analysis: chainNodeStatus,
   target_definition: chainNodeStatus,
   personas: chainNodeStatus,
@@ -30,7 +33,10 @@ const DEFAULT_WAKE_THRESHOLD_OPEN_TASKS = 5;
 
 export type ChainNodeKind =
   | "codebase_understanding"
-  | "app_description"
+  | "identity"
+  | "brand_voice"
+  | "feature_catalog"
+  | "scope"
   | "market_analysis"
   | "target_definition"
   | "personas"
@@ -49,7 +55,10 @@ export type ChainState = Record<ChainNodeKind, ChainNodeStatus>;
 
 const CHAIN_NODE_KINDS: ChainNodeKind[] = [
   "codebase_understanding",
-  "app_description",
+  "identity",
+  "brand_voice",
+  "feature_catalog",
+  "scope",
   "market_analysis",
   "target_definition",
   "personas",
@@ -59,10 +68,16 @@ const CHAIN_NODE_KINDS: ChainNodeKind[] = [
   "drafts",
 ];
 
+// Market analysis now grounds on the four typed knowledge docs directly. The
+// synthesis layer (the old `app_description` node + `product_definition` doc)
+// has been removed — downstream chain producers read typed inputs.
 const DAG_EDGES: Partial<Record<ChainNodeKind, ChainNodeKind[]>> = {
   codebase_understanding: [],
-  app_description: ["codebase_understanding"],
-  market_analysis: ["app_description"],
+  identity: ["codebase_understanding"],
+  brand_voice: ["codebase_understanding"],
+  feature_catalog: ["codebase_understanding"],
+  scope: ["codebase_understanding"],
+  market_analysis: ["identity", "brand_voice", "feature_catalog", "scope"],
   target_definition: ["market_analysis"],
   personas: ["target_definition"],
   use_cases: ["personas"],
@@ -85,9 +100,26 @@ const DOC_TYPE_BY_NODE: Partial<
   Record<ChainNodeKind, Doc<"autopilotDocuments">["type"]>
 > = {
   codebase_understanding: "codebase_understanding",
-  app_description: "app_description",
   market_analysis: "market_research",
   target_definition: "target_definition",
+};
+
+/**
+ * Chain nodes whose canonical artifact lives in `autopilotKnowledgeDocs`
+ * (single source of truth for user-facing structured knowledge). Their status
+ * is "published" when the doc exists, "missing" otherwise — knowledge docs
+ * have no draft/review workflow.
+ */
+const KNOWLEDGE_DOC_TYPE_BY_NODE: Partial<
+  Record<
+    ChainNodeKind,
+    "target_audience" | "identity" | "brand_voice" | "feature_catalog" | "scope"
+  >
+> = {
+  identity: "identity",
+  brand_voice: "brand_voice",
+  feature_catalog: "feature_catalog",
+  scope: "scope",
 };
 
 const docStatusToNodeStatus = (
@@ -204,11 +236,29 @@ const fetchDraftsNodeStatus = async (
   return aggregateNodeStatus(allStatuses);
 };
 
+const fetchKnowledgeDocNodeStatus = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">,
+  docType: NonNullable<(typeof KNOWLEDGE_DOC_TYPE_BY_NODE)[ChainNodeKind]>
+): Promise<ChainNodeStatus> => {
+  const doc = await ctx.db
+    .query("autopilotKnowledgeDocs")
+    .withIndex("by_org_docType", (q) =>
+      q.eq("organizationId", orgId).eq("docType", docType)
+    )
+    .unique();
+  return doc ? "published" : "missing";
+};
+
 const fetchNodeStatus = async (
   ctx: { db: QueryCtx["db"] },
   orgId: Id<"organizations">,
   kind: ChainNodeKind
 ): Promise<ChainNodeStatus> => {
+  const knowledgeType = KNOWLEDGE_DOC_TYPE_BY_NODE[kind];
+  if (knowledgeType) {
+    return await fetchKnowledgeDocNodeStatus(ctx, orgId, knowledgeType);
+  }
   const docType = DOC_TYPE_BY_NODE[kind];
   if (docType) {
     return await fetchDocNodeStatus(ctx, orgId, docType);
@@ -262,6 +312,24 @@ export const getChainState = internalQuery({
   },
 });
 
+export const getAgentChainGate = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    agent: v.string(),
+  },
+  returns: v.object({
+    ready: v.boolean(),
+    missing: v.array(chainNodeKind),
+  }),
+  handler: async (ctx, args) => {
+    const state = await computeChainState(ctx, args.organizationId);
+    return {
+      ready: isAgentChainReady(state, args.agent),
+      missing: getAgentMissingDependencies(state, args.agent),
+    };
+  },
+});
+
 export const getOpenTaskCount = internalQuery({
   args: { organizationId: v.id("organizations") },
   returns: v.number(),
@@ -312,7 +380,10 @@ export const isGatedByOpenTasks = async (
 
 export const CHAIN_NODE_OWNERS: Record<ChainNodeKind, string> = {
   codebase_understanding: "cto",
-  app_description: "cto",
+  identity: "cto",
+  brand_voice: "cto",
+  feature_catalog: "cto",
+  scope: "cto",
   market_analysis: "growth",
   target_definition: "pm",
   personas: "pm",
@@ -322,4 +393,120 @@ export const CHAIN_NODE_OWNERS: Record<ChainNodeKind, string> = {
   drafts: "growth",
 };
 
-export { CHAIN_NODE_KINDS, DAG_EDGES, DOC_TYPE_BY_NODE, DRAFT_DOC_TYPES };
+export const CHAIN_NODE_LABELS: Record<ChainNodeKind, string> = {
+  codebase_understanding: "Codebase understanding",
+  identity: "Product identity",
+  brand_voice: "Brand voice",
+  feature_catalog: "Feature catalog",
+  scope: "Scope",
+  market_analysis: "Market analysis",
+  target_definition: "Target definition",
+  personas: "Personas",
+  use_cases: "Use cases",
+  lead_targets: "Lead targets",
+  community_posts: "Community posts",
+  drafts: "Drafts",
+};
+
+export const CHAIN_NODE_PLURALS: Record<ChainNodeKind, string> = {
+  codebase_understanding: "docs",
+  identity: "docs",
+  brand_voice: "docs",
+  feature_catalog: "docs",
+  scope: "docs",
+  market_analysis: "docs",
+  target_definition: "docs",
+  personas: "personas",
+  use_cases: "use cases",
+  lead_targets: "leads",
+  community_posts: "posts",
+  drafts: "drafts",
+};
+
+export const CHAIN_STAGES: readonly {
+  id: string;
+  label: string;
+  nodes: readonly ChainNodeKind[];
+}[] = [
+  {
+    id: "foundation",
+    label: "Foundation",
+    nodes: ["codebase_understanding"],
+  },
+  {
+    id: "knowledge",
+    label: "Knowledge",
+    nodes: ["identity", "brand_voice", "feature_catalog", "scope"],
+  },
+  {
+    id: "market",
+    label: "Market",
+    nodes: ["market_analysis", "target_definition"],
+  },
+  { id: "audience", label: "Audience", nodes: ["personas", "use_cases"] },
+  {
+    id: "outreach",
+    label: "Outreach",
+    nodes: ["lead_targets", "community_posts"],
+  },
+  { id: "distribution", label: "Distribution", nodes: ["drafts"] },
+];
+
+/**
+ * Per-agent chain readiness. Defines which chain nodes MUST be `published`
+ * before an agent is allowed to run free-form work (i.e. work outside the
+ * chain producers themselves). Chain producers handle their own gating via
+ * `isNodeReadyToProduce`.
+ *
+ * - `cto`: spec generation needs the product identity published as grounding.
+ * - `pm`: free analysis (roadmap from feedback) needs to know users → personas.
+ * - `growth`: free content/market work needs market_analysis published.
+ * - `sales`: lead generation needs personas (lead_targets depends on personas).
+ * - `support`, `ceo`, `validator`: independent of chain state.
+ */
+export const AGENT_CHAIN_REQUIREMENTS: Record<string, ChainNodeKind[]> = {
+  cto: ["identity"],
+  pm: ["personas"],
+  growth: ["market_analysis"],
+  sales: ["personas"],
+  support: [],
+  ceo: [],
+  validator: [],
+};
+
+export const isAgentChainReady = (
+  state: ChainState,
+  agent: string
+): boolean => {
+  const required = AGENT_CHAIN_REQUIREMENTS[agent] ?? [];
+  return required.every((node) => state[node] === "published");
+};
+
+export const getAgentMissingDependencies = (
+  state: ChainState,
+  agent: string
+): ChainNodeKind[] => {
+  const required = AGENT_CHAIN_REQUIREMENTS[agent] ?? [];
+  return required.filter((node) => state[node] !== "published");
+};
+
+export const DRAFT_DOC_LABELS: Record<
+  (typeof DRAFT_DOC_TYPES)[number],
+  string
+> = {
+  blog_post: "Blog post",
+  reddit_reply: "Reddit reply",
+  linkedin_post: "LinkedIn post",
+  twitter_post: "Tweet",
+  hn_comment: "HN comment",
+  email: "Email",
+  changelog: "Changelog",
+};
+
+export {
+  CHAIN_NODE_KINDS,
+  DAG_EDGES,
+  DOC_TYPE_BY_NODE,
+  DRAFT_DOC_TYPES,
+  KNOWLEDGE_DOC_TYPE_BY_NODE,
+};

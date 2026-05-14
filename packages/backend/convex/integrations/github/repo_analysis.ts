@@ -331,11 +331,9 @@ export const runAnalysis = internalAction({
       }
     );
 
-    // Launch the product exploration — it handles its own status updates
-    // and triggers company brief generation when done.
     await ctx.scheduler.runAfter(
       0,
-      internal.integrations.github.product_exploration.runProductExploration,
+      internal.autopilot.codebase.actions.runDeepAnalysis,
       {
         organizationId: args.organizationId,
         analysisId: args.analysisId,

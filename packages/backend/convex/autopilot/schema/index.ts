@@ -1,5 +1,6 @@
 import { activityTables } from "./activity.tables";
 import { agentsTables } from "./agents.tables";
+import { codebaseTables } from "./codebase.tables";
 import { communityPostsTables } from "./community_posts.tables";
 import { competitorsTables } from "./competitors.tables";
 import { configTables } from "./config.tables";
@@ -30,4 +31,5 @@ export const autopilotTables = {
   ...personasTables,
   ...useCasesTables,
   ...communityPostsTables,
+  ...codebaseTables,
 };

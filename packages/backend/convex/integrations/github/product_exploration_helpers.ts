@@ -113,6 +113,17 @@ const RETRYABLE_ERROR_PATTERNS = [
   "throttl",
   "deprecated",
   "has been deprecated",
+  // Per-model fatal errors — same family of fallback-eligible failures.
+  // A bad model ID should hop to the next entry in the fallback list,
+  // not kill the whole exploration.
+  "is not a valid model",
+  "invalid model",
+  "no such model",
+  "model not found",
+  "model_not_found",
+  "unknown model",
+  "no allowed providers",
+  "404",
 ];
 
 export function isRetryableError(error: unknown): boolean {

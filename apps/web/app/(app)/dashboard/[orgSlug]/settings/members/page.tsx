@@ -8,7 +8,7 @@ import { use, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
+import { H2, H3, Muted } from "@/components/ui/typography";
 import { InvitationList } from "@/features/members/components/invitation-list";
 import { InviteMemberDialog } from "@/features/members/components/invite-member-dialog";
 import { MemberList } from "@/features/members/components/member-list";
@@ -70,20 +70,14 @@ export default function MembersGearPage({
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <H1>Members</H1>
-          <Text variant="bodySmall">
-            Manage your organization&apos;s team members
-          </Text>
-        </div>
-        {isAdmin ? (
+      {isAdmin ? (
+        <div className="mb-8 flex items-center justify-end">
           <Button onClick={() => setIsInviteDialogOpen(true)}>
             <Plus className="mr-2 size-4" />
             Invite Member
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       <div className="space-y-8">
         <section className="space-y-4">

@@ -30,13 +30,16 @@ const MAX_DRAFTS_PER_RUN = 5;
 const MIN_VALIDATION_SCORE = 60;
 
 const chainStateReturn = v.object({
-  app_description: chainNodeStatus,
+  brand_voice: chainNodeStatus,
   codebase_understanding: chainNodeStatus,
   community_posts: chainNodeStatus,
   drafts: chainNodeStatus,
+  feature_catalog: chainNodeStatus,
+  identity: chainNodeStatus,
   lead_targets: chainNodeStatus,
   market_analysis: chainNodeStatus,
   personas: chainNodeStatus,
+  scope: chainNodeStatus,
   target_definition: chainNodeStatus,
   use_cases: chainNodeStatus,
 });

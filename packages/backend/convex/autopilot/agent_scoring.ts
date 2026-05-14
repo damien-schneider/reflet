@@ -107,7 +107,7 @@ export const getAllAgentScores = internalQuery({
       .order("desc")
       .take(500);
 
-    const agents = ["pm", "cto", "dev", "growth", "support", "sales"] as const;
+    const agents = ["pm", "cto", "growth", "support", "sales"] as const;
 
     return agents.map((agent) => {
       const agentLogs = logs.filter((l) => l.agent === agent);

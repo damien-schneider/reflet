@@ -16,7 +16,6 @@ import {
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
 
 import {
   Command,
@@ -61,7 +60,7 @@ export function CommandPalette({
   filters,
   setFilters,
 }: CommandPaletteProps) {
-  const router = useRouter();
+  const { push } = useRouter();
   const trimmedInput = query.trim();
   const [debounced] = useDebouncedValue(trimmedInput, {
     wait: SEARCH_DEBOUNCE_MS,
@@ -78,18 +77,15 @@ export function CommandPalette({
   );
 
   const isSearching = trimmedInput.length > 0;
-  const tasksForList = useMemo(() => {
-    if (isSearching) {
-      return searched ?? [];
-    }
-    return (recent ?? []).slice(0, RECENT_COUNT);
-  }, [isSearching, searched, recent]);
+  const tasksForList = isSearching
+    ? (searched ?? [])
+    : (recent ?? []).slice(0, RECENT_COUNT);
 
   const close = () => onOpenChange(false);
 
   const goto = (path: string) => {
     close();
-    router.push(path);
+    push(path);
   };
 
   const onSelectTask = (task: Doc<"autopilotWorkItems">) => {

@@ -50,6 +50,29 @@ async function listTasks(t: TestContext, organizationId: Id<"organizations">) {
   );
 }
 
+async function publishAppDescription(
+  t: TestContext,
+  organizationId: Id<"organizations">
+) {
+  // CTO's free-form chain requirement is now `identity` (post-chain-split).
+  const now = Date.now();
+  await t.run((ctx) =>
+    ctx.db.insert("autopilotKnowledgeDocs", {
+      organizationId,
+      docType: "identity",
+      ownerAgent: "cto",
+      title: "Product Identity",
+      contentFull: "Test product identity",
+      contentSummary: "Test product identity",
+      version: 1,
+      userEdited: false,
+      stalenessAlertDays: 30,
+      lastUpdatedAt: now,
+      createdAt: now,
+    })
+  );
+}
+
 describe("autopilot routine dispatch", () => {
   test("routine creation rejects agents that cannot dispatch routine tasks", async () => {
     const t = createTestContext();
@@ -100,6 +123,8 @@ describe("autopilot routine dispatch", () => {
     const t = createTestContext();
     const organizationId = await createOrg(t);
     await createAutopilotConfig(t, organizationId);
+    // CTO routine requires app_description published per chain gate.
+    await publishAppDescription(t, organizationId);
     await createRoutine(t, {
       organizationId,
       agent: "cto",
@@ -115,5 +140,30 @@ describe("autopilot routine dispatch", () => {
     expect(dispatched).toBe(1);
     expect(tasks).toHaveLength(1);
     expect(tasks[0]?.assignedAgent).toBe("cto");
+  });
+
+  test("routine evaluation skips when chain dependencies are not yet published", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createAutopilotConfig(t, organizationId);
+    // No app_description published — CTO chain gate must block dispatch.
+    await createRoutine(t, {
+      organizationId,
+      agent: "cto",
+    });
+
+    const dispatched = await t.mutation(
+      internal.autopilot.routines.evaluateRoutines,
+      {}
+    );
+
+    const tasks = await listTasks(t, organizationId);
+    const activity = await getActivity(t);
+
+    expect(dispatched).toBe(0);
+    expect(tasks).toEqual([]);
+    expect(
+      activity.some((entry) => entry.message.includes("chain not ready"))
+    ).toBe(true);
   });
 });

@@ -15,7 +15,17 @@ import {
   internalMutation,
   internalQuery,
 } from "../../_generated/server";
-import { formatProviderHttpError } from "../adapters/adapter_helpers";
+
+const formatProviderHttpError = (
+  action: string,
+  response: Response
+): string => {
+  const statusText = response.statusText.trim();
+  const status = statusText
+    ? `HTTP ${response.status} ${statusText}`
+    : `HTTP ${response.status}`;
+  return `${action} failed with ${status}. Check the stored provider credentials, permissions, or rate limits.`;
+};
 
 const typefullyResponseSchema = z.object({
   share_url: z.string().optional(),

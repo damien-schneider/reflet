@@ -14,6 +14,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 import type { GridAgentId } from "./agent-grid-card";
+import {
+  AgentWorkStreamPanel,
+  type AgentWorkStreamPanelStream,
+} from "./agent-work-stream-panel";
+
+type AgentWorkStream = AgentWorkStreamPanelStream | null | undefined;
 
 /**
  * Read-only real-time conversation stream for an agent.
@@ -29,16 +35,32 @@ export function AgentConversationStream({
   organizationId: Id<"organizations">;
   agentId: GridAgentId;
 }) {
+  const workStream = useQuery(
+    api.autopilot.queries.threads.getLatestAgentWorkStream,
+    {
+      organizationId,
+      agent: agentId,
+    }
+  );
   // Only CEO has a thread via ceo_chat system
   const isCeo = agentId === "orchestrator";
 
   if (isCeo) {
-    return <CeoConversationStream organizationId={organizationId} />;
+    return (
+      <CeoConversationStream
+        organizationId={organizationId}
+        workStream={workStream}
+      />
+    );
   }
 
   // For other agents, check if they have a thread in autopilotAgentThreads
   return (
-    <AgentThreadStream agentId={agentId} organizationId={organizationId} />
+    <AgentThreadStream
+      agentId={agentId}
+      organizationId={organizationId}
+      workStream={workStream}
+    />
   );
 }
 
@@ -47,8 +69,10 @@ export function AgentConversationStream({
  */
 function CeoConversationStream({
   organizationId,
+  workStream,
 }: {
   organizationId: Id<"organizations">;
+  workStream: AgentWorkStream;
 }) {
   const threadId = useQuery(api.autopilot.ceo_chat.getThread, {
     organizationId,
@@ -59,20 +83,30 @@ function CeoConversationStream({
   }
 
   if (threadId === null) {
-    return <EmptyThreadState agentLabel="CEO" />;
+    return (
+      <ConversationContainer workStream={workStream}>
+        <EmptyThreadState agentLabel="CEO" />
+      </ConversationContainer>
+    );
   }
 
   return (
-    <ActiveCeoStream organizationId={organizationId} threadId={threadId} />
+    <ActiveCeoStream
+      organizationId={organizationId}
+      threadId={threadId}
+      workStream={workStream}
+    />
   );
 }
 
 function ActiveCeoStream({
   threadId,
   organizationId,
+  workStream,
 }: {
   threadId: string;
   organizationId: Id<"organizations">;
+  workStream: AgentWorkStream;
 }) {
   const { results: messages, status } = useUIMessages(
     api.autopilot.ceo_chat.listMessages,
@@ -81,7 +115,7 @@ function ActiveCeoStream({
   );
 
   return (
-    <ConversationContainer>
+    <ConversationContainer workStream={workStream}>
       {messages.length === 0 && status !== "LoadingMore" ? (
         <EmptyThreadState agentLabel="CEO" />
       ) : (
@@ -108,9 +142,11 @@ function ActiveCeoStream({
 function AgentThreadStream({
   organizationId,
   agentId,
+  workStream,
 }: {
   organizationId: Id<"organizations">;
   agentId: GridAgentId;
+  workStream: AgentWorkStream;
 }) {
   const thread = useQuery(api.autopilot.queries.agent_detail.getAgentThread, {
     organizationId,
@@ -123,7 +159,7 @@ function AgentThreadStream({
 
   if (thread === null) {
     return (
-      <ConversationContainer>
+      <ConversationContainer workStream={workStream}>
         <EmptyThreadState agentLabel={agentId.toUpperCase()} />
       </ConversationContainer>
     );
@@ -133,6 +169,7 @@ function AgentThreadStream({
     <AgentThreadMessages
       agentLabel={agentId.toUpperCase()}
       threadId={thread._id}
+      workStream={workStream}
     />
   );
 }
@@ -140,9 +177,11 @@ function AgentThreadStream({
 function AgentThreadMessages({
   threadId,
   agentLabel,
+  workStream,
 }: {
   threadId: Id<"autopilotAgentThreads">;
   agentLabel: string;
+  workStream: AgentWorkStream;
 }) {
   const messages = useQuery(api.autopilot.queries.threads.getThreadMessages, {
     threadId,
@@ -155,14 +194,14 @@ function AgentThreadMessages({
 
   if (messages.length === 0) {
     return (
-      <ConversationContainer>
+      <ConversationContainer workStream={workStream}>
         <EmptyThreadState agentLabel={agentLabel} />
       </ConversationContainer>
     );
   }
 
   return (
-    <ConversationContainer>
+    <ConversationContainer workStream={workStream}>
       {/* Messages are desc from query — reverse for chronological display */}
       {[...messages].reverse().map((msg) => (
         <StaticMessage content={msg.content} key={msg._id} role={msg.role} />
@@ -277,7 +316,13 @@ function StaticMessage({
 // SHARED UI
 // ============================================
 
-function ConversationContainer({ children }: { children: React.ReactNode }) {
+function ConversationContainer({
+  children,
+  workStream,
+}: {
+  children: React.ReactNode;
+  workStream?: AgentWorkStream;
+}) {
   return (
     <div className="flex h-full flex-col rounded-xl border bg-card">
       <div className="border-border border-b px-4 py-3">
@@ -288,7 +333,10 @@ function ConversationContainer({ children }: { children: React.ReactNode }) {
         classNameViewport="p-4"
         direction="vertical"
       >
-        <div className="flex flex-col gap-4">{children}</div>
+        <div className="flex flex-col gap-4">
+          {workStream ? <AgentWorkStreamPanel stream={workStream} /> : null}
+          {children}
+        </div>
       </ScrollArea>
     </div>
   );

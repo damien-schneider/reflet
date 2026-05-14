@@ -8,13 +8,12 @@ import { use } from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { H1, H2, Muted } from "@/components/ui/typography";
-import { LiveTicker } from "@/features/autopilot/components/activity/live-ticker";
+import { H2, Muted } from "@/components/ui/typography";
 import { AutonomyToggle } from "@/features/autopilot/components/autonomy-toggle";
 import { AutopilotContext } from "@/features/autopilot/components/autopilot-context";
 import { AutopilotNav } from "@/features/autopilot/components/autopilot-nav";
 import { CeoChatPanel } from "@/features/autopilot/components/ceo-chat/ceo-chat-panel";
-import { CeoChatToggle } from "@/features/autopilot/components/ceo-chat/ceo-chat-toggle";
+import { ChainLiveBar } from "@/features/autopilot/components/chain-live-bar";
 import { HealthBanner } from "@/features/autopilot/components/health-banner";
 import { cn } from "@/lib/utils";
 import { ceoChatOpenAtom } from "@/store/ui";
@@ -121,14 +120,8 @@ export default function AutopilotLayout({
         )}
       >
         <div className="mx-auto max-w-6xl px-4 pt-12 pb-8">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <H1 variant="page">Autopilot</H1>
-              <Muted>AI-powered product team for your codebase</Muted>
-            </div>
-            <div className="flex items-center gap-3">
-              <AutonomyToggle />
-            </div>
+          <div className="mb-6 flex items-center justify-end gap-3">
+            <AutonomyToggle />
           </div>
 
           <div className="flex flex-col md:flex-row md:gap-8">
@@ -144,16 +137,19 @@ export default function AutopilotLayout({
 
             <div className="min-w-0 flex-1">
               <HealthBanner />
-              {config?.autonomyMode && config.autonomyMode !== "stopped" ? (
-                <LiveTicker organizationId={org._id} />
-              ) : null}
               {children}
             </div>
           </div>
         </div>
       </div>
 
-      {canUseCeoChat ? <CeoChatToggle /> : null}
+      {isAdmin && config?.autonomyMode !== "stopped" ? (
+        <ChainLiveBar
+          baseUrl={baseUrl}
+          canUseCeoChat={canUseCeoChat}
+          organizationId={org._id}
+        />
+      ) : null}
 
       {isCeoChatVisible && (
         <aside className="fixed inset-3 z-40 overflow-hidden rounded-xl border border-border bg-background shadow-lg sm:left-auto sm:w-[var(--ceo-chat-width)] sm:max-w-[calc(100vw-1.5rem)]">

@@ -20,7 +20,6 @@ import { cn } from "@/lib/utils";
 export type AssignedAgent =
   | "pm"
   | "cto"
-  | "dev"
   | "growth"
   | "orchestrator"
   | "system"
@@ -32,7 +31,6 @@ export type AssignedAgent =
 const AGENT_OPTIONS: readonly AssignedAgent[] = [
   "pm",
   "cto",
-  "dev",
   "growth",
   "orchestrator",
   "support",
@@ -45,7 +43,6 @@ const AGENT_OPTIONS: readonly AssignedAgent[] = [
 const AGENT_LABELS: Record<AssignedAgent, string> = {
   pm: "PM",
   cto: "CTO",
-  dev: "Dev",
   growth: "Growth",
   orchestrator: "Orchestrator",
   support: "Support",

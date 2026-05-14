@@ -7,7 +7,6 @@ import { use, useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { H1, Text } from "@/components/ui/typography";
 import { CreateSurveyDialog } from "@/features/surveys/components/create-survey-dialog";
 import { SurveyList } from "@/features/surveys/components/survey-list";
 import type { SurveyStatus } from "@/store/surveys";
@@ -64,13 +63,7 @@ export default function SurveysPage({
 
   return (
     <div className="admin-container">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <H1>Surveys</H1>
-          <Text variant="bodySmall">
-            Create and manage surveys to collect structured feedback
-          </Text>
-        </div>
+      <div className="mb-8 flex items-center justify-end">
         <CreateSurveyDialog organizationId={org._id} />
       </div>
 

@@ -37,7 +37,6 @@ describe("autopilot production config and dashboard contracts", () => {
     const config = await t.run((ctx) => ctx.db.get(configId));
     expect(config?.pmEnabled).toBe(true);
     expect(config?.ctoEnabled).toBe(true);
-    expect(config?.devEnabled).toBe(false);
     expect(config?.growthEnabled).toBe(false);
     expect(config?.supportEnabled).toBe(false);
     expect(config?.salesEnabled).toBe(false);
@@ -85,10 +84,8 @@ describe("autopilot production config and dashboard contracts", () => {
       ctx.db.insert("autopilotConfig", {
         organizationId,
         enabled: true,
-        adapter: "builtin",
         autonomyLevel: "review_required",
         autonomyMode: "supervised",
-        autoMergePRs: false,
         maxTasksPerDay: 10,
         tasksUsedToday: 0,
         tasksResetAt: now + 24 * 60 * 60 * 1000,

@@ -6,7 +6,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   IconArrowLeft,
   IconBrain,
-  IconCode,
   IconCoin,
   IconCrown,
   IconHeadset,
@@ -51,12 +50,6 @@ const AGENT_META = {
     description: "Architecture & specs",
     configField: "ctoEnabled",
   },
-  dev: {
-    label: "Dev",
-    icon: IconCode,
-    description: "Code & shipping",
-    configField: "devEnabled",
-  },
   growth: {
     label: "Growth",
     icon: IconRocket,
@@ -81,7 +74,6 @@ function isAgentEnabled(
   agentId: GridAgentId,
   config: {
     ctoEnabled?: boolean;
-    devEnabled?: boolean;
     growthEnabled?: boolean;
     pmEnabled?: boolean;
     salesEnabled?: boolean;
@@ -96,9 +88,6 @@ function isAgentEnabled(
   }
   if (agentId === "cto") {
     return config.ctoEnabled !== false;
-  }
-  if (agentId === "dev") {
-    return config.devEnabled !== false;
   }
   if (agentId === "growth") {
     return config.growthEnabled !== false;
@@ -128,10 +117,6 @@ export function AgentDetailView({
     organizationId,
     limit: 20,
   });
-  const readiness = useQuery(
-    api.autopilot.queries.dashboard.getAgentReadiness,
-    { organizationId }
-  );
   const updateConfig = useMutation(api.autopilot.mutations.config.updateConfig);
 
   if (config === undefined || activity === undefined) {
@@ -158,9 +143,7 @@ export function AgentDetailView({
   // Derive status
   const isOrchestrator = agentId === "orchestrator";
   const enabled = isAgentEnabled(agentId, config);
-  const agentReadiness = readiness?.[agentId];
-  const isBlocked =
-    enabled && agentReadiness !== undefined && !agentReadiness.ready;
+  const isBlocked = false;
 
   // Find last activity for this agent
   const lastActivity = activity.find((e) => e.agent === agentId);
@@ -239,13 +222,6 @@ export function AgentDetailView({
           </div>
         )}
       </div>
-
-      {/* Blocked banner */}
-      {isBlocked && agentReadiness?.reason && (
-        <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-amber-600 text-sm">
-          {agentReadiness.reason}
-        </div>
-      )}
 
       {/* Two-column layout: Activity Feed + Conversation */}
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-2">

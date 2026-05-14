@@ -31,7 +31,6 @@ function degradeTo(state: HealthState, target: HealthStatus): void {
 const AGENT_FIELDS = [
   "pmEnabled",
   "ctoEnabled",
-  "devEnabled",
   "growthEnabled",
   "supportEnabled",
   "salesEnabled",
@@ -244,6 +243,115 @@ function checkPipelineCapacity(
   }
 }
 
+type ChainNodeKind =
+  | "codebase_understanding"
+  | "identity"
+  | "brand_voice"
+  | "feature_catalog"
+  | "scope"
+  | "market_analysis"
+  | "target_definition"
+  | "personas"
+  | "use_cases"
+  | "lead_targets"
+  | "community_posts"
+  | "drafts";
+
+type ChainNodeStatus = "missing" | "draft" | "pending_review" | "published";
+
+type ChainStateLike = Record<ChainNodeKind, ChainNodeStatus>;
+
+interface ChainBlockerContext {
+  ctoEnabled: boolean;
+  githubConnected: boolean;
+  hasRepoAnalysis: boolean;
+  lastBlockerLogAt: number | null;
+  repoAnalysisError: string | null;
+}
+
+const CHAIN_BLOCKER_LOG_STALE_MS = 6 * 60 * 60 * 1000;
+
+function checkChainBlockers(
+  chainState: ChainStateLike,
+  context: ChainBlockerContext,
+  state: HealthState
+): void {
+  const chainEmpty = Object.values(chainState).every((s) => s === "missing");
+  const rootMissing = chainState.codebase_understanding === "missing";
+
+  if (!rootMissing) {
+    return;
+  }
+
+  if (!context.githubConnected) {
+    state.status = "critical";
+    state.issues.unshift({
+      id: "chain_blocked_no_github",
+      severity: "critical",
+      message:
+        "Autopilot is blocked: no GitHub repository connected. The chain cannot start without a codebase to analyze.",
+      resolution:
+        "Connect a GitHub repository in Settings → GitHub. Once connected, the CTO will produce a codebase understanding and the chain will advance automatically.",
+      actionUrl: "/settings/github",
+      actionLabel: "Connect Repository",
+    });
+    return;
+  }
+
+  if (!context.hasRepoAnalysis) {
+    state.status = "critical";
+    const baseMessage =
+      "CTO is blocked: no repository analysis available. Codebase understanding cannot be produced yet.";
+    const message = context.repoAnalysisError
+      ? `${baseMessage} Last attempt failed: ${context.repoAnalysisError}`
+      : baseMessage;
+    const resolution = context.repoAnalysisError
+      ? "Autopilot will retry automatically. If the same error keeps appearing, fix the root cause (e.g., update a stale model ID) and the next heartbeat will pick it up."
+      : "Open Knowledge and click Recompute to run a repo analysis. The chain stays blocked until the analysis completes.";
+    state.issues.unshift({
+      id: "chain_blocked_no_repo_analysis",
+      severity: "critical",
+      message,
+      resolution,
+      actionUrl: "knowledge",
+      actionLabel: "Run Repo Analysis",
+    });
+    return;
+  }
+
+  if (!context.ctoEnabled) {
+    degradeTo(state, "degraded");
+    state.issues.push({
+      id: "chain_blocked_cto_disabled",
+      severity: "warning",
+      message:
+        "Chain root cannot advance: CTO is disabled but codebase_understanding is missing.",
+      resolution:
+        "Enable the CTO agent in Settings so it can produce the first chain artifact.",
+      actionUrl: "settings",
+      actionLabel: "Enable CTO",
+    });
+    return;
+  }
+
+  if (chainEmpty && context.lastBlockerLogAt) {
+    const ageMs = Date.now() - context.lastBlockerLogAt;
+    if (ageMs < CHAIN_BLOCKER_LOG_STALE_MS) {
+      degradeTo(state, "degraded");
+      state.issues.push({
+        id: "chain_blocker_logged",
+        severity: "warning",
+        message:
+          "Recent chain producer failure logged. Check the activity log for details.",
+        resolution:
+          "Open Activity to see the agent log — the CTO or another producer reported a blocker within the last few hours.",
+        actionUrl: "activity",
+        actionLabel: "View Activity",
+      });
+    }
+  }
+}
+
 function checkCredentials(
   credentialStatus: "missing" | "invalid" | "valid",
   adapterName: string,
@@ -272,12 +380,13 @@ function checkCredentials(
   }
 }
 
-export type { HealthState };
+export type { ChainBlockerContext, ChainStateLike, HealthState };
 export {
   AGENT_FIELDS,
   checkActivity,
   checkAgentCount,
   checkAutonomyMode,
+  checkChainBlockers,
   checkCostCap,
   checkCredentials,
   checkErrors,

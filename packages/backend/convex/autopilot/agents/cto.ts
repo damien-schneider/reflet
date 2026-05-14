@@ -1,14 +1,13 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
-import type { Id } from "../../_generated/dataModel";
 import {
-  type ActionCtx,
   internalAction,
   internalMutation,
   internalQuery,
 } from "../../_generated/server";
-import { activityLogLevel, priority } from "../schema/validators";
+import { createWorkStreamCallbacks } from "../agent_threads";
+import { activityLogLevel } from "../schema/validators";
 import { QUALITY_MODELS } from "./models";
 import { buildAgentPrompt, CTO_SYSTEM_PROMPT } from "./prompts";
 import { generateObjectWithFallback } from "./shared_generation";
@@ -95,77 +94,6 @@ export const updateTaskWithSpec = internalMutation({
     });
     return null;
   },
-});
-
-interface CreateDevSubtaskArgs {
-  acceptanceCriteria: string[];
-  estimatedComplexity: string;
-  implementationPrompt: string;
-  organizationId: Id<"organizations">;
-  parentTaskId: Id<"autopilotWorkItems">;
-  priority: "critical" | "high" | "low" | "medium";
-  title: string;
-}
-
-const createDevSubtaskHandler = async (
-  ctx: ActionCtx,
-  args: CreateDevSubtaskArgs
-): Promise<Id<"autopilotWorkItems"> | null> => {
-  const workItemId: Id<"autopilotWorkItems"> | null = await ctx.runMutation(
-    internal.autopilot.task_mutations.createTask,
-    {
-      organizationId: args.organizationId,
-      type: "task",
-      title: args.title,
-      description: args.implementationPrompt,
-      priority: args.priority,
-      assignedAgent: "dev",
-      parentId: args.parentTaskId,
-      acceptanceCriteria: args.acceptanceCriteria,
-      needsReview: false,
-      createdBy: "cto",
-    }
-  );
-
-  if (!workItemId) {
-    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-      organizationId: args.organizationId,
-      taskId: args.parentTaskId,
-      agent: "cto",
-      targetAgent: "dev",
-      level: "warning",
-      message: `Skipped dev subtask: ${args.title}`,
-      details: `Task caps prevented creation. Complexity: ${args.estimatedComplexity}`,
-    });
-    return null;
-  }
-
-  await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-    organizationId: args.organizationId,
-    taskId: workItemId,
-    agent: "cto",
-    targetAgent: "dev",
-    level: "action",
-    message: `Technical spec ready: ${args.title}`,
-    details: `Complexity: ${args.estimatedComplexity}`,
-  });
-
-  return workItemId;
-};
-
-export const createDevSubtask = internalAction({
-  args: {
-    organizationId: v.id("organizations"),
-    parentTaskId: v.id("autopilotWorkItems"),
-    title: v.string(),
-    implementationPrompt: v.string(),
-    priority,
-    estimatedComplexity: v.string(),
-    acceptanceCriteria: v.array(v.string()),
-  },
-  returns: v.union(v.id("autopilotWorkItems"), v.null()),
-  handler: async (ctx, args): Promise<Id<"autopilotWorkItems"> | null> =>
-    createDevSubtaskHandler(ctx, args),
 });
 
 export const logCtoActivity = internalMutation({
@@ -297,41 +225,24 @@ Create a specification that a developer can execute without asking clarifying qu
         prompt: userPrompt,
         temperature: 0.7,
         maxOutputTokens: 4000,
+        stream: await createWorkStreamCallbacks(ctx, {
+          organizationId: args.organizationId,
+          agent: "cto",
+          workItemId: args.taskId,
+          title: `Generating spec: ${task.title}`,
+        }),
       });
 
-      // Update task with technical spec
+      // Update task with technical spec (implementation prompt now lives
+      // on the parent task — code execution is delegated externally)
       await ctx.runMutation(internal.autopilot.agents.cto.updateTaskWithSpec, {
         taskId: args.taskId,
         technicalSpec: JSON.stringify(spec, null, 2),
         acceptanceCriteria: spec.acceptanceCriteria,
       });
 
-      // Create dev subtask
-      const devTaskId = await ctx.runAction(
-        internal.autopilot.agents.cto.createDevSubtask,
-        {
-          organizationId: args.organizationId,
-          parentTaskId: args.taskId,
-          title: `Dev: ${task.title}`,
-          implementationPrompt: spec.implementationPrompt,
-          priority: task.priority,
-          estimatedComplexity: spec.estimatedComplexity,
-          acceptanceCriteria: spec.acceptanceCriteria,
-        }
-      );
-
-      if (!devTaskId) {
-        await ctx.runMutation(
-          internal.autopilot.task_mutations.updateTaskStatus,
-          {
-            taskId: args.taskId,
-            status: "todo",
-          }
-        );
-        return null;
-      }
-
-      // Mark CTO task as completed
+      // Mark CTO task as completed — the parent task now carries a complete
+      // implementation prompt ready to be delegated as a GitHub issue.
       await ctx.runMutation(
         internal.autopilot.task_mutations.updateTaskStatus,
         {
@@ -340,13 +251,12 @@ Create a specification that a developer can execute without asking clarifying qu
         }
       );
 
-      // Log success
       await ctx.runMutation(internal.autopilot.agents.cto.logCtoActivity, {
         organizationId: args.organizationId,
         taskId: args.taskId,
         level: "success",
         message: "Technical specification completed",
-        details: `Created dev subtask: ${devTaskId} | Risk: ${spec.riskLevel} | Complexity: ${spec.estimatedComplexity}`,
+        details: `Risk: ${spec.riskLevel} | Complexity: ${spec.estimatedComplexity}`,
       });
       return null;
     } catch (error) {

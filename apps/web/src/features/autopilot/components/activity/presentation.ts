@@ -17,7 +17,6 @@ export type ActivityLevel = ActivityLogEntry["level"];
 export const ACTIVITY_AGENTS = [
   "pm",
   "cto",
-  "dev",
   "growth",
   "orchestrator",
   "system",
@@ -38,7 +37,6 @@ export const ACTIVITY_LEVELS = [
 export const ACTIVITY_AGENT_LABELS = {
   pm: "PM",
   cto: "CTO",
-  dev: "Dev",
   growth: "Growth",
   orchestrator: "CEO",
   system: "System",
@@ -51,7 +49,6 @@ export const ACTIVITY_AGENT_LABELS = {
 export const ACTIVITY_AGENT_BADGE_STYLES = {
   pm: "border-blue-500/30 bg-blue-500/10 text-blue-500",
   cto: "border-purple-500/30 bg-purple-500/10 text-purple-500",
-  dev: "border-green-500/30 bg-green-500/10 text-green-500",
   growth: "border-pink-500/30 bg-pink-500/10 text-pink-500",
   orchestrator: "border-cyan-500/30 bg-cyan-500/10 text-cyan-500",
   system: "border-border bg-muted text-muted-foreground",
@@ -71,16 +68,4 @@ export const ACTIVITY_LEVEL_DOT_STYLES = {
 
 export const getActivityAgentLabel = (agent: ActivityAgent): string => {
   return ACTIVITY_AGENT_LABELS[agent];
-};
-
-export const formatTickerEntry = (
-  entry: Pick<ActivityLogEntry, "agent" | "message" | "targetAgent">
-): string => {
-  const sourceAgentLabel = getActivityAgentLabel(entry.agent);
-
-  if (entry.targetAgent) {
-    return `${sourceAgentLabel} -> ${getActivityAgentLabel(entry.targetAgent)}: ${entry.message}`;
-  }
-
-  return `${sourceAgentLabel}: ${entry.message}`;
 };

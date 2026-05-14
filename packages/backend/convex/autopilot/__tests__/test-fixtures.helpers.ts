@@ -121,9 +121,7 @@ export const createAutopilotConfig = async (
   t: TestContext,
   organizationId: Id<"organizations">,
   overrides: {
-    adapter?: Doc<"autopilotConfig">["adapter"];
     autonomyMode?: Doc<"autopilotConfig">["autonomyMode"];
-    autoMergePRs?: boolean;
     ceoChatThreadId?: string;
     costUsedTodayUsd?: number;
     dailyCostCapUsd?: number;
@@ -139,10 +137,8 @@ export const createAutopilotConfig = async (
     return ctx.db.insert("autopilotConfig", {
       organizationId,
       enabled: true,
-      adapter: "builtin",
       autonomyLevel: "review_required",
       autonomyMode: "supervised",
-      autoMergePRs: false,
       maxTasksPerDay: 10,
       tasksUsedToday: 0,
       tasksResetAt: now + 24 * 60 * 60 * 1000,

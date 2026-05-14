@@ -95,7 +95,16 @@ export function TasksFilterBar({
     const next = current.includes(value)
       ? current.filter((v) => v !== value)
       : [...current, value];
-    setFilters({ [key]: next } as Partial<TaskFilters>);
+    const updateByKey: Record<
+      typeof key,
+      (values: string[]) => Partial<TaskFilters>
+    > = {
+      status: (status) => ({ status }),
+      type: (type) => ({ type }),
+      priority: (priority) => ({ priority }),
+      labelIds: (labelIds) => ({ labelIds }),
+    };
+    setFilters(updateByKey[key](next));
   };
 
   return (
@@ -201,7 +210,7 @@ export function TasksFilterBar({
           <ChipOptions
             onClear={() => setFilters({ labelIds: [] })}
             options={labels.map((l) => ({
-              value: l._id as unknown as string,
+              value: l._id,
               label: l.name,
             }))}
             selected={filters.labelIds}
@@ -243,8 +252,9 @@ function MultiSelectChip({
         render={
           <Button
             className={cn(
-              "h-8 gap-1.5 border-dashed",
-              active && "border-primary border-solid"
+              "h-8 gap-1.5 rounded-full border-transparent bg-muted/40 px-3 text-muted-foreground hover:bg-muted hover:text-foreground",
+              active &&
+                "border-primary/30 bg-primary/10 text-foreground hover:bg-primary/15"
             )}
             size="sm"
             variant="outline"
@@ -284,8 +294,9 @@ function SingleSelectChip({
         render={
           <Button
             className={cn(
-              "h-8 gap-1.5 border-dashed",
-              active && "border-primary border-solid"
+              "h-8 gap-1.5 rounded-full border-transparent bg-muted/40 px-3 text-muted-foreground hover:bg-muted hover:text-foreground",
+              active &&
+                "border-primary/30 bg-primary/10 text-foreground hover:bg-primary/15"
             )}
             size="sm"
             variant="outline"

@@ -8,7 +8,6 @@ import { formatDistanceToNow } from "date-fns";
 import { use, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { H1, Muted } from "@/components/ui/typography";
 
 export default function TrashPage({
   params,
@@ -43,11 +42,6 @@ export default function TrashPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <H1>Trash</H1>
-        <Muted>Deleted items are permanently removed after 30 days.</Muted>
-      </div>
-
       {deletedFeedback === undefined && (
         <div className="flex items-center justify-center py-12">
           <Spinner className="animate-spin" />

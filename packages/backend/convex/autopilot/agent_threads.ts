@@ -7,8 +7,76 @@
  */
 
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+import type { ActionCtx } from "../_generated/server";
 import { internalMutation, internalQuery } from "../_generated/server";
-import { agentThreadRole, assignedAgent } from "./schema/validators";
+import type { GenerationStreamCallbacks } from "./agents/shared_generation";
+import {
+  agentThreadRole,
+  agentWorkStreamRecord,
+  assignedAgent,
+} from "./schema/validators";
+
+type WorkStreamAgent =
+  | "pm"
+  | "cto"
+  | "growth"
+  | "orchestrator"
+  | "system"
+  | "support"
+  | "sales"
+  | "ceo"
+  | "validator";
+
+interface WorkStreamOptions {
+  agent: WorkStreamAgent;
+  organizationId: Id<"organizations">;
+  title: string;
+  workItemId?: Id<"autopilotWorkItems">;
+}
+
+export const createWorkStreamCallbacks = async (
+  ctx: ActionCtx,
+  options: WorkStreamOptions
+): Promise<GenerationStreamCallbacks> => {
+  const streamId = options.workItemId
+    ? await ctx.runMutation(internal.autopilot.agent_threads.startWorkStream, {
+        organizationId: options.organizationId,
+        agent: options.agent,
+        title: options.title,
+        workItemId: options.workItemId,
+      })
+    : await ctx.runMutation(internal.autopilot.agent_threads.startWorkStream, {
+        organizationId: options.organizationId,
+        agent: options.agent,
+        title: options.title,
+      });
+
+  return {
+    onError: (error: string) =>
+      ctx.runMutation(internal.autopilot.agent_threads.failWorkStream, {
+        streamId,
+        error,
+      }),
+    onFinish: (content: string) =>
+      ctx.runMutation(internal.autopilot.agent_threads.finishWorkStream, {
+        streamId,
+        content,
+      }),
+    onModelStart: (model: string) =>
+      ctx.runMutation(internal.autopilot.agent_threads.updateWorkStream, {
+        streamId,
+        content: "",
+        model,
+      }),
+    onUpdate: (content: string) =>
+      ctx.runMutation(internal.autopilot.agent_threads.updateWorkStream, {
+        streamId,
+        content,
+      }),
+  };
+};
 
 // ============================================
 // QUERIES
@@ -164,5 +232,142 @@ export const addMessage = internalMutation({
     await ctx.db.patch(args.threadId, { lastMessageAt: now });
 
     return messageId;
+  },
+});
+
+export const startWorkStream = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    agent: assignedAgent,
+    title: v.string(),
+    workItemId: v.optional(v.id("autopilotWorkItems")),
+  },
+  returns: v.id("autopilotAgentWorkStreams"),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const activeStreams = await ctx.db
+      .query("autopilotAgentWorkStreams")
+      .withIndex("by_org_agent_status", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("agent", args.agent)
+          .eq("status", "streaming")
+      )
+      .collect();
+
+    for (const stream of activeStreams) {
+      await ctx.db.patch(stream._id, {
+        status: "completed",
+        updatedAt: now,
+        completedAt: now,
+      });
+    }
+
+    return ctx.db.insert("autopilotAgentWorkStreams", {
+      organizationId: args.organizationId,
+      agent: args.agent,
+      workItemId: args.workItemId,
+      title: args.title,
+      status: "streaming",
+      content: "",
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+export const updateWorkStream = internalMutation({
+  args: {
+    streamId: v.id("autopilotAgentWorkStreams"),
+    content: v.string(),
+    model: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const stream = await ctx.db.get(args.streamId);
+    if (!stream) {
+      throw new Error(`Agent work stream not found: ${args.streamId}`);
+    }
+
+    if (args.model) {
+      await ctx.db.patch(args.streamId, {
+        content: args.content,
+        model: args.model,
+        status: "streaming",
+        updatedAt: now,
+      });
+      return null;
+    }
+
+    await ctx.db.patch(args.streamId, {
+      content: args.content,
+      status: "streaming",
+      updatedAt: now,
+    });
+    return null;
+  },
+});
+
+export const finishWorkStream = internalMutation({
+  args: {
+    streamId: v.id("autopilotAgentWorkStreams"),
+    content: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const stream = await ctx.db.get(args.streamId);
+    if (!stream) {
+      throw new Error(`Agent work stream not found: ${args.streamId}`);
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(args.streamId, {
+      content: args.content,
+      status: "completed",
+      updatedAt: now,
+      completedAt: now,
+    });
+    return null;
+  },
+});
+
+export const failWorkStream = internalMutation({
+  args: {
+    streamId: v.id("autopilotAgentWorkStreams"),
+    error: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const stream = await ctx.db.get(args.streamId);
+    if (!stream) {
+      throw new Error(`Agent work stream not found: ${args.streamId}`);
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(args.streamId, {
+      status: "failed",
+      error: args.error,
+      updatedAt: now,
+      completedAt: now,
+    });
+    return null;
+  },
+});
+
+export const getLatestWorkStream = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    agent: assignedAgent,
+  },
+  returns: v.union(agentWorkStreamRecord, v.null()),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("autopilotAgentWorkStreams")
+      .withIndex("by_org_agent_updated", (q) =>
+        q.eq("organizationId", args.organizationId).eq("agent", args.agent)
+      )
+      .order("desc")
+      .first();
   },
 });

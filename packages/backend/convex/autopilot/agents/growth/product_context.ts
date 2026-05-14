@@ -95,9 +95,12 @@ export const loadProductContext = async (
   ctx: { runQuery: ActionCtx["runQuery"] },
   organizationId: Id<"organizations">
 ): Promise<ProductContext | null> => {
+  // Growth grounds on the product identity doc (the user-facing "what is this
+  // product" canonical surface). Replaced the legacy `product_definition` doc
+  // after the chain split.
   const productDef = await ctx.runQuery(
     internal.autopilot.knowledge.getKnowledgeDocByType,
-    { organizationId, docType: "product_definition" }
+    { organizationId, docType: "identity" }
   );
 
   if (!productDef) {

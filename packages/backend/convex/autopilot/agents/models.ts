@@ -12,11 +12,11 @@
 
 export const MODELS = {
   /** Free inference — high-quality open model (default) */
-  FREE: "qwen/qwen3.6-plus:free",
+  FREE: "qwen/qwen3-next-80b-a3b-instruct:free",
   /** Fast paid fallback */
   FAST: "openai/gpt-5.4-mini",
   /** Smartest model — defaults to free, falls back to paid */
-  SMART: "qwen/qwen3.6-plus:free",
+  SMART: "qwen/qwen3-next-80b-a3b-instruct:free",
 } as const;
 
 /**
@@ -24,7 +24,7 @@ export const MODELS = {
  * Use for: drafts, classifications, enrichments, content generation, search.
  */
 export const FAST_MODELS = [
-  "qwen/qwen3.6-plus:free",
+  "qwen/qwen3-next-80b-a3b-instruct:free",
   "nvidia/nemotron-3-super-120b-a12b:free",
   "meta-llama/llama-3.3-70b-instruct:free",
 ] as const;
@@ -35,7 +35,7 @@ export const FAST_MODELS = [
  * Producer agents must NOT use this tier.
  */
 export const QUALITY_MODELS = [
-  "qwen/qwen3.6-plus:free",
+  "qwen/qwen3-next-80b-a3b-instruct:free",
   "openai/gpt-5.4-mini",
 ] as const;
 
@@ -44,6 +44,6 @@ export const QUALITY_MODELS = [
  * These are regular models — web search is injected via the server tool, not the model suffix.
  */
 export const WEB_SEARCH_MODELS = [
-  "qwen/qwen3.6-plus:free",
+  "qwen/qwen3-next-80b-a3b-instruct:free",
   "openai/gpt-5.4-mini",
 ] as const;

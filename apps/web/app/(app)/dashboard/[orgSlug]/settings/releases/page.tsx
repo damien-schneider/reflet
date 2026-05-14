@@ -7,7 +7,7 @@ import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { H1, Muted, Text } from "@/components/ui/typography";
+import { Muted } from "@/components/ui/typography";
 import { ReleaseSetupWizard } from "@/features/changelog/components/release-setup-wizard";
 import { AutomationSection } from "./_components/automation-section";
 import { CurrentConfigSection } from "./_components/current-config-section";
@@ -123,13 +123,6 @@ export default function ReleaseSettingsPage({
 
   return (
     <div className="space-y-8">
-      <div>
-        <H1>Release Settings</H1>
-        <Text variant="bodySmall">
-          Configure how releases and changelogs are managed
-        </Text>
-      </div>
-
       {/* Versioning — always available */}
       <VersioningSection
         autoVersioning={settings?.autoVersioning}

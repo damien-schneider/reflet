@@ -47,11 +47,11 @@ async function createProductDefinition(
     const now = Date.now();
     const docId = await ctx.db.insert("autopilotKnowledgeDocs", {
       organizationId,
-      docType: "product_definition",
+      docType: "identity",
       ownerAgent: "pm",
-      title: "Product Definition",
-      contentFull: "Existing product definition",
-      contentSummary: "Existing product definition",
+      title: "Product Identity",
+      contentFull: "Existing product identity",
+      contentSummary: "Existing product identity",
       version: 1,
       userEdited: true,
       userEditedAt: now,
@@ -63,7 +63,7 @@ async function createProductDefinition(
     await ctx.db.insert("autopilotKnowledgeDocVersions", {
       docId,
       version: 1,
-      content: "Existing product definition",
+      content: "Existing product identity",
       editedBy: "user",
       createdAt: now,
     });
@@ -95,7 +95,7 @@ async function createFeedback(
 async function createTask(
   t: TestContext,
   options: {
-    assignedAgent?: "cto" | "dev" | "growth" | "pm" | "sales" | "support";
+    assignedAgent?: "cto" | "growth" | "pm" | "sales" | "support";
     needsReview?: boolean;
     organizationId: Awaited<ReturnType<typeof createLocalOrg>>;
     reviewType?: Doc<"autopilotWorkItems">["reviewType"];
@@ -247,7 +247,7 @@ describe("autopilot production access control", () => {
         description: "Cleanup must still run after billing access is lost.",
         status: "in_progress",
         priority: "medium",
-        assignedAgent: "dev",
+        assignedAgent: "cto",
         needsReview: false,
         createdAt: staleAt,
         updatedAt: staleAt,
@@ -295,25 +295,14 @@ describe("autopilot production access control", () => {
       })
     ).rejects.toThrow("Autopilot requires a Pro subscription.");
     await expect(
-      authed.mutation(api.autopilot.mutations.config.upsertCredentials, {
-        organizationId,
-        adapter: "codex",
-        credentials: "token",
-      })
-    ).rejects.toThrow("Autopilot requires a Pro subscription.");
-    await expect(
       authed.mutation(api.autopilot.mutations.config.raiseBudgetCap, {
         organizationId,
         newCapUsd: 100,
       })
     ).rejects.toThrow("Autopilot requires a Pro subscription.");
 
-    const rows = await t.run(async (ctx) => ({
-      config: await ctx.db.get(configId),
-      credentials: await ctx.db.query("autopilotAdapterCredentials").collect(),
-    }));
-    expect(rows.config?.maxTasksPerDay).toBe(10);
-    expect(rows.credentials).toHaveLength(0);
+    const config = await t.run((ctx) => ctx.db.get(configId));
+    expect(config?.maxTasksPerDay).toBe(10);
   });
 
   test("non-Pro organizations cannot use CEO chat write paths", async () => {
@@ -384,7 +373,7 @@ describe("autopilot production access control", () => {
         .withIndex("by_doc", (q) => q.eq("docId", docId))
         .collect(),
     }));
-    expect(rows.doc?.contentFull).toBe("Existing product definition");
+    expect(rows.doc?.contentFull).toBe("Existing product identity");
     expect(rows.versions).toHaveLength(1);
   });
 
@@ -407,7 +396,7 @@ describe("autopilot production access control", () => {
         .withIndex("by_doc", (q) => q.eq("docId", docId))
         .collect(),
     }));
-    expect(rows.doc?.contentFull).toBe("Existing product definition");
+    expect(rows.doc?.contentFull).toBe("Existing product identity");
     expect(rows.versions).toHaveLength(1);
   });
 
@@ -440,7 +429,7 @@ describe("autopilot production access control", () => {
         .withIndex("by_doc", (q) => q.eq("docId", docId))
         .collect(),
     }));
-    expect(rows.doc?.contentFull).toBe("Existing product definition");
+    expect(rows.doc?.contentFull).toBe("Existing product identity");
     expect(rows.versions).toHaveLength(1);
   });
 

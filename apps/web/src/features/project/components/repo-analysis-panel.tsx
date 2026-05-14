@@ -5,6 +5,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { Muted, Text } from "@/components/ui/typography";
+import { getAutopilotErrorMessage } from "@/features/autopilot/lib/error-messages";
 
 type AnalysisField =
   | "summary"
@@ -52,6 +54,13 @@ export function RepoAnalysisPanel({
     setIsStarting(true);
     try {
       await startAnalysis({ organizationId });
+      toast.success("Repository analysis started");
+    } catch (error) {
+      toast.error(
+        getAutopilotErrorMessage(error, {
+          fallback: "Failed to start repository analysis",
+        })
+      );
     } finally {
       setIsStarting(false);
     }
@@ -173,11 +182,19 @@ function AnalysisResults({
   const sections = allSections.filter((s) => s.content);
 
   const handleSectionChange = async (field: AnalysisField, value: string) => {
-    await updateSection({
-      organizationId,
-      field,
-      value,
-    });
+    try {
+      await updateSection({
+        organizationId,
+        field,
+        value,
+      });
+    } catch (error) {
+      toast.error(
+        getAutopilotErrorMessage(error, {
+          fallback: "Failed to save analysis section",
+        })
+      );
+    }
   };
 
   return (

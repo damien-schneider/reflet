@@ -2,6 +2,7 @@
  * Activity log queries.
  */
 
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { query } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
@@ -14,6 +15,7 @@ import { requireOrgMembership } from "./auth";
 
 const TICKER_ACTIVITY_LIMIT = 10;
 const FILTERED_ACTIVITY_LIMIT = 200;
+const WORK_ITEM_ACTIVITY_LIMIT = 100;
 
 const activityLogEntryValidator = v.object({
   _id: v.id("autopilotActivityLog"),
@@ -71,6 +73,28 @@ export const listTickerActivity = query({
   },
 });
 
+export const listWorkItemActivity = query({
+  args: {
+    workItemId: v.id("autopilotWorkItems"),
+    limit: v.optional(v.number()),
+  },
+  returns: v.array(activityLogEntryValidator),
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    const item = await ctx.db.get(args.workItemId);
+    if (!item) {
+      return [];
+    }
+    await requireOrgMembership(ctx, item.organizationId, user._id);
+
+    return ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_work_item", (q) => q.eq("workItemId", args.workItemId))
+      .order("desc")
+      .take(args.limit ?? WORK_ITEM_ACTIVITY_LIMIT);
+  },
+});
+
 export const listActivityByType = query({
   args: {
     organizationId: v.id("organizations"),
@@ -123,5 +147,47 @@ export const listActivityFiltered = query({
     }
 
     return results;
+  },
+});
+
+const paginatedActivityValidator = v.object({
+  page: v.array(activityLogEntryValidator),
+  isDone: v.boolean(),
+  continueCursor: v.string(),
+  splitCursor: v.optional(v.union(v.string(), v.null())),
+  pageStatus: v.optional(
+    v.union(v.literal("SplitRecommended"), v.literal("SplitRequired"), v.null())
+  ),
+});
+
+export const listActivityPaginated = query({
+  args: {
+    organizationId: v.id("organizations"),
+    paginationOpts: paginationOptsValidator,
+    agent: v.optional(assignedAgent),
+    level: v.optional(activityLogLevel),
+  },
+  returns: paginatedActivityValidator,
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+    await requireOrgMembership(ctx, args.organizationId, user._id);
+
+    let q = ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_org_created", (idx) =>
+        idx.eq("organizationId", args.organizationId)
+      )
+      .order("desc");
+
+    if (args.agent) {
+      const agent = args.agent;
+      q = q.filter((f) => f.eq(f.field("agent"), agent));
+    }
+    if (args.level) {
+      const level = args.level;
+      q = q.filter((f) => f.eq(f.field("level"), level));
+    }
+
+    return await q.paginate(args.paginationOpts);
   },
 });

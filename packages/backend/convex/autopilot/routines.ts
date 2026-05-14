@@ -9,6 +9,11 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { getEffectiveTier } from "../billing/effective_tier";
+import {
+  computeChainState,
+  getAgentMissingDependencies,
+  isAgentChainReady,
+} from "./chain";
 import { isAgentEnabledInConfig } from "./config";
 import { isRoutineDispatchAgent } from "./schema/validators";
 
@@ -208,6 +213,21 @@ export const evaluateRoutines = internalMutation({
         continue;
       }
       if (!(config && canRunRoutine({ config, currentDate, now, routine }))) {
+        continue;
+      }
+
+      // Chain gate: routines never dispatch work for an agent whose chain
+      // dependencies are not yet published. Source of truth = chain.ts.
+      const chainState = await computeChainState(ctx, routine.organizationId);
+      if (!isAgentChainReady(chainState, routine.agent)) {
+        const missing = getAgentMissingDependencies(chainState, routine.agent);
+        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+          organizationId: routine.organizationId,
+          agent: "system",
+          level: "info",
+          message: `Routine "${routine.title}" skipped — chain not ready (waiting on: ${missing.join(", ")})`,
+          action: "routine.skipped_chain_gate",
+        });
         continue;
       }
 

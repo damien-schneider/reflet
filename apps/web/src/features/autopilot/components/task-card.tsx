@@ -10,8 +10,8 @@ import {
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { useParams } from "next/navigation";
-import { useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -30,14 +30,14 @@ import {
   getStatusEntry,
   InlineStatusPopover,
 } from "@/features/autopilot/components/tasks/inline-status-popover";
-import { TaskDetailSheet } from "@/features/autopilot/components/tasks/task-detail-sheet";
 import { WorkItemIdentifier } from "@/features/autopilot/components/tasks/work-item-identifier";
 import { cn } from "@/lib/utils";
 
 export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
-  const [detailOpen, setDetailOpen] = useState(false);
   const params = useParams();
-  const orgSlug = (params?.orgSlug as string | undefined) ?? "";
+  const { push } = useRouter();
+  const orgSlug = typeof params?.orgSlug === "string" ? params.orgSlug : "";
+  const taskHref = orgSlug ? `/dashboard/${orgSlug}/tasks/${task._id}` : "#";
 
   const updateWorkItem = useMutation(
     api.autopilot.mutations.work.updateWorkItem
@@ -78,7 +78,9 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
 
   const handleViewDetails = (event: React.MouseEvent) => {
     event.stopPropagation();
-    setDetailOpen(true);
+    if (orgSlug) {
+      push(taskHref);
+    }
   };
 
   const handleOpenPr = (event: React.MouseEvent) => {
@@ -88,154 +90,130 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
     }
   };
 
-  const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.metaKey || event.ctrlKey) {
-      event.preventDefault();
-      if (orgSlug) {
-        window.open(`/dashboard/${orgSlug}/tasks/${task._id}`, "_blank");
-      }
-      return;
-    }
-    setDetailOpen(true);
-  };
-
   const labelIds = (labelLinks ?? []).map((label) => label._id);
+  const hasAssignee =
+    task.assignedAgent !== undefined || task.assigneeUserId !== undefined;
 
   return (
-    <>
-      {/* biome-ignore lint/a11y/useSemanticElements: card container with nested popovers and buttons cannot be a <button> */}
-      <div
-        className="group flex items-start gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50"
-        onClick={handleCardClick}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            setDetailOpen(true);
-          }
-        }}
-        role="button"
-        tabIndex={0}
-      >
-        <StatusIcon
-          className={cn("mt-0.5 size-5 shrink-0", statusEntry.color)}
+    <div className="group relative grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-2 py-1.5">
+      <Link
+        aria-label={`Open task ${task.identifier ?? task.title}`}
+        className="absolute inset-0 z-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        href={taskHref}
+        prefetch
+      />
+      <div className="relative z-10 flex min-w-0 items-center gap-2">
+        <InlineStatusPopover
+          showLabel={false}
+          status={task.status}
+          workItemId={task._id}
         />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <WorkItemIdentifier identifier={task.identifier} />
-            <h3 className="font-medium">{task.title}</h3>
-          </div>
-          {task.description ? (
-            <p className="mt-1 line-clamp-2 text-muted-foreground text-sm">
-              {task.description}
-            </p>
-          ) : null}
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-            <InlineStatusPopover status={task.status} workItemId={task._id} />
-            <InlinePriorityPopover
-              priority={task.priority}
-              workItemId={task._id}
-            />
+        <WorkItemIdentifier
+          className="hidden shrink-0 sm:inline-flex"
+          identifier={task.identifier}
+        />
+        <h3 className="truncate font-medium text-sm leading-5">{task.title}</h3>
+      </div>
+
+      <div className="relative z-10 flex min-w-0 shrink-0 items-center justify-end gap-1.5 text-xs">
+        <div className="hidden items-center gap-1.5 md:flex">
+          <InlinePriorityPopover
+            priority={task.priority}
+            showLabel={false}
+            workItemId={task._id}
+          />
+          {hasAssignee ? (
             <InlineAssigneePopover
               assignedAgent={task.assignedAgent}
               assigneeUserId={task.assigneeUserId}
               organizationId={task.organizationId}
               workItemId={task._id}
             />
+          ) : null}
+          {labelIds.length > 0 ? (
             <InlineLabelsPopover
               labelIds={labelIds}
               organizationId={task.organizationId}
               workItemId={task._id}
             />
-            {task.prUrl ? <Badge variant="outline">PR</Badge> : null}
-            <span className="text-muted-foreground" suppressHydrationWarning>
-              {formatDistanceToNow(task.createdAt, { addSuffix: true })}
-            </span>
-          </div>
+          ) : null}
+          {task.prUrl ? <Badge variant="outline">PR</Badge> : null}
+          <span
+            className="min-w-16 text-right text-muted-foreground"
+            suppressHydrationWarning
+          >
+            {formatDistanceToNow(task.createdAt, { addSuffix: true })}
+          </span>
         </div>
 
-        {/* Inline actions */}
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper traps bubbling clicks from nested buttons */}
-        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: wrapper traps bubbling clicks from nested buttons */}
-        <div
-          className="flex shrink-0 items-center gap-1"
-          onClick={(event) => event.stopPropagation()}
-          onKeyDown={(event) => event.stopPropagation()}
-        >
-          {canRetry && (
-            <Button
-              aria-label="Retry task"
-              className="size-7"
-              onClick={handleRetry}
-              size="icon-sm"
-              title="Retry task"
-              variant="ghost"
-            >
-              <IconRefresh className="size-4" />
-            </Button>
-          )}
-          {canCancel && (
-            <Button
-              aria-label="Cancel task"
-              className="size-7 text-destructive hover:text-destructive"
-              onClick={handleCancel}
-              size="icon-sm"
-              title="Cancel task"
-              variant="ghost"
-            >
-              <IconX className="size-4" />
-            </Button>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  aria-label="Open task actions"
-                  className="size-7"
-                  size="icon-sm"
-                  variant="ghost"
-                />
-              }
-            >
-              <IconDots className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleViewDetails}>
-                View details
+        <StatusIcon
+          className={cn("size-4 shrink-0 md:hidden", statusEntry.color)}
+        />
+        {canRetry && (
+          <Button
+            aria-label="Retry task"
+            className="size-7 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+            onClick={handleRetry}
+            size="icon-sm"
+            title="Retry task"
+            variant="ghost"
+          >
+            <IconRefresh className="size-4" />
+          </Button>
+        )}
+        {canCancel && (
+          <Button
+            aria-label="Cancel task"
+            className="size-7 text-destructive opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+            onClick={handleCancel}
+            size="icon-sm"
+            title="Cancel task"
+            variant="ghost"
+          >
+            <IconX className="size-4" />
+          </Button>
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                aria-label="Open task actions"
+                className="size-7 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
+                size="icon-sm"
+                variant="ghost"
+              />
+            }
+          >
+            <IconDots className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleViewDetails}>
+              View details
+            </DropdownMenuItem>
+            {task.prUrl && (
+              <DropdownMenuItem onClick={handleOpenPr}>
+                <IconExternalLink className="size-4" />
+                Open PR
               </DropdownMenuItem>
-              {task.prUrl && (
-                <DropdownMenuItem onClick={handleOpenPr}>
-                  <IconExternalLink className="size-4" />
-                  Open PR
+            )}
+            {canRetry && (
+              <DropdownMenuItem onClick={handleRetry}>
+                <IconRefresh className="size-4" />
+                Retry
+              </DropdownMenuItem>
+            )}
+            {canCancel && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleCancel} variant="destructive">
+                  <IconX className="size-4" />
+                  Cancel
                 </DropdownMenuItem>
-              )}
-              {canRetry && (
-                <DropdownMenuItem onClick={handleRetry}>
-                  <IconRefresh className="size-4" />
-                  Retry
-                </DropdownMenuItem>
-              )}
-              {canCancel && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleCancel}
-                    variant="destructive"
-                  >
-                    <IconX className="size-4" />
-                    Cancel
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-
-      <TaskDetailSheet
-        onOpenChange={setDetailOpen}
-        open={detailOpen}
-        workItemId={task._id}
-      />
-    </>
+    </div>
   );
 }

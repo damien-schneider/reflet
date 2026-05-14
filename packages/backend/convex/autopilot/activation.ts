@@ -7,13 +7,12 @@ import { internalQuery } from "../_generated/server";
 const activationAgent = v.union(
   v.literal("pm"),
   v.literal("cto"),
-  v.literal("dev"),
   v.literal("growth"),
   v.literal("support"),
   v.literal("sales")
 );
 
-type ActivationAgent = "pm" | "cto" | "dev" | "growth" | "support" | "sales";
+type ActivationAgent = "pm" | "cto" | "growth" | "support" | "sales";
 
 const activationOverrideSchema = z.record(z.string(), z.boolean());
 
@@ -78,17 +77,17 @@ const checkSalesActivation = async (
   ctx: QueryCtx,
   organizationId: Id<"organizations">
 ): Promise<ActivationResult> => {
-  const productDef = await ctx.db
+  const identity = await ctx.db
     .query("autopilotKnowledgeDocs")
     .withIndex("by_org_docType", (q) =>
-      q.eq("organizationId", organizationId).eq("docType", "product_definition")
+      q.eq("organizationId", organizationId).eq("docType", "identity")
     )
     .unique();
 
-  if (!productDef) {
+  if (!identity) {
     return {
       active: false,
-      reason: "Need product definition before sales can start",
+      reason: "Need product identity before sales can start",
     };
   }
 

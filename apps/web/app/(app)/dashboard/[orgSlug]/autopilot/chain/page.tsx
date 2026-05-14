@@ -4,6 +4,7 @@ import { IconHierarchy3, IconList } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ActivityPanel } from "@/features/autopilot/components/activity-panel";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
 import { ChainStatus } from "@/features/autopilot/components/chain-status";
 import { ChainTechTree } from "@/features/autopilot/components/chain-tech-tree";
@@ -52,6 +53,17 @@ export default function AutopilotChainPage() {
       ) : (
         <ChainStatus organizationId={organizationId} />
       )}
+
+      <section className="space-y-3 pt-2">
+        <div>
+          <h2 className="font-semibold text-lg">Activity log</h2>
+          <p className="text-muted-foreground text-xs">
+            Every agent action, filterable and searchable. Click a row to see
+            full details.
+          </p>
+        </div>
+        <ActivityPanel organizationId={organizationId} />
+      </section>
     </div>
   );
 }

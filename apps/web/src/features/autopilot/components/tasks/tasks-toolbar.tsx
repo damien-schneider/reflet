@@ -45,6 +45,12 @@ const SORT_LABELS: Record<TaskSortKey, string> = {
   due: "Due date",
 };
 
+function isTaskSortKey(value: unknown): value is TaskSortKey {
+  return (
+    typeof value === "string" && TASK_SORT_KEYS.some((key) => key === value)
+  );
+}
+
 export interface TasksToolbarProps {
   filters: TaskFilters;
   isAdmin: boolean;
@@ -64,47 +70,7 @@ export function TasksToolbar({
 }: TasksToolbarProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="relative max-w-xs flex-1">
-        <IconSearch className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          aria-label="Search tasks"
-          className="h-8 pl-8"
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Search tasks…"
-          value={searchValue}
-        />
-      </div>
-
-      <SavedViewsMenu
-        applyFilters={setFilters}
-        filters={filters}
-        isAdmin={isAdmin}
-        organizationId={organizationId}
-      />
-
-      <GroupBySelect
-        onChange={(groupBy) => setFilters({ groupBy })}
-        value={filters.groupBy}
-      />
-
-      <Select
-        onValueChange={(value) => setFilters({ sortKey: value as TaskSortKey })}
-        value={filters.sortKey}
-      >
-        <SelectTrigger className="h-8 w-36 gap-1.5">
-          <IconSortDescending className="size-3.5 text-muted-foreground" />
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {TASK_SORT_KEYS.map((key) => (
-            <SelectItem key={key} value={key}>
-              {SORT_LABELS[key]}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <div className="ml-auto flex gap-1 rounded-lg bg-muted/50 p-1">
+      <div className="flex gap-1 rounded-md bg-muted/50 p-0.5">
         {VIEW_TABS.map((tab) => (
           <Button
             aria-pressed={filters.viewMode === tab.id}
@@ -124,6 +90,50 @@ export function TasksToolbar({
           </Button>
         ))}
       </div>
+
+      <div className="relative min-w-52 flex-1 md:max-w-sm">
+        <IconSearch className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          aria-label="Search tasks"
+          className="h-8 rounded-md border-transparent bg-muted/45 pl-8 shadow-none hover:border-border focus-visible:bg-background"
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="Search tasks…"
+          value={searchValue}
+        />
+      </div>
+
+      <SavedViewsMenu
+        applyFilters={setFilters}
+        filters={filters}
+        isAdmin={isAdmin}
+        organizationId={organizationId}
+      />
+
+      <GroupBySelect
+        onChange={(groupBy) => setFilters({ groupBy })}
+        value={filters.groupBy}
+      />
+
+      <Select
+        onValueChange={(value) => {
+          if (isTaskSortKey(value)) {
+            setFilters({ sortKey: value });
+          }
+        }}
+        value={filters.sortKey}
+      >
+        <SelectTrigger className="h-8 w-36 gap-1.5 rounded-full bg-muted/40">
+          <IconSortDescending className="size-3.5 text-muted-foreground" />
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {TASK_SORT_KEYS.map((key) => (
+            <SelectItem key={key} value={key}>
+              {SORT_LABELS[key]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

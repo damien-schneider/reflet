@@ -30,7 +30,7 @@ import {
 } from "../validator_prompts";
 
 const MAX_POSTS_PER_PASS = 5;
-const CONTEXT_DOC_TYPES = ["app_description", "target_definition"] as const;
+const CONTEXT_DOC_TYPES = ["target_definition"] as const;
 
 const communityPostValidationTarget = v.object({
   _id: v.id("autopilotCommunityPosts"),
@@ -75,6 +75,21 @@ const getContextDocs = async (
   organizationId: Id<"organizations">
 ) => {
   const docs: Array<{ content: string; title: string; type: string }> = [];
+
+  const identity = await ctx.db
+    .query("autopilotKnowledgeDocs")
+    .withIndex("by_org_docType", (q) =>
+      q.eq("organizationId", organizationId).eq("docType", "identity")
+    )
+    .unique();
+  if (identity) {
+    docs.push({
+      content: identity.contentFull.slice(0, 2000),
+      title: identity.title,
+      type: "identity",
+    });
+  }
+
   for (const docType of CONTEXT_DOC_TYPES) {
     const matches = await ctx.db
       .query("autopilotDocuments")

@@ -1,6 +1,5 @@
 import {
   IconBrain,
-  IconCode,
   IconCoin,
   IconCrown,
   IconHeadset,
@@ -18,7 +17,6 @@ export const AGENT_META = {
   },
   pm: { label: "PM", icon: IconUsers, description: "Product management" },
   cto: { label: "CTO", icon: IconBrain, description: "Architecture & specs" },
-  dev: { label: "Dev", icon: IconCode, description: "Code & shipping" },
   growth: {
     label: "Growth",
     icon: IconRocket,
@@ -38,7 +36,6 @@ export const GRID_AGENT_IDS: readonly GridAgentId[] = [
   "orchestrator",
   "pm",
   "cto",
-  "dev",
   "growth",
   "support",
   "sales",

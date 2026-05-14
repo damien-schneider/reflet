@@ -4,12 +4,10 @@
 
 import { v } from "convex/values";
 import { internalQuery } from "../../../_generated/server";
-import { isProductionCodingAdapter } from "../../schema/validators";
 
 const AGENT_CONFIG_FIELDS = [
   { name: "pm", field: "pmEnabled" },
   { name: "cto", field: "ctoEnabled" },
-  { name: "dev", field: "devEnabled" },
   { name: "growth", field: "growthEnabled" },
   { name: "support", field: "supportEnabled" },
   { name: "sales", field: "salesEnabled" },
@@ -151,10 +149,7 @@ export const getDetailedCEOContext = internalQuery({
     const agentStates: Record<string, boolean> = {};
     if (config) {
       for (const { name, field } of AGENT_CONFIG_FIELDS) {
-        agentStates[name] =
-          name === "dev" && !isProductionCodingAdapter(config.adapter)
-            ? false
-            : config[field] !== false;
+        agentStates[name] = config[field] !== false;
       }
     }
 

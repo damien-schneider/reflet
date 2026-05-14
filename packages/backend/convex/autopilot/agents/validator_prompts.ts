@@ -24,7 +24,7 @@ export const USE_CASE_RUBRIC = `You are a validator scoring a candidate use case
 
 Your input is:
 - The use case (title, description, persona links, trigger scenario, expected outcome)
-- The upstream context: app_description, market_analysis, target_definition, the linked personas
+- The upstream context: identity, market_analysis, target_definition, the linked personas
 
 ${RUBRIC_DIMENSIONS}
 
@@ -39,7 +39,7 @@ export const COMMUNITY_POST_RUBRIC = `You are a validator scoring a community po
 Your input is:
 - The post (author, content, source URL, platform)
 - The matched personas and use cases
-- The upstream context: app_description, target_definition
+- The upstream context: identity, target_definition
 
 ${RUBRIC_DIMENSIONS}
 
@@ -54,7 +54,7 @@ export const DRAFT_RUBRIC = `You are a validator scoring a draft (reply, blog po
 
 Your input is:
 - The draft (platform, content, target URL or audience)
-- The upstream context: app_description, brand voice, the source community post if applicable
+- The upstream context: identity, brand voice, the source community post if applicable
 
 ${RUBRIC_DIMENSIONS}
 

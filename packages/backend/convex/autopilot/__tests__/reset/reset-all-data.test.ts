@@ -20,7 +20,7 @@ describe("autopilot reset all data", () => {
     );
 
     expect(scope.map((group) => group.title)).toEqual([
-      "Execution and review history",
+      "Work and review history",
       "Generated artifacts",
       "Market and customer intelligence",
       "Agent conversations and memory",
@@ -30,7 +30,6 @@ describe("autopilot reset all data", () => {
     expect(scope.flatMap((group) => group.items)).toEqual(
       expect.arrayContaining([
         "Work items",
-        "Runs",
         "Activity logs",
         "Knowledge versions",
         "Agent messages",
@@ -39,7 +38,7 @@ describe("autopilot reset all data", () => {
     );
   });
 
-  test("clears org-owned runs and agent messages even when parent links drift", async () => {
+  test("clears org-owned agent messages even when parent links drift", async () => {
     const t = createTestContext();
     const organizationId = await createOrg(t);
     const otherOrganizationId = await createOrg(t);
@@ -47,7 +46,7 @@ describe("autopilot reset all data", () => {
     await createAutopilotConfig(t, otherOrganizationId);
     const authed = await createMemberSession(t, organizationId);
 
-    const otherTaskId = await createParentTask(t, {
+    await createParentTask(t, {
       organizationId: otherOrganizationId,
       title: "Other org task",
       description: "A valid task in another organization.",
@@ -56,7 +55,7 @@ describe("autopilot reset all data", () => {
     const otherThreadId = await t.run((ctx) =>
       ctx.db.insert("autopilotAgentThreads", {
         organizationId: otherOrganizationId,
-        agent: "dev",
+        agent: "cto",
         threadId: "other-thread",
         createdAt: Date.now(),
       })
@@ -64,15 +63,6 @@ describe("autopilot reset all data", () => {
 
     await t.run(async (ctx) => {
       const now = Date.now();
-      await ctx.db.insert("autopilotRuns", {
-        organizationId,
-        workItemId: otherTaskId,
-        adapter: "builtin",
-        status: "coding",
-        tokensUsed: 10,
-        estimatedCostUsd: 0.05,
-        startedAt: now,
-      });
       await ctx.db.insert("autopilotAgentMessages", {
         organizationId,
         threadId: otherThreadId,
@@ -93,15 +83,8 @@ describe("autopilot reset all data", () => {
           q.eq("organizationId", organizationId)
         )
         .collect(),
-      runs: await ctx.db
-        .query("autopilotRuns")
-        .withIndex("by_org_status", (q) =>
-          q.eq("organizationId", organizationId)
-        )
-        .collect(),
     }));
 
     expect(remaining.messages).toHaveLength(0);
-    expect(remaining.runs).toHaveLength(0);
   });
 });

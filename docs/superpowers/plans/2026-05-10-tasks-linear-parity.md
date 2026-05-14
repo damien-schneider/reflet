@@ -158,7 +158,7 @@
 - [x] **3.8 TaskCard wiring** — replaced static badges with the four inline popovers, identifier shown next to title, label links queried via `listWorkItemLabels`. Detail dialog still wired here (Phase 4 will migrate).
 - [x] **3.9 Unit tests** — `work-item-identifier.test.tsx` (4 cases: render, fallback, copy, copy failure) and `inline-status-popover.test.tsx` (6 cases: render, full option list incl. triage, mutation, no-op on same status, click does not bubble, error toast).
 - [x] **3.10 `bun run check-types` clean.**
-- [ ] **3.11 Commit:** `feat(tasks): inline editing, identifiers, triage status`.
+- [x] **3.11 Commit:** `feat(tasks): inline editing, identifiers, triage status`.
 
 **Acceptance:** Click status icon → popover updates without dialog. Identifier visible. Triage filterable.
 
@@ -189,7 +189,7 @@
 - [x] **4.6 Breadcrumb** — header renders parent chain via `useParentChain` (statically unrolled `getWorkItem` queries up to depth 5 since hooks can't recurse). Each ancestor renders as a `Link` to `/dashboard/<slug>/tasks/<id>` with `IconChevronRight` separators. Hidden when no parent.
 - [x] **4.7 Unit test** — `task-detail-content.test.tsx` (5 cases: title+identifier render, skeleton on `undefined`, "Task not found" on `null`, subtasks list, acceptance criteria). All green.
 - [x] **4.8 `bun run check-types` clean.** — `bunx tsc --noEmit` in `apps/web` passes. Touched files also pass `bun x ultracite check`.
-- [ ] **4.9 Commit:** `feat(tasks): unified detail UI with peek/full modes`.
+- [x] **4.9 Commit:** `feat(tasks): unified detail UI with peek/full modes`.
 
 **Acceptance:** Single source of detail UI. Deep links work. Peek opens fast.
 
@@ -278,7 +278,7 @@
 - [x] **7.6 Labels E2E:** `tasks-labels.e2e.ts`: 1 spec covering admin creates label → assigns inline → filter chip → URL has `labelIds=`.
 - [x] **7.7 Bulk E2E:** `tasks-bulk.e2e.ts`: 2 specs covering shift-click range → bulk priority → all 3 rows updated, plus Esc clears selection.
 - [x] **7.8 Run `bun run test:e2e`** — 12 tests across 6 suites. `skipUnlessTasksE2E` removed; suites run unconditionally now that `getEffectiveTier` honors the `AUTOPILOT_E2E_BYPASS=1` env flag (see deviation below). `bun run check-types` and `bun x ultracite check` clean on touched files.
-- [ ] **7.9 Commit:** `test(tasks): comprehensive E2E coverage for Linear parity`.
+- [x] **7.9 Commit:** `test(tasks): comprehensive E2E coverage for Linear parity`.
 
 **Acceptance:** All E2E suites pass on CI without flakes.
 
@@ -306,10 +306,10 @@ Tests under `packages/backend/convex/billing/__tests__/effective_tier.test.ts` p
 
 ### Tasks
 
-- [ ] **8.1 `bun run check-types` clean.**
-- [ ] **8.2 `bun x ultracite check` clean.**
-- [ ] **8.3 `bun run test:unit` clean.**
-- [ ] **8.4 `bun run test:e2e` clean.**
+- [x] **8.1 `bun run check-types` clean.**
+- [x] **8.2 `bun x ultracite check` clean.**
+- [x] **8.3 `bun run test:unit` clean.**
+- [x] **8.4 `bun run test:e2e` clean.**
 - [ ] **8.5 Manual smoke** — load `/tasks`, create, peek, filter, search, palette, label, bulk. No console errors.
 - [ ] **8.6 Update `docs/AUTOPILOT_ARCHITECTURE.md`** — add Linear parity section.
 - [ ] **8.7 Final commit + open PR.**

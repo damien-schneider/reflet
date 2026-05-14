@@ -7,6 +7,11 @@ import { query } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
 import { requireOrgMembership } from "./auth";
 
+// Legacy entry point kept for backward compatibility with existing UI calls.
+// Now backed by the `identity` knowledge doc (the canonical "what is this
+// product" surface) after the chain split. New code should call
+// `listKnowledgeDocs` and pick the doc by `docType` to access any of the four
+// typed docs (identity, brand_voice, feature_catalog, scope).
 export const getProductDefinition = query({
   args: { organizationId: v.id("organizations") },
   returns: v.union(
@@ -25,9 +30,7 @@ export const getProductDefinition = query({
     const doc = await ctx.db
       .query("autopilotKnowledgeDocs")
       .withIndex("by_org_docType", (q) =>
-        q
-          .eq("organizationId", args.organizationId)
-          .eq("docType", "product_definition")
+        q.eq("organizationId", args.organizationId).eq("docType", "identity")
       )
       .unique();
 

@@ -15,30 +15,8 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { internalAction, internalQuery } from "../_generated/server";
 
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_AGENTS_PER_CYCLE = 3;
 const NO_OUTPUT_RETRY_COOLDOWN_MS = 30 * 60 * 1000;
-
-/**
- * Check if a "Dev task paused" message was logged in the last 24h.
- * Used to deduplicate the noisy "no credentials" log.
- */
-export const hasRecentDevPauseLog = internalQuery({
-  args: { organizationId: v.id("organizations") },
-  returns: v.boolean(),
-  handler: async (ctx, args) => {
-    const cutoff = Date.now() - ONE_DAY_MS;
-    const recentLogs = await ctx.db
-      .query("autopilotActivityLog")
-      .withIndex("by_org_created", (q) =>
-        q.eq("organizationId", args.organizationId).gt("createdAt", cutoff)
-      )
-      .filter((q) => q.eq(q.field("agent"), "dev"))
-      .collect();
-
-    return recentLogs.some((log) => log.message.includes("Dev task paused"));
-  },
-});
 
 /**
  * Check if an agent was recently woken (has an "action" log within the cooldown window).
@@ -131,6 +109,127 @@ function isChainProducerAgent(
   return agent === "cto" || agent === "growth" || agent === "pm";
 }
 
+type ChainProducer =
+  | typeof internal.autopilot.agents.chain_producers.produceCodebaseUnderstanding
+  | typeof internal.autopilot.agents.chain_producers.produceIdentity
+  | typeof internal.autopilot.agents.chain_producers.produceBrandVoice
+  | typeof internal.autopilot.agents.chain_producers.produceFeatureCatalog
+  | typeof internal.autopilot.agents.chain_producers.produceScope
+  | typeof internal.autopilot.agents.chain_producers.produceMarketAnalysis
+  | typeof internal.autopilot.agents.chain_producers.produceTargetDefinition
+  | typeof internal.autopilot.agents.chain_producers.producePersonas
+  | typeof internal.autopilot.agents.chain_producers.produceUseCases;
+
+interface ChainProducerCandidate {
+  condition: boolean;
+  producer: ChainProducer;
+}
+
+const buildCtoChainCandidates = (
+  chainState: Record<string, string>
+): ChainProducerCandidate[] => {
+  const codebaseReady = chainState.codebase_understanding === "published";
+  return [
+    {
+      producer:
+        internal.autopilot.agents.chain_producers.produceCodebaseUnderstanding,
+      condition: chainState.codebase_understanding === "missing",
+    },
+    {
+      producer: internal.autopilot.agents.chain_producers.produceIdentity,
+      condition: codebaseReady && chainState.identity === "missing",
+    },
+    {
+      producer: internal.autopilot.agents.chain_producers.produceBrandVoice,
+      condition: codebaseReady && chainState.brand_voice === "missing",
+    },
+    {
+      producer: internal.autopilot.agents.chain_producers.produceFeatureCatalog,
+      condition: codebaseReady && chainState.feature_catalog === "missing",
+    },
+    {
+      producer: internal.autopilot.agents.chain_producers.produceScope,
+      condition: codebaseReady && chainState.scope === "missing",
+    },
+  ];
+};
+
+const buildPmChainCandidates = (
+  chainState: Record<string, string>
+): ChainProducerCandidate[] => [
+  {
+    producer: internal.autopilot.agents.chain_producers.produceTargetDefinition,
+    condition:
+      chainState.market_analysis === "published" &&
+      chainState.target_definition === "missing",
+  },
+  {
+    producer: internal.autopilot.agents.chain_producers.producePersonas,
+    condition:
+      chainState.target_definition === "published" &&
+      chainState.personas === "missing",
+  },
+  {
+    producer: internal.autopilot.agents.chain_producers.produceUseCases,
+    condition:
+      chainState.personas === "published" && chainState.use_cases === "missing",
+  },
+];
+
+interface GrowthDispatchTarget {
+  scheduledAction:
+    | typeof internal.autopilot.agents.chain_producers.produceMarketAnalysis
+    | typeof internal.autopilot.agents.community_discovery.runCommunityDiscovery
+    | typeof internal.autopilot.agents.growth.drafts.producer.runCommunityDraftGeneration;
+  target: string;
+}
+
+const isKnowledgeChainPublished = (
+  chainState: Record<string, string>
+): boolean =>
+  chainState.identity === "published" &&
+  chainState.brand_voice === "published" &&
+  chainState.feature_catalog === "published" &&
+  chainState.scope === "published";
+
+const pickGrowthDispatch = (
+  chainState: Record<string, string>
+): GrowthDispatchTarget | null => {
+  if (
+    isKnowledgeChainPublished(chainState) &&
+    chainState.market_analysis === "missing"
+  ) {
+    return {
+      target: "market_analysis",
+      scheduledAction:
+        internal.autopilot.agents.chain_producers.produceMarketAnalysis,
+    };
+  }
+  if (
+    chainState.personas === "published" &&
+    chainState.use_cases === "published" &&
+    chainState.community_posts === "missing"
+  ) {
+    return {
+      target: "community_posts",
+      scheduledAction:
+        internal.autopilot.agents.community_discovery.runCommunityDiscovery,
+    };
+  }
+  if (
+    chainState.community_posts === "published" &&
+    chainState.drafts === "missing"
+  ) {
+    return {
+      target: "drafts",
+      scheduledAction:
+        internal.autopilot.agents.growth.drafts.producer
+          .runCommunityDraftGeneration,
+    };
+  }
+  return null;
+};
+
 /**
  * Dispatch the chain producer for an agent's next actionable node.
  * Returns true if a producer was dispatched; false if no chain work for this agent.
@@ -148,110 +247,32 @@ const dispatchChainProducer = async (
     return false;
   }
 
-  const chainState = await ctx.runQuery(
+  const chainState = (await ctx.runQuery(
     internal.autopilot.chain.getChainState,
     { organizationId: orgId }
-  );
+  )) as Record<string, string>;
 
-  type Producer =
-    | typeof internal.autopilot.agents.chain_producers.produceCodebaseUnderstanding
-    | typeof internal.autopilot.agents.chain_producers.produceAppDescription
-    | typeof internal.autopilot.agents.chain_producers.produceMarketAnalysis
-    | typeof internal.autopilot.agents.chain_producers.produceTargetDefinition
-    | typeof internal.autopilot.agents.chain_producers.producePersonas
-    | typeof internal.autopilot.agents.chain_producers.produceUseCases;
+  if (agent === "growth") {
+    const dispatch = pickGrowthDispatch(chainState);
+    if (!dispatch) {
+      return false;
+    }
+    await logChainProducerWake(ctx, {
+      agent,
+      organizationId: orgId,
+      target: dispatch.target,
+    });
+    await ctx.scheduler.runAfter(0, dispatch.scheduledAction, {
+      organizationId: orgId,
+    });
+    return true;
+  }
 
-  const candidates: Array<{ producer: Producer; condition: boolean }> = [];
-
+  let candidates: ChainProducerCandidate[] = [];
   if (agent === "cto") {
-    candidates.push(
-      {
-        producer:
-          internal.autopilot.agents.chain_producers
-            .produceCodebaseUnderstanding,
-        condition: chainState.codebase_understanding === "missing",
-      },
-      {
-        producer:
-          internal.autopilot.agents.chain_producers.produceAppDescription,
-        condition:
-          chainState.codebase_understanding === "published" &&
-          chainState.app_description === "missing",
-      }
-    );
-  } else if (agent === "growth") {
-    if (
-      chainState.app_description === "published" &&
-      chainState.market_analysis === "missing"
-    ) {
-      await logChainProducerWake(ctx, {
-        agent,
-        organizationId: orgId,
-        target: "market_analysis",
-      });
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.chain_producers.produceMarketAnalysis,
-        { organizationId: orgId }
-      );
-      return true;
-    }
-    if (
-      chainState.personas === "published" &&
-      chainState.use_cases === "published" &&
-      chainState.community_posts === "missing"
-    ) {
-      await logChainProducerWake(ctx, {
-        agent,
-        organizationId: orgId,
-        target: "community_posts",
-      });
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.community_discovery.runCommunityDiscovery,
-        { organizationId: orgId }
-      );
-      return true;
-    }
-    if (
-      chainState.community_posts === "published" &&
-      chainState.drafts === "missing"
-    ) {
-      await logChainProducerWake(ctx, {
-        agent,
-        organizationId: orgId,
-        target: "drafts",
-      });
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.growth.drafts.producer
-          .runCommunityDraftGeneration,
-        { organizationId: orgId }
-      );
-      return true;
-    }
+    candidates = buildCtoChainCandidates(chainState);
   } else if (agent === "pm") {
-    candidates.push(
-      {
-        producer:
-          internal.autopilot.agents.chain_producers.produceTargetDefinition,
-        condition:
-          chainState.market_analysis === "published" &&
-          chainState.target_definition === "missing",
-      },
-      {
-        producer: internal.autopilot.agents.chain_producers.producePersonas,
-        condition:
-          chainState.target_definition === "published" &&
-          chainState.personas === "missing",
-      },
-      {
-        producer: internal.autopilot.agents.chain_producers.produceUseCases,
-        condition:
-          chainState.personas === "published" &&
-          chainState.use_cases === "missing",
-      }
-    );
+    candidates = buildPmChainCandidates(chainState);
   }
 
   for (const { producer, condition } of candidates) {
@@ -289,6 +310,23 @@ const wakeAgent = async (
     return;
   }
 
+  // Chain gate: free-form (non-producer) agent work only runs when the
+  // agent's chain dependencies are published. Producers handle their own
+  // gating via dispatchChainProducer above; this protects everything else.
+  const chainGate = await ctx.runQuery(
+    internal.autopilot.chain.getAgentChainGate,
+    { organizationId: orgId, agent }
+  );
+  if (!chainGate.ready) {
+    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+      organizationId: orgId,
+      agent: "system",
+      level: "info",
+      message: `Wake skipped for ${agent} — chain not ready (waiting on: ${chainGate.missing.join(", ")})`,
+    });
+    return;
+  }
+
   switch (agent) {
     case "pm":
       await ctx.scheduler.runAfter(
@@ -299,9 +337,6 @@ const wakeAgent = async (
       break;
     case "cto":
       // CTO needs a specific taskId — dispatched by dispatchPendingTasks
-      break;
-    case "dev":
-      // Dev needs a specific taskId — dispatched by dispatchPendingTasks
       break;
     case "growth":
       if (wakeContext.shippedFeaturesWithoutContent) {
@@ -380,7 +415,7 @@ interface PendingDispatchTask {
   title: string;
 }
 
-type DispatchableAgent = "cto" | "dev" | "growth" | "sales" | "support";
+type DispatchableAgent = "cto" | "growth" | "sales" | "support";
 
 const checkoutTaskForAgent = async (
   ctx: HeartbeatCtx,
@@ -405,51 +440,6 @@ const checkoutTaskForAgent = async (
     agent,
     level: "action",
     message: `Task picked up: ${task.title}`,
-  });
-  return true;
-};
-
-const dispatchDevTask = async (
-  ctx: HeartbeatCtx,
-  orgId: Id<"organizations">,
-  task: PendingDispatchTask
-): Promise<boolean> => {
-  const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
-    organizationId: orgId,
-  });
-  if (!config) {
-    return false;
-  }
-  const creds = await ctx.runQuery(
-    internal.autopilot.config.getAdapterCredentials,
-    { organizationId: orgId, adapter: config.adapter }
-  );
-  if (!creds?.isValid) {
-    const recentDevPauseLogs = await ctx.runQuery(
-      internal.autopilot.heartbeat.hasRecentDevPauseLog,
-      { organizationId: orgId }
-    );
-    if (!recentDevPauseLogs) {
-      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-        organizationId: orgId,
-        taskId: task._id,
-        agent: "dev",
-        level: "info",
-        message:
-          "Dev task paused — no coding adapter credentials. Configure in Settings to enable code execution.",
-      });
-    }
-    return false;
-  }
-
-  const checkedOut = await checkoutTaskForAgent(ctx, orgId, task, "dev");
-  if (!checkedOut) {
-    return false;
-  }
-
-  await ctx.scheduler.runAfter(0, internal.autopilot.execution.executeTask, {
-    organizationId: orgId,
-    taskId: task._id,
   });
   return true;
 };
@@ -532,9 +522,6 @@ const dispatchTaskToAgent = async (
   task: PendingDispatchTask,
   agent: string
 ): Promise<boolean> => {
-  if (agent === "dev") {
-    return await dispatchDevTask(ctx, orgId, task);
-  }
   if (agent === "cto") {
     return await dispatchCtoTask(ctx, orgId, task);
   }
@@ -615,6 +602,7 @@ const evaluateAndWakeAgents = async (
   ctx: HeartbeatCtx & { runQuery: ActionCtx["runQuery"] },
   orgId: Id<"organizations">,
   shouldWake: Record<string, boolean>,
+  wakeBlockers: Record<string, string>,
   enabledSet: Set<string>,
   pipelineFull: boolean,
   wakeContext: WakeContext
@@ -628,7 +616,7 @@ const evaluateAndWakeAgents = async (
       continue;
     }
     if (!wake) {
-      skipped.push(`${agent} (no work)`);
+      skipped.push(`${agent} (${wakeBlockers[agent] ?? "no work"})`);
       continue;
     }
     if (agent === "pm" && pipelineFull) {
@@ -695,10 +683,20 @@ export const runHeartbeat = internalAction({
         continue;
       }
 
-      const { shouldWake, signals } = await ctx.runQuery(
+      const { shouldWake, wakeBlockers, signals } = await ctx.runQuery(
         internal.autopilot.heartbeat_conditions.checkWakeConditions,
         { organizationId: orgId }
       );
+
+      // Autonomous recovery: if CTO is stuck waiting for a repo analysis,
+      // kick one off in the background so the chain can self-unblock.
+      if (wakeBlockers.cto === "waiting for repo analysis") {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.autopilot.repo_analysis.bootRepoAnalysisIfStuck,
+          { organizationId: orgId }
+        );
+      }
 
       const enabledAgents: string[] = await ctx.runQuery(
         internal.autopilot.config.getEnabledAgents,
@@ -720,6 +718,7 @@ export const runHeartbeat = internalAction({
         ctx,
         orgId,
         shouldWake,
+        wakeBlockers,
         enabledSet,
         pipelineFull,
         signals

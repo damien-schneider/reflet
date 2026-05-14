@@ -1,10 +1,7 @@
 "use client";
 
-import { IconArrowLeft } from "@tabler/icons-react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import { Muted } from "@/components/ui/typography";
 import { TaskDetailContent } from "@/features/autopilot/components/tasks/task-detail-content";
 import { toOptionalId } from "@/lib/convex-helpers";
@@ -14,29 +11,19 @@ export default function TaskDetailPageClient({ taskId }: { taskId: string }) {
   const orgSlug = (params?.orgSlug as string | undefined) ?? "";
   const workItemId = toOptionalId("autopilotWorkItems", taskId);
 
-  return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <Link
-        className="inline-flex items-center gap-1.5 text-muted-foreground text-sm transition-colors hover:text-foreground"
-        href={`/dashboard/${orgSlug}/tasks`}
-      >
-        <IconArrowLeft className="size-4" />
-        Back to tasks
-      </Link>
+  if (!workItemId) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+        <Muted>Task not found</Muted>
+        <a
+          className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-2.5 font-medium text-sm transition-colors hover:bg-muted"
+          href={`/dashboard/${orgSlug}/tasks`}
+        >
+          Back to tasks
+        </a>
+      </div>
+    );
+  }
 
-      {workItemId ? (
-        <TaskDetailContent workItemId={workItemId} />
-      ) : (
-        <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-          <Muted>Task not found</Muted>
-          <Link href={`/dashboard/${orgSlug}/tasks`}>
-            <Button size="sm" variant="outline">
-              <IconArrowLeft className="size-4" />
-              Back to tasks
-            </Button>
-          </Link>
-        </div>
-      )}
-    </div>
-  );
+  return <TaskDetailContent workItemId={workItemId} />;
 }

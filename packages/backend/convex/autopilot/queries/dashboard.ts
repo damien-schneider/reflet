@@ -13,12 +13,10 @@ import {
   assignedAgent,
   autonomyLevel,
   autonomyMode,
-  codingAdapterType,
 } from "../schema/validators";
 import { requireOrgMembership } from "./auth";
 
 const dashboardStatsValidator = v.object({
-  adapter: codingAdapterType,
   autonomyLevel,
   autonomyMode,
   costUsedTodayUsd: v.number(),
@@ -55,15 +53,9 @@ const chartTimelinePointValidator = v.object({
   successes: v.number(),
 });
 
-const costTimelinePointValidator = v.object({
-  cost: v.number(),
-  date: v.string(),
-});
-
 const chartDataValidator = v.object({
   activityTimeline: v.array(chartTimelinePointValidator),
   agentCounts: v.record(v.string(), v.number()),
-  costTimeline: v.array(costTimelinePointValidator),
   statusCounts: v.record(v.string(), v.number()),
   typeCounts: v.record(v.string(), v.number()),
 });
@@ -153,7 +145,6 @@ export const getDashboardStats = query({
       enabled: Boolean(
         config?.enabled && (config.autonomyMode ?? "supervised") !== "stopped"
       ),
-      adapter: config?.adapter ?? "builtin",
       autonomyLevel: config?.autonomyLevel ?? "review_required",
       autonomyMode: config?.autonomyMode ?? "supervised",
       tasksUsedToday: config?.tasksUsedToday ?? 0,
@@ -175,8 +166,7 @@ export const getDashboardStats = query({
 });
 
 /**
- * Chart data — activity over the last 7 days, task breakdown by type/status,
- * and cost over time.
+ * Chart data — activity over the last 7 days and task breakdown by type/status.
  */
 export const getChartData = query({
   args: { organizationId: v.id("organizations") },
@@ -245,33 +235,8 @@ export const getChartData = query({
       agentCounts[agent] = (agentCounts[agent] ?? 0) + 1;
     }
 
-    // Runs cost over last 7 days
-    const recentRuns = await ctx.db
-      .query("autopilotRuns")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    const costByDay: Record<string, number> = {};
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now - i * 24 * 60 * 60 * 1000);
-      costByDay[d.toISOString().slice(0, 10)] = 0;
-    }
-    for (const run of recentRuns) {
-      const key = new Date(run.startedAt).toISOString().slice(0, 10);
-      if (costByDay[key] !== undefined) {
-        costByDay[key] += run.estimatedCostUsd;
-      }
-    }
-    const costTimeline = Object.entries(costByDay).map(([date, cost]) => ({
-      date,
-      cost: Math.round(cost * 100) / 100,
-    }));
-
     return {
       activityTimeline,
-      costTimeline,
       statusCounts,
       typeCounts,
       agentCounts,
@@ -279,56 +244,18 @@ export const getChartData = query({
   },
 });
 
+/**
+ * Agent readiness — currently always returns an empty map since coding
+ * adapter credentials were removed. Kept as a stable hook for future
+ * provider integrations (e.g. GitHub issue delegation).
+ */
 export const getAgentReadiness = query({
   args: { organizationId: v.id("organizations") },
   returns: agentReadinessValidator,
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgMembership(ctx, args.organizationId, user._id);
-
-    const config = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    if (!config) {
-      return {};
-    }
-
-    const readiness: Record<
-      string,
-      { ready: boolean; reason?: string; actionUrl?: string }
-    > = {};
-
-    const credentials = await ctx.db
-      .query("autopilotAdapterCredentials")
-      .withIndex("by_org_adapter", (q) =>
-        q
-          .eq("organizationId", args.organizationId)
-          .eq("adapter", config.adapter)
-      )
-      .unique();
-
-    const hasValidCreds = credentials?.isValid === true;
-    const hasCreds = credentials !== null;
-
-    if (!hasCreds) {
-      readiness.dev = {
-        ready: false,
-        reason: "No credentials configured",
-        actionUrl: "settings",
-      };
-    } else if (!hasValidCreds) {
-      readiness.dev = {
-        ready: false,
-        reason: "Credentials invalid",
-        actionUrl: "settings",
-      };
-    }
-
-    return readiness;
+    return {};
   },
 });
 
@@ -359,7 +286,7 @@ export const getAgentPerformance = query({
       .order("desc")
       .take(500);
 
-    const agents = ["pm", "cto", "dev", "growth", "support", "sales"] as const;
+    const agents = ["pm", "cto", "growth", "support", "sales"] as const;
 
     return agents.map((agent) => {
       const agentLogs = logs.filter((l) => l.agent === agent);

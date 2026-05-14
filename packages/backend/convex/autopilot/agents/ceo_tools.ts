@@ -198,7 +198,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
       title: string;
       description: string;
       priority: "critical" | "high" | "medium" | "low";
-      assignedAgent: "pm" | "cto" | "dev" | "growth" | "support" | "sales";
+      assignedAgent: "pm" | "cto" | "growth" | "support" | "sales";
     },
     string,
     CeoCtx
@@ -214,7 +214,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
         .enum(["critical", "high", "medium", "low"])
         .describe("Task priority"),
       assignedAgent: z
-        .enum(["pm", "cto", "dev", "growth", "support", "sales"])
+        .enum(["pm", "cto", "growth", "support", "sales"])
         .describe("Agent to assign this task to"),
     }),
     execute: async (ctx, input) => {
@@ -396,7 +396,7 @@ export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
     description: "Enable or disable a specific agent.",
     inputSchema: z.object({
       agent: z
-        .enum(["pm", "cto", "dev", "growth", "support", "sales"])
+        .enum(["pm", "cto", "growth", "support", "sales"])
         .describe("Agent to toggle"),
       enabled: z.boolean().describe("Enable (true) or disable (false)"),
     }),

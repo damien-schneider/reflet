@@ -38,6 +38,7 @@ export interface ActivitySummary {
   openTaskCount: number;
   pendingValidationCount: number;
   recentErrorCount: number;
+  repoAnalysisReady: boolean;
   shippedFeaturesWithoutContent: number;
   stuckReviewCount: number;
   wakeThresholdOpenTasks: number;
@@ -45,6 +46,18 @@ export interface ActivitySummary {
 
 export const isChainGated = (summary: ActivitySummary): boolean =>
   summary.openTaskCount >= summary.wakeThresholdOpenTasks;
+
+const isNodePreconditionMet = (
+  kind: ChainNodeKind,
+  summary: ActivitySummary
+): boolean => {
+  // codebase_understanding needs a usable repo analysis upstream.
+  // Without it the CTO producer cannot make progress and would loop forever.
+  if (kind === "codebase_understanding") {
+    return summary.repoAnalysisReady;
+  }
+  return true;
+};
 
 const ownerWakeForChain = (
   owner: string,
@@ -59,14 +72,19 @@ const ownerWakeForChain = (
       ownedNodes.push(kind as ChainNodeKind);
     }
   }
-  return ownedNodes.some((kind) =>
-    isNodeReadyToProduce(summary.chainState, kind)
+  return ownedNodes.some(
+    (kind) =>
+      isNodeReadyToProduce(summary.chainState, kind) &&
+      isNodePreconditionMet(kind, summary)
   );
 };
 
 const NODE_OWNERS: Record<ChainNodeKind, string> = {
   codebase_understanding: "cto",
-  app_description: "cto",
+  identity: "cto",
+  brand_voice: "cto",
+  feature_catalog: "cto",
+  scope: "cto",
   market_analysis: "growth",
   target_definition: "pm",
   personas: "pm",
@@ -112,7 +130,27 @@ export const shouldWakeCEO = (summary: ActivitySummary): boolean => {
 export const shouldWakeSupport = (summary: ActivitySummary): boolean =>
   summary.newSupportConversationCount > 0;
 
-export const shouldWakeDev = (_summary: ActivitySummary): boolean => false;
+/**
+ * Returns a precise reason why an agent is not waking — used by the
+ * heartbeat log so blocked-on-preconditions reads differently from idle.
+ * Null means "fall back to default (no work)".
+ */
+export const wakeBlockerReason = (
+  agent: string,
+  summary: ActivitySummary
+): string | null => {
+  if (isChainGated(summary)) {
+    return `chain gated: ${summary.openTaskCount} open tasks ≥ ${summary.wakeThresholdOpenTasks}`;
+  }
+  if (
+    agent === "cto" &&
+    summary.chainState.codebase_understanding === "missing" &&
+    !summary.repoAnalysisReady
+  ) {
+    return "waiting for repo analysis";
+  }
+  return null;
+};
 
 // ============================================
 // DATA — collect summary
@@ -249,6 +287,27 @@ const fetchRecentErrorCount = async (
   ).length;
 };
 
+const fetchRepoAnalysisReady = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">
+): Promise<boolean> => {
+  // Legacy table — present means onboarding ran, even though it's never updated.
+  const legacy = await ctx.db
+    .query("autopilotRepoAnalysis")
+    .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+    .first();
+  if (legacy) {
+    return true;
+  }
+  // Integration table — populated by the Recompute / Run Repo Analysis flow.
+  const integration = await ctx.db
+    .query("repoAnalysis")
+    .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+    .order("desc")
+    .first();
+  return integration?.status === "completed";
+};
+
 const fetchShippedWithoutContentCount = async (
   ctx: { db: QueryCtx["db"] },
   orgId: Id<"organizations">,
@@ -275,19 +334,29 @@ const fetchShippedWithoutContentCount = async (
   return count;
 };
 
+const AGENT_KEYS = [
+  "pm",
+  "cto",
+  "growth",
+  "sales",
+  "ceo",
+  "support",
+  "validator",
+] as const;
+
 export const checkWakeConditions = internalQuery({
   args: { organizationId: v.id("organizations") },
   returns: v.object({
     shouldWake: v.object({
       pm: v.boolean(),
       cto: v.boolean(),
-      dev: v.boolean(),
       growth: v.boolean(),
       sales: v.boolean(),
       ceo: v.boolean(),
       support: v.boolean(),
       validator: v.boolean(),
     }),
+    wakeBlockers: v.record(v.string(), v.string()),
     signals: v.object({
       shippedFeaturesWithoutContent: v.boolean(),
       chainGated: v.boolean(),
@@ -315,6 +384,7 @@ export const checkWakeConditions = internalQuery({
       stuckReviewCount,
       recentErrorCount,
       shippedFeaturesWithoutContent,
+      repoAnalysisReady,
     ] = await Promise.all([
       computeChainState(ctx, args.organizationId),
       fetchOpenTaskCount(ctx, args.organizationId),
@@ -323,6 +393,7 @@ export const checkWakeConditions = internalQuery({
       fetchStuckReviewCount(ctx, args.organizationId, now),
       fetchRecentErrorCount(ctx, args.organizationId, now),
       fetchShippedWithoutContentCount(ctx, args.organizationId, now),
+      fetchRepoAnalysisReady(ctx, args.organizationId),
     ]);
 
     const summary: ActivitySummary = {
@@ -334,20 +405,34 @@ export const checkWakeConditions = internalQuery({
       stuckReviewCount,
       recentErrorCount,
       shippedFeaturesWithoutContent,
+      repoAnalysisReady,
       now,
     };
 
+    const shouldWake = {
+      pm: shouldWakePM(summary),
+      cto: shouldWakeCTO(summary),
+      growth: shouldWakeGrowth(summary),
+      sales: shouldWakeSales(summary),
+      ceo: shouldWakeCEO(summary),
+      support: shouldWakeSupport(summary),
+      validator: shouldWakeValidator(summary),
+    };
+
+    const wakeBlockers: Record<string, string> = {};
+    for (const agent of AGENT_KEYS) {
+      if (shouldWake[agent]) {
+        continue;
+      }
+      const reason = wakeBlockerReason(agent, summary);
+      if (reason) {
+        wakeBlockers[agent] = reason;
+      }
+    }
+
     return {
-      shouldWake: {
-        pm: shouldWakePM(summary),
-        cto: shouldWakeCTO(summary),
-        dev: shouldWakeDev(summary),
-        growth: shouldWakeGrowth(summary),
-        sales: shouldWakeSales(summary),
-        ceo: shouldWakeCEO(summary),
-        support: shouldWakeSupport(summary),
-        validator: shouldWakeValidator(summary),
-      },
+      shouldWake,
+      wakeBlockers,
       signals: {
         shippedFeaturesWithoutContent: shippedFeaturesWithoutContent > 0,
         chainGated: isChainGated(summary),

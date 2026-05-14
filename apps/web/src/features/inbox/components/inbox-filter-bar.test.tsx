@@ -43,11 +43,6 @@ vi.mock("@/components/ui/input", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  H1: ({ children }: { children: React.ReactNode }) => <h1>{children}</h1>,
-  Muted: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
-}));
-
 vi.mock("@phosphor-icons/react", () => ({
   MagnifyingGlass: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="search-icon" />

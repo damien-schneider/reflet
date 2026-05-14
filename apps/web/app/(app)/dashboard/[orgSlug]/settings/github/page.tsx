@@ -5,7 +5,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { use } from "react";
 
-import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
+import { H2, H3, Muted } from "@/components/ui/typography";
 import { GitHubConnectionSection } from "@/features/github/components/github-connection-card";
 import { IssuesSyncSection } from "@/features/github/components/issues-sync-card";
 import { LabelMappingsSection } from "@/features/github/components/label-mappings-card";
@@ -90,13 +90,6 @@ export default function GitHubSettingsPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <H1>GitHub Integration</H1>
-        <Text variant="bodySmall">
-          Connect GitHub to sync releases, issues, and automate your changelog
-        </Text>
-      </div>
-
       <div className="space-y-6">
         <GitHubConnectionSection
           accountAvatarUrl={queries.connectionStatus?.accountAvatarUrl}

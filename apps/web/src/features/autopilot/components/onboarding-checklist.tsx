@@ -25,15 +25,11 @@ export function OnboardingChecklist({
   const config = useQuery(api.autopilot.queries.config.getConfig, {
     organizationId,
   });
-  const readiness = useQuery(
-    api.autopilot.queries.dashboard.getAgentReadiness,
-    { organizationId }
-  );
   const stats = useQuery(api.autopilot.queries.dashboard.getDashboardStats, {
     organizationId,
   });
 
-  if (config === undefined || readiness === undefined || stats === undefined) {
+  if (config === undefined || stats === undefined) {
     return null;
   }
 
@@ -49,18 +45,11 @@ export function OnboardingChecklist({
       href: `${baseUrl}/settings`,
     },
     {
-      key: "credentials",
-      label: "Configure coding adapter credentials",
-      done: readiness.dev === undefined || readiness.dev.ready,
-      href: `${baseUrl}/settings`,
-    },
-    {
       key: "agents",
       label: "Enable at least one agent",
       done:
         config.pmEnabled !== false ||
         config.ctoEnabled !== false ||
-        config.devEnabled !== false ||
         config.growthEnabled !== false,
     },
     {

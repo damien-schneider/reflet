@@ -23,7 +23,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   activityChartConfig,
-  costChartConfig,
   formatShortDate,
   STATUS_COLORS,
   STATUS_LABELS,
@@ -160,62 +159,6 @@ function ActivityTimelineChart({
               type="monotone"
             />
           </AreaChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CostTimelineChart({
-  data,
-}: {
-  data: Array<{ date: string; cost: number }>;
-}) {
-  const totalCost = data.reduce((sum, d) => sum + d.cost, 0);
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">Cost (7 days)</CardTitle>
-        <CardDescription>Total: ${totalCost.toFixed(2)}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer
-          className="min-h-[200px] w-full"
-          config={costChartConfig}
-        >
-          <BarChart accessibilityLayer data={data}>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              axisLine={false}
-              dataKey="date"
-              tickFormatter={formatShortDate}
-              tickLine={false}
-              tickMargin={8}
-            />
-            <YAxis
-              axisLine={false}
-              tickFormatter={(v) => `$${v}`}
-              tickLine={false}
-              width={40}
-            />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  formatter={(value) => [
-                    `$${Number(value).toFixed(2)}`,
-                    "Cost",
-                  ]}
-                  labelFormatter={(value) => formatShortDate(String(value))}
-                />
-              }
-            />
-            <Bar
-              dataKey="cost"
-              fill="var(--color-cost)"
-              radius={[4, 4, 0, 0]}
-            />
-          </BarChart>
         </ChartContainer>
       </CardContent>
     </Card>
@@ -377,12 +320,13 @@ export function DashboardCharts({
     );
   }
 
-  const hasActivity = chartData.activityTimeline.some((d) => d.actions > 0);
-  const hasCost = chartData.costTimeline.some((d) => d.cost > 0);
+  const hasActivity = chartData.activityTimeline.some(
+    (d: { actions: number }) => d.actions > 0
+  );
   const hasStatus = Object.values(chartData.statusCounts).some((c) => c > 0);
   const hasTypes = Object.values(chartData.typeCounts).some((c) => c > 0);
 
-  if (!(hasActivity || hasCost || hasStatus || hasTypes)) {
+  if (!(hasActivity || hasStatus || hasTypes)) {
     return null;
   }
 
@@ -398,7 +342,6 @@ export function DashboardCharts({
         {hasActivity && (
           <ActivityTimelineChart data={chartData.activityTimeline} />
         )}
-        {hasCost && <CostTimelineChart data={chartData.costTimeline} />}
         {hasStatus && <WorkItemsByStatusChart data={chartData.statusCounts} />}
         {hasTypes && <WorkItemsByTypeChart data={chartData.typeCounts} />}
       </div>

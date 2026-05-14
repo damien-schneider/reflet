@@ -2,31 +2,31 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
-import { IconChevronRight, IconExternalLink, IconX } from "@tabler/icons-react";
+import {
+  IconChevronRight,
+  IconExternalLink,
+  IconPlus,
+} from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
-import { H2, Muted } from "@/components/ui/typography";
-import { InlineAssigneePopover } from "@/features/autopilot/components/tasks/inline-assignee-popover";
-import { InlineLabelsPopover } from "@/features/autopilot/components/tasks/inline-labels-popover";
-import { InlinePriorityPopover } from "@/features/autopilot/components/tasks/inline-priority-popover";
-import {
-  getStatusEntry,
-  InlineStatusPopover,
-} from "@/features/autopilot/components/tasks/inline-status-popover";
+import { Muted } from "@/components/ui/typography";
+import { ActivitySection } from "@/features/autopilot/components/tasks/detail/activity-section";
+import { ParentBreadcrumb } from "@/features/autopilot/components/tasks/detail/parent-breadcrumb";
+import { PropertiesSidebar } from "@/features/autopilot/components/tasks/detail/properties-sidebar";
+import { TaskDetailSkeleton } from "@/features/autopilot/components/tasks/detail/skeleton";
+import { SubtasksSection } from "@/features/autopilot/components/tasks/detail/subtasks-section";
+import { getStatusEntry } from "@/features/autopilot/components/tasks/inline-status-popover";
+import { QuickCreateDialog } from "@/features/autopilot/components/tasks/quick-create-dialog";
 import { WorkItemIdentifier } from "@/features/autopilot/components/tasks/work-item-identifier";
-import { TaskRunsList } from "@/features/autopilot/components/views/task-runs-list";
 import { getAutopilotErrorMessage } from "@/features/autopilot/lib/error-messages";
 import { cn } from "@/lib/utils";
-
-const PARENT_CHAIN_MAX_DEPTH = 5;
 
 export function TaskDetailContent({
   workItemId,
@@ -52,7 +52,8 @@ export function TaskDetailContent({
 
 function TaskDetailBody({ task }: { task: Doc<"autopilotWorkItems"> }) {
   const params = useParams();
-  const orgSlug = (params?.orgSlug as string | undefined) ?? "";
+  const orgSlug = typeof params?.orgSlug === "string" ? params.orgSlug : "";
+  const [subIssueOpen, setSubIssueOpen] = useState(false);
 
   const subtasks = useQuery(api.autopilot.queries.work.getChildren, {
     parentId: task._id,
@@ -60,6 +61,10 @@ function TaskDetailBody({ task }: { task: Doc<"autopilotWorkItems"> }) {
   const labelLinks = useQuery(api.autopilot.queries.labels.listWorkItemLabels, {
     workItemId: task._id,
   });
+  const activity = useQuery(
+    api.autopilot.queries.activity.listWorkItemActivity,
+    { workItemId: task._id }
+  );
   const updateWorkItem = useMutation(
     api.autopilot.mutations.work.updateWorkItem
   );
@@ -86,237 +91,117 @@ function TaskDetailBody({ task }: { task: Doc<"autopilotWorkItems"> }) {
   };
 
   return (
-    <div className="space-y-6">
-      <ParentBreadcrumb orgSlug={orgSlug} parentId={task.parentId ?? null} />
-
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <WorkItemIdentifier identifier={task.identifier} />
-          <span
-            className="text-muted-foreground text-xs"
-            suppressHydrationWarning
+    <div className="flex min-h-[calc(100svh-3.5rem)] flex-col rounded-xl border bg-card/70 shadow-sm">
+      <header className="flex items-center justify-between gap-3 border-b px-4 py-3 text-sm">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Link
+            className="text-muted-foreground transition-colors hover:text-foreground"
+            href={`/dashboard/${orgSlug}/tasks`}
           >
-            Created {formatDistanceToNow(task.createdAt, { addSuffix: true })}
+            Tasks
+          </Link>
+          <IconChevronRight
+            aria-hidden
+            className="size-3.5 text-muted-foreground"
+          />
+          {task.identifier ? (
+            <WorkItemIdentifier identifier={task.identifier} />
+          ) : null}
+          <span className="line-clamp-1 max-w-[40ch] text-foreground">
+            {task.title}
           </span>
-          <span className="text-muted-foreground text-xs">·</span>
-          <span
-            className="text-muted-foreground text-xs"
-            suppressHydrationWarning
+        </div>
+        {task.prUrl ? (
+          <Button
+            className="size-7"
+            render={
+              <a href={task.prUrl} rel="noopener noreferrer" target="_blank">
+                <span className="sr-only">Open pull request</span>
+              </a>
+            }
+            size="icon-sm"
+            variant="ghost"
           >
-            Updated {formatDistanceToNow(task.updatedAt, { addSuffix: true })}
-          </span>
-        </div>
-
-        <div className="flex items-start gap-3">
-          <StatusIcon
-            className={cn("mt-1 size-6 shrink-0", statusEntry.color)}
-          />
-          <h1 className="font-semibold text-2xl leading-tight">{task.title}</h1>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <InlineStatusPopover status={task.status} workItemId={task._id} />
-          <InlinePriorityPopover
-            priority={task.priority}
-            workItemId={task._id}
-          />
-          <InlineAssigneePopover
-            assignedAgent={task.assignedAgent}
-            assigneeUserId={task.assigneeUserId}
-            organizationId={task.organizationId}
-            workItemId={task._id}
-          />
-          <InlineLabelsPopover
-            labelIds={labelIds}
-            organizationId={task.organizationId}
-            workItemId={task._id}
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {task.prUrl ? (
-            <a
-              className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 font-medium text-sm transition-colors hover:bg-muted"
-              href={task.prUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <IconExternalLink className="size-4" />
-              Pull Request {task.prNumber ? `#${task.prNumber}` : ""}
-            </a>
-          ) : null}
-          {canCancel ? (
-            <Button onClick={handleCancel} size="sm" variant="destructive">
-              <IconX className="size-4" />
-              Cancel task
-            </Button>
-          ) : null}
-        </div>
+            <IconExternalLink className="size-3.5" />
+          </Button>
+        ) : null}
       </header>
 
-      <Separator />
-
-      <section>
-        <H2 className="mb-2" variant="card">
-          Description
-        </H2>
-        {task.description ? (
-          <TiptapMarkdownEditor
-            editable={false}
-            minimal
-            value={task.description}
+      <div className="grid flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="mx-auto w-full max-w-4xl space-y-8 px-6 py-8 lg:px-10 lg:py-12">
+          <ParentBreadcrumb
+            orgSlug={orgSlug}
+            parentId={task.parentId ?? null}
           />
-        ) : (
-          <Muted>No description.</Muted>
-        )}
-      </section>
 
-      {task.acceptanceCriteria && task.acceptanceCriteria.length > 0 ? (
-        <section>
-          <H2 className="mb-2" variant="card">
-            Acceptance criteria
-          </H2>
-          <ul className="list-inside list-disc space-y-1 text-sm">
-            {task.acceptanceCriteria.map((criterion) => (
-              <li key={criterion}>{criterion}</li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+          <div className="flex items-start gap-4">
+            <StatusIcon
+              className={cn("mt-2 size-7 shrink-0", statusEntry.color)}
+            />
+            <h1 className="font-semibold text-3xl leading-tight tracking-tight">
+              {task.title}
+            </h1>
+          </div>
 
-      {task.completionPercent !== undefined && task.completionPercent > 0 ? (
-        <section>
-          <Muted className="text-sm">Progress: {task.completionPercent}%</Muted>
-        </section>
-      ) : null}
+          <section className="space-y-3">
+            {task.description ? (
+              <TiptapMarkdownEditor
+                editable={false}
+                minimal
+                value={task.description}
+              />
+            ) : (
+              <Muted>No description.</Muted>
+            )}
+          </section>
 
-      <SubtasksSection orgSlug={orgSlug} subtasks={subtasks} />
-
-      <section>
-        <H2 className="mb-3" variant="card">
-          Runs
-        </H2>
-        <TaskRunsList taskId={task._id} />
-      </section>
-    </div>
-  );
-}
-
-function SubtasksSection({
-  orgSlug,
-  subtasks,
-}: {
-  orgSlug: string;
-  subtasks: Doc<"autopilotWorkItems">[] | undefined;
-}) {
-  if (subtasks === undefined || subtasks.length === 0) {
-    return null;
-  }
-  return (
-    <section>
-      <H2 className="mb-3" variant="card">
-        Subtasks ({subtasks.length})
-      </H2>
-      <div className="space-y-2">
-        {subtasks.map((sub) => {
-          const subStatus = getStatusEntry(sub.status);
-          const SubIcon = subStatus.icon;
-          return (
-            <Link
-              className="flex items-center gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50"
-              href={`/dashboard/${orgSlug}/tasks/${sub._id}`}
-              key={sub._id}
-            >
-              <SubIcon className={cn("size-4 shrink-0", subStatus.color)} />
-              <WorkItemIdentifier identifier={sub.identifier} />
-              <span className="flex-1 truncate">{sub.title}</span>
-              <span className="shrink-0 text-muted-foreground text-xs">
-                {subStatus.label}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function ParentBreadcrumb({
-  orgSlug,
-  parentId,
-}: {
-  orgSlug: string;
-  parentId: Id<"autopilotWorkItems"> | null;
-}) {
-  const chain = useParentChain(parentId);
-  if (chain.length === 0) {
-    return null;
-  }
-  return (
-    <nav
-      aria-label="Parent chain"
-      className="flex flex-wrap items-center gap-1 text-muted-foreground text-xs"
-    >
-      {chain.map((ancestor, index) => (
-        <span className="inline-flex items-center gap-1" key={ancestor._id}>
-          <Link
-            className="rounded-sm px-1 py-0.5 font-medium transition-colors hover:bg-muted hover:text-foreground"
-            href={`/dashboard/${orgSlug}/tasks/${ancestor._id}`}
+          <Button
+            className="gap-2 text-muted-foreground hover:text-foreground"
+            onClick={() => setSubIssueOpen(true)}
+            size="sm"
+            variant="ghost"
           >
-            {ancestor.identifier ? (
-              <span className="font-mono">{ancestor.identifier}</span>
-            ) : null}
-            <span className={cn(ancestor.identifier && "ml-1.5")}>
-              {ancestor.title}
-            </span>
-          </Link>
-          {index < chain.length - 1 ? (
-            <IconChevronRight aria-hidden className="size-3" />
+            <IconPlus className="size-4" />
+            Add sub-issues
+          </Button>
+
+          {task.acceptanceCriteria && task.acceptanceCriteria.length > 0 ? (
+            <section className="space-y-3">
+              <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                Acceptance criteria
+              </h2>
+              <ul className="space-y-1.5 text-sm">
+                {task.acceptanceCriteria.map((criterion) => (
+                  <li className="flex gap-2" key={criterion}>
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted-foreground/60" />
+                    <span>{criterion}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ) : null}
-        </span>
-      ))}
-    </nav>
-  );
-}
 
-function useParentChain(
-  parentId: Id<"autopilotWorkItems"> | null
-): Doc<"autopilotWorkItems">[] {
-  // Recursion is unsupported in hooks — we statically unroll up to the max depth.
-  const a0 = useQuery(
-    api.autopilot.queries.work.getWorkItem,
-    parentId ? { workItemId: parentId } : "skip"
-  );
-  const a1 = useQuery(
-    api.autopilot.queries.work.getWorkItem,
-    a0?.parentId ? { workItemId: a0.parentId } : "skip"
-  );
-  const a2 = useQuery(
-    api.autopilot.queries.work.getWorkItem,
-    a1?.parentId ? { workItemId: a1.parentId } : "skip"
-  );
-  const a3 = useQuery(
-    api.autopilot.queries.work.getWorkItem,
-    a2?.parentId ? { workItemId: a2.parentId } : "skip"
-  );
-  const a4 = useQuery(
-    api.autopilot.queries.work.getWorkItem,
-    a3?.parentId ? { workItemId: a3.parentId } : "skip"
-  );
+          <SubtasksSection orgSlug={orgSlug} subtasks={subtasks} />
 
-  const ancestors = [a4, a3, a2, a1, a0]
-    .filter((entry): entry is Doc<"autopilotWorkItems"> => Boolean(entry))
-    .slice(-PARENT_CHAIN_MAX_DEPTH);
-  return ancestors;
-}
+          <Separator />
 
-function TaskDetailSkeleton() {
-  return (
-    <div className="space-y-6">
-      <Skeleton className="h-4 w-48" data-testid="task-detail-skeleton" />
-      <Skeleton className="h-8 w-3/4" data-testid="task-detail-skeleton" />
-      <Skeleton className="h-24 w-full" data-testid="task-detail-skeleton" />
-      <Skeleton className="h-40 w-full" data-testid="task-detail-skeleton" />
+          <ActivitySection activity={activity} task={task} />
+        </div>
+
+        <PropertiesSidebar
+          canCancel={canCancel}
+          labelIds={labelIds}
+          onCancel={handleCancel}
+          orgSlug={orgSlug}
+          task={task}
+        />
+      </div>
+      <QuickCreateDialog
+        onOpenChange={setSubIssueOpen}
+        open={subIssueOpen}
+        organizationId={task.organizationId}
+        parentId={task._id}
+      />
     </div>
   );
 }

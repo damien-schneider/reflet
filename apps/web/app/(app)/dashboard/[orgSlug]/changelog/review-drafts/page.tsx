@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { H1, Muted, Text } from "@/components/ui/typography";
+import { Muted, Text } from "@/components/ui/typography";
 import { RetroactiveDraftItem } from "@/features/changelog/components/retroactive-draft-item";
 
 function DraftsList({
@@ -188,13 +188,6 @@ export default function ReviewDraftsPage({
         <ArrowLeft className="size-4" />
         Back to Changelog
       </Link>
-
-      <div className="mb-8">
-        <H1>Review Generated Changelogs</H1>
-        <Text variant="bodySmall">
-          {drafts.length} draft{drafts.length === 1 ? "" : "s"} ready for review
-        </Text>
-      </div>
 
       {drafts.length > 0 && (
         <div className="sticky top-0 z-10 mb-6 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3">

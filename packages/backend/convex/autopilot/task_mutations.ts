@@ -1,8 +1,9 @@
 /**
- * Work item mutations — create, update, and manage autopilot work items and runs.
+ * Work item mutations — create, update, and manage autopilot work items.
  *
  * Work items form a DAG: PM creates initiatives → CTO breaks them into
- * stories/specs → Dev agent executes tasks → Architect reviews.
+ * stories/specs. Code execution is delegated externally (e.g. via GitHub
+ * issues), not run from this backend.
  */
 
 import { v } from "convex/values";
@@ -14,9 +15,7 @@ import {
 import {
   activityLogLevel,
   assignedAgent,
-  codingAdapterType,
   priority,
-  runStatus,
   workItemStatus,
   workItemType,
 } from "./schema/validators";
@@ -140,8 +139,6 @@ export const updateTaskStatus = internalMutation({
     prUrl: v.optional(v.string()),
     prNumber: v.optional(v.number()),
     branch: v.optional(v.string()),
-    tokensUsed: v.optional(v.number()),
-    estimatedCostUsd: v.optional(v.number()),
     needsReview: v.optional(v.boolean()),
     reviewType: v.optional(v.string()),
   },
@@ -311,109 +308,6 @@ export const updateTaskPriority = internalMutation({
 });
 
 /**
- * Create a coding run record.
- */
-export const createRun = internalMutation({
-  args: {
-    organizationId: v.id("organizations"),
-    taskId: v.id("autopilotWorkItems"),
-    adapter: codingAdapterType,
-  },
-  returns: v.id("autopilotRuns"),
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("autopilotRuns", {
-      organizationId: args.organizationId,
-      workItemId: args.taskId,
-      adapter: args.adapter,
-      status: "queued",
-      tokensUsed: 0,
-      estimatedCostUsd: 0,
-      startedAt: Date.now(),
-    });
-  },
-});
-
-/**
- * Update a coding run's status and details.
- */
-export const updateRun = internalMutation({
-  args: {
-    runId: v.id("autopilotRuns"),
-    status: v.optional(runStatus),
-    externalRef: v.optional(v.string()),
-    branch: v.optional(v.string()),
-    prUrl: v.optional(v.string()),
-    prNumber: v.optional(v.number()),
-    ciStatus: v.optional(
-      v.union(
-        v.literal("pending"),
-        v.literal("running"),
-        v.literal("passed"),
-        v.literal("failed")
-      )
-    ),
-    ciFailureLog: v.optional(v.string()),
-    tokensUsed: v.optional(v.number()),
-    estimatedCostUsd: v.optional(v.number()),
-    errorMessage: v.optional(v.string()),
-    completedAt: v.optional(v.number()),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const updates: {
-      branch?: string;
-      ciFailureLog?: string;
-      ciStatus?: "failed" | "passed" | "pending" | "running";
-      completedAt?: number;
-      errorMessage?: string;
-      estimatedCostUsd?: number;
-      externalRef?: string;
-      prNumber?: number;
-      prUrl?: string;
-      status?: typeof args.status;
-      tokensUsed?: number;
-    } = {};
-
-    if (args.status !== undefined) {
-      updates.status = args.status;
-    }
-    if (args.externalRef !== undefined) {
-      updates.externalRef = args.externalRef;
-    }
-    if (args.branch !== undefined) {
-      updates.branch = args.branch;
-    }
-    if (args.prUrl !== undefined) {
-      updates.prUrl = args.prUrl;
-    }
-    if (args.prNumber !== undefined) {
-      updates.prNumber = args.prNumber;
-    }
-    if (args.ciStatus !== undefined) {
-      updates.ciStatus = args.ciStatus;
-    }
-    if (args.ciFailureLog !== undefined) {
-      updates.ciFailureLog = args.ciFailureLog;
-    }
-    if (args.tokensUsed !== undefined) {
-      updates.tokensUsed = args.tokensUsed;
-    }
-    if (args.estimatedCostUsd !== undefined) {
-      updates.estimatedCostUsd = args.estimatedCostUsd;
-    }
-    if (args.errorMessage !== undefined) {
-      updates.errorMessage = args.errorMessage;
-    }
-    if (args.completedAt !== undefined) {
-      updates.completedAt = args.completedAt;
-    }
-
-    await ctx.db.patch(args.runId, updates);
-    return null;
-  },
-});
-
-/**
  * Log an activity entry.
  */
 export const logActivity = internalMutation({
@@ -421,7 +315,6 @@ export const logActivity = internalMutation({
     organizationId: v.id("organizations"),
     taskId: v.optional(v.id("autopilotWorkItems")),
     workItemId: v.optional(v.id("autopilotWorkItems")),
-    runId: v.optional(v.id("autopilotRuns")),
     agent: assignedAgent,
     targetAgent: v.optional(assignedAgent),
     level: activityLogLevel,
@@ -433,7 +326,6 @@ export const logActivity = internalMutation({
         v.literal("work_item"),
         v.literal("document"),
         v.literal("knowledge_doc"),
-        v.literal("run"),
         v.literal("lead"),
         v.literal("competitor")
       )
@@ -445,7 +337,6 @@ export const logActivity = internalMutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: args.organizationId,
       workItemId: args.workItemId ?? args.taskId,
-      runId: args.runId,
       agent: args.agent,
       targetAgent: args.targetAgent,
       level: args.level,

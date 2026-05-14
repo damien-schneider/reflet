@@ -1,5 +1,5 @@
 /**
- * Config mutations — init, update, autonomy mode, credentials.
+ * Config mutations — init, update, autonomy mode.
  */
 
 import { v } from "convex/values";
@@ -9,12 +9,7 @@ import type { Doc } from "../../_generated/dataModel";
 import { mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
 import { DEFAULT_DAILY_COST_CAP_USD } from "../config_task_caps";
-import {
-  autonomyLevel,
-  autonomyMode,
-  codingAdapterType,
-  isProductionCodingAdapter,
-} from "../schema/validators";
+import { autonomyLevel, autonomyMode } from "../schema/validators";
 import { requireAutopilotAccess, requireOrgAdmin } from "./auth";
 
 export const initConfig = mutation({
@@ -48,17 +43,13 @@ export const initConfig = mutation({
       growthEnabled: false,
       supportEnabled: false,
       salesEnabled: false,
-      adapter: "builtin",
       autonomyLevel: "review_required",
       autonomyMode: "stopped",
-      autoMergeThreshold: 80,
       fullAutoDelay: 15 * 60 * 1000,
-      devEnabled: false,
       maxTasksPerDay: 10,
       tasksUsedToday: 0,
       tasksResetAt: now + TWENTY_FOUR_HOURS,
       dailyCostCapUsd: DEFAULT_DAILY_COST_CAP_USD,
-      autoMergePRs: false,
       requireArchitectReview: true,
       createdAt: now,
       updatedAt: now,
@@ -69,12 +60,9 @@ export const initConfig = mutation({
 type ConfigPatch = Partial<
   Pick<
     Doc<"autopilotConfig">,
-    | "adapter"
-    | "autoMergePRs"
     | "autonomyLevel"
     | "ctoEnabled"
     | "dailyCostCapUsd"
-    | "devEnabled"
     | "emailDailyLimit"
     | "growthEnabled"
     | "intelligenceEnabled"
@@ -90,12 +78,9 @@ type ConfigPatch = Partial<
 > & { updatedAt: number };
 
 interface ConfigUpdateArgs {
-  adapter?: Doc<"autopilotConfig">["adapter"];
-  autoMergePRs?: boolean;
   autonomyLevel?: Doc<"autopilotConfig">["autonomyLevel"];
   ctoEnabled?: boolean;
   dailyCostCapUsd?: number;
-  devEnabled?: boolean;
   emailDailyLimit?: number;
   growthEnabled?: boolean;
   intelligenceEnabled?: boolean;
@@ -112,7 +97,6 @@ interface ConfigUpdateArgs {
 const perAgentDailyCapUsdSchema = z
   .object({
     cto: z.number().positive().finite().optional(),
-    dev: z.number().positive().finite().optional(),
     growth: z.number().positive().finite().optional(),
     pm: z.number().positive().finite().optional(),
     sales: z.number().positive().finite().optional(),
@@ -157,36 +141,12 @@ function validateConfigUpdate(args: {
   }
 }
 
-function applyAdapterUpdate(
-  args: ConfigUpdateArgs,
-  currentAdapter: Doc<"autopilotConfig">["adapter"],
-  updates: ConfigPatch
-): void {
-  const adapter = args.adapter ?? currentAdapter;
-
-  if (args.adapter !== undefined) {
-    updates.adapter = args.adapter;
-  }
-
-  if (args.devEnabled !== undefined) {
-    updates.devEnabled = args.devEnabled && isProductionCodingAdapter(adapter);
-    return;
-  }
-
-  if (!isProductionCodingAdapter(adapter)) {
-    updates.devEnabled = false;
-  }
-}
-
 function applyGeneralUpdates(
   args: ConfigUpdateArgs,
   updates: ConfigPatch
 ): void {
   if (args.autonomyLevel !== undefined) {
     updates.autonomyLevel = args.autonomyLevel;
-  }
-  if (args.autoMergePRs !== undefined) {
-    updates.autoMergePRs = args.autoMergePRs;
   }
   if (args.requireArchitectReview !== undefined) {
     updates.requireArchitectReview = args.requireArchitectReview;
@@ -238,15 +198,12 @@ function applyLimitUpdates(args: ConfigUpdateArgs, updates: ConfigPatch): void {
 export const updateConfig = mutation({
   args: {
     configId: v.id("autopilotConfig"),
-    adapter: v.optional(codingAdapterType),
     autonomyLevel: v.optional(autonomyLevel),
     maxTasksPerDay: v.optional(v.number()),
-    autoMergePRs: v.optional(v.boolean()),
     requireArchitectReview: v.optional(v.boolean()),
     intelligenceEnabled: v.optional(v.boolean()),
     pmEnabled: v.optional(v.boolean()),
     ctoEnabled: v.optional(v.boolean()),
-    devEnabled: v.optional(v.boolean()),
     growthEnabled: v.optional(v.boolean()),
     supportEnabled: v.optional(v.boolean()),
     salesEnabled: v.optional(v.boolean()),
@@ -269,7 +226,6 @@ export const updateConfig = mutation({
     validateConfigUpdate(args);
 
     const updates: ConfigPatch = { updatedAt: Date.now() };
-    applyAdapterUpdate(args, config.adapter, updates);
     applyGeneralUpdates(args, updates);
     applyAgentUpdates(args, updates);
     applyLimitUpdates(args, updates);
@@ -321,15 +277,6 @@ export const setAutonomyMode = mutation({
           status: "backlog",
           updatedAt: now,
         });
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.execution_lifecycle.cancelTask,
-          {
-            organizationId: args.organizationId,
-            taskId: item._id,
-            finalStatus: "backlog",
-          }
-        );
       }
 
       await ctx.db.patch(config._id, {
@@ -395,59 +342,6 @@ export const setAutonomyMode = mutation({
       organizationId: args.organizationId,
     });
     return null;
-  },
-});
-
-export const upsertCredentials = mutation({
-  args: {
-    organizationId: v.id("organizations"),
-    adapter: codingAdapterType,
-    credentials: v.string(),
-  },
-  returns: v.id("autopilotAdapterCredentials"),
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-    await requireOrgAdmin(ctx, args.organizationId, user._id);
-    await requireAutopilotAccess(ctx, args.organizationId);
-
-    const existing = await ctx.db
-      .query("autopilotAdapterCredentials")
-      .withIndex("by_org_adapter", (q) =>
-        q.eq("organizationId", args.organizationId).eq("adapter", args.adapter)
-      )
-      .unique();
-
-    const now = Date.now();
-
-    const credentialId = existing
-      ? existing._id
-      : await ctx.db.insert("autopilotAdapterCredentials", {
-          organizationId: args.organizationId,
-          adapter: args.adapter,
-          credentials: args.credentials,
-          isValid: false,
-          createdAt: now,
-          updatedAt: now,
-        });
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        credentials: args.credentials,
-        isValid: false,
-        updatedAt: now,
-      });
-    }
-
-    await ctx.scheduler.runAfter(
-      0,
-      internal.autopilot.config_mutations.validateAdapterCredentials,
-      {
-        organizationId: args.organizationId,
-        adapter: args.adapter,
-      }
-    );
-
-    return credentialId;
   },
 });
 

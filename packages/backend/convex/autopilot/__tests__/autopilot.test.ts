@@ -101,7 +101,7 @@ describe("autopilot tasks", () => {
         title: "Status test",
         description: "Test status updates",
         priority: "high",
-        assignedAgent: "dev",
+        assignedAgent: "cto",
         createdBy: "test",
       })
     );
@@ -129,7 +129,7 @@ describe("autopilot tasks", () => {
         title: "Complete test",
         description: "Test completion",
         priority: "medium",
-        assignedAgent: "dev",
+        assignedAgent: "cto",
         createdBy: "test",
       })
     );
@@ -166,7 +166,7 @@ describe("autopilot tasks", () => {
         title: "Completed task",
         description: "Should not appear",
         priority: "low",
-        assignedAgent: "dev",
+        assignedAgent: "cto",
         createdBy: "test",
       })
     );
@@ -228,6 +228,44 @@ describe("autopilot tasks", () => {
     expect(activity).toHaveLength(1);
     expect(activity[0].agent).toBe("orchestrator");
     expect(activity[0].targetAgent).toBe("pm");
+  });
+});
+
+describe("agent work streams", () => {
+  test("persists the latest streamed work snapshot for an agent", async () => {
+    const t = createTestContext();
+    const orgId = await createOrg(t);
+
+    const streamId = await t.mutation(
+      internal.autopilot.agent_threads.startWorkStream,
+      {
+        organizationId: orgId,
+        agent: "cto",
+        title: "Generating technical specification",
+      }
+    );
+
+    await t.mutation(internal.autopilot.agent_threads.updateWorkStream, {
+      streamId,
+      content: '{"riskLevel":"low"',
+      model: "openai/gpt-5.4-mini",
+    });
+
+    await t.mutation(internal.autopilot.agent_threads.finishWorkStream, {
+      streamId,
+      content: '{\n  "riskLevel": "low"\n}',
+    });
+
+    const streams = await t.run((ctx) =>
+      ctx.db.query("autopilotAgentWorkStreams").collect()
+    );
+
+    expect(streams).toHaveLength(1);
+    expect(streams[0].agent).toBe("cto");
+    expect(streams[0].content).toContain('"riskLevel": "low"');
+    expect(streams[0].model).toBe("openai/gpt-5.4-mini");
+    expect(streams[0].status).toBe("completed");
+    expect(streams[0].completedAt).toBeTypeOf("number");
   });
 });
 
@@ -299,52 +337,27 @@ describe("autopilot config", () => {
   });
 });
 
-describe("autopilot execution", () => {
-  test("pauses capped tasks outside the dispatch queue", async () => {
+describe("autopilot dispatch caps", () => {
+  test("reserveTaskExecution refuses when daily task limit reached", async () => {
     const t = createProTestContext();
     const organizationId = await createProOrg(t);
-    const configId = await createProAutopilotConfig(t, organizationId, {
+    await createProAutopilotConfig(t, organizationId, {
       maxTasksPerDay: 1,
       tasksUsedToday: 1,
     });
-    const taskId = await createParentTask(t, {
+    await createParentTask(t, {
       organizationId,
       title: "Queued after daily cap",
       description: "Do not churn in the heartbeat dispatch queue.",
       priority: "medium",
     });
-    await t.mutation(
-      internal.autopilot.config_mutations.upsertAdapterCredentials,
-      {
-        organizationId,
-        adapter: "builtin",
-        credentials: JSON.stringify({ githubToken: "ghp_test" }),
-      }
+
+    const reservation = await t.mutation(
+      internal.autopilot.config_mutations.reserveTaskExecution,
+      { organizationId }
     );
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = async () => new Response("{}", { status: 200 });
 
-    try {
-      await t.action(internal.autopilot.execution.executeTask, {
-        organizationId,
-        taskId,
-      });
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
-
-    const rows = await t.run(async (ctx) => ({
-      activity: await ctx.db.query("autopilotActivityLog").collect(),
-      config: await ctx.db.get(configId),
-      task: await ctx.db.get(taskId),
-    }));
-
-    expect(rows.config?.tasksUsedToday).toBe(1);
-    expect(rows.task?.status).toBe("backlog");
-    expect(
-      rows.activity.some((entry) =>
-        entry.details?.includes("Daily task limit reached")
-      )
-    ).toBe(true);
+    expect(reservation.allowed).toBe(false);
+    expect(reservation.reason).toMatch(/Daily task limit reached/);
   });
 });

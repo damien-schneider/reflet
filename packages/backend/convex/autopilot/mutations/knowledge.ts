@@ -27,9 +27,7 @@ export const upsertProductDefinition = mutation({
     const existing = await ctx.db
       .query("autopilotKnowledgeDocs")
       .withIndex("by_org_docType", (q) =>
-        q
-          .eq("organizationId", args.organizationId)
-          .eq("docType", "product_definition")
+        q.eq("organizationId", args.organizationId).eq("docType", "identity")
       )
       .unique();
 
@@ -54,9 +52,9 @@ export const upsertProductDefinition = mutation({
     } else {
       const docId = await ctx.db.insert("autopilotKnowledgeDocs", {
         organizationId: args.organizationId,
-        docType: "product_definition",
+        docType: "identity",
         ownerAgent: "pm",
-        title: "Product Definition",
+        title: "Product Identity",
         contentFull: args.content,
         contentSummary: summary,
         version: 1,
@@ -135,9 +133,7 @@ export const deleteProductDefinitionAndRegenerate = mutation({
     const doc = await ctx.db
       .query("autopilotKnowledgeDocs")
       .withIndex("by_org_docType", (q) =>
-        q
-          .eq("organizationId", args.organizationId)
-          .eq("docType", "product_definition")
+        q.eq("organizationId", args.organizationId).eq("docType", "identity")
       )
       .unique();
 

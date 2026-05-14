@@ -16,10 +16,6 @@ import {
   internalMutation,
   internalQuery,
 } from "../_generated/server";
-import {
-  codingAdapterType,
-  isProductionCodingAdapter,
-} from "./schema/validators";
 
 /**
  * Initialize autopilot for an org — creates config with V6 defaults.
@@ -29,7 +25,6 @@ import {
 export const initAutopilot = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    adapter: codingAdapterType,
     repoUrl: v.optional(v.string()),
   },
   returns: v.union(v.id("autopilotConfig"), v.null()),
@@ -51,15 +46,11 @@ export const initAutopilot = internalMutation({
     const configId = await ctx.db.insert("autopilotConfig", {
       organizationId: args.organizationId,
       enabled: false,
-      adapter: args.adapter,
       autonomyLevel: "review_required",
       autonomyMode: "supervised",
       maxTasksPerDay: 10,
       tasksUsedToday: 0,
       tasksResetAt: now + TWENTY_FOUR_HOURS,
-      autoMergePRs: false,
-      autoMergeThreshold: 80,
-      devEnabled: isProductionCodingAdapter(args.adapter),
       fullAutoDelay: 15 * 60 * 1000,
       requireArchitectReview: true,
       createdAt: now,

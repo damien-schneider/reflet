@@ -9,9 +9,12 @@
     "dev:setup": "convex dev --configure --until-success",
     "check-types": "convex codegen && tsc --noEmit -p convex/tsconfig.json",
     "test": "vitest run",
+    "cleanup:legacy": "bun run scripts/cleanup-legacy-autopilot.ts",
     "verify:stripe": "tsx scripts/verify-stripe-setup.ts",
     "verify:stripe:prod": "STRIPE_MODE=production tsx scripts/verify-stripe-setup.ts",
-    "predeploy": "bun run verify:stripe",
+    "verify:models": "tsx scripts/verify-openrouter-models.ts",
+    "verify:models:prod": "OPENROUTER_MODE=production tsx scripts/verify-openrouter-models.ts",
+    "predeploy": "bun run verify:stripe && bun run verify:models",
     "deploy": "convex deploy"
   },
   "dependencies": {
@@ -33,11 +36,14 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@ai-sdk/provider": "^3.0.10",
     "@edge-runtime/vm": "^5.0.0",
     "@reflet/config": "workspace:*",
     "@types/node": "^25.5.0",
     "@types/web-push": "^3.6.4",
+    "@typescript/native-preview": "^7.0.0-dev.20260510.1",
     "convex-test": "^0.0.44",
+    "nock": "^14.0.15",
     "stripe": "^21.0.0",
     "tsx": "^4.21.0",
     "typescript": "catalog:",

@@ -10,8 +10,9 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useMutation, useQuery } from "convex/react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -40,9 +41,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import type { TaskFilters } from "./use-tasks-filters";
+import {
+  TASK_GROUP_BY,
+  TASK_SORT_KEYS,
+  TASK_VIEW_MODES,
+  type TaskFilters,
+} from "./use-tasks-filters";
 
 type SavedView = Doc<"userViews">;
+
+const storedFiltersSchema = z.object({
+  status: z.array(z.string()).optional(),
+  type: z.array(z.string()).optional(),
+  priority: z.array(z.string()).optional(),
+  assigneeUserId: z.string().optional(),
+  assignedAgent: z.string().optional(),
+  labelIds: z.array(z.string()).optional(),
+  q: z.string().optional(),
+  groupBy: z.enum(TASK_GROUP_BY).optional(),
+  sortKey: z.enum(TASK_SORT_KEYS).optional(),
+  viewMode: z.enum(TASK_VIEW_MODES).optional(),
+});
 
 interface SavedViewsMenuProps {
   applyFilters: (next: Partial<TaskFilters>) => void;
@@ -52,11 +71,20 @@ interface SavedViewsMenuProps {
 }
 
 function viewMatchesFilters(view: SavedView, filters: TaskFilters): boolean {
-  try {
-    const stored = JSON.parse(view.filtersJson) as Partial<TaskFilters>;
-    return JSON.stringify(stored) === JSON.stringify(serializeFilters(filters));
-  } catch {
+  const stored = parseStoredFilters(view.filtersJson);
+  if (!stored) {
     return false;
+  }
+  return JSON.stringify(stored) === JSON.stringify(serializeFilters(filters));
+}
+
+function parseStoredFilters(filtersJson: string): Partial<TaskFilters> | null {
+  try {
+    const parsed: unknown = JSON.parse(filtersJson);
+    const result = storedFiltersSchema.safeParse(parsed);
+    return result.success ? result.data : null;
+  } catch {
+    return null;
   }
 }
 
@@ -93,18 +121,17 @@ export function SavedViewsMenu({
   const [scope, setScope] = useState<"personal" | "shared">("personal");
   const [isSaving, setIsSaving] = useState(false);
 
-  const activeView = useMemo(
-    () => (views ?? []).find((view) => viewMatchesFilters(view, filters)),
-    [views, filters]
+  const activeView = (views ?? []).find((view) =>
+    viewMatchesFilters(view, filters)
   );
 
   const handleApply = (view: SavedView) => {
-    try {
-      const stored = JSON.parse(view.filtersJson) as Partial<TaskFilters>;
-      applyFilters(stored);
-    } catch {
+    const stored = parseStoredFilters(view.filtersJson);
+    if (!stored) {
       toast.error("Could not load view");
+      return;
     }
+    applyFilters(stored);
   };
 
   const handleSave = async () => {
@@ -153,7 +180,11 @@ export function SavedViewsMenu({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button className="h-8 gap-1.5" size="sm" variant="outline" />
+            <Button
+              className="h-8 gap-1.5 rounded-full bg-muted/40"
+              size="sm"
+              variant="outline"
+            />
           }
         >
           <IconBookmark className="size-3.5" />
@@ -163,10 +194,10 @@ export function SavedViewsMenu({
         <DropdownMenuContent align="start" className="w-64">
           <DropdownMenuLabel>Saved views</DropdownMenuLabel>
           {views === undefined && (
-            <p className="px-2 py-2 text-muted-foreground text-xs">Loading…</p>
+            <p className="p-2 text-muted-foreground text-xs">Loading…</p>
           )}
           {views && views.length === 0 && (
-            <p className="px-2 py-2 text-muted-foreground text-xs">
+            <p className="p-2 text-muted-foreground text-xs">
               No saved views yet.
             </p>
           )}
@@ -226,7 +257,6 @@ export function SavedViewsMenu({
             <div className="space-y-1.5">
               <Label htmlFor="view-name">Name</Label>
               <Input
-                autoFocus
                 id="view-name"
                 onChange={(event) => setName(event.target.value)}
                 placeholder="My active tasks"
@@ -237,7 +267,11 @@ export function SavedViewsMenu({
               <div className="space-y-1.5">
                 <Label htmlFor="view-scope">Visibility</Label>
                 <Select
-                  onValueChange={(v) => setScope(v as "personal" | "shared")}
+                  onValueChange={(value) => {
+                    if (value === "personal" || value === "shared") {
+                      setScope(value);
+                    }
+                  }}
                   value={scope}
                 >
                   <SelectTrigger id="view-scope">

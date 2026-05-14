@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -37,6 +38,10 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
           listLabels: "autopilot.labels.listLabels",
           listWorkItemLabels: "autopilot.labels.listWorkItemLabels",
         },
+        activity: {
+          listActivity: "autopilot.activity.listActivity",
+          listWorkItemActivity: "autopilot.activity.listWorkItemActivity",
+        },
       },
       mutations_unused: {},
     },
@@ -63,6 +68,7 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("date-fns", () => ({
+  format: () => "May 14, 2026",
   formatDistanceToNow: () => "just now",
 }));
 
@@ -147,6 +153,12 @@ function setupQueries({
     if (key === "autopilot.labels.listLabels") {
       return [];
     }
+    if (key === "autopilot.activity.listActivity") {
+      return [];
+    }
+    if (key === "autopilot.activity.listWorkItemActivity") {
+      return [];
+    }
     if (key === "organizations.members.list") {
       return [];
     }
@@ -169,10 +181,23 @@ describe("TaskDetailContent", () => {
 
     render(<TaskDetailContent workItemId={workItemId} />);
 
-    expect(screen.getByText("Refactor login flow")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Refactor login flow" })
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Copy identifier ACME-12/ })
     ).toBeInTheDocument();
+  });
+
+  it("queries activity for the loaded work item directly", () => {
+    setupQueries({ task: makeTask() });
+
+    render(<TaskDetailContent workItemId={workItemId} />);
+
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      "autopilot.activity.listWorkItemActivity",
+      { workItemId }
+    );
   });
 
   it("renders the loading skeleton while the task query is undefined", () => {
@@ -224,5 +249,18 @@ describe("TaskDetailContent", () => {
     expect(screen.getByText("First criterion")).toBeInTheDocument();
     expect(screen.getByText("Second criterion")).toBeInTheDocument();
     expect(screen.getByText("Acceptance criteria")).toBeInTheDocument();
+  });
+
+  it("opens quick sub-issue creation from the task detail page", async () => {
+    const user = userEvent.setup();
+    setupQueries({ task: makeTask() });
+
+    render(<TaskDetailContent workItemId={workItemId} />);
+
+    await user.click(screen.getByRole("button", { name: /Add sub-issues/i }));
+
+    expect(
+      await screen.findByRole("dialog", { name: /Quick create sub-issue/i })
+    ).toBeInTheDocument();
   });
 });

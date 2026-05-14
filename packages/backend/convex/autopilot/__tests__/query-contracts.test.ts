@@ -16,7 +16,9 @@ import {
   listActivity,
   listActivityByType,
   listActivityFiltered,
+  listActivityPaginated,
   listTickerActivity,
+  listWorkItemActivity,
 } from "../queries/activity";
 import {
   getAgentPerformance,
@@ -58,7 +60,9 @@ const PUBLIC_QUERY_CONTRACTS = [
   ["listActivity", listActivity, "autopilotActivityLog"],
   ["listActivityByType", listActivityByType, "autopilotActivityLog"],
   ["listActivityFiltered", listActivityFiltered, "autopilotActivityLog"],
+  ["listActivityPaginated", listActivityPaginated, "autopilotActivityLog"],
   ["listTickerActivity", listTickerActivity, "autopilotActivityLog"],
+  ["listWorkItemActivity", listWorkItemActivity, "autopilotActivityLog"],
   ["listInboxItems", listInboxItems, "autopilotReports"],
   ["getInboxCounts", getInboxCounts, "reportCount"],
 ] as const;

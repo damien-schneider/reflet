@@ -4,7 +4,10 @@ import { type RefObject, useEffect, useLayoutEffect, useState } from "react";
 
 type ChainNodeKind =
   | "codebase_understanding"
-  | "app_description"
+  | "identity"
+  | "brand_voice"
+  | "feature_catalog"
+  | "scope"
   | "market_analysis"
   | "target_definition"
   | "personas"
@@ -22,22 +25,38 @@ interface PathInfo {
   d: string;
   endX: number;
   endY: number;
-  highlight: boolean;
   key: string;
+  variant: EdgeVariant;
 }
+
+export type EdgeVariant = "done" | "active" | "available" | "locked";
 
 interface ChainTechTreeConnectorsProps {
   containerRef: RefObject<HTMLElement | null>;
   edges: ConnectorEdge[];
-  highlightTargetKey: string;
   refMap: RefObject<Map<ChainNodeKind, HTMLElement>>;
+  variantByTarget: Record<ChainNodeKind, EdgeVariant>;
 }
+
+const STROKE_CLASS_BY_VARIANT: Record<EdgeVariant, string> = {
+  done: "stroke-emerald-500",
+  active: "stroke-emerald-500",
+  available: "stroke-primary",
+  locked: "stroke-border",
+};
+
+const WIDTH_BY_VARIANT: Record<EdgeVariant, number> = {
+  done: 1.5,
+  active: 2,
+  available: 2,
+  locked: 1,
+};
 
 const computePaths = (
   container: HTMLElement,
   refMap: Map<ChainNodeKind, HTMLElement>,
   edges: ConnectorEdge[],
-  highlightTargets: ReadonlySet<string>
+  variantByTarget: Record<ChainNodeKind, EdgeVariant>
 ): PathInfo[] => {
   const containerRect = container.getBoundingClientRect();
   const result: PathInfo[] = [];
@@ -53,31 +72,29 @@ const computePaths = (
     const fromY = fromRect.top + fromRect.height / 2 - containerRect.top;
     const toX = toRect.left - containerRect.left;
     const toY = toRect.top + toRect.height / 2 - containerRect.top;
-    const midX = (fromX + toX) / 2;
-    const d = `M ${fromX} ${fromY} H ${midX} V ${toY} H ${toX}`;
+    const dx = toX - fromX;
+    const c1X = fromX + dx * 0.55;
+    const c2X = toX - dx * 0.55;
+    const d = `M ${fromX} ${fromY} C ${c1X} ${fromY}, ${c2X} ${toY}, ${toX} ${toY}`;
     result.push({
       key: `${from}->${to}`,
       d,
       endX: toX,
       endY: toY,
-      highlight: highlightTargets.has(to),
+      variant: variantByTarget[to],
     });
   }
   return result;
 };
 
-const HIGHLIGHT_STROKE = "var(--primary)";
-const DEFAULT_STROKE = "var(--border)";
-
 export function ChainTechTreeConnectors({
   containerRef,
   refMap,
   edges,
-  highlightTargetKey,
+  variantByTarget,
 }: ChainTechTreeConnectorsProps) {
   const [paths, setPaths] = useState<PathInfo[]>([]);
 
-  // Recompute on mount, on highlight target changes, and on resize.
   useLayoutEffect(
     function syncConnectorPaths() {
       const container = containerRef.current;
@@ -88,11 +105,8 @@ export function ChainTechTreeConnectors({
       if (!refs) {
         return;
       }
-      const highlightTargets = new Set(
-        highlightTargetKey.split("|").filter(Boolean)
-      );
       const recompute = () => {
-        setPaths(computePaths(container, refs, edges, highlightTargets));
+        setPaths(computePaths(container, refs, edges, variantByTarget));
       };
       recompute();
       const observer = new ResizeObserver(recompute);
@@ -102,10 +116,9 @@ export function ChainTechTreeConnectors({
       }
       return () => observer.disconnect();
     },
-    [containerRef, refMap, edges, highlightTargetKey]
+    [containerRef, refMap, edges, variantByTarget]
   );
 
-  // Also redraw on window resize for safety (font scaling, devtools, etc.).
   useEffect(
     function syncConnectorPathsOnResize() {
       const container = containerRef.current;
@@ -116,16 +129,13 @@ export function ChainTechTreeConnectors({
       if (!refs) {
         return;
       }
-      const highlightTargets = new Set(
-        highlightTargetKey.split("|").filter(Boolean)
-      );
       const onResize = () => {
-        setPaths(computePaths(container, refs, edges, highlightTargets));
+        setPaths(computePaths(container, refs, edges, variantByTarget));
       };
       window.addEventListener("resize", onResize, { passive: true });
       return () => window.removeEventListener("resize", onResize);
     },
-    [containerRef, refMap, edges, highlightTargetKey]
+    [containerRef, refMap, edges, variantByTarget]
   );
 
   return (
@@ -135,26 +145,31 @@ export function ChainTechTreeConnectors({
       role="presentation"
     >
       <title>Chain dependency graph</title>
-      {paths.map((p) => (
-        <g key={p.key}>
-          <path
-            d={p.d}
-            fill="none"
-            stroke={p.highlight ? HIGHLIGHT_STROKE : DEFAULT_STROKE}
-            strokeDasharray="2.25 3.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={p.highlight ? 1.5 : 1}
-          />
-          <circle
-            cx={p.endX}
-            cy={p.endY}
-            fill="var(--background)"
-            r={2.5}
-            stroke={p.highlight ? HIGHLIGHT_STROKE : DEFAULT_STROKE}
-          />
-        </g>
-      ))}
+      {paths.map((p) => {
+        const strokeClass = STROKE_CLASS_BY_VARIANT[p.variant];
+        return (
+          <g
+            className={p.variant === "locked" ? "opacity-55" : undefined}
+            key={p.key}
+          >
+            <path
+              className={strokeClass}
+              d={p.d}
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={WIDTH_BY_VARIANT[p.variant]}
+            />
+            <circle
+              className={`${strokeClass} fill-background`}
+              cx={p.endX}
+              cy={p.endY}
+              r={3}
+              strokeWidth={WIDTH_BY_VARIANT[p.variant]}
+            />
+          </g>
+        );
+      })}
     </svg>
   );
 }

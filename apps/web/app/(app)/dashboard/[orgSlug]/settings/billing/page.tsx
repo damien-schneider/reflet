@@ -4,7 +4,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useAction, useQuery } from "convex/react";
 import { use, useState } from "react";
 
-import { H1, H2, Muted, Text } from "@/components/ui/typography";
+import { H2, Muted } from "@/components/ui/typography";
 import { capture } from "@/lib/analytics";
 
 import { DEFAULT_LIMITS, PLANS } from "./billing-config";
@@ -114,13 +114,6 @@ export default function BillingPage({
 
   return (
     <div>
-      <div className="mb-8">
-        <H1>Billing</H1>
-        <Text className="text-muted-foreground" variant="bodySmall">
-          Manage your organization&apos;s subscription and usage
-        </Text>
-      </div>
-
       <div className="space-y-8">
         {/* Billing Interval Toggle */}
         <BillingToggle

@@ -32,7 +32,6 @@ export const TASK_AGENTS = [
   "ceo",
   "pm",
   "cto",
-  "dev",
   "growth",
   "orchestrator",
   "sales",

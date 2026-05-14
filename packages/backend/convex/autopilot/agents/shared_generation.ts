@@ -6,7 +6,7 @@
  */
 
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateObject } from "ai";
+import { generateObject, Output, streamText } from "ai";
 import type { z } from "zod";
 
 export const openrouter = createOpenRouter({
@@ -15,6 +15,14 @@ export const openrouter = createOpenRouter({
 
 export const DEFAULT_MAX_OUTPUT_TOKENS = 4096;
 const RETRY_MAX_OUTPUT_TOKENS = 2048;
+const STREAM_UPDATE_INTERVAL_MS = 350;
+
+export interface GenerationStreamCallbacks {
+  onError(error: string): Promise<unknown>;
+  onFinish(content: string): Promise<unknown>;
+  onModelStart(model: string): Promise<unknown>;
+  onUpdate(content: string): Promise<unknown>;
+}
 
 // ============================================
 // COST TRACKING
@@ -23,10 +31,9 @@ const RETRY_MAX_OUTPUT_TOKENS = 2048;
 /** Per-model cost rates (USD per 1M tokens). Updated from OpenRouter pricing. */
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   // Free models — actually free
-  "qwen/qwen3.6-plus:free": { input: 0, output: 0 },
+  "qwen/qwen3-next-80b-a3b-instruct:free": { input: 0, output: 0 },
   "nvidia/nemotron-3-super-120b-a12b:free": { input: 0, output: 0 },
   "minimax/minimax-m2.5:free": { input: 0, output: 0 },
-  "stepfun/step-3.5-flash:free": { input: 0, output: 0 },
   "openai/gpt-oss-120b:free": { input: 0, output: 0 },
   "meta-llama/llama-3.3-70b-instruct:free": { input: 0, output: 0 },
   "z-ai/glm-4.5-air:free": { input: 0, output: 0 },
@@ -101,14 +108,78 @@ const isTokenLimitError = (message: string): boolean =>
   message.includes("credit") ||
   message.includes("limit");
 
+const stringifyGeneratedObject = (value: unknown): string =>
+  JSON.stringify(value, null, 2) ?? "";
+
+const streamStructuredObject = async <T extends z.ZodType>(
+  model: string,
+  schema: T,
+  prompt: string,
+  systemPrompt: string,
+  temperature: number,
+  maxTokens: number,
+  stream: GenerationStreamCallbacks
+): Promise<z.output<T>> => {
+  await stream.onModelStart(model);
+
+  const result = streamText({
+    model: openrouter(model),
+    output: Output.object({ schema }),
+    prompt,
+    system: `${systemPrompt}\n\nRespond in JSON format.`,
+    temperature,
+    maxOutputTokens: maxTokens,
+  });
+
+  let content = "";
+  let lastSavedContent = "";
+  let lastUpdateAt = 0;
+
+  for await (const textDelta of result.textStream) {
+    content += textDelta;
+    const now = Date.now();
+    if (
+      content !== lastSavedContent &&
+      now - lastUpdateAt >= STREAM_UPDATE_INTERVAL_MS
+    ) {
+      await stream.onUpdate(content);
+      lastSavedContent = content;
+      lastUpdateAt = now;
+    }
+  }
+
+  if (content !== lastSavedContent) {
+    await stream.onUpdate(content);
+  }
+
+  const object = await result.output;
+  const usage = await result.totalUsage;
+  trackUsage(usage, model);
+  await stream.onFinish(stringifyGeneratedObject(object));
+  return schema.parse(object);
+};
+
 const tryGenerateObject = async <T extends z.ZodType>(
   model: string,
   schema: T,
   prompt: string,
   systemPrompt: string,
   temperature: number,
-  maxTokens: number
-): Promise<z.infer<T>> => {
+  maxTokens: number,
+  stream?: GenerationStreamCallbacks
+): Promise<z.output<T>> => {
+  if (stream) {
+    return await streamStructuredObject(
+      model,
+      schema,
+      prompt,
+      systemPrompt,
+      temperature,
+      maxTokens,
+      stream
+    );
+  }
+
   const result = await generateObject({
     model: openrouter(model),
     schema,
@@ -119,7 +190,7 @@ const tryGenerateObject = async <T extends z.ZodType>(
   });
 
   trackUsage(result.usage, model);
-  return result.object as z.infer<T>;
+  return schema.parse(result.object);
 };
 
 const tryModelWithRetry = async <T extends z.ZodType>(
@@ -129,8 +200,9 @@ const tryModelWithRetry = async <T extends z.ZodType>(
   systemPrompt: string,
   temperature: number,
   tokenLimit: number,
-  errors: Array<{ model: string; error: string }>
-): Promise<z.infer<T> | undefined> => {
+  errors: Array<{ model: string; error: string }>,
+  stream?: GenerationStreamCallbacks
+): Promise<z.output<T> | undefined> => {
   try {
     return await tryGenerateObject(
       model,
@@ -138,7 +210,8 @@ const tryModelWithRetry = async <T extends z.ZodType>(
       prompt,
       systemPrompt,
       temperature,
-      tokenLimit
+      tokenLimit,
+      stream
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -155,7 +228,8 @@ const tryModelWithRetry = async <T extends z.ZodType>(
         prompt,
         systemPrompt,
         temperature,
-        RETRY_MAX_OUTPUT_TOKENS
+        RETRY_MAX_OUTPUT_TOKENS,
+        stream
       );
     } catch (retryError) {
       const retryMessage =
@@ -180,6 +254,7 @@ export const generateObjectWithFallback = async <T extends z.ZodType>({
   systemPrompt,
   temperature,
   maxOutputTokens,
+  stream,
 }: {
   models: readonly string[];
   schema: T;
@@ -187,7 +262,8 @@ export const generateObjectWithFallback = async <T extends z.ZodType>({
   systemPrompt: string;
   temperature?: number;
   maxOutputTokens?: number;
-}): Promise<z.infer<T>> => {
+  stream?: GenerationStreamCallbacks;
+}): Promise<z.output<T>> => {
   const errors: Array<{ model: string; error: string }> = [];
   const tokenLimit = maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS;
   const temp = temperature ?? 0;
@@ -200,7 +276,8 @@ export const generateObjectWithFallback = async <T extends z.ZodType>({
       systemPrompt,
       temp,
       tokenLimit,
-      errors
+      errors,
+      stream
     );
     if (result !== undefined) {
       return result;
@@ -210,6 +287,10 @@ export const generateObjectWithFallback = async <T extends z.ZodType>({
   const errorDetails = errors
     .map((e) => `  [${e.model}]: ${e.error}`)
     .join("\n");
+
+  if (stream) {
+    await stream.onError(errorDetails);
+  }
 
   throw new Error(`All ${models.length} models failed:\n${errorDetails}`);
 };

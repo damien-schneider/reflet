@@ -1,5 +1,5 @@
 /**
- * Work item queries — read-only access to autopilot work items, runs, and activity.
+ * Work item queries — read-only access to autopilot work items and activity.
  */
 
 import { v } from "convex/values";
@@ -15,9 +15,7 @@ import {
   activityEntityType,
   activityLogLevel,
   assignedAgent,
-  codingAdapterType,
   priority,
-  runStatus,
   workItemStatus,
   workItemType,
 } from "./schema/validators";
@@ -105,12 +103,17 @@ const workItemValidator = v.object({
   _id: v.id("autopilotWorkItems"),
   acceptanceCriteria: v.optional(v.array(v.string())),
   assignedAgent: v.optional(assignedAgent),
+  assigneeUserId: v.optional(v.string()),
   branch: v.optional(v.string()),
   completionPercent: v.optional(v.number()),
+  confidence: v.optional(v.number()),
   createdAt: v.number(),
   createdBy: v.optional(v.string()),
   createdByUser: v.optional(v.string()),
   description: v.string(),
+  dueDate: v.optional(v.number()),
+  estimate: v.optional(v.number()),
+  identifier: v.optional(v.string()),
   includeInChangelog: v.optional(v.boolean()),
   isPublicRoadmap: v.optional(v.boolean()),
   needsReview: v.boolean(),
@@ -121,38 +124,13 @@ const workItemValidator = v.object({
   priority,
   reviewedAt: v.optional(v.number()),
   reviewType: v.optional(v.string()),
+  startDate: v.optional(v.number()),
   status: workItemStatus,
   tags: v.optional(v.array(v.string())),
+  targetDate: v.optional(v.number()),
   title: v.string(),
   type: workItemType,
   updatedAt: v.number(),
-});
-
-const runValidator = v.object({
-  _creationTime: v.number(),
-  _id: v.id("autopilotRuns"),
-  adapter: codingAdapterType,
-  branch: v.optional(v.string()),
-  ciFailureLog: v.optional(v.string()),
-  ciStatus: v.optional(
-    v.union(
-      v.literal("pending"),
-      v.literal("running"),
-      v.literal("passed"),
-      v.literal("failed")
-    )
-  ),
-  completedAt: v.optional(v.number()),
-  errorMessage: v.optional(v.string()),
-  estimatedCostUsd: v.number(),
-  externalRef: v.optional(v.string()),
-  organizationId: v.id("organizations"),
-  prNumber: v.optional(v.number()),
-  prUrl: v.optional(v.string()),
-  startedAt: v.number(),
-  status: runStatus,
-  tokensUsed: v.number(),
-  workItemId: v.id("autopilotWorkItems"),
 });
 
 const activityLogValidator = v.object({
@@ -167,7 +145,6 @@ const activityLogValidator = v.object({
   level: activityLogLevel,
   message: v.string(),
   organizationId: v.id("organizations"),
-  runId: v.optional(v.id("autopilotRuns")),
   targetAgent: v.optional(assignedAgent),
   workItemId: v.optional(v.id("autopilotWorkItems")),
 });
@@ -292,28 +269,6 @@ export const getTasksByOrg = internalQuery({
       )
       .collect();
   },
-});
-
-/**
- * Get active runs for a work item.
- */
-export const getRunsForTask = internalQuery({
-  args: { taskId: v.id("autopilotWorkItems") },
-  returns: v.array(runValidator),
-  handler: async (ctx, args) =>
-    ctx.db
-      .query("autopilotRuns")
-      .withIndex("by_work_item", (q) => q.eq("workItemId", args.taskId))
-      .collect(),
-});
-
-/**
- * Get one coding run by ID.
- */
-export const getRun = internalQuery({
-  args: { runId: v.id("autopilotRuns") },
-  returns: v.union(runValidator, v.null()),
-  handler: async (ctx, args) => ctx.db.get(args.runId),
 });
 
 /**

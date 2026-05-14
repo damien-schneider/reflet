@@ -40,7 +40,7 @@ export const workTables = {
     reviewType: v.optional(v.string()),
     reviewedAt: v.optional(v.number()),
 
-    // Execution (for dev tasks)
+    // External code references (PR URL/number when work is delegated to GitHub)
     prUrl: v.optional(v.string()),
     prNumber: v.optional(v.number()),
     branch: v.optional(v.string()),

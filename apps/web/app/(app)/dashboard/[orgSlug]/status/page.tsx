@@ -8,7 +8,7 @@ import Link from "next/link";
 import { use, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { H1, Muted, Text } from "@/components/ui/typography";
+import { Muted } from "@/components/ui/typography";
 import { AddMonitorInput } from "@/features/status/components/add-monitor-input";
 import { IncidentComposer } from "@/features/status/components/incident-composer";
 import { IncidentCard } from "@/features/status/components/incidents/card";
@@ -139,13 +139,6 @@ export default function StatusDashboardPage({
   if (!hasMonitors && monitors !== undefined) {
     return (
       <div className="admin-container">
-        <div className="mb-8">
-          <H1>Status</H1>
-          <Text variant="bodySmall">
-            Monitor your services and show real-time health to your users
-          </Text>
-        </div>
-
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
           <Heartbeat className="mb-4 size-12 text-muted-foreground" />
           <h2 className="font-semibold text-lg">
@@ -177,13 +170,7 @@ export default function StatusDashboardPage({
 
   return (
     <div className="admin-container">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <H1>Status</H1>
-          <Text variant="bodySmall">
-            Monitor your services and show real-time health to your users
-          </Text>
-        </div>
+      <div className="mb-8 flex flex-col items-end gap-4 sm:flex-row sm:justify-end">
         <div className="flex items-center gap-2">
           <Link href={`/${orgSlug}/status`} target="_blank">
             <Button size="sm" variant="outline">

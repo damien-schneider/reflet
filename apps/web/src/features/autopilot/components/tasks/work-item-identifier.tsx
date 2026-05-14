@@ -28,7 +28,7 @@ export function WorkItemIdentifier({
     );
   }
 
-  const handleClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
+  const copyIdentifier = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     try {
       await navigator.clipboard.writeText(identifier);
@@ -46,7 +46,7 @@ export function WorkItemIdentifier({
         "px-1.5 py-0.5",
         className
       )}
-      onClick={handleClick}
+      onClick={copyIdentifier}
       type="button"
     >
       {identifier}

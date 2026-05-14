@@ -1,10 +1,8 @@
 "use client";
 
 import {
-  IconArrowRight,
   IconInbox,
   IconMap,
-  IconRobot,
   IconSettings,
   IconSparkles,
   IconTrendingUp,
@@ -75,22 +73,6 @@ export default function AutopilotDashboardPage() {
       </section>
 
       <DashboardCharts organizationId={organizationId} />
-
-      <section>
-        <Link
-          className="group flex items-center justify-between rounded-xl border bg-card px-4 py-3 transition-colors hover:bg-accent/50"
-          href={`${baseUrl}/agents`}
-        >
-          <div className="flex items-center gap-2.5">
-            <IconRobot className="size-4 text-muted-foreground" />
-            <span className="font-medium text-sm">Agent Fleet</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-            <span>View all agents</span>
-            <IconArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-          </div>
-        </Link>
-      </section>
     </div>
   );
 }

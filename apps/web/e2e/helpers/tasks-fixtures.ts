@@ -36,6 +36,8 @@ import {
 
 const DASHBOARD_SLUG_EXTRACT_REGEX = /\/dashboard\/([^/]+)/;
 const IDENTIFIER_REGEX = /[A-Z]{3,6}-\d+/;
+const PRIORITY_BUTTON_NAME_REGEX = /Priority:/;
+const TYPE_BUTTON_NAME_REGEX = /Type:/;
 
 export interface TasksTestUser {
   email: string;
@@ -124,25 +126,27 @@ export async function createTaskViaUI(
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible({ timeout: 10_000 });
 
-  await dialog.getByLabel("Title").fill(title);
+  await dialog.getByLabel("Issue title").fill(title);
   await dialog
-    .getByLabel("Description")
+    .getByLabel("Issue description")
     .fill(description ?? `${title} description`);
 
   if (type) {
-    await dialog.locator("#new-task-type").click();
+    await dialog.getByRole("button", { name: TYPE_BUTTON_NAME_REGEX }).click();
     await page
-      .getByRole("option", { name: typeLabel(type), exact: true })
+      .getByRole("button", { exact: true, name: typeLabel(type) })
       .click();
   }
   if (priority) {
-    await dialog.locator("#new-task-priority").click();
+    await dialog
+      .getByRole("button", { name: PRIORITY_BUTTON_NAME_REGEX })
+      .click();
     await page
-      .getByRole("option", { name: priorityLabel(priority), exact: true })
+      .getByRole("button", { exact: true, name: priorityLabel(priority) })
       .click();
   }
 
-  await dialog.getByRole("button", { name: "Create Task" }).click();
+  await dialog.getByRole("button", { name: "Create issue" }).click();
   await expect(dialog).not.toBeVisible({ timeout: 10_000 });
   await page.waitForLoadState("networkidle");
 

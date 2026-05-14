@@ -1,19 +1,14 @@
 /**
- * Autopilot configuration — core queries for config, agents, and credentials.
+ * Autopilot configuration — core queries for config and agents.
  *
- * Mutations live in config_mutations.ts, task cap queries in config_task_caps.ts.
+ * Mutations live in mutations/config.ts, task cap queries in config_task_caps.ts.
  */
 
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { internalQuery, type QueryCtx } from "../_generated/server";
 import { getEffectiveTier } from "../billing/effective_tier";
-import {
-  autonomyLevel,
-  autonomyMode,
-  codingAdapterType,
-  isProductionCodingAdapter,
-} from "./schema/validators";
+import { autonomyLevel, autonomyMode } from "./schema/validators";
 
 // ============================================
 // INTERNAL QUERIES
@@ -23,9 +18,6 @@ const autopilotConfigValidator = v.object({
   _creationTime: v.number(),
   _id: v.id("autopilotConfig"),
   activationOverrides: v.optional(v.string()),
-  adapter: codingAdapterType,
-  autoMergePRs: v.boolean(),
-  autoMergeThreshold: v.optional(v.number()),
   autonomyLevel,
   autonomyMode: v.optional(autonomyMode),
   budgetHardStop: v.optional(v.boolean()),
@@ -36,7 +28,6 @@ const autopilotConfigValidator = v.object({
   createdAt: v.number(),
   ctoEnabled: v.optional(v.boolean()),
   dailyCostCapUsd: v.optional(v.number()),
-  devEnabled: v.optional(v.boolean()),
   emailBlocklist: v.optional(v.array(v.string())),
   emailDailyLimit: v.optional(v.number()),
   enabled: v.boolean(),
@@ -72,18 +63,6 @@ const autopilotConfigValidator = v.object({
   wakeThresholdOpenTasks: v.optional(v.number()),
 });
 
-const adapterCredentialsValidator = v.object({
-  _creationTime: v.number(),
-  _id: v.id("autopilotAdapterCredentials"),
-  adapter: codingAdapterType,
-  createdAt: v.number(),
-  credentials: v.string(),
-  isValid: v.boolean(),
-  lastValidatedAt: v.optional(v.number()),
-  organizationId: v.id("organizations"),
-  updatedAt: v.number(),
-});
-
 /**
  * Get the autopilot config for an organization.
  */
@@ -99,27 +78,6 @@ export const getConfig = internalQuery({
       .unique();
 
     return config;
-  },
-});
-
-/**
- * Get adapter credentials for an org + adapter combination.
- */
-export const getAdapterCredentials = internalQuery({
-  args: {
-    organizationId: v.id("organizations"),
-    adapter: codingAdapterType,
-  },
-  returns: v.union(adapterCredentialsValidator, v.null()),
-  handler: async (ctx, args) => {
-    const creds = await ctx.db
-      .query("autopilotAdapterCredentials")
-      .withIndex("by_org_adapter", (q) =>
-        q.eq("organizationId", args.organizationId).eq("adapter", args.adapter)
-      )
-      .unique();
-
-    return creds;
   },
 });
 
@@ -182,7 +140,6 @@ export const isAgentEnabled = internalQuery({
 const AGENT_CONFIG_FIELDS = [
   { name: "pm", field: "pmEnabled" },
   { name: "cto", field: "ctoEnabled" },
-  { name: "dev", field: "devEnabled" },
   { name: "growth", field: "growthEnabled" },
   { name: "support", field: "supportEnabled" },
   { name: "sales", field: "salesEnabled" },
@@ -207,9 +164,7 @@ async function isOrgAutopilotAllowed(
 export function isAgentEnabledInConfig(
   agent: string,
   config: {
-    adapter?: string;
     ctoEnabled?: boolean;
-    devEnabled?: boolean;
     growthEnabled?: boolean;
     pmEnabled?: boolean;
     salesEnabled?: boolean;
@@ -221,11 +176,6 @@ export function isAgentEnabledInConfig(
       return config.pmEnabled !== false;
     case "cto":
       return config.ctoEnabled !== false;
-    case "dev":
-      return (
-        isProductionCodingAdapter(config.adapter ?? "builtin") &&
-        config.devEnabled === true
-      );
     case "growth":
       return config.growthEnabled === true;
     case "support":

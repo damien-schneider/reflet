@@ -21,7 +21,6 @@ export const createRoutine = mutation({
     agent: v.union(
       v.literal("pm"),
       v.literal("cto"),
-      v.literal("dev"),
       v.literal("growth"),
       v.literal("orchestrator"),
       v.literal("system"),

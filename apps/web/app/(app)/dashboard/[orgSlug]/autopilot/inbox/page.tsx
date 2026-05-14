@@ -3,7 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useReducer } from "react";
+import { useEffect, useMemo, useReducer } from "react";
 import { toast } from "sonner";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -143,17 +143,25 @@ export default function AutopilotInboxPage() {
     push(`/dashboard/${orgSlug}/autopilot/tasks/${item._id}`);
   };
 
-  const filteredItems = items?.filter((item) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      item.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const filteredItems = useMemo(() => {
+    if (items === undefined) {
+      return;
+    }
+    const normalizedQuery = searchQuery.toLowerCase();
+    if (normalizedQuery === "") {
+      return items;
+    }
+    return items.filter((item) =>
+      item.title.toLowerCase().includes(normalizedQuery)
+    );
+  }, [items, searchQuery]);
 
   useEffect(
     function clampSelectedInboxIndex() {
       if (filteredItems === undefined || filteredItems.length === 0) {
-        dispatchPageState({ kind: "setSelectedIndex", update: 0 });
+        if (selectedIndex !== 0) {
+          dispatchPageState({ kind: "setSelectedIndex", update: 0 });
+        }
         return;
       }
       if (selectedIndex >= filteredItems.length) {

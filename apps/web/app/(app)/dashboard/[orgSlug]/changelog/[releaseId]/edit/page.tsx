@@ -8,7 +8,7 @@ import Link from "next/link";
 import { use } from "react";
 
 import { Button } from "@/components/ui/button";
-import { H1, Muted, Text } from "@/components/ui/typography";
+import { H1, Muted } from "@/components/ui/typography";
 import { ReleaseEditor } from "@/features/changelog/components/release-editor";
 
 export default function EditReleasePage({
@@ -80,19 +80,13 @@ export default function EditReleasePage({
 
   return (
     <div className="admin-container">
-      <div className="mb-8">
-        <Link
-          className="mb-4 inline-flex items-center text-muted-foreground text-sm transition-colors hover:text-foreground"
-          href={`/dashboard/${orgSlug}/changelog`}
-        >
-          <ArrowLeft className="mr-1 size-4" />
-          Back to Changelog
-        </Link>
-        <H1>Edit Release</H1>
-        <Text variant="bodySmall">
-          Update your release note. Changes are saved automatically as a draft.
-        </Text>
-      </div>
+      <Link
+        className="mb-8 inline-flex items-center text-muted-foreground text-sm transition-colors hover:text-foreground"
+        href={`/dashboard/${orgSlug}/changelog`}
+      >
+        <ArrowLeft className="mr-1 size-4" />
+        Back to Changelog
+      </Link>
 
       <ReleaseEditor
         className="max-w-4xl"

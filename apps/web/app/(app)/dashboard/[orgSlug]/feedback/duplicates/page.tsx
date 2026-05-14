@@ -5,7 +5,7 @@ import { useQuery } from "convex/react";
 import { use } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { H1, Muted } from "@/components/ui/typography";
+import { H1 } from "@/components/ui/typography";
 import { DuplicateReviewPanel } from "@/features/feedback/components/duplicate-review-panel";
 
 export default function DuplicateReviewPage({
@@ -37,13 +37,6 @@ export default function DuplicateReviewPage({
 
   return (
     <div className="container mx-auto space-y-6 px-4 py-8">
-      <div>
-        <H1>Duplicate Detection</H1>
-        <Muted>
-          Review AI-detected duplicate feedback and merge or dismiss pairs.
-        </Muted>
-      </div>
-
       <DuplicateReviewPanel organizationId={org._id} />
     </div>
   );

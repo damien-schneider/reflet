@@ -17,7 +17,10 @@ import { cn } from "@/lib/utils";
 type NodeStatus = "missing" | "draft" | "pending_review" | "published";
 type ChainNodeKind =
   | "codebase_understanding"
-  | "app_description"
+  | "identity"
+  | "brand_voice"
+  | "feature_catalog"
+  | "scope"
   | "market_analysis"
   | "target_definition"
   | "personas"
@@ -25,54 +28,6 @@ type ChainNodeKind =
   | "lead_targets"
   | "community_posts"
   | "drafts";
-
-const NODE_LABELS: Record<ChainNodeKind, string> = {
-  codebase_understanding: "Codebase Understanding",
-  app_description: "App Description",
-  market_analysis: "Market Analysis",
-  target_definition: "Target Definition",
-  personas: "Personas",
-  use_cases: "Use Cases",
-  lead_targets: "Lead Targets",
-  community_posts: "Community Posts",
-  drafts: "Drafts",
-};
-
-const NODE_OWNERS: Record<ChainNodeKind, string> = {
-  codebase_understanding: "cto",
-  app_description: "cto",
-  market_analysis: "growth",
-  target_definition: "pm",
-  personas: "pm",
-  use_cases: "pm",
-  lead_targets: "sales",
-  community_posts: "growth",
-  drafts: "growth",
-};
-
-const DAG_DEPS: Record<ChainNodeKind, ChainNodeKind[]> = {
-  codebase_understanding: [],
-  app_description: ["codebase_understanding"],
-  market_analysis: ["app_description"],
-  target_definition: ["market_analysis"],
-  personas: ["target_definition"],
-  use_cases: ["personas"],
-  lead_targets: ["personas"],
-  community_posts: ["personas", "use_cases"],
-  drafts: ["community_posts"],
-};
-
-const NODE_ORDER: ChainNodeKind[] = [
-  "codebase_understanding",
-  "app_description",
-  "market_analysis",
-  "target_definition",
-  "personas",
-  "use_cases",
-  "lead_targets",
-  "community_posts",
-  "drafts",
-];
 
 const STATUS_META: Record<
   NodeStatus,
@@ -108,12 +63,20 @@ export function ChainStatus({ organizationId }: ChainStatusProps) {
   const chain = useQuery(api.autopilot.queries.chain.getChainStatePublic, {
     organizationId,
   });
+  const meta = useQuery(api.autopilot.queries.chain.getChainMeta, {});
+  const activeWork = useQuery(api.autopilot.queries.chain.getActiveChainWork, {
+    organizationId,
+  });
 
-  if (!chain) {
+  if (!(chain && meta)) {
     return (
       <div className="text-muted-foreground text-sm">Loading chain state…</div>
     );
   }
+
+  const labels = new Map<ChainNodeKind, string>(
+    meta.nodes.map((n) => [n.kind, n.label])
+  );
 
   return (
     <div className="space-y-3">
@@ -124,44 +87,58 @@ export function ChainStatus({ organizationId }: ChainStatusProps) {
         </span>
       </div>
       <ol className="space-y-2">
-        {NODE_ORDER.map((kind) => {
-          const status = chain[kind];
-          const meta = STATUS_META[status];
-          const Icon = meta.icon;
-          const deps = DAG_DEPS[kind];
-          const upstreamReady = deps.every((dep) => chain[dep] === "published");
+        {meta.nodes.map((node) => {
+          const kind = node.kind as ChainNodeKind;
+          const status = chain[kind] as NodeStatus;
+          const statusMeta = STATUS_META[status];
+          const Icon = statusMeta.icon;
+          const upstreamReady = node.deps.every(
+            (dep) => chain[dep as ChainNodeKind] === "published"
+          );
           const isActionable = status === "missing" && upstreamReady;
+          const isActive = activeWork?.activeNode === kind;
           return (
             <li
               className={cn(
                 "flex items-start justify-between rounded-lg border bg-card p-3",
-                isActionable && "border-amber-500/40"
+                isActionable && "border-amber-500/40",
+                isActive && "border-emerald-500/60 ring-1 ring-emerald-500/20"
               )}
               key={kind}
             >
               <div className="flex items-start gap-3">
-                <Icon className={cn("mt-0.5 size-4", meta.color)} />
+                <Icon className={cn("mt-0.5 size-4", statusMeta.color)} />
                 <div>
-                  <div className="font-medium text-sm">{NODE_LABELS[kind]}</div>
+                  <div className="font-medium text-sm">{node.label}</div>
                   <div className="mt-0.5 text-muted-foreground text-xs">
-                    Owner: {NODE_OWNERS[kind]}
-                    {deps.length > 0 && (
+                    Owner: {node.owner}
+                    {node.deps.length > 0 && (
                       <>
                         {" · Deps: "}
-                        {deps.map((d) => NODE_LABELS[d]).join(", ")}
+                        {node.deps.map((d) => labels.get(d) ?? d).join(", ")}
                       </>
                     )}
                   </div>
+                  {isActive && activeWork?.message ? (
+                    <div className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+                      {activeWork.message}
+                    </div>
+                  ) : null}
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {isActionable && (
+                {isActive && (
+                  <Badge className="text-xs" variant="green">
+                    Working now
+                  </Badge>
+                )}
+                {isActionable && !isActive && (
                   <Badge className="text-xs" variant="outline">
                     Ready to produce
                   </Badge>
                 )}
                 <Badge className="text-xs" variant="secondary">
-                  {meta.label}
+                  {statusMeta.label}
                 </Badge>
               </div>
             </li>

@@ -1,8 +1,9 @@
 "use client";
 
-import { ChatCircle } from "@phosphor-icons/react";
+import { ArrowLeft, ChatCircle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 
+import { Button } from "@/components/ui/button";
 import { H2, H3, Muted, Text } from "@/components/ui/typography";
 import { AssignMemberDropdown } from "@/features/inbox/components/assign-member-dropdown";
 import { InlineStatusButtons } from "@/features/inbox/components/inline-status-buttons";
@@ -41,6 +42,7 @@ interface AdminConversationViewProps {
   messages: Message[];
   messagesLoading: boolean;
   onAssign: (memberId: string | undefined) => Promise<void>;
+  onBack?: () => void;
   onSendMessage: (body: string) => Promise<void>;
   onStatusChange: (status: ConversationStatus) => Promise<void>;
   teamMembers: TeamMember[];
@@ -54,30 +56,44 @@ export function AdminConversationView({
   onSendMessage,
   onStatusChange,
   onAssign,
+  onBack,
 }: AdminConversationViewProps) {
   const isConversationClosed =
     conversation.status === "closed" || conversation.status === "resolved";
 
   return (
     <>
-      <div className="flex items-center justify-between border-b px-6 py-4">
-        <div>
-          <H2 variant="card">
-            {conversation.subject || "Support Conversation"}
-          </H2>
-          <Text variant="bodySmall">
-            From:{" "}
-            {conversation.user?.name ??
-              conversation.guestEmail ??
-              conversation.user?.email ??
-              "Unknown User"}
-            {conversation.guestEmail && !conversation.user?.name && (
-              <span className="ml-1 text-muted-foreground">(guest)</span>
-            )}
-          </Text>
+      <div className="flex items-center justify-between gap-3 border-b px-4 py-4 md:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          {onBack && (
+            <Button
+              aria-label="Back to conversations"
+              className="-ml-1 md:hidden"
+              onClick={onBack}
+              size="icon"
+              variant="ghost"
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
+          )}
+          <div className="min-w-0">
+            <H2 className="truncate" variant="card">
+              {conversation.subject || "Support Conversation"}
+            </H2>
+            <Text className="truncate" variant="bodySmall">
+              From:{" "}
+              {conversation.user?.name ??
+                conversation.guestEmail ??
+                conversation.user?.email ??
+                "Unknown User"}
+              {conversation.guestEmail && !conversation.user?.name && (
+                <span className="ml-1 text-muted-foreground">(guest)</span>
+              )}
+            </Text>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 md:gap-3">
           <AssignMemberDropdown
             assignedTo={conversation.assignedTo}
             members={teamMembers}

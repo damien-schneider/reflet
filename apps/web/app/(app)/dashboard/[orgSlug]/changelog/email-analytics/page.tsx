@@ -5,7 +5,7 @@ import { useQuery } from "convex/react";
 import { use } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { H1, Muted } from "@/components/ui/typography";
+import { H1 } from "@/components/ui/typography";
 import { EmailAnalyticsDashboard } from "@/features/changelog/components/email-analytics-dashboard";
 
 export default function EmailAnalyticsPage({
@@ -39,14 +39,6 @@ export default function EmailAnalyticsPage({
 
   return (
     <div className="container mx-auto space-y-6 px-4 py-8">
-      <div>
-        <H1>Email Analytics</H1>
-        <Muted>
-          Monitor delivery rates, opens, and engagement for changelog
-          notifications.
-        </Muted>
-      </div>
-
       <EmailAnalyticsDashboard organizationId={org._id} />
     </div>
   );

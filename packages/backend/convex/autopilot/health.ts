@@ -8,6 +8,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
+import { computeChainState } from "./chain";
 import { DEFAULT_MAX_PENDING_TOTAL } from "./config_task_caps";
 import type { HealthState } from "./health_checks";
 import {
@@ -15,8 +16,8 @@ import {
   checkActivity,
   checkAgentCount,
   checkAutonomyMode,
+  checkChainBlockers,
   checkCostCap,
-  checkCredentials,
   checkErrors,
   checkOrphanedTasks,
   checkPendingApprovals,
@@ -28,7 +29,6 @@ import {
   TOTAL_AGENTS,
 } from "./health_checks";
 import { requireOrgMembership } from "./queries/auth";
-import { isProductionCodingAdapter } from "./schema/validators";
 
 const healthIssueValidator = v.object({
   actionLabel: v.optional(v.string()),
@@ -117,6 +117,59 @@ export const getSystemHealth = query({
 
     const enabledCount = checkAgentCount(config, state);
 
+    const chainState = await computeChainState(ctx, args.organizationId);
+    const repoAnalysis = await ctx.db
+      .query("autopilotRepoAnalysis")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+    const integrationAnalysis = await ctx.db
+      .query("repoAnalysis")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .order("desc")
+      .first();
+    const githubConnection = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+    const recentChainBlockerLog = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_org_created", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .gte("createdAt", Date.now() - 6 * ONE_HOUR)
+      )
+      .order("desc")
+      .take(50);
+    const lastBlockerLog = recentChainBlockerLog.find(
+      (log) =>
+        (log.level === "warning" || log.level === "error") &&
+        typeof log.message === "string" &&
+        log.message.startsWith("Cannot produce ")
+    );
+
+    const hasUsableAnalysis =
+      repoAnalysis !== null || integrationAnalysis?.status === "completed";
+    checkChainBlockers(
+      chainState,
+      {
+        ctoEnabled: config.ctoEnabled !== false,
+        githubConnected: Boolean(githubConnection?.repositoryFullName),
+        hasRepoAnalysis: hasUsableAnalysis,
+        lastBlockerLogAt: lastBlockerLog?.createdAt ?? null,
+        repoAnalysisError:
+          integrationAnalysis?.status === "error"
+            ? (integrationAnalysis.error ?? "Unknown analysis error")
+            : null,
+      },
+      state
+    );
+
     const lastActivityEntry = await ctx.db
       .query("autopilotActivityLog")
       .withIndex("by_organization", (q) =>
@@ -169,38 +222,6 @@ export const getSystemHealth = query({
       (w) => w.assignedAgent && !enabledSet.has(w.assignedAgent)
     ).length;
     checkOrphanedTasks(orphanedCount, state);
-
-    // Check adapter credentials validity
-    const credentials = await ctx.db
-      .query("autopilotAdapterCredentials")
-      .withIndex("by_org_adapter", (q) =>
-        q
-          .eq("organizationId", args.organizationId)
-          .eq("adapter", config.adapter)
-      )
-      .unique();
-
-    let credentialStatus: "missing" | "invalid" | "valid" = "missing";
-    if (credentials) {
-      credentialStatus = credentials.isValid ? "valid" : "invalid";
-    }
-    checkCredentials(credentialStatus, config.adapter, state);
-
-    // Check if Dev agent is enabled but pipeline is blocked by missing credentials
-    const devEnabled =
-      isProductionCodingAdapter(config.adapter) && config.devEnabled !== false;
-    if (devEnabled && credentialStatus !== "valid") {
-      state.issues.push({
-        id: "dev_pipeline_blocked",
-        severity: "warning",
-        message:
-          "Dev agent is enabled but cannot execute — coding adapter credentials are missing or invalid",
-        resolution:
-          "Configure adapter credentials in Settings to unblock the Dev pipeline",
-        actionUrl: "settings",
-        actionLabel: "Configure Credentials",
-      });
-    }
 
     // Check items waiting for president approval
     const reviewWorkItems = await ctx.db

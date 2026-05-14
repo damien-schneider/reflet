@@ -114,12 +114,13 @@ export const enrichKnowledgeBase = internalAction({
       );
     }
 
-    // Update product_definition with product insights
+    // Update product identity with product insights (was product_definition
+    // before the chain split; identity is now the canonical "what this is" doc)
     if (productFindings.length > 0) {
       await appendToKnowledgeDoc(
         ctx,
         args.organizationId,
-        "product_definition",
+        "identity",
         productFindings
       );
     }
@@ -136,7 +137,9 @@ export const enrichKnowledgeBase = internalAction({
 });
 
 type KnowledgeDocType =
-  | "product_definition"
+  | "identity"
+  | "feature_catalog"
+  | "scope"
   | "roadmap"
   | "brand_voice"
   | "team_processes"

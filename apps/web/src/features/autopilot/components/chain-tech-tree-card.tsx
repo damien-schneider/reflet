@@ -6,14 +6,21 @@ import {
   IconTrendingUp,
   IconUsers,
 } from "@tabler/icons-react";
-import type { ComponentType, Ref } from "react";
+import type {
+  ComponentType,
+  KeyboardEvent as ReactKeyboardEvent,
+  Ref,
+} from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type ChainNodeKind =
   | "codebase_understanding"
-  | "app_description"
+  | "identity"
+  | "brand_voice"
+  | "feature_catalog"
+  | "scope"
   | "market_analysis"
   | "target_definition"
   | "personas"
@@ -26,16 +33,38 @@ type ChainNodeStatus = "missing" | "draft" | "pending_review" | "published";
 type Owner = "cto" | "pm" | "growth" | "sales";
 type BadgeColor = "green" | "blue" | "orange" | "yellow" | "gray";
 
+type DraftSubtypeKind =
+  | "blog_post"
+  | "reddit_reply"
+  | "linkedin_post"
+  | "twitter_post"
+  | "hn_comment"
+  | "email"
+  | "changelog";
+
+interface DraftSubtype {
+  avgValidationScore: number | null;
+  count: number;
+  kind: DraftSubtypeKind;
+  lastUpdatedAt: number | null;
+  status: ChainNodeStatus;
+}
+
 interface ChainTechTreeCardProps {
   actionable: boolean;
+  activeMessage?: string | null;
   artifactCount: number;
   avgValidationScore: number | null;
+  draftSubtypes?: DraftSubtype[];
+  isActive?: boolean;
   kind: ChainNodeKind;
   label: string;
   lastUpdatedAt: number | null;
+  onPreview?: (kind: ChainNodeKind) => void;
   owner: Owner;
   pluralNoun: string;
-  ref?: Ref<HTMLDivElement>;
+  recentTitles: string[];
+  ref?: Ref<HTMLButtonElement>;
   status: ChainNodeStatus;
 }
 
@@ -53,16 +82,53 @@ const OWNER_LABELS: Record<Owner, string> = {
   sales: "Sales",
 };
 
+const DRAFT_SUBTYPE_LABELS: Record<DraftSubtypeKind, string> = {
+  blog_post: "Blog post",
+  reddit_reply: "Reddit reply",
+  linkedin_post: "LinkedIn post",
+  twitter_post: "Tweet",
+  hn_comment: "HN comment",
+  email: "Email",
+  changelog: "Changelog",
+};
+
+const SUBTYPE_DOT_COLOR: Record<ChainNodeStatus, string> = {
+  published: "bg-emerald-500",
+  pending_review: "bg-amber-500",
+  draft: "bg-yellow-500",
+  missing: "bg-muted-foreground/30",
+};
+
 const TRAILING_S = /s$/;
 
 const UPDATED_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
   month: "short",
-  timeZone: "UTC",
 });
 
-const formatUpdatedDate = (timestamp: number): string =>
-  UPDATED_DATE_FORMATTER.format(timestamp);
+const SECOND_MS = 1000;
+const MINUTE_MS = 60 * SECOND_MS;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
+const formatRelative = (timestamp: number, now: number): string => {
+  const delta = now - timestamp;
+  if (delta < MINUTE_MS) {
+    return "just now";
+  }
+  if (delta < HOUR_MS) {
+    return `${Math.floor(delta / MINUTE_MS)}m ago`;
+  }
+  if (delta < DAY_MS) {
+    return `${Math.floor(delta / HOUR_MS)}h ago`;
+  }
+  if (delta < 7 * DAY_MS) {
+    return `${Math.floor(delta / DAY_MS)}d ago`;
+  }
+  return UPDATED_DATE_FORMATTER.format(timestamp);
+};
 
 const computeBadge = (
   status: ChainNodeStatus,
@@ -98,51 +164,75 @@ const computeSubtitle = (
     return "In progress";
   }
   if (actionable) {
-    return `Ready, Agent: ${OWNER_LABELS[owner]}`;
+    return `Ready · ${OWNER_LABELS[owner]}`;
   }
-  return "Locked";
+  return `Locked · ${OWNER_LABELS[owner]}`;
 };
 
 export function ChainTechTreeCard({
+  kind,
   label,
   pluralNoun,
+  onPreview,
   owner,
   status,
   actionable,
+  activeMessage,
   artifactCount,
+  draftSubtypes,
+  isActive,
   lastUpdatedAt,
   avgValidationScore,
+  recentTitles,
   ref,
 }: ChainTechTreeCardProps) {
   const Icon = OWNER_ICONS[owner];
   const badge = computeBadge(status, actionable);
-  const subtitle = computeSubtitle(status, actionable, owner);
+  const subtitle = isActive
+    ? "Working now…"
+    : computeSubtitle(status, actionable, owner);
 
-  const isMuted = status === "missing" && !actionable;
-  const isHighlighted = status === "missing" && actionable;
+  const isMuted = status === "missing" && !actionable && !isActive;
+  const isHighlighted = (status === "missing" && actionable) || isActive;
 
   const noun =
     artifactCount === 1 ? pluralNoun.replace(TRAILING_S, "") : pluralNoun;
 
+  const now = Date.now();
+
+  const handleClick = () => onPreview?.(kind);
+  const handleKeyDown = (e: ReactKeyboardEvent<HTMLElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onPreview?.(kind);
+    }
+  };
+
   return (
-    <article
+    <button
+      aria-label={`${label} — open preview`}
       className={cn(
-        "relative flex flex-col gap-2 rounded-xl border bg-card p-3 shadow-sm transition-colors",
+        "relative flex w-full flex-col gap-2 rounded-xl border bg-card p-3 text-left shadow-sm transition-colors",
+        "cursor-pointer hover:border-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         isHighlighted && "border-amber-500/50 ring-1 ring-amber-500/20",
-        isMuted && "opacity-50"
+        isActive && "border-emerald-500/60 ring-1 ring-emerald-500/30",
+        isMuted && "opacity-60"
       )}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
       ref={ref}
+      type="button"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-muted/30">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-muted/30">
             <Icon className="size-4 text-muted-foreground" />
           </div>
           <div className="min-w-0">
             <div className="truncate font-medium text-sm leading-tight">
               {label}
             </div>
-            <div className="mt-0.5 truncate text-muted-foreground text-xs">
+            <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
               {subtitle}
             </div>
           </div>
@@ -151,23 +241,76 @@ export function ChainTechTreeCard({
           {badge.label}
         </Badge>
       </div>
-      {(artifactCount > 0 ||
-        lastUpdatedAt !== null ||
-        avgValidationScore !== null) && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-muted-foreground text-xs">
+
+      {(artifactCount > 0 || lastUpdatedAt !== null) && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
           {artifactCount > 0 && (
             <span>
               {artifactCount} {noun}
             </span>
           )}
           {lastUpdatedAt !== null && (
-            <span>Updated {formatUpdatedDate(lastUpdatedAt)}</span>
+            <span>· {formatRelative(lastUpdatedAt, now)}</span>
           )}
           {avgValidationScore !== null && (
-            <span>Score: {avgValidationScore}/100</span>
+            <span>· {avgValidationScore}/100</span>
           )}
         </div>
       )}
-    </article>
+
+      {recentTitles.length > 0 && !draftSubtypes && (
+        <ul className="space-y-0.5 text-[11px] text-muted-foreground">
+          {recentTitles.map((title) => (
+            <li className="flex items-center gap-1.5" key={title}>
+              <span
+                aria-hidden="true"
+                className="size-1 shrink-0 rounded-full bg-muted-foreground/40"
+              />
+              <span className="truncate text-foreground/70">{title}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {draftSubtypes && draftSubtypes.length > 0 && (
+        <ul className="mt-0.5 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
+          {draftSubtypes.map((sub) => (
+            <li
+              className={cn(
+                "flex items-center gap-1.5",
+                sub.count === 0 && "opacity-50"
+              )}
+              key={sub.kind}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "size-1.5 shrink-0 rounded-full",
+                  SUBTYPE_DOT_COLOR[sub.status]
+                )}
+              />
+              <span className="truncate text-foreground/70">
+                {DRAFT_SUBTYPE_LABELS[sub.kind]}
+              </span>
+              {sub.count > 0 && (
+                <span className="ml-auto font-mono text-[10px] text-muted-foreground">
+                  {sub.count}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {isActive && activeMessage ? (
+        <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500/60 motion-reduce:animate-none" />
+            <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+          </span>
+          <span className="truncate">{activeMessage}</span>
+        </div>
+      ) : null}
+    </button>
   );
 }

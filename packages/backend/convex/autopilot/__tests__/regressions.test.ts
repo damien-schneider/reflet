@@ -494,6 +494,270 @@ describe("autopilot regressions", () => {
     expect(Reflect.get(stats, "maxPendingTasksTotal")).toBe(9);
   });
 
+  test("health surfaces critical issue when no GitHub repo is connected", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createAutopilotConfig(t, organizationId);
+    const authed = await createMemberSession(t, organizationId);
+
+    const health = await authed.query(api.autopilot.health.getSystemHealth, {
+      organizationId,
+    });
+
+    expect(health.status).toBe("critical");
+    const blocker = health.issues.find(
+      (issue) => issue.id === "chain_blocked_no_github"
+    );
+    expect(blocker).toBeDefined();
+    expect(blocker?.severity).toBe("critical");
+    expect(Reflect.get(blocker ?? {}, "actionLabel")).toBe(
+      "Connect Repository"
+    );
+    expect(Reflect.get(blocker ?? {}, "actionUrl")).toBe("/settings/github");
+  });
+
+  test(
+    "health surfaces repo-analysis blocker once GitHub is connected",
+    async () => {
+      const t = createTestContext();
+      const organizationId = await createOrg(t);
+      await createAutopilotConfig(t, organizationId);
+      await t.run(async (ctx) => {
+        const now = Date.now();
+        await ctx.db.insert("githubConnections", {
+          organizationId,
+          installationId: "inst-1",
+          accountType: "user",
+          accountLogin: "test-user",
+          status: "connected",
+          repositoryFullName: "test-user/example",
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
+      const authed = await createMemberSession(t, organizationId);
+
+      const health = await authed.query(api.autopilot.health.getSystemHealth, {
+        organizationId,
+      });
+
+      expect(health.status).toBe("critical");
+      const blocker = health.issues.find(
+        (issue) => issue.id === "chain_blocked_no_repo_analysis"
+      );
+      expect(blocker).toBeDefined();
+      expect(blocker?.severity).toBe("critical");
+      expect(Reflect.get(blocker ?? {}, "actionLabel")).toBe(
+        "Run Repo Analysis"
+      );
+      const noGithub = health.issues.find(
+        (issue) => issue.id === "chain_blocked_no_github"
+      );
+      expect(noGithub).toBeUndefined();
+    },
+    CONVEX_INTEGRATION_TEST_TIMEOUT_MS
+  );
+
+  test(
+    "produceCodebaseUnderstanding logs a warning when repo analysis is missing",
+    async () => {
+      const t = createTestContext();
+      const organizationId = await createOrg(t);
+      await createAutopilotConfig(t, organizationId);
+
+      await t.action(
+        internal.autopilot.agents.chain_producers.produceCodebaseUnderstanding,
+        { organizationId }
+      );
+
+      const logs = await t.run(async (ctx) =>
+        ctx.db
+          .query("autopilotActivityLog")
+          .withIndex("by_organization", (q) =>
+            q.eq("organizationId", organizationId)
+          )
+          .collect()
+      );
+
+      const warning = logs.find(
+        (entry) =>
+          entry.agent === "cto" &&
+          entry.level === "warning" &&
+          typeof entry.message === "string" &&
+          entry.message.startsWith("Cannot produce codebase_understanding: ")
+      );
+      expect(warning).toBeDefined();
+      expect(warning?.details).toBeDefined();
+    },
+    CONVEX_INTEGRATION_TEST_TIMEOUT_MS
+  );
+
+  test(
+    "health flags chain_blocker_logged when CTO recently failed to produce",
+    async () => {
+      const t = createTestContext();
+      const organizationId = await createOrg(t);
+      await createAutopilotConfig(t, organizationId);
+      await t.run(async (ctx) => {
+        const now = Date.now();
+        await ctx.db.insert("githubConnections", {
+          organizationId,
+          installationId: "inst-3",
+          accountType: "user",
+          accountLogin: "test-user",
+          status: "connected",
+          repositoryFullName: "test-user/example",
+          createdAt: now,
+          updatedAt: now,
+        });
+        await ctx.db.insert("autopilotRepoAnalysis", {
+          organizationId,
+          repoUrl: "https://github.com/test-user/example",
+          createdAt: now,
+        });
+        await ctx.db.insert("autopilotActivityLog", {
+          organizationId,
+          agent: "cto",
+          level: "warning",
+          message:
+            "Cannot produce codebase_understanding: no repo analysis available",
+          createdAt: now - 60_000,
+        });
+      });
+      const authed = await createMemberSession(t, organizationId);
+
+      const health = await authed.query(api.autopilot.health.getSystemHealth, {
+        organizationId,
+      });
+
+      const blocker = health.issues.find(
+        (issue) => issue.id === "chain_blocker_logged"
+      );
+      expect(blocker).toBeDefined();
+      expect(Reflect.get(blocker ?? {}, "actionLabel")).toBe("View Activity");
+    },
+    CONVEX_INTEGRATION_TEST_TIMEOUT_MS
+  );
+
+  test(
+    "health clears chain blocker once repo analysis exists",
+    async () => {
+      const t = createTestContext();
+      const organizationId = await createOrg(t);
+      await createAutopilotConfig(t, organizationId);
+      await t.run(async (ctx) => {
+        const now = Date.now();
+        await ctx.db.insert("githubConnections", {
+          organizationId,
+          installationId: "inst-2",
+          accountType: "user",
+          accountLogin: "test-user",
+          status: "connected",
+          repositoryFullName: "test-user/example",
+          createdAt: now,
+          updatedAt: now,
+        });
+        await ctx.db.insert("autopilotRepoAnalysis", {
+          organizationId,
+          repoUrl: "https://github.com/test-user/example",
+          createdAt: now,
+        });
+      });
+      const authed = await createMemberSession(t, organizationId);
+
+      const health = await authed.query(api.autopilot.health.getSystemHealth, {
+        organizationId,
+      });
+
+      const blocker = health.issues.find((issue) =>
+        issue.id.startsWith("chain_blocked")
+      );
+      expect(blocker).toBeUndefined();
+    },
+    CONVEX_INTEGRATION_TEST_TIMEOUT_MS
+  );
+
+  test(
+    "listActivityPaginated returns ordered pages and filters by agent + level",
+    async () => {
+      const t = createTestContext();
+      const organizationId = await createOrg(t);
+      await createAutopilotConfig(t, organizationId);
+      await t.run(async (ctx) => {
+        const base = Date.now();
+        const seed = [
+          {
+            agent: "cto" as const,
+            level: "info" as const,
+            message: "cto-info",
+          },
+          {
+            agent: "pm" as const,
+            level: "warning" as const,
+            message: "pm-warn",
+          },
+          {
+            agent: "cto" as const,
+            level: "error" as const,
+            message: "cto-error",
+          },
+          {
+            agent: "growth" as const,
+            level: "success" as const,
+            message: "growth-success",
+          },
+        ];
+        for (let i = 0; i < seed.length; i++) {
+          const entry = seed[i];
+          await ctx.db.insert("autopilotActivityLog", {
+            organizationId,
+            agent: entry.agent,
+            level: entry.level,
+            message: entry.message,
+            createdAt: base + i,
+          });
+        }
+      });
+      const authed = await createMemberSession(t, organizationId);
+
+      const firstPage = await authed.query(
+        api.autopilot.queries.activity.listActivityPaginated,
+        {
+          organizationId,
+          paginationOpts: { numItems: 2, cursor: null },
+        }
+      );
+      expect(firstPage.page.length).toBe(2);
+      expect(firstPage.isDone).toBe(false);
+      expect(firstPage.page[0].message).toBe("growth-success");
+
+      const filteredCto = await authed.query(
+        api.autopilot.queries.activity.listActivityPaginated,
+        {
+          organizationId,
+          paginationOpts: { numItems: 10, cursor: null },
+          agent: "cto",
+        }
+      );
+      const ctoMessages = filteredCto.page.map((entry) => entry.message);
+      expect(ctoMessages).toContain("cto-info");
+      expect(ctoMessages).toContain("cto-error");
+      expect(ctoMessages).not.toContain("pm-warn");
+
+      const filteredError = await authed.query(
+        api.autopilot.queries.activity.listActivityPaginated,
+        {
+          organizationId,
+          paginationOpts: { numItems: 10, cursor: null },
+          level: "error",
+        }
+      );
+      expect(filteredError.page).toHaveLength(1);
+      expect(filteredError.page[0].message).toBe("cto-error");
+    },
+    CONVEX_INTEGRATION_TEST_TIMEOUT_MS
+  );
+
   test("daily task guard allows dispatch after reset time has passed", async () => {
     const t = createTestContext();
     const organizationId = await createOrg(t);

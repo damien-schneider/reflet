@@ -84,11 +84,6 @@ vi.mock("@/features/autopilot/components/autopilot-context", () => ({
   }),
 }));
 
-vi.mock("@/features/autopilot/components/settings/adapter-settings", () => ({
-  AdapterSettings: () => null,
-  isAdapterValue: () => true,
-}));
-
 vi.mock("@/features/autopilot/components/settings/billing-section", () => ({
   BillingSection: () => null,
   BillingSectionSkeleton: () => null,
@@ -106,14 +101,9 @@ vi.mock("@/features/autopilot/components/settings/danger-zone", () => ({
   },
 }));
 
-vi.mock("@/features/autopilot/components/settings/general-settings", () => ({
-  GeneralSettings: () => null,
-}));
-
 const config = {
   _id: "config_123",
   adapter: "builtin",
-  autoMergePRs: false,
   dailyCostCapUsd: 25,
   emailDailyLimit: 20,
   maxTasksPerDay: 5,

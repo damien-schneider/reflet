@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  IconActivity,
   IconBook,
   IconChartBar,
   IconDashboard,
@@ -30,7 +29,6 @@ const NAV_ITEMS = [
     path: "/documents",
   },
   { id: "reports", label: "Reports", icon: IconChartBar, path: "/reports" },
-  { id: "activity", label: "Activity", icon: IconActivity, path: "/activity" },
   { id: "sales", label: "Sales", icon: IconUserSearch, path: "/sales" },
   { id: "settings", label: "Settings", icon: IconSettings, path: "/settings" },
 ] as const;
