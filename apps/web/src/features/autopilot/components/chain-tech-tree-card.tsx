@@ -57,11 +57,14 @@ interface ChainTechTreeCardProps {
   activeMessage?: string | null;
   artifactCount: number;
   avgValidationScore: number | null;
+  blockerLabels?: string[];
+  dimmed?: boolean;
   draftSubtypes?: DraftSubtype[];
   isActive?: boolean;
   kind: ChainNodeKind;
   label: string;
   lastUpdatedAt: number | null;
+  onHover?: (kind: ChainNodeKind | null) => void;
   onPreview?: (kind: ChainNodeKind) => void;
   owner: Owner;
   pluralNoun: string;
@@ -171,16 +174,132 @@ const computeSubtitle = (
   return `Locked · ${OWNER_LABELS[owner]}`;
 };
 
+interface MetricsRowProps {
+  artifactCount: number;
+  avgValidationScore: number | null;
+  lastUpdatedAt: number | null;
+  noun: string;
+  now: number;
+}
+
+function CardMetricsRow({
+  artifactCount,
+  avgValidationScore,
+  lastUpdatedAt,
+  noun,
+  now,
+}: MetricsRowProps) {
+  if (artifactCount === 0 && lastUpdatedAt === null) {
+    return null;
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+      {artifactCount > 0 && (
+        <span>
+          {artifactCount} {noun}
+        </span>
+      )}
+      {lastUpdatedAt !== null && (
+        <span>· {formatRelative(lastUpdatedAt, now)}</span>
+      )}
+      {avgValidationScore !== null && <span>· {avgValidationScore}/100</span>}
+    </div>
+  );
+}
+
+function CardRecentTitles({ titles }: { titles: string[] }) {
+  if (titles.length === 0) {
+    return null;
+  }
+  return (
+    <ul className="space-y-0.5 text-[11px] text-muted-foreground">
+      {titles.map((title) => (
+        <li className="flex items-center gap-1.5" key={title}>
+          <span
+            aria-hidden="true"
+            className="size-1 shrink-0 rounded-full bg-muted-foreground/40"
+          />
+          <span className="truncate text-foreground/70">{title}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function CardDraftSubtypes({ subtypes }: { subtypes: DraftSubtype[] }) {
+  if (subtypes.length === 0) {
+    return null;
+  }
+  return (
+    <ul className="mt-0.5 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
+      {subtypes.map((sub) => (
+        <li
+          className={cn(
+            "flex items-center gap-1.5",
+            sub.count === 0 && "opacity-50"
+          )}
+          key={sub.kind}
+        >
+          <span
+            aria-hidden="true"
+            className={cn(
+              "size-1.5 shrink-0 rounded-full",
+              SUBTYPE_DOT_COLOR[sub.status]
+            )}
+          />
+          <span className="truncate text-foreground/70">
+            {DRAFT_SUBTYPE_LABELS[sub.kind]}
+          </span>
+          {sub.count > 0 && (
+            <span className="ml-auto font-mono text-[10px] text-muted-foreground">
+              {sub.count}
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function CardBlockersHint({ labels }: { labels: string[] }) {
+  if (labels.length === 0) {
+    return null;
+  }
+  return (
+    <div className="text-[11px] text-muted-foreground">
+      <span className="font-mono text-[10px] uppercase tracking-wider">
+        Waiting on
+      </span>
+      <span className="ml-1.5 text-foreground/70">{labels.join(", ")}</span>
+    </div>
+  );
+}
+
+function CardActiveBeacon({ message }: { message: string }) {
+  return (
+    <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+      <span className="relative flex size-2">
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500/60 motion-reduce:animate-none" />
+        <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+      </span>
+      <span className="truncate">{message}</span>
+    </div>
+  );
+}
+
 export function ChainTechTreeCard({
   kind,
   label,
   pluralNoun,
+  onHover,
   onPreview,
   owner,
   status,
   actionable,
   activeMessage,
   artifactCount,
+  blockerLabels,
+  dimmed,
   draftSubtypes,
   isActive,
   lastUpdatedAt,
@@ -209,19 +328,33 @@ export function ChainTechTreeCard({
       onPreview?.(kind);
     }
   };
+  const handleMouseEnter = () => onHover?.(kind);
+  const handleMouseLeave = () => onHover?.(null);
+  const handleFocus = () => onHover?.(kind);
+  const handleBlur = () => onHover?.(null);
+
+  const showBlockers =
+    status === "missing" &&
+    !(actionable || isActive) &&
+    (blockerLabels?.length ?? 0) > 0;
 
   return (
     <button
       aria-label={`${label} — open preview`}
       className={cn(
-        "relative flex w-full flex-col gap-2 rounded-xl border bg-card p-3 text-left shadow-sm transition-colors",
+        "relative flex w-full flex-col gap-2 rounded-xl border bg-card p-3 text-left shadow-sm transition-[opacity,box-shadow,border-color]",
         "cursor-pointer hover:border-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         isHighlighted && "border-amber-500/50 ring-1 ring-amber-500/20",
         isActive && "border-emerald-500/60 ring-1 ring-emerald-500/30",
-        isMuted && "opacity-60"
+        isMuted && !dimmed && "opacity-60",
+        dimmed && "opacity-25"
       )}
+      onBlur={handleBlur}
       onClick={handleClick}
+      onFocus={handleFocus}
       onKeyDown={handleKeyDown}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       ref={ref}
       type="button"
     >
@@ -244,74 +377,23 @@ export function ChainTechTreeCard({
         </Badge>
       </div>
 
-      {(artifactCount > 0 || lastUpdatedAt !== null) && (
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
-          {artifactCount > 0 && (
-            <span>
-              {artifactCount} {noun}
-            </span>
-          )}
-          {lastUpdatedAt !== null && (
-            <span>· {formatRelative(lastUpdatedAt, now)}</span>
-          )}
-          {avgValidationScore !== null && (
-            <span>· {avgValidationScore}/100</span>
-          )}
-        </div>
+      <CardMetricsRow
+        artifactCount={artifactCount}
+        avgValidationScore={avgValidationScore}
+        lastUpdatedAt={lastUpdatedAt}
+        noun={noun}
+        now={now}
+      />
+      {draftSubtypes ? (
+        <CardDraftSubtypes subtypes={draftSubtypes} />
+      ) : (
+        <CardRecentTitles titles={recentTitles} />
       )}
-
-      {recentTitles.length > 0 && !draftSubtypes && (
-        <ul className="space-y-0.5 text-[11px] text-muted-foreground">
-          {recentTitles.map((title) => (
-            <li className="flex items-center gap-1.5" key={title}>
-              <span
-                aria-hidden="true"
-                className="size-1 shrink-0 rounded-full bg-muted-foreground/40"
-              />
-              <span className="truncate text-foreground/70">{title}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {draftSubtypes && draftSubtypes.length > 0 && (
-        <ul className="mt-0.5 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
-          {draftSubtypes.map((sub) => (
-            <li
-              className={cn(
-                "flex items-center gap-1.5",
-                sub.count === 0 && "opacity-50"
-              )}
-              key={sub.kind}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "size-1.5 shrink-0 rounded-full",
-                  SUBTYPE_DOT_COLOR[sub.status]
-                )}
-              />
-              <span className="truncate text-foreground/70">
-                {DRAFT_SUBTYPE_LABELS[sub.kind]}
-              </span>
-              {sub.count > 0 && (
-                <span className="ml-auto font-mono text-[10px] text-muted-foreground">
-                  {sub.count}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
+      {showBlockers && blockerLabels ? (
+        <CardBlockersHint labels={blockerLabels} />
+      ) : null}
       {isActive && activeMessage ? (
-        <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-          <span className="relative flex size-2">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500/60 motion-reduce:animate-none" />
-            <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-          </span>
-          <span className="truncate">{activeMessage}</span>
-        </div>
+        <CardActiveBeacon message={activeMessage} />
       ) : null}
     </button>
   );
