@@ -1,11 +1,13 @@
 "use client";
 
+import type { chainNodeStatus } from "@reflet/backend/convex/autopilot/schema/validators";
 import {
   IconCode,
   IconTarget,
   IconTrendingUp,
   IconUsers,
 } from "@tabler/icons-react";
+import type { Infer } from "convex/values";
 import type {
   ComponentType,
   KeyboardEvent as ReactKeyboardEvent,
@@ -29,7 +31,7 @@ type ChainNodeKind =
   | "community_posts"
   | "drafts";
 
-type ChainNodeStatus = "missing" | "draft" | "pending_review" | "published";
+type ChainNodeStatus = Infer<typeof chainNodeStatus>;
 type Owner = "cto" | "pm" | "growth" | "sales";
 type BadgeColor = "green" | "blue" | "orange" | "yellow" | "gray";
 

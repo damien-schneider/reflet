@@ -19,14 +19,8 @@ import {
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { slugify } from "@/lib/slug";
 import { BrandingSection } from "./branding-section";
-
-const generateSlug = (text: string): string => {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-};
 
 function SaveButtonContent({
   isSaving,
@@ -90,7 +84,7 @@ export function OrganizationSection({
   );
 
   const handleSlugChange = (value: string) => {
-    setSlug(generateSlug(value));
+    setSlug(slugify(value));
     setError(null);
   };
 

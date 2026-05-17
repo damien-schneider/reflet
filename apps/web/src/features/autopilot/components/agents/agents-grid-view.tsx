@@ -1,6 +1,7 @@
 "use client";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { PAGE_SIZE } from "@reflet/backend/convex/shared/constants";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
@@ -110,7 +111,7 @@ export function AgentsGridView({
 }) {
   const activity = useQuery(api.autopilot.queries.activity.listActivity, {
     organizationId,
-    limit: 50,
+    limit: PAGE_SIZE.DEFAULT,
   });
   const config = useQuery(api.autopilot.queries.config.getConfig, {
     organizationId,

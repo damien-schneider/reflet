@@ -63,7 +63,7 @@ export default function FeedbackBoardMockup() {
     <LazyMotion features={domAnimation}>
       <m.div
         animate={isInView ? { opacity: 1, y: 0 } : {}}
-        className="relative w-full overflow-hidden rounded-2xl border border-border bg-card shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.4)]"
+        className="relative w-full overflow-hidden rounded-2xl border border-border bg-card shadow-mockup dark:shadow-mockup-dark"
         initial={{ opacity: 0, y: 32 }}
         ref={ref}
         transition={{ duration: 0.8, ease: EASE_OUT_EXPO }}

@@ -1,7 +1,7 @@
+import { env } from "@reflet/env/web";
+
 const MCP_NPM_PACKAGE = "@reflet/mcp-server";
-const CONVEX_SITE_URL =
-  process.env.NEXT_PUBLIC_CONVEX_SITE_URL ??
-  "https://your-deployment.convex.site";
+const CONVEX_SITE_URL = env.NEXT_PUBLIC_CONVEX_SITE_URL;
 
 export type TransportMode = "http" | "stdio";
 

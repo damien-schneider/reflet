@@ -4,9 +4,10 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { v } from "convex/values";
 import { action } from "../_generated/server";
+import { env } from "../shared/env";
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 const MAX_COMMITS_FOR_CONTEXT = 80;
@@ -20,7 +21,7 @@ export const generateReleaseTitle = action({
   },
   returns: v.string(),
   handler: async (_ctx, args) => {
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!env.OPENROUTER_API_KEY) {
       throw new Error("AI service not configured");
     }
 
@@ -85,7 +86,7 @@ export const matchReleaseFeedback = action({
       return [];
     }
 
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!env.OPENROUTER_API_KEY) {
       throw new Error("AI service not configured");
     }
 

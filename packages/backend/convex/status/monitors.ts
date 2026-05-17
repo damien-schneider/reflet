@@ -1,7 +1,9 @@
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
+import { hasActiveSubscription } from "../billing/lib";
 import { PLAN_LIMITS } from "../billing/queries";
+import { SEVEN_DAYS_MS } from "../shared/constants";
 import { monitorMethod, monitorStatus } from "./tableFields";
 
 // ============================================
@@ -48,7 +50,7 @@ export const getMonitorWithHistory = query({
     }
 
     // Last 7 days of checks
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const sevenDaysAgo = Date.now() - SEVEN_DAYS_MS;
     const checks = await ctx.db
       .query("statusChecks")
       .withIndex("by_monitor_time", (q) =>
@@ -188,10 +190,7 @@ export const createMonitor = mutation({
       components.stripe.public.getSubscriptionByOrgId,
       { orgId: args.organizationId }
     );
-    const hasActiveSub =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
-    const minInterval = hasActiveSub
+    const minInterval = hasActiveSubscription(subscription)
       ? PLAN_LIMITS.pro.minCheckIntervalMinutes
       : PLAN_LIMITS.free.minCheckIntervalMinutes;
     const requestedInterval = args.checkIntervalMinutes ?? 5;
@@ -242,11 +241,7 @@ export const updateMonitor = mutation({
           components.stripe.public.getSubscriptionByOrgId,
           { orgId: monitor.organizationId }
         );
-        const hasActiveSub =
-          subscription &&
-          (subscription.status === "active" ||
-            subscription.status === "trialing");
-        const minInterval = hasActiveSub
+        const minInterval = hasActiveSubscription(subscription)
           ? PLAN_LIMITS.pro.minCheckIntervalMinutes
           : PLAN_LIMITS.free.minCheckIntervalMinutes;
         filtered.checkIntervalMinutes = Math.max(

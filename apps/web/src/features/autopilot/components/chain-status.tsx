@@ -2,6 +2,7 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { chainNodeStatus } from "@reflet/backend/convex/autopilot/schema/validators";
 import {
   IconCheck,
   IconCircleDashed,
@@ -9,12 +10,13 @@ import {
   IconClock,
 } from "@tabler/icons-react";
 import { useQuery } from "convex/react";
+import type { Infer } from "convex/values";
 import type { ComponentType } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-type NodeStatus = "missing" | "draft" | "pending_review" | "published";
+type NodeStatus = Infer<typeof chainNodeStatus>;
 type ChainNodeKind =
   | "codebase_understanding"
   | "identity"

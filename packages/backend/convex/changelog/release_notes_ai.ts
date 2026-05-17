@@ -4,9 +4,10 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { v } from "convex/values";
 import { action } from "../_generated/server";
+import { env } from "../shared/env";
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 const MAX_COMMITS_FOR_CONTEXT = 100;

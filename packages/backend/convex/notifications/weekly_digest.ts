@@ -3,6 +3,7 @@
 import { internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
 import { internalAction } from "../_generated/server";
+import { env } from "../shared/env";
 
 const BATCH_SIZE = 10;
 const BATCH_DELAY_MS = 100;
@@ -62,7 +63,7 @@ async function sendDigestForOrg(ctx: ActionCtx, orgId: string): Promise<void> {
     return;
   }
 
-  const siteUrl = process.env.SITE_URL ?? "";
+  const siteUrl = env.SITE_URL ?? "";
 
   for (let i = 0; i < members.length; i += BATCH_SIZE) {
     const batch = members.slice(i, i + BATCH_SIZE);

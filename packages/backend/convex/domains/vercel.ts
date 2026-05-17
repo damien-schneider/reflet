@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import { internalAction } from "../_generated/server";
+import { env } from "../shared/env";
 
 const VERCEL_API_BASE = "https://api.vercel.com";
 
@@ -8,7 +9,7 @@ const DOMAIN_FORMAT_REGEX =
   /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
 
 const getVercelHeaders = (): Record<string, string> => {
-  const token = process.env.VERCEL_API_TOKEN;
+  const token = env.VERCEL_API_TOKEN;
   if (!token) {
     throw new Error("VERCEL_API_TOKEN environment variable is not set");
   }
@@ -19,12 +20,12 @@ const getVercelHeaders = (): Record<string, string> => {
 };
 
 const getTeamParam = (): string => {
-  const teamId = process.env.VERCEL_TEAM_ID;
+  const teamId = env.VERCEL_TEAM_ID;
   return teamId ? `&teamId=${teamId}` : "";
 };
 
 const getProjectId = (): string => {
-  const projectId = process.env.VERCEL_PROJECT_ID;
+  const projectId = env.VERCEL_PROJECT_ID;
   if (!projectId) {
     throw new Error("VERCEL_PROJECT_ID environment variable is not set");
   }

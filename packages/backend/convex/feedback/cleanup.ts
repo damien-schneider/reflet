@@ -1,6 +1,5 @@
 import { internalMutation } from "../_generated/server";
-
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+import { THIRTY_DAYS_MS } from "../shared/constants";
 
 /**
  * Permanently delete feedback items that have been soft-deleted for more than 30 days.

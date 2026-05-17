@@ -5,36 +5,12 @@ import {
   MAX_DESCRIPTION_LENGTH,
   MAX_TITLE_LENGTH,
 } from "../shared/constants";
-import { validateInputLength } from "../shared/validators";
-
-// ============================================
-// FEEDBACK STATUS
-// ============================================
-
-const feedbackStatus = v.union(
-  v.literal("open"),
-  v.literal("under_review"),
-  v.literal("planned"),
-  v.literal("in_progress"),
-  v.literal("completed"),
-  v.literal("closed")
-);
-
-const priorityValue = v.union(
-  v.literal("critical"),
-  v.literal("high"),
-  v.literal("medium"),
-  v.literal("low"),
-  v.literal("none")
-);
-
-const complexityValue = v.union(
-  v.literal("trivial"),
-  v.literal("simple"),
-  v.literal("moderate"),
-  v.literal("complex"),
-  v.literal("very_complex")
-);
+import {
+  complexityValue,
+  feedbackStatus,
+  priorityValue,
+  validateInputLength,
+} from "../shared/validators";
 
 // ============================================
 // FEEDBACK ADMIN MUTATIONS

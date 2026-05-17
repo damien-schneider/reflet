@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { getAuthUser } from "../shared/utils";
+import { invitableMemberRole } from "../shared/validators";
 
 /**
  * List all members of an organization
@@ -180,7 +181,7 @@ export const remove = mutation({
 export const updateRole = mutation({
   args: {
     memberId: v.id("organizationMembers"),
-    role: v.union(v.literal("admin"), v.literal("member")),
+    role: invitableMemberRole,
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);

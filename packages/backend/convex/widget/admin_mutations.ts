@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { DEFAULT_BRAND_PRIMARY } from "../shared/constants";
 
 function generateWidgetId(): string {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -68,7 +69,7 @@ export const create = mutation({
 
     await ctx.db.insert("widgetSettings", {
       widgetId: id,
-      primaryColor: org.primaryColor ?? "#5c6d4f",
+      primaryColor: org.primaryColor ?? DEFAULT_BRAND_PRIMARY,
       position: "bottom-right",
       welcomeMessage: "Hi there! How can we help you?",
       greetingMessage: "We typically reply within a few hours",

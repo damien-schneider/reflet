@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { authComponent } from "../auth/auth";
+import { resolveOrgReader } from "../shared/access";
 
 const TIME_HORIZON_ORDER = [
   "now",
@@ -29,20 +29,8 @@ export const list = query({
       return [];
     }
 
-    const user = await authComponent.safeGetAuthUser(ctx);
-
-    let isMember = false;
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q.eq("organizationId", args.organizationId).eq("userId", user._id)
-        )
-        .unique();
-      isMember = !!membership;
-    }
-
-    if (!(isMember || org.isPublic)) {
+    const { isMember, canRead } = await resolveOrgReader(ctx, org);
+    if (!canRead) {
       return [];
     }
 

@@ -13,6 +13,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction, internalMutation } from "../_generated/server";
+import { USER_AGENT } from "../shared/constants";
 
 // ============================================
 // VERIFICATION STATUS
@@ -51,8 +52,7 @@ const verifyUrlContent = async (
       signal: controller.signal,
       redirect: "follow",
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; RefletBot/1.0; +https://reflet.dev)",
+        "User-Agent": USER_AGENT,
       },
     });
 

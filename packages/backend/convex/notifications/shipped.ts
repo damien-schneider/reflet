@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalAction } from "../_generated/server";
+import { env } from "../shared/env";
 
 const BATCH_SIZE = 10;
 const BATCH_DELAY_MS = 100;
@@ -39,7 +40,7 @@ export const sendShippedNotifications = internalAction({
       return { success: true, emailsSent: 0 };
     }
 
-    const siteUrl = process.env.SITE_URL ?? "";
+    const siteUrl = env.SITE_URL ?? "";
     let totalSent = 0;
 
     for (const item of data.feedbackItems) {

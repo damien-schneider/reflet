@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { authComponent } from "../auth/auth";
+import { isOrgReader } from "../shared/access";
 
 // ============================================
 // QUERIES
@@ -12,27 +12,13 @@ import { authComponent } from "../auth/auth";
 export const list = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-
     // Get organization
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
       return [];
     }
 
-    // Check access
-    let isMember = false;
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q.eq("organizationId", args.organizationId).eq("userId", user._id)
-        )
-        .unique();
-      isMember = !!membership;
-    }
-
-    if (!(isMember || org.isPublic)) {
+    if (!(await isOrgReader(ctx, org))) {
       return [];
     }
 
@@ -74,20 +60,7 @@ export const getBySlug = query({
     }
 
     // Tags are accessible if org is public or user is a member
-    const user = await authComponent.safeGetAuthUser(ctx);
-
-    let isMember = false;
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q.eq("organizationId", args.organizationId).eq("userId", user._id)
-        )
-        .unique();
-      isMember = !!membership;
-    }
-
-    if (!(isMember || org.isPublic)) {
+    if (!(await isOrgReader(ctx, org))) {
       return null;
     }
 

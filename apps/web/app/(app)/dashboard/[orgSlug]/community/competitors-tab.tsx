@@ -2,28 +2,28 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
+import {
+  SEVEN_DAYS_MS,
+  THIRTY_DAYS_MS,
+} from "@reflet/backend/convex/shared/constants";
 import { IconExternalLink, IconSearch, IconTarget } from "@tabler/icons-react";
 import { useQuery } from "convex/react";
 import { useState } from "react";
-
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CompetitorSheet } from "@/features/autopilot/components/competitor-sheet";
 import { cn } from "@/lib/utils";
 
-const STALENESS_7D = 7 * 24 * 60 * 60 * 1000;
-const STALENESS_30D = 30 * 24 * 60 * 60 * 1000;
-
 function getStaleness(lastResearchedAt?: number) {
   if (!lastResearchedAt) {
     return null;
   }
   const age = Date.now() - lastResearchedAt;
-  if (age > STALENESS_30D) {
+  if (age > THIRTY_DAYS_MS) {
     return "stale";
   }
-  if (age > STALENESS_7D) {
+  if (age > SEVEN_DAYS_MS) {
     return "aging";
   }
   return "fresh";

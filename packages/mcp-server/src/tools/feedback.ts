@@ -1,6 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { RefletAdminClient } from "../client.js";
+import {
+  complexityValueEnum,
+  feedbackStatusEnum,
+  priorityValueEnum,
+} from "../shared/enums.js";
 import { textResult } from "./utils.js";
 
 export function registerFeedbackTools(
@@ -11,15 +16,7 @@ export function registerFeedbackTools(
     "feedback_list",
     "List feedback items. Filter by status, tags, or search text. Sort by votes, newest, oldest, or comments.",
     {
-      status: z
-        .enum([
-          "open",
-          "under_review",
-          "planned",
-          "in_progress",
-          "completed",
-          "closed",
-        ])
+      status: feedbackStatusEnum
         .optional()
         .describe("Filter by feedback status"),
       statusId: z
@@ -116,17 +113,7 @@ export function registerFeedbackTools(
     {
       feedbackId: z.string().describe("The feedback item ID"),
       statusId: z.string().optional().describe("Organization status ID to set"),
-      status: z
-        .enum([
-          "open",
-          "under_review",
-          "planned",
-          "in_progress",
-          "completed",
-          "closed",
-        ])
-        .optional()
-        .describe("Generic status to set"),
+      status: feedbackStatusEnum.optional().describe("Generic status to set"),
     },
     async ({ feedbackId, statusId, status }) =>
       textResult(await client.setFeedbackStatus(feedbackId, statusId, status))
@@ -173,9 +160,7 @@ export function registerFeedbackTools(
     "Set the priority level of a feedback item.",
     {
       feedbackId: z.string().describe("The feedback item ID"),
-      priority: z
-        .enum(["critical", "high", "medium", "low", "none"])
-        .describe("Priority level"),
+      priority: priorityValueEnum.describe("Priority level"),
     },
     async ({ feedbackId, priority }) =>
       textResult(await client.updateFeedbackAnalysis({ feedbackId, priority }))
@@ -186,9 +171,7 @@ export function registerFeedbackTools(
     "Set the complexity level of a feedback item.",
     {
       feedbackId: z.string().describe("The feedback item ID"),
-      complexity: z
-        .enum(["trivial", "simple", "moderate", "complex", "very_complex"])
-        .describe("Complexity level"),
+      complexity: complexityValueEnum.describe("Complexity level"),
     },
     async ({ feedbackId, complexity }) =>
       textResult(

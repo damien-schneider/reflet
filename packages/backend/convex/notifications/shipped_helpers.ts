@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { internalQuery } from "../_generated/server";
+import { hasActiveSubscription } from "../billing/lib";
 export const getShippedNotificationData = internalQuery({
   args: { releaseId: v.id("releases") },
   handler: async (ctx, args) => {
@@ -36,15 +37,11 @@ export const getShippedNotificationData = internalQuery({
       components.stripe.public.getSubscriptionByOrgId,
       { orgId: release.organizationId }
     );
-    const isPro =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
-
     return {
       releaseTitle: release.title,
       orgName: org.name,
       orgSlug: org.slug,
-      isPro: Boolean(isPro),
+      isPro: hasActiveSubscription(subscription),
       feedbackItems,
     };
   },

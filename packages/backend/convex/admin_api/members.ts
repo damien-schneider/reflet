@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { INVITATION_EXPIRY_MS } from "../shared/constants";
+import { invitableMemberRole } from "../shared/validators";
 
 // ============================================
 // MEMBER QUERIES
@@ -53,13 +55,11 @@ export const listInvitations = internalQuery({
 // INVITATION MUTATIONS
 // ============================================
 
-const INVITATION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-
 export const createInvitation = internalMutation({
   args: {
     organizationId: v.id("organizations"),
     email: v.string(),
-    role: v.union(v.literal("admin"), v.literal("member")),
+    role: invitableMemberRole,
   },
   returns: v.object({ id: v.id("invitations") }),
   handler: async (ctx, args) => {

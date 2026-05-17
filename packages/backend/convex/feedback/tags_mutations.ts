@@ -1,14 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { slugify } from "../shared/slug";
 import { getAuthUser } from "../shared/utils";
-
-// Helper to generate slug from name
-const generateSlug = (name: string): string => {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-};
 
 // Default tags for categorizing feedback types
 const DEFAULT_TAGS = [
@@ -126,7 +119,7 @@ export const create = mutation({
     }
 
     // Generate or validate slug
-    let slug = args.slug ?? generateSlug(args.name);
+    let slug = args.slug ?? slugify(args.name);
 
     // Ensure slug is unique within the organization
     const existingTag = await ctx.db

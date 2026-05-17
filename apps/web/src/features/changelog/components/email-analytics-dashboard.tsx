@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { PAGE_SIZE } from "@reflet/backend/convex/shared/constants";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
@@ -102,7 +103,7 @@ function StatCard({
               <span
                 className={cn(
                   "flex items-center text-xs",
-                  trend === "up" ? "text-green-600" : "text-red-600"
+                  trend === "up" ? "text-success" : "text-destructive"
                 )}
               >
                 {trend === "up" ? (
@@ -141,7 +142,7 @@ export function EmailAnalyticsDashboard({
 
   const recentEmails = useQuery(api.email.analytics.getRecentEmails, {
     organizationId,
-    limit: 20,
+    limit: PAGE_SIZE.SMALL,
   });
 
   const isLoading =

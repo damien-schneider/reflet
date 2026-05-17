@@ -41,7 +41,7 @@ function WidgetMockup() {
   return (
     <div className="space-y-4">
       {/* Code editor */}
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)]">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-product-tour">
         {/* Chrome */}
         <div className="flex items-center gap-3 border-border border-b bg-muted px-4 py-2.5">
           <div className="flex gap-1.5">
@@ -104,7 +104,7 @@ const AI_AUTO_TAGS = [
 
 function AIMockup() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)]">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-product-tour">
       {/* Header */}
       <div className="flex items-center justify-between border-border border-b px-5 py-3">
         <div className="flex items-center gap-2">

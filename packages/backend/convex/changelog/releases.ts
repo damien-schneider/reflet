@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { canReadRelease, resolveOrgReader } from "../shared/access";
 
 /**
  * List releases for an organization
@@ -16,22 +17,9 @@ export const list = query({
       return [];
     }
 
-    const user = await authComponent.safeGetAuthUser(ctx);
-
-    // Check access
-    let isMember = false;
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q.eq("organizationId", args.organizationId).eq("userId", user._id)
-        )
-        .unique();
-      isMember = !!membership;
-    }
-
     // Non-members can only see public releases
-    if (!(isMember || org.isPublic)) {
+    const { isMember, canRead } = await resolveOrgReader(ctx, org);
+    if (!canRead) {
       return [];
     }
 
@@ -114,22 +102,9 @@ export const get = query({
       return null;
     }
 
-    const user = await authComponent.safeGetAuthUser(ctx);
-
-    // Check access
-    let isMember = false;
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q.eq("organizationId", release.organizationId).eq("userId", user._id)
-        )
-        .unique();
-      isMember = !!membership;
-    }
-
     // Non-members can only see published releases in public orgs
-    if (!(isMember || (org.isPublic && release.publishedAt))) {
+    const { isMember, canRead } = await canReadRelease(ctx, org, release);
+    if (!canRead) {
       return null;
     }
 

@@ -1,6 +1,10 @@
 "use client";
 
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
+import {
+  SEVEN_DAYS_MS,
+  THIRTY_DAYS_MS,
+} from "@reflet/backend/convex/shared/constants";
 import { IconExternalLink } from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
 import type { ReactNode } from "react";
@@ -122,10 +126,8 @@ function computeStaleness(lastResearchedAt?: number) {
     return { isStale: false, isAging: false };
   }
   const age = Date.now() - lastResearchedAt;
-  const STALENESS_30D = 30 * 24 * 60 * 60 * 1000;
-  const STALENESS_7D = 7 * 24 * 60 * 60 * 1000;
-  const isStale = age > STALENESS_30D;
-  return { isStale, isAging: age > STALENESS_7D && !isStale };
+  const isStale = age > THIRTY_DAYS_MS;
+  return { isStale, isAging: age > SEVEN_DAYS_MS && !isStale };
 }
 
 function parseFeatures(features?: string): string[] {

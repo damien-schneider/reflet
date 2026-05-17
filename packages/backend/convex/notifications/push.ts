@@ -5,6 +5,8 @@ import webpush from "web-push";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalAction } from "../_generated/server";
+import { EMAIL_ADDRESSES } from "../shared/constants";
+import { env } from "../shared/env";
 
 // Notification type preference mapping
 const NOTIFICATION_TYPE_PREFERENCE_MAP: Record<string, string> = {
@@ -37,9 +39,9 @@ function getVapidConfig(): {
   privateKey: string;
   subject: string;
 } | null {
-  const publicKey = process.env.VAPID_PUBLIC_KEY;
-  const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT ?? "mailto:hello@reflet.dev";
+  const publicKey = env.VAPID_PUBLIC_KEY;
+  const privateKey = env.VAPID_PRIVATE_KEY;
+  const subject = env.VAPID_SUBJECT ?? `mailto:${EMAIL_ADDRESSES.HELLO}`;
 
   if (!(publicKey && privateKey)) {
     console.error("[Push] VAPID keys not configured");

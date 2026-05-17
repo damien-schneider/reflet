@@ -7,6 +7,7 @@
 
 import { generateText } from "ai";
 import { z } from "zod";
+import { USER_AGENT } from "../../shared/constants";
 import {
   DEFAULT_MAX_OUTPUT_TOKENS,
   openrouter,
@@ -210,8 +211,7 @@ export const validateUrl = async (url: string): Promise<UrlValidation> => {
       signal: controller.signal,
       redirect: "follow",
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; RefletBot/1.0; +https://reflet.dev)",
+        "User-Agent": USER_AGENT,
       },
     });
 
@@ -234,8 +234,7 @@ export const validateUrl = async (url: string): Promise<UrlValidation> => {
         signal: getController.signal,
         redirect: "follow",
         headers: {
-          "User-Agent":
-            "Mozilla/5.0 (compatible; RefletBot/1.0; +https://reflet.dev)",
+          "User-Agent": USER_AGENT,
         },
       });
 

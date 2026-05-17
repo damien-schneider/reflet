@@ -1,14 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-
-const feedbackStatus = v.union(
-  v.literal("open"),
-  v.literal("under_review"),
-  v.literal("planned"),
-  v.literal("in_progress"),
-  v.literal("completed"),
-  v.literal("closed")
-);
+import { feedbackStatus } from "../shared/validators";
 
 /**
  * Get organization configuration for the public API

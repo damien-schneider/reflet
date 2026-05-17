@@ -1,3 +1,4 @@
+import { env } from "@reflet/env/server";
 import { Agentation } from "agentation";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@/components/ui/sonner";
@@ -12,7 +13,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Toaster richColors />
         <AuthDialog />
         {process.env.NODE_ENV === "development" &&
-          process.env.AUTOPILOT_E2E_BYPASS !== "1" && <Agentation />}
+          env.AUTOPILOT_E2E_BYPASS !== "1" && <Agentation />}
       </NuqsAdapter>
     </Providers>
   );

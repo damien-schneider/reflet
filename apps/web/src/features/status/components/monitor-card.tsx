@@ -8,6 +8,10 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import {
+  MONITOR_STATUS_LABEL_STYLES,
+  MONITOR_STATUS_LABELS,
+} from "@reflet/ui/status-colors";
 import { Button } from "@/components/ui/button";
 import {
   DropdownList,
@@ -54,20 +58,6 @@ interface MonitorCardProps {
   uptimeData?: UptimeData;
 }
 
-const statusLabels = {
-  operational: "Operational",
-  degraded: "Degraded",
-  major_outage: "Major Outage",
-  paused: "Paused",
-} as const;
-
-const statusLabelStyles = {
-  operational: "text-emerald-600 dark:text-emerald-400",
-  degraded: "text-amber-600 dark:text-amber-400",
-  major_outage: "text-red-600 dark:text-red-400",
-  paused: "text-muted-foreground",
-} as const;
-
 export function MonitorCard({
   monitor,
   onPause,
@@ -91,10 +81,10 @@ export function MonitorCard({
               <span
                 className={cn(
                   "font-medium text-xs",
-                  statusLabelStyles[monitor.status]
+                  MONITOR_STATUS_LABEL_STYLES[monitor.status]
                 )}
               >
-                {statusLabels[monitor.status]}
+                {MONITOR_STATUS_LABELS[monitor.status]}
               </span>
             </div>
             <p className="truncate text-muted-foreground text-xs">

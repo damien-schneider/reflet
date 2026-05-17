@@ -8,9 +8,10 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateObject, Output, streamText } from "ai";
 import type { z } from "zod";
+import { env } from "../../shared/env";
 
 export const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 export const DEFAULT_MAX_OUTPUT_TOKENS = 4096;

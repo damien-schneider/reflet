@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { internalQuery } from "../_generated/server";
+import { SEVEN_DAYS_MS } from "../shared/constants";
 
-const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const ONE_WEEK_MS = SEVEN_DAYS_MS;
 
 /**
  * Get all organization IDs for digest processing.

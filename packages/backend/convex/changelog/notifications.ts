@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
 import { internalAction } from "../_generated/server";
+import { env } from "../shared/env";
 import { stripHtml } from "../shared/text_formatters";
 
 const BATCH_SIZE = 10;
@@ -176,7 +177,7 @@ export const sendReleaseNotifications = internalAction({
       return { success: true, emailsSent: 0 };
     }
 
-    const siteUrl = process.env.SITE_URL ?? "";
+    const siteUrl = env.SITE_URL ?? "";
     const params = {
       siteUrl,
       releaseUrl: `${siteUrl}/${org.slug}/changelog`,

@@ -2,10 +2,11 @@ import { Agent } from "@convex-dev/agent";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
 import { components } from "../_generated/api";
+import { env } from "../shared/env";
 
 // Use OpenRouter for LLM access
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 export const chatAgent = new Agent(components.agent, {

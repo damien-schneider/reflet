@@ -4,6 +4,7 @@
 
 import { v } from "convex/values";
 import { query } from "../../_generated/server";
+import { SEVEN_DAYS_MS } from "../../shared/constants";
 import { getAuthUser } from "../../shared/utils";
 import {
   DEFAULT_MAX_PENDING_PER_AGENT,
@@ -176,7 +177,7 @@ export const getChartData = query({
     await requireOrgMembership(ctx, args.organizationId, user._id);
 
     const now = Date.now();
-    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const sevenDaysAgo = now - SEVEN_DAYS_MS;
 
     // Activity over last 7 days
     const recentActivity = await ctx.db
@@ -269,7 +270,7 @@ export const getAgentPerformance = query({
     const user = await getAuthUser(ctx);
     await requireOrgMembership(ctx, args.organizationId, user._id);
 
-    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - SEVEN_DAYS_MS;
 
     const logs = await ctx.db
       .query("autopilotActivityLog")

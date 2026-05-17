@@ -1,6 +1,10 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { RefletAdminClient } from "../client.js";
+import {
+  feedbackStatusEnum,
+  releaseFilterStatusEnum,
+} from "../shared/enums.js";
 import { textResult } from "./utils.js";
 
 export function registerReleaseTools(
@@ -11,8 +15,7 @@ export function registerReleaseTools(
     "release_list",
     "List releases (changelog entries). Filter by draft/published status.",
     {
-      status: z
-        .enum(["draft", "published", "all"])
+      status: releaseFilterStatusEnum
         .optional()
         .describe("Filter by publish status (default: all)"),
       limit: z.number().optional().describe("Max items to return"),
@@ -109,15 +112,7 @@ export function registerReleaseTools(
       scheduledPublishAt: z
         .number()
         .describe("Unix timestamp in milliseconds for when to publish"),
-      feedbackStatus: z
-        .enum([
-          "open",
-          "under_review",
-          "planned",
-          "in_progress",
-          "completed",
-          "closed",
-        ])
+      feedbackStatus: feedbackStatusEnum
         .optional()
         .describe(
           "Status to set on linked feedback items when the release publishes"

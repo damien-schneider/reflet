@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { RefletAdminClient } from "../client.js";
+import { milestoneFilterStatusEnum } from "../shared/enums.js";
 import { textResult } from "./utils.js";
 
 export function registerMilestoneTools(
@@ -11,8 +12,7 @@ export function registerMilestoneTools(
     "milestone_list",
     "List milestones with their progress (linked feedback count). Filter by status.",
     {
-      status: z
-        .enum(["active", "completed", "archived", "all"])
+      status: milestoneFilterStatusEnum
         .optional()
         .describe("Filter by milestone status (default: all)"),
     },

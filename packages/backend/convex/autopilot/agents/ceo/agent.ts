@@ -5,11 +5,12 @@
 import { Agent } from "@convex-dev/agent";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { components } from "../../../_generated/api";
+import { env } from "../../../shared/env";
 import { MODELS, QUALITY_MODELS } from "../models";
 import { buildAgentPrompt, CEO_SYSTEM_PROMPT } from "../prompts";
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 export const CEO_MODELS = QUALITY_MODELS;

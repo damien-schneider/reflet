@@ -1,9 +1,8 @@
 import createMDX from "@next/mdx";
 import { withPostHogConfig } from "@posthog/nextjs-config";
+import { env as serverEnv } from "@reflet/env/server";
+import { env as webEnv } from "@reflet/env/web";
 import type { NextConfig } from "next";
-
-// Import env to validate at build time
-import "@reflet/env/web";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -107,14 +106,14 @@ const withMDX = createMDX({});
 
 const configWithMDX = withMDX(nextConfig);
 
-const posthogApiKey = process.env.POSTHOG_PERSONAL_API_KEY;
-const posthogProjectId = process.env.POSTHOG_PROJECT_ID;
+const posthogApiKey = serverEnv.POSTHOG_PERSONAL_API_KEY;
+const posthogProjectId = serverEnv.POSTHOG_PROJECT_ID;
 
 export default posthogApiKey && posthogProjectId
   ? withPostHogConfig(configWithMDX, {
       personalApiKey: posthogApiKey,
       projectId: posthogProjectId,
-      host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+      host: webEnv.NEXT_PUBLIC_POSTHOG_HOST,
       sourcemaps: {
         deleteAfterUpload: true,
       },

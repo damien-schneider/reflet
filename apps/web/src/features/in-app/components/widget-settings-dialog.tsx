@@ -2,6 +2,7 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
+import { DEFAULT_BRAND_PRIMARY } from "@reflet/backend/convex/shared/constants";
 import { useMutation } from "convex/react";
 import { type ChangeEvent, useState } from "react";
 import { toast } from "sonner";
@@ -49,7 +50,7 @@ export function WidgetSettingsDialog({
   const [isSaving, setIsSaving] = useState(false);
 
   const [primaryColor, setPrimaryColor] = useState(
-    widget.settings?.primaryColor ?? "#5c6d4f"
+    widget.settings?.primaryColor ?? DEFAULT_BRAND_PRIMARY
   );
   const [position, setPosition] = useState<WidgetPosition>(
     widget.settings?.position ?? "bottom-right"
@@ -119,7 +120,7 @@ export function WidgetSettingsDialog({
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setPrimaryColor(e.target.value)
                 }
-                placeholder="#5c6d4f"
+                placeholder={DEFAULT_BRAND_PRIMARY}
                 value={primaryColor}
               />
             </div>

@@ -18,13 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { H2, H3, Muted, Text } from "@/components/ui/typography";
-
-const generateSlug = (text: string): string => {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-};
+import { slugify } from "@/lib/slug";
 
 export default function GeneralSettingsPage({
   params,
@@ -75,7 +69,7 @@ export default function GeneralSettingsPage({
   }
 
   const handleSlugChange = (value: string) => {
-    setSlug(generateSlug(value));
+    setSlug(slugify(value));
     setError(null);
   };
 

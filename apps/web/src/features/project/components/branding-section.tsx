@@ -3,6 +3,7 @@
 import { Check, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { DEFAULT_BRAND_PRIMARY } from "@reflet/backend/convex/shared/constants";
 import { useMutation, useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,7 +20,6 @@ import {
   normalizeHexColor,
 } from "@/lib/color-utils";
 
-const DEFAULT_PRIMARY_COLOR = "#5c6d4f";
 const AUTOSAVE_DEBOUNCE_MS = 800;
 
 interface BrandingSectionProps {
@@ -40,8 +40,8 @@ export function BrandingSection({
   const updateOrg = useMutation(api.organizations.mutations.update);
 
   const [logo, setLogo] = useState<string | null>(null);
-  const [primaryColor, setPrimaryColor] = useState(DEFAULT_PRIMARY_COLOR);
-  const [colorInput, setColorInput] = useState(DEFAULT_PRIMARY_COLOR);
+  const [primaryColor, setPrimaryColor] = useState(DEFAULT_BRAND_PRIMARY);
+  const [colorInput, setColorInput] = useState(DEFAULT_BRAND_PRIMARY);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
     "idle"
   );
@@ -57,7 +57,7 @@ export function BrandingSection({
     function syncOrgBrandingState() {
       if (org) {
         setLogo(org.logo ?? null);
-        const color = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
+        const color = org.primaryColor ?? DEFAULT_BRAND_PRIMARY;
         setPrimaryColor(color);
         setColorInput(color);
       }
@@ -172,13 +172,13 @@ export function BrandingSection({
             disabled={isBrandingDisabled}
             id="primary-color"
             onChange={(e) => handleColorInputChange(e.target.value)}
-            placeholder="#5c6d4f"
+            placeholder={DEFAULT_BRAND_PRIMARY}
             value={colorInput}
           />
         </div>
         {!isValidHexColor(colorInput) && colorInput !== "" ? (
           <p className="text-destructive text-sm">
-            Please enter a valid hex color (e.g., #5c6d4f)
+            Please enter a valid hex color (e.g., {DEFAULT_BRAND_PRIMARY})
           </p>
         ) : null}
       </div>

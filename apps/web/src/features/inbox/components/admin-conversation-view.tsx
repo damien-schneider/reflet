@@ -2,6 +2,8 @@
 
 import { ArrowLeft, ChatCircle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { supportConversationStatus } from "@reflet/backend/convex/shared/validators";
+import type { Infer } from "convex/values";
 
 import { Button } from "@/components/ui/button";
 import { H2, H3, Muted, Text } from "@/components/ui/typography";
@@ -10,7 +12,7 @@ import { InlineStatusButtons } from "@/features/inbox/components/inline-status-b
 import { MessageInput } from "@/features/inbox/components/message-input";
 import { MessageList } from "@/features/inbox/components/message-list";
 
-type ConversationStatus = "open" | "awaiting_reply" | "resolved" | "closed";
+type ConversationStatus = Infer<typeof supportConversationStatus>;
 
 interface TeamMember {
   email: string;

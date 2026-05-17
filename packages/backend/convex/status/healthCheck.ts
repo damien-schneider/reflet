@@ -5,6 +5,7 @@ import {
   internalMutation,
   internalQuery,
 } from "../_generated/server";
+import { hasActiveSubscription } from "../billing/lib";
 import { PLAN_LIMITS } from "../billing/queries";
 
 // ============================================
@@ -28,11 +29,7 @@ export const getActiveMonitors = internalQuery({
         components.stripe.public.getSubscriptionByOrgId,
         { orgId }
       );
-      const hasActiveSub =
-        subscription &&
-        (subscription.status === "active" ||
-          subscription.status === "trialing");
-      const min = hasActiveSub
+      const min = hasActiveSubscription(subscription)
         ? PLAN_LIMITS.pro.minCheckIntervalMinutes
         : PLAN_LIMITS.free.minCheckIntervalMinutes;
       orgTierCache.set(orgId, min);

@@ -1,6 +1,7 @@
 import { StripeSubscriptions } from "@convex-dev/stripe";
 import Stripe from "stripe";
 import { components } from "../_generated/api";
+import { env } from "../shared/env";
 
 /**
  * Stripe client for managing subscriptions and billing
@@ -20,8 +21,8 @@ export const stripeClient = new StripeSubscriptions(
 );
 
 export const STRIPE_PRICES = {
-  proMonthly: process.env.STRIPE_PRICE_PRO_MONTHLY ?? "",
-  proYearly: process.env.STRIPE_PRICE_PRO_YEARLY ?? "",
+  proMonthly: env.STRIPE_PRICE_PRO_MONTHLY ?? "",
+  proYearly: env.STRIPE_PRICE_PRO_YEARLY ?? "",
 } as const;
 
 /**

@@ -6,6 +6,7 @@
 import { v } from "convex/values";
 import { api, internal } from "../../_generated/api";
 import { action } from "../../_generated/server";
+import { env } from "../../shared/env";
 
 interface Repository {
   defaultBranch: string;
@@ -277,7 +278,7 @@ export const setupWebhook = action({
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
-    const convexSiteUrl = process.env.CONVEX_SITE_URL ?? "";
+    const convexSiteUrl = env.CONVEX_SITE_URL ?? "";
     const webhookUrl = `${convexSiteUrl}/github-webhook`;
 
     const webhookResult = await ctx.runAction(

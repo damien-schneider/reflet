@@ -6,7 +6,7 @@ import {
   DotsThreeVertical,
   PushPin,
 } from "@phosphor-icons/react";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,11 +26,10 @@ import {
 import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
 
-interface OrganizationStatus {
-  _id: Id<"organizationStatuses">;
-  color: string;
-  name: string;
-}
+type OrganizationStatus = Pick<
+  Doc<"organizationStatuses">,
+  "_id" | "color" | "name"
+>;
 
 interface PublicFeedbackHeaderProps {
   commentCount: number;

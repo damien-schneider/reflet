@@ -1,6 +1,7 @@
 import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
+import { env } from "../../shared/env";
 import { clusterCommitsWithAI, generateNotesForGroup } from "./ai_helpers";
 import {
   buildGroupMap,
@@ -321,7 +322,7 @@ export async function handleGenerateNotes(
       return;
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = env.OPENROUTER_API_KEY;
     if (!apiKey) {
       throw new Error("OPENROUTER_API_KEY is not configured");
     }

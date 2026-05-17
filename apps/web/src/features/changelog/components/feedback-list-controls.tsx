@@ -2,27 +2,13 @@
 
 import { Check, MagnifyingGlass, X } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import {
+  FEEDBACK_STATUS_BADGE_VARIANTS,
+  FEEDBACK_STATUS_LABELS,
+} from "@reflet/ui/feedback-status-colors";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const STATUS_LABELS: Record<string, string> = {
-  open: "Open",
-  under_review: "Under Review",
-  planned: "Planned",
-  in_progress: "In Progress",
-  completed: "Completed",
-  closed: "Closed",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  open: "blue",
-  under_review: "orange",
-  planned: "purple",
-  in_progress: "yellow",
-  completed: "green",
-  closed: "gray",
-};
 
 // --- StatusBadge shared util ---
 
@@ -31,16 +17,14 @@ function StatusBadge({ status }: { status: string }) {
     <Badge
       className="shrink-0 text-xs"
       variant={
-        (STATUS_COLORS[status] as
-          | "green"
-          | "blue"
-          | "orange"
-          | "purple"
-          | "yellow"
-          | "gray") ?? "gray"
+        (FEEDBACK_STATUS_BADGE_VARIANTS[
+          status as keyof typeof FEEDBACK_STATUS_BADGE_VARIANTS
+        ] as "green" | "blue" | "orange" | "purple" | "yellow" | "gray") ??
+        "gray"
       }
     >
-      {STATUS_LABELS[status] ?? status}
+      {FEEDBACK_STATUS_LABELS[status as keyof typeof FEEDBACK_STATUS_LABELS] ??
+        status}
     </Badge>
   );
 }

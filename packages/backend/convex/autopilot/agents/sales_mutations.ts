@@ -7,7 +7,10 @@
 import { v } from "convex/values";
 import { internal } from "../../_generated/api";
 import { internalAction, internalMutation } from "../../_generated/server";
+import { ONE_DAY_MS, SEVEN_DAYS_MS } from "../../shared/constants";
 import { leadSource, leadStatus } from "../schema/validators";
+
+const THREE_DAYS_MS = 3 * ONE_DAY_MS;
 
 // ============================================
 // MUTATIONS
@@ -79,7 +82,6 @@ export const updateLeadStatus = internalMutation({
       updates.lastContactedAt = now;
       updates.outreachCount = lead.outreachCount + 1;
       // Default follow-up in 3 days
-      const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
       updates.nextFollowUpAt = now + THREE_DAYS_MS;
     }
 
@@ -177,7 +179,6 @@ export const runSalesFollowUp = internalAction({
       });
 
       // Schedule next follow-up (7 days from now)
-      const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
       await ctx.runMutation(
         internal.autopilot.agents.sales_mutations.updateLeadFollowUp,
         {

@@ -43,7 +43,7 @@ const requestBodySchema = z.object({
 
 export async function POST(request: Request): Promise<Response> {
   try {
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!env.OPENROUTER_API_KEY) {
       return Response.json(
         { error: "AI service not configured" },
         { status: 503 }

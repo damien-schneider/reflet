@@ -14,6 +14,7 @@ import { stepCountIs } from "ai";
 import { v } from "convex/values";
 import { internal } from "../../_generated/api";
 import { internalAction } from "../../_generated/server";
+import { env } from "../../shared/env";
 import { createExplorationTools } from "./exploration_tools";
 import {
   EXPLORATION_SYSTEM_PROMPT,
@@ -122,7 +123,7 @@ export const runProductExploration = internalAction({
     }
 
     const openrouter = createOpenRouter({
-      apiKey: process.env.OPENROUTER_API_KEY,
+      apiKey: env.OPENROUTER_API_KEY,
     });
 
     // =========================================

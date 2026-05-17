@@ -7,9 +7,10 @@ import { WelcomeEmail } from "@reflet/email/templates/welcome-email";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { env } from "../shared/env";
+import { invitableMemberRole } from "../shared/validators";
 
-const fromEmail =
-  process.env.RESEND_FROM_EMAIL ?? "notifications@mail.reflet.app";
+const fromEmail = env.RESEND_FROM_EMAIL ?? "notifications@mail.reflet.app";
 const fromName = "Reflet";
 const defaultFrom = `${fromName} <${fromEmail}>`;
 const SUPPORT_EMAIL = "support@reflet.app";
@@ -78,7 +79,7 @@ export const sendWelcomeEmail = internalAction({
     dashboardUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const siteUrl = process.env.SITE_URL ?? "";
+    const siteUrl = env.SITE_URL ?? "";
     const dashboardUrl = args.dashboardUrl
       ? `${siteUrl}${args.dashboardUrl}`
       : `${siteUrl}/dashboard`;
@@ -107,7 +108,7 @@ export const sendInvitationEmail = internalAction({
     to: v.string(),
     organizationName: v.string(),
     inviterName: v.string(),
-    role: v.union(v.literal("admin"), v.literal("member")),
+    role: invitableMemberRole,
     acceptUrl: v.string(),
   },
   handler: async (ctx, args) => {
@@ -159,7 +160,7 @@ export const sendTemplatedEmail = internalAction({
         break;
       }
       case "welcome": {
-        const siteUrl = process.env.SITE_URL ?? "";
+        const siteUrl = env.SITE_URL ?? "";
         const dashboardUrl = args.templateProps.dashboardUrl
           ? `${siteUrl}${args.templateProps.dashboardUrl}`
           : `${siteUrl}/dashboard`;

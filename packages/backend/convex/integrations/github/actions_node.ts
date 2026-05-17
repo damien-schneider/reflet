@@ -2,6 +2,7 @@
 
 import { v } from "convex/values";
 import { action } from "../../_generated/server";
+import { env } from "../../shared/env";
 
 // GitHub API base URL
 const GITHUB_API_URL = "https://api.github.com";
@@ -15,8 +16,8 @@ export const getInstallationToken = action({
     installationId: v.string(),
   },
   handler: async (_ctx, args) => {
-    const appId = process.env.GITHUB_APP_ID;
-    const privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
+    const appId = env.GITHUB_APP_ID;
+    const privateKey = env.GITHUB_APP_PRIVATE_KEY;
 
     if (!(appId && privateKey)) {
       throw new Error("GitHub App credentials not configured");

@@ -7,12 +7,13 @@ import { z } from "zod";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalAction } from "../_generated/server";
+import { env } from "../shared/env";
 
 const SIMILARITY_THRESHOLD = 0.7;
 const MAX_CANDIDATES = 10;
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 const DUPLICATE_CHECK_MODELS = [

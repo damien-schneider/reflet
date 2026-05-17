@@ -14,7 +14,11 @@ import {
   Trash,
   WarningCircle,
 } from "@phosphor-icons/react";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
+import {
+  FEEDBACK_STATUS_DOT_COLORS,
+  FEEDBACK_STATUS_LABELS,
+} from "@reflet/ui/feedback-status-colors";
 import Link from "next/link";
 import type * as React from "react";
 import { Badge } from "@/components/ui/badge";
@@ -29,27 +33,27 @@ import {
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { cn } from "@/lib/utils";
 
-interface LinkedFeedback {
-  _id: Id<"feedback">;
+type LinkedFeedback = Pick<Doc<"feedback">, "_id" | "title"> & {
   status?: string;
-  title: string;
-}
+};
 
-export interface ReleaseData {
-  _creationTime: number;
-  _id: Id<"releases">;
+export type ReleaseData = Pick<
+  Doc<"releases">,
+  | "_creationTime"
+  | "_id"
+  | "description"
+  | "githubHtmlUrl"
+  | "githubPushErrorType"
+  | "githubPushStatus"
+  | "githubReleaseId"
+  | "publishedAt"
+  | "scheduledPublishAt"
+  | "title"
+  | "version"
+> & {
   commitCount?: number;
-  description?: string;
   feedback?: (LinkedFeedback | null)[];
-  githubHtmlUrl?: string;
-  githubPushErrorType?: string;
-  githubPushStatus?: "pending" | "success" | "failed";
-  githubReleaseId?: string;
-  publishedAt?: number;
-  scheduledPublishAt?: number;
-  title: string;
-  version?: string;
-}
+};
 
 interface ReleaseItemProps {
   isAdmin?: boolean;
@@ -243,32 +247,19 @@ export function ReleaseItem({
   );
 }
 
-const STATUS_DOT_COLORS: Record<string, string> = {
-  open: "bg-blue-500",
-  under_review: "bg-orange-500",
-  planned: "bg-purple-500",
-  in_progress: "bg-yellow-500",
-  completed: "bg-green-500",
-  closed: "bg-gray-400",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  open: "Open",
-  under_review: "Under Review",
-  planned: "Planned",
-  in_progress: "In Progress",
-  completed: "Completed",
-  closed: "Closed",
-};
-
 function FeedbackStatusDot({ status }: { status: string }) {
   return (
     <span
       className={cn(
         "inline-block size-2 shrink-0 rounded-full",
-        STATUS_DOT_COLORS[status] ?? "bg-gray-400"
+        FEEDBACK_STATUS_DOT_COLORS[
+          status as keyof typeof FEEDBACK_STATUS_DOT_COLORS
+        ] ?? "bg-gray-400"
       )}
-      title={STATUS_LABELS[status] ?? status}
+      title={
+        FEEDBACK_STATUS_LABELS[status as keyof typeof FEEDBACK_STATUS_LABELS] ??
+        status
+      }
     />
   );
 }

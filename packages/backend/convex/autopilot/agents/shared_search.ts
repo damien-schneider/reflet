@@ -5,6 +5,7 @@
  * web search. Both paths produce the same DiscoveredThread[] output.
  */
 
+import { USER_AGENT } from "../../shared/constants";
 import { WEB_SEARCH_MODELS } from "./models";
 import type { ExaSearchParams } from "./shared_exa";
 import {
@@ -294,8 +295,7 @@ const fetchUrlDirectly = async (url: string): Promise<string | null> => {
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; RefletBot/1.0; +https://reflet.dev)",
+        "User-Agent": USER_AGENT,
       },
     });
 

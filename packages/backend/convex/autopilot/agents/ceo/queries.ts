@@ -4,6 +4,7 @@
 
 import { v } from "convex/values";
 import { internalQuery } from "../../../_generated/server";
+import { SEVEN_DAYS_MS } from "../../../shared/constants";
 
 const AGENT_CONFIG_FIELDS = [
   { name: "pm", field: "pmEnabled" },
@@ -41,7 +42,7 @@ export const getCEOContext = internalQuery({
       },
     };
 
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const sevenDaysAgo = Date.now() - SEVEN_DAYS_MS;
     const recentActivity = await ctx.db
       .query("autopilotActivityLog")
       .withIndex("by_organization", (q) =>

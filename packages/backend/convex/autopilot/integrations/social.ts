@@ -16,6 +16,10 @@ import {
   internalQuery,
 } from "../../_generated/server";
 
+// Note: `BUFFER_ACCESS_TOKEN` and `TYPEFULLY_API_KEY` are read via `process.env`
+// (not `@reflet/env`) because integration tests mutate them at runtime. They are
+// still declared in `convex/shared/env.ts` for documentation.
+
 const formatProviderHttpError = (
   action: string,
   response: Response

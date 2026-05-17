@@ -19,6 +19,11 @@ export const memberRole = v.union(
   v.literal("member")
 );
 
+export const invitableMemberRole = v.union(
+  v.literal("admin"),
+  v.literal("member")
+);
+
 export const invitationStatus = v.union(
   v.literal("pending"),
   v.literal("accepted"),
@@ -32,6 +37,36 @@ export const feedbackStatus = v.union(
   v.literal("in_progress"),
   v.literal("completed"),
   v.literal("closed")
+);
+
+export const priorityValue = v.union(
+  v.literal("critical"),
+  v.literal("high"),
+  v.literal("medium"),
+  v.literal("low"),
+  v.literal("none")
+);
+
+export const complexityValue = v.union(
+  v.literal("trivial"),
+  v.literal("simple"),
+  v.literal("moderate"),
+  v.literal("complex"),
+  v.literal("very_complex")
+);
+
+// Filter params (include "all" — used for query inputs, not stored values)
+export const releaseFilterStatus = v.union(
+  v.literal("draft"),
+  v.literal("published"),
+  v.literal("all")
+);
+
+export const milestoneFilterStatus = v.union(
+  v.literal("active"),
+  v.literal("completed"),
+  v.literal("archived"),
+  v.literal("all")
 );
 
 export const notificationType = v.union(

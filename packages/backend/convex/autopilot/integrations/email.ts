@@ -18,6 +18,10 @@ import {
   internalQuery,
 } from "../../_generated/server";
 
+// Note: `RESEND_API_KEY` is read via `process.env` (not `@reflet/env`) because
+// integration tests mutate `process.env.RESEND_API_KEY` at runtime. The variable
+// is still declared in `convex/shared/env.ts` for documentation.
+
 const formatProviderHttpError = (
   action: string,
   response: Response

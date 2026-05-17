@@ -1,10 +1,11 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { env } from "../shared/env";
 import { getAuthUser } from "../shared/utils";
 
 const getSuperAdminEmails = (): string[] => {
-  const raw = process.env.SUPER_ADMIN_EMAILS ?? "";
+  const raw = env.SUPER_ADMIN_EMAILS ?? "";
   return raw
     .split(",")
     .map((e) => e.trim().toLowerCase())

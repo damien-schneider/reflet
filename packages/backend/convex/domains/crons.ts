@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { hasActiveSubscription } from "../billing/lib";
 
 const MAX_DOMAINS_PER_CHECK = 10;
 const RECENTLY_CHECKED_THRESHOLD_MS = 3 * 60 * 1000; // 3 minutes
@@ -42,11 +43,7 @@ export const checkPendingDomains = internalAction({
         { orgId: org.organizationId }
       );
 
-      const hasProSubscription =
-        subscription?.status === "active" ||
-        subscription?.status === "trialing";
-
-      if (!hasProSubscription) {
+      if (!hasActiveSubscription(subscription)) {
         await ctx.runAction(internal.domains.actions.removeDomainAction, {
           organizationId: org.organizationId,
           domain: org.domain,

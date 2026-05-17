@@ -1,6 +1,7 @@
 "use client";
 
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { env } from "@reflet/env/web";
 import { useCallback, useState } from "react";
 import type { CommitInfo } from "../components/generate-from-commits";
 
@@ -53,7 +54,7 @@ export function useFeedbackMatching(): UseFeedbackMatchingResult {
 
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/match-release-feedback`,
+          `${env.NEXT_PUBLIC_CONVEX_SITE_URL}/api/ai/match-release-feedback`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

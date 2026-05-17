@@ -13,6 +13,7 @@ import { registerGithubApiRoutes } from "./http/github_api";
 import { registerGithubWebhookRoutes } from "./http/github_webhook";
 import { registerPublicApiRoutes } from "./http/public_api";
 import { mcpCorsHandler, mcpHandler } from "./mcp/handler";
+import { env } from "./shared/env";
 
 const http = httpRouter();
 
@@ -70,7 +71,7 @@ http.route({
       { organizationId: org._id, limit: 50 }
     );
 
-    const siteUrl = process.env.SITE_URL ?? "";
+    const siteUrl = env.SITE_URL ?? "";
     const rssXml = generateRssFeed(org, releases, siteUrl);
 
     return new Response(rssXml, {

@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
+import { DEFAULT_BRAND_PRIMARY } from "@reflet/backend/convex/shared/constants";
 import { env } from "@reflet/env/web";
 import { useQuery } from "convex/react";
 import Image from "next/image";
@@ -19,8 +20,6 @@ import { H2, Text as TypographyText } from "@/components/ui/typography";
 import { PublicViewToolbar } from "@/features/feedback/components/public-view-toolbar";
 import { generateColorCssVars, generateColorPalette } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
-
-const DEFAULT_PRIMARY_COLOR = "#5c6d4f";
 
 function resolveTab(pathname: string, basePath: string): string {
   const relativePath = basePath ? pathname.replace(basePath, "") : pathname;
@@ -87,7 +86,7 @@ export function PublicOrgShell({
     [prefetch, basePath, supportEnabled, statusEnabled]
   );
 
-  const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
+  const primaryColor = org.primaryColor ?? DEFAULT_BRAND_PRIMARY;
   const palette = generateColorPalette(primaryColor);
   const colorCssVars = generateColorCssVars(palette);
 

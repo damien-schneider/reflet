@@ -1,5 +1,12 @@
 "use client";
 
+import type {
+  assignedAgent,
+  priority,
+  workItemStatus,
+  workItemType,
+} from "@reflet/backend/convex/autopilot/schema/validators";
+import type { Infer } from "convex/values";
 import {
   parseAsArrayOf,
   parseAsString,
@@ -7,6 +14,11 @@ import {
   useQueryStates,
 } from "nuqs";
 import { useCallback, useMemo } from "react";
+
+export type TaskStatus = Infer<typeof workItemStatus>;
+export type TaskType = Infer<typeof workItemType>;
+export type TaskPriority = Infer<typeof priority>;
+export type TaskAgent = Infer<typeof assignedAgent>;
 
 export const TASK_STATUSES = [
   "triage",
@@ -16,7 +28,7 @@ export const TASK_STATUSES = [
   "in_review",
   "done",
   "cancelled",
-] as const;
+] as const satisfies readonly TaskStatus[];
 
 export const TASK_TYPES = [
   "initiative",
@@ -24,9 +36,14 @@ export const TASK_TYPES = [
   "task",
   "spec",
   "bug",
-] as const;
+] as const satisfies readonly TaskType[];
 
-export const TASK_PRIORITIES = ["critical", "high", "medium", "low"] as const;
+export const TASK_PRIORITIES = [
+  "critical",
+  "high",
+  "medium",
+  "low",
+] as const satisfies readonly TaskPriority[];
 
 export const TASK_AGENTS = [
   "ceo",
@@ -38,7 +55,7 @@ export const TASK_AGENTS = [
   "support",
   "system",
   "validator",
-] as const;
+] as const satisfies readonly TaskAgent[];
 
 export const TASK_GROUP_BY = [
   "none",
@@ -60,10 +77,6 @@ export const TASK_SORT_KEYS = [
 
 export const TASK_VIEW_MODES = ["list", "board"] as const;
 
-export type TaskStatus = (typeof TASK_STATUSES)[number];
-export type TaskType = (typeof TASK_TYPES)[number];
-export type TaskPriority = (typeof TASK_PRIORITIES)[number];
-export type TaskAgent = (typeof TASK_AGENTS)[number];
 export type TaskGroupBy = (typeof TASK_GROUP_BY)[number];
 export type TaskSortKey = (typeof TASK_SORT_KEYS)[number];
 export type TaskViewMode = (typeof TASK_VIEW_MODES)[number];

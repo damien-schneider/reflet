@@ -1,4 +1,5 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { DEFAULT_BRAND_PRIMARY } from "@reflet/backend/convex/shared/constants";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -266,7 +267,7 @@ describe("ChangelogWidgetTab", () => {
 
   it("shows default color when no primary color provided", () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(screen.getByText("#5c6d4f")).toBeInTheDocument();
+    expect(screen.getByText(DEFAULT_BRAND_PRIMARY)).toBeInTheDocument();
   });
 
   it("links to branding settings page", () => {

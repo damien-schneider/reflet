@@ -137,6 +137,7 @@
         "@openrouter/ai-sdk-provider": "^2.3.3",
         "@react-email/render": "^2.0.4",
         "@reflet/email": "workspace:*",
+        "@t3-oss/env-core": "^0.13.11",
         "ai": "^6.0.138",
         "better-auth": "catalog:",
         "convex": "catalog:",

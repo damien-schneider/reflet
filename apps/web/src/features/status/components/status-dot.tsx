@@ -1,27 +1,16 @@
 "use client";
 
+import {
+  MONITOR_STATUS_DOT_COLORS,
+  type MonitorStatus,
+} from "@reflet/ui/status-colors";
 import { cn } from "@/lib/utils";
-
-type StatusType =
-  | "operational"
-  | "degraded"
-  | "major_outage"
-  | "paused"
-  | "no_monitors";
 
 interface StatusDotProps {
   pulse?: boolean;
   size?: "sm" | "md" | "lg";
-  status: StatusType;
+  status: MonitorStatus;
 }
-
-const colorMap: Record<StatusType, string> = {
-  operational: "bg-emerald-500",
-  degraded: "bg-amber-500",
-  major_outage: "bg-red-500",
-  paused: "bg-gray-400",
-  no_monitors: "bg-gray-300",
-};
 
 const sizeMap = {
   sm: "size-2",
@@ -39,7 +28,7 @@ export function StatusDot({
       <span
         className={cn(
           "inline-block rounded-full",
-          colorMap[status],
+          MONITOR_STATUS_DOT_COLORS[status],
           sizeMap[size]
         )}
       />
@@ -47,7 +36,7 @@ export function StatusDot({
         <span
           className={cn(
             "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
-            colorMap[status]
+            MONITOR_STATUS_DOT_COLORS[status]
           )}
         />
       )}

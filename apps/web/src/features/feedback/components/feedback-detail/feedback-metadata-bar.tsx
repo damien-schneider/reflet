@@ -2,7 +2,12 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type {
+  complexityValue,
+  priorityValue,
+} from "@reflet/backend/convex/shared/validators";
 import { useMutation, useQuery } from "convex/react";
+import type { Infer } from "convex/values";
 import { useCallback, useState } from "react";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { AiAnalysisDisplay } from "./ai-analysis-display";
@@ -15,16 +20,13 @@ import { SubscribeButton } from "./subscribe-button";
 import { TagDisplay } from "./tag-display";
 import { VoteButtons } from "./vote-buttons";
 
+type PriorityValue = Infer<typeof priorityValue>;
+type ComplexityValue = Infer<typeof complexityValue>;
+
 interface FeedbackMetadataBarProps {
-  aiComplexity?:
-    | "trivial"
-    | "simple"
-    | "moderate"
-    | "complex"
-    | "very_complex"
-    | null;
+  aiComplexity?: ComplexityValue | null;
   aiComplexityReasoning?: string | null;
-  aiPriority?: "critical" | "high" | "medium" | "low" | "none" | null;
+  aiPriority?: PriorityValue | null;
   aiPriorityReasoning?: string | null;
   aiTimeEstimate?: string | null;
   assignee?: {
@@ -39,13 +41,7 @@ interface FeedbackMetadataBarProps {
     email?: string;
     image?: string | null;
   } | null;
-  complexity?:
-    | "trivial"
-    | "simple"
-    | "moderate"
-    | "complex"
-    | "very_complex"
-    | null;
+  complexity?: ComplexityValue | null;
   createdAt: number;
   deadline?: number | null;
   description: string | null;
@@ -53,7 +49,7 @@ interface FeedbackMetadataBarProps {
   isAdmin: boolean;
   organizationId: Id<"organizations">;
   organizationStatusId?: Id<"organizationStatuses"> | null;
-  priority?: "critical" | "high" | "medium" | "low" | "none" | null;
+  priority?: PriorityValue | null;
   tags?: Array<FeedbackTag | null>;
   timeEstimate?: string | null;
   title: string;

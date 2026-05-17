@@ -5,11 +5,12 @@ import { generateText } from "ai";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
+import { env } from "../shared/env";
 
 const ARRAY_PATTERN = /\[[\d,\s]*\]/;
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 /**

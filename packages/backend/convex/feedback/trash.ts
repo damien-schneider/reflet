@@ -1,8 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { ONE_DAY_MS, THIRTY_DAYS_MS } from "../shared/constants";
 import { getAuthUser } from "../shared/utils";
-
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
  * List soft-deleted feedback for an organization (admin-only)
@@ -60,7 +59,7 @@ export const listDeleted = query({
         const elapsedMs = now - (f.deletedAt ?? 0);
         const daysRemaining = Math.max(
           0,
-          Math.ceil((THIRTY_DAYS_MS - elapsedMs) / (24 * 60 * 60 * 1000))
+          Math.ceil((THIRTY_DAYS_MS - elapsedMs) / ONE_DAY_MS)
         );
 
         return {

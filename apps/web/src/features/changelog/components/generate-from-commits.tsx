@@ -3,6 +3,7 @@
 import { Info, Lightning, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { env } from "@reflet/env/web";
 import { useAction, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -198,7 +199,7 @@ export function GenerateFromCommits({
   const generateTitle = async (description: string): Promise<void> => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/generate-release-title`,
+        `${env.NEXT_PUBLIC_CONVEX_SITE_URL}/api/ai/generate-release-title`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

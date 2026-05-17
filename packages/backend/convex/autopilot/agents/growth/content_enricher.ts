@@ -8,6 +8,7 @@
  * - Other: Direct fetch + HTML extraction
  */
 
+import { USER_AGENT } from "../../../shared/constants";
 import { type DiscoveredThread, fetchUrlContent } from "../shared_search";
 
 // ============================================
@@ -52,8 +53,7 @@ const enrichRedditThread = async (
     const response = await fetch(jsonUrl, {
       signal: controller.signal,
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; RefletBot/1.0; +https://reflet.dev)",
+        "User-Agent": USER_AGENT,
       },
     });
 

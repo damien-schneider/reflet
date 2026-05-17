@@ -1,15 +1,8 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
+import { slugify } from "../shared/slug";
 import { getAuthUser } from "../shared/utils";
-
-// Helper to generate slug from name
-const generateSlug = (name: string): string => {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-};
 
 // ============================================
 // INTERNAL MUTATIONS (for testing and internal use)
@@ -27,7 +20,7 @@ export const createOrganization = internalMutation({
     userId: v.string(),
   },
   handler: async (ctx, args) => {
-    const slug = args.slug || generateSlug(args.name);
+    const slug = args.slug || slugify(args.name);
 
     const existingOrg = await ctx.db
       .query("organizations")
@@ -166,7 +159,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    const slug = args.slug || generateSlug(args.name);
+    const slug = args.slug || slugify(args.name);
 
     const existingOrg = await ctx.db
       .query("organizations")

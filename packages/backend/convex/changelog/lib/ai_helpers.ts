@@ -1,3 +1,5 @@
+import { env } from "../../shared/env";
+import { slugify } from "../../shared/slug";
 import type { GroupMapValue } from "./commit_grouping";
 import { buildGroupMapFromFlat } from "./commit_grouping";
 import type { CommitData } from "./github_fetch";
@@ -52,7 +54,7 @@ export async function clusterCommitsWithAI(
 
   const commitsForClustering = allCommits.slice(0, MAX_COMMITS_FOR_CLUSTERING);
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return buildGroupMapFromFlat(commitsForClustering);
   }
@@ -103,10 +105,7 @@ Return ONLY the JSON array, no markdown fences or explanation.`;
       }
 
       const dates = groupCommits.map((c) => new Date(c.date).getTime());
-      const groupId = `auto-${String(groupIdx + 1).padStart(2, "0")}-${group.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .slice(0, 40)}`;
+      const groupId = `auto-${String(groupIdx + 1).padStart(2, "0")}-${slugify(group.title).slice(0, 40)}`;
 
       result.set(groupId, {
         commits: groupCommits,

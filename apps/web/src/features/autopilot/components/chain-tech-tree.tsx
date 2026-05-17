@@ -2,7 +2,9 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { chainNodeStatus } from "@reflet/backend/convex/autopilot/schema/validators";
 import { useQuery } from "convex/react";
+import type { Infer } from "convex/values";
 import { useParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 
@@ -59,7 +61,7 @@ const TREE_POSITIONS: Record<ChainNodeKind, NodePosition> = {
 const TREE_COL_COUNT = 9;
 const TREE_ROW_COUNT = 3;
 
-type ChainNodeStatus = "missing" | "draft" | "pending_review" | "published";
+type ChainNodeStatus = Infer<typeof chainNodeStatus>;
 
 const computeEdgeVariant = (
   status: ChainNodeStatus,

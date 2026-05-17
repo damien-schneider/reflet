@@ -68,7 +68,7 @@ export default function LandingLiveDemo() {
           {/* Primary CTA — Feedback Board */}
           <m.a
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            className="group relative mb-5 block overflow-hidden rounded-2xl border border-border/80 bg-card/50 p-5 backdrop-blur-sm transition-all hover:border-olive-600/30 hover:shadow-xl sm:p-7 dark:border-border/50 dark:bg-card/30 dark:hover:border-olive-400/20 dark:hover:shadow-[0_8px_40px_-8px_rgba(0,0,0,0.5)]"
+            className="group relative mb-5 block overflow-hidden rounded-2xl border border-border/80 bg-card/50 p-5 backdrop-blur-sm transition-all hover:border-olive-600/30 hover:shadow-xl sm:p-7 dark:border-border/50 dark:bg-card/30 dark:hover:border-olive-400/20 dark:hover:shadow-card-hover-dark-lg"
             href={REFLET_BASE}
             initial={{ opacity: 0, y: 28 }}
             rel="noopener noreferrer"
@@ -118,7 +118,7 @@ export default function LandingLiveDemo() {
             {/* Roadmap */}
             <m.a
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              className="group relative block overflow-hidden rounded-2xl border border-border/80 bg-card/50 p-5 backdrop-blur-sm transition-all hover:border-olive-600/30 hover:shadow-lg dark:border-border/50 dark:bg-card/30 dark:hover:border-olive-400/20 dark:hover:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.4)]"
+              className="group relative block overflow-hidden rounded-2xl border border-border/80 bg-card/50 p-5 backdrop-blur-sm transition-all hover:border-olive-600/30 hover:shadow-lg dark:border-border/50 dark:bg-card/30 dark:hover:border-olive-400/20 dark:hover:shadow-card-hover-dark"
               href={`${REFLET_BASE}?view=roadmap`}
               initial={{ opacity: 0, y: 24 }}
               rel="noopener noreferrer"
@@ -156,7 +156,7 @@ export default function LandingLiveDemo() {
             {/* Changelog */}
             <m.a
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              className="group relative block overflow-hidden rounded-2xl border border-border/80 bg-card/50 p-5 backdrop-blur-sm transition-all hover:border-olive-600/30 hover:shadow-lg dark:border-border/50 dark:bg-card/30 dark:hover:border-olive-400/20 dark:hover:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.4)]"
+              className="group relative block overflow-hidden rounded-2xl border border-border/80 bg-card/50 p-5 backdrop-blur-sm transition-all hover:border-olive-600/30 hover:shadow-lg dark:border-border/50 dark:bg-card/30 dark:hover:border-olive-400/20 dark:hover:shadow-card-hover-dark"
               href={`${REFLET_BASE}?view=changelog`}
               initial={{ opacity: 0, y: 24 }}
               rel="noopener noreferrer"

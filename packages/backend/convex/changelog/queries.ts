@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { authComponent } from "../auth/auth";
+import { canReadRelease, resolveOrgReader } from "../shared/access";
 
 // ============================================
 // QUERIES
@@ -20,20 +20,8 @@ export const list = query({
       return [];
     }
 
-    const user = await authComponent.safeGetAuthUser(ctx);
-
-    let isMember = false;
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q.eq("organizationId", args.organizationId).eq("userId", user._id)
-        )
-        .unique();
-      isMember = !!membership;
-    }
-
-    if (!(isMember || org.isPublic)) {
+    const { isMember, canRead } = await resolveOrgReader(ctx, org);
+    if (!canRead) {
       return [];
     }
 
@@ -81,20 +69,8 @@ export const get = query({
       return null;
     }
 
-    const user = await authComponent.safeGetAuthUser(ctx);
-
-    let isMember = false;
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q.eq("organizationId", release.organizationId).eq("userId", user._id)
-        )
-        .unique();
-      isMember = !!membership;
-    }
-
-    if (!(isMember || (org.isPublic && release.publishedAt))) {
+    const { isMember, canRead } = await canReadRelease(ctx, org, release);
+    if (!canRead) {
       return null;
     }
 

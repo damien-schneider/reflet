@@ -1,7 +1,7 @@
+import { env } from "@reflet/env/web";
 import type { Metadata, Viewport } from "next";
 
-export const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.reflet.app";
+export const BASE_URL = env.NEXT_PUBLIC_SITE_URL ?? "https://www.reflet.app";
 export const SITE_NAME = "Reflet";
 const DEFAULT_TITLE =
   "Reflet — The Autonomous AI Company That Runs Your Product";

@@ -1,6 +1,7 @@
 "use client";
 
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { INCIDENT_SEVERITY_BORDER_COLORS } from "@reflet/ui/status-colors";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,12 +37,6 @@ const statusOptions = [
   { value: "monitoring" as const, label: "Monitoring" },
   { value: "resolved" as const, label: "Resolved" },
 ];
-
-const severityColors = {
-  minor: "border-amber-300 dark:border-amber-800",
-  major: "border-orange-300 dark:border-orange-800",
-  critical: "border-red-300 dark:border-red-800",
-};
 
 const formatRelativeTime = (timestamp: number): string => {
   const diffMs = Date.now() - timestamp;
@@ -92,7 +87,7 @@ export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
     <div
       className={cn(
         "rounded-lg border-l-4 bg-card p-4",
-        severityColors[incident.severity]
+        INCIDENT_SEVERITY_BORDER_COLORS[incident.severity]
       )}
     >
       <div className="flex items-start justify-between gap-2">

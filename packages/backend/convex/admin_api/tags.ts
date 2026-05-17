@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { slugify } from "../shared/slug";
 
 // ============================================
 // TAG QUERIES
@@ -57,10 +58,7 @@ export const createTag = internalMutation({
   },
   returns: v.object({ id: v.id("tags") }),
   handler: async (ctx, args) => {
-    const slug = args.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+    const slug = slugify(args.name);
 
     const existing = await ctx.db
       .query("tags")
@@ -109,10 +107,7 @@ export const updateTag = internalMutation({
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (args.name !== undefined) {
       updates.name = args.name;
-      updates.slug = args.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
+      updates.slug = slugify(args.name);
     }
     if (args.color !== undefined) {
       updates.color = args.color;

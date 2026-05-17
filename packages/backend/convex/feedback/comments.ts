@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { resolveOrgReader } from "../shared/access";
 import { MAX_COMMENT_LENGTH } from "../shared/constants";
 import { validateInputLength } from "../shared/validators";
 
@@ -39,22 +40,9 @@ export const list = query({
       return [];
     }
 
-    const user = await authComponent.safeGetAuthUser(ctx);
-
-    // Check access
-    let isMember = false;
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-        )
-        .unique();
-      isMember = !!membership;
-    }
-
     // Check visibility: member OR org is public
-    if (!(isMember || org.isPublic)) {
+    const { user, canRead } = await resolveOrgReader(ctx, org);
+    if (!canRead) {
       return [];
     }
 

@@ -2,10 +2,13 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { INVITATION_EXPIRY_MS, ONE_MINUTE_MS } from "../shared/constants";
+import { env } from "../shared/env";
 import { getAuthUser } from "../shared/utils";
+import { invitableMemberRole } from "../shared/validators";
 import { PLAN_LIMITS } from "./queries";
 
-const siteUrl = process.env.SITE_URL ?? "";
+const siteUrl = env.SITE_URL ?? "";
 
 /**
  * Invite a user to the organization
@@ -14,7 +17,7 @@ export const create = mutation({
   args: {
     organizationId: v.id("organizations"),
     email: v.string(),
-    role: v.union(v.literal("admin"), v.literal("member")),
+    role: invitableMemberRole,
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -98,7 +101,7 @@ export const create = mutation({
       email: args.email.toLowerCase(),
       role: args.role,
       status: "pending",
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      expiresAt: Date.now() + INVITATION_EXPIRY_MS,
       createdAt: Date.now(),
       inviterId: user._id,
       token,
@@ -232,7 +235,7 @@ export const cancel = mutation({
   },
 });
 
-const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
+const RESEND_COOLDOWN_MS = ONE_MINUTE_MS;
 
 /**
  * Resend invitation email

@@ -11,6 +11,7 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { internalAction, internalMutation } from "../_generated/server";
+import { env } from "../shared/env";
 
 // ============================================
 // STRIPE METRICS HELPER
@@ -233,7 +234,7 @@ export const captureRevenueSnapshot = internalAction({
       return null;
     }
 
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    const stripeSecretKey = env.STRIPE_SECRET_KEY;
     if (!stripeSecretKey) {
       throw new Error("STRIPE_SECRET_KEY environment variable not set");
     }

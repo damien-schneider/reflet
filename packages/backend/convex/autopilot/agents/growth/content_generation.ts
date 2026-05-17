@@ -8,6 +8,7 @@ import type { z } from "zod";
 import { internal } from "../../../_generated/api";
 import type { Doc } from "../../../_generated/dataModel";
 import { internalAction } from "../../../_generated/server";
+import { SEVEN_DAYS_MS } from "../../../shared/constants";
 import { buildAgentPrompt, GROWTH_SYSTEM_PROMPT } from "../prompts";
 import {
   generateObjectWithFallback,
@@ -138,7 +139,7 @@ export const runGrowthGeneration = internalAction({
         { organizationId: orgId, status: "done" }
       );
 
-      const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+      const sevenDaysAgo = now - SEVEN_DAYS_MS;
       const relevantTasks = recentItems
         .filter(
           (item: Doc<"autopilotWorkItems">) => item.updatedAt > sevenDaysAgo

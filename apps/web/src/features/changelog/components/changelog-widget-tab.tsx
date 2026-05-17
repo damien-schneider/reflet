@@ -3,6 +3,7 @@
 import { Copy, Key, Robot, Warning } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { DEFAULT_BRAND_PRIMARY } from "@reflet/backend/convex/shared/constants";
 import { useMutation } from "convex/react";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
@@ -11,8 +12,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { generateChangelogWidgetPrompt } from "../lib/generate-changelog-widget-prompt";
-
-const DEFAULT_PRIMARY_COLOR = "#5c6d4f";
 
 interface ChangelogWidgetTabProps {
   hasApiKeys: boolean;
@@ -42,7 +41,7 @@ export function ChangelogWidgetTab({
   orgSlug,
   primaryColor,
 }: ChangelogWidgetTabProps) {
-  const brandColor = primaryColor ?? DEFAULT_PRIMARY_COLOR;
+  const brandColor = primaryColor ?? DEFAULT_BRAND_PRIMARY;
   const [mode, setMode] = useState<WidgetMode>("card");
   const [position, setPosition] = useState<WidgetPosition>("bottom-right");
   const [theme, setTheme] = useState<WidgetTheme>("auto");
@@ -84,7 +83,7 @@ export function ChangelogWidgetTab({
     if (mode !== "trigger") {
       attrs.push(`data-position="${position}"`);
     }
-    if (brandColor !== DEFAULT_PRIMARY_COLOR) {
+    if (brandColor !== DEFAULT_BRAND_PRIMARY) {
       attrs.push(`data-color="${brandColor}"`);
     }
     return `<script\n  ${attrs.join("\n  ")}>\n</script>`;
@@ -102,7 +101,7 @@ export function ChangelogWidgetTab({
     if (mode === "trigger") {
       props.push(`triggerSelector="[data-reflet-changelog]"`);
     }
-    if (brandColor !== DEFAULT_PRIMARY_COLOR) {
+    if (brandColor !== DEFAULT_BRAND_PRIMARY) {
       props.push(`primaryColor="${brandColor}"`);
     }
     return `import { ChangelogWidget } from 'reflet-sdk/react';
@@ -165,7 +164,7 @@ export function MyApp() {
         <p className="mt-1 text-muted-foreground">
           Customize the widget appearance. The embed code below updates
           automatically.
-          {brandColor !== DEFAULT_PRIMARY_COLOR &&
+          {brandColor !== DEFAULT_BRAND_PRIMARY &&
             " Your organization brand color is applied."}
         </p>
 

@@ -1,10 +1,12 @@
 "use client";
 
 import { CheckCircle, Circle, Clock, XCircle } from "@phosphor-icons/react";
+import type { supportConversationStatus } from "@reflet/backend/convex/shared/validators";
+import type { Infer } from "convex/values";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
-type ConversationStatus = "open" | "awaiting_reply" | "resolved" | "closed";
+type ConversationStatus = Infer<typeof supportConversationStatus>;
 
 const STATUS_OPTIONS: {
   value: ConversationStatus;

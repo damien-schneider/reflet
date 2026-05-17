@@ -9,9 +9,10 @@ import {
   fetchFileContent,
   searchCodeMultiQuery,
 } from "../integrations/github/code_search";
+import { env } from "../shared/env";
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 const FEATURE_CHECK_MODEL = "anthropic/claude-sonnet-4";

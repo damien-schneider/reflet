@@ -5,6 +5,7 @@ import { z } from "zod";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalAction } from "../_generated/server";
+import { env } from "../shared/env";
 
 // Priority levels for feedback
 const PRIORITY_LEVELS = ["critical", "high", "medium", "low", "none"] as const;
@@ -55,7 +56,7 @@ type AutoTaggingResponse = z.infer<typeof autoTaggingResponseSchema>;
 
 // OpenRouter provider setup
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 // Model fallback chain

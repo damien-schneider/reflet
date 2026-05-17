@@ -12,6 +12,11 @@ const EXA_BASE_URL = "https://api.exa.ai";
 // ============================================
 // ENVIRONMENT
 // ============================================
+// Note: `EXA_API_KEY` is read directly from `process.env` here (not via
+// `@reflet/env`) because tests mutate `process.env.EXA_API_KEY` at runtime to
+// exercise different provider states. `@reflet/env` snapshots values at module
+// load time, which would defeat that test pattern. The variable is still
+// declared in `convex/shared/env.ts` for documentation.
 
 export const isExaAvailable = (): boolean => !!process.env.EXA_API_KEY;
 

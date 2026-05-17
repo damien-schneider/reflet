@@ -4,21 +4,22 @@ import { betterAuth } from "better-auth";
 import { components, internal } from "../_generated/api";
 import type { DataModel } from "../_generated/dataModel";
 import authConfig from "../auth.config";
+import { env } from "../shared/env";
 
 // GitHub OAuth configuration (optional)
-const githubClientId = process.env.GITHUB_CLIENT_ID;
-const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
+const githubClientId = env.GITHUB_CLIENT_ID;
+const githubClientSecret = env.GITHUB_CLIENT_SECRET;
 
 // Google OAuth configuration (optional)
-const googleClientId = process.env.GOOGLE_CLIENT_ID;
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const googleClientId = env.GOOGLE_CLIENT_ID;
+const googleClientSecret = env.GOOGLE_CLIENT_SECRET;
 
 // Skip email verification for e2e tests
-const skipEmailVerification = process.env.SKIP_EMAIL_VERIFICATION === "true";
+const skipEmailVerification = env.SKIP_EMAIL_VERIFICATION === "true";
 
-const siteUrl = process.env.SITE_URL ?? "";
+const siteUrl = env.SITE_URL ?? "";
 const additionalOrigins =
-  process.env.ADDITIONAL_TRUSTED_ORIGINS?.split(",").filter(Boolean) ?? [];
+  env.ADDITIONAL_TRUSTED_ORIGINS?.split(",").filter(Boolean) ?? [];
 
 export const authComponent = createClient<DataModel>(components.betterAuth);
 

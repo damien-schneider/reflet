@@ -1,8 +1,9 @@
+import { env } from "@reflet/env/web";
 import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "reflet.app";
+const ROOT_DOMAIN = env.NEXT_PUBLIC_ROOT_DOMAIN ?? "reflet.app";
 
 const AUTH_PAGES = [
   "/auth/forgot-password",

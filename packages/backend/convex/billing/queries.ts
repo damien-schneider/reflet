@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { hasActiveSubscription } from "./lib";
 import { stripeTimestampToMs } from "./utils";
 
 // Plan limits for Free vs Pro tiers
@@ -68,10 +69,7 @@ export const getStatus = query({
     );
 
     // Determine tier based on subscription status
-    const hasActiveSubscription =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
-    const tier: PlanTier = hasActiveSubscription ? "pro" : "free";
+    const tier: PlanTier = hasActiveSubscription(subscription) ? "pro" : "free";
 
     // Get current usage
     const members = await ctx.db
@@ -151,10 +149,7 @@ export const checkLimit = query({
     );
 
     // Determine tier based on subscription status
-    const hasActiveSubscription =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
-    const tier: PlanTier = hasActiveSubscription ? "pro" : "free";
+    const tier: PlanTier = hasActiveSubscription(subscription) ? "pro" : "free";
     const limits = PLAN_LIMITS[tier];
 
     switch (args.action) {
@@ -260,12 +255,10 @@ export const getPublicPlanFeatures = query({
       components.stripe.public.getSubscriptionByOrgId,
       { orgId: args.organizationId }
     );
-    const isPro =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
+    const isPro = hasActiveSubscription(subscription);
 
     return {
-      hideBranding: org.hideBranding === true && Boolean(isPro),
+      hideBranding: org.hideBranding === true && isPro,
     };
   },
 });

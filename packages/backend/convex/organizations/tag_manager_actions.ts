@@ -1,14 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { slugify } from "../shared/slug";
 import { getAuthUser } from "../shared/utils";
-
-// Helper to generate slug from name
-const generateSlug = (name: string): string => {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-};
 
 // ============================================
 // MUTATIONS
@@ -41,7 +34,7 @@ export const create = mutation({
     }
 
     // Generate slug
-    let slug = generateSlug(args.name);
+    let slug = slugify(args.name);
 
     // Ensure slug is unique within the organization
     const existingTag = await ctx.db

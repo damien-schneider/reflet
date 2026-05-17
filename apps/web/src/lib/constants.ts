@@ -1,11 +1,8 @@
+import type { feedbackStatus } from "@reflet/backend/convex/shared/validators";
+import type { Infer } from "convex/values";
+
 // Feedback status types and configuration
-export type FeedbackStatus =
-  | "open"
-  | "under_review"
-  | "planned"
-  | "in_progress"
-  | "completed"
-  | "closed";
+export type FeedbackStatus = Infer<typeof feedbackStatus>;
 
 export type RoadmapLane = "now" | "next" | "later";
 

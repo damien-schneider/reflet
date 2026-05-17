@@ -7,9 +7,10 @@
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
+import { SEVEN_DAYS_MS } from "../shared/constants";
 import { assignedAgent } from "./schema/validators";
 
-const SCORING_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const SCORING_WINDOW_MS = SEVEN_DAYS_MS;
 
 export const getAgentScore = internalQuery({
   args: {

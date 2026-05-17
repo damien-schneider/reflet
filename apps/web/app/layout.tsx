@@ -1,3 +1,4 @@
+import { env } from "@reflet/env/server";
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Inter } from "next/font/google";
 import Script from "next/script";
@@ -39,7 +40,7 @@ export default function RootLayout({
       <head>
         <link href="https://umami.damien-schneider.pro" rel="preconnect" />
         {process.env.NODE_ENV === "development" &&
-          process.env.AUTOPILOT_E2E_BYPASS !== "1" && (
+          env.AUTOPILOT_E2E_BYPASS !== "1" && (
             <Script
               src="//unpkg.com/react-grab/dist/index.global.js"
               strategy="lazyOnload"

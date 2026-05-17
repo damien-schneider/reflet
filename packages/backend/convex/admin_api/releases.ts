@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { MAX_CHANGELOG_VERSION_LENGTH } from "../shared/constants";
-import { validateInputLength } from "../shared/validators";
+import { releaseFilterStatus, validateInputLength } from "../shared/validators";
 
 // ============================================
 // RELEASE QUERIES
@@ -11,9 +11,7 @@ import { validateInputLength } from "../shared/validators";
 export const listReleases = internalQuery({
   args: {
     organizationId: v.id("organizations"),
-    status: v.optional(
-      v.union(v.literal("draft"), v.literal("published"), v.literal("all"))
-    ),
+    status: v.optional(releaseFilterStatus),
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
   },

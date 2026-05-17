@@ -1,5 +1,6 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { env } from "@reflet/env/web";
 import { fetchQuery } from "convex/nextjs";
 import type { Metadata } from "next";
 
@@ -26,7 +27,7 @@ export async function generateMetadata({
 
       const ogUrl = new URL(
         "/api/og/shipped",
-        process.env.NEXT_PUBLIC_SITE_URL ?? "https://reflet.app"
+        env.NEXT_PUBLIC_SITE_URL ?? "https://reflet.app"
       );
       ogUrl.searchParams.set("feedback", meta.title);
       if (meta.releaseTitle) {

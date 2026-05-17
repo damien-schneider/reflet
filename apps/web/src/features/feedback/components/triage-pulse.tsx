@@ -129,11 +129,11 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
   const allTriaged = count === 0;
   const manyUntriaged = count >= MANY_UNTAGGED_THRESHOLD;
 
-  let dotColor = "bg-amber-500";
+  let dotColor = "bg-warning";
   if (allTriaged) {
-    dotColor = "bg-emerald-500";
+    dotColor = "bg-success";
   } else if (manyUntriaged) {
-    dotColor = "bg-red-500";
+    dotColor = "bg-destructive";
   }
 
   // All caught up: calm green dot

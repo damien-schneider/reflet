@@ -158,6 +158,7 @@ import type * as autopilot_verification from "../autopilot/verification.js";
 import type * as billing_actions from "../billing/actions.js";
 import type * as billing_effective_tier from "../billing/effective_tier.js";
 import type * as billing_internal from "../billing/internal.js";
+import type * as billing_lib from "../billing/lib.js";
 import type * as billing_queries from "../billing/queries.js";
 import type * as billing_stripe from "../billing/stripe.js";
 import type * as billing_tableFields from "../billing/tableFields.js";
@@ -319,7 +320,10 @@ import type * as organizations_tableFields from "../organizations/tableFields.js
 import type * as organizations_tag_manager from "../organizations/tag_manager.js";
 import type * as organizations_tag_manager_actions from "../organizations/tag_manager_actions.js";
 import type * as privateData from "../privateData.js";
+import type * as shared_access from "../shared/access.js";
 import type * as shared_constants from "../shared/constants.js";
+import type * as shared_env from "../shared/env.js";
+import type * as shared_slug from "../shared/slug.js";
 import type * as shared_text_formatters from "../shared/text_formatters.js";
 import type * as shared_utils from "../shared/utils.js";
 import type * as shared_validators from "../shared/validators.js";
@@ -505,6 +509,7 @@ declare const fullApi: ApiFromModules<{
   "billing/actions": typeof billing_actions;
   "billing/effective_tier": typeof billing_effective_tier;
   "billing/internal": typeof billing_internal;
+  "billing/lib": typeof billing_lib;
   "billing/queries": typeof billing_queries;
   "billing/stripe": typeof billing_stripe;
   "billing/tableFields": typeof billing_tableFields;
@@ -666,7 +671,10 @@ declare const fullApi: ApiFromModules<{
   "organizations/tag_manager": typeof organizations_tag_manager;
   "organizations/tag_manager_actions": typeof organizations_tag_manager_actions;
   privateData: typeof privateData;
+  "shared/access": typeof shared_access;
   "shared/constants": typeof shared_constants;
+  "shared/env": typeof shared_env;
+  "shared/slug": typeof shared_slug;
   "shared/text_formatters": typeof shared_text_formatters;
   "shared/utils": typeof shared_utils;
   "shared/validators": typeof shared_validators;

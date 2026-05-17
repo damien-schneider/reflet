@@ -15,7 +15,9 @@ const GITHUB_HEADERS = {
 } as const;
 
 const MAX_README_LENGTH = 5000;
-const MAX_TREE_FILES = 100;
+// Cap for repo-intro tree summary (kept low to keep prompts short).
+// For deep code search see code_search.ts MAX_TREE_FILES.
+const MAX_TREE_FILES_FOR_INTRO = 100;
 
 async function fetchRootContents(repositoryFullName: string): Promise<string> {
   try {
@@ -54,12 +56,12 @@ async function fetchFileTree(repositoryFullName: string): Promise<string> {
       tree?: Array<{ path: string; type: string }>;
     };
     const tree = data.tree ?? [];
-    const limitedTree = tree.slice(0, MAX_TREE_FILES);
+    const limitedTree = tree.slice(0, MAX_TREE_FILES_FOR_INTRO);
     let fileTree = limitedTree
       .map((item: { path: string; type: string }) => item.path)
       .join("\n");
-    if (tree.length > MAX_TREE_FILES) {
-      fileTree += `\n... and ${tree.length - MAX_TREE_FILES} more files`;
+    if (tree.length > MAX_TREE_FILES_FOR_INTRO) {
+      fileTree += `\n... and ${tree.length - MAX_TREE_FILES_FOR_INTRO} more files`;
     }
     return fileTree;
   } catch {

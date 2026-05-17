@@ -3,11 +3,12 @@
 import type { LanguageModelV3 } from "@ai-sdk/provider";
 import { Agent } from "@mastra/core/agent";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { env } from "../../shared/env";
 import { EXPLORATION_INSTRUCTIONS } from "./prompts";
 import { codebaseTools } from "./tools";
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 export const DEFAULT_CODEBASE_MODEL = "openai/gpt-5-mini";

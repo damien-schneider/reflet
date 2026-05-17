@@ -24,7 +24,7 @@ export default function RoadmapMockup() {
     <LazyMotion features={domAnimation}>
       <m.div
         animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
-        className="w-full overflow-hidden rounded-xl shadow-[0_24px_64px_-16px_rgba(0,0,0,0.12)] [perspective:1200px] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.5)]"
+        className="w-full overflow-hidden rounded-xl shadow-mockup-strong [perspective:1200px] dark:shadow-mockup-strong-dark"
         initial={{ opacity: 0, y: 40, rotateX: 4 }}
         ref={ref}
         transition={{ duration: 0.9, ease: EASE_OUT_EXPO }}

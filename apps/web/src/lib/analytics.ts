@@ -1,3 +1,4 @@
+import { env } from "@reflet/env/web";
 import posthog from "posthog-js";
 import { hasAnalyticsConsent } from "@/components/cookie-consent-banner";
 
@@ -39,7 +40,7 @@ interface AnalyticsEvents {
 }
 
 const isPostHogConfigured =
-  Boolean(process.env.NEXT_PUBLIC_POSTHOG_KEY) &&
+  Boolean(env.NEXT_PUBLIC_POSTHOG_KEY) &&
   process.env.NODE_ENV !== "development";
 
 export function capture<K extends keyof AnalyticsEvents>(

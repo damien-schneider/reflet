@@ -8,10 +8,11 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
+import { ONE_DAY_MS, SEVEN_DAYS_MS, THIRTY_DAYS_MS } from "../shared/constants";
 
-const REVIEW_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
-const ACTIVITY_LOG_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-const DOCUMENT_ARCHIVE_TTL_MS = 60 * 24 * 60 * 60 * 1000; // 60 days
+const REVIEW_EXPIRY_MS = SEVEN_DAYS_MS;
+const ACTIVITY_LOG_TTL_MS = THIRTY_DAYS_MS;
+const DOCUMENT_ARCHIVE_TTL_MS = 60 * ONE_DAY_MS;
 const CLEANUP_BATCH_SIZE = 100;
 
 // ============================================

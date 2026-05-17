@@ -2,6 +2,10 @@
 
 import { Sparkle, Spinner } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import {
+  FEEDBACK_STATUS_BADGE_VARIANTS,
+  FEEDBACK_STATUS_LABELS,
+} from "@reflet/ui/feedback-status-colors";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,24 +15,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-
-const STATUS_LABELS: Record<string, string> = {
-  open: "Open",
-  under_review: "Under Review",
-  planned: "Planned",
-  in_progress: "In Progress",
-  completed: "Completed",
-  closed: "Closed",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  open: "blue",
-  under_review: "orange",
-  planned: "purple",
-  in_progress: "yellow",
-  completed: "green",
-  closed: "gray",
-};
 
 const CONFIDENCE_STYLES: Record<string, { dot: string; label: string }> = {
   high: { dot: "bg-green-500", label: "High confidence" },
@@ -151,7 +137,9 @@ export function FeedbackSuggestionList({
               <Badge
                 className="shrink-0 text-xs"
                 variant={
-                  (STATUS_COLORS[item.status] as
+                  (FEEDBACK_STATUS_BADGE_VARIANTS[
+                    item.status as keyof typeof FEEDBACK_STATUS_BADGE_VARIANTS
+                  ] as
                     | "green"
                     | "blue"
                     | "orange"
@@ -160,7 +148,9 @@ export function FeedbackSuggestionList({
                     | "gray") ?? "gray"
                 }
               >
-                {STATUS_LABELS[item.status] ?? item.status}
+                {FEEDBACK_STATUS_LABELS[
+                  item.status as keyof typeof FEEDBACK_STATUS_LABELS
+                ] ?? item.status}
               </Badge>
             </div>
           );

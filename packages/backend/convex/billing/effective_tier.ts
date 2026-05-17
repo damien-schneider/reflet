@@ -1,6 +1,7 @@
 import { components } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { hasActiveSubscription } from "./lib";
 
 export type EffectiveTier = "free" | "pro";
 
@@ -59,10 +60,10 @@ export async function getEffectiveTier(
     components.stripe.public.getSubscriptionByOrgId,
     { orgId: organizationId }
   );
-  const hasActiveSubscription =
-    subscription &&
+  const isActive =
+    !!subscription &&
     subscription.stripeCustomerId === organization.stripeCustomerId &&
-    (subscription.status === "active" || subscription.status === "trialing");
+    hasActiveSubscription(subscription);
 
-  return hasActiveSubscription ? "pro" : "free";
+  return isActive ? "pro" : "free";
 }

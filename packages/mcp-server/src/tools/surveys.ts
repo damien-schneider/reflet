@@ -1,6 +1,12 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { RefletAdminClient } from "../client.js";
+import {
+  surveyQuestionTypeEnum,
+  surveyResponseStatusMcpEnum,
+  surveyStatusEnum,
+  surveyTriggerTypeEnum,
+} from "../shared/enums.js";
 import { textResult } from "./utils.js";
 
 export function registerSurveyTools(
@@ -11,10 +17,7 @@ export function registerSurveyTools(
     "survey_list",
     "List all surveys for the organization. Optionally filter by status (draft, active, paused, closed).",
     {
-      status: z
-        .enum(["draft", "active", "paused", "closed"])
-        .optional()
-        .describe("Filter surveys by status"),
+      status: surveyStatusEnum.optional().describe("Filter surveys by status"),
     },
     async (params) =>
       textResult(
@@ -39,15 +42,9 @@ export function registerSurveyTools(
     {
       title: z.string().describe("Survey title"),
       description: z.string().optional().describe("Survey description"),
-      triggerType: z
-        .enum([
-          "manual",
-          "page_visit",
-          "time_delay",
-          "exit_intent",
-          "feedback_submitted",
-        ])
-        .describe("When the survey should be triggered"),
+      triggerType: surveyTriggerTypeEnum.describe(
+        "When the survey should be triggered"
+      ),
       triggerConfig: z
         .object({
           pageUrl: z.string().optional(),
@@ -59,14 +56,7 @@ export function registerSurveyTools(
       questions: z
         .array(
           z.object({
-            type: z.enum([
-              "rating",
-              "nps",
-              "text",
-              "single_choice",
-              "multiple_choice",
-              "boolean",
-            ]),
+            type: surveyQuestionTypeEnum,
             title: z.string(),
             description: z.string().optional(),
             required: z.boolean().optional().default(true),
@@ -94,9 +84,7 @@ export function registerSurveyTools(
     "Update a survey's status. Valid transitions: draft→active, active→paused, paused→active, any→closed.",
     {
       surveyId: z.string().describe("The survey ID to update"),
-      status: z
-        .enum(["draft", "active", "paused", "closed"])
-        .describe("The new status"),
+      status: surveyStatusEnum.describe("The new status"),
     },
     async (params) =>
       textResult(
@@ -146,14 +134,7 @@ export function registerSurveyTools(
       surveyId: z.string().describe("The survey ID to update"),
       title: z.string().optional().describe("New title"),
       description: z.string().optional().describe("New description"),
-      triggerType: z
-        .enum([
-          "manual",
-          "page_visit",
-          "time_delay",
-          "exit_intent",
-          "feedback_submitted",
-        ])
+      triggerType: surveyTriggerTypeEnum
         .optional()
         .describe("New trigger type"),
       triggerConfig: z
@@ -177,8 +158,7 @@ export function registerSurveyTools(
     "List responses for a survey. Optionally filter by status (started, completed, abandoned).",
     {
       surveyId: z.string().describe("The survey ID to list responses for"),
-      status: z
-        .enum(["started", "completed", "abandoned"])
+      status: surveyResponseStatusMcpEnum
         .optional()
         .describe("Filter responses by status"),
       limit: z
