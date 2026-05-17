@@ -7,7 +7,9 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type { chainNodeStatus } from "@reflet/backend/convex/autopilot/schema/validators";
 import {
   Background,
+  BaseEdge,
   type Edge,
+  type EdgeProps,
   Handle,
   MarkerType,
   type Node,
@@ -17,8 +19,9 @@ import {
 } from "@xyflow/react";
 import { useQuery } from "convex/react";
 import type { Infer } from "convex/values";
+import ELK from "elkjs/lib/elk.bundled.js";
 import { useParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -46,32 +49,71 @@ type ChainNodeStatus = Infer<typeof chainNodeStatus>;
 const isOwner = (s: string): s is Owner =>
   s === "cto" || s === "pm" || s === "growth" || s === "sales";
 
-interface NodePosition {
-  col: number;
-  row: number;
+const NODE_WIDTH = 220;
+const NODE_HEIGHT = 150;
+
+const elk = new ELK();
+
+const ELK_LAYOUT_OPTIONS = {
+  "elk.algorithm": "layered",
+  "elk.direction": "RIGHT",
+  "elk.layered.spacing.nodeNodeBetweenLayers": "80",
+  "elk.spacing.nodeNode": "50",
+  "elk.edgeRouting": "ORTHOGONAL",
+  "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+  "elk.layered.crossingMinimization.semiInteractive": "true",
+  "elk.layered.spacing.edgeNodeBetweenLayers": "30",
+  "elk.layered.spacing.edgeEdgeBetweenLayers": "20",
+} as const;
+
+interface ElkPoint {
+  x: number;
+  y: number;
 }
 
-const TREE_POSITIONS: Record<ChainNodeKind, NodePosition> = {
-  codebase_understanding: { col: 0, row: 1 },
-  identity: { col: 1, row: 0 },
-  brand_voice: { col: 1, row: 2 },
-  feature_catalog: { col: 2, row: 0 },
-  scope: { col: 2, row: 2 },
-  market_analysis: { col: 3, row: 1 },
-  target_definition: { col: 4, row: 1 },
-  personas: { col: 5, row: 1 },
-  use_cases: { col: 6, row: 0 },
-  lead_targets: { col: 6, row: 2 },
-  community_posts: { col: 7, row: 1 },
-  drafts: { col: 8, row: 1 },
-};
+interface ElkEdgeSection {
+  bendPoints?: ElkPoint[];
+  endPoint: ElkPoint;
+  startPoint: ElkPoint;
+}
 
-const NODE_WIDTH = 220;
-const COL_GAP = 60;
-const ROW_GAP = 40;
-const NODE_HEIGHT = 150;
-const COL_SPACING = NODE_WIDTH + COL_GAP;
-const ROW_SPACING = NODE_HEIGHT + ROW_GAP;
+interface ElkChild {
+  height: number;
+  id: string;
+  width: number;
+  x?: number;
+  y?: number;
+}
+
+interface ElkEdgeOut {
+  id: string;
+  sections?: ElkEdgeSection[];
+}
+
+interface ElkLayoutResult {
+  children?: ElkChild[];
+  edges?: ElkEdgeOut[];
+}
+
+interface ChainLayout {
+  edgePaths: Record<string, string>;
+  positions: Record<string, { x: number; y: number }>;
+}
+
+const buildSvgPath = (sections: ElkEdgeSection[] | undefined): string => {
+  if (!sections || sections.length === 0) {
+    return "";
+  }
+  const segments: string[] = [];
+  for (const section of sections) {
+    segments.push(`M ${section.startPoint.x} ${section.startPoint.y}`);
+    for (const bend of section.bendPoints ?? []) {
+      segments.push(`L ${bend.x} ${bend.y}`);
+    }
+    segments.push(`L ${section.endPoint.x} ${section.endPoint.y}`);
+  }
+  return segments.join(" ");
+};
 
 const EDGE_STROKE_BY_VARIANT: Record<EdgeVariant, string> = {
   done: "var(--color-emerald-500)",
@@ -114,14 +156,14 @@ function ChainFlowNodeComponent({ data }: NodeProps<ChainFlowNode>) {
   return (
     <div style={{ width: NODE_WIDTH }}>
       <Handle
-        className="!border-0 !bg-transparent !opacity-0"
+        className="!border-0 !bg-transparent !opacity-0 !pointer-events-none"
         isConnectable={false}
         position={Position.Left}
         type="target"
       />
       <ChainTechTreeCard {...data.cardProps} />
       <Handle
-        className="!border-0 !bg-transparent !opacity-0"
+        className="!border-0 !bg-transparent !opacity-0 !pointer-events-none"
         isConnectable={false}
         position={Position.Right}
         type="source"
@@ -130,7 +172,30 @@ function ChainFlowNodeComponent({ data }: NodeProps<ChainFlowNode>) {
   );
 }
 
+interface ChainEdgeData extends Record<string, unknown> {
+  path?: string;
+}
+
+type ChainFlowEdge = Edge<ChainEdgeData, "chain">;
+
+function ChainElkEdge({
+  id,
+  data,
+  style,
+  markerEnd,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+}: EdgeProps<ChainFlowEdge>) {
+  // Prefer the ELK-computed orthogonal path. Fall back to a straight line
+  // between RF's source/target handles while layout is still pending.
+  const path = data?.path ?? `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
+  return <BaseEdge id={id} markerEnd={markerEnd} path={path} style={style} />;
+}
+
 const NODE_TYPES = { chain: ChainFlowNodeComponent } as const;
+const EDGE_TYPES = { chain: ChainElkEdge } as const;
 const PRO_OPTIONS = { hideAttribution: true } as const;
 const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 1 } as const;
 
@@ -150,11 +215,15 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
     organizationId,
   });
 
-  const [previewKind, setPreviewKind] = useState<ChainNodeKind | null>(null);
   const [hoveredKind, setHoveredKind] = useState<ChainNodeKind | null>(null);
+  const [previewKind, setPreviewKind] = useState<ChainNodeKind | null>(null);
 
   const handleHover = useCallback((kind: ChainNodeKind | null) => {
     setHoveredKind(kind);
+  }, []);
+
+  const handlePreview = useCallback((kind: ChainNodeKind) => {
+    setPreviewKind(kind);
   }, []);
 
   const nodesByKind = useMemo(() => {
@@ -217,6 +286,52 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
     return { children, parents };
   }, [meta]);
 
+  const [layout, setLayout] = useState<ChainLayout | null>(null);
+
+  useEffect(() => {
+    if (!meta) {
+      return;
+    }
+    let cancelled = false;
+    const graph = {
+      id: "root",
+      layoutOptions: ELK_LAYOUT_OPTIONS,
+      children: meta.nodes.map<ElkChild>((n) => ({
+        id: n.kind,
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+      })),
+      edges: meta.edges.map((e) => ({
+        id: `${e.from}->${e.to}`,
+        sources: [e.from],
+        targets: [e.to],
+      })),
+    };
+    elk
+      .layout(graph)
+      .then((result: ElkLayoutResult) => {
+        if (cancelled) {
+          return;
+        }
+        const positions: Record<string, { x: number; y: number }> = {};
+        for (const child of result.children ?? []) {
+          positions[child.id] = { x: child.x ?? 0, y: child.y ?? 0 };
+        }
+        const edgePaths: Record<string, string> = {};
+        for (const elkEdge of result.edges ?? []) {
+          edgePaths[elkEdge.id] = buildSvgPath(elkEdge.sections);
+        }
+        setLayout({ edgePaths, positions });
+      })
+      .catch(() => {
+        // ELK rejection (e.g. invalid graph) is non-recoverable here; the
+        // skeleton stays visible since `layout` never resolves.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [meta]);
+
   const highlightedKinds = useMemo<Set<ChainNodeKind> | null>(() => {
     if (!hoveredKind) {
       return null;
@@ -243,13 +358,13 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
   }, [hoveredKind, adjacency]);
 
   const flowNodes = useMemo<ChainFlowNode[]>(() => {
-    if (!(meta && nodesByKind && metaByKind)) {
+    if (!(meta && nodesByKind && metaByKind && layout)) {
       return [];
     }
     const result: ChainFlowNode[] = [];
     for (const nodeMeta of meta.nodes) {
       const node = nodesByKind.get(nodeMeta.kind);
-      const position = TREE_POSITIONS[nodeMeta.kind];
+      const position = layout.positions[nodeMeta.kind];
       if (!(node && position)) {
         continue;
       }
@@ -267,10 +382,10 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
       result.push({
         id: nodeMeta.kind,
         type: "chain",
-        position: {
-          x: position.col * COL_SPACING,
-          y: position.row * ROW_SPACING,
-        },
+        position: { x: position.x, y: position.y },
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+        style: { cursor: "auto", pointerEvents: "all" },
         data: {
           cardProps: {
             actionable: node.actionable,
@@ -285,7 +400,7 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
             label: nodeMeta.label,
             lastUpdatedAt: node.lastUpdatedAt,
             onHover: handleHover,
-            onPreview: setPreviewKind,
+            onPreview: handlePreview,
             owner,
             pluralNoun: nodeMeta.plural,
             recentTitles: node.recentTitles,
@@ -305,13 +420,16 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
     activeWork,
     highlightedKinds,
     handleHover,
+    handlePreview,
+    layout,
   ]);
 
-  const flowEdges = useMemo<Edge[]>(() => {
+  const flowEdges = useMemo<ChainFlowEdge[]>(() => {
     if (!(meta && variantByTarget)) {
       return [];
     }
-    return meta.edges.map((edge) => {
+    return meta.edges.map<ChainFlowEdge>((edge) => {
+      const edgeId = `${edge.from}->${edge.to}`;
       const variant = variantByTarget[edge.to];
       const stroke = EDGE_STROKE_BY_VARIANT[variant];
       const strokeWidth = EDGE_WIDTH_BY_VARIANT[variant];
@@ -320,11 +438,12 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
         (highlightedKinds.has(edge.from) && highlightedKinds.has(edge.to));
       const opacity = highlightedKinds && !inHighlight ? 0.15 : 1;
       return {
-        id: `${edge.from}->${edge.to}`,
+        id: edgeId,
         source: edge.from,
         target: edge.to,
-        type: "smoothstep",
+        type: "chain",
         animated: variant === "active",
+        data: { path: layout?.edgePaths[edgeId] },
         style: {
           stroke,
           strokeWidth:
@@ -341,9 +460,18 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
         },
       };
     });
-  }, [meta, variantByTarget, highlightedKinds]);
+  }, [meta, variantByTarget, highlightedKinds, layout]);
 
-  if (!(overview && nodesByKind && meta && metaByKind && variantByTarget)) {
+  if (
+    !(
+      overview &&
+      nodesByKind &&
+      meta &&
+      metaByKind &&
+      variantByTarget &&
+      layout
+    )
+  ) {
     return (
       <div className="space-y-3">
         <div className="h-7 w-48 animate-pulse rounded bg-muted" />
@@ -374,13 +502,14 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
         </div>
       </div>
 
-      <div className="h-[560px] w-full overflow-hidden rounded-xl border bg-muted/10">
+      <div className="chain-tree h-[560px] w-full overflow-hidden rounded-xl border bg-muted/10">
         <ReactFlow
           defaultViewport={DEFAULT_VIEWPORT}
           edges={flowEdges}
           edgesFocusable={false}
+          edgeTypes={EDGE_TYPES}
           fitView
-          fitViewOptions={{ padding: 0.15, minZoom: 0.5, maxZoom: 1.1 }}
+          fitViewOptions={{ padding: 0.12, minZoom: 0.25, maxZoom: 1.1 }}
           maxZoom={1.5}
           minZoom={0.3}
           nodes={flowNodes}

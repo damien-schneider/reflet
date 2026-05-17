@@ -65,7 +65,7 @@ interface ChainTechTreeCardProps {
   label: string;
   lastUpdatedAt: number | null;
   onHover?: (kind: ChainNodeKind | null) => void;
-  onPreview?: (kind: ChainNodeKind) => void;
+  onPreview: (kind: ChainNodeKind) => void;
   owner: Owner;
   pluralNoun: string;
   recentTitles: string[];
@@ -321,11 +321,11 @@ export function ChainTechTreeCard({
 
   const now = Date.now();
 
-  const handleClick = () => onPreview?.(kind);
-  const handleKeyDown = (e: ReactKeyboardEvent<HTMLElement>) => {
+  const handleClick = () => onPreview(kind);
+  const handleKeyDown = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      onPreview?.(kind);
+      onPreview(kind);
     }
   };
   const handleMouseEnter = () => onHover?.(kind);
@@ -340,14 +340,14 @@ export function ChainTechTreeCard({
 
   return (
     <button
-      aria-label={`${label} — open preview`}
+      aria-label={`${label} — open documents`}
       className={cn(
-        "relative flex w-full flex-col gap-2 rounded-xl border bg-card p-3 text-left shadow-sm transition-[opacity,box-shadow,border-color]",
+        "nodrag nopan relative flex w-full flex-col gap-2 rounded-xl border bg-card p-3 text-left shadow-sm transition-[opacity,box-shadow,border-color]",
         "cursor-pointer hover:border-foreground/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         isHighlighted && "border-amber-500/50 ring-1 ring-amber-500/20",
         isActive && "border-emerald-500/60 ring-1 ring-emerald-500/30",
-        isMuted && !dimmed && "opacity-60",
-        dimmed && "opacity-25"
+        isMuted && !dimmed && "bg-muted text-muted-foreground",
+        dimmed && "bg-muted text-muted-foreground grayscale"
       )}
       onBlur={handleBlur}
       onClick={handleClick}

@@ -169,6 +169,16 @@
   --sidebar-ring: oklch(0.5 0.01 85);
 }
 
+/* React Flow chain tree — elevate edges so they aren't visually hidden
+ * behind nodes. Default RF z-stack renders nodes above the SVG edge layer,
+ * which means any arrow whose path crosses an unrelated card becomes
+ * invisible. Bumping the edge container above the node container keeps
+ * every arrow visible while keeping pointer events delegated to nodes via
+ * `.react-flow__edges{pointer-events:none}` (RF's own rule). */
+.chain-tree .react-flow__edges {
+  z-index: 5;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

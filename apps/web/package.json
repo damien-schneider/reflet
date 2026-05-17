@@ -66,6 +66,7 @@
     "convex": "catalog:",
     "date-fns": "^4.1.0",
     "dotenv": "catalog:",
+    "elkjs": "^0.11.1",
     "embla-carousel-react": "^8.6.0",
     "frimousse": "^0.3.0",
     "input-otp": "^1.4.2",
