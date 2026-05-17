@@ -10,75 +10,6 @@ import { requireAutopilotAccess, requireOrgAdmin } from "./auth";
 
 const USER_EDIT_PROTECTION_MS = 72 * 60 * 60 * 1000;
 
-export const upsertProductDefinition = mutation({
-  args: {
-    organizationId: v.id("organizations"),
-    content: v.string(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-    await requireOrgAdmin(ctx, args.organizationId, user._id);
-    await requireAutopilotAccess(ctx, args.organizationId);
-
-    const now = Date.now();
-    const summary = args.content.slice(0, 200).trimEnd();
-
-    const existing = await ctx.db
-      .query("autopilotKnowledgeDocs")
-      .withIndex("by_org_docType", (q) =>
-        q.eq("organizationId", args.organizationId).eq("docType", "identity")
-      )
-      .unique();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        contentFull: args.content,
-        contentSummary: summary,
-        userEdited: true,
-        userEditedAt: now,
-        userEditProtectedUntil: now + USER_EDIT_PROTECTION_MS,
-        version: existing.version + 1,
-        lastUpdatedAt: now,
-      });
-
-      await ctx.db.insert("autopilotKnowledgeDocVersions", {
-        docId: existing._id,
-        version: existing.version + 1,
-        content: args.content,
-        editedBy: "user",
-        createdAt: now,
-      });
-    } else {
-      const docId = await ctx.db.insert("autopilotKnowledgeDocs", {
-        organizationId: args.organizationId,
-        docType: "identity",
-        ownerAgent: "pm",
-        title: "Product Identity",
-        contentFull: args.content,
-        contentSummary: summary,
-        version: 1,
-        userEdited: true,
-        userEditedAt: now,
-        userEditProtectedUntil: now + USER_EDIT_PROTECTION_MS,
-        stalenessAlertDays: 30,
-        lastUpdatedAt: now,
-        createdAt: now,
-      });
-
-      await ctx.db.insert("autopilotKnowledgeDocVersions", {
-        docId,
-        version: 1,
-        content: args.content,
-        editedBy: "user",
-        createdAt: now,
-      });
-    }
-
-    return null;
-  },
-});
-
 export const updateKnowledgeDoc = mutation({
   args: {
     docId: v.id("autopilotKnowledgeDocs"),
@@ -119,10 +50,9 @@ export const updateKnowledgeDoc = mutation({
 });
 
 /**
- * Delete the product_definition doc and its versions, with admin auth check.
- * Returns true if a doc was deleted, false if none existed.
+ * Delete the typed product profile + its version history, with admin auth check.
  */
-export const deleteProductDefinitionAndRegenerate = mutation({
+export const deleteProductProfileAndRegenerate = mutation({
   args: { organizationId: v.id("organizations") },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -130,24 +60,24 @@ export const deleteProductDefinitionAndRegenerate = mutation({
     await requireOrgAdmin(ctx, args.organizationId, user._id);
     await requireAutopilotAccess(ctx, args.organizationId);
 
-    const doc = await ctx.db
-      .query("autopilotKnowledgeDocs")
-      .withIndex("by_org_docType", (q) =>
-        q.eq("organizationId", args.organizationId).eq("docType", "identity")
+    const profile = await ctx.db
+      .query("autopilotProductProfile")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
       )
       .unique();
 
-    if (doc) {
+    if (profile) {
       const versions = await ctx.db
-        .query("autopilotKnowledgeDocVersions")
-        .withIndex("by_doc", (q) => q.eq("docId", doc._id))
+        .query("autopilotProductProfileVersions")
+        .withIndex("by_profile", (q) => q.eq("profileId", profile._id))
         .collect();
 
       for (const version of versions) {
         await ctx.db.delete(version._id);
       }
 
-      await ctx.db.delete(doc._id);
+      await ctx.db.delete(profile._id);
     }
 
     return null;
@@ -155,23 +85,21 @@ export const deleteProductDefinitionAndRegenerate = mutation({
 });
 
 /**
- * Regenerate the product definition by re-running deep product exploration.
- * Deletes the existing doc, then uses the shared pipeline (same as bootstrap).
+ * Regenerate the product profile by re-running deep product exploration. The
+ * chain heartbeat then dispatches `produceProductProfile` once
+ * `codebase_understanding` is published again.
  */
 export const regenerateProductDefinition = action({
   args: { organizationId: v.id("organizations") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Auth-gated mutation: deletes existing doc
     await ctx.runMutation(
-      api.autopilot.mutations.knowledge.deleteProductDefinitionAndRegenerate,
+      api.autopilot.mutations.knowledge.deleteProductProfileAndRegenerate,
       { organizationId: args.organizationId }
     );
 
-    // Use the single entry point for product definition generation
-    await ctx.scheduler.runAfter(
-      0,
-      internal.autopilot.company_brief.triggerProductDefinitionPipeline,
+    await ctx.runMutation(
+      internal.integrations.github.repo_analysis.startAnalysisInternal,
       { organizationId: args.organizationId }
     );
 

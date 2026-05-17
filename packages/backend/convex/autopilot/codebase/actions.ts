@@ -536,12 +536,6 @@ export async function runDeepAnalysisCore(
       `${brief.slice(0, 280)}…`
     );
 
-    await ctx.scheduler.runAfter(
-      0,
-      internal.autopilot.company_brief.generateCompanyBrief,
-      { organizationId: args.organizationId }
-    );
-
     return null;
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);

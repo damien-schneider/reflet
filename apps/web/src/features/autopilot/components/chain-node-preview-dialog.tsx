@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 
 type ChainNodeKind =
   | "codebase_understanding"
-  | "identity"
+  | "product_profile"
   | "brand_voice"
   | "feature_catalog"
   | "scope"
@@ -44,7 +44,7 @@ interface ChainNodePreviewDialogProps {
 
 const ROUTE_BY_KIND: Record<ChainNodeKind, (orgSlug: string) => string> = {
   codebase_understanding: (slug) => `/dashboard/${slug}/autopilot/knowledge`,
-  identity: (slug) => `/dashboard/${slug}/autopilot/knowledge`,
+  product_profile: (slug) => `/dashboard/${slug}/autopilot/knowledge`,
   brand_voice: (slug) => `/dashboard/${slug}/autopilot/knowledge`,
   feature_catalog: (slug) => `/dashboard/${slug}/autopilot/knowledge`,
   scope: (slug) => `/dashboard/${slug}/autopilot/knowledge`,
@@ -59,7 +59,7 @@ const ROUTE_BY_KIND: Record<ChainNodeKind, (orgSlug: string) => string> = {
 
 const ROUTE_LABEL_BY_KIND: Record<ChainNodeKind, string> = {
   codebase_understanding: "Open Knowledge",
-  identity: "Open Knowledge",
+  product_profile: "Open Knowledge",
   brand_voice: "Open Knowledge",
   feature_catalog: "Open Knowledge",
   scope: "Open Knowledge",
@@ -79,6 +79,71 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   month: "short",
   year: "numeric",
 });
+
+interface ProductProfileShape {
+  category: string | null;
+  differentiators: string[];
+  oneLiner: string;
+  pricingModel:
+    | "free"
+    | "freemium"
+    | "paid"
+    | "open_source"
+    | "enterprise"
+    | "unknown"
+    | null;
+  primaryUserVerbs: string[];
+  productName: string;
+  tagline: string;
+  targetAudienceTags: string[];
+  valueProposition: string;
+  websiteUrl: string | null;
+}
+
+function ProductProfileView({ profile }: { profile: ProductProfileShape }) {
+  return (
+    <dl className="grid grid-cols-[140px_1fr] gap-x-4 gap-y-2 text-sm">
+      <dt className="text-muted-foreground">Name</dt>
+      <dd className="font-medium">{profile.productName}</dd>
+      <dt className="text-muted-foreground">Tagline</dt>
+      <dd>{profile.tagline}</dd>
+      <dt className="text-muted-foreground">One-liner</dt>
+      <dd>{profile.oneLiner}</dd>
+      {profile.category && (
+        <>
+          <dt className="text-muted-foreground">Category</dt>
+          <dd>{profile.category}</dd>
+        </>
+      )}
+      {profile.websiteUrl && (
+        <>
+          <dt className="text-muted-foreground">Website</dt>
+          <dd className="truncate">{profile.websiteUrl}</dd>
+        </>
+      )}
+      <dt className="text-muted-foreground">Value proposition</dt>
+      <dd>{profile.valueProposition}</dd>
+      <dt className="text-muted-foreground">Differentiators</dt>
+      <dd>
+        <ul className="list-disc pl-4">
+          {profile.differentiators.map((d) => (
+            <li key={d}>{d}</li>
+          ))}
+        </ul>
+      </dd>
+      <dt className="text-muted-foreground">User verbs</dt>
+      <dd>{profile.primaryUserVerbs.join(", ")}</dd>
+      <dt className="text-muted-foreground">Audience tags</dt>
+      <dd>{profile.targetAudienceTags.join(", ")}</dd>
+      {profile.pricingModel && (
+        <>
+          <dt className="text-muted-foreground">Pricing</dt>
+          <dd>{profile.pricingModel}</dd>
+        </>
+      )}
+    </dl>
+  );
+}
 
 export function ChainNodePreviewDialog({
   kind,
@@ -121,7 +186,11 @@ export function ChainNodePreviewDialog({
             </div>
           )}
 
-          {detail?.markdown && (
+          {detail?.productProfile && (
+            <ProductProfileView profile={detail.productProfile} />
+          )}
+
+          {detail && !detail.productProfile && detail.markdown && (
             <TiptapMarkdownEditor
               className="prose-sm text-foreground/80"
               editable={false}
@@ -129,30 +198,36 @@ export function ChainNodePreviewDialog({
             />
           )}
 
-          {detail && !detail.markdown && detail.items.length > 0 && (
-            <ul className="space-y-2">
-              {detail.items.map((item) => (
-                <li
-                  className="rounded-md border bg-card p-2.5"
-                  key={`${item.title}-${item.updatedAt}`}
-                >
-                  <div className="font-medium text-sm">{item.title}</div>
-                  {item.summary && (
-                    <p className="mt-1 line-clamp-2 text-muted-foreground text-xs">
-                      {item.summary}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+          {detail &&
+            !detail.productProfile &&
+            !detail.markdown &&
+            detail.items.length > 0 && (
+              <ul className="space-y-2">
+                {detail.items.map((item) => (
+                  <li
+                    className="rounded-md border bg-card p-2.5"
+                    key={`${item.title}-${item.updatedAt}`}
+                  >
+                    <div className="font-medium text-sm">{item.title}</div>
+                    {item.summary && (
+                      <p className="mt-1 line-clamp-2 text-muted-foreground text-xs">
+                        {item.summary}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
 
-          {detail && !detail.markdown && detail.items.length === 0 && (
-            <div className="flex h-32 items-center justify-center text-muted-foreground text-sm">
-              No content yet. The autopilot will generate this once upstream
-              dependencies are published.
-            </div>
-          )}
+          {detail &&
+            !detail.productProfile &&
+            !detail.markdown &&
+            detail.items.length === 0 && (
+              <div className="flex h-32 items-center justify-center text-muted-foreground text-sm">
+                No content yet. The autopilot will generate this once upstream
+                dependencies are published.
+              </div>
+            )}
         </div>
 
         <DialogFooter>

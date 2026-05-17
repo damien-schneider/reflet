@@ -54,16 +54,20 @@ async function publishAppDescription(
   t: TestContext,
   organizationId: Id<"organizations">
 ) {
-  // CTO's free-form chain requirement is now `identity` (post-chain-split).
+  // CTO's free-form chain requirement is the typed `product_profile`.
   const now = Date.now();
   await t.run((ctx) =>
-    ctx.db.insert("autopilotKnowledgeDocs", {
+    ctx.db.insert("autopilotProductProfile", {
       organizationId,
-      docType: "identity",
+      productName: "Test product",
+      tagline: "Test tagline",
+      oneLiner: "Test one-liner",
+      valueProposition: "Test value",
+      differentiators: ["fast"],
+      primaryUserVerbs: ["use"],
+      targetAudienceTags: ["developer"],
       ownerAgent: "cto",
-      title: "Product Identity",
-      contentFull: "Test product identity",
-      contentSummary: "Test product identity",
+      generatedBy: "agent",
       version: 1,
       userEdited: false,
       stalenessAlertDays: 30,

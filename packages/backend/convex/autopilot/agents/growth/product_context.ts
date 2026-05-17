@@ -12,98 +12,34 @@ import type { ActionCtx } from "../../../_generated/server";
 
 export interface ProductContext {
   agentKnowledge: string;
-  /** Full product definition markdown from the knowledge base. */
+  /** Long-form markdown description rendered from the typed product profile. */
   productDescription: string;
-  /** Human-readable product name extracted from the knowledge base. */
+  /** Human-readable product name. */
   productName: string;
   /** 1-2 sentence summary for use in compact prompts. */
   productSummary: string;
 }
 
-// Regex patterns for product name extraction (top-level for performance)
-export const HEADING_PATTERN = /^#{1,2}\s+(.+?)(?:\s*[-—:|]|$)/m;
-export const SENTENCE_SPLIT_PATTERN = /[.!]/;
-export const NAME_IS_PATTERN = /^(.+?)\s+(?:is|—|:)\s/;
-export const GENERIC_HEADINGS = ["product definition", "overview"];
-
 export const MISSING_PRODUCT_DEF_MESSAGE =
-  "Growth agent skipped — no product definition found in the Knowledge Base. " +
-  "Run the onboarding or manually create a product definition so Growth knows what the product is.";
-
-// ============================================
-// HELPERS
-// ============================================
+  "Growth agent skipped — no product profile found in the Knowledge Base. " +
+  "Run the onboarding or wait for the CTO to publish product_profile so Growth knows what the product is.";
 
 /**
- * Extract the product name from a knowledge doc.
+ * Load product context for Growth from the typed product profile. Growth
+ * grounds on these atomic fields rather than parsing a markdown blob.
  *
- * Tries (in order):
- *   1. The doc title if it's more specific than "Product Definition"
- *   2. The first H1/H2 heading in the content
- *   3. The first sentence of the summary (pattern: "X is a ...")
- */
-export const extractProductName = (productDef: {
-  title: string;
-  contentFull: string;
-  contentSummary: string;
-}): string => {
-  // Use doc title if it's specific (not just "Product Definition")
-  const title = productDef.title.trim();
-  if (title && !title.toLowerCase().includes("product definition")) {
-    return title;
-  }
-
-  // Try to find the product name from the first heading
-  const headingMatch = productDef.contentFull.match(HEADING_PATTERN);
-  if (headingMatch?.[1]) {
-    const heading = headingMatch[1].trim();
-    const headingLower = heading.toLowerCase();
-    // Skip generic headings
-    if (
-      !GENERIC_HEADINGS.some((g) => headingLower.includes(g)) &&
-      heading.length < 80
-    ) {
-      return heading;
-    }
-  }
-
-  // Try the first sentence of the summary — often "X is a ..."
-  const sentences = productDef.contentSummary.split(SENTENCE_SPLIT_PATTERN);
-  const firstSentence = sentences[0]?.trim();
-  if (firstSentence) {
-    const isAMatch = firstSentence.match(NAME_IS_PATTERN);
-    if (isAMatch?.[1] && isAMatch[1].length < 60) {
-      return isAMatch[1];
-    }
-  }
-
-  // Last resort: use the summary itself (capped)
-  return productDef.contentSummary.slice(0, 60);
-};
-
-/**
- * Load product context for Growth from the Knowledge Base.
- *
- * Growth should understand the product from the curated product definition,
- * NOT from raw codebase analysis. The repo analysis contains tech stack details
- * (React, Next.js, etc.) which Growth would incorrectly classify as competitors.
- * Tech stack data is for CTO/Dev agents only.
- *
- * Returns null if no product definition exists — callers must bail early.
+ * Returns null if no product profile exists — callers must bail early.
  */
 export const loadProductContext = async (
   ctx: { runQuery: ActionCtx["runQuery"] },
   organizationId: Id<"organizations">
 ): Promise<ProductContext | null> => {
-  // Growth grounds on the product identity doc (the user-facing "what is this
-  // product" canonical surface). Replaced the legacy `product_definition` doc
-  // after the chain split.
-  const productDef = await ctx.runQuery(
-    internal.autopilot.knowledge.getKnowledgeDocByType,
-    { organizationId, docType: "identity" }
+  const profile = await ctx.runQuery(
+    internal.autopilot.queries.productProfile.getProductProfileInternal,
+    { organizationId }
   );
 
-  if (!productDef) {
+  if (!profile) {
     return null;
   }
 
@@ -112,10 +48,24 @@ export const loadProductContext = async (
     { organizationId, agent: "growth" }
   );
 
+  const description = [
+    `# ${profile.productName}`,
+    `**Tagline:** ${profile.tagline}`,
+    `**One-liner:** ${profile.oneLiner}`,
+    profile.category ? `**Category:** ${profile.category}` : null,
+    `**Value proposition:** ${profile.valueProposition}`,
+    `**Differentiators:** ${profile.differentiators.join("; ")}`,
+    `**Primary user verbs:** ${profile.primaryUserVerbs.join(", ")}`,
+    `**Target audience tags:** ${profile.targetAudienceTags.join(", ")}`,
+    profile.pricingModel ? `**Pricing model:** ${profile.pricingModel}` : null,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n\n");
+
   return {
-    productName: extractProductName(productDef),
-    productDescription: productDef.contentFull,
-    productSummary: productDef.contentSummary,
+    productName: profile.productName,
+    productDescription: description,
+    productSummary: profile.oneLiner,
     agentKnowledge,
   };
 };

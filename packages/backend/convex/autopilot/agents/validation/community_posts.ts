@@ -76,17 +76,22 @@ const getContextDocs = async (
 ) => {
   const docs: Array<{ content: string; title: string; type: string }> = [];
 
-  const identity = await ctx.db
-    .query("autopilotKnowledgeDocs")
-    .withIndex("by_org_docType", (q) =>
-      q.eq("organizationId", organizationId).eq("docType", "identity")
-    )
+  const profile = await ctx.db
+    .query("autopilotProductProfile")
+    .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
     .unique();
-  if (identity) {
+  if (profile) {
+    const profileContent = [
+      `Tagline: ${profile.tagline}`,
+      `One-liner: ${profile.oneLiner}`,
+      `Value proposition: ${profile.valueProposition}`,
+      `Differentiators: ${profile.differentiators.join("; ")}`,
+      `Target audience tags: ${profile.targetAudienceTags.join(", ")}`,
+    ].join("\n");
     docs.push({
-      content: identity.contentFull.slice(0, 2000),
-      title: identity.title,
-      type: "identity",
+      content: profileContent.slice(0, 2000),
+      title: profile.productName,
+      type: "product_profile",
     });
   }
 

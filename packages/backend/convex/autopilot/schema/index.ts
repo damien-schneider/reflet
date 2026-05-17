@@ -10,6 +10,7 @@ import { knowledgeTables } from "./knowledge.tables";
 import { labelsTables } from "./labels.tables";
 import { memoryTables } from "./memory.tables";
 import { personasTables } from "./personas.tables";
+import { productProfileTables } from "./product_profile.tables";
 import { reportsTables } from "./reports.tables";
 import { useCasesTables } from "./use_cases.tables";
 import { viewsTables } from "./views.tables";
@@ -32,4 +33,5 @@ export const autopilotTables = {
   ...useCasesTables,
   ...communityPostsTables,
   ...codebaseTables,
+  ...productProfileTables,
 };

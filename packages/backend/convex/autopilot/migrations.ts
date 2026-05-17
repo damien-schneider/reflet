@@ -136,74 +136,6 @@ export const cleanupLegacyAutopilotData = internalMutation({
 });
 
 /**
- * Migrate any existing `product_definition` knowledge docs to `identity`. Used
- * once when collapsing the legacy single-doc product_definition into the four
- * typed knowledge docs (identity, brand_voice, feature_catalog, scope). The
- * content is preserved verbatim into identity since that's the user-facing
- * "what is the product" surface; the other three typed docs are regenerated
- * by the chain producers from codebase_understanding.
- *
- * MUST run before deploying the schema change that drops "product_definition"
- * from knowledgeDocType, otherwise the new schema rejects legacy rows.
- *
- * Run via:
- *   bunx convex run autopilot/migrations:migrateProductDefinitionToIdentity '{}'
- */
-export const migrateProductDefinitionToIdentity = internalMutation({
-  args: {},
-  returns: v.object({
-    migrated: v.number(),
-    skippedExistingIdentity: v.number(),
-    versionsRelinked: v.number(),
-  }),
-  handler: async (ctx) => {
-    let migrated = 0;
-    let skippedExistingIdentity = 0;
-    let versionsRelinked = 0;
-
-    const productDefs = await ctx.db.query("autopilotKnowledgeDocs").collect();
-    for (const doc of productDefs) {
-      // Compare via `as string` so this migration keeps compiling after the
-      // schema drops "product_definition" from the knowledgeDocType union.
-      if ((doc.docType as string) !== "product_definition") {
-        continue;
-      }
-
-      const existingIdentity = await ctx.db
-        .query("autopilotKnowledgeDocs")
-        .withIndex("by_org_docType", (q) =>
-          q.eq("organizationId", doc.organizationId).eq("docType", "identity")
-        )
-        .unique();
-
-      if (existingIdentity) {
-        // Identity already exists for this org — drop legacy product_definition
-        // rather than overwrite user-edited identity content.
-        await ctx.db.delete(doc._id);
-        skippedExistingIdentity++;
-        continue;
-      }
-
-      await ctx.db.patch(doc._id, {
-        docType: "identity",
-        ownerAgent: doc.ownerAgent,
-      });
-      migrated++;
-
-      // Relink version history rows to the same doc — they reference docId,
-      // which doesn't change. Nothing to do, but count for the report.
-      const versions = await ctx.db
-        .query("autopilotKnowledgeDocVersions")
-        .withIndex("by_doc", (q) => q.eq("docId", doc._id))
-        .collect();
-      versionsRelinked += versions.length;
-    }
-
-    return { migrated, skippedExistingIdentity, versionsRelinked };
-  },
-});
-
-/**
  * One-off cleanup: deletes stale "starvation"/"bottleneck" coordination notes
  * that were created by the CEO loop before the dedup + chain-gating fix landed.
  * Without this, the dashboard keeps showing misleading notes about agents that
@@ -212,6 +144,49 @@ export const migrateProductDefinitionToIdentity = internalMutation({
  * Safe to re-run — only deletes notes tagged "coordination" + ("starvation" or
  * "bottleneck"). New notes won't be created for chain-gated agents.
  */
+/**
+ * Drop legacy `identity` knowledge docs + their version history. Runs after
+ * the schema change deploys (identity removed from knowledgeDocType).
+ *
+ * To deploy:
+ *   1. Set `defineSchema(..., { schemaValidation: false })` in convex/schema.ts
+ *   2. `bun run dev` (push relaxed schema, Ctrl+C)
+ *   3. `bunx convex run autopilot/migrations:dropLegacyIdentity '{}'`
+ *   4. Revert schemaValidation
+ *   5. `bun run dev` (clean push)
+ */
+export const dropLegacyIdentity = internalMutation({
+  args: {},
+  returns: v.object({
+    docsDeleted: v.number(),
+    versionsDeleted: v.number(),
+  }),
+  handler: async (ctx) => {
+    let docsDeleted = 0;
+    let versionsDeleted = 0;
+
+    const docs = await ctx.db.query("autopilotKnowledgeDocs").collect();
+    for (const doc of docs) {
+      if ((doc.docType as string) !== "identity") {
+        continue;
+      }
+
+      const versions = await ctx.db
+        .query("autopilotKnowledgeDocVersions")
+        .withIndex("by_doc", (q) => q.eq("docId", doc._id))
+        .collect();
+      for (const version of versions) {
+        await ctx.db.delete(version._id);
+        versionsDeleted++;
+      }
+      await ctx.db.delete(doc._id);
+      docsDeleted++;
+    }
+
+    return { docsDeleted, versionsDeleted };
+  },
+});
+
 export const purgeStaleCoordinationNotes = internalMutation({
   args: {},
   returns: v.object({

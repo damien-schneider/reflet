@@ -138,32 +138,34 @@ export const analyzeRepo = internalAction({
 export const bootstrapAutopilot = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    // Check if brief exists — if not, generate it in background
-    const briefApproved = await ctx.runQuery(
-      internal.autopilot.company_brief.isCompanyBriefApproved,
+    // Kick off the repo analysis if no knowledge has been produced yet. The
+    // chain heartbeat will then dispatch product_profile + the three markdown
+    // knowledge docs once codebase_understanding lands.
+    const knowledgeDocs = await ctx.runQuery(
+      internal.autopilot.knowledge.getKnowledgeDocsByOrg,
+      { organizationId: args.organizationId, summaryOnly: true }
+    );
+    const existingProfile = await ctx.runQuery(
+      internal.autopilot.queries.productProfile.getProductProfileInternal,
       { organizationId: args.organizationId }
     );
 
-    if (!briefApproved) {
-      const knowledgeDocs = await ctx.runQuery(
-        internal.autopilot.knowledge.getKnowledgeDocsByOrg,
-        { organizationId: args.organizationId, summaryOnly: true }
-      );
-
-      if (knowledgeDocs.length === 0) {
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.company_brief.triggerProductDefinitionPipeline,
+    if (knowledgeDocs.length === 0 && !existingProfile) {
+      try {
+        await ctx.runMutation(
+          internal.integrations.github.repo_analysis.startAnalysisInternal,
           { organizationId: args.organizationId }
         );
-
         await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
           organizationId: args.organizationId,
           agent: "system",
           level: "action",
           message:
-            "Product definition not found — triggering deep analysis pipeline.",
+            "No knowledge yet — starting repo analysis. Chain will produce product_profile next.",
         });
+      } catch {
+        // No repo connected or analysis already in progress — chain heartbeat
+        // will handle it on the next tick.
       }
     }
 

@@ -81,7 +81,7 @@ const ownerWakeForChain = (
 
 const NODE_OWNERS: Record<ChainNodeKind, string> = {
   codebase_understanding: "cto",
-  identity: "cto",
+  product_profile: "cto",
   brand_voice: "cto",
   feature_catalog: "cto",
   scope: "cto",

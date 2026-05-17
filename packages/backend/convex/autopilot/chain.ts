@@ -16,7 +16,7 @@ import { chainNodeKind, chainNodeStatus } from "./schema/validators";
 
 const chainStateValidator = v.object({
   codebase_understanding: chainNodeStatus,
-  identity: chainNodeStatus,
+  product_profile: chainNodeStatus,
   brand_voice: chainNodeStatus,
   feature_catalog: chainNodeStatus,
   scope: chainNodeStatus,
@@ -33,7 +33,7 @@ const DEFAULT_WAKE_THRESHOLD_OPEN_TASKS = 5;
 
 export type ChainNodeKind =
   | "codebase_understanding"
-  | "identity"
+  | "product_profile"
   | "brand_voice"
   | "feature_catalog"
   | "scope"
@@ -55,7 +55,7 @@ export type ChainState = Record<ChainNodeKind, ChainNodeStatus>;
 
 const CHAIN_NODE_KINDS: ChainNodeKind[] = [
   "codebase_understanding",
-  "identity",
+  "product_profile",
   "brand_voice",
   "feature_catalog",
   "scope",
@@ -68,16 +68,22 @@ const CHAIN_NODE_KINDS: ChainNodeKind[] = [
   "drafts",
 ];
 
-// Market analysis now grounds on the four typed knowledge docs directly. The
-// synthesis layer (the old `app_description` node + `product_definition` doc)
-// has been removed — downstream chain producers read typed inputs.
+// Market analysis now grounds on the typed product profile + the three
+// markdown knowledge docs directly. The synthesis layer (the old
+// `app_description` node + `product_definition` doc) has been removed —
+// downstream chain producers read typed inputs.
 const DAG_EDGES: Partial<Record<ChainNodeKind, ChainNodeKind[]>> = {
   codebase_understanding: [],
-  identity: ["codebase_understanding"],
+  product_profile: ["codebase_understanding"],
   brand_voice: ["codebase_understanding"],
   feature_catalog: ["codebase_understanding"],
   scope: ["codebase_understanding"],
-  market_analysis: ["identity", "brand_voice", "feature_catalog", "scope"],
+  market_analysis: [
+    "product_profile",
+    "brand_voice",
+    "feature_catalog",
+    "scope",
+  ],
   target_definition: ["market_analysis"],
   personas: ["target_definition"],
   use_cases: ["personas"],
@@ -113,10 +119,9 @@ const DOC_TYPE_BY_NODE: Partial<
 const KNOWLEDGE_DOC_TYPE_BY_NODE: Partial<
   Record<
     ChainNodeKind,
-    "target_audience" | "identity" | "brand_voice" | "feature_catalog" | "scope"
+    "target_audience" | "brand_voice" | "feature_catalog" | "scope"
   >
 > = {
-  identity: "identity",
   brand_voice: "brand_voice",
   feature_catalog: "feature_catalog",
   scope: "scope",
@@ -250,6 +255,17 @@ const fetchKnowledgeDocNodeStatus = async (
   return doc ? "published" : "missing";
 };
 
+const fetchProductProfileNodeStatus = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">
+): Promise<ChainNodeStatus> => {
+  const profile = await ctx.db
+    .query("autopilotProductProfile")
+    .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+    .unique();
+  return profile ? "published" : "missing";
+};
+
 const fetchNodeStatus = async (
   ctx: { db: QueryCtx["db"] },
   orgId: Id<"organizations">,
@@ -264,6 +280,8 @@ const fetchNodeStatus = async (
     return await fetchDocNodeStatus(ctx, orgId, docType);
   }
   switch (kind) {
+    case "product_profile":
+      return await fetchProductProfileNodeStatus(ctx, orgId);
     case "personas":
       return await fetchPersonasNodeStatus(ctx, orgId);
     case "use_cases":
@@ -380,7 +398,7 @@ export const isGatedByOpenTasks = async (
 
 export const CHAIN_NODE_OWNERS: Record<ChainNodeKind, string> = {
   codebase_understanding: "cto",
-  identity: "cto",
+  product_profile: "cto",
   brand_voice: "cto",
   feature_catalog: "cto",
   scope: "cto",
@@ -395,7 +413,7 @@ export const CHAIN_NODE_OWNERS: Record<ChainNodeKind, string> = {
 
 export const CHAIN_NODE_LABELS: Record<ChainNodeKind, string> = {
   codebase_understanding: "Codebase understanding",
-  identity: "Product identity",
+  product_profile: "Product profile",
   brand_voice: "Brand voice",
   feature_catalog: "Feature catalog",
   scope: "Scope",
@@ -410,7 +428,7 @@ export const CHAIN_NODE_LABELS: Record<ChainNodeKind, string> = {
 
 export const CHAIN_NODE_PLURALS: Record<ChainNodeKind, string> = {
   codebase_understanding: "docs",
-  identity: "docs",
+  product_profile: "profile",
   brand_voice: "docs",
   feature_catalog: "docs",
   scope: "docs",
@@ -436,7 +454,7 @@ export const CHAIN_STAGES: readonly {
   {
     id: "knowledge",
     label: "Knowledge",
-    nodes: ["identity", "brand_voice", "feature_catalog", "scope"],
+    nodes: ["product_profile", "brand_voice", "feature_catalog", "scope"],
   },
   {
     id: "market",
@@ -465,7 +483,7 @@ export const CHAIN_STAGES: readonly {
  * - `support`, `ceo`, `validator`: independent of chain state.
  */
 export const AGENT_CHAIN_REQUIREMENTS: Record<string, ChainNodeKind[]> = {
-  cto: ["identity"],
+  cto: ["product_profile"],
   pm: ["personas"],
   growth: ["market_analysis"],
   sales: ["personas"],

@@ -299,13 +299,6 @@ export const runProductExploration = internalAction({
         `Product analysis complete — ${analysis.length} chars`,
         `${analysis.slice(0, 200)}…`
       );
-
-      // Generate the product definition knowledge doc
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.company_brief.generateCompanyBrief,
-        { organizationId: args.organizationId }
-      );
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       await logProgress(

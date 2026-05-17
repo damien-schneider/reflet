@@ -25,7 +25,17 @@ import { Streamdown } from "streamdown";
 import "@/components/ui/tiptap/styles.css";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { Muted } from "@/components/ui/typography";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
@@ -48,11 +58,7 @@ const LEVEL_COLORS = {
   error: "text-red-500",
 } as const;
 
-type TypedKnowledgeDocType =
-  | "identity"
-  | "brand_voice"
-  | "feature_catalog"
-  | "scope";
+type TypedKnowledgeDocType = "brand_voice" | "feature_catalog" | "scope";
 
 interface KnowledgeSectionConfig {
   description: string;
@@ -63,18 +69,9 @@ interface KnowledgeSectionConfig {
 }
 
 // Order matters: this is the editorial top-to-bottom flow the user sees on the
-// page. It mirrors the chain DAG produced by the CTO (identity first, then
-// brand voice, features, scope).
+// page. Mirrors the chain DAG (brand voice → features → scope, sitting under
+// the typed product profile card).
 const KNOWLEDGE_SECTIONS: readonly KnowledgeSectionConfig[] = [
-  {
-    docType: "identity",
-    title: "Product Identity",
-    description:
-      "What the product is, who it's for, primary user verbs, value proposition.",
-    icon: IconSparkles,
-    emptyHint:
-      "The CTO produces this from the codebase analysis. Click Recompute to trigger it, or write it manually.",
-  },
   {
     docType: "brand_voice",
     title: "Brand Voice",
@@ -347,6 +344,358 @@ function KnowledgeDocPreview({
   );
 }
 
+type PricingModel =
+  | "free"
+  | "freemium"
+  | "paid"
+  | "open_source"
+  | "enterprise"
+  | "unknown";
+
+const PRICING_MODELS: PricingModel[] = [
+  "free",
+  "freemium",
+  "paid",
+  "open_source",
+  "enterprise",
+  "unknown",
+];
+
+const PRICING_NONE_VALUE = "__none__";
+
+interface ProductProfileFormState {
+  category: string;
+  differentiators: string;
+  oneLiner: string;
+  pricingModel: PricingModel | "";
+  primaryUserVerbs: string;
+  productName: string;
+  tagline: string;
+  targetAudienceTags: string;
+  valueProposition: string;
+  websiteUrl: string;
+}
+
+const EMPTY_FORM: ProductProfileFormState = {
+  productName: "",
+  tagline: "",
+  oneLiner: "",
+  category: "",
+  websiteUrl: "",
+  valueProposition: "",
+  differentiators: "",
+  primaryUserVerbs: "",
+  targetAudienceTags: "",
+  pricingModel: "",
+};
+
+const csvToList = (raw: string): string[] =>
+  raw
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+
+function ProductProfileCard({
+  organizationId,
+}: {
+  organizationId: Id<"organizations">;
+}) {
+  const profile = useQuery(
+    api.autopilot.queries.productProfile.getProductProfile,
+    { organizationId }
+  );
+  const update = useMutation(
+    api.autopilot.mutations.product_profile.updateProductProfile
+  );
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState<ProductProfileFormState>(EMPTY_FORM);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleEdit = () => {
+    if (profile) {
+      setForm({
+        productName: profile.productName,
+        tagline: profile.tagline,
+        oneLiner: profile.oneLiner,
+        category: profile.category ?? "",
+        websiteUrl: profile.websiteUrl ?? "",
+        valueProposition: profile.valueProposition,
+        differentiators: profile.differentiators.join(", "),
+        primaryUserVerbs: profile.primaryUserVerbs.join(", "),
+        targetAudienceTags: profile.targetAudienceTags.join(", "),
+        pricingModel: profile.pricingModel ?? "",
+      });
+    } else {
+      setForm(EMPTY_FORM);
+    }
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setForm(EMPTY_FORM);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await update({
+        organizationId,
+        productName: form.productName.trim(),
+        tagline: form.tagline.trim(),
+        oneLiner: form.oneLiner.trim(),
+        category: form.category.trim() || undefined,
+        websiteUrl: form.websiteUrl.trim() || undefined,
+        valueProposition: form.valueProposition.trim(),
+        differentiators: csvToList(form.differentiators),
+        primaryUserVerbs: csvToList(form.primaryUserVerbs),
+        targetAudienceTags: csvToList(form.targetAudienceTags),
+        pricingModel: form.pricingModel || undefined,
+      });
+      toast.success("Product profile saved");
+      setIsEditing(false);
+    } catch (error) {
+      toast.error(
+        getAutopilotErrorMessage(error, {
+          fallback: "Failed to save product profile",
+        })
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <section className="space-y-2 rounded-xl border bg-card p-4">
+      <header className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2.5">
+          <IconSparkles className="mt-0.5 size-5 text-muted-foreground" />
+          <div>
+            <h3 className="font-medium text-sm">Product Profile</h3>
+            <p className="mt-0.5 text-muted-foreground text-xs">
+              Typed product facts — name, tagline, value prop, differentiators.
+              Agents query these fields atomically.
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          {isEditing ? (
+            <>
+              <Button
+                disabled={isSaving}
+                onClick={handleCancel}
+                size="sm"
+                variant="ghost"
+              >
+                Cancel
+              </Button>
+              <Button disabled={isSaving} onClick={handleSave} size="sm">
+                {isSaving ? "Saving…" : "Save"}
+              </Button>
+            </>
+          ) : (
+            <Button onClick={handleEdit} size="sm" variant="outline">
+              {profile ? "Edit" : "Create"}
+            </Button>
+          )}
+        </div>
+      </header>
+
+      {profile === undefined && <Skeleton className="h-48 w-full rounded-lg" />}
+
+      {profile !== undefined && !isEditing && !profile && (
+        <div className="flex h-32 items-center justify-center rounded-lg border border-dashed text-muted-foreground text-xs">
+          <div className="text-center">
+            <IconUserStar className="mx-auto mb-2 size-5 text-muted-foreground/40" />
+            <p>Not produced yet.</p>
+            <p className="mt-1 max-w-md text-[11px] text-muted-foreground/60">
+              The CTO produces this from the codebase analysis once
+              codebase_understanding is published. Click Recompute to trigger.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!isEditing && profile && (
+        <dl className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-1.5 rounded-lg border bg-background p-4 text-sm">
+          <dt className="text-muted-foreground">Name</dt>
+          <dd className="font-medium">{profile.productName}</dd>
+          <dt className="text-muted-foreground">Tagline</dt>
+          <dd>{profile.tagline}</dd>
+          <dt className="text-muted-foreground">One-liner</dt>
+          <dd>{profile.oneLiner}</dd>
+          {profile.category && (
+            <>
+              <dt className="text-muted-foreground">Category</dt>
+              <dd>{profile.category}</dd>
+            </>
+          )}
+          {profile.websiteUrl && (
+            <>
+              <dt className="text-muted-foreground">Website</dt>
+              <dd className="truncate">{profile.websiteUrl}</dd>
+            </>
+          )}
+          <dt className="text-muted-foreground">Value proposition</dt>
+          <dd>{profile.valueProposition}</dd>
+          <dt className="text-muted-foreground">Differentiators</dt>
+          <dd>
+            <ul className="list-disc pl-4">
+              {profile.differentiators.map((d) => (
+                <li key={d}>{d}</li>
+              ))}
+            </ul>
+          </dd>
+          <dt className="text-muted-foreground">User verbs</dt>
+          <dd>{profile.primaryUserVerbs.join(", ")}</dd>
+          <dt className="text-muted-foreground">Audience tags</dt>
+          <dd>{profile.targetAudienceTags.join(", ")}</dd>
+          {profile.pricingModel && (
+            <>
+              <dt className="text-muted-foreground">Pricing</dt>
+              <dd>{profile.pricingModel}</dd>
+            </>
+          )}
+        </dl>
+      )}
+
+      {isEditing && (
+        <div className="space-y-3 rounded-lg border bg-background p-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="profile-name">Name</Label>
+              <Input
+                id="profile-name"
+                onChange={(e) =>
+                  setForm({ ...form, productName: e.target.value })
+                }
+                value={form.productName}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="profile-category">Category</Label>
+              <Input
+                id="profile-category"
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                value={form.category}
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="profile-tagline">Tagline</Label>
+            <Input
+              id="profile-tagline"
+              onChange={(e) => setForm({ ...form, tagline: e.target.value })}
+              value={form.tagline}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="profile-oneliner">One-liner</Label>
+            <Input
+              id="profile-oneliner"
+              onChange={(e) => setForm({ ...form, oneLiner: e.target.value })}
+              value={form.oneLiner}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="profile-website">Website URL</Label>
+            <Input
+              id="profile-website"
+              onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })}
+              value={form.websiteUrl}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="profile-vp">Value proposition</Label>
+            <Textarea
+              id="profile-vp"
+              onChange={(e) =>
+                setForm({ ...form, valueProposition: e.target.value })
+              }
+              rows={3}
+              value={form.valueProposition}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="profile-differentiators">
+              Differentiators (comma-separated)
+            </Label>
+            <Textarea
+              id="profile-differentiators"
+              onChange={(e) =>
+                setForm({ ...form, differentiators: e.target.value })
+              }
+              rows={2}
+              value={form.differentiators}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="profile-verbs">
+                User verbs (comma-separated)
+              </Label>
+              <Input
+                id="profile-verbs"
+                onChange={(e) =>
+                  setForm({ ...form, primaryUserVerbs: e.target.value })
+                }
+                value={form.primaryUserVerbs}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="profile-audience">
+                Audience tags (comma-separated)
+              </Label>
+              <Input
+                id="profile-audience"
+                onChange={(e) =>
+                  setForm({ ...form, targetAudienceTags: e.target.value })
+                }
+                value={form.targetAudienceTags}
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label>Pricing model</Label>
+            <Select
+              onValueChange={(value) =>
+                setForm({
+                  ...form,
+                  pricingModel:
+                    value === PRICING_NONE_VALUE ? "" : (value as PricingModel),
+                })
+              }
+              value={form.pricingModel || PRICING_NONE_VALUE}
+            >
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select pricing model" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={PRICING_NONE_VALUE}>—</SelectItem>
+                {PRICING_MODELS.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {m}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
+      {profile && !isEditing && (
+        <p className="text-[11px] text-muted-foreground/50">
+          Updated{" "}
+          {formatDistanceToNow(profile.lastUpdatedAt, { addSuffix: true })} · v
+          {profile.version}
+          {profile.userEdited && " · user-edited"}
+        </p>
+      )}
+    </section>
+  );
+}
+
 export default function ProductPage() {
   const { organizationId } = useAutopilotContext();
 
@@ -471,6 +820,7 @@ export default function ProductPage() {
       )}
 
       <div className="space-y-3">
+        <ProductProfileCard organizationId={organizationId} />
         {KNOWLEDGE_SECTIONS.map((section) => (
           <KnowledgeDocCard
             config={section}

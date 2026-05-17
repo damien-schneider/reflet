@@ -77,17 +77,15 @@ const checkSalesActivation = async (
   ctx: QueryCtx,
   organizationId: Id<"organizations">
 ): Promise<ActivationResult> => {
-  const identity = await ctx.db
-    .query("autopilotKnowledgeDocs")
-    .withIndex("by_org_docType", (q) =>
-      q.eq("organizationId", organizationId).eq("docType", "identity")
-    )
+  const productProfile = await ctx.db
+    .query("autopilotProductProfile")
+    .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
     .unique();
 
-  if (!identity) {
+  if (!productProfile) {
     return {
       active: false,
-      reason: "Need product identity before sales can start",
+      reason: "Need product profile before sales can start",
     };
   }
 

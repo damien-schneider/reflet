@@ -151,7 +151,7 @@ export const documentType = v.union(
 
 export const chainNodeKind = v.union(
   v.literal("codebase_understanding"),
-  v.literal("identity"),
+  v.literal("product_profile"),
   v.literal("brand_voice"),
   v.literal("feature_catalog"),
   v.literal("scope"),
@@ -238,7 +238,6 @@ export const knowledgeDocType = v.union(
   v.literal("brand_voice"),
   v.literal("team_processes"),
   v.literal("target_audience"),
-  v.literal("identity"),
   v.literal("feature_catalog"),
   v.literal("scope")
 );

@@ -111,7 +111,7 @@ function isChainProducerAgent(
 
 type ChainProducer =
   | typeof internal.autopilot.agents.chain_producers.produceCodebaseUnderstanding
-  | typeof internal.autopilot.agents.chain_producers.produceIdentity
+  | typeof internal.autopilot.agents.chain_producers.produceProductProfile
   | typeof internal.autopilot.agents.chain_producers.produceBrandVoice
   | typeof internal.autopilot.agents.chain_producers.produceFeatureCatalog
   | typeof internal.autopilot.agents.chain_producers.produceScope
@@ -136,8 +136,8 @@ const buildCtoChainCandidates = (
       condition: chainState.codebase_understanding === "missing",
     },
     {
-      producer: internal.autopilot.agents.chain_producers.produceIdentity,
-      condition: codebaseReady && chainState.identity === "missing",
+      producer: internal.autopilot.agents.chain_producers.produceProductProfile,
+      condition: codebaseReady && chainState.product_profile === "missing",
     },
     {
       producer: internal.autopilot.agents.chain_producers.produceBrandVoice,
@@ -187,7 +187,7 @@ interface GrowthDispatchTarget {
 const isKnowledgeChainPublished = (
   chainState: Record<string, string>
 ): boolean =>
-  chainState.identity === "published" &&
+  chainState.product_profile === "published" &&
   chainState.brand_voice === "published" &&
   chainState.feature_catalog === "published" &&
   chainState.scope === "published";

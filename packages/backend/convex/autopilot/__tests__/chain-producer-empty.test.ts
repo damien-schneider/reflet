@@ -21,7 +21,7 @@ import {
 describe("assertNonEmpty", () => {
   it("passes when every field has real content", () => {
     expect(() =>
-      assertNonEmpty("identity", {
+      assertNonEmpty("product_profile", {
         oneLineSummary: "A real summary",
         whatItDoes: "Records screen and edits videos",
         verbs: ["record", "edit", "share"],
@@ -31,7 +31,7 @@ describe("assertNonEmpty", () => {
 
   it("rejects an empty string field", () => {
     expect(() =>
-      assertNonEmpty("identity", {
+      assertNonEmpty("product_profile", {
         oneLineSummary: "",
         whatItDoes: "Real content",
       })

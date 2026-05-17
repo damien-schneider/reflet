@@ -32,7 +32,7 @@ const DEFAULT_WAKE_THRESHOLD = 5;
 
 const chainStateValidator = v.object({
   codebase_understanding: chainNodeStatus,
-  identity: chainNodeStatus,
+  product_profile: chainNodeStatus,
   brand_voice: chainNodeStatus,
   feature_catalog: chainNodeStatus,
   scope: chainNodeStatus,
@@ -328,6 +328,30 @@ const fetchKnowledgeDocNodeMeta = async (
   };
 };
 
+const fetchProductProfileMeta = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">
+): Promise<NodeMeta> => {
+  const profile = await ctx.db
+    .query("autopilotProductProfile")
+    .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+    .unique();
+  if (!profile) {
+    return {
+      count: 0,
+      lastUpdatedAt: null,
+      avgValidationScore: null,
+      recentTitles: [],
+    };
+  }
+  return {
+    count: 1,
+    lastUpdatedAt: profile.lastUpdatedAt,
+    avgValidationScore: null,
+    recentTitles: [profile.productName],
+  };
+};
+
 const fetchNodeMeta = async (
   ctx: { db: QueryCtx["db"] },
   orgId: Id<"organizations">,
@@ -335,6 +359,9 @@ const fetchNodeMeta = async (
 ): Promise<NodeMeta> => {
   if (kind === "drafts") {
     return await fetchDraftsMeta(ctx, orgId);
+  }
+  if (kind === "product_profile") {
+    return await fetchProductProfileMeta(ctx, orgId);
   }
   const knowledgeType = KNOWLEDGE_DOC_TYPE_BY_NODE[kind];
   if (knowledgeType) {
@@ -518,6 +545,78 @@ const chainNodeItemValidator = v.object({
   updatedAt: v.number(),
 });
 
+interface ProductProfileDetail {
+  category: string | null;
+  differentiators: string[];
+  oneLiner: string;
+  pricingModel:
+    | "free"
+    | "freemium"
+    | "paid"
+    | "open_source"
+    | "enterprise"
+    | "unknown"
+    | null;
+  primaryUserVerbs: string[];
+  productName: string;
+  tagline: string;
+  targetAudienceTags: string[];
+  valueProposition: string;
+  websiteUrl: string | null;
+}
+
+const fetchProductProfileDetail = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">
+): Promise<{
+  detail: ProductProfileDetail | null;
+  lastUpdatedAt: number | null;
+}> => {
+  const profile = await ctx.db
+    .query("autopilotProductProfile")
+    .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+    .unique();
+  if (!profile) {
+    return { detail: null, lastUpdatedAt: null };
+  }
+  return {
+    detail: {
+      productName: profile.productName,
+      tagline: profile.tagline,
+      oneLiner: profile.oneLiner,
+      category: profile.category ?? null,
+      websiteUrl: profile.websiteUrl ?? null,
+      valueProposition: profile.valueProposition,
+      differentiators: profile.differentiators,
+      primaryUserVerbs: profile.primaryUserVerbs,
+      targetAudienceTags: profile.targetAudienceTags,
+      pricingModel: profile.pricingModel ?? null,
+    },
+    lastUpdatedAt: profile.lastUpdatedAt,
+  };
+};
+
+const productProfileDetailValidator = v.object({
+  productName: v.string(),
+  tagline: v.string(),
+  oneLiner: v.string(),
+  category: v.union(v.string(), v.null()),
+  websiteUrl: v.union(v.string(), v.null()),
+  valueProposition: v.string(),
+  differentiators: v.array(v.string()),
+  primaryUserVerbs: v.array(v.string()),
+  targetAudienceTags: v.array(v.string()),
+  pricingModel: v.union(
+    v.literal("free"),
+    v.literal("freemium"),
+    v.literal("paid"),
+    v.literal("open_source"),
+    v.literal("enterprise"),
+    v.literal("unknown"),
+    v.null()
+  ),
+});
+
 /**
  * Returns the content needed to preview a chain node in the UI:
  * - markdown (when the node maps to a single canonical document)
@@ -535,12 +634,27 @@ export const getChainNodeDetail = query({
   returns: v.object({
     kind: chainNodeKind,
     markdown: v.union(v.string(), v.null()),
+    productProfile: v.union(productProfileDetailValidator, v.null()),
     items: v.array(chainNodeItemValidator),
     lastUpdatedAt: v.union(v.number(), v.null()),
   }),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgMembership(ctx, args.organizationId, user._id);
+
+    if (args.kind === "product_profile") {
+      const { detail, lastUpdatedAt } = await fetchProductProfileDetail(
+        ctx,
+        args.organizationId
+      );
+      return {
+        kind: args.kind,
+        markdown: null,
+        productProfile: detail,
+        items: [],
+        lastUpdatedAt,
+      };
+    }
 
     const knowledgeType = KNOWLEDGE_DOC_TYPE_BY_NODE[args.kind];
     if (knowledgeType) {
@@ -555,6 +669,7 @@ export const getChainNodeDetail = query({
       return {
         kind: args.kind,
         markdown: doc?.contentFull ?? null,
+        productProfile: null,
         items: [],
         lastUpdatedAt: doc?.lastUpdatedAt ?? null,
       };
@@ -573,6 +688,7 @@ export const getChainNodeDetail = query({
       return {
         kind: args.kind,
         markdown: doc?.content ?? null,
+        productProfile: null,
         items: [],
         lastUpdatedAt: doc?.updatedAt ?? null,
       };
@@ -588,6 +704,7 @@ export const getChainNodeDetail = query({
       return {
         kind: args.kind,
         markdown: null,
+        productProfile: null,
         items: personas.map((p) => ({
           title: p.name,
           summary: p.description,
@@ -607,6 +724,7 @@ export const getChainNodeDetail = query({
       return {
         kind: args.kind,
         markdown: null,
+        productProfile: null,
         items: items.map((u) => ({
           title: u.title,
           summary: u.description,
@@ -626,6 +744,7 @@ export const getChainNodeDetail = query({
       return {
         kind: args.kind,
         markdown: null,
+        productProfile: null,
         items: leads.map((l) => ({
           title: l.name,
           summary: l.company ?? l.bio ?? null,
@@ -645,6 +764,7 @@ export const getChainNodeDetail = query({
       return {
         kind: args.kind,
         markdown: null,
+        productProfile: null,
         items: posts.map((p) => ({
           title: p.title ?? p.authorName,
           summary: p.content.slice(0, 200),
@@ -679,12 +799,19 @@ export const getChainNodeDetail = query({
       return {
         kind: args.kind,
         markdown: null,
+        productProfile: null,
         items: items.sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 30),
         lastUpdatedAt: maxOrNull(items.map((i) => i.updatedAt)),
       };
     }
 
-    return { kind: args.kind, markdown: null, items: [], lastUpdatedAt: null };
+    return {
+      kind: args.kind,
+      markdown: null,
+      productProfile: null,
+      items: [],
+      lastUpdatedAt: null,
+    };
   },
 });
 
@@ -755,7 +882,7 @@ const PRODUCER_MESSAGE_TO_NODE: Array<{
   kind: ChainNodeKind;
 }> = [
   { needle: "codebase_understanding", kind: "codebase_understanding" },
-  { needle: "identity", kind: "identity" },
+  { needle: "product_profile", kind: "product_profile" },
   { needle: "brand_voice", kind: "brand_voice" },
   { needle: "feature_catalog", kind: "feature_catalog" },
   { needle: "scope", kind: "scope" },

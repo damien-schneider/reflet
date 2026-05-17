@@ -79,32 +79,24 @@ export const enrichKnowledgeBase = internalAction({
       return null;
     }
 
-    // Group findings by relevant knowledge doc type
+    // Group findings by relevant knowledge doc type. Product-side enrichment
+    // now flows into the typed product profile via dedicated mutations, so the
+    // legacy markdown append path only covers `target_audience`.
     const targetAudienceFindings: string[] = [];
-    const productFindings: string[] = [];
 
     for (const insight of insights) {
       const isMarketResearch =
         insight.type === "market_research" ||
         insight.type === "battlecard" ||
         insight.type === "prospect_brief";
-      const isProductRelated =
-        insight.type === "adr" || insight.type === "changelog";
 
       if (isMarketResearch) {
         for (const finding of insight.keyFindings) {
           targetAudienceFindings.push(finding);
         }
       }
-
-      if (isProductRelated) {
-        for (const finding of insight.keyFindings) {
-          productFindings.push(finding);
-        }
-      }
     }
 
-    // Update target_audience knowledge with market insights
     if (targetAudienceFindings.length > 0) {
       await appendToKnowledgeDoc(
         ctx,
@@ -114,22 +106,11 @@ export const enrichKnowledgeBase = internalAction({
       );
     }
 
-    // Update product identity with product insights (was product_definition
-    // before the chain split; identity is now the canonical "what this is" doc)
-    if (productFindings.length > 0) {
-      await appendToKnowledgeDoc(
-        ctx,
-        args.organizationId,
-        "identity",
-        productFindings
-      );
-    }
-
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
       agent: "system",
       level: "info",
-      message: `Knowledge enriched with ${targetAudienceFindings.length + productFindings.length} findings from ${insights.length} recent documents`,
+      message: `Knowledge enriched with ${targetAudienceFindings.length} findings from ${insights.length} recent documents`,
     });
 
     return null;
@@ -137,7 +118,6 @@ export const enrichKnowledgeBase = internalAction({
 });
 
 type KnowledgeDocType =
-  | "identity"
   | "feature_catalog"
   | "scope"
   | "roadmap"

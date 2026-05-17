@@ -17,7 +17,7 @@ import {
 } from "../chain";
 
 const KNOWLEDGE_NODES: ChainNodeKind[] = [
-  "identity",
+  "product_profile",
   "brand_voice",
   "feature_catalog",
   "scope",
@@ -25,7 +25,7 @@ const KNOWLEDGE_NODES: ChainNodeKind[] = [
 
 const emptyChain: ChainState = {
   codebase_understanding: "missing",
-  identity: "missing",
+  product_profile: "missing",
   brand_voice: "missing",
   feature_catalog: "missing",
   scope: "missing",
@@ -63,13 +63,13 @@ describe("chain DAG with split knowledge nodes", () => {
     const state: ChainState = {
       ...emptyChain,
       codebase_understanding: "published",
-      identity: "published",
+      product_profile: "published",
       brand_voice: "published",
     };
     const actionable = getNextActionableNodes(state);
     expect(actionable).toContain("feature_catalog");
     expect(actionable).toContain("scope");
-    expect(actionable).not.toContain("identity");
+    expect(actionable).not.toContain("product_profile");
     expect(actionable).not.toContain("brand_voice");
     expect(actionable).not.toContain("market_analysis");
   });
@@ -78,7 +78,7 @@ describe("chain DAG with split knowledge nodes", () => {
     const partialKnowledge: ChainState = {
       ...emptyChain,
       codebase_understanding: "published",
-      identity: "published",
+      product_profile: "published",
       brand_voice: "published",
       feature_catalog: "published",
       // scope still missing

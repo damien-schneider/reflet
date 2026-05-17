@@ -45,13 +45,17 @@ async function createProductDefinition(
 ) {
   return await t.run(async (ctx) => {
     const now = Date.now();
-    const docId = await ctx.db.insert("autopilotKnowledgeDocs", {
+    const profileId = await ctx.db.insert("autopilotProductProfile", {
       organizationId,
-      docType: "identity",
-      ownerAgent: "pm",
-      title: "Product Identity",
-      contentFull: "Existing product identity",
-      contentSummary: "Existing product identity",
+      productName: "Existing product",
+      tagline: "Existing tagline",
+      oneLiner: "Existing one-liner",
+      valueProposition: "Existing value proposition",
+      differentiators: ["fast"],
+      primaryUserVerbs: ["use"],
+      targetAudienceTags: ["developer"],
+      ownerAgent: "cto",
+      generatedBy: "user",
       version: 1,
       userEdited: true,
       userEditedAt: now,
@@ -60,14 +64,22 @@ async function createProductDefinition(
       lastUpdatedAt: now,
       createdAt: now,
     });
-    await ctx.db.insert("autopilotKnowledgeDocVersions", {
-      docId,
+    await ctx.db.insert("autopilotProductProfileVersions", {
+      profileId,
       version: 1,
-      content: "Existing product identity",
+      snapshot: {
+        productName: "Existing product",
+        tagline: "Existing tagline",
+        oneLiner: "Existing one-liner",
+        valueProposition: "Existing value proposition",
+        differentiators: ["fast"],
+        primaryUserVerbs: ["use"],
+        targetAudienceTags: ["developer"],
+      },
       editedBy: "user",
       createdAt: now,
     });
-    return docId;
+    return profileId;
   });
 }
 
@@ -167,50 +179,6 @@ async function createReport(
       archived: false,
       createdAt: now,
       updatedAt: now,
-    })
-  );
-}
-
-async function createGithubConnection(
-  t: TestContext,
-  options: { organizationId: Awaited<ReturnType<typeof createLocalOrg>> }
-) {
-  const now = Date.now();
-  return await t.run((ctx) =>
-    ctx.db.insert("githubConnections", {
-      organizationId: options.organizationId,
-      installationId: `installation-${crypto.randomUUID()}`,
-      accountType: "organization",
-      accountLogin: "reflet",
-      status: "connected",
-      repositoryId: "repo-123",
-      repositoryFullName: "reflet/reflet",
-      repositoryDefaultBranch: "main",
-      createdAt: now,
-      updatedAt: now,
-    })
-  );
-}
-
-async function createCompletedRepoAnalysis(
-  t: TestContext,
-  options: {
-    githubConnectionId: Id<"githubConnections">;
-    organizationId: Awaited<ReturnType<typeof createLocalOrg>>;
-  }
-) {
-  const now = Date.now();
-  return await t.run((ctx) =>
-    ctx.db.insert("repoAnalysis", {
-      organizationId: options.organizationId,
-      githubConnectionId: options.githubConnectionId,
-      status: "completed",
-      summary: "A production feedback workspace.",
-      productAnalysis:
-        "Reflet helps product teams collect, prioritize, and ship customer feedback.",
-      createdAt: now,
-      updatedAt: now,
-      completedAt: now,
     })
   );
 }
@@ -356,7 +324,7 @@ describe("autopilot production access control", () => {
 
   test("non-Pro organizations cannot regenerate product definition", async () => {
     const { organizationId, t } = await createFreeOrg();
-    const docId = await createProductDefinition(t, organizationId);
+    const profileId = await createProductDefinition(t, organizationId);
     const authed = await createMemberSession(t, organizationId);
 
     await expect(
@@ -367,69 +335,68 @@ describe("autopilot production access control", () => {
     ).rejects.toThrow("Autopilot requires a Pro subscription.");
 
     const rows = await t.run(async (ctx) => ({
-      doc: await ctx.db.get(docId),
+      profile: await ctx.db.get(profileId),
       versions: await ctx.db
-        .query("autopilotKnowledgeDocVersions")
-        .withIndex("by_doc", (q) => q.eq("docId", docId))
+        .query("autopilotProductProfileVersions")
+        .withIndex("by_profile", (q) => q.eq("profileId", profileId))
         .collect(),
     }));
-    expect(rows.doc?.contentFull).toBe("Existing product identity");
+    expect(rows.profile?.productName).toBe("Existing product");
     expect(rows.versions).toHaveLength(1);
   });
 
-  test("non-Pro organizations cannot delete product definition before regeneration", async () => {
+  test("non-Pro organizations cannot delete product profile before regeneration", async () => {
     const { organizationId, t } = await createFreeOrg();
-    const docId = await createProductDefinition(t, organizationId);
+    const profileId = await createProductDefinition(t, organizationId);
     const authed = await createMemberSession(t, organizationId);
 
     await expect(
       authed.mutation(
-        api.autopilot.mutations.knowledge.deleteProductDefinitionAndRegenerate,
+        api.autopilot.mutations.knowledge.deleteProductProfileAndRegenerate,
         { organizationId }
       )
     ).rejects.toThrow("Autopilot requires a Pro subscription.");
 
     const rows = await t.run(async (ctx) => ({
-      doc: await ctx.db.get(docId),
+      profile: await ctx.db.get(profileId),
       versions: await ctx.db
-        .query("autopilotKnowledgeDocVersions")
-        .withIndex("by_doc", (q) => q.eq("docId", docId))
+        .query("autopilotProductProfileVersions")
+        .withIndex("by_profile", (q) => q.eq("profileId", profileId))
         .collect(),
     }));
-    expect(rows.doc?.contentFull).toBe("Existing product identity");
+    expect(rows.profile?.productName).toBe("Existing product");
     expect(rows.versions).toHaveLength(1);
   });
 
-  test("non-Pro organizations cannot mutate product definition manually", async () => {
+  test("non-Pro organizations cannot mutate product profile manually", async () => {
     const { organizationId, t } = await createFreeOrg();
-    const docId = await createProductDefinition(t, organizationId);
+    const profileId = await createProductDefinition(t, organizationId);
     const authed = await createMemberSession(t, organizationId);
 
     await expect(
       authed.mutation(
-        api.autopilot.mutations.knowledge.upsertProductDefinition,
+        api.autopilot.mutations.product_profile.updateProductProfile,
         {
           organizationId,
-          content: "New product definition",
+          productName: "Hijacked",
+          tagline: "Hijacked tagline",
+          oneLiner: "Hijacked one-liner",
+          valueProposition: "Hijacked value",
+          differentiators: ["nope"],
+          primaryUserVerbs: ["nope"],
+          targetAudienceTags: ["nope"],
         }
       )
     ).rejects.toThrow("Autopilot requires a Pro subscription.");
-    await expect(
-      authed.mutation(api.autopilot.mutations.knowledge.updateKnowledgeDoc, {
-        docId,
-        contentFull: "Overwritten product definition",
-        contentSummary: "Overwritten product definition",
-      })
-    ).rejects.toThrow("Autopilot requires a Pro subscription.");
 
     const rows = await t.run(async (ctx) => ({
-      doc: await ctx.db.get(docId),
+      profile: await ctx.db.get(profileId),
       versions: await ctx.db
-        .query("autopilotKnowledgeDocVersions")
-        .withIndex("by_doc", (q) => q.eq("docId", docId))
+        .query("autopilotProductProfileVersions")
+        .withIndex("by_profile", (q) => q.eq("profileId", profileId))
         .collect(),
     }));
-    expect(rows.doc?.contentFull).toBe("Existing product identity");
+    expect(rows.profile?.productName).toBe("Existing product");
     expect(rows.versions).toHaveLength(1);
   });
 
@@ -586,49 +553,6 @@ describe("autopilot production access control", () => {
     expect(report?.archived).toBe(false);
     expect(report?.needsReview).toBe(true);
     expect(report?.reviewedAt).toBeUndefined();
-  });
-
-  test("non-Pro internal product definition generation does not write knowledge docs", async () => {
-    const { organizationId, t } = await createFreeOrg();
-    const githubConnectionId = await createGithubConnection(t, {
-      organizationId,
-    });
-    await createCompletedRepoAnalysis(t, {
-      githubConnectionId,
-      organizationId,
-    });
-
-    await t.action(internal.autopilot.company_brief.generateCompanyBrief, {
-      organizationId,
-    });
-
-    const rows = await t.run(async (ctx) => ({
-      activity: await ctx.db.query("autopilotActivityLog").collect(),
-      docs: await ctx.db.query("autopilotKnowledgeDocs").collect(),
-    }));
-    expect(rows.docs).toHaveLength(0);
-    expect(rows.activity.map((entry) => entry.message)).toContain(
-      "Autopilot requires a Pro subscription."
-    );
-  });
-
-  test("non-Pro internal product definition pipeline does not enqueue repo analysis", async () => {
-    const { organizationId, t } = await createFreeOrg();
-    await createGithubConnection(t, { organizationId });
-
-    await t.action(
-      internal.autopilot.company_brief.triggerProductDefinitionPipeline,
-      { organizationId }
-    );
-
-    const rows = await t.run(async (ctx) => ({
-      activity: await ctx.db.query("autopilotActivityLog").collect(),
-      analyses: await ctx.db.query("repoAnalysis").collect(),
-    }));
-    expect(rows.analyses).toHaveLength(0);
-    expect(rows.activity.map((entry) => entry.message)).toContain(
-      "Autopilot requires a Pro subscription."
-    );
   });
 
   test("feedback links cannot connect records from different organizations", async () => {

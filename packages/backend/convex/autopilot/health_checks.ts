@@ -245,7 +245,7 @@ function checkPipelineCapacity(
 
 type ChainNodeKind =
   | "codebase_understanding"
-  | "identity"
+  | "product_profile"
   | "brand_voice"
   | "feature_catalog"
   | "scope"

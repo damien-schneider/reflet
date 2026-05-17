@@ -35,7 +35,7 @@ const chainStateReturn = v.object({
   community_posts: chainNodeStatus,
   drafts: chainNodeStatus,
   feature_catalog: chainNodeStatus,
-  identity: chainNodeStatus,
+  product_profile: chainNodeStatus,
   lead_targets: chainNodeStatus,
   market_analysis: chainNodeStatus,
   personas: chainNodeStatus,

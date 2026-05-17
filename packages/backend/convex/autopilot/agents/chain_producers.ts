@@ -168,7 +168,7 @@ export const getChainContext = internalQuery({
       "codebase_understanding"
     );
     const findKnowledgeDoc = async (
-      docType: "identity" | "brand_voice" | "feature_catalog" | "scope"
+      docType: "brand_voice" | "feature_catalog" | "scope"
     ) =>
       await ctx.db
         .query("autopilotKnowledgeDocs")
@@ -177,7 +177,12 @@ export const getChainContext = internalQuery({
         )
         .unique();
 
-    const identityDoc = await findKnowledgeDoc("identity");
+    const productProfile = await ctx.db
+      .query("autopilotProductProfile")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
     const brandVoiceDoc = await findKnowledgeDoc("brand_voice");
     const featureCatalogDoc = await findKnowledgeDoc("feature_catalog");
     const scopeDoc = await findKnowledgeDoc("scope");
@@ -210,7 +215,7 @@ export const getChainContext = internalQuery({
       chainState,
       repoAnalysis,
       codebaseDoc,
-      identityDoc,
+      productProfile,
       brandVoiceDoc,
       featureCatalogDoc,
       scopeDoc,
@@ -275,7 +280,6 @@ export const upsertChainKnowledgeDoc = internalMutation({
     organizationId: v.id("organizations"),
     docType: v.union(
       v.literal("target_audience"),
-      v.literal("identity"),
       v.literal("brand_voice"),
       v.literal("feature_catalog"),
       v.literal("scope")
@@ -464,26 +468,131 @@ export const assertNonEmpty = (
 };
 
 // ============================================
-// PRODUCER: identity (CTO)
+// PRODUCER: product_profile (CTO)
 // ============================================
 
-const identitySchema = z.object({
-  title: z.string(),
-  oneLineSummary: z.string(),
-  whatItDoes: z.string(),
-  primaryUserVerbs: z.array(z.string()).min(1),
+const pricingModelEnum = z.enum([
+  "free",
+  "freemium",
+  "paid",
+  "open_source",
+  "enterprise",
+  "unknown",
+]);
+
+const productProfileSchema = z.object({
+  productName: z.string(),
+  tagline: z.string(),
+  oneLiner: z.string(),
+  category: z.string().optional(),
+  websiteUrl: z.string().optional(),
   valueProposition: z.string(),
+  differentiators: z.array(z.string()).min(1),
+  primaryUserVerbs: z.array(z.string()).min(1),
+  targetAudienceTags: z.array(z.string()).min(1),
+  pricingModel: pricingModelEnum.optional(),
 });
 
-const renderIdentity = (schema: z.infer<typeof identitySchema>): string =>
-  [
-    `## Summary\n${schema.oneLineSummary}`,
-    `## What It Does\n${schema.whatItDoes}`,
-    `## Primary User Verbs\n${schema.primaryUserVerbs.map((v) => `- ${v}`).join("\n")}`,
-    `## Value Proposition\n${schema.valueProposition}`,
-  ].join("\n\n");
+const PRODUCT_PROFILE_STALENESS_DAYS = 30;
 
-export const produceIdentity = internalAction({
+const pricingModelValidator = v.union(
+  v.literal("free"),
+  v.literal("freemium"),
+  v.literal("paid"),
+  v.literal("open_source"),
+  v.literal("enterprise"),
+  v.literal("unknown")
+);
+
+export const upsertProductProfile = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    ownerAgent: v.string(),
+    productName: v.string(),
+    tagline: v.string(),
+    oneLiner: v.string(),
+    category: v.optional(v.string()),
+    websiteUrl: v.optional(v.string()),
+    valueProposition: v.string(),
+    differentiators: v.array(v.string()),
+    primaryUserVerbs: v.array(v.string()),
+    targetAudienceTags: v.array(v.string()),
+    pricingModel: v.optional(pricingModelValidator),
+  },
+  returns: v.id("autopilotProductProfile"),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("autopilotProductProfile")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .unique();
+
+    const snapshot = {
+      productName: args.productName,
+      tagline: args.tagline,
+      oneLiner: args.oneLiner,
+      category: args.category,
+      websiteUrl: args.websiteUrl,
+      valueProposition: args.valueProposition,
+      differentiators: args.differentiators,
+      primaryUserVerbs: args.primaryUserVerbs,
+      targetAudienceTags: args.targetAudienceTags,
+      pricingModel: args.pricingModel,
+    };
+
+    if (existing) {
+      if (
+        existing.userEditProtectedUntil &&
+        existing.userEditProtectedUntil > now
+      ) {
+        return existing._id;
+      }
+      const newVersion = existing.version + 1;
+      await ctx.db.patch(existing._id, {
+        ...snapshot,
+        ownerAgent: args.ownerAgent,
+        generatedBy: "agent",
+        version: newVersion,
+        userEdited: false,
+        lastUpdatedAt: now,
+      });
+      await ctx.db.insert("autopilotProductProfileVersions", {
+        profileId: existing._id,
+        version: newVersion,
+        snapshot,
+        editedBy: "agent",
+        editingAgent: args.ownerAgent,
+        createdAt: now,
+      });
+      return existing._id;
+    }
+
+    const profileId = await ctx.db.insert("autopilotProductProfile", {
+      organizationId: args.organizationId,
+      ...snapshot,
+      ownerAgent: args.ownerAgent,
+      generatedBy: "agent",
+      version: 1,
+      userEdited: false,
+      stalenessAlertDays: PRODUCT_PROFILE_STALENESS_DAYS,
+      lastUpdatedAt: now,
+      createdAt: now,
+    });
+    await ctx.db.insert("autopilotProductProfileVersions", {
+      profileId,
+      version: 1,
+      snapshot,
+      editedBy: "agent",
+      editingAgent: args.ownerAgent,
+      createdAt: now,
+    });
+    return profileId;
+  },
+});
+
+export const produceProductProfile = internalAction({
   args: { organizationId: v.id("organizations") },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -492,7 +601,7 @@ export const produceIdentity = internalAction({
       { organizationId: args.organizationId }
     );
 
-    if (!isNodeReadyToProduce(context.chainState, "identity")) {
+    if (!isNodeReadyToProduce(context.chainState, "product_profile")) {
       return null;
     }
     if (!context.codebaseDoc) {
@@ -501,28 +610,37 @@ export const produceIdentity = internalAction({
 
     const result = await generateObjectWithFallback({
       models: QUALITY_MODELS,
-      schema: identitySchema,
-      systemPrompt: `You are a senior CTO distilling the product identity from a codebase_understanding. Produce a tight, plain-language identity statement that downstream Growth and PM agents can ground on. ${PRE_ANSWER}`,
-      prompt: `Codebase understanding:\n${context.codebaseDoc.content}\n\nProduce a structured product identity (summary, what it does, user verbs, value prop).`,
+      schema: productProfileSchema,
+      systemPrompt: `You are a senior CTO distilling typed product facts from a codebase_understanding. Atomic, factual, no fluff. ${PRE_ANSWER}`,
+      prompt: `Codebase understanding:\n${context.codebaseDoc.content}\n\nProduce typed product profile fields.`,
       temperature: 0,
     });
 
-    assertNonEmpty("identity", {
-      oneLineSummary: result.oneLineSummary,
-      whatItDoes: result.whatItDoes,
+    assertNonEmpty("product_profile", {
+      productName: result.productName,
+      tagline: result.tagline,
+      oneLiner: result.oneLiner,
       valueProposition: result.valueProposition,
+      differentiators: result.differentiators,
       primaryUserVerbs: result.primaryUserVerbs,
+      targetAudienceTags: result.targetAudienceTags,
     });
 
     await ctx.runMutation(
-      internal.autopilot.agents.chain_producers.upsertChainKnowledgeDoc,
+      internal.autopilot.agents.chain_producers.upsertProductProfile,
       {
         organizationId: args.organizationId,
-        docType: "identity",
         ownerAgent: "cto",
-        title: result.title,
-        contentFull: renderIdentity(result),
-        contentSummary: result.oneLineSummary.slice(0, 200),
+        productName: result.productName,
+        tagline: result.tagline,
+        oneLiner: result.oneLiner,
+        category: result.category,
+        websiteUrl: result.websiteUrl,
+        valueProposition: result.valueProposition,
+        differentiators: result.differentiators,
+        primaryUserVerbs: result.primaryUserVerbs,
+        targetAudienceTags: result.targetAudienceTags,
+        pricingModel: result.pricingModel,
       }
     );
 
@@ -530,7 +648,7 @@ export const produceIdentity = internalAction({
       organizationId: args.organizationId,
       agent: "cto",
       level: "success",
-      message: "Produced identity (knowledge doc)",
+      message: "Produced product_profile (typed)",
     });
     return null;
   },
@@ -770,15 +888,35 @@ export const produceScope = internalAction({
 // cares about most (e.g. brand_voice for content; feature_catalog for use
 // cases). This helper renders the relevant subset as a stable prompt block.
 
+const renderProductProfileBlock = (
+  profile: Doc<"autopilotProductProfile">
+): string => {
+  const lines: (string | null)[] = [
+    "## Product Profile",
+    `- **Name:** ${profile.productName}`,
+    `- **Tagline:** ${profile.tagline}`,
+    `- **One-liner:** ${profile.oneLiner}`,
+    profile.category ? `- **Category:** ${profile.category}` : null,
+    `- **Value proposition:** ${profile.valueProposition}`,
+    `- **Differentiators:** ${profile.differentiators.join("; ")}`,
+    `- **Primary user verbs:** ${profile.primaryUserVerbs.join(", ")}`,
+    `- **Target audience tags:** ${profile.targetAudienceTags.join(", ")}`,
+    profile.pricingModel
+      ? `- **Pricing model:** ${profile.pricingModel}`
+      : null,
+  ];
+  return lines.filter((line): line is string => line !== null).join("\n");
+};
+
 const renderTypedKnowledgeContext = (parts: {
-  identity?: string | null;
+  productProfile?: Doc<"autopilotProductProfile"> | null;
   brandVoice?: string | null;
   featureCatalog?: string | null;
   scope?: string | null;
 }): string => {
   const sections: string[] = [];
-  if (parts.identity) {
-    sections.push(`## Identity\n${parts.identity}`);
+  if (parts.productProfile) {
+    sections.push(renderProductProfileBlock(parts.productProfile));
   }
   if (parts.brandVoice) {
     sections.push(`## Brand Voice\n${parts.brandVoice}`);
@@ -827,13 +965,14 @@ export const produceMarketAnalysis = internalAction({
     if (!isNodeReadyToProduce(context.chainState, "market_analysis")) {
       return null;
     }
-    const { identityDoc, brandVoiceDoc, featureCatalogDoc, scopeDoc } = context;
-    if (!(identityDoc && brandVoiceDoc && featureCatalogDoc && scopeDoc)) {
+    const { productProfile, brandVoiceDoc, featureCatalogDoc, scopeDoc } =
+      context;
+    if (!(productProfile && brandVoiceDoc && featureCatalogDoc && scopeDoc)) {
       return null;
     }
 
     const knowledgeContext = renderTypedKnowledgeContext({
-      identity: identityDoc.contentFull,
+      productProfile,
       brandVoice: brandVoiceDoc.contentFull,
       featureCatalog: featureCatalogDoc.contentFull,
       scope: scopeDoc.contentFull,
@@ -903,12 +1042,12 @@ export const produceTargetDefinition = internalAction({
     if (!isNodeReadyToProduce(context.chainState, "target_definition")) {
       return null;
     }
-    if (!(context.identityDoc && context.scopeDoc && context.marketDoc)) {
+    if (!(context.productProfile && context.scopeDoc && context.marketDoc)) {
       return null;
     }
 
     const knowledgeContext = renderTypedKnowledgeContext({
-      identity: context.identityDoc.contentFull,
+      productProfile: context.productProfile,
       scope: context.scopeDoc.contentFull,
     });
 
@@ -1063,7 +1202,7 @@ export const produceUseCases = internalAction({
     }));
 
     const knowledgeContext = renderTypedKnowledgeContext({
-      identity: context.identityDoc?.contentFull,
+      productProfile: context.productProfile,
       featureCatalog: context.featureCatalogDoc?.contentFull,
     });
 

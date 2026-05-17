@@ -139,7 +139,7 @@ const seedQueries = (
             recentTitles: [],
           },
           {
-            kind: "identity",
+            kind: "product_profile",
             owner: "pm",
             status: "missing",
             actionable: false,
@@ -166,14 +166,14 @@ const seedQueries = (
             deps: [],
           },
           {
-            kind: "identity",
-            label: "Product identity",
+            kind: "product_profile",
+            label: "Product profile",
             owner: "pm",
-            plural: "docs",
+            plural: "profile",
             deps: ["codebase_understanding"],
           },
         ],
-        edges: [{ from: "codebase_understanding", to: "identity" }],
+        edges: [{ from: "codebase_understanding", to: "product_profile" }],
         stages: [],
         agentRequirements: {},
       };

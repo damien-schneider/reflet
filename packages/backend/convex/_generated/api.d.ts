@@ -80,7 +80,6 @@ import type * as autopilot_codebase_octokit_helpers from "../autopilot/codebase/
 import type * as autopilot_codebase_prompts from "../autopilot/codebase/prompts.js";
 import type * as autopilot_codebase_queries from "../autopilot/codebase/queries.js";
 import type * as autopilot_codebase_tools from "../autopilot/codebase/tools.js";
-import type * as autopilot_company_brief from "../autopilot/company_brief.js";
 import type * as autopilot_competitors from "../autopilot/competitors.js";
 import type * as autopilot_config from "../autopilot/config.js";
 import type * as autopilot_config_mutations from "../autopilot/config_mutations.js";
@@ -114,6 +113,7 @@ import type * as autopilot_mutations_inbox from "../autopilot/mutations/inbox.js
 import type * as autopilot_mutations_knowledge from "../autopilot/mutations/knowledge.js";
 import type * as autopilot_mutations_labels from "../autopilot/mutations/labels.js";
 import type * as autopilot_mutations_personas from "../autopilot/mutations/personas.js";
+import type * as autopilot_mutations_product_profile from "../autopilot/mutations/product_profile.js";
 import type * as autopilot_mutations_reports from "../autopilot/mutations/reports.js";
 import type * as autopilot_mutations_routines from "../autopilot/mutations/routines.js";
 import type * as autopilot_mutations_use_cases from "../autopilot/mutations/use_cases.js";
@@ -136,6 +136,7 @@ import type * as autopilot_queries_inbox from "../autopilot/queries/inbox.js";
 import type * as autopilot_queries_knowledge from "../autopilot/queries/knowledge.js";
 import type * as autopilot_queries_labels from "../autopilot/queries/labels.js";
 import type * as autopilot_queries_leads from "../autopilot/queries/leads.js";
+import type * as autopilot_queries_productProfile from "../autopilot/queries/productProfile.js";
 import type * as autopilot_queries_reports from "../autopilot/queries/reports.js";
 import type * as autopilot_queries_revenue from "../autopilot/queries/revenue.js";
 import type * as autopilot_queries_tasks_public from "../autopilot/queries/tasks_public.js";
@@ -431,7 +432,6 @@ declare const fullApi: ApiFromModules<{
   "autopilot/codebase/prompts": typeof autopilot_codebase_prompts;
   "autopilot/codebase/queries": typeof autopilot_codebase_queries;
   "autopilot/codebase/tools": typeof autopilot_codebase_tools;
-  "autopilot/company_brief": typeof autopilot_company_brief;
   "autopilot/competitors": typeof autopilot_competitors;
   "autopilot/config": typeof autopilot_config;
   "autopilot/config_mutations": typeof autopilot_config_mutations;
@@ -465,6 +465,7 @@ declare const fullApi: ApiFromModules<{
   "autopilot/mutations/knowledge": typeof autopilot_mutations_knowledge;
   "autopilot/mutations/labels": typeof autopilot_mutations_labels;
   "autopilot/mutations/personas": typeof autopilot_mutations_personas;
+  "autopilot/mutations/product_profile": typeof autopilot_mutations_product_profile;
   "autopilot/mutations/reports": typeof autopilot_mutations_reports;
   "autopilot/mutations/routines": typeof autopilot_mutations_routines;
   "autopilot/mutations/use_cases": typeof autopilot_mutations_use_cases;
@@ -487,6 +488,7 @@ declare const fullApi: ApiFromModules<{
   "autopilot/queries/knowledge": typeof autopilot_queries_knowledge;
   "autopilot/queries/labels": typeof autopilot_queries_labels;
   "autopilot/queries/leads": typeof autopilot_queries_leads;
+  "autopilot/queries/productProfile": typeof autopilot_queries_productProfile;
   "autopilot/queries/reports": typeof autopilot_queries_reports;
   "autopilot/queries/revenue": typeof autopilot_queries_revenue;
   "autopilot/queries/tasks_public": typeof autopilot_queries_tasks_public;
