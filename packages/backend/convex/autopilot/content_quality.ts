@@ -1,5 +1,5 @@
 /**
- * Content Quality — pre-review quality scoring for agent-generated documents.
+ * Content Quality — pre-review quality scoring for role-skill-generated documents.
  *
  * Scores content before it reaches the president's review queue.
  * Low-quality content is flagged or auto-rejected to reduce review noise.
@@ -28,7 +28,7 @@ export const getPendingReviewDocuments = internalQuery({
       type: v.string(),
       title: v.string(),
       contentLength: v.number(),
-      sourceAgent: v.optional(v.string()),
+      sourceRole: v.optional(v.string()),
       qualityScore: v.number(),
       qualityFlags: v.array(v.string()),
       createdAt: v.number(),
@@ -55,7 +55,7 @@ export const getPendingReviewDocuments = internalQuery({
           type: d.type,
           title: d.title,
           contentLength: d.content.length,
-          sourceAgent: d.sourceAgent ?? undefined,
+          sourceRole: d.sourceRole ?? undefined,
           qualityScore: score,
           qualityFlags: flags,
           createdAt: d.createdAt,

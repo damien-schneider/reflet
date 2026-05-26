@@ -1,5 +1,5 @@
 /**
- * Persona mutations — create/update personas owned by PM agent.
+ * Persona mutations — create/update personas owned by the PM role skill.
  */
 
 import { v } from "convex/values";

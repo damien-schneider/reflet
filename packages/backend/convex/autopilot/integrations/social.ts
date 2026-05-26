@@ -1,5 +1,5 @@
 /**
- * Social media publishing pipeline for Growth agent.
+ * Social media publishing pipeline for Growth role skill.
  *
  * Flow: Growth generates content → pending_review → President approves →
  * auto-publishes via configured platform APIs (Buffer, Typefully, or native).
@@ -70,7 +70,7 @@ export const getApprovedContent = internalQuery({
     return docs.filter(
       (d) =>
         publishableTypes.includes(d.type) &&
-        d.sourceAgent === "growth" &&
+        d.sourceRole === "growth" &&
         d.publishedAt === undefined // Not yet actually posted
     );
   },
@@ -116,13 +116,13 @@ export const publishApprovedContent = internalAction({
     const orgId = args.organizationId;
     const gate = await ctx.runQuery(internal.autopilot.gate.checkGate, {
       organizationId: orgId,
-      agent: "growth",
+      role: "growth",
       action: "publish_content",
     });
     if (!gate.proceed) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: orgId,
-        agent: "growth",
+        role: "growth",
         level: "info",
         message: `Social publishing skipped — gate blocked with ${gate.reason ?? "unknown"}`,
       });
@@ -144,7 +144,7 @@ export const publishApprovedContent = internalAction({
     if (!(bufferAccessToken || typefullyApiKey)) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: orgId,
-        agent: "growth",
+        role: "growth",
         level: "info",
         message: `${approved.length} content pieces approved for publishing but no social API configured (set BUFFER_ACCESS_TOKEN or TYPEFULLY_API_KEY)`,
       });
@@ -184,7 +184,7 @@ export const publishApprovedContent = internalAction({
 
         await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
           organizationId: orgId,
-          agent: "growth",
+          role: "growth",
           level: "success",
           message: `Content published: "${doc.title}" (${doc.type})${publishedUrl ? ` → ${publishedUrl}` : ""}`,
           action: "social.published",
@@ -195,7 +195,7 @@ export const publishApprovedContent = internalAction({
         const message = error instanceof Error ? error.message : String(error);
         await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
           organizationId: orgId,
-          agent: "growth",
+          role: "growth",
           level: "error",
           message: `Failed to publish "${doc.title}": ${message}`,
         });
@@ -205,7 +205,7 @@ export const publishApprovedContent = internalAction({
     if (published > 0) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: orgId,
-        agent: "growth",
+        role: "growth",
         level: "success",
         message: `Social publishing complete: ${published}/${approved.length} pieces published`,
       });

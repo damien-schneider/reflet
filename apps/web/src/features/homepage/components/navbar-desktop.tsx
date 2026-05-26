@@ -28,7 +28,7 @@ interface ProductItem {
 const PRODUCT_ITEMS: ProductItem[] = [
   {
     label: "Autopilot Dashboard",
-    description: "See your AI agents at work",
+    description: "See the role-skill chain at work",
     href: "/autopilot",
   },
   {
@@ -61,7 +61,7 @@ interface ResourceItem {
 const RESOURCE_ITEMS: ResourceItem[] = [
   {
     label: "How Autopilot Works",
-    description: "Learn how 7 AI agents run your product",
+    description: "Learn how role skills run through one visible chain",
     href: "/autopilot",
   },
   {

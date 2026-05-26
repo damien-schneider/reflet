@@ -11,7 +11,7 @@ const DEFAULT_FILTERS: TaskFilters = {
   type: [],
   priority: [],
   assigneeUserId: "",
-  assignedAgent: "",
+  assignedRole: "",
   labelIds: [],
   q: "",
   groupBy: "none",
@@ -50,7 +50,9 @@ describe("TasksFilterBar", () => {
     expect(
       screen.getByRole("button", { name: /Priority/i })
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Agent/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Role skill/i })
+    ).toBeInTheDocument();
   });
 
   it("toggles a status filter when a chip option is clicked", async () => {

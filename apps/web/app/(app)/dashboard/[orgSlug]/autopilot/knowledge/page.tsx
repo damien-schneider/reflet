@@ -88,7 +88,7 @@ const KNOWLEDGE_SECTIONS: readonly KnowledgeSectionConfig[] = [
       "Typed list of user-facing features with maturity (experimental, beta, stable, deprecated).",
     icon: IconCode,
     emptyHint:
-      "Auto-derived from the codebase. Used by downstream agents to ground use cases.",
+      "Auto-derived from the codebase. Used by downstream role skills to ground use cases.",
   },
   {
     docType: "scope",
@@ -106,7 +106,7 @@ const KNOWLEDGE_DOC_TYPES = new Set<string>(
 );
 
 /**
- * Shows the live exploration progress as the agent explores the codebase.
+ * Shows the live exploration progress as the codebase exploration runs.
  * Filters activity log entries to show only system/exploration entries.
  */
 function ExplorationProgress({
@@ -149,14 +149,14 @@ function ExplorationProgress({
 
   const cutoff = analysisSince ?? 0;
   const explorationEntries = activity
-    .filter((entry) => entry.agent === "system" && entry.createdAt >= cutoff)
+    .filter((entry) => entry.role === "system" && entry.createdAt >= cutoff)
     .reverse();
 
   if (explorationEntries.length === 0) {
     return (
       <div className="flex items-center gap-2 py-4 text-muted-foreground text-sm">
         <IconLoader2 className="size-4 animate-spin" />
-        <span>Agent is exploring the codebase&hellip;</span>
+        <span>Codebase exploration is running&hellip;</span>
       </div>
     );
   }
@@ -475,7 +475,7 @@ function ProductProfileCard({
             <h3 className="font-medium text-sm">Product Profile</h3>
             <p className="mt-0.5 text-muted-foreground text-xs">
               Typed product facts — name, tagline, value prop, differentiators.
-              Agents query these fields atomically.
+              Role skills query these fields atomically.
             </p>
           </div>
         </div>
@@ -756,8 +756,8 @@ export default function ProductPage() {
       <div className="flex items-start justify-between gap-4">
         <Muted>
           Four typed knowledge docs produced by the CTO from the codebase
-          analysis. Each one grounds the downstream agents — edit any of them to
-          override what the AI produced.
+          analysis. Each one grounds downstream role skills — edit any of them
+          to override what the AI produced.
         </Muted>
         <Button
           disabled={isRegenerating || isAnalysisRunning}
@@ -801,9 +801,9 @@ export default function ProductPage() {
           </div>
           <div className="border-blue-500/10 border-t px-4 py-2">
             <p className="text-[11px] text-blue-500/60">
-              The AI agent is reading your codebase to produce the four typed
-              knowledge docs. This typically takes 1-2 minutes. The page will
-              update automatically when complete.
+              The codebase exploration skill is reading your codebase to produce
+              the four typed knowledge docs. This typically takes 1-2 minutes.
+              The page will update automatically when complete.
             </p>
           </div>
         </div>

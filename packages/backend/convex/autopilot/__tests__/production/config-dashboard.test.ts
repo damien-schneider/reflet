@@ -24,7 +24,7 @@ async function createFreeOrg(t: TestContext) {
 }
 
 describe("autopilot production config and dashboard contracts", () => {
-  test("public config initialization writes explicit safe agent defaults", async () => {
+  test("public config initialization writes explicit safe role-skill defaults", async () => {
     const t = createTestContext();
     const organizationId = await createOrg(t);
     const authed = await createMemberSession(t, organizationId);
@@ -51,14 +51,14 @@ describe("autopilot production config and dashboard contracts", () => {
     await t.run(async (ctx) => {
       await ctx.db.insert("autopilotActivityLog", {
         organizationId,
-        agent: "pm",
+        role: "pm",
         level: "action",
         message: "PM started analysis",
         createdAt: now,
       });
       await ctx.db.insert("autopilotActivityLog", {
         organizationId,
-        agent: "pm",
+        role: "pm",
         level: "success",
         message: "PM produced tasks",
         createdAt: now + 1,
@@ -66,59 +66,14 @@ describe("autopilot production config and dashboard contracts", () => {
     });
 
     const performance = await authed.query(
-      api.autopilot.queries.dashboard.getAgentPerformance,
+      api.autopilot.queries.dashboard.getRolePerformance,
       { organizationId }
     );
-    const pm = performance.find((entry) => entry.agent === "pm");
+    const pm = performance.find((entry) => entry.role === "pm");
 
     expect(pm?.totalActions).toBe(1);
     expect(pm?.successCount).toBe(1);
     expect(pm?.successRate).toBe(1);
-  });
-
-  test("legacy configs do not enable opt-in agents by omission", async () => {
-    const t = createTestContext();
-    const organizationId = await createOrg(t);
-    const now = Date.now();
-    await t.run((ctx) =>
-      ctx.db.insert("autopilotConfig", {
-        organizationId,
-        enabled: true,
-        autonomyLevel: "review_required",
-        autonomyMode: "supervised",
-        maxTasksPerDay: 10,
-        tasksUsedToday: 0,
-        tasksResetAt: now + 24 * 60 * 60 * 1000,
-        requireArchitectReview: true,
-        createdAt: now,
-        updatedAt: now,
-      })
-    );
-    await t.run((ctx) =>
-      ctx.db.insert("autopilotRoutines", {
-        organizationId,
-        title: "Growth routine",
-        agent: "growth",
-        cronExpression: "* * * * *",
-        taskTemplate: JSON.stringify({ title: "Growth task" }),
-        enabled: true,
-        createdAt: now,
-        updatedAt: now,
-      })
-    );
-
-    const gate = await t.query(internal.autopilot.gate.checkGate, {
-      organizationId,
-      agent: "growth",
-      action: "publish_content",
-    });
-    const dispatched = await t.mutation(
-      internal.autopilot.routines.evaluateRoutines,
-      {}
-    );
-
-    expect(gate).toEqual({ proceed: false, reason: "agent_disabled" });
-    expect(dispatched).toBe(0);
   });
 
   test("non-Pro organizations cannot use public Autopilot CRUD mutations", async () => {
@@ -127,7 +82,7 @@ describe("autopilot production config and dashboard contracts", () => {
     await createAutopilotConfig(t, organizationId);
     const authed = await createMemberSession(t, organizationId);
     const now = Date.now();
-    const [workItemId, documentId, routineId] = await t.run(async (ctx) => {
+    const [workItemId, documentId] = await t.run(async (ctx) => {
       const createdWorkItemId = await ctx.db.insert("autopilotWorkItems", {
         organizationId,
         type: "task",
@@ -150,17 +105,7 @@ describe("autopilot production config and dashboard contracts", () => {
         createdAt: now,
         updatedAt: now,
       });
-      const createdRoutineId = await ctx.db.insert("autopilotRoutines", {
-        organizationId,
-        title: "Downgraded routine",
-        agent: "cto",
-        cronExpression: "* * * * *",
-        taskTemplate: JSON.stringify({ title: "Task" }),
-        enabled: true,
-        createdAt: now,
-        updatedAt: now,
-      });
-      return [createdWorkItemId, createdDocumentId, createdRoutineId];
+      return [createdWorkItemId, createdDocumentId];
     });
     const error = "Autopilot requires a Pro subscription.";
     const denials = [
@@ -197,23 +142,6 @@ describe("autopilot production config and dashboard contracts", () => {
         authed.mutation(api.autopilot.mutations.documents.archiveDocument, {
           documentId,
         }),
-      () =>
-        authed.mutation(api.autopilot.mutations.routines.createRoutine, {
-          organizationId,
-          title: "Blocked routine",
-          agent: "cto",
-          cronExpression: "* * * * *",
-          taskTemplate: JSON.stringify({ title: "Task" }),
-        }),
-      () =>
-        authed.mutation(api.autopilot.mutations.routines.updateRoutine, {
-          routineId,
-          enabled: false,
-        }),
-      () =>
-        authed.mutation(api.autopilot.mutations.routines.deleteRoutine, {
-          routineId,
-        }),
     ];
 
     for (const denial of denials) {
@@ -221,7 +149,7 @@ describe("autopilot production config and dashboard contracts", () => {
     }
   });
 
-  test("guards count agent activity even when unrelated logs are noisy", async () => {
+  test("guards count role activity even when unrelated logs are noisy", async () => {
     const t = createTestContext();
     const organizationId = await createOrg(t);
     await createAutopilotConfig(t, organizationId);
@@ -231,7 +159,7 @@ describe("autopilot production config and dashboard contracts", () => {
       for (let index = 0; index < 10; index += 1) {
         await ctx.db.insert("autopilotActivityLog", {
           organizationId,
-          agent: "growth",
+          role: "growth",
           level: "action",
           message: `Growth execution ${index}`,
           createdAt: now - 5 * 60 * 1000 + index,
@@ -240,7 +168,7 @@ describe("autopilot production config and dashboard contracts", () => {
       for (let index = 0; index < 5; index += 1) {
         await ctx.db.insert("autopilotActivityLog", {
           organizationId,
-          agent: "sales",
+          role: "sales",
           level: "error",
           message: `Sales failure ${index}`,
           createdAt: now - 2 * 60 * 1000 + index,
@@ -249,7 +177,7 @@ describe("autopilot production config and dashboard contracts", () => {
       for (let index = 0; index < 120; index += 1) {
         await ctx.db.insert("autopilotActivityLog", {
           organizationId,
-          agent: "system",
+          role: "system",
           level: "info",
           message: `Unrelated noise ${index}`,
           createdAt: now + index,
@@ -259,11 +187,11 @@ describe("autopilot production config and dashboard contracts", () => {
 
     const rateLimited = await t.query(internal.autopilot.guards.checkGuards, {
       organizationId,
-      agent: "growth",
+      role: "growth",
     });
     const circuitOpen = await t.query(internal.autopilot.guards.checkGuards, {
       organizationId,
-      agent: "sales",
+      role: "sales",
     });
 
     expect(rateLimited.allowed).toBe(false);

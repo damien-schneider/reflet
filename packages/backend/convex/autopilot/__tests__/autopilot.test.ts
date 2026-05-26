@@ -50,7 +50,7 @@ describe("autopilot tasks", () => {
         title: "Test task",
         description: "A test description",
         priority: "medium",
-        assignedAgent: "pm",
+        assignedRole: "pm",
         createdBy: "test",
       })
     );
@@ -101,7 +101,7 @@ describe("autopilot tasks", () => {
         title: "Status test",
         description: "Test status updates",
         priority: "high",
-        assignedAgent: "cto",
+        assignedRole: "cto",
         createdBy: "test",
       })
     );
@@ -129,7 +129,7 @@ describe("autopilot tasks", () => {
         title: "Complete test",
         description: "Test completion",
         priority: "medium",
-        assignedAgent: "cto",
+        assignedRole: "cto",
         createdBy: "test",
       })
     );
@@ -156,7 +156,7 @@ describe("autopilot tasks", () => {
       title: "Pending task",
       description: "Should appear",
       priority: "medium",
-      assignedAgent: "pm",
+      assignedRole: "pm",
       createdBy: "test",
     });
 
@@ -166,7 +166,7 @@ describe("autopilot tasks", () => {
         title: "Completed task",
         description: "Should not appear",
         priority: "low",
-        assignedAgent: "cto",
+        assignedRole: "cto",
         createdBy: "test",
       })
     );
@@ -193,7 +193,7 @@ describe("autopilot tasks", () => {
 
     await t.mutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: orgId,
-      agent: "pm",
+      role: "pm",
       level: "info",
       message: "Test activity",
       details: "Some details",
@@ -205,18 +205,18 @@ describe("autopilot tasks", () => {
 
     expect(activity).toHaveLength(1);
     expect(activity[0].message).toBe("Test activity");
-    expect(activity[0].agent).toBe("pm");
-    expect(activity[0].targetAgent).toBeUndefined();
+    expect(activity[0].role).toBe("pm");
+    expect(activity[0].targetRole).toBeUndefined();
   });
 
-  test("logActivity persists targetAgent when provided", async () => {
+  test("logActivity persists targetRole when provided", async () => {
     const t = createTestContext();
     const orgId = await createOrg(t);
 
     await t.mutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: orgId,
-      agent: "orchestrator",
-      targetAgent: "pm",
+      role: "ceo",
+      targetRole: "pm",
       level: "action",
       message: "Launching PM analysis",
     });
@@ -226,46 +226,8 @@ describe("autopilot tasks", () => {
     );
 
     expect(activity).toHaveLength(1);
-    expect(activity[0].agent).toBe("orchestrator");
-    expect(activity[0].targetAgent).toBe("pm");
-  });
-});
-
-describe("agent work streams", () => {
-  test("persists the latest streamed work snapshot for an agent", async () => {
-    const t = createTestContext();
-    const orgId = await createOrg(t);
-
-    const streamId = await t.mutation(
-      internal.autopilot.agent_threads.startWorkStream,
-      {
-        organizationId: orgId,
-        agent: "cto",
-        title: "Generating technical specification",
-      }
-    );
-
-    await t.mutation(internal.autopilot.agent_threads.updateWorkStream, {
-      streamId,
-      content: '{"riskLevel":"low"',
-      model: "openai/gpt-5.4-mini",
-    });
-
-    await t.mutation(internal.autopilot.agent_threads.finishWorkStream, {
-      streamId,
-      content: '{\n  "riskLevel": "low"\n}',
-    });
-
-    const streams = await t.run((ctx) =>
-      ctx.db.query("autopilotAgentWorkStreams").collect()
-    );
-
-    expect(streams).toHaveLength(1);
-    expect(streams[0].agent).toBe("cto");
-    expect(streams[0].content).toContain('"riskLevel": "low"');
-    expect(streams[0].model).toBe("openai/gpt-5.4-mini");
-    expect(streams[0].status).toBe("completed");
-    expect(streams[0].completedAt).toBeTypeOf("number");
+    expect(activity[0].role).toBe("ceo");
+    expect(activity[0].targetRole).toBe("pm");
   });
 });
 
@@ -280,7 +242,7 @@ describe("autopilot review items", () => {
         title: "Review me",
         description: "Needs review",
         priority: "medium",
-        assignedAgent: "pm",
+        assignedRole: "pm",
         needsReview: true,
         reviewType: "task_approval",
       })

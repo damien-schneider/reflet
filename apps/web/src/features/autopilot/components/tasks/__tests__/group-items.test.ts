@@ -9,7 +9,7 @@ function makeItem(overrides: Partial<WorkItem>): WorkItem {
   return {
     _creationTime: 1,
     _id: `id-${Math.random()}` as unknown as WorkItem["_id"],
-    assignedAgent: "system",
+    assignedRole: "system",
     createdAt: 1,
     description: "",
     organizationId: "org" as unknown as WorkItem["organizationId"],

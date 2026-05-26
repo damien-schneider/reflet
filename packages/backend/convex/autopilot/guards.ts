@@ -1,5 +1,5 @@
 /**
- * Guards — middleware checks wrapping every agent execution.
+ * Guards — middleware checks wrapping every role-skill execution.
  *
  * Checks: autonomy mode, cost budget, rate limit, circuit breaker.
  */
@@ -7,16 +7,40 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
 import { getEffectiveTier } from "../billing/effective_tier";
+import { DEFAULT_WEEKLY_COST_CAP_USD } from "./cost_guard";
 
 const MAX_EXECUTIONS_PER_HOUR = 10;
 const CIRCUIT_BREAKER_FAILURES = 5;
 const CIRCUIT_BREAKER_WINDOW_MS = 10 * 60 * 1000;
 const CIRCUIT_BREAKER_COOLDOWN_MS = 30 * 60 * 1000;
 
+const checkCostCaps = (config: {
+  costUsedThisWeekUsd?: number;
+  costUsedTodayUsd?: number;
+  dailyCostCapUsd?: number;
+  weeklyCostCapUsd?: number;
+}): string | null => {
+  const dailyCap = config.dailyCostCapUsd ?? 0;
+  if (dailyCap > 0) {
+    const costUsed = config.costUsedTodayUsd ?? 0;
+    if (costUsed >= dailyCap) {
+      return `Daily cost cap reached ($${costUsed.toFixed(2)} / $${dailyCap.toFixed(2)})`;
+    }
+  }
+  const weeklyCap = config.weeklyCostCapUsd ?? DEFAULT_WEEKLY_COST_CAP_USD;
+  if (weeklyCap > 0) {
+    const weeklyUsed = config.costUsedThisWeekUsd ?? 0;
+    if (weeklyUsed >= weeklyCap) {
+      return `Weekly cost cap reached ($${weeklyUsed.toFixed(2)} / $${weeklyCap.toFixed(2)})`;
+    }
+  }
+  return null;
+};
+
 export const checkGuards = internalQuery({
   args: {
     organizationId: v.id("organizations"),
-    agent: v.string(),
+    role: v.string(),
   },
   returns: v.object({
     allowed: v.boolean(),
@@ -62,17 +86,9 @@ export const checkGuards = internalQuery({
       };
     }
 
-    // Check daily cost cap
-    const dailyCap = config.dailyCostCapUsd ?? 0;
-    if (dailyCap > 0) {
-      const costUsed = config.costUsedTodayUsd ?? 0;
-      if (costUsed >= dailyCap) {
-        return {
-          allowed: false,
-          reason: `Daily cost cap reached ($${costUsed.toFixed(2)} / $${dailyCap.toFixed(2)})`,
-          autonomyMode,
-        };
-      }
+    const costCapReason = checkCostCaps(config);
+    if (costCapReason) {
+      return { allowed: false, reason: costCapReason, autonomyMode };
     }
 
     // Check task-per-day limit only inside the active counter window.
@@ -87,32 +103,32 @@ export const checkGuards = internalQuery({
       };
     }
 
-    // Rate limit: max executions per hour per agent
+    // Rate limit: max executions per hour per role skill
     const now = Date.now();
     const oneHourAgo = now - 60 * 60 * 1000;
-    const agentActivity = await ctx.db
+    const roleActivity = await ctx.db
       .query("autopilotActivityLog")
       .withIndex("by_org_created", (q) =>
         q.eq("organizationId", args.organizationId).gt("createdAt", oneHourAgo)
       )
-      .filter((q) => q.eq(q.field("agent"), args.agent))
+      .filter((q) => q.eq(q.field("role"), args.role))
       .collect();
 
-    const agentExecutions = agentActivity.filter(
+    const roleExecutions = roleActivity.filter(
       (entry) => entry.level === "action"
     );
 
-    if (agentExecutions.length >= MAX_EXECUTIONS_PER_HOUR) {
+    if (roleExecutions.length >= MAX_EXECUTIONS_PER_HOUR) {
       return {
         allowed: false,
-        reason: `Rate limit: ${args.agent} has ${agentExecutions.length} executions in the last hour`,
+        reason: `Rate limit: ${args.role} has ${roleExecutions.length} executions in the last hour`,
         autonomyMode,
       };
     }
 
     // Circuit breaker: 5 failures in 10 min → 30 min cooldown
     const windowStart = now - CIRCUIT_BREAKER_WINDOW_MS;
-    const recentErrors = agentActivity.filter(
+    const recentErrors = roleActivity.filter(
       (entry) => entry.level === "error" && entry.createdAt > windowStart
     );
 
@@ -124,7 +140,7 @@ export const checkGuards = internalQuery({
       ) {
         return {
           allowed: false,
-          reason: `Circuit breaker: ${args.agent} has ${recentErrors.length} errors in ${CIRCUIT_BREAKER_WINDOW_MS / 60_000}min`,
+          reason: `Circuit breaker: ${args.role} has ${recentErrors.length} errors in ${CIRCUIT_BREAKER_WINDOW_MS / 60_000}min`,
           autonomyMode,
         };
       }

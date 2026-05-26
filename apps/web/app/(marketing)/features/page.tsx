@@ -16,12 +16,12 @@ import { cn } from "@/lib/utils";
 export const metadata = generatePageMetadata({
   title: "Features | Reflet — Autonomous AI Company Platform",
   description:
-    "7 AI agents that autonomously run your product — CEO, PM, CTO, Dev, Growth, Sales, Support. Shared board, knowledge base, inbox, work board, and provider-agnostic coding.",
+    "A visible Autopilot chain with role skills, blockers, deliverables, knowledge, inbox review, work board, and provider-agnostic coding.",
   path: "/features",
   keywords: [
-    "autonomous AI agents",
+    "AI role skills",
     "AI company platform",
-    "AI employees",
+    "runtime chain",
     "AI product management",
     "AI developer",
     "shared board",
@@ -40,13 +40,13 @@ const FEATURES = [
     accentBg: "bg-emerald-500/10 dark:bg-emerald-500/15",
     title: "The Shared Board",
     description:
-      "No orchestrator. Agents communicate through a shared database — exactly like a real company.",
+      "No hidden scheduler. Role skills coordinate through visible execution records and shared product context.",
     details: [
-      "Agents read and write to a single source of truth",
-      "PM sees Growth's research; CTO sees PM's initiatives; Dev sees CTO's specs",
+      "Role skills read and write to a single source of truth",
+      "PM sees Growth research; CTO sees PM initiatives; Validator sees CTO specs",
       "Changes cascade automatically — no manual handoffs",
-      "Full audit trail of every agent action",
-      "You observe the entire company's activity in real time",
+      "Full audit trail of every role-skill action",
+      "You observe the whole chain in real time",
     ],
   },
   {
@@ -61,8 +61,8 @@ const FEATURES = [
       "Company Brief: product definition, ICP, competitive landscape",
       "Roadmap: current initiatives ranked by impact and effort",
       "Architecture Overview: codebase structure and key decisions",
-      "Market Report: ongoing research by the Growth agent",
-      "Change cascades — updating one document notifies dependent agents",
+      "Market Report: ongoing research by the Growth skill",
+      "Change cascades notify dependent branches",
     ],
   },
   {
@@ -72,13 +72,13 @@ const FEATURES = [
     accentBg: "bg-amber-500/10 dark:bg-amber-500/15",
     title: "The Inbox",
     description:
-      "Every agent output that needs your attention lands here. Approve, edit, reject, or snooze.",
+      "Every role-skill output that needs attention lands here. Approve, edit, reject, or snooze.",
     details: [
-      "Approve agent proposals with one click",
+      "Approve proposals with one click",
       "Edit drafts before they're published or executed",
-      "Reject with a reason — agents learn from feedback",
+      "Reject with a reason so future runs have context",
       "Snooze items to review later, nothing gets lost",
-      "Unified queue across all 7 agents",
+      "Unified queue across all role skills",
     ],
   },
   {
@@ -92,9 +92,9 @@ const FEATURES = [
     details: [
       "Initiatives created by PM, broken into stories",
       "Specs written by CTO, attached to stories",
-      "Tasks generated for Dev with clear acceptance criteria",
-      "Status flows automatically as agents complete work",
-      "See exactly what every agent is working on right now",
+      "Tasks generated with clear acceptance criteria",
+      "Status flows automatically as executions complete",
+      "See exactly what each branch is waiting on",
     ],
   },
   {
@@ -120,12 +120,12 @@ const FEATURES = [
     accentBg: "bg-[#f0efea] dark:bg-[#ffffff08]",
     title: "Deep Integrations",
     description:
-      "Connect your GitHub repo, Stripe account, and existing tools. Agents work with your stack.",
+      "Connect your GitHub repo, Stripe account, and existing tools. Role skills work with your stack.",
     details: [
-      "GitHub: agents read code, create PRs, sync issues",
+      "GitHub: codebase context, PRs, and issue sync",
       "Stripe: Sales tracks MRR, ARR, and churn in real time",
       "SDK & React hooks for embedding in your product",
-      "REST API for programmatic access to all agent data",
+      "REST API for programmatic access to runtime data",
       "MCP Server for AI coding assistant integration",
     ],
   },
@@ -145,13 +145,12 @@ export default function FeaturesPage() {
               Autonomous AI company
             </span>
             <h1 className="mx-auto mb-6 max-w-180 font-display text-[clamp(2rem,5vw,3.5rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
-              7 AI agents built to run your product.
+              A visible runtime chain built to run your product.
             </h1>
             <p className="mx-auto mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
-              Reflet Autopilot gives you a shared board where agents
-              collaborate, a knowledge base that stays current, an inbox for key
-              decisions, and a work board tracking every initiative from idea to
-              shipped code.
+              Reflet Autopilot gives you role skills, durable executions, a
+              knowledge base that stays current, an inbox for key decisions, and
+              a work board tracking every initiative from idea to shipped code.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">
@@ -225,8 +224,8 @@ export default function FeaturesPage() {
               Ready to start your AI company?
             </h2>
             <p className="mx-auto mb-8 max-w-120 text-[15px] text-olive-300/80 leading-relaxed sm:text-[17px]">
-              Connect your repo. 7 AI agents start in 5 minutes. Free tier
-              available.
+              Connect your repo. The visible chain starts in 5 minutes. Free
+              tier available.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">

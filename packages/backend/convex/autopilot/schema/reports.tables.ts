@@ -1,6 +1,6 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
-import { assignedAgent, priority } from "./validators";
+import { assignedRole, priority } from "./validators";
 
 export const reportType = v.union(
   v.literal("daily"),
@@ -37,7 +37,7 @@ export const reportsTables = {
         priority,
       })
     ),
-    sourceAgent: v.optional(assignedAgent),
+    sourceRole: v.optional(assignedRole),
     tags: v.array(v.string()),
 
     // Review/inbox

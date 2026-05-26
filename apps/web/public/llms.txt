@@ -1,59 +1,53 @@
 # Reflet
 
-> The world's first fully autonomous AI company. 10 AI agents that run your product 24/7.
+> A visible Autopilot chain with role skills that run product work from explicit conditions, blockers, and validations.
 
 ## Autopilot — The Core Product
 
-Reflet Autopilot is an autonomous AI company platform. Connect your GitHub repo and 10 AI agents start running your product — from market research to shipped code to paying customers.
+Reflet Autopilot is an autonomous AI company platform. Connect your GitHub repo and one visible chain runtime starts coordinating role skills for market research, delivery planning, sales, support, and validation.
 
 ### How It Works
 1. Paste your GitHub repo URL
 2. Reflet generates a Company Brief in 5 minutes (product definition, ICP, competitive landscape, roadmap)
-3. 10 AI agents start working autonomously
+3. Role skills start working through condition-based triggers
 4. You act as President — set strategy, approve key decisions
 
 ### Shared Board Architecture
-Agents communicate through data on shared boards, not function calls. Every agent reads from and writes to boards (feedback, roadmap, changelog, knowledge base). This mirrors how real employees collaborate — through shared artifacts, not direct messages.
+Role skills communicate through data on shared boards, not hidden prompt handoffs. Every role skill reads from and writes to boards (feedback, roadmap, changelog, knowledge base). This keeps runtime state, blockers, and deliverables visible.
 
 ### Autonomy Modes
-- **Supervised**: Agents propose actions, you approve
-- **Full Auto**: Agents act autonomously within budgets and guardrails
-- **Stopped**: Agent paused, no actions taken
+- **Supervised**: Role skills propose actions, you approve
+- **Full Auto**: Validated outputs replace canonical work within budgets and guardrails
+- **Stopped**: The chain shows state without generating new work
 
 ### Cost Guards
-Per-agent budgets, rate limits, and circuit breakers ensure costs stay predictable.
+Per-role-skill budgets, rate limits, and circuit breakers ensure costs stay predictable.
 
-## AI Agents
+## Role Skills
 
-### CEO Agent
-Strategic oversight. Generates the Company Brief from your repo. Sets product direction and competitive positioning.
+### CEO Skill
+Strategic coordination. Generates the Company Brief from your repo and keeps chain blockers visible.
 
-### PM Agent (Product Manager)
+### PM Skill (Product Manager)
 Reads market research, user feedback, and competitive intel. Creates initiatives and prioritizes the roadmap.
 
-### CTO Agent
+### CTO Skill
 Writes technical specifications from PM initiatives. Makes architecture decisions and defines implementation plans.
 
-### Dev Agent (Developer)
-Generates code and ships pull requests to GitHub. Implements features based on CTO specs.
+### Validator Skill
+Checks outputs, delivery plans, and review gates before work becomes canonical.
 
-### Growth Agent
+### Growth Skill
 Creates content, announces shipped features, researches market opportunities on Reddit, Hacker News, and competitor sites.
 
-### Sales Agent
+### Sales Skill
 Discovers leads, researches prospects, and generates outreach messages. Tracks revenue via Stripe integration.
 
-### Security Agent
-Scans code for vulnerabilities, checks dependencies, and ensures compliance with security best practices.
+### Support Skill
+Triages incoming user issues, generates responses, and escalates critical problems to PM.
 
-### Architect Agent
-Reviews code quality, enforces architecture standards, and provides code review on pull requests.
-
-### Support Agent
-Triages incoming user issues, generates responses, and escalates critical problems to the PM agent.
-
-### Docs Agent
-Generates and maintains documentation. Keeps knowledge base current as features ship and APIs change.
+### Knowledge Refresh
+Freshness rules identify stale deliverables after codebase changes and route replacement drafts through review or validation.
 
 ## Feedback Platform
 
@@ -80,11 +74,11 @@ Link feedback to issues. When a PR merges, the linked request moves to Shipped a
 ## Alternatives & Comparisons
 
 ### AI Company Alternatives
-- **Devin**: AI developer only. Reflet provides the full company — 10 agents covering every role.
-- **Artisan**: AI sales BDR only. Reflet includes sales plus 9 other agents.
-- **Sintra AI**: Individual AI workers without coordination. Reflet is an integrated AI company with shared board communication.
-- **Relevance AI**: AI workforce platform. Reflet provides pre-built agents with domain expertise, not generic agent builders.
-- **Lindy AI**: AI employees for individual tasks. Reflet offers a complete company with inter-agent collaboration.
+- **Devin**: AI developer only. Reflet provides a broader product operations chain.
+- **Artisan**: AI sales BDR only. Reflet includes sales plus product, growth, support, and validation workflows.
+- **Sintra AI**: Individual AI workers without shared runtime state. Reflet uses one visible chain.
+- **Relevance AI**: AI workforce platform. Reflet provides product-specific role skills and deliverables.
+- **Lindy AI**: AI workers for individual tasks. Reflet focuses on product operations with visible blockers and validations.
 
 ### Feedback Platform Alternatives
 - **Canny**: Reflet offers similar features at 60-80% lower cost with open-source transparency
@@ -101,7 +95,7 @@ Link feedback to issues. When a PR merges, the linked request moves to Shipped a
 - **Backend**: Convex (real-time reactive backend)
 - **UI**: TailwindCSS, shadcn/ui
 - **Auth**: Better-Auth
-- **AI**: Multi-model (OpenRouter), autonomous agent orchestration
+- **AI**: Multi-model (OpenRouter), condition-based role-skill orchestration
 - **Build**: Turborepo, Bun
 
 ## Getting Started

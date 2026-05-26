@@ -1,6 +1,6 @@
 /**
- * Use case mutations — create use cases owned by PM agent.
- * Validation scores are written by the Validator agent, not here.
+ * Use case mutations — create use cases owned by the PM role skill.
+ * Validation scores are written by the Validator role skill, not here.
  */
 
 import { v } from "convex/values";

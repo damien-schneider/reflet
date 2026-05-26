@@ -6,7 +6,7 @@ export const knowledgeTables = {
   autopilotKnowledgeDocs: defineTable({
     organizationId: v.id("organizations"),
     docType: knowledgeDocType,
-    ownerAgent: v.string(),
+    ownerRole: v.string(),
     title: v.string(),
     contentFull: v.string(),
     contentSummary: v.string(),
@@ -26,7 +26,7 @@ export const knowledgeTables = {
     version: v.number(),
     content: v.string(),
     editedBy: knowledgeEditedBy,
-    editingAgent: v.optional(v.string()),
+    editingRole: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_doc", ["docId"]),
 };

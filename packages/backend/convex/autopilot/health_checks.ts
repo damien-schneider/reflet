@@ -28,7 +28,7 @@ function degradeTo(state: HealthState, target: HealthStatus): void {
   }
 }
 
-const AGENT_FIELDS = [
+const ROLE_SKILL_FIELDS = [
   "pmEnabled",
   "ctoEnabled",
   "growthEnabled",
@@ -36,11 +36,11 @@ const AGENT_FIELDS = [
   "salesEnabled",
 ] as const;
 
-type AgentToggleConfig = Partial<
-  Record<(typeof AGENT_FIELDS)[number], boolean>
+type RoleSkillToggleConfig = Partial<
+  Record<(typeof ROLE_SKILL_FIELDS)[number], boolean>
 >;
 
-const TOTAL_AGENTS = AGENT_FIELDS.length;
+const TOTAL_ROLE_SKILLS = ROLE_SKILL_FIELDS.length;
 
 function checkAutonomyMode(
   config: { autonomyMode?: string; enabled: boolean },
@@ -57,31 +57,31 @@ function checkAutonomyMode(
   }
 }
 
-function checkAgentCount(
-  config: AgentToggleConfig,
+function checkRoleCount(
+  config: RoleSkillToggleConfig,
   state: HealthState
 ): number {
-  const enabledCount = AGENT_FIELDS.filter(
+  const enabledCount = ROLE_SKILL_FIELDS.filter(
     (field) => config[field] !== false
   ).length;
 
   if (enabledCount === 0) {
     state.status = "critical";
     state.issues.push({
-      id: "no_agents",
+      id: "no_role_skills",
       severity: "critical",
-      message: "No agents are enabled",
-      resolution: "Enable at least one agent to start your autonomous team",
+      message: "No role skills are enabled",
+      resolution: "Enable at least one role skill to start the chain runtime",
       actionUrl: "settings",
-      actionLabel: "Enable Agents",
+      actionLabel: "Enable Role Skills",
     });
   } else if (enabledCount <= 2) {
     degradeTo(state, "degraded");
     state.issues.push({
-      id: "few_agents",
+      id: "few_role_skills",
       severity: "warning",
-      message: `Only ${enabledCount} of ${TOTAL_AGENTS} agents enabled`,
-      resolution: "Consider enabling more agents for full coverage",
+      message: `Only ${enabledCount} of ${TOTAL_ROLE_SKILLS} role skills enabled`,
+      resolution: "Consider enabling more role skills for full coverage",
     });
   }
 
@@ -102,7 +102,7 @@ function checkActivity(
     state.issues.push({
       id: "no_activity",
       severity: "warning",
-      message: "No agent activity recorded yet",
+      message: "No role-skill activity recorded yet",
       resolution:
         "System may still be bootstrapping. Wait for the next cron tick.",
     });
@@ -113,9 +113,9 @@ function checkActivity(
     state.issues.push({
       id: "stale_activity",
       severity: "info",
-      message: "No agent activity in the last hour",
+      message: "No role-skill activity in the last hour",
       resolution:
-        "Agents are work-driven — they wake only when there's work on the board. This is normal when all tasks are complete.",
+        "Role skills are work-driven — they wake only when there is a visible chain reason. This is normal when all work is complete.",
     });
   }
 }
@@ -159,7 +159,7 @@ function checkCostCap(
     state.issues.push({
       id: "cost_cap_reached",
       severity: "warning",
-      message: "Daily cost cap reached — agents paused until reset",
+      message: "Daily cost cap reached — role skills paused until reset",
       resolution: "Increase cost cap in Settings or wait for daily reset",
       actionUrl: "settings",
       actionLabel: "Adjust Cost Cap",
@@ -204,8 +204,9 @@ function checkOrphanedTasks(orphanedCount: number, state: HealthState): void {
     state.issues.push({
       id: "orphaned_tasks",
       severity: "warning",
-      message: `${orphanedCount} task(s) assigned to disabled agents`,
-      resolution: "Self-healing will auto-cancel these, or enable the agents",
+      message: `${orphanedCount} task(s) assigned to disabled role skills`,
+      resolution:
+        "Self-healing will auto-cancel these, or enable the role skills",
       actionUrl: "tasks",
       actionLabel: "View Tasks",
     });
@@ -218,7 +219,8 @@ function checkPendingApprovals(count: number, state: HealthState): void {
       id: "pending_approvals",
       severity: count >= 5 ? "warning" : "info",
       message: `${count} item${count > 1 ? "s" : ""} waiting for your approval`,
-      resolution: "Review and approve or reject in Inbox to unblock agents",
+      resolution:
+        "Review and approve or reject in Inbox to unblock dependent role skills",
       actionUrl: "inbox",
       actionLabel: "Review Inbox",
     });
@@ -327,7 +329,7 @@ function checkChainBlockers(
       message:
         "Chain root cannot advance: CTO is disabled but codebase_understanding is missing.",
       resolution:
-        "Enable the CTO agent in Settings so it can produce the first chain artifact.",
+        "Enable the CTO role skill in Settings so it can produce the first chain artifact.",
       actionUrl: "settings",
       actionLabel: "Enable CTO",
     });
@@ -344,7 +346,7 @@ function checkChainBlockers(
         message:
           "Recent chain producer failure logged. Check the activity log for details.",
         resolution:
-          "Open Activity to see the agent log — the CTO or another producer reported a blocker within the last few hours.",
+          "Open Activity to see the role-skill log — the CTO or another producer reported a blocker within the last few hours.",
         actionUrl: "activity",
         actionLabel: "View Activity",
       });
@@ -362,7 +364,7 @@ function checkCredentials(
     state.issues.unshift({
       id: "credentials_missing",
       severity: "critical",
-      message: `No credentials configured for "${adapterName}" adapter — agents cannot execute tasks`,
+      message: `No credentials configured for "${adapterName}" adapter — role skills cannot execute tasks`,
       resolution: "Add your API keys in Settings to enable task execution",
       actionUrl: "settings",
       actionLabel: "Configure Credentials",
@@ -382,9 +384,7 @@ function checkCredentials(
 
 export type { ChainBlockerContext, ChainStateLike, HealthState };
 export {
-  AGENT_FIELDS,
   checkActivity,
-  checkAgentCount,
   checkAutonomyMode,
   checkChainBlockers,
   checkCostCap,
@@ -393,9 +393,11 @@ export {
   checkOrphanedTasks,
   checkPendingApprovals,
   checkPipelineCapacity,
+  checkRoleCount,
   checkStuckTasks,
   checkTaskThrottle,
   ONE_HOUR,
+  ROLE_SKILL_FIELDS,
   THIRTY_MINUTES,
-  TOTAL_AGENTS,
+  TOTAL_ROLE_SKILLS,
 };

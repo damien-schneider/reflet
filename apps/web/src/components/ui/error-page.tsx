@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "./button";
+import { DevErrorDetails } from "./dev-error-details";
 
 interface ErrorPageProps {
   className?: string;
@@ -12,7 +13,6 @@ interface ErrorPageProps {
   error?: Error | null;
   onRetry?: () => void;
   retryLabel?: string;
-  showError?: boolean;
   showHomeLink?: boolean;
   title?: string;
 }
@@ -24,7 +24,6 @@ export function ErrorPage({
   onRetry,
   retryLabel = "Try again",
   showHomeLink = true,
-  showError = false,
   className,
 }: ErrorPageProps) {
   return (
@@ -44,11 +43,7 @@ export function ErrorPage({
         <p className="max-w-md text-muted-foreground">{description}</p>
       </div>
 
-      {showError && error?.message && (
-        <code className="mt-4 max-w-lg overflow-auto rounded-md bg-muted px-4 py-2 text-sm text-muted-foreground">
-          {error.message}
-        </code>
-      )}
+      {error && <DevErrorDetails error={error} />}
 
       <div className="mt-6 flex items-center gap-3">
         {onRetry && (

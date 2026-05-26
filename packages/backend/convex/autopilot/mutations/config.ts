@@ -66,10 +66,10 @@ type ConfigPatch = Partial<
     | "emailDailyLimit"
     | "growthEnabled"
     | "intelligenceEnabled"
-    | "maxPendingTasksPerAgent"
+    | "maxPendingTasksPerRole"
     | "maxPendingTasksTotal"
     | "maxTasksPerDay"
-    | "perAgentDailyCapUsd"
+    | "perRoleDailyCapUsd"
     | "pmEnabled"
     | "requireArchitectReview"
     | "salesEnabled"
@@ -84,17 +84,17 @@ interface ConfigUpdateArgs {
   emailDailyLimit?: number;
   growthEnabled?: boolean;
   intelligenceEnabled?: boolean;
-  maxPendingTasksPerAgent?: number;
+  maxPendingTasksPerRole?: number;
   maxPendingTasksTotal?: number;
   maxTasksPerDay?: number;
-  perAgentDailyCapUsd?: string;
+  perRoleDailyCapUsd?: string;
   pmEnabled?: boolean;
   requireArchitectReview?: boolean;
   salesEnabled?: boolean;
   supportEnabled?: boolean;
 }
 
-const perAgentDailyCapUsdSchema = z
+const perRoleDailyCapUsdSchema = z
   .object({
     cto: z.number().positive().finite().optional(),
     growth: z.number().positive().finite().optional(),
@@ -119,24 +119,24 @@ function assertNonNegative(value: number | undefined, field: string): void {
 function validateConfigUpdate(args: {
   dailyCostCapUsd?: number;
   emailDailyLimit?: number;
-  maxPendingTasksPerAgent?: number;
+  maxPendingTasksPerRole?: number;
   maxPendingTasksTotal?: number;
   maxTasksPerDay?: number;
-  perAgentDailyCapUsd?: string;
+  perRoleDailyCapUsd?: string;
 }): void {
   assertAtLeastOne(args.maxTasksPerDay, "maxTasksPerDay");
-  assertAtLeastOne(args.maxPendingTasksPerAgent, "maxPendingTasksPerAgent");
+  assertAtLeastOne(args.maxPendingTasksPerRole, "maxPendingTasksPerRole");
   assertAtLeastOne(args.maxPendingTasksTotal, "maxPendingTasksTotal");
   assertNonNegative(args.dailyCostCapUsd, "dailyCostCapUsd");
   assertNonNegative(args.emailDailyLimit, "emailDailyLimit");
-  if (args.perAgentDailyCapUsd === undefined) {
+  if (args.perRoleDailyCapUsd === undefined) {
     return;
   }
   try {
-    perAgentDailyCapUsdSchema.parse(JSON.parse(args.perAgentDailyCapUsd));
+    perRoleDailyCapUsdSchema.parse(JSON.parse(args.perRoleDailyCapUsd));
   } catch {
     throw new Error(
-      "perAgentDailyCapUsd must be a JSON object of positive finite dollar amounts for known agents"
+      "perRoleDailyCapUsd must be a JSON object of positive finite dollar amounts for known role skills"
     );
   }
 }
@@ -153,7 +153,10 @@ function applyGeneralUpdates(
   }
 }
 
-function applyAgentUpdates(args: ConfigUpdateArgs, updates: ConfigPatch): void {
+function applyRoleSkillUpdates(
+  args: ConfigUpdateArgs,
+  updates: ConfigPatch
+): void {
   if (args.intelligenceEnabled !== undefined) {
     updates.intelligenceEnabled = args.intelligenceEnabled;
   }
@@ -184,14 +187,14 @@ function applyLimitUpdates(args: ConfigUpdateArgs, updates: ConfigPatch): void {
   if (args.emailDailyLimit !== undefined) {
     updates.emailDailyLimit = args.emailDailyLimit;
   }
-  if (args.maxPendingTasksPerAgent !== undefined) {
-    updates.maxPendingTasksPerAgent = args.maxPendingTasksPerAgent;
+  if (args.maxPendingTasksPerRole !== undefined) {
+    updates.maxPendingTasksPerRole = args.maxPendingTasksPerRole;
   }
   if (args.maxPendingTasksTotal !== undefined) {
     updates.maxPendingTasksTotal = args.maxPendingTasksTotal;
   }
-  if (args.perAgentDailyCapUsd !== undefined) {
-    updates.perAgentDailyCapUsd = args.perAgentDailyCapUsd;
+  if (args.perRoleDailyCapUsd !== undefined) {
+    updates.perRoleDailyCapUsd = args.perRoleDailyCapUsd;
   }
 }
 
@@ -209,9 +212,9 @@ export const updateConfig = mutation({
     salesEnabled: v.optional(v.boolean()),
     dailyCostCapUsd: v.optional(v.number()),
     emailDailyLimit: v.optional(v.number()),
-    maxPendingTasksPerAgent: v.optional(v.number()),
+    maxPendingTasksPerRole: v.optional(v.number()),
     maxPendingTasksTotal: v.optional(v.number()),
-    perAgentDailyCapUsd: v.optional(v.string()),
+    perRoleDailyCapUsd: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -227,7 +230,7 @@ export const updateConfig = mutation({
 
     const updates: ConfigPatch = { updatedAt: Date.now() };
     applyGeneralUpdates(args, updates);
-    applyAgentUpdates(args, updates);
+    applyRoleSkillUpdates(args, updates);
     applyLimitUpdates(args, updates);
 
     await ctx.db.patch(args.configId, updates);
@@ -287,7 +290,7 @@ export const setAutonomyMode = mutation({
       });
 
       await ctx.db.insert("autopilotActivityLog", {
-        agent: "system",
+        role: "system",
         createdAt: now,
         level: "warning",
         message: `Autopilot stopped — ${inProgressItems.length} work items paused`,
@@ -319,7 +322,7 @@ export const setAutonomyMode = mutation({
       });
 
       await ctx.db.insert("autopilotActivityLog", {
-        agent: "system",
+        role: "system",
         createdAt: now,
         level: "success",
         message: `Autopilot resumed in ${args.mode} mode — ${backlogItems.length} work items resumed`,
@@ -335,7 +338,7 @@ export const setAutonomyMode = mutation({
     });
 
     await ctx.db.insert("autopilotActivityLog", {
-      agent: "system",
+      role: "system",
       createdAt: now,
       level: "info",
       message: `Autonomy mode changed to ${args.mode}`,
@@ -380,7 +383,7 @@ export const raiseBudgetCap = mutation({
 
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      agent: "system",
+      role: "system",
       level: "success",
       message: `Budget cap raised to $${args.newCapUsd.toFixed(2)}`,
       action: "budget.raised",

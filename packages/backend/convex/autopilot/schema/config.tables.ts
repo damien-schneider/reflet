@@ -1,14 +1,17 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
-import { assignedAgent, autonomyLevel, autonomyMode } from "./validators";
+import { autonomyLevel, autonomyMode } from "./validators";
 
 export const configTables = {
   autopilotConfig: defineTable({
     autonomyLevel,
     ceoChatThreadId: v.optional(v.string()),
     costUsedTodayUsd: v.optional(v.number()),
+    costUsedThisWeekUsd: v.optional(v.number()),
     createdAt: v.number(),
     dailyCostCapUsd: v.optional(v.number()),
+    weeklyCostCapUsd: v.optional(v.number()),
+    weekResetAt: v.optional(v.number()),
     emailBlocklist: v.optional(v.array(v.string())),
     emailDailyLimit: v.optional(v.number()),
     enabled: v.boolean(),
@@ -28,18 +31,16 @@ export const configTables = {
     autonomyMode: v.optional(autonomyMode),
     stoppedAt: v.optional(v.number()),
     fullAutoDelay: v.optional(v.number()),
-    maxPendingTasksPerAgent: v.optional(v.number()),
+    maxPendingTasksPerRole: v.optional(v.number()),
     maxPendingTasksTotal: v.optional(v.number()),
     maxActiveInitiatives: v.optional(v.number()),
     maxActiveStoriesPerInitiative: v.optional(v.number()),
     maxSignalsPerDay: v.optional(v.number()),
-    activationOverrides: v.optional(v.string()),
     budgetWarnPercent: v.optional(v.number()),
     budgetHardStop: v.optional(v.boolean()),
-    perAgentDailyCapUsd: v.optional(v.string()),
+    perRoleDailyCapUsd: v.optional(v.string()),
     // Chain orchestration
     chainEnabled: v.optional(v.boolean()),
-    wakeThresholdOpenTasks: v.optional(v.number()),
     validatorWeights: v.optional(
       v.object({
         cost: v.number(),
@@ -50,21 +51,4 @@ export const configTables = {
       })
     ),
   }).index("by_organization", ["organizationId"]),
-
-  autopilotRoutines: defineTable({
-    organizationId: v.id("organizations"),
-    title: v.string(),
-    description: v.optional(v.string()),
-    agent: assignedAgent,
-    cronExpression: v.string(),
-    timezone: v.optional(v.string()),
-    taskTemplate: v.string(),
-    enabled: v.boolean(),
-    lastRunAt: v.optional(v.number()),
-    nextRunAt: v.optional(v.number()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_organization", ["organizationId"])
-    .index("by_next_run", ["nextRunAt"]),
 };

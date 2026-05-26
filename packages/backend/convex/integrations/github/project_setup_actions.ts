@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "../../_generated/api";
 import { internalAction } from "../../_generated/server";
-import { repoAnalysisAgent } from "../../ai/agent";
+import { repoAnalysisRuntime } from "../../ai/runtimes";
 import { fetchGitHubReleases, fetchRepoData } from "./github_helpers";
 import { parseJsonArray, SEMVER_TAG_REGEX } from "./project_setup_shared";
 
@@ -37,7 +37,7 @@ export const runProjectSetup = internalAction({
 
       const repoData = await fetchRepoData(repositoryFullName);
 
-      const analysisResult = await repoAnalysisAgent.generateText(
+      const analysisResult = await repoAnalysisRuntime.generateText(
         ctx,
         { userId: "system" },
         {
@@ -109,7 +109,7 @@ Provide a concise project overview (2-3 sentences describing what this project d
         }
       );
 
-      const servicesResult = await repoAnalysisAgent.generateText(
+      const servicesResult = await repoAnalysisRuntime.generateText(
         ctx,
         { userId: "system" },
         {
@@ -166,7 +166,7 @@ Return ONLY the JSON array, no markdown.`,
         }
       );
 
-      const keywordsResult = await repoAnalysisAgent.generateText(
+      const keywordsResult = await repoAnalysisRuntime.generateText(
         ctx,
         { userId: "system" },
         {
@@ -263,7 +263,7 @@ Return ONLY the JSON array, no markdown.`,
         { setupId: args.setupId, stepKey: "suggest_tags", status: "running" }
       );
 
-      const tagsResult = await repoAnalysisAgent.generateText(
+      const tagsResult = await repoAnalysisRuntime.generateText(
         ctx,
         { userId: "system" },
         {
@@ -313,7 +313,7 @@ Return ONLY the JSON array, no markdown.`,
         }
       );
 
-      const promptsResult = await repoAnalysisAgent.generateText(
+      const promptsResult = await repoAnalysisRuntime.generateText(
         ctx,
         { userId: "system" },
         {

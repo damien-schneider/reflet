@@ -116,7 +116,7 @@ export const createTaskFromFeedback = mutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: args.organizationId,
       workItemId,
-      agent: "system",
+      role: "system",
       level: "info",
       message: `Task created from feedback: ${feedback.title}`,
       details: `Priority: ${args.priority}`,

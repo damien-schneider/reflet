@@ -27,7 +27,7 @@ const TIERS = [
     yearlyPrice: 0,
     description: "For solo founders getting started with an AI-run product.",
     features: [
-      "7 AI agents",
+      "7 role skills",
       "1 GitHub repo",
       "Supervised mode only",
       "Community support",
@@ -66,7 +66,7 @@ const TIERS = [
       "Unlimited repos",
       "SSO (SAML)",
       "Dedicated success manager",
-      "Custom agent budgets",
+      "Custom role-skill budgets",
     ],
     cta: "Talk to us",
     ctaVariant: "outline" as const,

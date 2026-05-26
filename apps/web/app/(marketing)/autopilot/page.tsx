@@ -2,9 +2,9 @@ import Link from "next/link";
 import {
   ArrowRight,
   Brain,
-  Code,
   Headset,
   MegaphoneSimple,
+  Shield,
   Target,
   Users,
   Wrench,
@@ -16,72 +16,72 @@ import { generatePageMetadata } from "@/lib/seo-config";
 import { cn } from "@/lib/utils";
 
 export const metadata = generatePageMetadata({
-  title: "Reflet Autopilot — 7 AI Agents That Run Your Company",
+  title: "Reflet Autopilot — Visible Role Skills and Runtime Chains",
   description:
-    "Connect your GitHub repo. 7 autonomous AI agents — CEO, PM, CTO, Dev, Growth, Sales, Support — start running your product in 5 minutes.",
+    "Connect your GitHub repo. Reflet runs one visible chain runtime with CEO, PM, CTO, Growth, Sales, Support, and Validator role skills.",
   path: "/autopilot",
   keywords: [
     "autonomous AI company",
-    "AI agents",
-    "AI employees",
+    "AI role skills",
+    "chain runtime",
     "Autopilot",
     "AI product management",
-    "AI developer agent",
-    "AI sales agent",
+    "AI product operations",
+    "AI sales workflow",
     "zero employee company",
   ],
 });
 
-const AGENTS = [
+const ROLE_SKILLS = [
   {
-    role: "CEO",
+    role: "CEO skill",
     icon: Target,
     description:
-      "Strategic coordination. Relays President's vision. Detects bottlenecks.",
+      "Coordinates the chain, reads blockers, and keeps decisions visible.",
     color: "text-violet-500",
     bg: "bg-violet-500/10 dark:bg-violet-500/15",
   },
   {
-    role: "PM",
+    role: "PM skill",
     icon: Brain,
     description:
-      "Reads Growth's market findings. Creates initiatives. Prioritizes roadmap.",
+      "Turns validated signals into initiatives, stories, and priorities.",
     color: "text-blue-500",
     bg: "bg-blue-500/10 dark:bg-blue-500/15",
   },
   {
-    role: "CTO",
+    role: "CTO skill",
     icon: Wrench,
     description:
-      "Technical specs. Architecture decisions. Implementation plans.",
+      "Maintains codebase-aware architecture, specs, and implementation plans.",
     color: "text-sky-500",
     bg: "bg-sky-500/10 dark:bg-sky-500/15",
   },
   {
-    role: "Dev",
-    icon: Code,
-    description: "Code generation. Pull requests. Feature implementation.",
+    role: "Validator skill",
+    icon: Shield,
+    description: "Checks outputs before delivery and blocks unsafe changes.",
     color: "text-emerald-500",
     bg: "bg-emerald-500/10 dark:bg-emerald-500/15",
   },
   {
-    role: "Growth",
+    role: "Growth skill",
     icon: MegaphoneSimple,
-    description: "Content creation. Feature announcements. Market research.",
+    description: "Researches markets, drafts content, and tracks freshness.",
     color: "text-amber-500",
     bg: "bg-amber-500/10 dark:bg-amber-500/15",
   },
   {
-    role: "Sales",
+    role: "Sales skill",
     icon: Users,
-    description: "Lead discovery. Prospect research. Outreach messages.",
+    description: "Finds qualified leads and prepares reviewable outreach.",
     color: "text-rose-500",
     bg: "bg-rose-500/10 dark:bg-rose-500/15",
   },
   {
-    role: "Support",
+    role: "Support skill",
     icon: Headset,
-    description: "Issue triage. Response generation. Escalation to PM.",
+    description: "Triage support signals and routes product-impacting issues.",
     color: "text-teal-500",
     bg: "bg-teal-500/10 dark:bg-teal-500/15",
   },
@@ -104,13 +104,13 @@ const LIFECYCLE_STEPS = [
     step: 3,
     title: "Build",
     description:
-      "PM, CTO, and Dev agents turn the roadmap into specs, architecture decisions, and shipped pull requests.",
+      "PM, CTO, and Validator skills turn roadmap items into specs, architecture decisions, and validated delivery plans.",
   },
   {
     step: 4,
     title: "Grow",
     description:
-      "Growth, Sales, and Support agents find leads, create content, and handle user issues — all autonomously.",
+      "Growth, Sales, and Support skills create reviewable outputs from real triggers, not time-based routines.",
   },
 ] as const;
 
@@ -118,17 +118,17 @@ const AUTONOMY_MODES = [
   {
     title: "Supervised",
     description:
-      "Agents propose actions and wait for your approval before executing. Full visibility, full control.",
+      "Role skills create pending-review drafts and wait for approval before execution.",
   },
   {
     title: "Full Auto",
     description:
-      "Agents execute autonomously within guardrails you define. Review results asynchronously.",
+      "Validated outputs can replace canonical work only after the chain passes its checks.",
   },
   {
     title: "Stopped",
     description:
-      "Pause any agent instantly. Resume when ready. Your data and context are preserved.",
+      "The chain shows state and blockers without generating or replacing outputs.",
   },
 ] as const;
 
@@ -146,13 +146,13 @@ export default function AutopilotPage() {
               Autopilot
             </span>
             <h1 className="mx-auto mb-6 max-w-180 font-display text-[clamp(2rem,5vw,3.5rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
-              7 AI agents. Your entire company.
+              One visible chain. Seven role skills.
             </h1>
             <p className="mx-auto mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
               Connect your GitHub repo and Reflet generates your Company Brief
-              in 5 minutes. Then 7 AI agents start running your product,
-              discovering opportunities, shipping code, finding leads, and
-              handling support.
+              in 5 minutes. Then the chain wakes for explicit reasons:
+              dependencies, review gates, stale artifacts, approved delivery,
+              support signals, and failed-execution retries.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">
@@ -174,34 +174,34 @@ export default function AutopilotPage() {
           </div>
         </section>
 
-        {/* Agent cards */}
+        {/* Role skill cards */}
         <section className="py-16 sm:py-24">
           <div className="mx-auto max-w-300 px-5 sm:px-8">
             <h2 className="mb-12 text-center font-display text-[clamp(1.4rem,3vw,2rem)] text-olive-950 leading-[1.15] tracking-[-0.01em] dark:text-olive-100">
-              Your AI team
+              Role skills, blockers, and deliverables stay visible
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {AGENTS.map((agent) => {
-                const Icon = agent.icon;
+              {ROLE_SKILLS.map((roleSkill) => {
+                const Icon = roleSkill.icon;
                 return (
                   <div
                     className="rounded-2xl border border-border/50 bg-card p-5 transition-colors hover:border-border"
-                    key={agent.role}
+                    key={roleSkill.role}
                   >
                     <div
                       className={cn(
                         "mb-3 flex size-10 items-center justify-center rounded-xl",
-                        agent.bg,
-                        agent.color
+                        roleSkill.bg,
+                        roleSkill.color
                       )}
                     >
                       <Icon size={20} weight="duotone" />
                     </div>
                     <p className="mb-1 font-display font-semibold text-[15px] text-olive-950 dark:text-olive-100">
-                      {agent.role}
+                      {roleSkill.role}
                     </p>
                     <p className="text-[13px] text-muted-foreground leading-relaxed">
-                      {agent.description}
+                      {roleSkill.description}
                     </p>
                   </div>
                 );
@@ -262,11 +262,12 @@ export default function AutopilotPage() {
         <section className="bg-olive-950 py-20 dark:bg-[#0f0e0b]">
           <div className="mx-auto max-w-300 px-5 text-center sm:px-8">
             <h2 className="mb-4 font-display text-[clamp(1.8rem,4vw,2.5rem)] text-olive-100 leading-[1.1]">
-              Your AI company starts here.
+              Your visible Autopilot chain starts here.
             </h2>
             <p className="mx-auto mb-8 max-w-120 text-[15px] text-olive-300/80 leading-relaxed sm:text-[17px]">
-              Connect your GitHub repo. Get a Company Brief in 5 minutes. Let 7
-              agents run your product.
+              Connect your GitHub repo. Get a Company Brief in 5 minutes. Let
+              role skills work through explicit reasons, blockers, and
+              validations.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">

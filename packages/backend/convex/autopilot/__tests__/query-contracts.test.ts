@@ -1,16 +1,8 @@
 /// <reference types="vite/client" />
 import { describe, expect, it } from "vitest";
-
-import { createDevSubtask } from "../agents/cto";
-import { canDispatchTask, getAdapterCredentials } from "../config";
-import {
-  markCredentialsValid,
-  reserveTaskExecution,
-  upsertAdapterCredentials,
-  validateAdapterCredentials,
-} from "../config_mutations";
-import { executeTask, retryTask } from "../execution";
-import { cancelTask, pollTaskStatus } from "../execution_lifecycle";
+import { canDispatchTask } from "../config";
+import { reserveTaskExecution } from "../config_mutations";
+import { cancelTask } from "../execution_lifecycle";
 import { getSystemHealth } from "../health";
 import {
   listActivity,
@@ -21,20 +13,20 @@ import {
   listWorkItemActivity,
 } from "../queries/activity";
 import {
-  getAgentPerformance,
-  getAgentReadiness,
   getChartData,
   getContentQualityOverview,
   getDashboardStats,
+  getRolePerformance,
+  getRoleReadiness,
 } from "../queries/dashboard";
 import { getInboxCounts, listInboxItems } from "../queries/inbox";
+import { runCTOSpecGeneration } from "../role_skills/cto";
+import { runExecutionFromRecord } from "../runtime/lifecycle";
 import {
-  completeAgentTask,
-  completeAgentTasks,
-  createRun,
+  completeRoleTask,
+  completeRoleTasks,
   createTask,
   logActivity,
-  updateRun,
   updateTaskPriority,
   updateTaskStatus,
 } from "../task_mutations";
@@ -43,8 +35,6 @@ import {
   getOrganization,
   getPendingTasks,
   getRecentActivity,
-  getRun,
-  getRunsForTask,
   getSubtasks,
   getTask,
   getTasksByOrg,
@@ -54,8 +44,8 @@ const PUBLIC_QUERY_CONTRACTS = [
   ["getSystemHealth", getSystemHealth, "pendingApprovalCount"],
   ["getDashboardStats", getDashboardStats, "maxPendingTasksTotal"],
   ["getChartData", getChartData, "activityTimeline"],
-  ["getAgentReadiness", getAgentReadiness, "ready"],
-  ["getAgentPerformance", getAgentPerformance, "successRate"],
+  ["getRoleReadiness", getRoleReadiness, "ready"],
+  ["getRolePerformance", getRolePerformance, "successRate"],
   ["getContentQualityOverview", getContentQualityOverview, "totalPending"],
   ["listActivity", listActivity, "autopilotActivityLog"],
   ["listActivityByType", listActivityByType, "autopilotActivityLog"],
@@ -70,32 +60,20 @@ const PUBLIC_QUERY_CONTRACTS = [
 const INTERNAL_MUTATION_CONTRACTS = [
   ["createTask", createTask, "autopilotWorkItems"],
   ["updateTaskStatus", updateTaskStatus, '"type":"null"'],
-  ["completeAgentTask", completeAgentTask, "boolean"],
-  ["completeAgentTasks", completeAgentTasks, "number"],
+  ["completeRoleTask", completeRoleTask, "boolean"],
+  ["completeRoleTasks", completeRoleTasks, "number"],
   ["updateTaskPriority", updateTaskPriority, '"type":"null"'],
-  ["createRun", createRun, "autopilotRuns"],
-  ["updateRun", updateRun, '"type":"null"'],
   ["logActivity", logActivity, '"type":"null"'],
   ["reserveTaskExecution", reserveTaskExecution, "allowed"],
-  [
-    "upsertAdapterCredentials",
-    upsertAdapterCredentials,
-    "autopilotAdapterCredentials",
-  ],
-  ["markCredentialsValid", markCredentialsValid, '"type":"null"'],
 ] as const;
 
 const INTERNAL_ACTION_CONTRACTS = [
-  ["createDevSubtask", createDevSubtask, "autopilotWorkItems"],
-  ["validateAdapterCredentials", validateAdapterCredentials, "boolean"],
-  ["executeTask", executeTask, '"type":"null"'],
-  ["retryTask", retryTask, '"type":"null"'],
-  ["pollTaskStatus", pollTaskStatus, '"type":"null"'],
+  ["runCTOSpecGeneration", runCTOSpecGeneration, '"type":"null"'],
+  ["runExecutionFromRecord", runExecutionFromRecord, '"type":"null"'],
   ["cancelTask", cancelTask, '"type":"null"'],
 ] as const;
 
 const INTERNAL_QUERY_CONTRACTS = [
-  ["getAdapterCredentials", getAdapterCredentials, "credentials"],
   ["canDispatchTask", canDispatchTask, "boolean"],
   ["getDispatchableTasks", getDispatchableTasks, "autopilotWorkItems"],
   ["getOrganization", getOrganization, "organizations"],
@@ -103,8 +81,6 @@ const INTERNAL_QUERY_CONTRACTS = [
   ["getTask", getTask, "autopilotWorkItems"],
   ["getSubtasks", getSubtasks, "autopilotWorkItems"],
   ["getTasksByOrg", getTasksByOrg, "autopilotWorkItems"],
-  ["getRunsForTask", getRunsForTask, "autopilotRuns"],
-  ["getRun", getRun, "autopilotRuns"],
   ["getRecentActivity", getRecentActivity, "autopilotActivityLog"],
 ] as const;
 

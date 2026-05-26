@@ -5,8 +5,8 @@
  * be produced when their upstream dependencies are `published`. The chain is
  * the single source of truth for "what should happen next" in the autopilot.
  *
- * No time-based triggers — every node advancement is condition-based, gated
- * by upstream state and the open-task threshold.
+ * No time-based triggers: every node advancement is condition-based and gated
+ * by upstream state.
  */
 
 import { v } from "convex/values";
@@ -28,8 +28,6 @@ const chainStateValidator = v.object({
   community_posts: chainNodeStatus,
   drafts: chainNodeStatus,
 });
-
-const DEFAULT_WAKE_THRESHOLD_OPEN_TASKS = 5;
 
 export type ChainNodeKind =
   | "codebase_understanding"
@@ -158,6 +156,9 @@ const aggregateNodeStatus = (statuses: ChainNodeStatus[]): ChainNodeStatus => {
   return "missing";
 };
 
+const isChainProducerDoc = (doc: Doc<"autopilotDocuments">): boolean =>
+  doc.reviewType === "chain_artifact" && (doc.tags?.includes("chain") ?? false);
+
 const fetchDocNodeStatus = async (
   ctx: { db: QueryCtx["db"] },
   orgId: Id<"organizations">,
@@ -169,7 +170,10 @@ const fetchDocNodeStatus = async (
       q.eq("organizationId", orgId).eq("type", docType)
     )
     .take(50);
-  return aggregateNodeStatus(docs.map((d) => docStatusToNodeStatus(d.status)));
+  const chainDocs = docs.filter(isChainProducerDoc);
+  return aggregateNodeStatus(
+    chainDocs.map((d) => docStatusToNodeStatus(d.status))
+  );
 };
 
 const fetchPersonasNodeStatus = async (
@@ -330,10 +334,10 @@ export const getChainState = internalQuery({
   },
 });
 
-export const getAgentChainGate = internalQuery({
+export const getRoleChainGate = internalQuery({
   args: {
     organizationId: v.id("organizations"),
-    agent: v.string(),
+    role: v.string(),
   },
   returns: v.object({
     ready: v.boolean(),
@@ -342,59 +346,11 @@ export const getAgentChainGate = internalQuery({
   handler: async (ctx, args) => {
     const state = await computeChainState(ctx, args.organizationId);
     return {
-      ready: isAgentChainReady(state, args.agent),
-      missing: getAgentMissingDependencies(state, args.agent),
+      ready: isRoleChainReady(state, args.role),
+      missing: getRoleMissingDependencies(state, args.role),
     };
   },
 });
-
-export const getOpenTaskCount = internalQuery({
-  args: { organizationId: v.id("organizations") },
-  returns: v.number(),
-  handler: async (ctx, args) => {
-    const todoItems = await ctx.db
-      .query("autopilotWorkItems")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "todo")
-      )
-      .collect();
-    const inProgressItems = await ctx.db
-      .query("autopilotWorkItems")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId).eq("status", "in_progress")
-      )
-      .collect();
-    return todoItems.length + inProgressItems.length;
-  },
-});
-
-export const isGatedByOpenTasks = async (
-  ctx: { db: QueryCtx["db"] },
-  orgId: Id<"organizations">
-): Promise<boolean> => {
-  const config = await ctx.db
-    .query("autopilotConfig")
-    .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
-    .unique();
-  const threshold =
-    config?.wakeThresholdOpenTasks ?? DEFAULT_WAKE_THRESHOLD_OPEN_TASKS;
-
-  const todoItems = await ctx.db
-    .query("autopilotWorkItems")
-    .withIndex("by_org_status", (q) =>
-      q.eq("organizationId", orgId).eq("status", "todo")
-    )
-    .collect();
-  const inProgressItems = await ctx.db
-    .query("autopilotWorkItems")
-    .withIndex("by_org_status", (q) =>
-      q.eq("organizationId", orgId).eq("status", "in_progress")
-    )
-    .collect();
-  const openCount = todoItems.length + inProgressItems.length;
-
-  return openCount >= threshold;
-};
 
 export const CHAIN_NODE_OWNERS: Record<ChainNodeKind, string> = {
   codebase_understanding: "cto",
@@ -471,8 +427,8 @@ export const CHAIN_STAGES: readonly {
 ];
 
 /**
- * Per-agent chain readiness. Defines which chain nodes MUST be `published`
- * before an agent is allowed to run free-form work (i.e. work outside the
+ * Per-role chain readiness. Defines which chain nodes MUST be `published`
+ * before a role skill is allowed to run free-form work (i.e. work outside the
  * chain producers themselves). Chain producers handle their own gating via
  * `isNodeReadyToProduce`.
  *
@@ -482,7 +438,7 @@ export const CHAIN_STAGES: readonly {
  * - `sales`: lead generation needs personas (lead_targets depends on personas).
  * - `support`, `ceo`, `validator`: independent of chain state.
  */
-export const AGENT_CHAIN_REQUIREMENTS: Record<string, ChainNodeKind[]> = {
+export const ROLE_CHAIN_REQUIREMENTS: Record<string, ChainNodeKind[]> = {
   cto: ["product_profile"],
   pm: ["personas"],
   growth: ["market_analysis"],
@@ -492,19 +448,16 @@ export const AGENT_CHAIN_REQUIREMENTS: Record<string, ChainNodeKind[]> = {
   validator: [],
 };
 
-export const isAgentChainReady = (
-  state: ChainState,
-  agent: string
-): boolean => {
-  const required = AGENT_CHAIN_REQUIREMENTS[agent] ?? [];
+export const isRoleChainReady = (state: ChainState, role: string): boolean => {
+  const required = ROLE_CHAIN_REQUIREMENTS[role] ?? [];
   return required.every((node) => state[node] === "published");
 };
 
-export const getAgentMissingDependencies = (
+export const getRoleMissingDependencies = (
   state: ChainState,
-  agent: string
+  role: string
 ): ChainNodeKind[] => {
-  const required = AGENT_CHAIN_REQUIREMENTS[agent] ?? [];
+  const required = ROLE_CHAIN_REQUIREMENTS[role] ?? [];
   return required.filter((node) => state[node] !== "published");
 };
 
@@ -521,10 +474,94 @@ export const DRAFT_DOC_LABELS: Record<
   changelog: "Changelog",
 };
 
+// ============================================
+// NODE PRECONDITIONS — runtime gates beyond DAG deps
+// ============================================
+//
+// Some nodes can only be produced when an external prerequisite has been
+// satisfied (e.g. `codebase_understanding` needs a completed repo analysis).
+// Declaring these here keeps the chain page UI, the role schedule, and the
+// producer dispatch in sync: each consumer asks `checkNodePrecondition` for
+// the same answer instead of re-implementing the rule.
+
+export type NodePreconditionResult =
+  | { met: true }
+  | { met: false; reason: string };
+
+type PreconditionFn = (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">
+) => Promise<NodePreconditionResult>;
+
+const fetchRepoAnalysisReady = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">
+): Promise<boolean> => {
+  const integration = await ctx.db
+    .query("repoAnalysis")
+    .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+    .order("desc")
+    .first();
+  return (
+    integration?.status === "completed" && Boolean(integration.productAnalysis)
+  );
+};
+
+const NODE_PRECONDITIONS: Partial<Record<ChainNodeKind, PreconditionFn>> = {
+  codebase_understanding: async (ctx, orgId) => {
+    // SSOT: integration's repoAnalysis is the only source. Producer consumes
+    // `productAnalysis` text directly. Precondition mirrors that contract.
+    const integration = await ctx.db
+      .query("repoAnalysis")
+      .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+      .order("desc")
+      .first();
+    if (!integration) {
+      return {
+        met: false,
+        reason: "No repo analysis yet — run one in Knowledge",
+      };
+    }
+    if (
+      integration.status === "pending" ||
+      integration.status === "in_progress"
+    ) {
+      return { met: false, reason: "Repo analysis still running" };
+    }
+    if (integration.status === "error") {
+      return {
+        met: false,
+        reason: `Last repo analysis failed${integration.error ? `: ${integration.error}` : ""}`,
+      };
+    }
+    if (!integration.productAnalysis) {
+      return {
+        met: false,
+        reason:
+          "Repo analysis completed but productAnalysis text is empty — recompute it",
+      };
+    }
+    return { met: true };
+  },
+};
+
+export const checkNodePrecondition = async (
+  ctx: { db: QueryCtx["db"] },
+  orgId: Id<"organizations">,
+  kind: ChainNodeKind
+): Promise<NodePreconditionResult> => {
+  const check = NODE_PRECONDITIONS[kind];
+  if (!check) {
+    return { met: true };
+  }
+  return await check(ctx, orgId);
+};
+
 export {
   CHAIN_NODE_KINDS,
   DAG_EDGES,
   DOC_TYPE_BY_NODE,
   DRAFT_DOC_TYPES,
+  fetchRepoAnalysisReady,
   KNOWLEDGE_DOC_TYPE_BY_NODE,
 };

@@ -18,12 +18,12 @@ import { sortItems } from "@/features/autopilot/components/tasks/sort-items";
 import { TasksFilterBar } from "@/features/autopilot/components/tasks/tasks-filter-bar";
 import { TasksToolbar } from "@/features/autopilot/components/tasks/tasks-toolbar";
 import {
-  TASK_AGENTS,
   TASK_PRIORITIES,
+  TASK_ROLES,
   TASK_STATUSES,
   TASK_TYPES,
-  type TaskAgent,
   type TaskPriority,
+  type TaskRole,
   type TaskStatus,
   type TaskType,
   useTasksFilters,
@@ -97,7 +97,7 @@ export function TasksPageBody({
   }));
 
   const queryArgs: {
-    assignedAgent?: TaskAgent;
+    assignedRole?: TaskRole;
     assigneeUserId?: string;
     organizationId: Id<"organizations">;
     priority?: TaskPriority;
@@ -112,8 +112,8 @@ export function TasksPageBody({
   if (filters.status.length === 1 && isOneOf(TASK_STATUSES, statusFilter)) {
     queryArgs.status = statusFilter;
   }
-  if (isOneOf(TASK_AGENTS, filters.assignedAgent)) {
-    queryArgs.assignedAgent = filters.assignedAgent;
+  if (isOneOf(TASK_ROLES, filters.assignedRole)) {
+    queryArgs.assignedRole = filters.assignedRole;
   }
   if (filters.assigneeUserId !== "") {
     queryArgs.assigneeUserId = filters.assigneeUserId;
@@ -158,8 +158,8 @@ export function TasksPageBody({
       return false;
     }
     if (
-      filters.assignedAgent !== "" &&
-      task.assignedAgent !== filters.assignedAgent
+      filters.assignedRole !== "" &&
+      task.assignedRole !== filters.assignedRole
     ) {
       return false;
     }

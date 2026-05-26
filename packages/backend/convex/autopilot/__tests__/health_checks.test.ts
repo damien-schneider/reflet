@@ -164,9 +164,9 @@ describe("checkChainBlockers", () => {
       status: "degraded",
       issues: [
         {
-          id: "few_agents",
+          id: "few_role_skills",
           severity: "warning",
-          message: "Only 2 of 6 agents enabled",
+          message: "Only 2 of 5 role skills enabled",
           resolution: "Enable more",
         },
       ],

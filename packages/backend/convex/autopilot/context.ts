@@ -1,30 +1,31 @@
 /**
- * Concurrent Context Gatherer — cross-agent knowledge sharing.
+ * Concurrent Context Gatherer — cross-role knowledge sharing.
  *
- * When an agent is working on a topic, it can query what other agents
+ * When a role skill is working on a topic, it can query what other role skills
  * know about that topic. This enables informed decision-making across
- * the entire agent team.
+ * the entire runtime.
  */
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
 import { SEVEN_DAYS_MS } from "../shared/constants";
+import { isRoleSkillEnabledInConfig } from "./config";
 
 /**
- * Gather context from all agents about a specific topic.
+ * Gather context from all role skills about a specific topic.
  *
  * Searches recent activity logs, inbox items, tasks, and intelligence signals
- * for mentions of the topic keywords. Returns a per-agent summary.
+ * for mentions of the topic keywords. Returns a per-role summary.
  */
 export const gatherConcurrentContext = internalQuery({
   args: {
     organizationId: v.id("organizations"),
     keywords: v.array(v.string()),
-    excludeAgent: v.optional(v.string()),
+    excludeRole: v.optional(v.string()),
   },
   returns: v.array(
     v.object({
-      agent: v.string(),
+      role: v.string(),
       relevantFindings: v.array(v.string()),
     })
   ),
@@ -71,25 +72,24 @@ export const gatherConcurrentContext = internalQuery({
       (t) => t.status !== "done" && t.status !== "cancelled"
     );
 
-    // Build agent context map
-    const agentContextMap = new Map<string, string[]>();
+    const roleContextMap = new Map<string, string[]>();
 
-    const addFinding = (agent: string, finding: string) => {
-      if (agent === args.excludeAgent) {
+    const addFinding = (role: string, finding: string) => {
+      if (role === args.excludeRole) {
         return;
       }
-      const existing = agentContextMap.get(agent) ?? [];
-      // Limit to 5 findings per agent
+      const existing = roleContextMap.get(role) ?? [];
+      // Limit to 5 findings per role skill
       if (existing.length < 5) {
         existing.push(finding);
       }
-      agentContextMap.set(agent, existing);
+      roleContextMap.set(role, existing);
     };
 
     // Match activities
     for (const activity of recentActivities) {
       if (matchesKeyword(activity.message)) {
-        addFinding(activity.agent, activity.message);
+        addFinding(activity.role, activity.message);
       }
     }
 
@@ -97,7 +97,7 @@ export const gatherConcurrentContext = internalQuery({
     for (const doc of recentDocs) {
       const searchable = `${doc.title} ${doc.content ?? ""}`;
       if (matchesKeyword(searchable)) {
-        addFinding(doc.sourceAgent ?? "system", `[Doc] ${doc.title}`);
+        addFinding(doc.sourceRole ?? "system", `[Doc] ${doc.title}`);
       }
     }
 
@@ -106,7 +106,7 @@ export const gatherConcurrentContext = internalQuery({
       const searchable = `${item.title} ${item.description}`;
       if (matchesKeyword(searchable)) {
         addFinding(
-          item.assignedAgent ?? "system",
+          item.assignedRole ?? "system",
           `[WorkItem:${item.status}] ${item.title}`
         );
       }
@@ -114,11 +114,11 @@ export const gatherConcurrentContext = internalQuery({
 
     // Convert map to array
     const results: Array<{
-      agent: string;
+      role: string;
       relevantFindings: string[];
     }> = [];
-    for (const [agent, findings] of agentContextMap) {
-      results.push({ agent, relevantFindings: findings });
+    for (const [role, findings] of roleContextMap) {
+      results.push({ role, relevantFindings: findings });
     }
 
     return results;
@@ -126,14 +126,14 @@ export const gatherConcurrentContext = internalQuery({
 });
 
 /**
- * Get a brief status summary for ALL agents.
+ * Get a brief status summary for all role skills.
  * Used by CEO for coordination overview.
  */
-export const getAllAgentStatus = internalQuery({
+export const getAllRoleSkillStatus = internalQuery({
   args: { organizationId: v.id("organizations") },
   returns: v.array(
     v.object({
-      agent: v.string(),
+      role: v.string(),
       enabled: v.boolean(),
       recentActivityCount: v.number(),
       pendingInboxCount: v.number(),
@@ -152,7 +152,7 @@ export const getAllAgentStatus = internalQuery({
       return [];
     }
 
-    const agents = ["pm", "cto", "growth", "support", "sales"] as const;
+    const roles = ["pm", "cto", "growth", "support", "sales"] as const;
 
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
 
@@ -177,30 +177,26 @@ export const getAllAgentStatus = internalQuery({
       )
       .collect();
 
-    return agents.map((agent) => {
-      const agentToggleKey = `${agent}Enabled` as const;
-      const enabled =
-        ((config as Record<string, unknown>)[agentToggleKey] as
-          | boolean
-          | undefined) ?? true;
+    return roles.map((role) => {
+      const enabled = isRoleSkillEnabledInConfig(role, config);
 
       const recentActivityCount = activities.filter(
-        (a) => a.agent === agent && a.createdAt >= oneHourAgo
+        (a) => a.role === role && a.createdAt >= oneHourAgo
       ).length;
 
       const pendingInboxCount = reviewItems.filter(
-        (item) => item.assignedAgent === agent
+        (item) => item.assignedRole === role
       ).length;
 
       const activeTaskCount = workItems.filter(
         (t) =>
-          t.assignedAgent === agent &&
+          t.assignedRole === role &&
           t.status !== "done" &&
           t.status !== "cancelled"
       ).length;
 
       return {
-        agent,
+        role,
         enabled,
         recentActivityCount,
         pendingInboxCount,

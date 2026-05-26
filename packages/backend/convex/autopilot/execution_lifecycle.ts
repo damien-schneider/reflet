@@ -8,7 +8,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction, internalMutation } from "../_generated/server";
-import { assignedAgent } from "./schema/validators";
+import { assignedRole } from "./schema/validators";
 
 export const cancelTask = internalAction({
   args: {
@@ -30,7 +30,7 @@ export const cancelTask = internalAction({
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: task.organizationId,
         workItemId: args.taskId,
-        agent: "system",
+        role: "system",
         level: "warning",
         message:
           "Cancellation stopped: work item belongs to another organization",
@@ -49,7 +49,7 @@ export const cancelTask = internalAction({
 export const checkoutTask = internalMutation({
   args: {
     taskId: v.id("autopilotWorkItems"),
-    agent: assignedAgent,
+    role: assignedRole,
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
@@ -64,7 +64,7 @@ export const checkoutTask = internalMutation({
 
     await ctx.db.patch(args.taskId, {
       status: "in_progress",
-      assignedAgent: args.agent,
+      assignedRole: args.role,
       updatedAt: Date.now(),
     });
 

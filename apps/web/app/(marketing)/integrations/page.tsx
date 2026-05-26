@@ -52,7 +52,7 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     icon: GithubLogo,
     title: "GitHub",
     description:
-      "Connect your repo. Agents read code, create PRs, sync issues, and auto-close them when work ships.",
+      "Connect your repo. The chain reads code, creates PRs, syncs issues, and auto-closes them when work ships.",
     href: "/docs",
   },
   {
@@ -68,7 +68,7 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     icon: CreditCard,
     title: "Stripe Connect",
     description:
-      "Revenue tracking with MRR, ARR, and churn metrics. Sales agent uses live Stripe data to prioritize prospects.",
+      "Revenue tracking with MRR, ARR, and churn metrics. The Sales skill uses live Stripe data to prioritize prospects.",
   },
   {
     id: "sdk",

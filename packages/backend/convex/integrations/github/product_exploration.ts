@@ -1,8 +1,8 @@
 /**
- * Agentic product exploration for repository analysis.
+ * Codebase product exploration for repository analysis.
  *
  * Two-phase approach:
- * 1. EXPLORE: AI agent uses GitHub tools to read the codebase (gather phase)
+ * 1. EXPLORE: Codebase explorer uses GitHub tools to read the codebase
  * 2. SYNTHESIZE: Feed all gathered data to the LLM to write the analysis
  *
  * This avoids the AI SDK v6 issue where stopWhen cuts off during tool calls
@@ -30,7 +30,6 @@ import {
 } from "./product_exploration_helpers";
 
 /**
- * Autonomous product exploration agent.
  * Phase 1: Explore the repo with tools. Phase 2: Synthesize into product analysis.
  */
 export const runProductExploration = internalAction({

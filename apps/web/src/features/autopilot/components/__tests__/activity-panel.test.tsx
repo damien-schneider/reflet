@@ -29,14 +29,14 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 function buildEntry(overrides: Record<string, unknown> = {}) {
   return {
     _id: "log_1",
-    agent: "cto" as const,
+    role: "cto" as const,
     level: "warning" as const,
     message: "Cannot produce codebase_understanding",
     details: "Missing repo analysis for org",
     action: "produceCodebaseUnderstanding",
     entityType: "document" as const,
     entityId: "doc_42",
-    targetAgent: undefined,
+    targetRole: undefined,
     workItemId: undefined,
     createdAt: Date.now(),
     ...overrides,

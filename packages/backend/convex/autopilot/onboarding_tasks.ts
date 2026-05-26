@@ -22,7 +22,7 @@ export const createPrimaryOnboardingTasks = internalMutation({
     const createWorkItem = async (item: {
       title: string;
       description: string;
-      assignedAgent: "cto" | "growth" | "pm";
+      assignedRole: "cto" | "growth" | "pm";
       priority: "critical" | "high" | "medium" | "low";
     }) => {
       await ctx.db.insert("autopilotWorkItems", {
@@ -32,7 +32,7 @@ export const createPrimaryOnboardingTasks = internalMutation({
         description: item.description,
         status: "todo",
         priority: item.priority,
-        assignedAgent: item.assignedAgent,
+        assignedRole: item.assignedRole,
         needsReview: false,
         reviewType: "task_approval",
         createdBy: "onboarding",
@@ -44,14 +44,14 @@ export const createPrimaryOnboardingTasks = internalMutation({
     await createWorkItem({
       title: "Spec the Reflet Feedback Widget integration",
       description: `Draft a clear implementation spec for adding the Reflet feedback widget to the product at ${args.repoUrl}. The spec should be ready to delegate to engineering (e.g. as a GitHub issue).`,
-      assignedAgent: "cto",
+      assignedRole: "cto",
       priority: "high",
     });
 
     await createWorkItem({
       title: "Spec the Reflet Changelog integration",
       description: `Draft a clear implementation spec for adding the Reflet changelog component to the product at ${args.repoUrl}. The spec should be ready to delegate to engineering (e.g. as a GitHub issue).`,
-      assignedAgent: "cto",
+      assignedRole: "cto",
       priority: "high",
     });
 
@@ -59,7 +59,7 @@ export const createPrimaryOnboardingTasks = internalMutation({
       title: "Market Analysis",
       description:
         "Analyze the competitive landscape. Who are the competitors? What's the market size? What's the positioning?",
-      assignedAgent: "growth",
+      assignedRole: "growth",
       priority: "medium",
     });
 
@@ -67,7 +67,7 @@ export const createPrimaryOnboardingTasks = internalMutation({
       title: "SEO Analysis",
       description:
         "Audit the current SEO state. Meta tags, sitemap, robots.txt, page speed, content gaps.",
-      assignedAgent: "growth",
+      assignedRole: "growth",
       priority: "medium",
     });
 
@@ -77,7 +77,7 @@ export const createPrimaryOnboardingTasks = internalMutation({
       title: "Welcome to Reflet Autopilot",
       content: `I've started analyzing ${args.repoUrl}. 4 primary onboarding tasks have been created. I'll report back with findings from the market analysis shortly.`,
       tags: ["onboarding"],
-      sourceAgent: "system",
+      sourceRole: "system",
       status: "published",
       needsReview: false,
       createdAt: now,
@@ -106,7 +106,7 @@ export const createAnalysisTask = internalMutation({
       description: `Analyze the repository at ${args.repoUrl} to identify improvement opportunities, security issues, and growth potential.`,
       status: "todo",
       priority: "high",
-      assignedAgent: "pm",
+      assignedRole: "pm",
       needsReview: false,
       reviewType: "task_approval",
       createdBy: "system",
@@ -120,7 +120,7 @@ export const createAnalysisTask = internalMutation({
       title: "Repository analysis started",
       content: `Autopilot is analyzing ${args.repoUrl} to generate initial improvement tasks.`,
       tags: ["onboarding", "analysis"],
-      sourceAgent: "system",
+      sourceRole: "system",
       status: "published",
       needsReview: false,
       linkedWorkItemId: workItemId,

@@ -25,6 +25,16 @@ const AUTOPILOT_RESET_GROUPS = [
       },
       {
         kind: "byOrganization",
+        label: "Execution records",
+        table: "autopilotExecutions",
+      },
+      {
+        kind: "byOrganization",
+        label: "Deliverable freshness state",
+        table: "autopilotDeliverableStates",
+      },
+      {
+        kind: "byOrganization",
         label: "Activity logs",
         table: "autopilotActivityLog",
       },
@@ -33,7 +43,7 @@ const AUTOPILOT_RESET_GROUPS = [
   {
     title: "Generated artifacts",
     description:
-      "Documents, reports, and knowledge files created or maintained by agents.",
+      "Documents, reports, and knowledge files created or maintained by role skills.",
     steps: [
       {
         kind: "knowledgeVersions",
@@ -77,11 +87,6 @@ const AUTOPILOT_RESET_GROUPS = [
         label: "Revenue snapshots",
         table: "autopilotRevenueSnapshots",
       },
-      {
-        kind: "byOrganization",
-        label: "Autopilot repo intelligence",
-        table: "autopilotRepoAnalysis",
-      },
       { kind: "byOrganization", label: "Leads", table: "autopilotLeads" },
       {
         kind: "byOrganization",
@@ -96,41 +101,9 @@ const AUTOPILOT_RESET_GROUPS = [
     ],
   },
   {
-    title: "Agent conversations and memory",
-    description:
-      "Agent chat history, saved memory, and associated thread metadata.",
-    steps: [
-      {
-        kind: "byOrgThread",
-        label: "Agent messages",
-        table: "autopilotAgentMessages",
-      },
-      {
-        kind: "byOrganization",
-        label: "Agent work streams",
-        table: "autopilotAgentWorkStreams",
-      },
-      {
-        kind: "byOrganization",
-        label: "Agent threads",
-        table: "autopilotAgentThreads",
-      },
-      {
-        kind: "byOrganization",
-        label: "Agent memories",
-        table: "autopilotAgentMemories",
-      },
-    ],
-  },
-  {
     title: "Automation settings",
-    description: "Schedules, operating limits, and the Autopilot config.",
+    description: "Operating limits and the Autopilot config.",
     steps: [
-      {
-        kind: "byOrganization",
-        label: "Routines",
-        table: "autopilotRoutines",
-      },
       {
         kind: "byOrganization",
         label: "Autopilot configuration",
@@ -200,21 +173,6 @@ const deleteRowsByOrganization = async (
   }
 };
 
-const deleteRowsByOrgThread = async (
-  ctx: MutationCtx,
-  organizationId: Id<"organizations">,
-  table: ResetStepByKind<"byOrgThread">["table"]
-) => {
-  const rows = await ctx.db
-    .query(table)
-    .withIndex("by_org_thread", (q) => q.eq("organizationId", organizationId))
-    .collect();
-
-  for (const row of rows) {
-    await ctx.db.delete(row._id);
-  }
-};
-
 const deleteKnowledgeVersions = async (
   ctx: MutationCtx,
   organizationId: Id<"organizations">
@@ -243,10 +201,6 @@ const deleteResetStep = async (
 ) => {
   if (step.kind === "byOrganization") {
     await deleteRowsByOrganization(ctx, organizationId, step.table);
-    return;
-  }
-  if (step.kind === "byOrgThread") {
-    await deleteRowsByOrgThread(ctx, organizationId, step.table);
     return;
   }
   if (step.kind === "knowledgeVersions") {

@@ -12,7 +12,7 @@ import type { ComponentType } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AgentIdentity } from "@/features/autopilot/components/agent-identity";
+import { RoleSkillIdentity } from "@/features/autopilot/components/role-skill-identity";
 import { cn } from "@/lib/utils";
 
 const STATUS_ICONS: Record<
@@ -51,7 +51,7 @@ export function IssueRow({
   title,
   status,
   priority,
-  assignedAgent,
+  assignedRole,
   updatedAt,
   completionPercent,
   onClick,
@@ -60,7 +60,7 @@ export function IssueRow({
   title: string;
   status: string;
   priority?: string;
-  assignedAgent?: string;
+  assignedRole?: string;
   updatedAt?: number;
   completionPercent?: number;
   onClick?: () => void;
@@ -112,8 +112,8 @@ export function IssueRow({
         </div>
       )}
 
-      {assignedAgent && (
-        <AgentIdentity agent={assignedAgent} showLabel={false} size="sm" />
+      {assignedRole && (
+        <RoleSkillIdentity role={assignedRole} showLabel={false} size="sm" />
       )}
 
       {updatedAt && (

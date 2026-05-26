@@ -20,7 +20,7 @@ import { CONTENT_TYPES } from "@/features/autopilot/lib/document-labels";
 type SheetMode = "view" | "create";
 
 interface DocumentsPageState {
-  filterAgent: string;
+  filterRole: string;
   filterType: string;
   searchQuery: string;
   selectedDocId: Id<"autopilotDocuments"> | null;
@@ -29,7 +29,7 @@ interface DocumentsPageState {
 }
 
 const initialDocumentsPageState: DocumentsPageState = {
-  filterAgent: "all",
+  filterRole: "all",
   filterType: "all",
   searchQuery: "",
   selectedDocId: null,
@@ -62,7 +62,7 @@ export default function DocumentsPage() {
     initialDocumentsPageState
   );
   const {
-    filterAgent,
+    filterRole,
     filterType,
     searchQuery,
     selectedDocId,
@@ -76,7 +76,7 @@ export default function DocumentsPage() {
     searchQuery !== "" ||
     statusPreset !== "all" ||
     filterType !== "all" ||
-    filterAgent !== "all";
+    filterRole !== "all";
 
   if (documents === undefined) {
     return (
@@ -111,7 +111,7 @@ export default function DocumentsPage() {
     if (filterType !== "all" && doc.type !== filterType) {
       return false;
     }
-    if (filterAgent !== "all" && doc.sourceAgent !== filterAgent) {
+    if (filterRole !== "all" && doc.sourceRole !== filterRole) {
       return false;
     }
     if (statusPreset === "draft" && doc.status !== "draft") {
@@ -141,7 +141,7 @@ export default function DocumentsPage() {
 
   const handleClearFilters = () => {
     updatePageState({
-      filterAgent: "all",
+      filterRole: "all",
       filterType: "all",
       searchQuery: "",
       statusPreset: "all",
@@ -157,10 +157,10 @@ export default function DocumentsPage() {
       <DocumentsHeader onCreate={handleCreateDocument} />
 
       <DocumentFilters
-        filterAgent={filterAgent}
         filteredCount={filteredDocs.length}
+        filterRole={filterRole}
         filterType={filterType}
-        onAgentChange={(value) => updatePageState({ filterAgent: value })}
+        onRoleChange={(value) => updatePageState({ filterRole: value })}
         onSearchChange={(value) => updatePageState({ searchQuery: value })}
         onStatusChange={(value) => updatePageState({ statusPreset: value })}
         onTypeChange={(value) => updatePageState({ filterType: value })}

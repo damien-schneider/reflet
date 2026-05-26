@@ -54,7 +54,7 @@ async function createProductDefinition(
       differentiators: ["fast"],
       primaryUserVerbs: ["use"],
       targetAudienceTags: ["developer"],
-      ownerAgent: "cto",
+      ownerRole: "cto",
       generatedBy: "user",
       version: 1,
       userEdited: true,
@@ -107,7 +107,7 @@ async function createFeedback(
 async function createTask(
   t: TestContext,
   options: {
-    assignedAgent?: "cto" | "growth" | "pm" | "sales" | "support";
+    assignedRole?: "cto" | "growth" | "pm" | "sales" | "support";
     needsReview?: boolean;
     organizationId: Awaited<ReturnType<typeof createLocalOrg>>;
     reviewType?: Doc<"autopilotWorkItems">["reviewType"];
@@ -123,7 +123,7 @@ async function createTask(
       description: "This task belongs to one organization only.",
       status: options.status ?? "backlog",
       priority: "medium",
-      assignedAgent: options.assignedAgent,
+      assignedRole: options.assignedRole,
       needsReview: options.needsReview ?? false,
       reviewType: options.reviewType,
       createdAt: now,
@@ -148,7 +148,7 @@ async function createDocument(
       title: "Review document",
       content: "Document content",
       tags: [],
-      sourceAgent: "growth",
+      sourceRole: "growth",
       status: options.status ?? "pending_review",
       needsReview: options.needsReview ?? true,
       createdAt: now,
@@ -173,7 +173,7 @@ async function createReport(
       healthScore: 82,
       sections: [],
       recommendations: [],
-      sourceAgent: "ceo",
+      sourceRole: "ceo",
       tags: [],
       needsReview: true,
       archived: false,
@@ -215,7 +215,7 @@ describe("autopilot production access control", () => {
         description: "Cleanup must still run after billing access is lost.",
         status: "in_progress",
         priority: "medium",
-        assignedAgent: "cto",
+        assignedRole: "cto",
         needsReview: false,
         createdAt: staleAt,
         updatedAt: staleAt,
@@ -237,12 +237,12 @@ describe("autopilot production access control", () => {
 
     const gate = await t.query(internal.autopilot.gate.checkGate, {
       organizationId,
-      agent: "growth",
+      role: "growth",
       action: "publish_content",
     });
-    const isActive = await t.query(internal.autopilot.gate.isAgentActive, {
+    const isActive = await t.query(internal.autopilot.gate.isRoleSkillActive, {
       organizationId,
-      agent: "growth",
+      role: "growth",
     });
 
     expect(gate).toEqual({ proceed: false, reason: "plan_limit" });
@@ -721,16 +721,16 @@ describe("autopilot production access control", () => {
     expect(rows.lead?.outreachCount).toBe(0);
   });
 
-  test("task cap diagnostics use the same enabled-agent rules as the gate", async () => {
+  test("task cap diagnostics use the same enabled-role rules as the gate", async () => {
     const t = createTestContext();
     const organizationId = await createLocalOrg(t, "Cap Diagnostics Org");
     await createAutopilotConfig(t, organizationId, { enabled: true });
-    await createTask(t, { organizationId, assignedAgent: "growth" });
+    await createTask(t, { organizationId, assignedRole: "growth" });
     await t.run(async (ctx) => {
       const task = await ctx.db
         .query("autopilotWorkItems")
-        .withIndex("by_org_agent", (q) =>
-          q.eq("organizationId", organizationId).eq("assignedAgent", "growth")
+        .withIndex("by_org_role", (q) =>
+          q.eq("organizationId", organizationId).eq("assignedRole", "growth")
         )
         .first();
       if (task) {
@@ -747,8 +747,8 @@ describe("autopilot production access control", () => {
       { organizationId }
     );
 
-    expect(usage.agentUsage.map(({ agent }) => agent)).toEqual(["pm", "cto"]);
+    expect(usage.roleUsage.map(({ role }) => role)).toEqual(["pm", "cto"]);
     expect(orphaned).toHaveLength(1);
-    expect(orphaned[0]?.assignedAgent).toBe("growth");
+    expect(orphaned[0]?.assignedRole).toBe("growth");
   });
 });

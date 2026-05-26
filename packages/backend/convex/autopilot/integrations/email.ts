@@ -1,5 +1,5 @@
 /**
- * Email/outreach integration for Sales agent.
+ * Email/outreach integration for the Sales role skill.
  *
  * Provides the ability to send actual outreach emails via Resend.
  * Flow: Sales drafts outreach → saved as document (pending_review) →
@@ -74,7 +74,7 @@ async function sendOutreachEmail(
     );
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: params.organizationId,
-      agent: "sales",
+      role: "sales",
       level: "success",
       message: `Outreach email sent to ${params.lead.name} (${params.lead.email})`,
       action: "email.sent",
@@ -84,7 +84,7 @@ async function sendOutreachEmail(
     const message = error instanceof Error ? error.message : String(error);
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: params.organizationId,
-      agent: "sales",
+      role: "sales",
       level: "error",
       message: `Failed to send email to ${params.lead.email}: ${message}`,
     });
@@ -109,7 +109,7 @@ async function sendOutreachBatch(
       continue;
     }
     const lead = await ctx.runQuery(
-      internal.autopilot.agents.sales_queries.getLeadById,
+      internal.autopilot.role_skills.sales_queries.getLeadById,
       { leadId: doc.linkedLeadId }
     );
     if (!lead?.email) {
@@ -118,7 +118,7 @@ async function sendOutreachBatch(
     if (lead.organizationId !== params.organizationId) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: params.organizationId,
-        agent: "sales",
+        role: "sales",
         level: "warning",
         message: "Email skipped — linked lead belongs to another organization",
       });
@@ -127,7 +127,7 @@ async function sendOutreachBatch(
     if (params.blocklist.has(lead.email.toLowerCase())) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: params.organizationId,
-        agent: "sales",
+        role: "sales",
         level: "info",
         message: `Email to ${lead.email} skipped — on blocklist`,
       });
@@ -291,13 +291,13 @@ export const sendApprovedOutreach = internalAction({
     const orgId = args.organizationId;
     const gate = await ctx.runQuery(internal.autopilot.gate.checkGate, {
       organizationId: orgId,
-      agent: "sales",
+      role: "sales",
       action: "send_email",
     });
     if (!gate.proceed) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: orgId,
-        agent: "sales",
+        role: "sales",
         level: "info",
         message: `Email sending skipped — gate blocked with ${gate.reason ?? "unknown"}`,
       });
@@ -312,7 +312,7 @@ export const sendApprovedOutreach = internalAction({
     if (!limitCheck.allowed) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: orgId,
-        agent: "sales",
+        role: "sales",
         level: "info",
         message: `Email sending skipped — daily limit reached (${limitCheck.sentToday}/${limitCheck.limit})`,
       });
@@ -339,7 +339,7 @@ export const sendApprovedOutreach = internalAction({
     if (!senderEmail) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: orgId,
-        agent: "sales",
+        role: "sales",
         level: "warning",
         message: "Email sending skipped — no org email address configured",
       });
@@ -350,7 +350,7 @@ export const sendApprovedOutreach = internalAction({
     if (!resendApiKey) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: orgId,
-        agent: "sales",
+        role: "sales",
         level: "warning",
         message: "Email sending skipped — RESEND_API_KEY not configured",
       });
@@ -370,7 +370,7 @@ export const sendApprovedOutreach = internalAction({
     if (sent > 0) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: orgId,
-        agent: "sales",
+        role: "sales",
         level: "success",
         message: `Outreach batch complete: ${sent} emails sent`,
       });

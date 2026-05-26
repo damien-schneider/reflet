@@ -10,12 +10,12 @@ import { v } from "convex/values";
 
 import { components, internal } from "../_generated/api";
 import { internalAction, mutation, query } from "../_generated/server";
-import { chatAgent } from "./agent";
+import { chatRuntime } from "./runtimes";
 
 export const createNewThread = mutation({
   args: {},
   handler: async (ctx) => {
-    const threadId = await createThread(ctx, components.agent, {});
+    const threadId = await createThread(ctx, components.aiRuntime, {});
     return threadId;
   },
 });
@@ -27,8 +27,8 @@ export const listMessages = query({
     streamArgs: vStreamArgs,
   },
   handler: async (ctx, args) => {
-    const paginated = await listUIMessages(ctx, components.agent, args);
-    const streams = await syncStreams(ctx, components.agent, args);
+    const paginated = await listUIMessages(ctx, components.aiRuntime, args);
+    const streams = await syncStreams(ctx, components.aiRuntime, args);
     return { ...paginated, streams };
   },
 });
@@ -39,7 +39,7 @@ export const sendMessage = mutation({
     prompt: v.string(),
   },
   handler: async (ctx, { threadId, prompt }) => {
-    const { messageId } = await saveMessage(ctx, components.agent, {
+    const { messageId } = await saveMessage(ctx, components.aiRuntime, {
       threadId,
       prompt,
     });
@@ -57,7 +57,7 @@ export const generateResponseAsync = internalAction({
     promptMessageId: v.string(),
   },
   handler: async (ctx, { threadId, promptMessageId }) => {
-    await chatAgent.streamText(
+    await chatRuntime.streamText(
       ctx,
       { threadId },
       { promptMessageId },

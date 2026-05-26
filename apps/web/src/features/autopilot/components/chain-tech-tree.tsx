@@ -17,13 +17,21 @@ import {
   Position,
   ReactFlow,
 } from "@xyflow/react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import type { Infer } from "convex/values";
 import ELK from "elkjs/lib/elk.bundled.js";
+import { RefreshCw } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { ChainNodePreviewDialog } from "./chain-node-preview-dialog";
 import { ChainTechTreeCard } from "./chain-tech-tree-card";
@@ -146,15 +154,22 @@ const computeEdgeVariant = (
   return "locked";
 };
 
+interface ChainNodeRefreshAction {
+  label: string;
+  onRefresh: () => void;
+}
+
 interface ChainNodeData extends Record<string, unknown> {
   cardProps: Parameters<typeof ChainTechTreeCard>[0];
+  refreshAction?: ChainNodeRefreshAction;
 }
 
 type ChainFlowNode = Node<ChainNodeData, "chain">;
 
 function ChainFlowNodeComponent({ data }: NodeProps<ChainFlowNode>) {
+  const refresh = data.refreshAction;
   return (
-    <div style={{ width: NODE_WIDTH }}>
+    <div className="group relative" style={{ width: NODE_WIDTH }}>
       <Handle
         className="!border-0 !bg-transparent !opacity-0 !pointer-events-none"
         isConnectable={false}
@@ -162,6 +177,28 @@ function ChainFlowNodeComponent({ data }: NodeProps<ChainFlowNode>) {
         type="target"
       />
       <ChainTechTreeCard {...data.cardProps} />
+      {refresh && (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                aria-label={`Refresh ${refresh.label}`}
+                className="absolute top-1.5 right-1.5 size-6 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  refresh.onRefresh();
+                }}
+                onKeyDown={(event) => event.stopPropagation()}
+                size="icon"
+                variant="ghost"
+              >
+                <RefreshCw className="size-3" />
+              </Button>
+            }
+          />
+          <TooltipContent>Refresh {refresh.label}</TooltipContent>
+        </Tooltip>
+      )}
       <Handle
         className="!border-0 !bg-transparent !opacity-0 !pointer-events-none"
         isConnectable={false}
@@ -199,11 +236,124 @@ const EDGE_TYPES = { chain: ChainElkEdge } as const;
 const PRO_OPTIONS = { hideAttribution: true } as const;
 const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 1 } as const;
 
+interface NodeFreshness {
+  kind: "current" | "stale";
+  reason: "commit_threshold" | "age_with_new_commit" | null;
+  summary: string;
+}
+
+interface BuildFlowNodeArgs {
+  activeWork: {
+    activeNode: ChainNodeKind | null;
+    message: string | null;
+  } | null;
+  handleHover: (kind: ChainNodeKind | null) => void;
+  handlePreview: (kind: ChainNodeKind) => void;
+  handleRefresh: ((kind: ChainNodeKind, label: string) => void) | null;
+  highlightedKinds: Set<ChainNodeKind> | null;
+  metaByKind: Map<ChainNodeKind, { label: string }>;
+  node: {
+    actionable: boolean;
+    artifactCount: number;
+    avgValidationScore: number | null;
+    draftSubtypes?: Parameters<typeof ChainTechTreeCard>[0]["draftSubtypes"];
+    freshness: NodeFreshness;
+    lastUpdatedAt: number | null;
+    owner: string;
+    preconditionUnmet?: { reason: string };
+    recentTitles: string[];
+    roleDisabled: boolean;
+    status: ChainNodeStatus;
+  };
+  nodeMeta: {
+    kind: ChainNodeKind;
+    label: string;
+    plural: string;
+    deps: ChainNodeKind[];
+  };
+  nodesByKind: Map<ChainNodeKind, { status: ChainNodeStatus }>;
+  position: { x: number; y: number };
+}
+
+function buildFlowNode(args: BuildFlowNodeArgs): ChainFlowNode {
+  const {
+    activeWork,
+    handleHover,
+    handlePreview,
+    handleRefresh,
+    highlightedKinds,
+    metaByKind,
+    node,
+    nodeMeta,
+    nodesByKind,
+    position,
+  } = args;
+  const owner = isOwner(node.owner) ? node.owner : "cto";
+  const isActive = activeWork?.activeNode === nodeMeta.kind;
+  const blockerLabels = nodeMeta.deps
+    .filter((dep) => {
+      const parent = nodesByKind.get(dep);
+      return !parent || parent.status !== "published";
+    })
+    .map((dep) => metaByKind.get(dep)?.label ?? dep.replaceAll("_", " "));
+  const dimmed = highlightedKinds
+    ? !highlightedKinds.has(nodeMeta.kind)
+    : false;
+  const canRefresh =
+    handleRefresh !== null && node.status === "published" && !isActive;
+  return {
+    id: nodeMeta.kind,
+    type: "chain",
+    position: { x: position.x, y: position.y },
+    width: NODE_WIDTH,
+    height: NODE_HEIGHT,
+    style: { cursor: "auto", pointerEvents: "all" },
+    data: {
+      cardProps: {
+        actionable: node.actionable,
+        activeMessage: isActive ? (activeWork?.message ?? null) : null,
+        artifactCount: node.artifactCount,
+        avgValidationScore: node.avgValidationScore,
+        blockerLabels,
+        dimmed,
+        draftSubtypes: node.draftSubtypes,
+        freshness: node.freshness,
+        isActive,
+        kind: nodeMeta.kind,
+        label: nodeMeta.label,
+        lastUpdatedAt: node.lastUpdatedAt,
+        onHover: handleHover,
+        onPreview: handlePreview,
+        owner,
+        pluralNoun: nodeMeta.plural,
+        ...(node.preconditionUnmet
+          ? { preconditionUnmet: node.preconditionUnmet }
+          : {}),
+        recentTitles: node.recentTitles,
+        roleDisabled: node.roleDisabled,
+        status: node.status,
+      },
+      ...(canRefresh && handleRefresh
+        ? {
+            refreshAction: {
+              label: nodeMeta.label,
+              onRefresh: () => handleRefresh(nodeMeta.kind, nodeMeta.label),
+            },
+          }
+        : {}),
+    },
+    draggable: false,
+    selectable: false,
+    connectable: false,
+  };
+}
+
 interface ChainTechTreeProps {
+  isAdmin: boolean;
   organizationId: Id<"organizations">;
 }
 
-export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
+export function ChainTechTree({ isAdmin, organizationId }: ChainTechTreeProps) {
   const params = useParams<{ orgSlug: string }>();
   const orgSlug = params?.orgSlug ?? "";
 
@@ -214,6 +364,9 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
   const activeWork = useQuery(api.autopilot.queries.chain.getActiveChainWork, {
     organizationId,
   });
+  const refreshDeliverable = useMutation(
+    api.autopilot.runtime.mutations.refreshDeliverable
+  );
 
   const [hoveredKind, setHoveredKind] = useState<ChainNodeKind | null>(null);
   const [previewKind, setPreviewKind] = useState<ChainNodeKind | null>(null);
@@ -225,6 +378,20 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
   const handlePreview = useCallback((kind: ChainNodeKind) => {
     setPreviewKind(kind);
   }, []);
+
+  const handleRefresh = useMemo(() => {
+    if (!isAdmin) {
+      return null;
+    }
+    return async (kind: ChainNodeKind, label: string) => {
+      try {
+        await refreshDeliverable({ node: kind, organizationId });
+        toast.success(`${label} refresh queued`);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Refresh failed");
+      }
+    };
+  }, [isAdmin, organizationId, refreshDeliverable]);
 
   const nodesByKind = useMemo(() => {
     if (!overview) {
@@ -368,49 +535,19 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
       if (!(node && position)) {
         continue;
       }
-      const owner = isOwner(node.owner) ? node.owner : "cto";
-      const isActive = activeWork?.activeNode === nodeMeta.kind;
-      const blockerLabels = nodeMeta.deps
-        .filter((dep) => {
-          const parent = nodesByKind.get(dep);
-          return !parent || parent.status !== "published";
-        })
-        .map((dep) => metaByKind.get(dep)?.label ?? dep.replaceAll("_", " "));
-      const dimmed = highlightedKinds
-        ? !highlightedKinds.has(nodeMeta.kind)
-        : false;
-      result.push({
-        id: nodeMeta.kind,
-        type: "chain",
-        position: { x: position.x, y: position.y },
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
-        style: { cursor: "auto", pointerEvents: "all" },
-        data: {
-          cardProps: {
-            actionable: node.actionable,
-            activeMessage: isActive ? activeWork.message : null,
-            artifactCount: node.artifactCount,
-            avgValidationScore: node.avgValidationScore,
-            blockerLabels,
-            dimmed,
-            draftSubtypes: node.draftSubtypes,
-            isActive,
-            kind: nodeMeta.kind,
-            label: nodeMeta.label,
-            lastUpdatedAt: node.lastUpdatedAt,
-            onHover: handleHover,
-            onPreview: handlePreview,
-            owner,
-            pluralNoun: nodeMeta.plural,
-            recentTitles: node.recentTitles,
-            status: node.status,
-          },
-        },
-        draggable: false,
-        selectable: false,
-        connectable: false,
+      const flowNode = buildFlowNode({
+        activeWork: activeWork ?? null,
+        handleHover,
+        handlePreview,
+        handleRefresh,
+        highlightedKinds,
+        metaByKind,
+        node,
+        nodeMeta,
+        nodesByKind,
+        position,
       });
+      result.push(flowNode);
     }
     return result;
   }, [
@@ -421,6 +558,7 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
     highlightedKinds,
     handleHover,
     handlePreview,
+    handleRefresh,
     layout,
   ]);
 
@@ -491,14 +629,7 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <Badge variant={overview.gatedByOpenTasks ? "orange" : "gray"}>
-            {overview.openTaskCount}/{overview.wakeThreshold} open tasks
-          </Badge>
-          {overview.gatedByOpenTasks && (
-            <span className="text-muted-foreground">
-              Chain gated, clear tasks to resume
-            </span>
-          )}
+          <Badge variant="gray">Execution state drives dispatch</Badge>
         </div>
       </div>
 
@@ -526,6 +657,7 @@ export function ChainTechTree({ organizationId }: ChainTechTreeProps) {
       </div>
 
       <ChainNodePreviewDialog
+        isAdmin={isAdmin}
         kind={previewKind}
         label={previewKind ? (metaByKind.get(previewKind)?.label ?? "") : ""}
         onOpenChange={(o) => {

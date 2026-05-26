@@ -197,9 +197,9 @@ export const CHANGELOG_ITEMS_DATA = [
 ] as const;
 
 export const METRICS = [
-  { value: "7", label: "autonomous AI agents" },
+  { value: "7", label: "visible role skills" },
   { value: "5 min", label: "to first Company Brief" },
-  { value: "24/7", label: "agents never sleep" },
+  { value: "24/7", label: "condition-based runtime" },
 ] as const;
 
 export const LOOP_STEPS = [
@@ -221,7 +221,7 @@ export const LOOP_STEPS = [
     step: 3,
     title: "Build",
     description:
-      "CTO writes specs and reviews architecture. Dev creates PRs and ships code. All autonomous.",
+      "CTO writes specs and reviews architecture. Validator checks the delivery path before work ships.",
     icon: "code" as const,
   },
   {

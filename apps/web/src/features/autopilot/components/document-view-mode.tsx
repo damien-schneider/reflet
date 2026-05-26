@@ -26,8 +26,8 @@ import {
   SourceLink,
 } from "@/features/autopilot/components/document-content";
 import {
-  AGENT_LABELS,
   IMPACT_COLOR_MAP,
+  ROLE_SKILL_LABELS,
   STATUS_COLOR_MAP,
   STATUS_LABELS,
   TYPE_COLOR_MAP,
@@ -197,10 +197,10 @@ function PropertyGrid({
         </Badge>
       </PropertyRow>
 
-      {document.sourceAgent && (
-        <PropertyRow label="Agent">
+      {document.sourceRole && (
+        <PropertyRow label="Role skill">
           <Badge variant="secondary">
-            {AGENT_LABELS[document.sourceAgent] ?? document.sourceAgent}
+            {ROLE_SKILL_LABELS[document.sourceRole] ?? document.sourceRole}
           </Badge>
         </PropertyRow>
       )}

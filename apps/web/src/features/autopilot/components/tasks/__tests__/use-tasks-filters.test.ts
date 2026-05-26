@@ -80,7 +80,7 @@ describe("useTasksFilters", () => {
     expect(result.current.filters.type).toEqual([]);
     expect(result.current.filters.priority).toEqual([]);
     expect(result.current.filters.assigneeUserId).toBe("");
-    expect(result.current.filters.assignedAgent).toBe("");
+    expect(result.current.filters.assignedRole).toBe("");
     expect(result.current.filters.q).toBe("");
     expect(result.current.filters.groupBy).toBe("none");
     expect(result.current.filters.sortKey).toBe("updated");

@@ -1,8 +1,8 @@
 /**
- * CEO Chat — persistent thread-based conversation with the CEO Agent.
+ * CEO Chat — persistent thread-based conversation with the CEO coordination skill.
  *
  * Each organization has one CEO chat thread stored on its autopilotConfig.
- * The CEO agent receives full product context (tasks, feedback, activity)
+ * The CEO skill receives full product context (tasks, feedback, activity)
  * with each response, enabling it to act as a strategic advisor.
  */
 
@@ -21,10 +21,10 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { internalAction, mutation, query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
-import { ceoAgent } from "./agents/ceo/agent";
-import { makeCeoToolsForOrg } from "./agents/ceo_tools";
 import { requireAutopilotAccess, requireOrgAdmin } from "./mutations/auth";
 import { requireOrgMembership } from "./queries/auth";
+import { ceoSkillRuntime } from "./role_skills/ceo/runtime";
+import { makeCeoToolsForOrg } from "./role_skills/ceo_tools";
 
 interface ChatConfigOptions {
   organizationId: Id<"organizations">;
@@ -111,11 +111,11 @@ export const listMessages = query({
       userId: user._id,
     });
 
-    const paginated = await listUIMessages(ctx, components.agent, {
+    const paginated = await listUIMessages(ctx, components.aiRuntime, {
       threadId: args.threadId,
       paginationOpts: args.paginationOpts,
     });
-    const streams = await syncStreams(ctx, components.agent, {
+    const streams = await syncStreams(ctx, components.aiRuntime, {
       threadId: args.threadId,
       streamArgs: args.streamArgs,
     });
@@ -148,7 +148,7 @@ export const getOrCreateThread = mutation({
       return config.ceoChatThreadId;
     }
 
-    const threadId = await createThread(ctx, components.agent, {});
+    const threadId = await createThread(ctx, components.aiRuntime, {});
 
     await ctx.db.patch(config._id, {
       ceoChatThreadId: threadId,
@@ -161,7 +161,7 @@ export const getOrCreateThread = mutation({
 
 /**
  * Send a message to the CEO chat and trigger an AI response.
- * The CEO agent receives org context to provide informed answers.
+ * The CEO skill receives org context to provide informed answers.
  */
 export const sendMessage = mutation({
   args: {
@@ -180,7 +180,7 @@ export const sendMessage = mutation({
       userId: user._id,
     });
 
-    const { messageId } = await saveMessage(ctx, components.agent, {
+    const { messageId } = await saveMessage(ctx, components.aiRuntime, {
       threadId: args.threadId,
       prompt: args.prompt,
     });
@@ -205,7 +205,7 @@ export const sendMessage = mutation({
 
 /**
  * Generate a CEO response with full product context injected.
- * Uses the CEO agent with streaming for real-time message delivery.
+ * Uses the CEO coordination skill with streaming for real-time message delivery.
  */
 export const generateCEOResponseAsync = internalAction({
   args: {
@@ -227,39 +227,36 @@ export const generateCEOResponseAsync = internalAction({
 
     // Get aggregate context
     const ceoContext = await ctx.runQuery(
-      internal.autopilot.agents.ceo.queries.getCEOContext,
+      internal.autopilot.role_skills.ceo.queries.getCEOContext,
       { organizationId: args.organizationId }
     );
 
-    // Get detailed context with task titles, agent states, errors, inbox items
+    // Get detailed context with task titles, role states, errors, inbox items
     const detailed = await ctx.runQuery(
-      internal.autopilot.agents.ceo.queries.getDetailedCEOContext,
+      internal.autopilot.role_skills.ceo.queries.getDetailedCEOContext,
       { organizationId: args.organizationId }
     );
 
     const taskLines = detailed.taskSummaries
       .map(
         (t: {
-          agent?: string;
           priority: string;
+          role?: string;
           status: string;
           title: string;
         }) =>
-          `  - [${t.status}] ${t.title} (${t.priority}, ${t.agent ?? "unassigned"})`
+          `  - [${t.status}] ${t.title} (${t.priority}, ${t.role ?? "unassigned"})`
       )
       .join("\n");
 
-    const agentLines = Object.entries(detailed.agentStates)
-      .map(([agent, enabled]) => `  - ${agent}: ${enabled ? "ON" : "OFF"}`)
+    const roleLines = Object.entries(detailed.roleStates)
+      .map(([role, enabled]) => `  - ${role}: ${enabled ? "ON" : "OFF"}`)
       .join("\n");
 
     const errorLines =
       detailed.recentErrors.length > 0
         ? detailed.recentErrors
-            .map(
-              (e: { agent: string; ago: number; message: string }) =>
-                `  - ${e.agent}: ${e.message} (${e.ago}m ago)`
-            )
+            .map((e) => `  - ${e.role}: ${e.message} (${e.ago}m ago)`)
             .join("\n")
         : "  None";
 
@@ -289,8 +286,8 @@ Priority: Critical (${ceoContext.taskStats.byPriority.critical}), High (${ceoCon
 RECENT TASKS:
 ${taskLines || "  None"}
 
-AGENT STATES:
-${agentLines}
+ROLE-SKILL STATES:
+${roleLines}
 
 RECENT ERRORS:
 ${errorLines}
@@ -301,9 +298,9 @@ ${reviewLines}
 ACTIVITY: ${ceoContext.recentActivityCount} actions in last 7 days
 FEEDBACK: ${ceoContext.feedbackStats.total} active items
 
-You have tools available to create tasks, check agent statuses, view tasks, trigger PM analysis, and view recent activity. Use them when the user asks you to take action.`;
+You have tools available to create tasks, check role-skill statuses, view tasks, trigger PM analysis, and view recent activity. Use them when the user asks you to take action.`;
 
-    await ceoAgent.streamText(
+    await ceoSkillRuntime.streamText(
       ctx,
       { threadId: args.threadId },
       {

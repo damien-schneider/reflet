@@ -10,7 +10,6 @@ interface ErrorBoundaryProps {
   description?: string;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
-  showError?: boolean;
   size?: "sm" | "md" | "lg";
   title?: string;
 }
@@ -53,7 +52,6 @@ export class ErrorBoundary extends Component<
           description={this.props.description}
           error={this.state.error}
           onRetry={this.handleRetry}
-          showError={this.props.showError}
           size={this.props.size}
           title={this.props.title}
         />

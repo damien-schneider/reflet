@@ -45,8 +45,8 @@ export function OnboardingChecklist({
       href: `${baseUrl}/settings`,
     },
     {
-      key: "agents",
-      label: "Enable at least one agent",
+      key: "role-skills",
+      label: "Enable at least one role skill",
       done:
         config.pmEnabled !== false ||
         config.ctoEnabled !== false ||

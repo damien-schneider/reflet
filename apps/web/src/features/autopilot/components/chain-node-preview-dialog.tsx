@@ -2,10 +2,13 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +36,7 @@ type ChainNodeKind =
   | "drafts";
 
 interface ChainNodePreviewDialogProps {
+  isAdmin: boolean;
   kind: ChainNodeKind | null;
   label: string;
   onOpenChange: (open: boolean) => void;
@@ -43,7 +47,7 @@ interface ChainNodePreviewDialogProps {
 }
 
 const ROUTE_BY_KIND: Record<ChainNodeKind, (orgSlug: string) => string> = {
-  codebase_understanding: (slug) => `/dashboard/${slug}/autopilot/knowledge`,
+  codebase_understanding: (slug) => `/dashboard/${slug}/autopilot/documents`,
   product_profile: (slug) => `/dashboard/${slug}/autopilot/knowledge`,
   brand_voice: (slug) => `/dashboard/${slug}/autopilot/knowledge`,
   feature_catalog: (slug) => `/dashboard/${slug}/autopilot/knowledge`,
@@ -58,7 +62,7 @@ const ROUTE_BY_KIND: Record<ChainNodeKind, (orgSlug: string) => string> = {
 };
 
 const ROUTE_LABEL_BY_KIND: Record<ChainNodeKind, string> = {
-  codebase_understanding: "Open Knowledge",
+  codebase_understanding: "Open Documents",
   product_profile: "Open Knowledge",
   brand_voice: "Open Knowledge",
   feature_catalog: "Open Knowledge",
@@ -146,6 +150,7 @@ function ProductProfileView({ profile }: { profile: ProductProfileShape }) {
 }
 
 export function ChainNodePreviewDialog({
+  isAdmin,
   kind,
   label,
   onOpenChange,
@@ -158,9 +163,52 @@ export function ChainNodePreviewDialog({
     api.autopilot.queries.chain.getChainNodeDetail,
     kind ? { organizationId, kind } : "skip"
   );
+  const approveDocument = useMutation(
+    api.autopilot.mutations.inbox.approveDocument
+  );
+  const rejectDocument = useMutation(
+    api.autopilot.mutations.inbox.rejectDocument
+  );
+  const [pendingAction, setPendingAction] = useState<
+    "approve" | "reject" | null
+  >(null);
 
   const routeFn = kind ? ROUTE_BY_KIND[kind] : null;
   const routeLabel = kind ? ROUTE_LABEL_BY_KIND[kind] : "";
+  const pendingDocument = detail?.pendingDocument ?? null;
+  const showReviewActions = isAdmin && pendingDocument !== null;
+
+  const handleApprove = async () => {
+    if (!pendingDocument) {
+      return;
+    }
+    setPendingAction("approve");
+    try {
+      await approveDocument({ documentId: pendingDocument.documentId });
+      toast.success(`${label} approved`);
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Approval failed");
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!pendingDocument) {
+      return;
+    }
+    setPendingAction("reject");
+    try {
+      await rejectDocument({ documentId: pendingDocument.documentId });
+      toast.success(`${label} rejected — autopilot will regenerate`);
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Rejection failed");
+    } finally {
+      setPendingAction(null);
+    }
+  };
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -168,7 +216,9 @@ export function ChainNodePreviewDialog({
         <DialogHeader>
           <div className="flex items-center gap-2">
             <DialogTitle className="text-base">{label}</DialogTitle>
-            <Badge variant="gray">{statusLabel}</Badge>
+            <Badge variant={showReviewActions ? "orange" : "gray"}>
+              {statusLabel}
+            </Badge>
           </div>
           {detail?.lastUpdatedAt && (
             <DialogDescription>
@@ -230,7 +280,7 @@ export function ChainNodePreviewDialog({
             )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-row items-center justify-between gap-2 sm:justify-between">
           {routeFn && (
             <Link
               className={cn(
@@ -241,6 +291,25 @@ export function ChainNodePreviewDialog({
             >
               {routeLabel}
             </Link>
+          )}
+          {showReviewActions && (
+            <div className="flex items-center gap-2">
+              <Button
+                disabled={pendingAction !== null}
+                onClick={handleReject}
+                size="sm"
+                variant="outline"
+              >
+                {pendingAction === "reject" ? "Rejecting…" : "Reject"}
+              </Button>
+              <Button
+                disabled={pendingAction !== null}
+                onClick={handleApprove}
+                size="sm"
+              >
+                {pendingAction === "approve" ? "Approving…" : "Approve"}
+              </Button>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>

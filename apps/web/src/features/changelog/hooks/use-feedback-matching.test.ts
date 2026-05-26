@@ -223,30 +223,33 @@ describe("useFeedbackMatching", () => {
       );
     });
 
-    expect(fetchSpy).toHaveBeenCalledWith("/api/ai/match-release-feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        releaseNotes: "Added dark mode",
-        commits: [
-          {
-            sha: "abc123",
-            message: "feat: dark mode",
-            fullMessage: "feat: dark mode support",
-            author: "dev",
-          },
-        ],
-        feedbackItems: [
-          {
-            id: "f1",
-            title: "Dark mode please",
-            description: "Would love dark theme",
-            status: "open",
-            tags: ["ui"],
-          },
-        ],
-      }),
-    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/\/api\/ai\/match-release-feedback$/),
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          releaseNotes: "Added dark mode",
+          commits: [
+            {
+              sha: "abc123",
+              message: "feat: dark mode",
+              fullMessage: "feat: dark mode support",
+              author: "dev",
+            },
+          ],
+          feedbackItems: [
+            {
+              id: "f1",
+              title: "Dark mode please",
+              description: "Would love dark theme",
+              status: "open",
+              tags: ["ui"],
+            },
+          ],
+        }),
+      }
+    );
   });
 
   it("parses valid API response with multiple confidence levels", async () => {

@@ -19,8 +19,8 @@ import {
 import { cn } from "@/lib/utils";
 
 import {
-  TASK_AGENTS,
   TASK_PRIORITIES,
+  TASK_ROLES,
   TASK_STATUSES,
   TASK_TYPES,
   type TaskFilters,
@@ -53,13 +53,11 @@ const PRIORITY_LABELS: Record<string, string> = {
   low: "Low",
 };
 
-const AGENT_LABELS: Record<string, string> = {
+const ROLE_SKILL_LABELS: Record<string, string> = {
   ceo: "CEO",
   pm: "PM",
   cto: "CTO",
-  dev: "Dev",
   growth: "Growth",
-  orchestrator: "Orchestrator",
   sales: "Sales",
   support: "Support",
   system: "System",
@@ -158,22 +156,22 @@ export function TasksFilterBar({
       </MultiSelectChip>
 
       <SingleSelectChip
-        active={filters.assignedAgent !== ""}
-        label="Agent"
+        active={filters.assignedRole !== ""}
+        label="Role skill"
         value={
-          filters.assignedAgent
-            ? (AGENT_LABELS[filters.assignedAgent] ?? filters.assignedAgent)
+          filters.assignedRole
+            ? (ROLE_SKILL_LABELS[filters.assignedRole] ?? filters.assignedRole)
             : null
         }
       >
         <SingleOptions
-          onClear={() => setFilters({ assignedAgent: "" })}
-          options={TASK_AGENTS.map((a) => ({
-            value: a,
-            label: AGENT_LABELS[a] ?? a,
+          onClear={() => setFilters({ assignedRole: "" })}
+          options={TASK_ROLES.map((role) => ({
+            value: role,
+            label: ROLE_SKILL_LABELS[role] ?? role,
           }))}
-          select={(value) => setFilters({ assignedAgent: value })}
-          selected={filters.assignedAgent}
+          select={(value) => setFilters({ assignedRole: value })}
+          selected={filters.assignedRole}
         />
       </SingleSelectChip>
 

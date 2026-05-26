@@ -17,12 +17,11 @@ export const autonomyMode = v.union(
   v.literal("stopped")
 );
 
-// Agents — analysis & planning only. Coding execution is delegated externally.
-export const assignedAgent = v.union(
+// Role skills are visible runtime capabilities in one chain.
+export const assignedRole = v.union(
   v.literal("pm"),
   v.literal("cto"),
   v.literal("growth"),
-  v.literal("orchestrator"),
   v.literal("system"),
   v.literal("support"),
   v.literal("sales"),
@@ -30,42 +29,46 @@ export const assignedAgent = v.union(
   v.literal("validator")
 );
 
-export type RoutineDispatchAgent = "cto" | "growth" | "sales" | "support";
-
-export function isRoutineDispatchAgent(
-  agent: string
-): agent is RoutineDispatchAgent {
-  return (
-    agent === "cto" ||
-    agent === "growth" ||
-    agent === "sales" ||
-    agent === "support"
-  );
-}
-
-export const agentThreadRole = v.union(v.literal("user"), v.literal("agent"));
-
-export const agentWorkStreamStatus = v.union(
-  v.literal("streaming"),
-  v.literal("completed"),
-  v.literal("failed")
+export const roleSkill = v.union(
+  v.literal("cto"),
+  v.literal("pm"),
+  v.literal("growth"),
+  v.literal("sales"),
+  v.literal("support"),
+  v.literal("validator"),
+  v.literal("ceo")
 );
 
-export const agentWorkStreamRecord = v.object({
-  _id: v.id("autopilotAgentWorkStreams"),
-  _creationTime: v.number(),
-  organizationId: v.id("organizations"),
-  agent: assignedAgent,
-  workItemId: v.optional(v.id("autopilotWorkItems")),
-  title: v.string(),
-  status: agentWorkStreamStatus,
-  content: v.string(),
-  model: v.optional(v.string()),
-  error: v.optional(v.string()),
-  createdAt: v.number(),
-  updatedAt: v.number(),
-  completedAt: v.optional(v.number()),
-});
+export const autopilotExecutionStatus = v.union(
+  v.literal("queued"),
+  v.literal("running"),
+  v.literal("succeeded"),
+  v.literal("failed"),
+  v.literal("blocked")
+);
+
+export const autopilotExecutionTriggerReason = v.union(
+  v.literal("dependency_ready"),
+  v.literal("review_gate_clear"),
+  v.literal("stale_artifact"),
+  v.literal("support_conversation"),
+  v.literal("approved_delivery"),
+  v.literal("failed_execution_retry"),
+  v.literal("manual_refresh"),
+  v.literal("task_ready"),
+  v.literal("validation_required"),
+  v.literal("coordination_required")
+);
+
+export const autopilotExecutionActionKind = v.union(
+  v.literal("chain_producer"),
+  v.literal("task_dispatch"),
+  v.literal("validation_pass"),
+  v.literal("support_triage"),
+  v.literal("ceo_coordination"),
+  v.literal("growth_content"),
+  v.literal("refresh_deliverable")
+);
 
 export const communityPlatform = v.union(
   v.literal("reddit"),
@@ -78,7 +81,7 @@ export const communityPlatform = v.union(
 );
 
 // ============================================
-// Agent Memory
+// Role-skill memory categories
 // ============================================
 
 export const memoryCategory = v.union(
@@ -242,4 +245,7 @@ export const knowledgeDocType = v.union(
   v.literal("scope")
 );
 
-export const knowledgeEditedBy = v.union(v.literal("agent"), v.literal("user"));
+export const knowledgeEditedBy = v.union(
+  v.literal("role_skill"),
+  v.literal("user")
+);

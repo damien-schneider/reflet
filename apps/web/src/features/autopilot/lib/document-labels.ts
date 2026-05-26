@@ -89,14 +89,12 @@ export const STATUS_LABELS: Record<DocumentStatus, string> = {
   archived: "Archived",
 };
 
-export const AGENT_LABELS: Record<string, string> = {
+export const ROLE_SKILL_LABELS: Record<string, string> = {
   pm: "PM",
   cto: "CTO",
-  dev: "Dev",
   growth: "Growth",
   sales: "Sales",
   support: "Support",
-  orchestrator: "Orchestrator",
   system: "System",
   ceo: "CEO",
   validator: "Validator",

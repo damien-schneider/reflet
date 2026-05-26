@@ -181,7 +181,7 @@ export function LimitSettings({
               Tasks / Day
             </CardTitle>
             <CardDescription className="text-xs">
-              Max tasks agents can create daily
+              Max tasks role skills can create daily
             </CardDescription>
           </CardHeader>
           <CardContent>

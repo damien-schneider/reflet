@@ -177,14 +177,11 @@ export default function AutopilotSettingsPage() {
   const billing = useQuery(api.billing.queries.getStatus, {
     organizationId,
   });
-  const resetScope = useQuery(
-    api.autopilot.mutations.routines.getResetScope,
-    {}
-  );
+  const resetScope = useQuery(api.autopilot.reset.mutations.getResetScope, {});
 
   const initConfig = useMutation(api.autopilot.mutations.config.initConfig);
   const updateConfig = useMutation(api.autopilot.mutations.config.updateConfig);
-  const resetAll = useMutation(api.autopilot.mutations.routines.resetAllData);
+  const resetAll = useMutation(api.autopilot.reset.mutations.resetAllData);
 
   const [pending, setPending] = useReducer(
     pendingReducer,
@@ -286,7 +283,7 @@ export default function AutopilotSettingsPage() {
       <div>
         <H2 variant="card">Settings</H2>
         <Muted className="mt-1">
-          Configure your AI team&apos;s behavior, agents, and resource limits.
+          Configure role-skill behavior, operating limits, and resource budgets.
         </Muted>
       </div>
 
@@ -304,8 +301,8 @@ export default function AutopilotSettingsPage() {
 
       <BudgetSettings
         disabled={!canEditSettings || pending.savingSettings}
-        onSave={(json) => handleUpdate("perAgentDailyCapUsd", json)}
-        storedValue={config.perAgentDailyCapUsd}
+        onSave={(json) => handleUpdate("perRoleDailyCapUsd", json)}
+        storedValue={config.perRoleDailyCapUsd}
       />
 
       {canEditSettings && (

@@ -1,5 +1,5 @@
 /**
- * Deduplication helpers — prevent agents from creating duplicate work.
+ * Deduplication helpers — prevent role skills from creating duplicate work.
  *
  * Uses a hybrid similarity approach combining:
  * 1. Normalized token overlap (word-level Jaccard)
@@ -157,7 +157,6 @@ export const findSimilarTask = internalQuery({
   args: {
     organizationId: v.id("organizations"),
     title: v.string(),
-    agent: v.optional(v.string()),
   },
   returns: v.union(v.id("autopilotWorkItems"), v.null()),
   handler: async (ctx, args) => {

@@ -14,25 +14,23 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AgentIdentity } from "@/features/autopilot/components/agent-identity";
+import { RoleSkillIdentity } from "@/features/autopilot/components/role-skill-identity";
 import { cn } from "@/lib/utils";
 
-export type AssignedAgent =
+export type AssignedRole =
   | "pm"
   | "cto"
   | "growth"
-  | "orchestrator"
   | "system"
   | "support"
   | "sales"
   | "ceo"
   | "validator";
 
-const AGENT_OPTIONS: readonly AssignedAgent[] = [
+const ROLE_OPTIONS: readonly AssignedRole[] = [
   "pm",
   "cto",
   "growth",
-  "orchestrator",
   "support",
   "sales",
   "ceo",
@@ -40,11 +38,10 @@ const AGENT_OPTIONS: readonly AssignedAgent[] = [
   "system",
 ] as const;
 
-const AGENT_LABELS: Record<AssignedAgent, string> = {
+const ROLE_SKILL_LABELS: Record<AssignedRole, string> = {
   pm: "PM",
   cto: "CTO",
   growth: "Growth",
-  orchestrator: "Orchestrator",
   support: "Support",
   sales: "Sales",
   ceo: "CEO",
@@ -87,10 +84,10 @@ function MemberAvatar({ member }: { member: Member }) {
 
 function AssigneeTriggerLabel({
   assignedMember,
-  assignedAgent,
+  assignedRole,
 }: {
   assignedMember: Member | undefined;
-  assignedAgent: string | undefined;
+  assignedRole: string | undefined;
 }) {
   if (assignedMember) {
     return (
@@ -102,8 +99,8 @@ function AssigneeTriggerLabel({
       </span>
     );
   }
-  if (assignedAgent) {
-    return <AgentIdentity agent={assignedAgent} />;
+  if (assignedRole) {
+    return <RoleSkillIdentity role={assignedRole} />;
   }
   return (
     <span className="inline-flex items-center gap-1 text-muted-foreground">
@@ -167,13 +164,13 @@ function UserList({
 export function InlineAssigneePopover({
   workItemId,
   organizationId,
-  assignedAgent,
+  assignedRole,
   assigneeUserId,
   disabled,
 }: {
   workItemId: Id<"autopilotWorkItems">;
   organizationId: Id<"organizations">;
-  assignedAgent: string | undefined;
+  assignedRole: string | undefined;
   assigneeUserId: string | undefined;
   disabled?: boolean;
 }) {
@@ -190,19 +187,19 @@ export function InlineAssigneePopover({
     (member) => member.userId === assigneeUserId
   );
 
-  const handleSelectAgent = async (
+  const handleSelectRole = async (
     event: React.MouseEvent<HTMLButtonElement>,
-    agent: AssignedAgent
+    role: AssignedRole
   ) => {
     event.stopPropagation();
     setOpen(false);
-    if (agent === assignedAgent) {
+    if (role === assignedRole) {
       return;
     }
     try {
-      await assignWorkItem({ workItemId, assignedAgent: agent });
+      await assignWorkItem({ workItemId, assignedRole: role });
     } catch {
-      toast.error("Failed to assign agent");
+      toast.error("Failed to assign role skill");
     }
   };
 
@@ -222,15 +219,15 @@ export function InlineAssigneePopover({
     }
   };
 
-  const handleClearAgent = async (
+  const handleClearRole = async (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
     event.stopPropagation();
     setOpen(false);
     try {
-      await assignWorkItem({ workItemId, clearAssignedAgent: true });
+      await assignWorkItem({ workItemId, clearAssignedRole: true });
     } catch {
-      toast.error("Failed to clear agent");
+      toast.error("Failed to clear role skill");
     }
   };
 
@@ -260,8 +257,8 @@ export function InlineAssigneePopover({
         }
       >
         <AssigneeTriggerLabel
-          assignedAgent={assignedAgent}
           assignedMember={assignedMember}
+          assignedRole={assignedRole}
         />
       </PopoverTrigger>
       <PopoverContent
@@ -269,24 +266,24 @@ export function InlineAssigneePopover({
         className="w-64 p-0"
         onClick={(event) => event.stopPropagation()}
       >
-        <Tabs className="gap-0" defaultValue="agent">
+        <Tabs className="gap-0" defaultValue="role">
           <TabsList className="m-2" variant="default">
-            <TabsTrigger value="agent">Agent</TabsTrigger>
+            <TabsTrigger value="role">Role Skill</TabsTrigger>
             <TabsTrigger value="user">User</TabsTrigger>
           </TabsList>
-          <TabsContent className="max-h-64 overflow-y-auto p-1" value="agent">
-            {assignedAgent ? (
+          <TabsContent className="max-h-64 overflow-y-auto p-1" value="role">
+            {assignedRole ? (
               <button
                 className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-muted-foreground text-xs transition-colors hover:bg-muted"
-                onClick={handleClearAgent}
+                onClick={handleClearRole}
                 type="button"
               >
                 <IconX className="size-3.5" />
-                Clear agent assignment
+                Clear role-skill assignment
               </button>
             ) : null}
-            {AGENT_OPTIONS.map((agent) => {
-              const isActive = agent === assignedAgent;
+            {ROLE_OPTIONS.map((role) => {
+              const isActive = role === assignedRole;
               return (
                 <button
                   aria-pressed={isActive}
@@ -295,12 +292,12 @@ export function InlineAssigneePopover({
                     "hover:bg-muted focus-visible:bg-muted focus-visible:outline-none",
                     isActive && "bg-muted/60"
                   )}
-                  key={agent}
-                  onClick={(event) => handleSelectAgent(event, agent)}
+                  key={role}
+                  onClick={(event) => handleSelectRole(event, role)}
                   type="button"
                 >
-                  <AgentIdentity agent={agent} showLabel={false} />
-                  <span className="flex-1">{AGENT_LABELS[agent]}</span>
+                  <RoleSkillIdentity role={role} showLabel={false} />
+                  <span className="flex-1">{ROLE_SKILL_LABELS[role]}</span>
                 </button>
               );
             })}

@@ -11,7 +11,7 @@ export const pricingModel = v.union(
 );
 
 export const productProfileEditedBy = v.union(
-  v.literal("agent"),
+  v.literal("role_skill"),
   v.literal("user")
 );
 
@@ -41,7 +41,7 @@ export const productProfileTables = {
     primaryUserVerbs: v.array(v.string()),
     targetAudienceTags: v.array(v.string()),
     pricingModel: v.optional(pricingModel),
-    ownerAgent: v.string(),
+    ownerRole: v.string(),
     generatedBy: productProfileEditedBy,
     sourceAnalysisId: v.optional(v.id("repoAnalysis")),
     version: v.number(),
@@ -58,7 +58,7 @@ export const productProfileTables = {
     version: v.number(),
     snapshot: productProfileSnapshot,
     editedBy: productProfileEditedBy,
-    editingAgent: v.optional(v.string()),
+    editingRole: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_profile", ["profileId"]),
 };

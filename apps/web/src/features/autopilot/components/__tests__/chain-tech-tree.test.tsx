@@ -5,23 +5,36 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ChainTechTree } from "@/features/autopilot/components/chain-tech-tree";
 import { toOrgId } from "@/lib/convex-helpers";
 
-const { mockUseQuery } = vi.hoisted(() => ({
+const { mockRefreshDeliverable, mockUseQuery } = vi.hoisted(() => ({
+  mockRefreshDeliverable: vi.fn(),
   mockUseQuery: vi.fn(),
 }));
 
 vi.mock("convex/react", () => ({
+  useMutation: () => mockRefreshDeliverable,
   useQuery: (q: unknown) => mockUseQuery(q),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     autopilot: {
+      mutations: {
+        inbox: {
+          approveDocument: "autopilot.mutations.inbox.approveDocument",
+          rejectDocument: "autopilot.mutations.inbox.rejectDocument",
+        },
+      },
       queries: {
         chain: {
           getChainOverview: "autopilot.chain.getChainOverview",
           getChainMeta: "autopilot.chain.getChainMeta",
           getActiveChainWork: "autopilot.chain.getActiveChainWork",
           getChainNodeDetail: "autopilot.chain.getChainNodeDetail",
+        },
+      },
+      runtime: {
+        mutations: {
+          refreshDeliverable: "autopilot.runtime.refreshDeliverable",
         },
       },
     },
@@ -150,9 +163,6 @@ const seedQueries = (
             recentTitles: [],
           },
         ],
-        openTaskCount: 0,
-        wakeThreshold: 5,
-        gatedByOpenTasks: false,
       };
     }
     if (query === "autopilot.chain.getChainMeta") {
@@ -175,7 +185,7 @@ const seedQueries = (
         ],
         edges: [{ from: "codebase_understanding", to: "product_profile" }],
         stages: [],
-        agentRequirements: {},
+        roleRequirements: {},
       };
     }
     if (query === "autopilot.chain.getActiveChainWork") {
@@ -187,6 +197,7 @@ const seedQueries = (
           markdown: "# Codebase understanding\n\nDoc body here.",
           items: [],
           lastUpdatedAt: null,
+          pendingDocument: null,
         }
       );
     }
@@ -200,7 +211,7 @@ describe("ChainTechTree — clicking a card opens the related documents dialog",
   it("renders the card as a button wrapped by React Flow with drag-bypass classes", async () => {
     seedQueries();
 
-    render(<ChainTechTree organizationId={ORG_ID} />);
+    render(<ChainTechTree isAdmin organizationId={ORG_ID} />);
 
     const card = await screen.findByRole("button", { name: CARD_BUTTON_NAME });
 
@@ -218,7 +229,7 @@ describe("ChainTechTree — clicking a card opens the related documents dialog",
     seedQueries();
     const user = userEvent.setup();
 
-    render(<ChainTechTree organizationId={ORG_ID} />);
+    render(<ChainTechTree isAdmin organizationId={ORG_ID} />);
 
     const card = await screen.findByRole("button", { name: CARD_BUTTON_NAME });
     // userEvent dispatches the full pointerdown → pointerup → click sequence
@@ -235,7 +246,7 @@ describe("ChainTechTree — clicking a card opens the related documents dialog",
     seedQueries();
     const user = userEvent.setup();
 
-    render(<ChainTechTree organizationId={ORG_ID} />);
+    render(<ChainTechTree isAdmin organizationId={ORG_ID} />);
 
     const card = await screen.findByRole("button", { name: CARD_BUTTON_NAME });
     card.focus();
@@ -251,7 +262,7 @@ describe("ChainTechTree — clicking a card opens the related documents dialog",
     seedQueries({ items: [], markdown: undefined });
     const user = userEvent.setup();
 
-    render(<ChainTechTree organizationId={ORG_ID} />);
+    render(<ChainTechTree isAdmin organizationId={ORG_ID} />);
 
     const card = await screen.findByRole("button", { name: CARD_BUTTON_NAME });
     await user.click(card);
@@ -264,7 +275,9 @@ describe("ChainTechTree — clicking a card opens the related documents dialog",
     const user = userEvent.setup();
     const paneClick = vi.fn();
 
-    const { container } = render(<ChainTechTree organizationId={ORG_ID} />);
+    const { container } = render(
+      <ChainTechTree isAdmin organizationId={ORG_ID} />
+    );
     const card = await screen.findByRole("button", { name: CARD_BUTTON_NAME });
     const pane = container.querySelector(".react-flow__pane");
     pane?.addEventListener("mousedown", paneClick);
@@ -283,7 +296,7 @@ describe("ChainTechTree — clicking a card opens the related documents dialog",
   it("surfaces blocker labels on locked downstream cards", async () => {
     seedQueries();
 
-    render(<ChainTechTree organizationId={ORG_ID} />);
+    render(<ChainTechTree isAdmin organizationId={ORG_ID} />);
 
     // Wait until the layout resolves and the tree renders.
     await screen.findByRole("button", { name: CARD_BUTTON_NAME });
@@ -297,7 +310,7 @@ describe("ChainTechTree — clicking a card opens the related documents dialog",
   it("still opens the dialog after a pointerdown+pointerup sequence (drag-cancel safety)", async () => {
     seedQueries();
 
-    render(<ChainTechTree organizationId={ORG_ID} />);
+    render(<ChainTechTree isAdmin organizationId={ORG_ID} />);
 
     const card = await screen.findByRole("button", { name: CARD_BUTTON_NAME });
     fireEvent.pointerDown(card);

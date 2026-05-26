@@ -35,7 +35,7 @@ export function getHomePageJsonLd() {
         url: BASE_URL,
         description: DEFAULT_DESCRIPTION,
         knowsAbout: [
-          "Autonomous AI agents",
+          "Autonomous AI role skills",
           "AI company automation",
           "AI product management",
           "AI software development",
@@ -73,11 +73,11 @@ export function getHomePageJsonLd() {
           description: "Free tier available",
         },
         featureList: [
-          "7 Autonomous AI Agents (CEO, PM, CTO, Dev, Growth, Sales, Support)",
-          "Autonomous Product Development — from market research to shipped PRs",
+          "7 Role Skills (CEO, PM, CTO, Growth, Sales, Support, Validator)",
+          "Visible Runtime Chain — from market research to validated delivery",
           "AI Sales Prospecting and Lead Discovery",
           "AI Growth Marketing and Content Creation",
-          "Shared Board Architecture — agents communicate like real employees",
+          "Shared Board Architecture — role skills communicate through visible artifacts",
           "Supervised, Full Auto, and Manual Autonomy Modes",
           "User Feedback Collection and Roadmap Planning",
           "Real-time Collaboration with GitHub Integration",
@@ -102,7 +102,7 @@ function getHomePageFaqJsonLd() {
         name: "What is Reflet?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Reflet is the world's first fully autonomous AI company. 7 specialized AI agents — CEO, PM, CTO, Dev, Growth, Sales, and Support — autonomously run your product 24/7. They discover market opportunities, create initiatives, write specs, ship code via PRs, find sales leads, and handle support. Connect your GitHub repo and your AI company starts working in 5 minutes. Reflet also includes a full product feedback platform with voting, roadmaps, and changelogs.",
+          text: "Reflet is a fully autonomous AI company platform with one visible Autopilot chain. CEO, PM, CTO, Growth, Sales, Support, and Validator role skills discover market opportunities, create initiatives, write specs, prepare delivery, find sales leads, handle support, and validate outputs. Connect your GitHub repo and your Company Brief starts in 5 minutes. Reflet also includes a full product feedback platform with voting, roadmaps, and changelogs.",
         },
       },
       {
@@ -110,15 +110,15 @@ function getHomePageFaqJsonLd() {
         name: "How does Reflet Autopilot work?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Paste your GitHub repo URL and Reflet generates a Company Brief in 5 minutes — product definition, ICP, competitive landscape, and initial roadmap. Then 7 AI agents start working autonomously: PM creates initiatives from Growth's market research, CTO writes technical specs, Dev ships pull requests, Growth announces features and finds leads, Sales contacts prospects, Support triages user issues. You're the President — set strategy and approve key decisions.",
+          text: "Paste your GitHub repo URL and Reflet generates a Company Brief in 5 minutes — product definition, ICP, competitive landscape, and initial roadmap. Then role skills work through explicit reasons: PM creates initiatives from Growth research, CTO writes technical specs, Validator checks delivery, Growth announces features and finds leads, Sales contacts prospects, and Support triages user issues. You're the President — set strategy and approve key decisions.",
         },
       },
       {
         "@type": "Question",
-        name: "What AI agents does Reflet include?",
+        name: "What role skills does Reflet include?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Reflet includes 7 autonomous AI agents: (1) CEO — strategic coordination and reporting, (2) PM — reads Growth's market research and creates initiatives, (3) CTO — technical specs and architecture decisions, (4) Dev — code generation and pull requests, (5) Growth — market research, content creation and feature announcements, (6) Sales — lead discovery and outreach, (7) Support — user issue triage and responses.",
+          text: "Reflet includes 7 visible role skills: (1) CEO — strategic coordination and reporting, (2) PM — reads Growth research and creates initiatives, (3) CTO — technical specs and architecture decisions, (4) Growth — market research, content creation and feature announcements, (5) Sales — lead discovery and outreach, (6) Support — user issue triage and responses, and (7) Validator — output validation and delivery checks.",
         },
       },
       {
@@ -126,7 +126,7 @@ function getHomePageFaqJsonLd() {
         name: "How does Reflet compare to Devin, Artisan, or Sintra AI?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Devin is an AI developer only — it writes code but doesn't handle product management, sales, or support. Artisan is an AI BDR — it does sales outreach but nothing else. Sintra AI offers individual AI workers but they operate independently without coordination. Reflet is the only platform that provides a complete autonomous AI company: 7 integrated agents that communicate through a shared board architecture, covering every role from CEO to Support. One platform replaces an entire team.",
+          text: "Devin is an AI developer only — it writes code but doesn't handle product management, sales, or support. Artisan is an AI BDR — it does sales outreach but nothing else. Sintra AI offers individual AI workers that can operate independently without shared runtime state. Reflet provides a complete product operations chain: 7 integrated role skills that communicate through shared boards, durable execution records, blockers, and deliverables.",
         },
       },
       {
@@ -134,7 +134,7 @@ function getHomePageFaqJsonLd() {
         name: "Is Reflet free?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Yes, Reflet offers a free tier to get started. The Pro plan adds more agent capacity, priority processing, and advanced features. Reflet is also open source under the Server Side Public License (SSPL), so you can inspect the code and self-host your own instance from GitHub.",
+          text: "Yes, Reflet offers a free tier to get started. The Pro plan adds more role-skill capacity, priority processing, and advanced features. Reflet is also open source under the Server Side Public License (SSPL), so you can inspect the code and self-host your own instance from GitHub.",
         },
       },
       {
@@ -142,7 +142,7 @@ function getHomePageFaqJsonLd() {
         name: "What is a zero-employee company?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "A zero-employee company is a business where AI agents handle all operational roles — product management, development, sales, marketing, support, and more. Reflet makes this possible with 7 autonomous AI agents that work 24/7. The human founder acts as 'President' — setting strategic direction and approving key decisions while the AI team executes autonomously.",
+          text: "A zero-employee company is a business where AI handles operational work — product management, delivery planning, sales, marketing, support, and validation. Reflet makes this possible with one visible chain and 7 role skills that work from explicit runtime conditions. The human founder acts as President — setting strategic direction and approving key decisions.",
         },
       },
       {
@@ -150,7 +150,7 @@ function getHomePageFaqJsonLd() {
         name: "Can I still use Reflet for feedback?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Yes. Reflet includes a full product feedback platform with voting boards, kanban roadmaps, changelogs, an embeddable widget, AI-powered triage, and GitHub integration. The feedback data feeds directly into Autopilot — the Support agent triages incoming requests, the PM agent reads feedback patterns to inform initiatives, and the Growth agent uses shipped features for content and announcements.",
+          text: "Yes. Reflet includes a full product feedback platform with voting boards, kanban roadmaps, changelogs, an embeddable widget, AI-powered triage, and GitHub integration. The feedback data feeds directly into Autopilot — the Support skill triages incoming requests, the PM skill reads feedback patterns to inform initiatives, and the Growth skill uses shipped features for content and announcements.",
         },
       },
     ],

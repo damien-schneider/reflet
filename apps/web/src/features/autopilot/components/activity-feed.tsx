@@ -18,9 +18,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
-  ACTIVITY_AGENT_BADGE_STYLES,
+  ACTIVITY_ROLE_BADGE_STYLES,
   type ActivityLevel,
-  getActivityAgentLabel,
+  getActivityRoleLabel,
 } from "./activity/presentation";
 
 const LEVEL_ICONS = {
@@ -68,7 +68,7 @@ export function ActivityFeed({
     <div className="space-y-0.5 overflow-hidden rounded-2xl">
       {activity.map((entry: (typeof activity)[number]) => {
         const LevelIcon = LEVEL_ICONS[entry.level];
-        const agentColor = ACTIVITY_AGENT_BADGE_STYLES[entry.agent];
+        const roleColor = ACTIVITY_ROLE_BADGE_STYLES[entry.role];
 
         return (
           <div className="relative rounded-md bg-card p-3" key={entry._id}>
@@ -76,7 +76,7 @@ export function ActivityFeed({
               <div
                 className={cn(
                   "inline-flex items-center justify-center rounded-full p-1",
-                  agentColor
+                  roleColor
                 )}
               >
                 <LevelIcon className="size-3" />
@@ -91,11 +91,11 @@ export function ActivityFeed({
               <Badge
                 className={cn(
                   "absolute top-1 right-1 inline-flex gap-1 rounded-full border-none text-[10px]",
-                  agentColor
+                  roleColor
                 )}
                 variant="outline"
               >
-                {getActivityAgentLabel(entry.agent)}
+                {getActivityRoleLabel(entry.role)}
               </Badge>
 
               <p className="truncate font-medium text-foreground/80 text-xs leading-relaxed">

@@ -13,7 +13,7 @@ export const listDocuments = query({
     organizationId: v.id("organizations"),
     type: v.optional(documentType),
     status: v.optional(documentStatus),
-    sourceAgent: v.optional(v.string()),
+    sourceRole: v.optional(v.string()),
     needsReview: v.optional(v.boolean()),
     limit: v.optional(v.number()),
   },
@@ -86,19 +86,19 @@ export const getDocument = query({
   },
 });
 
-interface DocWithAgent {
-  sourceAgent?: string | null;
+interface DocWithRole {
+  sourceRole?: string | null;
   status: string;
 }
 
-function applyDocFilters<T extends DocWithAgent>(
+function applyDocFilters<T extends DocWithRole>(
   docs: T[],
-  filters: { sourceAgent?: string; status?: string }
+  filters: { sourceRole?: string; status?: string }
 ): T[] {
   let result = docs;
 
-  if (filters.sourceAgent) {
-    result = result.filter((d) => d.sourceAgent === filters.sourceAgent);
+  if (filters.sourceRole) {
+    result = result.filter((d) => d.sourceRole === filters.sourceRole);
   }
 
   return result;

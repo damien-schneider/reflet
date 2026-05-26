@@ -5,6 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
+import { DevErrorDetails } from "./dev-error-details";
 
 const errorDisplayVariants = cva(
   "flex flex-col items-center justify-center text-center",
@@ -67,7 +68,6 @@ interface ErrorDisplayProps extends VariantProps<typeof errorDisplayVariants> {
   error?: Error | null;
   onRetry?: () => void;
   retryLabel?: string;
-  showError?: boolean;
   title?: string;
 }
 
@@ -77,7 +77,6 @@ export function ErrorDisplay({
   error,
   onRetry,
   retryLabel = "Try again",
-  showError = false,
   size,
   className,
 }: ErrorDisplayProps) {
@@ -92,11 +91,7 @@ export function ErrorDisplay({
         <p className={descriptionVariants({ size })}>{description}</p>
       </div>
 
-      {showError && error?.message && (
-        <code className="mt-2 max-w-full overflow-auto rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-          {error.message}
-        </code>
-      )}
+      {error && <DevErrorDetails error={error} />}
 
       {onRetry && (
         <Button

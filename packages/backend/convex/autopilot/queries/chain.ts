@@ -7,28 +7,28 @@ import type { Doc, Id } from "../../_generated/dataModel";
 import { internalQuery, type QueryCtx, query } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
 import {
-  AGENT_CHAIN_REQUIREMENTS,
   CHAIN_NODE_KINDS,
   CHAIN_NODE_LABELS,
   CHAIN_NODE_OWNERS,
   CHAIN_NODE_PLURALS,
   CHAIN_STAGES,
   type ChainNodeKind,
+  checkNodePrecondition,
   computeChainState,
   DAG_EDGES,
   DOC_TYPE_BY_NODE,
   DRAFT_DOC_TYPES,
   getNextActionableNodes,
   KNOWLEDGE_DOC_TYPE_BY_NODE,
+  ROLE_CHAIN_REQUIREMENTS,
 } from "../chain";
+import { resolveDeliverableFreshness } from "../runtime/policy";
 import {
   activityLogLevel,
   chainNodeKind,
   chainNodeStatus,
 } from "../schema/validators";
 import { requireOrgMembership } from "./auth";
-
-const DEFAULT_WAKE_THRESHOLD = 5;
 
 const chainStateValidator = v.object({
   codebase_understanding: chainNodeStatus,
@@ -370,7 +370,13 @@ const fetchNodeMeta = async (
   const docType = DOC_TYPE_BY_NODE[kind];
   if (docType) {
     const docs = await fetchDocsByType(ctx, orgId, docType);
-    return aggregateDocs(docs);
+    const chainDocs = docs.filter(
+      (d) =>
+        d.status !== "archived" &&
+        d.reviewType === "chain_artifact" &&
+        (d.tags?.includes("chain") ?? false)
+    );
+    return aggregateDocs(chainDocs);
   }
   switch (kind) {
     case "personas":
@@ -389,25 +395,6 @@ const fetchNodeMeta = async (
         recentTitles: [],
       };
   }
-};
-
-const fetchOpenTaskCount = async (
-  ctx: { db: QueryCtx["db"] },
-  orgId: Id<"organizations">
-): Promise<number> => {
-  const todoItems = await ctx.db
-    .query("autopilotWorkItems")
-    .withIndex("by_org_status", (q) =>
-      q.eq("organizationId", orgId).eq("status", "todo")
-    )
-    .collect();
-  const inProgressItems = await ctx.db
-    .query("autopilotWorkItems")
-    .withIndex("by_org_status", (q) =>
-      q.eq("organizationId", orgId).eq("status", "in_progress")
-    )
-    .collect();
-  return todoItems.length + inProgressItems.length;
 };
 
 const draftSubtypeKindValidator = v.union(
@@ -435,6 +422,40 @@ const draftSubtypeValidator = v.object({
   avgValidationScore: v.union(v.number(), v.null()),
 });
 
+const freshnessValidator = v.object({
+  kind: v.union(v.literal("current"), v.literal("stale")),
+  reason: v.union(
+    v.literal("commit_threshold"),
+    v.literal("age_with_new_commit"),
+    v.null()
+  ),
+  summary: v.string(),
+});
+
+type DeliverableFreshness = ReturnType<typeof resolveDeliverableFreshness>;
+
+const isRoleDisabledForOwner = (
+  owner: string,
+  config: Doc<"autopilotConfig"> | null
+): boolean => {
+  if (!config) {
+    return false;
+  }
+  if (owner === "cto") {
+    return config.ctoEnabled === false;
+  }
+  if (owner === "pm") {
+    return config.pmEnabled === false;
+  }
+  if (owner === "growth") {
+    return config.growthEnabled === false;
+  }
+  if (owner === "sales") {
+    return config.salesEnabled === false;
+  }
+  return false;
+};
+
 export const getChainOverview = query({
   args: { organizationId: v.id("organizations") },
   returns: v.object({
@@ -444,16 +465,16 @@ export const getChainOverview = query({
         status: chainNodeStatus,
         actionable: v.boolean(),
         owner: v.string(),
+        roleDisabled: v.boolean(),
         artifactCount: v.number(),
         lastUpdatedAt: v.union(v.number(), v.null()),
         avgValidationScore: v.union(v.number(), v.null()),
         recentTitles: v.array(v.string()),
+        freshness: freshnessValidator,
         draftSubtypes: v.optional(v.array(draftSubtypeValidator)),
+        preconditionUnmet: v.optional(v.object({ reason: v.string() })),
       })
     ),
-    gatedByOpenTasks: v.boolean(),
-    openTaskCount: v.number(),
-    wakeThreshold: v.number(),
   }),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -461,45 +482,71 @@ export const getChainOverview = query({
 
     const chainState = await computeChainState(ctx, args.organizationId);
     const actionableSet = new Set(getNextActionableNodes(chainState));
-
-    const nodes: Array<{
-      actionable: boolean;
-      artifactCount: number;
-      avgValidationScore: number | null;
-      draftSubtypes?: DraftSubtype[];
-      kind: ChainNodeKind;
-      lastUpdatedAt: number | null;
-      owner: string;
-      recentTitles: string[];
-      status: (typeof chainState)[ChainNodeKind];
-    }> = [];
-    for (const kind of CHAIN_NODE_KINDS) {
-      const meta = await fetchNodeMeta(ctx, args.organizationId, kind);
-      nodes.push({
-        kind,
-        status: chainState[kind],
-        actionable: actionableSet.has(kind),
-        owner: CHAIN_NODE_OWNERS[kind],
-        artifactCount: meta.count,
-        lastUpdatedAt: meta.lastUpdatedAt,
-        avgValidationScore: meta.avgValidationScore,
-        recentTitles: meta.recentTitles,
-        ...(meta.draftSubtypes ? { draftSubtypes: meta.draftSubtypes } : {}),
-      });
-    }
-
     const config = await ctx.db
       .query("autopilotConfig")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .unique();
-    const wakeThreshold =
-      config?.wakeThresholdOpenTasks ?? DEFAULT_WAKE_THRESHOLD;
-    const openTaskCount = await fetchOpenTaskCount(ctx, args.organizationId);
-    const gatedByOpenTasks = openTaskCount >= wakeThreshold;
+    const now = Date.now();
 
-    return { nodes, gatedByOpenTasks, openTaskCount, wakeThreshold };
+    const nodes: Array<{
+      actionable: boolean;
+      artifactCount: number;
+      avgValidationScore: number | null;
+      draftSubtypes?: DraftSubtype[];
+      freshness: DeliverableFreshness;
+      kind: ChainNodeKind;
+      lastUpdatedAt: number | null;
+      owner: string;
+      preconditionUnmet?: { reason: string };
+      recentTitles: string[];
+      roleDisabled: boolean;
+      status: (typeof chainState)[ChainNodeKind];
+    }> = [];
+    for (const kind of CHAIN_NODE_KINDS) {
+      const meta = await fetchNodeMeta(ctx, args.organizationId, kind);
+      const precondition = await checkNodePrecondition(
+        ctx,
+        args.organizationId,
+        kind
+      );
+      const durableState = await ctx.db
+        .query("autopilotDeliverableStates")
+        .withIndex("by_org_node", (q) =>
+          q.eq("organizationId", args.organizationId).eq("node", kind)
+        )
+        .unique();
+      const currentCommitCount = durableState?.currentCommitCount ?? 0;
+      const sourceCommitCount =
+        durableState?.sourceCommitCount ?? currentCommitCount;
+      const owner = CHAIN_NODE_OWNERS[kind];
+      nodes.push({
+        kind,
+        status: chainState[kind],
+        actionable: actionableSet.has(kind),
+        owner,
+        roleDisabled: isRoleDisabledForOwner(owner, config),
+        artifactCount: meta.count,
+        lastUpdatedAt: meta.lastUpdatedAt,
+        avgValidationScore: meta.avgValidationScore,
+        recentTitles: meta.recentTitles,
+        freshness: resolveDeliverableFreshness({
+          commitsSinceSource: Math.max(
+            0,
+            currentCommitCount - sourceCommitCount
+          ),
+          generatedAt: meta.lastUpdatedAt,
+          now,
+        }),
+        ...(meta.draftSubtypes ? { draftSubtypes: meta.draftSubtypes } : {}),
+        ...(precondition.met
+          ? {}
+          : { preconditionUnmet: { reason: precondition.reason } }),
+      });
+    }
+
+    return { nodes };
   },
 });
 
@@ -626,6 +673,12 @@ const productProfileDetailValidator = v.object({
  * kind — knowledge docs for `app_description`, documents table for other doc
  * nodes, and the dedicated table for collections.
  */
+const pendingDocumentValidator = v.object({
+  documentId: v.id("autopilotDocuments"),
+  status: chainNodeStatus,
+  needsReview: v.boolean(),
+});
+
 export const getChainNodeDetail = query({
   args: {
     organizationId: v.id("organizations"),
@@ -637,6 +690,7 @@ export const getChainNodeDetail = query({
     productProfile: v.union(productProfileDetailValidator, v.null()),
     items: v.array(chainNodeItemValidator),
     lastUpdatedAt: v.union(v.number(), v.null()),
+    pendingDocument: v.union(pendingDocumentValidator, v.null()),
   }),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -653,6 +707,7 @@ export const getChainNodeDetail = query({
         productProfile: detail,
         items: [],
         lastUpdatedAt,
+        pendingDocument: null,
       };
     }
 
@@ -672,6 +727,7 @@ export const getChainNodeDetail = query({
         productProfile: null,
         items: [],
         lastUpdatedAt: doc?.lastUpdatedAt ?? null,
+        pendingDocument: null,
       };
     }
 
@@ -683,14 +739,28 @@ export const getChainNodeDetail = query({
           q.eq("organizationId", args.organizationId).eq("type", docType)
         )
         .order("desc")
-        .take(1);
-      const doc = docs[0];
+        .take(50);
+      const doc = docs.find(
+        (d) =>
+          d.status !== "archived" &&
+          d.reviewType === "chain_artifact" &&
+          (d.tags?.includes("chain") ?? false)
+      );
+      const pendingDocument =
+        doc && doc.status === "pending_review" && doc.needsReview === true
+          ? {
+              documentId: doc._id,
+              status: doc.status,
+              needsReview: doc.needsReview,
+            }
+          : null;
       return {
         kind: args.kind,
         markdown: doc?.content ?? null,
         productProfile: null,
         items: [],
         lastUpdatedAt: doc?.updatedAt ?? null,
+        pendingDocument,
       };
     }
 
@@ -711,6 +781,7 @@ export const getChainNodeDetail = query({
           updatedAt: p.updatedAt,
         })),
         lastUpdatedAt: maxOrNull(personas.map((p) => p.updatedAt)),
+        pendingDocument: null,
       };
     }
 
@@ -731,6 +802,7 @@ export const getChainNodeDetail = query({
           updatedAt: u.updatedAt,
         })),
         lastUpdatedAt: maxOrNull(items.map((u) => u.updatedAt)),
+        pendingDocument: null,
       };
     }
 
@@ -751,6 +823,7 @@ export const getChainNodeDetail = query({
           updatedAt: l.updatedAt,
         })),
         lastUpdatedAt: maxOrNull(leads.map((l) => l.updatedAt)),
+        pendingDocument: null,
       };
     }
 
@@ -771,6 +844,7 @@ export const getChainNodeDetail = query({
           updatedAt: p.updatedAt,
         })),
         lastUpdatedAt: maxOrNull(posts.map((p) => p.updatedAt)),
+        pendingDocument: null,
       };
     }
 
@@ -802,6 +876,7 @@ export const getChainNodeDetail = query({
         productProfile: null,
         items: items.sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 30),
         lastUpdatedAt: maxOrNull(items.map((i) => i.updatedAt)),
+        pendingDocument: null,
       };
     }
 
@@ -811,6 +886,7 @@ export const getChainNodeDetail = query({
       productProfile: null,
       items: [],
       lastUpdatedAt: null,
+      pendingDocument: null,
     };
   },
 });
@@ -839,7 +915,7 @@ export const getChainMeta = query({
         nodes: v.array(chainNodeKind),
       })
     ),
-    agentRequirements: v.record(v.string(), v.array(chainNodeKind)),
+    roleRequirements: v.record(v.string(), v.array(chainNodeKind)),
   }),
   handler: () => {
     const nodes = CHAIN_NODE_KINDS.map((kind) => ({
@@ -864,7 +940,7 @@ export const getChainMeta = query({
       nodes,
       edges,
       stages,
-      agentRequirements: AGENT_CHAIN_REQUIREMENTS,
+      roleRequirements: ROLE_CHAIN_REQUIREMENTS,
     };
   },
 });
@@ -904,19 +980,21 @@ const inferChainNodeFromMessage = (message: string): ChainNodeKind | null => {
   return null;
 };
 
+const resolveActivityRole = (log: { role: string }): string => log.role;
+
 export const getActiveChainWork = query({
   args: { organizationId: v.id("organizations") },
   returns: v.object({
     activeNode: v.union(chainNodeKind, v.null()),
-    agent: v.union(v.string(), v.null()),
     message: v.union(v.string(), v.null()),
+    role: v.union(v.string(), v.null()),
     startedAt: v.union(v.number(), v.null()),
     recent: v.array(
       v.object({
-        agent: v.string(),
         message: v.string(),
         level: activityLogLevel,
         createdAt: v.number(),
+        role: v.string(),
       })
     ),
   }),
@@ -934,10 +1012,10 @@ export const getActiveChainWork = query({
       .take(40);
 
     const recent = logs.slice(0, 6).map((log) => ({
-      agent: log.agent,
       message: log.message,
       level: log.level,
       createdAt: log.createdAt,
+      role: resolveActivityRole(log),
     }));
 
     const lastAction = logs.find(
@@ -949,8 +1027,8 @@ export const getActiveChainWork = query({
     if (!lastAction) {
       return {
         activeNode: null,
-        agent: null,
         message: null,
+        role: null,
         startedAt: null,
         recent,
       };
@@ -958,7 +1036,7 @@ export const getActiveChainWork = query({
 
     const terminal = logs.find(
       (log) =>
-        log.agent === lastAction.agent &&
+        resolveActivityRole(log) === resolveActivityRole(lastAction) &&
         log.createdAt > lastAction.createdAt &&
         (log.level === "success" || log.level === "error")
     );
@@ -966,8 +1044,8 @@ export const getActiveChainWork = query({
     if (terminal) {
       return {
         activeNode: null,
-        agent: null,
         message: null,
+        role: null,
         startedAt: null,
         recent,
       };
@@ -975,8 +1053,8 @@ export const getActiveChainWork = query({
 
     return {
       activeNode: inferChainNodeFromMessage(lastAction.message),
-      agent: lastAction.agent,
       message: lastAction.message,
+      role: resolveActivityRole(lastAction),
       startedAt: lastAction.createdAt,
       recent,
     };

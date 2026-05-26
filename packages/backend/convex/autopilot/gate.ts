@@ -1,16 +1,16 @@
 /**
- * Universal Autonomy Gate — every agent action passes through here.
+ * Universal Autonomy Gate — every role-skill action passes through here.
  *
  * Extends the existing autonomy.ts with rate limiting, deduplication awareness,
- * and per-agent action type checking. This is the single entry point that
- * replaces scattered autonomy checks across agents.
+ * and per-role action type checking. This is the single entry point that
+ * replaces scattered autonomy checks across role skills.
  */
 
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
 import { getEffectiveTier } from "../billing/effective_tier";
-import { isAgentEnabledInConfig } from "./config";
-import { assignedAgent } from "./schema/validators";
+import { isRoleSkillEnabledInConfig } from "./config";
+import { assignedRole } from "./schema/validators";
 
 export const gateActionType = v.union(
   v.literal("read"),
@@ -28,7 +28,7 @@ export const gateActionType = v.union(
   v.literal("delete")
 );
 
-const AGENT_RATE_LIMITS = {
+const ROLE_RATE_LIMITS = {
   max_inbox_items_per_hour: 10,
   max_tasks_per_hour: 5,
   max_emails_per_hour: 3,
@@ -38,10 +38,10 @@ const AGENT_RATE_LIMITS = {
 } as const;
 
 const ACTION_LIMIT_MAP: Record<string, number> = {
-  create_inbox_item: AGENT_RATE_LIMITS.max_inbox_items_per_hour,
-  send_email: AGENT_RATE_LIMITS.max_emails_per_hour,
-  publish_content: AGENT_RATE_LIMITS.max_content_per_hour,
-  create_pr: AGENT_RATE_LIMITS.max_prs_per_hour,
+  create_inbox_item: ROLE_RATE_LIMITS.max_inbox_items_per_hour,
+  send_email: ROLE_RATE_LIMITS.max_emails_per_hour,
+  publish_content: ROLE_RATE_LIMITS.max_content_per_hour,
+  create_pr: ROLE_RATE_LIMITS.max_prs_per_hour,
 };
 
 // Actions that are always autonomous (both supervised and full_auto).
@@ -76,18 +76,18 @@ const gateResultValidator = v.object({
       v.literal("plan_limit"),
       v.literal("cost_limit"),
       v.literal("rate_limit"),
-      v.literal("agent_disabled"),
+      v.literal("role_disabled"),
       v.literal("allowed")
     )
   ),
 });
 
 /**
- * Universal gate check. Every agent calls this before any action.
+ * Universal gate check. Every role skill calls this before any action.
  *
  * Checks in order:
  * 1. Is autonomy mode active (not "stopped")?
- * 2. Is the specific agent enabled?
+ * 2. Is the specific role skill enabled?
  * 3. Rate limit check
  * 4. Cost limit check
  * 5. Action-type-specific permissions
@@ -96,7 +96,7 @@ export const checkGate = internalQuery({
   args: {
     organizationId: v.id("organizations"),
     action: gateActionType,
-    agent: assignedAgent,
+    role: assignedRole,
   },
   returns: gateResultValidator,
   handler: async (ctx, args) => {
@@ -119,9 +119,9 @@ export const checkGate = internalQuery({
       return { proceed: false, reason: "plan_limit" as const };
     }
 
-    // 3. Check if agent is enabled
-    if (!isAgentEnabledInConfig(args.agent, config)) {
-      return { proceed: false, reason: "agent_disabled" as const };
+    // 3. Check if role skill is enabled
+    if (!isRoleSkillEnabledInConfig(args.role, config)) {
+      return { proceed: false, reason: "role_disabled" as const };
     }
 
     if (args.action === "create_task") {
@@ -149,7 +149,7 @@ export const checkGate = internalQuery({
 
       const actionCount = recentMatchingActions.filter(
         (a) =>
-          a.agent === args.agent &&
+          a.role === args.role &&
           a.level === "action" &&
           a.createdAt >= oneHourAgo
       ).length;
@@ -179,13 +179,13 @@ export const checkGate = internalQuery({
 });
 
 /**
- * Quick check: is the agent allowed to do anything at all?
- * Used by agents to short-circuit early before expensive work.
+ * Quick check: is the role skill allowed to do anything at all?
+ * Used by role skills to short-circuit early before expensive work.
  */
-export const isAgentActive = internalQuery({
+export const isRoleSkillActive = internalQuery({
   args: {
     organizationId: v.id("organizations"),
-    agent: assignedAgent,
+    role: assignedRole,
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
@@ -208,7 +208,7 @@ export const isAgentActive = internalQuery({
       return false;
     }
 
-    return isAgentEnabledInConfig(args.agent, config);
+    return isRoleSkillEnabledInConfig(args.role, config);
   },
 });
 

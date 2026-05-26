@@ -1,5 +1,5 @@
 /**
- * Dashboard queries — stats and agent readiness.
+ * Dashboard queries — stats and role-skill readiness.
  */
 
 import { v } from "convex/values";
@@ -7,11 +7,11 @@ import { query } from "../../_generated/server";
 import { SEVEN_DAYS_MS } from "../../shared/constants";
 import { getAuthUser } from "../../shared/utils";
 import {
-  DEFAULT_MAX_PENDING_PER_AGENT,
+  DEFAULT_MAX_PENDING_PER_ROLE,
   DEFAULT_MAX_PENDING_TOTAL,
 } from "../config_task_caps";
 import {
-  assignedAgent,
+  assignedRole,
   autonomyLevel,
   autonomyMode,
 } from "../schema/validators";
@@ -25,18 +25,18 @@ const dashboardStatsValidator = v.object({
   doneCount: v.number(),
   enabled: v.boolean(),
   inProgressCount: v.number(),
-  maxPendingTasksPerAgent: v.number(),
+  maxPendingTasksPerRole: v.number(),
   maxPendingTasksTotal: v.number(),
   maxTasksPerDay: v.number(),
   pendingReviewCount: v.number(),
   tasksUsedToday: v.number(),
   todoCount: v.number(),
-  itemsByAgent: v.record(v.string(), v.number()),
+  itemsByRole: v.record(v.string(), v.number()),
 });
 
-const agentPerformanceValidator = v.array(
+const rolePerformanceValidator = v.array(
   v.object({
-    agent: assignedAgent,
+    role: assignedRole,
     approvalRate: v.number(),
     documentsApproved: v.number(),
     documentsCreated: v.number(),
@@ -56,12 +56,12 @@ const chartTimelinePointValidator = v.object({
 
 const chartDataValidator = v.object({
   activityTimeline: v.array(chartTimelinePointValidator),
-  agentCounts: v.record(v.string(), v.number()),
+  roleCounts: v.record(v.string(), v.number()),
   statusCounts: v.record(v.string(), v.number()),
   typeCounts: v.record(v.string(), v.number()),
 });
 
-const agentReadinessValidator = v.record(
+const roleReadinessValidator = v.record(
   v.string(),
   v.object({
     actionUrl: v.optional(v.string()),
@@ -71,7 +71,7 @@ const agentReadinessValidator = v.record(
 );
 
 const contentQualityOverviewValidator = v.object({
-  byAgent: v.record(v.string(), v.number()),
+  byRole: v.record(v.string(), v.number()),
   shortContent: v.number(),
   totalPending: v.number(),
 });
@@ -132,14 +132,14 @@ export const getDashboardStats = query({
       .filter((q) => q.eq(q.field("archived"), false))
       .collect();
 
-    const maxPendingTasksPerAgent =
-      config?.maxPendingTasksPerAgent ?? DEFAULT_MAX_PENDING_PER_AGENT;
+    const maxPendingTasksPerRole =
+      config?.maxPendingTasksPerRole ?? DEFAULT_MAX_PENDING_PER_ROLE;
     const maxPendingTasksTotal =
       config?.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
-    const itemsByAgent: Record<string, number> = {};
+    const itemsByRole: Record<string, number> = {};
     for (const item of [...todoItems, ...inProgressItems]) {
-      const agent = item.assignedAgent ?? "unassigned";
-      itemsByAgent[agent] = (itemsByAgent[agent] ?? 0) + 1;
+      const role = item.assignedRole ?? "unassigned";
+      itemsByRole[role] = (itemsByRole[role] ?? 0) + 1;
     }
 
     return {
@@ -159,9 +159,9 @@ export const getDashboardStats = query({
         pendingReviewItems.length +
         pendingReviewDocs.length +
         pendingReviewReports.length,
-      maxPendingTasksPerAgent,
+      maxPendingTasksPerRole,
       maxPendingTasksTotal,
-      itemsByAgent,
+      itemsByRole,
     };
   },
 });
@@ -200,6 +200,14 @@ export const getChartData = query({
       activityByDay[key] = { actions: 0, errors: 0, successes: 0 };
     }
     for (const entry of recentActivity) {
+      // Exclude heartbeat housekeeping entries; they are not role-skill actions.
+      // and would drown out real signal in the 7-day activity chart.
+      if (
+        entry.action === "heartbeat" ||
+        entry.message.startsWith("Heartbeat:")
+      ) {
+        continue;
+      }
       const key = new Date(entry.createdAt).toISOString().slice(0, 10);
       if (activityByDay[key]) {
         activityByDay[key].actions++;
@@ -228,31 +236,31 @@ export const getChartData = query({
 
     const statusCounts: Record<string, number> = {};
     const typeCounts: Record<string, number> = {};
-    const agentCounts: Record<string, number> = {};
+    const roleCounts: Record<string, number> = {};
     for (const item of allItems) {
       statusCounts[item.status] = (statusCounts[item.status] ?? 0) + 1;
       typeCounts[item.type] = (typeCounts[item.type] ?? 0) + 1;
-      const agent = item.assignedAgent ?? "unassigned";
-      agentCounts[agent] = (agentCounts[agent] ?? 0) + 1;
+      const role = item.assignedRole ?? "unassigned";
+      roleCounts[role] = (roleCounts[role] ?? 0) + 1;
     }
 
     return {
       activityTimeline,
       statusCounts,
       typeCounts,
-      agentCounts,
+      roleCounts,
     };
   },
 });
 
 /**
- * Agent readiness — currently always returns an empty map since coding
+ * Role-skill readiness — currently always returns an empty map since coding
  * adapter credentials were removed. Kept as a stable hook for future
  * provider integrations (e.g. GitHub issue delegation).
  */
-export const getAgentReadiness = query({
+export const getRoleReadiness = query({
   args: { organizationId: v.id("organizations") },
-  returns: agentReadinessValidator,
+  returns: roleReadinessValidator,
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgMembership(ctx, args.organizationId, user._id);
@@ -261,11 +269,11 @@ export const getAgentReadiness = query({
 });
 
 /**
- * Agent performance scores — 7-day rolling metrics per agent.
+ * Role-skill performance scores — 7-day rolling metrics per role skill.
  */
-export const getAgentPerformance = query({
+export const getRolePerformance = query({
   args: { organizationId: v.id("organizations") },
-  returns: agentPerformanceValidator,
+  returns: rolePerformanceValidator,
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     await requireOrgMembership(ctx, args.organizationId, user._id);
@@ -287,33 +295,30 @@ export const getAgentPerformance = query({
       .order("desc")
       .take(500);
 
-    const agents = ["pm", "cto", "growth", "support", "sales"] as const;
+    const roles = ["pm", "cto", "growth", "support", "sales"] as const;
 
-    return agents.map((agent) => {
-      const agentLogs = logs.filter((l) => l.agent === agent);
-      const totalActions = agentLogs.filter((l) => l.level === "action").length;
-      const successCount = agentLogs.filter(
-        (l) => l.level === "success"
-      ).length;
-      const errorCount = agentLogs.filter((l) => l.level === "error").length;
+    return roles.map((role) => {
+      const roleLogs = logs.filter((l) => l.role === role);
+      const totalActions = roleLogs.filter((l) => l.level === "action").length;
+      const successCount = roleLogs.filter((l) => l.level === "success").length;
+      const errorCount = roleLogs.filter((l) => l.level === "error").length;
 
-      const agentDocs = docs.filter(
-        (d) => d.sourceAgent === agent && d.createdAt > cutoff
+      const roleDocs = docs.filter(
+        (d) => d.sourceRole === role && d.createdAt > cutoff
       );
-      const approvedDocs = agentDocs.filter(
+      const approvedDocs = roleDocs.filter(
         (d) => d.status === "published"
       ).length;
 
       return {
-        agent,
+        role,
         totalActions,
         successCount,
         errorCount,
         successRate: totalActions > 0 ? successCount / totalActions : 0,
-        documentsCreated: agentDocs.length,
+        documentsCreated: roleDocs.length,
         documentsApproved: approvedDocs,
-        approvalRate:
-          agentDocs.length > 0 ? approvedDocs / agentDocs.length : 0,
+        approvalRate: roleDocs.length > 0 ? approvedDocs / roleDocs.length : 0,
       };
     });
   },
@@ -345,17 +350,17 @@ export const getContentQualityOverview = query({
     const shortContent = pendingDocs.filter(
       (d) => d.content.length < 200
     ).length;
-    const byAgent: Record<string, number> = {};
+    const byRole: Record<string, number> = {};
 
     for (const doc of pendingDocs) {
-      const agent = doc.sourceAgent ?? "unknown";
-      byAgent[agent] = (byAgent[agent] ?? 0) + 1;
+      const role = doc.sourceRole ?? "unknown";
+      byRole[role] = (byRole[role] ?? 0) + 1;
     }
 
     return {
       totalPending,
       shortContent,
-      byAgent,
+      byRole,
     };
   },
 });

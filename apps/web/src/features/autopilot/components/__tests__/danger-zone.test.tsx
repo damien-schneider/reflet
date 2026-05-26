@@ -20,7 +20,7 @@ describe("DangerZone", () => {
         resetScope={[
           {
             title: "Execution history",
-            description: "Tasks, initiatives, stories, and agent runs.",
+            description: "Tasks, initiatives, stories, and role executions.",
             items: ["Tasks", "Runs"],
           },
           {

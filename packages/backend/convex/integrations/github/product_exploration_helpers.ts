@@ -1,10 +1,10 @@
 /**
- * Helpers for agentic product exploration: prompts, constants, and utilities.
+ * Helpers for codebase product exploration: prompts, constants, and utilities.
  */
 
 import { generateText } from "ai";
 import { internal } from "../../_generated/api";
-import { FAST_MODELS } from "../../autopilot/agents/models";
+import { FAST_MODELS } from "../../autopilot/role_skills/models";
 
 export const GITHUB_API_URL = "https://api.github.com";
 
@@ -32,7 +32,7 @@ export const EXPLORATION_SYSTEM_PROMPT = `You are a senior product manager explo
 - Pay special attention to: pricing/plans, feature names as shown in the UI, navigation labels, onboarding steps, and any taglines or marketing copy
 - After exploring, write a brief summary of what you found (the detailed analysis comes later)`;
 
-export const SYNTHESIS_SYSTEM_PROMPT = `You are a senior product manager writing the definitive product brief. This document is the single source of truth about what the product IS — used by other AI agents (growth, sales, PM, support) to understand the product deeply. Be thorough and factual.
+export const SYNTHESIS_SYSTEM_PROMPT = `You are a senior product manager writing the definitive product brief. This document is the single source of truth about what the product IS — used by growth, sales, PM, support, and validation role skills to understand the product deeply. Be thorough and factual.
 
 ## Output Rules
 - Be as long as needed to cover every feature and aspect of the product. Do NOT cut corners — list everything.
@@ -50,8 +50,8 @@ export const SYNTHESIS_SYSTEM_PROMPT = `You are a senior product manager writing
 - The user model: accounts, teams, orgs, roles, permissions
 
 ## What NOT to include
-- Technical stack, architecture, or implementation details (the CTO agent handles this)
-- Market analysis, competitive strategy, or growth suggestions (the growth agent handles this)
+- Technical stack, architecture, or implementation details (the CTO skill handles this)
+- Market analysis, competitive strategy, or growth suggestions (the Growth skill handles this)
 - Maturity assessments, gaps, or roadmap speculation
 - Recommendations or opinions
 

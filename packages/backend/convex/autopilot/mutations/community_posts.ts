@@ -1,6 +1,6 @@
 /**
- * Community post mutations — create posts discovered by Growth agent.
- * Validation scores written by Validator agent.
+ * Community post mutations — create posts discovered by Growth role skill.
+ * Validation scores written by Validator role skill.
  */
 
 import { v } from "convex/values";

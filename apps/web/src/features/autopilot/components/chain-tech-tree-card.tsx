@@ -52,6 +52,12 @@ interface DraftSubtype {
   status: ChainNodeStatus;
 }
 
+interface DeliverableFreshness {
+  kind: "current" | "stale";
+  reason: "commit_threshold" | "age_with_new_commit" | null;
+  summary: string;
+}
+
 interface ChainTechTreeCardProps {
   actionable: boolean;
   activeMessage?: string | null;
@@ -60,6 +66,7 @@ interface ChainTechTreeCardProps {
   blockerLabels?: string[];
   dimmed?: boolean;
   draftSubtypes?: DraftSubtype[];
+  freshness?: DeliverableFreshness;
   isActive?: boolean;
   kind: ChainNodeKind;
   label: string;
@@ -68,8 +75,10 @@ interface ChainTechTreeCardProps {
   onPreview: (kind: ChainNodeKind) => void;
   owner: Owner;
   pluralNoun: string;
+  preconditionUnmet?: { reason: string };
   recentTitles: string[];
   ref?: Ref<HTMLButtonElement>;
+  roleDisabled?: boolean;
   status: ChainNodeStatus;
 }
 
@@ -137,9 +146,15 @@ const formatRelative = (timestamp: number, now: number): string => {
 
 const computeBadge = (
   status: ChainNodeStatus,
-  actionable: boolean
-): { label: string; color: BadgeColor } => {
+  actionable: boolean,
+  preconditionUnmet: boolean,
+  isStale: boolean,
+  roleDisabled: boolean
+): { label: string; color: BadgeColor } | null => {
   if (status === "published") {
+    if (isStale) {
+      return { label: "Stale", color: "orange" };
+    }
     return { label: "Done", color: "green" };
   }
   if (status === "pending_review") {
@@ -148,8 +163,11 @@ const computeBadge = (
   if (status === "draft") {
     return { label: "In progress", color: "yellow" };
   }
-  if (actionable) {
-    return { label: "Available", color: "blue" };
+  if (roleDisabled) {
+    return { label: "Role off", color: "gray" };
+  }
+  if (actionable && !preconditionUnmet) {
+    return null;
   }
   return { label: "Locked", color: "gray" };
 };
@@ -157,10 +175,13 @@ const computeBadge = (
 const computeSubtitle = (
   status: ChainNodeStatus,
   actionable: boolean,
-  owner: Owner
+  owner: Owner,
+  preconditionUnmet: boolean,
+  staleSummary: string | null,
+  roleDisabled: boolean
 ): string => {
   if (status === "published") {
-    return "Done";
+    return staleSummary ?? "Done";
   }
   if (status === "pending_review") {
     return "Needs your approval";
@@ -168,10 +189,49 @@ const computeSubtitle = (
   if (status === "draft") {
     return "In progress";
   }
-  if (actionable) {
-    return `Ready · ${OWNER_LABELS[owner]}`;
+  if (roleDisabled) {
+    return `${OWNER_LABELS[owner]} role disabled`;
+  }
+  if (actionable && !preconditionUnmet) {
+    return `Owned by ${OWNER_LABELS[owner]}`;
   }
   return `Locked · ${OWNER_LABELS[owner]}`;
+};
+
+const resolveStaleSummary = (
+  status: ChainNodeStatus,
+  freshness: DeliverableFreshness | undefined
+): string | null => {
+  if (
+    status === "published" &&
+    freshness !== undefined &&
+    freshness.kind === "stale"
+  ) {
+    return freshness.summary;
+  }
+  return null;
+};
+
+const resolveBlockerHintLabels = (args: {
+  actionable: boolean;
+  blockerLabels: string[] | undefined;
+  hasUnmetPrecondition: boolean;
+  isActive: boolean;
+  preconditionUnmet: { reason: string } | undefined;
+  status: ChainNodeStatus;
+}): string[] => {
+  const labels: string[] = [];
+  if (args.hasUnmetPrecondition && args.preconditionUnmet) {
+    labels.push(args.preconditionUnmet.reason);
+  }
+  if (
+    args.status === "missing" &&
+    !(args.actionable || args.isActive) &&
+    args.blockerLabels?.length
+  ) {
+    labels.push(...args.blockerLabels);
+  }
+  return labels;
 };
 
 interface MetricsRowProps {
@@ -301,20 +361,45 @@ export function ChainTechTreeCard({
   blockerLabels,
   dimmed,
   draftSubtypes,
+  freshness,
   isActive,
   lastUpdatedAt,
   avgValidationScore,
+  preconditionUnmet,
   recentTitles,
   ref,
+  roleDisabled,
 }: ChainTechTreeCardProps) {
   const Icon = OWNER_ICONS[owner];
-  const badge = computeBadge(status, actionable);
+  const hasUnmetPrecondition = preconditionUnmet !== undefined;
+  const isRoleDisabled = roleDisabled === true && status === "missing";
+  const effectivelyActionable =
+    actionable && !hasUnmetPrecondition && !isRoleDisabled;
+  const staleSummary = resolveStaleSummary(status, freshness);
+  const isStale = staleSummary !== null;
+  const badge = computeBadge(
+    status,
+    actionable,
+    hasUnmetPrecondition,
+    isStale,
+    isRoleDisabled
+  );
   const subtitle = isActive
     ? "Working now…"
-    : computeSubtitle(status, actionable, owner);
+    : computeSubtitle(
+        status,
+        actionable,
+        owner,
+        hasUnmetPrecondition,
+        staleSummary,
+        isRoleDisabled
+      );
 
-  const isMuted = status === "missing" && !actionable && !isActive;
-  const isHighlighted = (status === "missing" && actionable) || isActive;
+  const isMuted =
+    (status === "missing" && !effectivelyActionable && !isActive) ||
+    isRoleDisabled;
+  const isHighlighted =
+    (status === "missing" && effectivelyActionable) || isActive || isStale;
 
   const noun =
     artifactCount === 1 ? pluralNoun.replace(TRAILING_S, "") : pluralNoun;
@@ -333,10 +418,15 @@ export function ChainTechTreeCard({
   const handleFocus = () => onHover?.(kind);
   const handleBlur = () => onHover?.(null);
 
-  const showBlockers =
-    status === "missing" &&
-    !(actionable || isActive) &&
-    (blockerLabels?.length ?? 0) > 0;
+  const blockerHintLabels = resolveBlockerHintLabels({
+    actionable,
+    blockerLabels,
+    hasUnmetPrecondition,
+    isActive: isActive === true,
+    preconditionUnmet,
+    status,
+  });
+  const showBlockers = blockerHintLabels.length > 0;
 
   return (
     <button
@@ -372,9 +462,11 @@ export function ChainTechTreeCard({
             </div>
           </div>
         </div>
-        <Badge className="shrink-0" variant={badge.color}>
-          {badge.label}
-        </Badge>
+        {badge ? (
+          <Badge className="shrink-0" variant={badge.color}>
+            {badge.label}
+          </Badge>
+        ) : null}
       </div>
 
       <CardMetricsRow
@@ -389,9 +481,7 @@ export function ChainTechTreeCard({
       ) : (
         <CardRecentTitles titles={recentTitles} />
       )}
-      {showBlockers && blockerLabels ? (
-        <CardBlockersHint labels={blockerLabels} />
-      ) : null}
+      {showBlockers ? <CardBlockersHint labels={blockerHintLabels} /> : null}
       {isActive && activeMessage ? (
         <CardActiveBeacon message={activeMessage} />
       ) : null}

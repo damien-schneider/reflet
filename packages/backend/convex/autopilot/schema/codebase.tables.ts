@@ -24,7 +24,7 @@ export const codebaseTables = {
     refreshedAt: v.number(),
   }).index("by_repo", ["installationId", "repoFullName"]),
 
-  codebaseAgentRuns: defineTable({
+  codebaseAnalysisRuns: defineTable({
     organizationId: v.id("organizations"),
     repoFullName: v.string(),
     purpose: v.union(v.literal("deep_analysis"), v.literal("ask")),

@@ -203,9 +203,9 @@ export function DashboardStats({
     },
   ];
 
-  const pendingTasksByAgent = stats.itemsByAgent ?? {};
-  const agentEntries = Object.entries(pendingTasksByAgent);
-  const perAgentCap = stats.maxPendingTasksPerAgent;
+  const pendingTasksByRole = stats.itemsByRole ?? {};
+  const roleEntries = Object.entries(pendingTasksByRole);
+  const perRoleCap = stats.maxPendingTasksPerRole;
 
   return (
     <div className="space-y-3">
@@ -279,7 +279,7 @@ export function DashboardStats({
           <IconAlertTriangle className="size-4 shrink-0 text-red-500" />
           <div className="min-w-0 flex-1">
             <p className="font-medium text-red-600 text-sm dark:text-red-400">
-              Daily task limit reached, agents paused until tomorrow
+              Daily task limit reached, role skills paused until tomorrow
             </p>
             <p className="text-muted-foreground text-xs">
               {stats.tasksUsedToday} / {stats.maxTasksPerDay} tasks used today
@@ -300,7 +300,7 @@ export function DashboardStats({
           <IconAlertTriangle className="size-4 shrink-0 text-red-500" />
           <div className="min-w-0 flex-1">
             <p className="font-medium text-red-600 text-sm dark:text-red-400">
-              Daily cost cap reached, agents paused until tomorrow
+              Daily cost cap reached, role skills paused until tomorrow
             </p>
             <p className="text-muted-foreground text-xs">
               {formatCost(stats.costUsedTodayUsd)} /{" "}
@@ -318,26 +318,26 @@ export function DashboardStats({
         </div>
       )}
 
-      {agentEntries.length > 0 && (
+      {roleEntries.length > 0 && (
         <div className="rounded-xl border bg-card p-4">
           <p className="mb-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-            Queue by Agent
+            Queue by Role Skill
           </p>
           <div className="space-y-2.5">
-            {agentEntries.map(([agent, rawCount]) => {
+            {roleEntries.map(([role, rawCount]) => {
               const count = typeof rawCount === "number" ? rawCount : 0;
-              const ratio = perAgentCap > 0 ? count / perAgentCap : 0;
+              const ratio = perRoleCap > 0 ? count / perRoleCap : 0;
               const atCap = ratio >= 1;
               const nearCap = ratio > 0.5 && !atCap;
 
               return (
-                <div className="flex items-center gap-3" key={agent}>
+                <div className="flex items-center gap-3" key={role}>
                   <span className="w-20 truncate font-medium text-[13px] capitalize">
-                    {agent}
+                    {role}
                   </span>
                   <QueueSegments
                     atCap={atCap}
-                    cap={perAgentCap}
+                    cap={perRoleCap}
                     count={count}
                     nearCap={nearCap}
                   />
@@ -349,7 +349,7 @@ export function DashboardStats({
                       !(atCap || nearCap) && "text-muted-foreground"
                     )}
                   >
-                    {count}/{perAgentCap}
+                    {count}/{perRoleCap}
                   </span>
                 </div>
               );

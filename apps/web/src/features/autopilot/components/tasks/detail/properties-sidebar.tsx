@@ -50,7 +50,7 @@ export function PropertiesSidebar({
         </SidebarRow>
         <SidebarRow icon={<IconUser className="size-3.5" />} label="Assignee">
           <InlineAssigneePopover
-            assignedAgent={task.assignedAgent}
+            assignedRole={task.assignedRole}
             assigneeUserId={task.assigneeUserId}
             organizationId={task.organizationId}
             workItemId={task._id}

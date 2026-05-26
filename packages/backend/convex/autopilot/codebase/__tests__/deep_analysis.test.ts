@@ -7,7 +7,7 @@ import schema from "../../../schema";
 import { modules } from "../../../test.helpers";
 import type { DeepAnalysisDeps } from "../actions";
 import { runDeepAnalysisCore } from "../actions";
-import { createCodebaseAgent } from "../agent";
+import { createCodebaseExplorer } from "../explorer";
 import {
   createFailingModel,
   createFakeOctokit,
@@ -131,7 +131,7 @@ function buildOverrides(opts: {
 
   return {
     octokitFor: async () => fakeOctokit as never,
-    agentForModel: () => createCodebaseAgent(exploreModel),
+    explorerForModel: () => createCodebaseExplorer(exploreModel),
     exploreModels: ["mock/explore"],
     synthesisModelFor: () => {
       if (synthesisAttempts < synthesisFails) {

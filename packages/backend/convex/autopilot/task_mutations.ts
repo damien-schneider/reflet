@@ -9,12 +9,12 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
 import {
-  DEFAULT_MAX_PENDING_PER_AGENT,
+  DEFAULT_MAX_PENDING_PER_ROLE,
   DEFAULT_MAX_PENDING_TOTAL,
 } from "./config_task_caps";
 import {
   activityLogLevel,
-  assignedAgent,
+  assignedRole,
   priority,
   workItemStatus,
   workItemType,
@@ -22,7 +22,7 @@ import {
 
 /**
  * Create a new autopilot work item.
- * Enforces per-agent and total active caps before insertion.
+ * Enforces per-role and total active caps before insertion.
  */
 export const createTask = internalMutation({
   args: {
@@ -31,7 +31,7 @@ export const createTask = internalMutation({
     description: v.string(),
     type: v.optional(workItemType),
     priority,
-    assignedAgent,
+    assignedRole,
     parentId: v.optional(v.id("autopilotWorkItems")),
     acceptanceCriteria: v.optional(v.array(v.string())),
     tags: v.optional(v.array(v.string())),
@@ -50,8 +50,8 @@ export const createTask = internalMutation({
       )
       .unique();
 
-    const perAgentCap =
-      config?.maxPendingTasksPerAgent ?? DEFAULT_MAX_PENDING_PER_AGENT;
+    const perRoleCap =
+      config?.maxPendingTasksPerRole ?? DEFAULT_MAX_PENDING_PER_ROLE;
     const totalCap = config?.maxPendingTasksTotal ?? DEFAULT_MAX_PENDING_TOTAL;
 
     const todoItems = await ctx.db
@@ -73,7 +73,7 @@ export const createTask = internalMutation({
     if (allActiveItems.length >= totalCap) {
       await ctx.db.insert("autopilotActivityLog", {
         organizationId: args.organizationId,
-        agent: args.assignedAgent,
+        role: args.assignedRole,
         level: "info",
         message: `Skipped creating work item "${args.title}" — active items at cap (${allActiveItems.length}/${totalCap})`,
         createdAt: now,
@@ -82,15 +82,15 @@ export const createTask = internalMutation({
     }
 
     const agentActive = allActiveItems.filter(
-      (t) => t.assignedAgent === args.assignedAgent
+      (t) => t.assignedRole === args.assignedRole
     ).length;
 
-    if (agentActive >= perAgentCap) {
+    if (agentActive >= perRoleCap) {
       await ctx.db.insert("autopilotActivityLog", {
         organizationId: args.organizationId,
-        agent: args.assignedAgent,
+        role: args.assignedRole,
         level: "info",
-        message: `Skipped creating work item "${args.title}" — agent "${args.assignedAgent}" at cap (${agentActive}/${perAgentCap})`,
+        message: `Skipped creating work item "${args.title}" — role skill "${args.assignedRole}" at cap (${agentActive}/${perRoleCap})`,
         createdAt: now,
       });
       return null;
@@ -103,7 +103,7 @@ export const createTask = internalMutation({
       description: args.description,
       status: "todo",
       priority: args.priority,
-      assignedAgent: args.assignedAgent,
+      assignedRole: args.assignedRole,
       parentId: args.parentId,
       acceptanceCriteria: args.acceptanceCriteria,
       tags: args.tags,
@@ -117,7 +117,7 @@ export const createTask = internalMutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: args.organizationId,
       workItemId,
-      agent: args.assignedAgent,
+      role: args.assignedRole,
       level: "info",
       message: `Work item created: ${args.title}`,
       details: `Priority: ${args.priority} | Type: ${args.type ?? "task"}`,
@@ -196,7 +196,7 @@ export const updateTaskStatus = internalMutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: item.organizationId,
       workItemId: args.taskId,
-      agent: item.assignedAgent ?? "system",
+      role: item.assignedRole ?? "system",
       level: logLevel,
       message: `Work item ${args.status}: ${item.title}`,
       details: args.errorMessage,
@@ -208,12 +208,12 @@ export const updateTaskStatus = internalMutation({
 });
 
 /**
- * Complete all in_progress work items for a given agent.
+ * Complete all in_progress work items for a given role skill.
  */
-export const completeAgentTasks = internalMutation({
+export const completeRoleTasks = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    agent: v.string(),
+    role: v.string(),
   },
   returns: v.number(),
   handler: async (ctx, args) => {
@@ -224,10 +224,10 @@ export const completeAgentTasks = internalMutation({
       )
       .collect();
 
-    const agentItems = items.filter((t) => t.assignedAgent === args.agent);
+    const roleItems = items.filter((t) => t.assignedRole === args.role);
     const now = Date.now();
 
-    for (const item of agentItems) {
+    for (const item of roleItems) {
       await ctx.db.patch(item._id, {
         status: "done",
         updatedAt: now,
@@ -236,31 +236,31 @@ export const completeAgentTasks = internalMutation({
       await ctx.db.insert("autopilotActivityLog", {
         organizationId: args.organizationId,
         workItemId: item._id,
-        agent: item.assignedAgent ?? "system",
+        role: item.assignedRole ?? "system",
         level: "success",
         message: `Work item completed: ${item.title}`,
         createdAt: now,
       });
     }
 
-    return agentItems.length;
+    return roleItems.length;
   },
 });
 
 /**
- * Complete one checked-out work item for an agent.
+ * Complete one checked-out work item for a role skill.
  */
-export const completeAgentTask = internalMutation({
+export const completeRoleTask = internalMutation({
   args: {
     taskId: v.id("autopilotWorkItems"),
-    agent: v.string(),
+    role: v.string(),
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.taskId);
     if (
       !item ||
-      item.assignedAgent !== args.agent ||
+      item.assignedRole !== args.role ||
       item.status !== "in_progress"
     ) {
       return false;
@@ -275,7 +275,7 @@ export const completeAgentTask = internalMutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: item.organizationId,
       workItemId: item._id,
-      agent: item.assignedAgent ?? "system",
+      role: item.assignedRole ?? "system",
       level: "success",
       message: `Work item completed: ${item.title}`,
       createdAt: now,
@@ -315,8 +315,8 @@ export const logActivity = internalMutation({
     organizationId: v.id("organizations"),
     taskId: v.optional(v.id("autopilotWorkItems")),
     workItemId: v.optional(v.id("autopilotWorkItems")),
-    agent: assignedAgent,
-    targetAgent: v.optional(assignedAgent),
+    role: assignedRole,
+    targetRole: v.optional(assignedRole),
     level: activityLogLevel,
     message: v.string(),
     details: v.optional(v.string()),
@@ -337,8 +337,8 @@ export const logActivity = internalMutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: args.organizationId,
       workItemId: args.workItemId ?? args.taskId,
-      agent: args.agent,
-      targetAgent: args.targetAgent,
+      role: args.role,
+      targetRole: args.targetRole,
       level: args.level,
       message: args.message,
       details: args.details,

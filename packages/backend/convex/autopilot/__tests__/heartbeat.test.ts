@@ -1,273 +1,252 @@
-import { describe, expect, it } from "vitest";
-import type { ChainState } from "../chain";
-import {
-  type ActivitySummary,
-  isChainGated,
-  shouldWakeCEO,
-  shouldWakeCTO,
-  shouldWakeGrowth,
-  shouldWakePM,
-  shouldWakeSales,
-  shouldWakeSupport,
-  shouldWakeValidator,
-} from "../heartbeat_conditions";
+/// <reference types="vite/client" />
+import { convexTest } from "convex-test";
+import { describe, expect, test } from "vitest";
+import { components, internal } from "../../_generated/api";
+import type { Id } from "../../_generated/dataModel";
+import schema from "../../schema";
+import { modules, registerStripeComponent } from "../../test.helpers";
 
-const emptyChain: ChainState = {
-  codebase_understanding: "missing",
-  identity: "missing",
-  brand_voice: "missing",
-  feature_catalog: "missing",
-  scope: "missing",
-  market_analysis: "missing",
-  target_definition: "missing",
-  personas: "missing",
-  use_cases: "missing",
-  lead_targets: "missing",
-  community_posts: "missing",
-  drafts: "missing",
+const createTestContext = () => {
+  const t = convexTest(schema, modules);
+  registerStripeComponent(t);
+  return t;
+};
+type TestContext = ReturnType<typeof createTestContext>;
+
+const createActiveStripeSubscription = async (
+  t: TestContext,
+  organizationId: Id<"organizations">
+) => {
+  const stripeSubscriptionId = `sub_autopilot_${organizationId}`;
+  const stripeCustomerId = `cus_autopilot_${organizationId}`;
+  await t.mutation(components.stripe.private.handleSubscriptionCreated, {
+    stripeSubscriptionId,
+    stripeCustomerId,
+    status: "active",
+    currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000,
+    cancelAtPeriodEnd: false,
+    priceId: "price_pro",
+    metadata: { orgId: organizationId },
+  });
+  await t.run(async (ctx) => {
+    await ctx.db.patch(organizationId, {
+      stripeCustomerId,
+      stripeSubscriptionId,
+    });
+  });
 };
 
-const fullyPublishedChain: ChainState = {
-  codebase_understanding: "published",
-  identity: "published",
-  brand_voice: "published",
-  feature_catalog: "published",
-  scope: "published",
-  market_analysis: "published",
-  target_definition: "published",
-  personas: "published",
-  use_cases: "published",
-  lead_targets: "published",
-  community_posts: "published",
-  drafts: "published",
+const createOrg = async (t: TestContext) => {
+  const organizationId = await t.run(async (ctx) =>
+    ctx.db.insert("organizations", {
+      name: "Test Org",
+      slug: `test-org-${Date.now()}-${Math.random()}`,
+      isPublic: false,
+      subscriptionTier: "pro",
+      subscriptionStatus: "active",
+      createdAt: Date.now(),
+    })
+  );
+  await createActiveStripeSubscription(t, organizationId);
+  return organizationId;
 };
 
-const BASE_SUMMARY: ActivitySummary = {
-  openTaskCount: 0,
-  wakeThresholdOpenTasks: 5,
-  chainState: emptyChain,
-  newSupportConversationCount: 0,
-  pendingValidationCount: 0,
-  stuckReviewCount: 0,
-  recentErrorCount: 0,
-  shippedFeaturesWithoutContent: 0,
-  repoAnalysisReady: true,
-  now: Date.now(),
+interface ConfigOverrides {
+  autonomyMode?: "supervised" | "full_auto" | "stopped";
+  ctoEnabled?: boolean;
+  enabled?: boolean;
+  growthEnabled?: boolean;
+  pmEnabled?: boolean;
+  salesEnabled?: boolean;
+  supportEnabled?: boolean;
+}
+
+const createConfig = async (
+  t: TestContext,
+  organizationId: Id<"organizations">,
+  overrides: ConfigOverrides = {}
+) =>
+  t.run(async (ctx) => {
+    const now = Date.now();
+    return ctx.db.insert("autopilotConfig", {
+      organizationId,
+      enabled: true,
+      autonomyLevel: "review_required",
+      autonomyMode: "supervised",
+      maxTasksPerDay: 100,
+      tasksUsedToday: 0,
+      tasksResetAt: now + 24 * 60 * 60 * 1000,
+      requireArchitectReview: true,
+      createdAt: now,
+      updatedAt: now,
+      ...overrides,
+    });
+  });
+
+const runSchedule = (t: TestContext, organizationId: Id<"organizations">) =>
+  t.query(internal.autopilot.role_schedule.getRoleScheduleInternal, {
+    organizationId,
+  });
+
+const seedCompletedRepoAnalysis = async (
+  t: TestContext,
+  organizationId: Id<"organizations">
+) => {
+  await t.run(async (ctx) => {
+    const now = Date.now();
+    const githubConnectionId = await ctx.db.insert("githubConnections", {
+      organizationId,
+      installationId: "test-installation",
+      accountType: "organization",
+      accountLogin: "test-org",
+      status: "connected",
+      repositoryFullName: "test-org/test-repo",
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("repoAnalysis", {
+      organizationId,
+      githubConnectionId,
+      status: "completed",
+      productAnalysis: "# Test Product\n\nSeeded analysis text.",
+      createdAt: now,
+      updatedAt: now,
+      completedAt: now,
+    });
+  });
 };
 
-describe("isChainGated", () => {
-  it("gates when openTaskCount >= threshold", () => {
-    expect(isChainGated({ ...BASE_SUMMARY, openTaskCount: 5 })).toBe(true);
-    expect(isChainGated({ ...BASE_SUMMARY, openTaskCount: 6 })).toBe(true);
+const findEntry = (
+  schedule: Awaited<ReturnType<typeof runSchedule>>,
+  role: string
+) => {
+  const entry = schedule.find((e) => e.role === role);
+  if (!entry) {
+    throw new Error(`role ${role} missing from schedule`);
+  }
+  return entry;
+};
+
+describe("computeRoleSchedule - disabled role skills", () => {
+  test("growth/sales/support default to disabled when not opted in", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createConfig(t, organizationId);
+    const schedule = await runSchedule(t, organizationId);
+
+    for (const role of ["growth", "sales", "support"]) {
+      const entry = findEntry(schedule, role);
+      expect(entry.state).toBe("blocked");
+      expect(entry.blockers.some((b) => b.kind === "role_disabled")).toBe(true);
+    }
   });
 
-  it("does not gate when openTaskCount < threshold", () => {
-    expect(isChainGated({ ...BASE_SUMMARY, openTaskCount: 4 })).toBe(false);
-  });
-});
+  test("cto/pm/validator/ceo are enabled by default", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createConfig(t, organizationId);
+    const schedule = await runSchedule(t, organizationId);
 
-describe("shouldWakeCTO", () => {
-  it("wakes when codebase_understanding missing (chain root)", () => {
-    expect(shouldWakeCTO(BASE_SUMMARY)).toBe(true);
-  });
-
-  it("wakes when knowledge nodes are ready to produce (codebase published)", () => {
-    expect(
-      shouldWakeCTO({
-        ...BASE_SUMMARY,
-        chainState: { ...emptyChain, codebase_understanding: "published" },
-      })
-    ).toBe(true);
-  });
-
-  it("does not wake when chain gated by open tasks", () => {
-    expect(shouldWakeCTO({ ...BASE_SUMMARY, openTaskCount: 5 })).toBe(false);
-  });
-
-  it("does not wake when chain fully published", () => {
-    expect(
-      shouldWakeCTO({ ...BASE_SUMMARY, chainState: fullyPublishedChain })
-    ).toBe(false);
-  });
-
-  it("does not wake for codebase_understanding when repo analysis not ready", () => {
-    expect(shouldWakeCTO({ ...BASE_SUMMARY, repoAnalysisReady: false })).toBe(
-      false
-    );
-  });
-
-  it("still wakes for knowledge nodes even if repo analysis flag is false", () => {
-    expect(
-      shouldWakeCTO({
-        ...BASE_SUMMARY,
-        repoAnalysisReady: false,
-        chainState: { ...emptyChain, codebase_understanding: "published" },
-      })
-    ).toBe(true);
+    for (const role of ["cto", "pm", "validator", "ceo"]) {
+      const entry = findEntry(schedule, role);
+      expect(entry.blockers.some((b) => b.kind === "role_disabled")).toBe(
+        false
+      );
+    }
   });
 });
 
-describe("shouldWakePM", () => {
-  it("wakes when target_definition ready (market_analysis published)", () => {
+describe("computeRoleSchedule — chain producer blockers", () => {
+  test("cto blocked by precondition_unmet when repo analysis missing", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createConfig(t, organizationId);
+    const schedule = await runSchedule(t, organizationId);
+    const cto = findEntry(schedule, "cto");
+    expect(cto.state).toBe("blocked");
     expect(
-      shouldWakePM({
-        ...BASE_SUMMARY,
-        chainState: {
-          ...emptyChain,
-          codebase_understanding: "published",
-          identity: "published",
-          brand_voice: "published",
-          feature_catalog: "published",
-          scope: "published",
-          market_analysis: "published",
-        },
-      })
+      cto.blockers.some(
+        (b) =>
+          b.kind === "precondition_unmet" && b.node === "codebase_understanding"
+      )
     ).toBe(true);
   });
 
-  it("does not wake when upstream incomplete", () => {
-    expect(shouldWakePM(BASE_SUMMARY)).toBe(false);
-  });
-
-  it("does not wake when chain gated", () => {
-    expect(
-      shouldWakePM({
-        ...BASE_SUMMARY,
-        openTaskCount: 6,
-        chainState: {
-          ...emptyChain,
-          codebase_understanding: "published",
-          identity: "published",
-          brand_voice: "published",
-          feature_catalog: "published",
-          scope: "published",
-          market_analysis: "published",
-        },
-      })
-    ).toBe(false);
+  test("cto becomes ready when repo analysis is completed", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createConfig(t, organizationId);
+    await seedCompletedRepoAnalysis(t, organizationId);
+    const schedule = await runSchedule(t, organizationId);
+    const cto = findEntry(schedule, "cto");
+    expect(cto.state).toBe("ready");
+    expect(cto.nextAction?.kind).toBe("chain_producer");
   });
 });
 
-describe("shouldWakeGrowth", () => {
-  it("wakes when market_analysis ready", () => {
-    expect(
-      shouldWakeGrowth({
-        ...BASE_SUMMARY,
-        chainState: {
-          ...emptyChain,
-          codebase_understanding: "published",
-          identity: "published",
-          brand_voice: "published",
-          feature_catalog: "published",
-          scope: "published",
-        },
-      })
-    ).toBe(true);
+describe("computeRoleSchedule — validator", () => {
+  test("idle when no pending review", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createConfig(t, organizationId);
+    const schedule = await runSchedule(t, organizationId);
+    const validator = findEntry(schedule, "validator");
+    expect(validator.state).toBe("idle");
   });
 
-  it("wakes for shipped features without content (when not gated)", () => {
-    expect(
-      shouldWakeGrowth({
-        ...BASE_SUMMARY,
-        chainState: fullyPublishedChain,
-        shippedFeaturesWithoutContent: 2,
-      })
-    ).toBe(true);
-  });
-
-  it("does not wake for shipped features when gated", () => {
-    expect(
-      shouldWakeGrowth({
-        ...BASE_SUMMARY,
-        chainState: fullyPublishedChain,
-        shippedFeaturesWithoutContent: 2,
-        openTaskCount: 6,
-      })
-    ).toBe(false);
-  });
-
-  it("wakes when community posts are ready for draft production", () => {
-    expect(
-      shouldWakeGrowth({
-        ...BASE_SUMMARY,
-        chainState: {
-          ...fullyPublishedChain,
-          drafts: "missing",
-        },
-      })
-    ).toBe(true);
+  test("ready when documents pending review without validation score", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createConfig(t, organizationId);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("autopilotDocuments", {
+        organizationId,
+        type: "market_research",
+        title: "Pending market research",
+        content: "Body",
+        tags: [],
+        sourceRole: "growth",
+        status: "pending_review",
+        needsReview: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const schedule = await runSchedule(t, organizationId);
+    const validator = findEntry(schedule, "validator");
+    expect(validator.state).toBe("ready");
+    expect(validator.nextAction?.kind).toBe("validation_pass");
   });
 });
 
-describe("shouldWakeSales", () => {
-  it("wakes when lead_targets ready (personas published)", () => {
-    expect(
-      shouldWakeSales({
-        ...BASE_SUMMARY,
-        chainState: {
-          ...emptyChain,
-          codebase_understanding: "published",
-          identity: "published",
-          brand_voice: "published",
-          feature_catalog: "published",
-          scope: "published",
-          market_analysis: "published",
-          target_definition: "published",
-          personas: "published",
-        },
-      })
-    ).toBe(true);
-  });
-
-  it("does not wake when personas missing", () => {
-    expect(shouldWakeSales(BASE_SUMMARY)).toBe(false);
-  });
-});
-
-describe("shouldWakeValidator", () => {
-  it("wakes when there is pending validation work", () => {
-    expect(
-      shouldWakeValidator({ ...BASE_SUMMARY, pendingValidationCount: 1 })
-    ).toBe(true);
-  });
-
-  it("does not wake when no pending validation", () => {
-    expect(shouldWakeValidator(BASE_SUMMARY)).toBe(false);
-  });
-
-  it("wakes regardless of chain gating (validator is always allowed)", () => {
-    expect(
-      shouldWakeValidator({
-        ...BASE_SUMMARY,
-        pendingValidationCount: 1,
-        openTaskCount: 100,
-      })
-    ).toBe(true);
-  });
-});
-
-describe("shouldWakeCEO", () => {
-  it("wakes when items stuck in review", () => {
-    expect(shouldWakeCEO({ ...BASE_SUMMARY, stuckReviewCount: 2 })).toBe(true);
-  });
-
-  it("wakes when recent errors exist", () => {
-    expect(shouldWakeCEO({ ...BASE_SUMMARY, recentErrorCount: 3 })).toBe(true);
-  });
-
-  it("does not wake when no coordination needed", () => {
-    expect(shouldWakeCEO(BASE_SUMMARY)).toBe(false);
-  });
-});
-
-describe("shouldWakeSupport", () => {
-  it("wakes when new conversations exist", () => {
-    expect(
-      shouldWakeSupport({ ...BASE_SUMMARY, newSupportConversationCount: 1 })
-    ).toBe(true);
-  });
-
-  it("does not wake when no conversations", () => {
-    expect(shouldWakeSupport(BASE_SUMMARY)).toBe(false);
+describe("computeRoleSchedule — no artificial blockers", () => {
+  test("open task count does not gate the chain", async () => {
+    const t = createTestContext();
+    const organizationId = await createOrg(t);
+    await createConfig(t, organizationId);
+    await seedCompletedRepoAnalysis(t, organizationId);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      for (let i = 0; i < 12; i++) {
+        await ctx.db.insert("autopilotWorkItems", {
+          organizationId,
+          type: "task",
+          title: `task ${i}`,
+          description: "load",
+          status: "todo",
+          priority: "medium",
+          assignedRole: "cto",
+          needsReview: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+    const schedule = await runSchedule(t, organizationId);
+    const cto = findEntry(schedule, "cto");
+    // Chain producer still wins (codebase_understanding missing), and even if
+    // producers are exhausted, open-task volume is not a wake reason.
+    expect(cto.state).toBe("ready");
   });
 });

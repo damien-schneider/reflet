@@ -61,7 +61,7 @@ export default function LandingLiveDemo() {
             </H2>
             <p className="mx-auto max-w-100 text-[15px] text-muted-foreground leading-relaxed sm:text-[17px]">
               This isn&apos;t a mockup. Click through Reflet&apos;s live board
-              where AI agents and users collaborate in real time.
+              where AI triage and user feedback stay visible in real time.
             </p>
           </m.div>
 
@@ -96,7 +96,7 @@ export default function LandingLiveDemo() {
 
                 <p className="mb-6 max-w-80 text-[14px] text-muted-foreground leading-relaxed sm:text-[15px]">
                   Browse real feature requests and AI-discovered opportunities.
-                  Upvote ideas, see agent activity, and watch AI triage in
+                  Upvote ideas, see role-skill activity, and watch AI triage in
                   action.
                 </p>
 

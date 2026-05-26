@@ -36,7 +36,7 @@ export const processStripeEvent = internalMutation({
     // Log the event
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      agent: "system",
+      role: "system",
       level: "info",
       message: `Stripe webhook: ${args.eventType}`,
       action: "stripe.webhook",
@@ -75,7 +75,7 @@ export const processStripeEvent = internalMutation({
 
         await ctx.db.insert("autopilotActivityLog", {
           organizationId: args.organizationId,
-          agent: "system",
+          role: "system",
           level: args.eventType.includes("deleted") ? "warning" : "success",
           message: `${alertMessage}${amount ? ` (${amount})` : ""}`,
           action: "revenue.event",
@@ -121,7 +121,7 @@ export const recordManualSnapshot = internalMutation({
 
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      agent: "system",
+      role: "system",
       level: "info",
       message: `Manual revenue snapshot recorded: MRR $${args.mrr}`,
       action: "revenue.manual",

@@ -109,12 +109,12 @@ describe("codebase schema + mutations", () => {
     expect(all).toHaveLength(1);
   });
 
-  test("agent run lifecycle: start -> increment -> complete", async () => {
+  test("analysis run lifecycle: start -> increment -> complete", async () => {
     const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
 
     const runId = await t.mutation(
-      internal.autopilot.codebase.mutations.startAgentRun,
+      internal.autopilot.codebase.mutations.startAnalysisRun,
       {
         organizationId: orgId,
         repoFullName: REPO,
@@ -131,13 +131,16 @@ describe("codebase schema + mutations", () => {
       { runId, delta: 2 }
     );
 
-    await t.mutation(internal.autopilot.codebase.mutations.completeAgentRun, {
-      runId,
-      assistantText: "brief content",
-      inputTokens: 100,
-      outputTokens: 200,
-      costUsd: 0.05,
-    });
+    await t.mutation(
+      internal.autopilot.codebase.mutations.completeAnalysisRun,
+      {
+        runId,
+        assistantText: "brief content",
+        inputTokens: 100,
+        outputTokens: 200,
+        costUsd: 0.05,
+      }
+    );
 
     const latest = await t.query(
       internal.autopilot.codebase.queries.getLatestRunForOrg,
@@ -150,12 +153,12 @@ describe("codebase schema + mutations", () => {
     expect(latest?.finishedAt).toBeDefined();
   });
 
-  test("failAgentRun marks failed with error", async () => {
+  test("failAnalysisRun marks failed with error", async () => {
     const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
 
     const runId = await t.mutation(
-      internal.autopilot.codebase.mutations.startAgentRun,
+      internal.autopilot.codebase.mutations.startAnalysisRun,
       {
         organizationId: orgId,
         repoFullName: REPO,
@@ -163,7 +166,7 @@ describe("codebase schema + mutations", () => {
       }
     );
 
-    await t.mutation(internal.autopilot.codebase.mutations.failAgentRun, {
+    await t.mutation(internal.autopilot.codebase.mutations.failAnalysisRun, {
       runId,
       error: "rate limit exceeded",
     });

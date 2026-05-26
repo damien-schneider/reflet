@@ -8,7 +8,7 @@ import type { QueryCtx } from "../../_generated/server";
 import { query } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
 import {
-  assignedAgent,
+  assignedRole,
   priority,
   workItemStatus,
   workItemType,
@@ -20,7 +20,7 @@ const DEFAULT_SEARCH_LIMIT = 50;
 const SEARCH_LIMIT_MAX = 50;
 
 interface ListWorkItemsArgs {
-  assignedAgent?: Doc<"autopilotWorkItems">["assignedAgent"];
+  assignedRole?: Doc<"autopilotWorkItems">["assignedRole"];
   assigneeUserId?: string;
   dueBefore?: number;
   isPublicRoadmap?: boolean;
@@ -39,7 +39,7 @@ export const listWorkItems = query({
     organizationId: v.id("organizations"),
     type: v.optional(workItemType),
     status: v.optional(workItemStatus),
-    assignedAgent: v.optional(assignedAgent),
+    assignedRole: v.optional(assignedRole),
     assigneeUserId: v.optional(v.string()),
     priority: v.optional(priority),
     needsReview: v.optional(v.boolean()),
@@ -129,12 +129,14 @@ const fetchWorkItemsByBestIndex = (
       .take(limit);
   }
 
-  if (args.assignedAgent) {
-    const { assignedAgent: agent } = args;
+  if (args.assignedRole) {
+    const { assignedRole } = args;
     return ctx.db
       .query("autopilotWorkItems")
-      .withIndex("by_org_agent", (q) =>
-        q.eq("organizationId", args.organizationId).eq("assignedAgent", agent)
+      .withIndex("by_org_role", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("assignedRole", assignedRole)
       )
       .order("desc")
       .take(limit);
@@ -261,7 +263,7 @@ export const searchWorkItems = query({
 });
 
 interface WorkItemFilter {
-  assignedAgent?: string | null;
+  assignedRole?: string | null;
   dueDate?: number;
   parentId?: string | null;
   priority: string;
@@ -274,7 +276,7 @@ function applyFilters<T extends WorkItemFilter>(
   filters: {
     type?: string;
     status?: string;
-    assignedAgent?: string;
+    assignedRole?: string;
     priority?: string;
     parentId?: string;
     dueBefore?: number;

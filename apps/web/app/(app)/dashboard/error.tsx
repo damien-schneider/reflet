@@ -13,7 +13,6 @@ export default function DashboardError({ error, reset }: ErrorProps) {
       description="We encountered an error loading the dashboard. Please try again."
       error={error}
       onRetry={reset}
-      showError={process.env.NODE_ENV === "development"}
       showHomeLink={false}
       title="Dashboard error"
     />

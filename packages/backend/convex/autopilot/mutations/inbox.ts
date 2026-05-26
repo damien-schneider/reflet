@@ -3,6 +3,7 @@
  */
 
 import { v } from "convex/values";
+import { internal } from "../../_generated/api";
 import { mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
 import { requireAutopilotAccess, requireOrgAdmin } from "./auth";
@@ -36,7 +37,7 @@ export const approveWorkItem = mutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: item.organizationId,
       workItemId: args.workItemId,
-      agent: "system",
+      role: "system",
       level: "success",
       message: `Approved ${item.type}: ${item.title}`,
       createdAt: now,
@@ -70,7 +71,7 @@ export const rejectWorkItem = mutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: item.organizationId,
       workItemId: args.workItemId,
-      agent: "system",
+      role: "system",
       level: "warning",
       message: `Rejected ${item.type}: ${item.title}`,
       createdAt: now,
@@ -103,11 +104,17 @@ export const approveDocument = mutation({
 
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: doc.organizationId,
-      agent: "system",
+      role: "system",
       level: "success",
       message: `Approved document: ${doc.title}`,
       createdAt: now,
     });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.autopilot.heartbeat.runHeartbeat,
+      {}
+    );
 
     return null;
   },
@@ -136,7 +143,7 @@ export const rejectDocument = mutation({
 
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: doc.organizationId,
-      agent: "system",
+      role: "system",
       level: "warning",
       message: `Rejected document: ${doc.title}`,
       createdAt: now,

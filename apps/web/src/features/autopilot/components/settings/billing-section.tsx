@@ -42,8 +42,8 @@ export function BillingSection({
             <p className="font-medium text-sm capitalize">{tier} Plan</p>
             <p className="text-muted-foreground text-xs">
               {isPro
-                ? "Full access to all Autopilot features and agents."
-                : "Limited access. Upgrade for higher limits and all agents."}
+                ? "Full access to all Autopilot features and role skills."
+                : "Limited access. Upgrade for higher limits and all role skills."}
             </p>
           </div>
           <Button

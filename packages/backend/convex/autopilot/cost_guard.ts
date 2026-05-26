@@ -1,13 +1,16 @@
 /**
- * Autopilot cost guard — enforces daily cost caps.
+ * Autopilot cost guard — enforces daily and weekly cost caps.
  *
- * Checks the org's accumulated spending against the configured cap
- * before allowing task execution. Resets daily counters.
+ * Checks the org's accumulated spending against the configured caps
+ * before allowing task execution. Resets daily/weekly counters.
  */
 
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+export const DEFAULT_WEEKLY_COST_CAP_USD = 5;
 
 /**
  * Check whether the org has budget remaining for task execution.
@@ -46,6 +49,14 @@ export const canExecute = internalQuery({
       }
     }
 
+    const weeklyCap = config.weeklyCostCapUsd ?? DEFAULT_WEEKLY_COST_CAP_USD;
+    if (weeklyCap > 0) {
+      const weeklyUsed = config.costUsedThisWeekUsd ?? 0;
+      if (weeklyUsed >= weeklyCap) {
+        return false;
+      }
+    }
+
     return true;
   },
 });
@@ -76,21 +87,34 @@ export const recordCost = internalMutation({
 
     const previousCost = config.costUsedTodayUsd ?? 0;
     const newCost = previousCost + args.costUsd;
+    const previousWeeklyCost = config.costUsedThisWeekUsd ?? 0;
+    const newWeeklyCost = previousWeeklyCost + args.costUsd;
 
     await ctx.db.patch(config._id, {
       costUsedTodayUsd: newCost,
+      costUsedThisWeekUsd: newWeeklyCost,
       updatedAt: Date.now(),
     });
 
-    // Check if the cap has been reached after this spend
     const dailyCap = config.dailyCostCapUsd ?? 0;
     if (dailyCap > 0 && newCost >= dailyCap) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
         workItemId: args.taskId,
-        agent: "system",
+        role: "system",
         level: "warning",
         message: `Daily cost cap reached ($${newCost.toFixed(2)} / $${dailyCap.toFixed(2)}). Pausing task execution until tomorrow.`,
+      });
+    }
+
+    const weeklyCap = config.weeklyCostCapUsd ?? DEFAULT_WEEKLY_COST_CAP_USD;
+    if (weeklyCap > 0 && newWeeklyCost >= weeklyCap) {
+      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+        organizationId: args.organizationId,
+        workItemId: args.taskId,
+        role: "system",
+        level: "warning",
+        message: `Weekly cost cap reached ($${newWeeklyCost.toFixed(2)} / $${weeklyCap.toFixed(2)}). Pausing task execution until next week.`,
       });
     }
 
@@ -106,7 +130,7 @@ export const recordCost = internalMutation({
 export const evaluateBudget = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    agent: v.string(),
+    role: v.string(),
     costUsd: v.number(),
   },
   returns: v.null(),
@@ -134,7 +158,7 @@ export const evaluateBudget = internalMutation({
     if (costUsed >= warnThreshold && costUsed < dailyCap) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
-        agent: "system",
+        role: "system",
         level: "warning",
         message: `Budget warning: ${warnPercent}% of daily cap used ($${costUsed.toFixed(2)} / $${dailyCap.toFixed(2)})`,
         action: "budget.warn_threshold",
@@ -144,9 +168,9 @@ export const evaluateBudget = internalMutation({
     if (costUsed >= dailyCap) {
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
-        agent: "system",
+        role: "system",
         level: "error",
-        message: `Budget cap reached ($${costUsed.toFixed(2)} / $${dailyCap.toFixed(2)}). Agents paused until counter resets.`,
+        message: `Budget cap reached ($${costUsed.toFixed(2)} / $${dailyCap.toFixed(2)}). Role skills paused until counter resets.`,
         action: "budget.cap_reached",
       });
     }
@@ -168,13 +192,20 @@ export const resetDailyCounters = internalMutation({
     const now = Date.now();
 
     for (const config of configs) {
+      const updates: Record<string, unknown> = {};
       if (now >= config.tasksResetAt) {
-        await ctx.db.patch(config._id, {
-          tasksUsedToday: 0,
-          costUsedTodayUsd: 0,
-          tasksResetAt: now + 24 * 60 * 60 * 1000,
-          updatedAt: now,
-        });
+        updates.tasksUsedToday = 0;
+        updates.costUsedTodayUsd = 0;
+        updates.tasksResetAt = now + 24 * 60 * 60 * 1000;
+      }
+      const weekResetAt = config.weekResetAt ?? 0;
+      if (now >= weekResetAt) {
+        updates.costUsedThisWeekUsd = 0;
+        updates.weekResetAt = now + WEEK_MS;
+      }
+      if (Object.keys(updates).length > 0) {
+        updates.updatedAt = now;
+        await ctx.db.patch(config._id, updates);
       }
     }
 

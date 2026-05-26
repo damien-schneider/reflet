@@ -50,14 +50,16 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
           updateConfig: "autopilot.config.updateConfig",
           upsertCredentials: "autopilot.config.upsertCredentials",
         },
-        routines: {
-          getResetScope: "autopilot.routines.getResetScope",
-          resetAllData: "autopilot.routines.resetAllData",
-        },
       },
       queries: {
         config: {
           getConfig: "autopilot.config.getConfig",
+        },
+      },
+      reset: {
+        mutations: {
+          getResetScope: "autopilot.reset.mutations.getResetScope",
+          resetAllData: "autopilot.reset.mutations.resetAllData",
         },
       },
     },
@@ -107,7 +109,7 @@ const config = {
   dailyCostCapUsd: 25,
   emailDailyLimit: 20,
   maxTasksPerDay: 5,
-  perAgentDailyCapUsd: undefined,
+  perRoleDailyCapUsd: undefined,
 };
 
 const resetScope = [
@@ -126,7 +128,7 @@ beforeEach(() => {
   mutationHandlers.set("autopilot.config.initConfig", vi.fn());
   mutationHandlers.set("autopilot.config.updateConfig", vi.fn());
   mutationHandlers.set("autopilot.config.upsertCredentials", vi.fn());
-  mutationHandlers.set("autopilot.routines.resetAllData", vi.fn());
+  mutationHandlers.set("autopilot.reset.mutations.resetAllData", vi.fn());
   mockUseQuery.mockImplementation((queryName: unknown) => {
     if (queryName === "autopilot.config.getConfig") {
       return config;
@@ -134,7 +136,7 @@ beforeEach(() => {
     if (queryName === "billing.getStatus") {
       return { tier: "pro" };
     }
-    if (queryName === "autopilot.routines.getResetScope") {
+    if (queryName === "autopilot.reset.mutations.getResetScope") {
       return resetScope;
     }
     return undefined;
@@ -180,7 +182,7 @@ describe("AutopilotSettingsPage", () => {
       if (queryName === "billing.getStatus") {
         return { tier: "free" };
       }
-      if (queryName === "autopilot.routines.getResetScope") {
+      if (queryName === "autopilot.reset.mutations.getResetScope") {
         return resetScope;
       }
       return undefined;
@@ -237,7 +239,7 @@ describe("AutopilotSettingsPage", () => {
     await renderSettingsPage();
 
     expect(mockUseQuery).toHaveBeenCalledWith(
-      "autopilot.routines.getResetScope",
+      "autopilot.reset.mutations.getResetScope",
       {}
     );
     expect(mockDangerZoneRender).toHaveBeenCalledWith(

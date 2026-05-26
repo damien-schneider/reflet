@@ -1,407 +1,23 @@
 /**
- * Heartbeat — dispatch and execution entry point.
+ * Heartbeat — dumb clock that consumes the role-skill schedule.
  *
- * Single cron that evaluates wake conditions and dispatches agent tasks.
- * Wake condition logic lives in heartbeat_conditions.ts.
+ * Single cron tick. The wake/dispatch decision lives in `role_schedule.ts`
+ * (single source of truth). Heartbeat fetches each org's schedule, dispatches
+ * every entry whose state is `ready`, and exits silently.
  *
- * Includes per-cycle budget enforcement:
- * - Max agents woken per cycle (prevents all agents firing at once)
- * - Agents that produced no user-visible output last cycle are deprioritized
+ * Hard rules:
+ * - No per-cycle caps. No wake cooldowns. No "no output last run" deprioritization.
+ * - Only legitimate blockers — billing/usage, circuit breaker, role disabled,
+ *   chain dep / precondition, in-flight idempotency — may stop dispatch.
+ * - Tick log only when work was dispatched. Silent clocks are silent.
  */
 
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Doc, Id } from "../_generated/dataModel";
+import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
-import { internalAction, internalQuery } from "../_generated/server";
-
-const MAX_AGENTS_PER_CYCLE = 3;
-const NO_OUTPUT_RETRY_COOLDOWN_MS = 30 * 60 * 1000;
-
-/**
- * Check if an agent was recently woken (has an "action" log within the cooldown window).
- * Prevents the heartbeat from scheduling duplicate runs of the same agent.
- */
-const AGENT_WAKE_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
-
-export const isAgentRecentlyWoken = internalQuery({
-  args: {
-    organizationId: v.id("organizations"),
-    agent: v.string(),
-  },
-  returns: v.boolean(),
-  handler: async (ctx, args) => {
-    const cutoff = Date.now() - AGENT_WAKE_COOLDOWN_MS;
-    const recentLogs = await ctx.db
-      .query("autopilotActivityLog")
-      .withIndex("by_org_created", (q) =>
-        q.eq("organizationId", args.organizationId).gt("createdAt", cutoff)
-      )
-      .filter((q) => q.eq(q.field("agent"), args.agent))
-      .collect();
-
-    return recentLogs.some((log) => log.level === "action");
-  },
-});
-
-/**
- * Check if an agent produced user-visible output in its last run.
- * "Output" = success log, new document created, or task status change.
- * If agent ran but produced nothing, it's deprioritized this cycle.
- */
-export const didAgentProduceOutput = internalQuery({
-  args: {
-    organizationId: v.id("organizations"),
-    agent: v.string(),
-  },
-  returns: v.boolean(),
-  handler: async (ctx, args) => {
-    const cutoff = Date.now() - NO_OUTPUT_RETRY_COOLDOWN_MS;
-    const recentLogs = await ctx.db
-      .query("autopilotActivityLog")
-      .withIndex("by_org_created", (q) =>
-        q.eq("organizationId", args.organizationId).gt("createdAt", cutoff)
-      )
-      .filter((q) => q.eq(q.field("agent"), args.agent))
-      .collect();
-    recentLogs.sort((a, b) => b.createdAt - a.createdAt);
-
-    // Find the most recent action (wake) for this agent
-    const lastAction = recentLogs.find((log) => log.level === "action");
-
-    if (!lastAction) {
-      return true; // No recent run — allow waking
-    }
-
-    // Check if there's a success log after the last action
-    return recentLogs.some(
-      (log) => log.level === "success" && log.createdAt >= lastAction.createdAt
-    );
-  },
-});
-
-interface WakeContext {
-  chainGated: boolean;
-  openTaskCount: number;
-  shippedFeaturesWithoutContent: boolean;
-  wakeThreshold: number;
-}
-
-const logChainProducerWake = async (
-  ctx: { runMutation: ActionCtx["runMutation"] },
-  params: {
-    agent: Doc<"autopilotActivityLog">["agent"];
-    organizationId: Id<"organizations">;
-    target: string;
-  }
-): Promise<void> => {
-  await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-    organizationId: params.organizationId,
-    agent: params.agent,
-    level: "action",
-    message: `Chain producer scheduled: ${params.target}`,
-  });
-};
-
-function isChainProducerAgent(
-  agent: string
-): agent is Doc<"autopilotActivityLog">["agent"] {
-  return agent === "cto" || agent === "growth" || agent === "pm";
-}
-
-type ChainProducer =
-  | typeof internal.autopilot.agents.chain_producers.produceCodebaseUnderstanding
-  | typeof internal.autopilot.agents.chain_producers.produceProductProfile
-  | typeof internal.autopilot.agents.chain_producers.produceBrandVoice
-  | typeof internal.autopilot.agents.chain_producers.produceFeatureCatalog
-  | typeof internal.autopilot.agents.chain_producers.produceScope
-  | typeof internal.autopilot.agents.chain_producers.produceMarketAnalysis
-  | typeof internal.autopilot.agents.chain_producers.produceTargetDefinition
-  | typeof internal.autopilot.agents.chain_producers.producePersonas
-  | typeof internal.autopilot.agents.chain_producers.produceUseCases;
-
-interface ChainProducerCandidate {
-  condition: boolean;
-  producer: ChainProducer;
-}
-
-const buildCtoChainCandidates = (
-  chainState: Record<string, string>
-): ChainProducerCandidate[] => {
-  const codebaseReady = chainState.codebase_understanding === "published";
-  return [
-    {
-      producer:
-        internal.autopilot.agents.chain_producers.produceCodebaseUnderstanding,
-      condition: chainState.codebase_understanding === "missing",
-    },
-    {
-      producer: internal.autopilot.agents.chain_producers.produceProductProfile,
-      condition: codebaseReady && chainState.product_profile === "missing",
-    },
-    {
-      producer: internal.autopilot.agents.chain_producers.produceBrandVoice,
-      condition: codebaseReady && chainState.brand_voice === "missing",
-    },
-    {
-      producer: internal.autopilot.agents.chain_producers.produceFeatureCatalog,
-      condition: codebaseReady && chainState.feature_catalog === "missing",
-    },
-    {
-      producer: internal.autopilot.agents.chain_producers.produceScope,
-      condition: codebaseReady && chainState.scope === "missing",
-    },
-  ];
-};
-
-const buildPmChainCandidates = (
-  chainState: Record<string, string>
-): ChainProducerCandidate[] => [
-  {
-    producer: internal.autopilot.agents.chain_producers.produceTargetDefinition,
-    condition:
-      chainState.market_analysis === "published" &&
-      chainState.target_definition === "missing",
-  },
-  {
-    producer: internal.autopilot.agents.chain_producers.producePersonas,
-    condition:
-      chainState.target_definition === "published" &&
-      chainState.personas === "missing",
-  },
-  {
-    producer: internal.autopilot.agents.chain_producers.produceUseCases,
-    condition:
-      chainState.personas === "published" && chainState.use_cases === "missing",
-  },
-];
-
-interface GrowthDispatchTarget {
-  scheduledAction:
-    | typeof internal.autopilot.agents.chain_producers.produceMarketAnalysis
-    | typeof internal.autopilot.agents.community_discovery.runCommunityDiscovery
-    | typeof internal.autopilot.agents.growth.drafts.producer.runCommunityDraftGeneration;
-  target: string;
-}
-
-const isKnowledgeChainPublished = (
-  chainState: Record<string, string>
-): boolean =>
-  chainState.product_profile === "published" &&
-  chainState.brand_voice === "published" &&
-  chainState.feature_catalog === "published" &&
-  chainState.scope === "published";
-
-const pickGrowthDispatch = (
-  chainState: Record<string, string>
-): GrowthDispatchTarget | null => {
-  if (
-    isKnowledgeChainPublished(chainState) &&
-    chainState.market_analysis === "missing"
-  ) {
-    return {
-      target: "market_analysis",
-      scheduledAction:
-        internal.autopilot.agents.chain_producers.produceMarketAnalysis,
-    };
-  }
-  if (
-    chainState.personas === "published" &&
-    chainState.use_cases === "published" &&
-    chainState.community_posts === "missing"
-  ) {
-    return {
-      target: "community_posts",
-      scheduledAction:
-        internal.autopilot.agents.community_discovery.runCommunityDiscovery,
-    };
-  }
-  if (
-    chainState.community_posts === "published" &&
-    chainState.drafts === "missing"
-  ) {
-    return {
-      target: "drafts",
-      scheduledAction:
-        internal.autopilot.agents.growth.drafts.producer
-          .runCommunityDraftGeneration,
-    };
-  }
-  return null;
-};
-
-/**
- * Dispatch the chain producer for an agent's next actionable node.
- * Returns true if a producer was dispatched; false if no chain work for this agent.
- */
-const dispatchChainProducer = async (
-  ctx: {
-    runMutation: ActionCtx["runMutation"];
-    runQuery: ActionCtx["runQuery"];
-    scheduler: ActionCtx["scheduler"];
-  },
-  orgId: Id<"organizations">,
-  agent: string
-): Promise<boolean> => {
-  if (!isChainProducerAgent(agent)) {
-    return false;
-  }
-
-  const chainState = (await ctx.runQuery(
-    internal.autopilot.chain.getChainState,
-    { organizationId: orgId }
-  )) as Record<string, string>;
-
-  if (agent === "growth") {
-    const dispatch = pickGrowthDispatch(chainState);
-    if (!dispatch) {
-      return false;
-    }
-    await logChainProducerWake(ctx, {
-      agent,
-      organizationId: orgId,
-      target: dispatch.target,
-    });
-    await ctx.scheduler.runAfter(0, dispatch.scheduledAction, {
-      organizationId: orgId,
-    });
-    return true;
-  }
-
-  let candidates: ChainProducerCandidate[] = [];
-  if (agent === "cto") {
-    candidates = buildCtoChainCandidates(chainState);
-  } else if (agent === "pm") {
-    candidates = buildPmChainCandidates(chainState);
-  }
-
-  for (const { producer, condition } of candidates) {
-    if (condition) {
-      await logChainProducerWake(ctx, {
-        agent,
-        organizationId: orgId,
-        target: "chain artifact",
-      });
-      await ctx.scheduler.runAfter(0, producer, { organizationId: orgId });
-      return true;
-    }
-  }
-  return false;
-};
-
-/**
- * Schedule an agent to run asynchronously.
- * Uses ctx.scheduler.runAfter(0) so the heartbeat returns immediately.
- * Agents run in parallel, not blocking the heartbeat.
- */
-const wakeAgent = async (
-  ctx: {
-    runMutation: ActionCtx["runMutation"];
-    runQuery: ActionCtx["runQuery"];
-    scheduler: ActionCtx["scheduler"];
-  },
-  orgId: Id<"organizations">,
-  agent: string,
-  wakeContext: WakeContext
-): Promise<void> => {
-  // Try chain producer first — chain takes precedence over legacy endpoints
-  const dispatchedChain = await dispatchChainProducer(ctx, orgId, agent);
-  if (dispatchedChain) {
-    return;
-  }
-
-  // Chain gate: free-form (non-producer) agent work only runs when the
-  // agent's chain dependencies are published. Producers handle their own
-  // gating via dispatchChainProducer above; this protects everything else.
-  const chainGate = await ctx.runQuery(
-    internal.autopilot.chain.getAgentChainGate,
-    { organizationId: orgId, agent }
-  );
-  if (!chainGate.ready) {
-    await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-      organizationId: orgId,
-      agent: "system",
-      level: "info",
-      message: `Wake skipped for ${agent} — chain not ready (waiting on: ${chainGate.missing.join(", ")})`,
-    });
-    return;
-  }
-
-  switch (agent) {
-    case "pm":
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.pm.analysis.runPMAnalysis,
-        { organizationId: orgId }
-      );
-      break;
-    case "cto":
-      // CTO needs a specific taskId — dispatched by dispatchPendingTasks
-      break;
-    case "growth":
-      if (wakeContext.shippedFeaturesWithoutContent) {
-        // Shipped features need content — generate Reddit, HN, X, LinkedIn posts
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.growth.content_generation
-            .runGrowthGeneration,
-          { organizationId: orgId, triggerReason: "scheduled" }
-        );
-      } else {
-        // No content needed — run market research instead
-        await ctx.scheduler.runAfter(
-          0,
-          internal.autopilot.agents.growth.market_research
-            .runGrowthMarketResearch,
-          { organizationId: orgId }
-        );
-      }
-      break;
-    case "sales":
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.sales_prospecting.runSalesProspecting,
-        { organizationId: orgId }
-      );
-      break;
-    case "ceo":
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.ceo.coordination.runCEOCoordination,
-        { organizationId: orgId }
-      );
-      break;
-    case "support":
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.support.runSupportTriage,
-        { organizationId: orgId }
-      );
-      break;
-    case "validator":
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.validator.runValidatorPass,
-        { organizationId: orgId }
-      );
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.agents.validation.community_posts
-          .runCommunityPostValidatorPass,
-        { organizationId: orgId }
-      );
-      break;
-    default:
-      break;
-  }
-};
-
-/**
- * Dispatch pending tasks from the task board.
- * Each pending task is assigned to an agent. When the heartbeat runs,
- * it picks up pending tasks and routes them to execution.
- * Max 2 tasks per heartbeat tick to avoid overwhelming.
- */
+import { internalAction } from "../_generated/server";
+import type { RoleNextAction, RoleScheduleEntry } from "./schedule/types";
 
 interface HeartbeatCtx {
   runMutation: ActionCtx["runMutation"];
@@ -409,255 +25,195 @@ interface HeartbeatCtx {
   scheduler: ActionCtx["scheduler"];
 }
 
-interface PendingDispatchTask {
-  _id: Id<"autopilotWorkItems">;
-  assignedAgent?: string | undefined;
-  title: string;
-}
-
-type DispatchableAgent = "cto" | "growth" | "sales" | "support";
-
-const checkoutTaskForAgent = async (
+const logAction = async (
   ctx: HeartbeatCtx,
   orgId: Id<"organizations">,
-  task: PendingDispatchTask,
-  agent: DispatchableAgent
-): Promise<boolean> => {
-  const checkedOut = await ctx.runMutation(
-    internal.autopilot.execution_lifecycle.checkoutTask,
-    {
-      taskId: task._id,
-      agent,
-    }
-  );
-  if (!checkedOut) {
-    return false;
-  }
-
+  role: RoleSkill | "system",
+  message: string,
+  taskId?: Id<"autopilotWorkItems">
+): Promise<void> => {
   await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
     organizationId: orgId,
-    taskId: task._id,
-    agent,
+    role,
     level: "action",
-    message: `Task picked up: ${task.title}`,
+    message,
+    ...(taskId ? { taskId } : {}),
   });
-  return true;
 };
 
-const dispatchCtoTask = async (
-  ctx: HeartbeatCtx,
-  orgId: Id<"organizations">,
-  task: PendingDispatchTask
-): Promise<boolean> => {
-  const checkedOut = await checkoutTaskForAgent(ctx, orgId, task, "cto");
-  if (!checkedOut) {
-    return false;
-  }
+type RoleSkill = RoleScheduleEntry["role"];
 
+const scheduleExecution = async (
+  ctx: HeartbeatCtx,
+  executionId: Id<"autopilotExecutions">
+): Promise<boolean> => {
   await ctx.scheduler.runAfter(
     0,
-    internal.autopilot.agents.cto.runCTOSpecGeneration,
-    { organizationId: orgId, taskId: task._id }
+    internal.autopilot.runtime.lifecycle.runExecutionFromRecord,
+    { executionId }
   );
   return true;
 };
 
-const dispatchGrowthTask = async (
+const dispatchChainProducer = async (
   ctx: HeartbeatCtx,
   orgId: Id<"organizations">,
-  task: PendingDispatchTask
+  role: RoleSkill,
+  action: Extract<RoleNextAction, { kind: "chain_producer" }>
 ): Promise<boolean> => {
-  const checkedOut = await checkoutTaskForAgent(ctx, orgId, task, "growth");
-  if (!checkedOut) {
-    return false;
-  }
-
-  await ctx.scheduler.runAfter(
-    0,
-    internal.autopilot.agents.growth.market_research.runGrowthMarketResearch,
-    { organizationId: orgId, taskId: task._id }
-  );
-  return true;
-};
-
-const dispatchSalesTask = async (
-  ctx: HeartbeatCtx,
-  orgId: Id<"organizations">,
-  task: PendingDispatchTask
-): Promise<boolean> => {
-  const checkedOut = await checkoutTaskForAgent(ctx, orgId, task, "sales");
-  if (!checkedOut) {
-    return false;
-  }
-
-  await ctx.scheduler.runAfter(
-    0,
-    internal.autopilot.agents.sales_prospecting.runSalesProspecting,
-    { organizationId: orgId, taskId: task._id }
-  );
-  return true;
-};
-
-const dispatchSupportTask = async (
-  ctx: HeartbeatCtx,
-  orgId: Id<"organizations">,
-  task: PendingDispatchTask
-): Promise<boolean> => {
-  const checkedOut = await checkoutTaskForAgent(ctx, orgId, task, "support");
-  if (!checkedOut) {
-    return false;
-  }
-
-  await ctx.scheduler.runAfter(
-    0,
-    internal.autopilot.agents.support.runSupportTriage,
-    { organizationId: orgId, taskId: task._id }
-  );
-  return true;
-};
-
-const dispatchTaskToAgent = async (
-  ctx: HeartbeatCtx,
-  orgId: Id<"organizations">,
-  task: PendingDispatchTask,
-  agent: string
-): Promise<boolean> => {
-  if (agent === "cto") {
-    return await dispatchCtoTask(ctx, orgId, task);
-  }
-  if (agent === "growth") {
-    return await dispatchGrowthTask(ctx, orgId, task);
-  }
-  if (agent === "sales") {
-    return await dispatchSalesTask(ctx, orgId, task);
-  }
-  if (agent === "support") {
-    return await dispatchSupportTask(ctx, orgId, task);
-  }
-  return false;
-};
-
-const dispatchPendingTasks = async (
-  ctx: HeartbeatCtx,
-  orgId: Id<"organizations">,
-  enabledAgentSet: Set<string>
-): Promise<number> => {
-  const pendingTasks = await ctx.runQuery(
-    internal.autopilot.task_queries.getDispatchableTasks,
-    { organizationId: orgId }
-  );
-
-  const MAX_DISPATCH_PER_TICK = 2;
-  let dispatched = 0;
-
-  for (const task of pendingTasks) {
-    if (dispatched >= MAX_DISPATCH_PER_TICK) {
-      break;
+  await logAction(ctx, orgId, role, `Chain producer queued: ${action.node}`);
+  const executionId = await ctx.runMutation(
+    internal.autopilot.runtime.lifecycle.queueExecution,
+    {
+      organizationId: orgId,
+      role,
+      triggerReason: "dependency_ready",
+      actionKind: "chain_producer",
+      title: `Produce ${action.node}`,
+      chainNode: action.node,
     }
+  );
+  return await scheduleExecution(ctx, executionId);
+};
 
-    const agent = task.assignedAgent;
-    if (!agent) {
-      continue;
-    }
-
-    // Use the pre-fetched enabled set instead of querying per task
-    if (!enabledAgentSet.has(agent)) {
-      continue;
-    }
-
-    try {
-      const wasDispatched = await dispatchTaskToAgent(ctx, orgId, task, agent);
-      if (!wasDispatched) {
-        continue;
-      }
-
-      dispatched++;
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : "Unknown error";
-      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+const dispatchByActionKind = async (
+  ctx: HeartbeatCtx,
+  orgId: Id<"organizations">,
+  entry: RoleScheduleEntry,
+  role: RoleSkill,
+  action: RoleNextAction
+): Promise<boolean> => {
+  if (action.kind === "chain_producer") {
+    return await dispatchChainProducer(ctx, orgId, role, action);
+  }
+  if (action.kind === "task_dispatch") {
+    await logAction(
+      ctx,
+      orgId,
+      role,
+      `Task queued: ${action.title}`,
+      action.taskId
+    );
+    const executionId = await ctx.runMutation(
+      internal.autopilot.runtime.lifecycle.queueExecution,
+      {
         organizationId: orgId,
-        taskId: task._id,
-        agent: "system",
-        level: "error",
-        message: `Failed to dispatch task to ${agent}: ${msg}`,
-      });
-    }
+        role: entry.role,
+        triggerReason: "task_ready",
+        actionKind: "task_dispatch",
+        title: action.title,
+        workItemId: action.taskId,
+      }
+    );
+    return await scheduleExecution(ctx, executionId);
   }
-
-  return dispatched;
+  if (action.kind === "validation_pass") {
+    await logAction(
+      ctx,
+      orgId,
+      role,
+      `Validator pass queued: ${action.count} item(s)`
+    );
+    const executionId = await ctx.runMutation(
+      internal.autopilot.runtime.lifecycle.queueExecution,
+      {
+        organizationId: orgId,
+        role: entry.role,
+        triggerReason: "validation_required",
+        actionKind: "validation_pass",
+        title: `Validate ${action.count} item(s)`,
+      }
+    );
+    return await scheduleExecution(ctx, executionId);
+  }
+  if (action.kind === "support_triage") {
+    await logAction(
+      ctx,
+      orgId,
+      role,
+      `Support triage queued: ${action.count} thread(s)`
+    );
+    const executionId = await ctx.runMutation(
+      internal.autopilot.runtime.lifecycle.queueExecution,
+      {
+        organizationId: orgId,
+        role: entry.role,
+        triggerReason: "support_conversation",
+        actionKind: "support_triage",
+        title: `Triage ${action.count} support thread(s)`,
+      }
+    );
+    return await scheduleExecution(ctx, executionId);
+  }
+  if (action.kind === "ceo_coordination") {
+    await logAction(
+      ctx,
+      orgId,
+      role,
+      `CEO coordination queued: ${action.reason}`
+    );
+    const executionId = await ctx.runMutation(
+      internal.autopilot.runtime.lifecycle.queueExecution,
+      {
+        organizationId: orgId,
+        role: entry.role,
+        triggerReason: "coordination_required",
+        actionKind: "ceo_coordination",
+        title: `Coordinate ${action.reason}`,
+      }
+    );
+    return await scheduleExecution(ctx, executionId);
+  }
+  await logAction(ctx, orgId, role, `Growth content queued: ${action.reason}`);
+  const executionId = await ctx.runMutation(
+    internal.autopilot.runtime.lifecycle.queueExecution,
+    {
+      organizationId: orgId,
+      role: entry.role,
+      triggerReason: "approved_delivery",
+      actionKind: "growth_content",
+      title: "Generate content for shipped features",
+    }
+  );
+  return await scheduleExecution(ctx, executionId);
 };
 
-interface WakeResult {
-  skipped: string[];
-  woken: string[];
-}
-
-/**
- * Evaluate each agent and decide whether to wake it.
- * Returns lists of woken and skipped agents with reasons.
- * Enforces MAX_AGENTS_PER_CYCLE to prevent all agents firing at once.
- * Deprioritizes agents that produced no output in their last run.
- */
-const evaluateAndWakeAgents = async (
-  ctx: HeartbeatCtx & { runQuery: ActionCtx["runQuery"] },
+const dispatchEntry = async (
+  ctx: HeartbeatCtx,
   orgId: Id<"organizations">,
-  shouldWake: Record<string, boolean>,
-  wakeBlockers: Record<string, string>,
-  enabledSet: Set<string>,
-  pipelineFull: boolean,
-  wakeContext: WakeContext
-): Promise<WakeResult> => {
-  const woken: string[] = [];
-  const skipped: string[] = [];
-
-  for (const [agent, wake] of Object.entries(shouldWake)) {
-    if (!enabledSet.has(agent)) {
-      skipped.push(`${agent} (disabled)`);
-      continue;
-    }
-    if (!wake) {
-      skipped.push(`${agent} (${wakeBlockers[agent] ?? "no work"})`);
-      continue;
-    }
-    if (agent === "pm" && pipelineFull) {
-      skipped.push("pm (pipeline full)");
-      continue;
-    }
-    // Per-cycle budget: max N agents per heartbeat tick
-    if (woken.length >= MAX_AGENTS_PER_CYCLE) {
-      skipped.push(`${agent} (cycle budget exhausted)`);
-      continue;
-    }
-    const agentGuard = await ctx.runQuery(
-      internal.autopilot.guards.checkGuards,
-      { organizationId: orgId, agent }
-    );
-    if (!agentGuard.allowed) {
-      skipped.push(`${agent} (${agentGuard.reason ?? "guard blocked"})`);
-      continue;
-    }
-    const recentlyWoken = await ctx.runQuery(
-      internal.autopilot.heartbeat.isAgentRecentlyWoken,
-      { organizationId: orgId, agent }
-    );
-    if (recentlyWoken) {
-      skipped.push(`${agent} (recently woken)`);
-      continue;
-    }
-    // Deprioritize agents that ran last cycle but produced no output
-    const producedOutput = await ctx.runQuery(
-      internal.autopilot.heartbeat.didAgentProduceOutput,
-      { organizationId: orgId, agent }
-    );
-    if (!producedOutput) {
-      skipped.push(`${agent} (no output last run)`);
-      continue;
-    }
-    await wakeAgent(ctx, orgId, agent, wakeContext);
-    woken.push(agent);
+  entry: RoleScheduleEntry
+): Promise<boolean> => {
+  if (entry.state !== "ready" || !entry.nextAction) {
+    return false;
   }
+  if (
+    await ctx.runQuery(
+      internal.autopilot.runtime.lifecycle.hasOpenExecutionForRole,
+      { organizationId: orgId, role: entry.role }
+    )
+  ) {
+    return false;
+  }
+  return await dispatchByActionKind(
+    ctx,
+    orgId,
+    entry,
+    entry.role,
+    entry.nextAction
+  );
+};
 
-  return { woken, skipped };
+const enabledRolesFromSchedule = (
+  schedule: RoleScheduleEntry[]
+): Set<string> => {
+  const set = new Set<string>();
+  for (const entry of schedule) {
+    const disabled = entry.blockers.some((b) => b.kind === "role_disabled");
+    if (!disabled) {
+      set.add(entry.role);
+    }
+  }
+  return set;
 };
 
 export const runHeartbeat = internalAction({
@@ -669,28 +225,30 @@ export const runHeartbeat = internalAction({
       {}
     );
 
-    await ctx.runMutation(internal.autopilot.routines.evaluateRoutines, {});
-
     for (const config of configs) {
       const orgId = config.organizationId;
 
       const guardResult = await ctx.runQuery(
         internal.autopilot.guards.checkGuards,
-        { organizationId: orgId, agent: "system" }
+        { organizationId: orgId, role: "system" }
       );
-
       if (!guardResult.allowed) {
         continue;
       }
 
-      const { shouldWake, wakeBlockers, signals } = await ctx.runQuery(
-        internal.autopilot.heartbeat_conditions.checkWakeConditions,
+      const schedule = await ctx.runQuery(
+        internal.autopilot.role_schedule.getRoleScheduleInternal,
         { organizationId: orgId }
       );
 
-      // Autonomous recovery: if CTO is stuck waiting for a repo analysis,
-      // kick one off in the background so the chain can self-unblock.
-      if (wakeBlockers.cto === "waiting for repo analysis") {
+      // Autonomous recovery: if CTO is blocked waiting on repo analysis, kick
+      // one off so the chain can self-unblock.
+      const ctoEntry = schedule.find((entry) => entry.role === "cto");
+      const repoAnalysisBlocked = ctoEntry?.blockers.some(
+        (b) =>
+          b.kind === "precondition_unmet" && b.node === "codebase_understanding"
+      );
+      if (repoAnalysisBlocked) {
         await ctx.scheduler.runAfter(
           0,
           internal.autopilot.repo_analysis.bootRepoAnalysisIfStuck,
@@ -698,39 +256,15 @@ export const runHeartbeat = internalAction({
         );
       }
 
-      const enabledAgents: string[] = await ctx.runQuery(
-        internal.autopilot.config.getEnabledAgents,
-        { organizationId: orgId }
-      );
-      const enabledSet = new Set(enabledAgents);
-      // CEO, support, validator always allowed (orchestrator + safety roles)
-      enabledSet.add("ceo");
-      enabledSet.add("validator");
+      let dispatched = 0;
+      for (const entry of schedule) {
+        const wasDispatched = await dispatchEntry(ctx, orgId, entry);
+        if (wasDispatched) {
+          dispatched++;
+        }
+      }
 
-      // Check pipeline capacity before waking PM (avoid waking just to skip)
-      const taskCapUsage = await ctx.runQuery(
-        internal.autopilot.config_task_caps.getTaskCapUsage,
-        { organizationId: orgId }
-      );
-      const pipelineFull = taskCapUsage.totalPending >= taskCapUsage.totalCap;
-
-      const { woken, skipped } = await evaluateAndWakeAgents(
-        ctx,
-        orgId,
-        shouldWake,
-        wakeBlockers,
-        enabledSet,
-        pipelineFull,
-        signals
-      );
-
-      // Dispatch any pending tasks to their assigned agents
-      const tasksDispatched = await dispatchPendingTasks(
-        ctx,
-        orgId,
-        enabledSet
-      );
-
+      const enabledSet = enabledRolesFromSchedule(schedule);
       if (enabledSet.has("sales")) {
         await ctx.scheduler.runAfter(
           0,
@@ -746,15 +280,17 @@ export const runHeartbeat = internalAction({
         );
       }
 
-      // Log a single heartbeat summary per org
-      const wokenStr = woken.length > 0 ? woken.join(", ") : "none";
-      const skippedStr = skipped.length > 0 ? skipped.join(", ") : "none";
-      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-        organizationId: orgId,
-        agent: "system",
-        level: "info",
-        message: `Heartbeat: woke [${wokenStr}], skipped [${skippedStr}], pipeline: ${taskCapUsage.totalPending}/${taskCapUsage.totalCap} active, ${tasksDispatched} dispatched`,
-      });
+      // Silent unless work was dispatched. This is the "dumb clock" rule —
+      // we don't want the activity log to fill with "skipped [...]" noise.
+      if (dispatched > 0) {
+        await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
+          organizationId: orgId,
+          role: "system",
+          level: "info",
+          action: "heartbeat",
+          message: `Heartbeat dispatched ${dispatched} role skill(s)`,
+        });
+      }
     }
 
     return null;

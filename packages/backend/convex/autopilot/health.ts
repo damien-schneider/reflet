@@ -12,9 +12,7 @@ import { computeChainState } from "./chain";
 import { DEFAULT_MAX_PENDING_TOTAL } from "./config_task_caps";
 import type { HealthState } from "./health_checks";
 import {
-  AGENT_FIELDS,
   checkActivity,
-  checkAgentCount,
   checkAutonomyMode,
   checkChainBlockers,
   checkCostCap,
@@ -22,11 +20,13 @@ import {
   checkOrphanedTasks,
   checkPendingApprovals,
   checkPipelineCapacity,
+  checkRoleCount,
   checkStuckTasks,
   checkTaskThrottle,
   ONE_HOUR,
+  ROLE_SKILL_FIELDS,
   THIRTY_MINUTES,
-  TOTAL_AGENTS,
+  TOTAL_ROLE_SKILLS,
 } from "./health_checks";
 import { requireOrgMembership } from "./queries/auth";
 
@@ -52,8 +52,8 @@ const systemHealthValidator = v.object({
   ),
   issues: v.array(healthIssueValidator),
   lastActivity: v.union(v.number(), v.null()),
-  enabledAgentCount: v.number(),
-  totalAgentCount: v.number(),
+  enabledRoleCount: v.number(),
+  totalRoleCount: v.number(),
   pendingApprovalCount: v.optional(v.number()),
 });
 
@@ -86,8 +86,8 @@ export const getSystemHealth = query({
           },
         ],
         lastActivity: null,
-        enabledAgentCount: 0,
-        totalAgentCount: TOTAL_AGENTS,
+        enabledRoleCount: 0,
+        totalRoleCount: TOTAL_ROLE_SKILLS,
       };
     }
 
@@ -106,8 +106,8 @@ export const getSystemHealth = query({
           },
         ],
         lastActivity: null,
-        enabledAgentCount: 0,
-        totalAgentCount: TOTAL_AGENTS,
+        enabledRoleCount: 0,
+        totalRoleCount: TOTAL_ROLE_SKILLS,
       };
     }
 
@@ -115,15 +115,9 @@ export const getSystemHealth = query({
 
     checkAutonomyMode(config, state);
 
-    const enabledCount = checkAgentCount(config, state);
+    const enabledCount = checkRoleCount(config, state);
 
     const chainState = await computeChainState(ctx, args.organizationId);
-    const repoAnalysis = await ctx.db
-      .query("autopilotRepoAnalysis")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .first();
     const integrationAnalysis = await ctx.db
       .query("repoAnalysis")
       .withIndex("by_organization", (q) =>
@@ -154,7 +148,8 @@ export const getSystemHealth = query({
     );
 
     const hasUsableAnalysis =
-      repoAnalysis !== null || integrationAnalysis?.status === "completed";
+      integrationAnalysis?.status === "completed" &&
+      Boolean(integrationAnalysis.productAnalysis);
     checkChainBlockers(
       chainState,
       {
@@ -205,11 +200,11 @@ export const getSystemHealth = query({
     checkCostCap(config, state);
     checkTaskThrottle(config, state);
 
-    // Check for orphaned work items (assigned to disabled agents)
-    const enabledAgentNames = AGENT_FIELDS.filter(
+    // Check for orphaned work items (assigned to disabled role skills)
+    const enabledRoleNames = ROLE_SKILL_FIELDS.filter(
       (field) => config[field] !== false
     ).map((field) => field.replace("Enabled", ""));
-    const enabledSet = new Set(enabledAgentNames);
+    const enabledSet = new Set(enabledRoleNames);
 
     const todoItems = await ctx.db
       .query("autopilotWorkItems")
@@ -219,7 +214,7 @@ export const getSystemHealth = query({
       .collect();
 
     const orphanedCount = todoItems.filter(
-      (w) => w.assignedAgent && !enabledSet.has(w.assignedAgent)
+      (w) => w.assignedRole && !enabledSet.has(w.assignedRole)
     ).length;
     checkOrphanedTasks(orphanedCount, state);
 
@@ -256,8 +251,8 @@ export const getSystemHealth = query({
       status: state.status,
       issues: state.issues,
       lastActivity,
-      enabledAgentCount: enabledCount,
-      totalAgentCount: TOTAL_AGENTS,
+      enabledRoleCount: enabledCount,
+      totalRoleCount: TOTAL_ROLE_SKILLS,
       pendingApprovalCount,
     };
   },

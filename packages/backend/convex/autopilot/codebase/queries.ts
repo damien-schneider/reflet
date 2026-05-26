@@ -41,7 +41,7 @@ export const getLatestRunForOrg = internalQuery({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) =>
     await ctx.db
-      .query("codebaseAgentRuns")
+      .query("codebaseAnalysisRuns")
       .withIndex("by_org_started", (q) =>
         q.eq("organizationId", args.organizationId)
       )

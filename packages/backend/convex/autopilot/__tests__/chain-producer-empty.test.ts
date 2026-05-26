@@ -4,7 +4,7 @@
  * Real failure mode: when an LLM call returned a structurally valid object
  * but with empty required strings (oneLineSummary === "", whatItDoes === "",
  * etc.), the chain advanced state to "published" with no real content. The
- * "starvation detected" alerts then masked the fact that downstream agents
+ * "starvation detected" alerts then masked the fact that downstream role skills
  * were grounding on an empty doc.
  *
  * Producers now call `assertNonEmpty` on every required field before persist.
@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertNonEmpty,
   EmptyChainArtifactError,
-} from "../agents/chain_producers";
+} from "../role_skills/chain_producers";
 
 describe("assertNonEmpty", () => {
   it("passes when every field has real content", () => {

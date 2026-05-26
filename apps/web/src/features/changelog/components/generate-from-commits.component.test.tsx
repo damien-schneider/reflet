@@ -833,8 +833,8 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        const titleCall = fetchSpy.mock.calls.find(
-          (call) => call[0] === "/api/ai/generate-release-title"
+        const titleCall = fetchSpy.mock.calls.find((call) =>
+          String(call[0]).endsWith("/api/ai/generate-release-title")
         );
         expect(titleCall).toBeDefined();
         const body = JSON.parse(
@@ -949,8 +949,8 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        const titleCall = fetchSpy.mock.calls.find(
-          (call) => call[0] === "/api/ai/generate-release-title"
+        const titleCall = fetchSpy.mock.calls.find((call) =>
+          String(call[0]).endsWith("/api/ai/generate-release-title")
         );
         expect(titleCall).toBeDefined();
         const body = JSON.parse(

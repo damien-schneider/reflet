@@ -21,10 +21,10 @@ const RELATIVE_TIME_THRESHOLDS = [
 ] as const;
 
 export interface ActivityEntry {
-  agent: string;
   createdAt: number;
   level: string;
   message: string;
+  role: string;
 }
 
 const formatRelativeTime = (timestamp: number, now: number): string => {
@@ -75,7 +75,7 @@ function ChainActivityList({
           animate={{ opacity: 1, x: 0 }}
           className="flex items-start gap-2 text-[11px]"
           initial={{ opacity: 0, x: -6 }}
-          key={`${entry.createdAt}-${entry.agent}`}
+          key={`${entry.createdAt}-${entry.role}`}
           transition={{
             delay: index * 0.03,
             duration: 0.25,
@@ -84,7 +84,7 @@ function ChainActivityList({
         >
           <ActivityLevelDot level={entry.level} />
           <span className="font-mono text-[9px] text-muted-foreground uppercase">
-            {entry.agent}
+            {entry.role}
           </span>
           <span className="min-w-0 flex-1 truncate text-foreground/80">
             {entry.message}

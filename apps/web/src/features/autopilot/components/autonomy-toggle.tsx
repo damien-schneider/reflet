@@ -40,7 +40,7 @@ const MODES = [
     value: "stopped",
     label: "Off",
     icon: IconPlayerPause,
-    description: "All agents stopped",
+    description: "All role skills stopped",
     activeClass:
       "bg-muted text-muted-foreground shadow-[inset_0_0_0_1px_rgba(128,128,128,0.2)]",
     dotClass: "bg-muted-foreground/50",

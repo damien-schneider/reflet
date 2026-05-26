@@ -14,7 +14,7 @@ import {
 import {
   activityEntityType,
   activityLogLevel,
-  assignedAgent,
+  assignedRole,
   priority,
   workItemStatus,
   workItemType,
@@ -102,7 +102,7 @@ const workItemValidator = v.object({
   _creationTime: v.number(),
   _id: v.id("autopilotWorkItems"),
   acceptanceCriteria: v.optional(v.array(v.string())),
-  assignedAgent: v.optional(assignedAgent),
+  assignedRole: v.optional(assignedRole),
   assigneeUserId: v.optional(v.string()),
   branch: v.optional(v.string()),
   completionPercent: v.optional(v.number()),
@@ -137,7 +137,6 @@ const activityLogValidator = v.object({
   _creationTime: v.number(),
   _id: v.id("autopilotActivityLog"),
   action: v.optional(v.string()),
-  agent: assignedAgent,
   createdAt: v.number(),
   details: v.optional(v.string()),
   entityId: v.optional(v.string()),
@@ -145,9 +144,28 @@ const activityLogValidator = v.object({
   level: activityLogLevel,
   message: v.string(),
   organizationId: v.id("organizations"),
-  targetAgent: v.optional(assignedAgent),
+  role: assignedRole,
+  targetRole: v.optional(assignedRole),
   workItemId: v.optional(v.id("autopilotWorkItems")),
 });
+
+function toActivityLogEntry(entry: Doc<"autopilotActivityLog">) {
+  return {
+    _id: entry._id,
+    _creationTime: entry._creationTime,
+    action: entry.action,
+    createdAt: entry.createdAt,
+    details: entry.details,
+    entityId: entry.entityId,
+    entityType: entry.entityType,
+    level: entry.level,
+    message: entry.message,
+    organizationId: entry.organizationId,
+    role: entry.role,
+    targetRole: entry.targetRole,
+    workItemId: entry.workItemId,
+  };
+}
 
 const PRIORITY_RANK = {
   critical: 0,
@@ -281,12 +299,37 @@ export const getRecentActivity = internalQuery({
   },
   returns: v.array(activityLogValidator),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const entries = await ctx.db
       .query("autopilotActivityLog")
       .withIndex("by_org_created", (q) =>
         q.eq("organizationId", args.organizationId)
       )
       .order("desc")
       .take(args.limit ?? 50);
+    return entries.map(toActivityLogEntry);
+  },
+});
+
+/**
+ * Recent activity for a single role skill within a lookback window. Used by the
+ * heartbeat for state-driven in-flight idempotency (no time cooldowns).
+ */
+export const getRecentActivityForRole = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    role: v.string(),
+    lookbackMs: v.number(),
+  },
+  returns: v.array(activityLogValidator),
+  handler: async (ctx, args) => {
+    const cutoff = Date.now() - args.lookbackMs;
+    const entries = await ctx.db
+      .query("autopilotActivityLog")
+      .withIndex("by_org_created", (q) =>
+        q.eq("organizationId", args.organizationId).gt("createdAt", cutoff)
+      )
+      .filter((q) => q.eq(q.field("role"), args.role))
+      .collect();
+    return entries.map(toActivityLogEntry);
   },
 });

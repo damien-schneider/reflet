@@ -18,7 +18,7 @@ type InternalConfigPatch = Partial<
     | "fullAutoDelay"
     | "growthEnabled"
     | "intelligenceEnabled"
-    | "maxPendingTasksPerAgent"
+    | "maxPendingTasksPerRole"
     | "maxPendingTasksTotal"
     | "maxTasksPerDay"
     | "pmEnabled"
@@ -89,7 +89,7 @@ export const updateConfig = internalMutation({
     requireArchitectReview: v.optional(v.boolean()),
     autonomyMode: v.optional(autonomyMode),
     fullAutoDelay: v.optional(v.number()),
-    maxPendingTasksPerAgent: v.optional(v.number()),
+    maxPendingTasksPerRole: v.optional(v.number()),
     maxPendingTasksTotal: v.optional(v.number()),
   },
   returns: v.null(),
@@ -128,8 +128,8 @@ export const updateConfig = internalMutation({
     if (args.fullAutoDelay !== undefined) {
       updates.fullAutoDelay = args.fullAutoDelay;
     }
-    if (args.maxPendingTasksPerAgent !== undefined) {
-      updates.maxPendingTasksPerAgent = args.maxPendingTasksPerAgent;
+    if (args.maxPendingTasksPerRole !== undefined) {
+      updates.maxPendingTasksPerRole = args.maxPendingTasksPerRole;
     }
     if (args.maxPendingTasksTotal !== undefined) {
       updates.maxPendingTasksTotal = args.maxPendingTasksTotal;

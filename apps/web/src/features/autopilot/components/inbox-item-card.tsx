@@ -5,7 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AgentIdentity } from "@/features/autopilot/components/agent-identity";
+import { RoleSkillIdentity } from "@/features/autopilot/components/role-skill-identity";
 import { cn } from "@/lib/utils";
 
 const TYPE_LABEL_OPTIONS = [
@@ -119,11 +119,11 @@ function getExternalLink(
   return undefined;
 }
 
-function getAgentName(item: UnifiedInboxItem): string | undefined {
+function getRoleName(item: UnifiedInboxItem): string | undefined {
   if (item._source === "work") {
-    return item.assignedAgent;
+    return item.assignedRole;
   }
-  return item.sourceAgent;
+  return item.sourceRole;
 }
 
 export function InboxItemCard({
@@ -145,7 +145,7 @@ export function InboxItemCard({
   const priority = getPriority(item);
   const priorityStyle = getPriorityStyle(priority);
   const isPending = item.needsReview;
-  const agentName = getAgentName(item);
+  const roleName = getRoleName(item);
   const description = getDescription(item);
   const externalLink = getExternalLink(item);
 
@@ -173,8 +173,8 @@ export function InboxItemCard({
           </span>
 
           <span className="mt-1 shrink-0">
-            <AgentIdentity
-              agent={agentName ?? "system"}
+            <RoleSkillIdentity
+              role={roleName ?? "system"}
               showLabel={false}
               size="sm"
             />

@@ -7,7 +7,7 @@ import {
   mutation,
   query,
 } from "../_generated/server";
-import { feedbackClarificationAgent } from "../ai/agent";
+import { feedbackClarificationRuntime } from "../ai/runtimes";
 import { getAuthUser } from "../shared/utils";
 
 // ============================================
@@ -243,7 +243,7 @@ export const saveClarification = internalMutation({
 // ============================================
 
 /**
- * Generate AI clarification using the agent
+ * Generate AI clarification using the AI runtime
  */
 export const generateClarification = internalAction({
   args: { feedbackId: v.id("feedback") },
@@ -297,8 +297,8 @@ Project Context:
         ? `\n\nContext about the product:\n${contextParts.join("\n\n")}`
         : "";
 
-    // Generate clarification using the agent
-    const result = await feedbackClarificationAgent.generateText(
+    // Generate clarification using the AI runtime
+    const result = await feedbackClarificationRuntime.generateText(
       ctx,
       { userId: "system" },
       {

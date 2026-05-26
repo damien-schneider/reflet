@@ -10,11 +10,8 @@ import {
   modules,
   registerStripeComponent,
 } from "../../test.helpers";
-import { getPMAssignableAgents } from "../agents/pm/analysis";
-import {
-  resolveCompletionStatus,
-  resolveRetryDelayMs,
-} from "../execution_policy";
+import { getPMAssignableRoles } from "../role_skills/pm/analysis";
+import { resolveExecutionRetryDelayMs } from "../runtime/policy";
 
 const readDocId = (doc: { _id: string }) => doc._id;
 
@@ -121,12 +118,11 @@ const createMemberSession = async (
 };
 
 interface ConfigOverrides {
-  autoMergePRs?: boolean;
   autonomyMode?: "supervised" | "full_auto" | "stopped";
   ceoChatThreadId?: string;
   dailyCostCapUsd?: number;
   enabled?: boolean;
-  maxPendingTasksPerAgent?: number;
+  maxPendingTasksPerRole?: number;
   maxPendingTasksTotal?: number;
   maxTasksPerDay?: number;
   salesEnabled?: boolean;
@@ -145,10 +141,8 @@ const createAutopilotConfig = async (
     return ctx.db.insert("autopilotConfig", {
       organizationId,
       enabled: true,
-      adapter: "builtin",
       autonomyLevel: "review_required",
       autonomyMode: "supervised",
-      autoMergePRs: false,
       maxTasksPerDay: 10,
       tasksUsedToday: 0,
       tasksResetAt: now + 24 * 60 * 60 * 1000,
@@ -160,7 +154,7 @@ const createAutopilotConfig = async (
   });
 
 interface WorkItemInput {
-  assignedAgent?: "pm" | "cto" | "dev";
+  assignedRole?: "pm" | "cto" | "dev";
   needsReview?: boolean;
   organizationId: Id<"organizations">;
   prUrl?: string;
@@ -187,7 +181,7 @@ const createWorkItem = async (t: TestContext, input: WorkItemInput) =>
       description: "Regression coverage task",
       status: input.status ?? "todo",
       priority: "medium",
-      assignedAgent: input.assignedAgent ?? "pm",
+      assignedRole: input.assignedRole ?? "pm",
       needsReview: input.needsReview ?? false,
       prUrl: input.prUrl,
       reviewedAt: input.reviewedAt,
@@ -229,7 +223,7 @@ const createDocument = async (t: TestContext, input: DocumentInput) =>
       title: input.title ?? "Review document",
       content: "Document content",
       tags: [],
-      sourceAgent: "growth",
+      sourceRole: "growth",
       status: input.needsReview ? "pending_review" : "published",
       needsReview: input.needsReview,
       reviewedAt: input.reviewedAt,
@@ -258,7 +252,7 @@ const createReport = async (t: TestContext, input: ReportInput) =>
       healthScore: 82,
       sections: [],
       recommendations: [],
-      sourceAgent: "ceo",
+      sourceRole: "ceo",
       tags: [],
       needsReview: input.needsReview,
       acknowledgedAt: input.acknowledgedAt,
@@ -266,35 +260,6 @@ const createReport = async (t: TestContext, input: ReportInput) =>
       archived: input.archived ?? false,
       createdAt: now,
       updatedAt: input.updatedAt ?? now,
-    });
-  });
-
-interface RoutineInput {
-  agent?: "cto" | "dev" | "growth" | "sales" | "support";
-  organizationId: Id<"organizations">;
-  taskTemplate?: string;
-  title?: string;
-}
-
-const createRoutine = async (t: TestContext, input: RoutineInput) =>
-  t.run(async (ctx) => {
-    const now = Date.now();
-    return ctx.db.insert("autopilotRoutines", {
-      organizationId: input.organizationId,
-      title: input.title ?? "Daily review",
-      description: "Routine coverage",
-      agent: input.agent ?? "cto",
-      cronExpression: "* * * * *",
-      taskTemplate:
-        input.taskTemplate ??
-        JSON.stringify({
-          title: "Daily review task",
-          description: "Routine-created task",
-          priority: "high",
-        }),
-      enabled: true,
-      createdAt: now,
-      updatedAt: now,
     });
   });
 
@@ -331,7 +296,7 @@ const createSupportConversation = async (
 describe("autopilot regressions", () => {
   test("PM analysis does not route work directly to PM or Dev", () => {
     expect(
-      getPMAssignableAgents(["pm", "cto", "dev", "growth", "support", "sales"])
+      getPMAssignableRoles(["pm", "cto", "dev", "growth", "support", "sales"])
     ).toEqual(["cto", "growth", "support", "sales"]);
   });
 
@@ -357,7 +322,7 @@ describe("autopilot regressions", () => {
     const workItemId = await createWorkItem(t, {
       organizationId,
       status: "backlog",
-      assignedAgent: "pm",
+      assignedRole: "pm",
     });
 
     await t.mutation(internal.autopilot.autonomy.setAutonomyMode, {
@@ -382,7 +347,7 @@ describe("autopilot regressions", () => {
       const workItemId = await createWorkItem(t, {
         organizationId,
         status: "backlog",
-        assignedAgent: "pm",
+        assignedRole: "pm",
       });
       const authed = await createMemberSession(t, organizationId);
 
@@ -455,12 +420,15 @@ describe("autopilot regressions", () => {
     });
 
     await expect(
-      t.mutation(internal.autopilot.agents.ceo_tools.approveInboxItemForOrg, {
-        organizationId: scopedOrgId,
-        itemId: foreignReportId,
-        itemType: "report",
-        decision: "approved",
-      })
+      t.mutation(
+        internal.autopilot.role_skills.ceo_tools.approveInboxItemForOrg,
+        {
+          organizationId: scopedOrgId,
+          itemId: foreignReportId,
+          itemType: "report",
+          decision: "approved",
+        }
+      )
     ).rejects.toThrow("Review item does not belong to this organization");
 
     const foreignReport = await t.run(async (ctx) =>
@@ -474,7 +442,7 @@ describe("autopilot regressions", () => {
     const t = createTestContext();
     const organizationId = await createOrg(t);
     await createAutopilotConfig(t, organizationId, {
-      maxPendingTasksPerAgent: 3,
+      maxPendingTasksPerRole: 3,
       maxPendingTasksTotal: 9,
     });
     await createReport(t, { organizationId, needsReview: true });
@@ -490,14 +458,14 @@ describe("autopilot regressions", () => {
 
     expect(health.pendingApprovalCount).toBe(1);
     expect(stats.pendingReviewCount).toBe(1);
-    expect(Reflect.get(stats, "maxPendingTasksPerAgent")).toBe(3);
+    expect(Reflect.get(stats, "maxPendingTasksPerRole")).toBe(3);
     expect(Reflect.get(stats, "maxPendingTasksTotal")).toBe(9);
   });
 
   test("health surfaces critical issue when no GitHub repo is connected", async () => {
     const t = createTestContext();
     const organizationId = await createOrg(t);
-    await createAutopilotConfig(t, organizationId);
+    await createAutopilotConfig(t, organizationId, { supportEnabled: true });
     const authed = await createMemberSession(t, organizationId);
 
     const health = await authed.query(api.autopilot.health.getSystemHealth, {
@@ -566,7 +534,8 @@ describe("autopilot regressions", () => {
       await createAutopilotConfig(t, organizationId);
 
       await t.action(
-        internal.autopilot.agents.chain_producers.produceCodebaseUnderstanding,
+        internal.autopilot.role_skills.chain_producers
+          .produceCodebaseUnderstanding,
         { organizationId }
       );
 
@@ -581,7 +550,7 @@ describe("autopilot regressions", () => {
 
       const warning = logs.find(
         (entry) =>
-          entry.agent === "cto" &&
+          entry.role === "cto" &&
           entry.level === "warning" &&
           typeof entry.message === "string" &&
           entry.message.startsWith("Cannot produce codebase_understanding: ")
@@ -600,7 +569,7 @@ describe("autopilot regressions", () => {
       await createAutopilotConfig(t, organizationId);
       await t.run(async (ctx) => {
         const now = Date.now();
-        await ctx.db.insert("githubConnections", {
+        const githubConnectionId = await ctx.db.insert("githubConnections", {
           organizationId,
           installationId: "inst-3",
           accountType: "user",
@@ -610,14 +579,18 @@ describe("autopilot regressions", () => {
           createdAt: now,
           updatedAt: now,
         });
-        await ctx.db.insert("autopilotRepoAnalysis", {
+        await ctx.db.insert("repoAnalysis", {
           organizationId,
-          repoUrl: "https://github.com/test-user/example",
+          githubConnectionId,
+          status: "completed",
+          productAnalysis: "# Test\nSeed.",
           createdAt: now,
+          updatedAt: now,
+          completedAt: now,
         });
         await ctx.db.insert("autopilotActivityLog", {
           organizationId,
-          agent: "cto",
+          role: "cto",
           level: "warning",
           message:
             "Cannot produce codebase_understanding: no repo analysis available",
@@ -647,7 +620,7 @@ describe("autopilot regressions", () => {
       await createAutopilotConfig(t, organizationId);
       await t.run(async (ctx) => {
         const now = Date.now();
-        await ctx.db.insert("githubConnections", {
+        const githubConnectionId = await ctx.db.insert("githubConnections", {
           organizationId,
           installationId: "inst-2",
           accountType: "user",
@@ -657,10 +630,14 @@ describe("autopilot regressions", () => {
           createdAt: now,
           updatedAt: now,
         });
-        await ctx.db.insert("autopilotRepoAnalysis", {
+        await ctx.db.insert("repoAnalysis", {
           organizationId,
-          repoUrl: "https://github.com/test-user/example",
+          githubConnectionId,
+          status: "completed",
+          productAnalysis: "# Test\nSeed.",
           createdAt: now,
+          updatedAt: now,
+          completedAt: now,
         });
       });
       const authed = await createMemberSession(t, organizationId);
@@ -678,7 +655,7 @@ describe("autopilot regressions", () => {
   );
 
   test(
-    "listActivityPaginated returns ordered pages and filters by agent + level",
+    "listActivityPaginated returns ordered pages and filters by role + level",
     async () => {
       const t = createTestContext();
       const organizationId = await createOrg(t);
@@ -687,22 +664,22 @@ describe("autopilot regressions", () => {
         const base = Date.now();
         const seed = [
           {
-            agent: "cto" as const,
+            role: "cto" as const,
             level: "info" as const,
             message: "cto-info",
           },
           {
-            agent: "pm" as const,
+            role: "pm" as const,
             level: "warning" as const,
             message: "pm-warn",
           },
           {
-            agent: "cto" as const,
+            role: "cto" as const,
             level: "error" as const,
             message: "cto-error",
           },
           {
-            agent: "growth" as const,
+            role: "growth" as const,
             level: "success" as const,
             message: "growth-success",
           },
@@ -711,7 +688,7 @@ describe("autopilot regressions", () => {
           const entry = seed[i];
           await ctx.db.insert("autopilotActivityLog", {
             organizationId,
-            agent: entry.agent,
+            role: entry.role,
             level: entry.level,
             message: entry.message,
             createdAt: base + i,
@@ -736,7 +713,7 @@ describe("autopilot regressions", () => {
         {
           organizationId,
           paginationOpts: { numItems: 10, cursor: null },
-          agent: "cto",
+          role: "cto",
         }
       );
       const ctoMessages = filteredCto.page.map((entry) => entry.message);
@@ -769,7 +746,7 @@ describe("autopilot regressions", () => {
 
     const guard = await t.query(internal.autopilot.guards.checkGuards, {
       organizationId,
-      agent: "pm",
+      role: "pm",
     });
 
     expect(guard.allowed).toBe(true);
@@ -821,11 +798,11 @@ describe("autopilot regressions", () => {
       });
     });
 
-    const wake = await t.query(
-      internal.autopilot.heartbeat_conditions.checkWakeConditions,
+    const schedule = await t.query(
+      internal.autopilot.role_schedule.getRoleScheduleInternal,
       { organizationId }
     );
-    expect(wake.shouldWake.validator).toBe(true);
+    expect(schedule.find((e) => e.role === "validator")?.state).toBe("ready");
   });
 
   test("community draft context only includes validated publishable posts", async () => {
@@ -864,7 +841,8 @@ describe("autopilot regressions", () => {
     });
 
     const context = await t.query(
-      internal.autopilot.agents.growth.drafts.producer.getCommunityDraftContext,
+      internal.autopilot.role_skills.growth.drafts.producer
+        .getCommunityDraftContext,
       { organizationId }
     );
 
@@ -879,7 +857,7 @@ describe("autopilot regressions", () => {
   test("support wake signal uses untriaged support conversations, not support draft documents", async () => {
     const t = createTestContext();
     const organizationId = await createOrg(t);
-    await createAutopilotConfig(t, organizationId);
+    await createAutopilotConfig(t, organizationId, { supportEnabled: true });
     await t.run(async (ctx) => {
       const now = Date.now();
       await ctx.db.insert("autopilotDocuments", {
@@ -888,7 +866,7 @@ describe("autopilot regressions", () => {
         title: "Reply draft: old-conversation",
         content: "Draft reply",
         tags: ["support"],
-        sourceAgent: "support",
+        sourceRole: "support",
         status: "draft",
         needsReview: true,
         reviewType: "support_reply",
@@ -899,17 +877,19 @@ describe("autopilot regressions", () => {
     });
 
     const draftOnly = await t.query(
-      internal.autopilot.heartbeat_conditions.checkWakeConditions,
+      internal.autopilot.role_schedule.getRoleScheduleInternal,
       { organizationId }
     );
-    expect(draftOnly.shouldWake.support).toBe(false);
+    expect(draftOnly.find((e) => e.role === "support")?.state).not.toBe(
+      "ready"
+    );
 
     const conversationId = await createSupportConversation(t, organizationId);
     const untriaged = await t.query(
-      internal.autopilot.heartbeat_conditions.checkWakeConditions,
+      internal.autopilot.role_schedule.getRoleScheduleInternal,
       { organizationId }
     );
-    expect(untriaged.shouldWake.support).toBe(true);
+    expect(untriaged.find((e) => e.role === "support")?.state).toBe("ready");
 
     await t.run(async (ctx) => {
       const now = Date.now();
@@ -919,7 +899,7 @@ describe("autopilot regressions", () => {
         title: `Reply draft: ${conversationId}`,
         content: "Draft reply",
         tags: ["support"],
-        sourceAgent: "support",
+        sourceRole: "support",
         status: "draft",
         needsReview: true,
         reviewType: "support_reply",
@@ -930,65 +910,10 @@ describe("autopilot regressions", () => {
     });
 
     const triaged = await t.query(
-      internal.autopilot.heartbeat_conditions.checkWakeConditions,
+      internal.autopilot.role_schedule.getRoleScheduleInternal,
       { organizationId }
     );
-    expect(triaged.shouldWake.support).toBe(false);
-  });
-
-  test("routine evaluation creates due tasks only for runnable agents", async () => {
-    const t = createTestContext();
-    const activeOrgId = await createOrg(t);
-    const stoppedOrgId = await createOrg(t);
-    const disabledSalesOrgId = await createOrg(t);
-    await createAutopilotConfig(t, activeOrgId);
-    await createAutopilotConfig(t, stoppedOrgId, { autonomyMode: "stopped" });
-    await createAutopilotConfig(t, disabledSalesOrgId, {
-      salesEnabled: false,
-    });
-    await createRoutine(t, { organizationId: activeOrgId });
-    await createRoutine(t, { organizationId: stoppedOrgId });
-    await createRoutine(t, {
-      organizationId: disabledSalesOrgId,
-      agent: "sales",
-    });
-
-    const dispatched = await t.mutation(
-      internal.autopilot.routines.evaluateRoutines,
-      {}
-    );
-
-    const activeTasks = await t.run((ctx) =>
-      ctx.db
-        .query("autopilotWorkItems")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", activeOrgId)
-        )
-        .collect()
-    );
-    const stoppedTasks = await t.run((ctx) =>
-      ctx.db
-        .query("autopilotWorkItems")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", stoppedOrgId)
-        )
-        .collect()
-    );
-    const disabledTasks = await t.run((ctx) =>
-      ctx.db
-        .query("autopilotWorkItems")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", disabledSalesOrgId)
-        )
-        .collect()
-    );
-
-    expect(dispatched).toBe(1);
-    expect(activeTasks).toHaveLength(1);
-    expect(activeTasks[0].title).toBe("Daily review task");
-    expect(activeTasks[0].priority).toBe("high");
-    expect(stoppedTasks).toHaveLength(0);
-    expect(disabledTasks).toHaveLength(0);
+    expect(triaged.find((e) => e.role === "support")?.state).not.toBe("ready");
   });
 
   test("disabled configs are excluded from active heartbeat orgs", async () => {
@@ -1006,35 +931,6 @@ describe("autopilot regressions", () => {
     expect(enabledConfigs.map((config) => config.organizationId)).toEqual([
       activeOrgId,
     ]);
-  });
-
-  test("routine evaluation does not mark capped tasks as dispatched", async () => {
-    const t = createTestContext();
-    const organizationId = await createOrg(t);
-    await createAutopilotConfig(t, organizationId, {
-      maxPendingTasksPerAgent: 0,
-      maxPendingTasksTotal: 0,
-    });
-    const routineId = await createRoutine(t, { organizationId });
-
-    const dispatched = await t.mutation(
-      internal.autopilot.routines.evaluateRoutines,
-      {}
-    );
-
-    const routine = await t.run((ctx) => ctx.db.get(routineId));
-    const tasks = await t.run((ctx) =>
-      ctx.db
-        .query("autopilotWorkItems")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", organizationId)
-        )
-        .collect()
-    );
-
-    expect(dispatched).toBe(0);
-    expect(routine?.lastRunAt).toBeUndefined();
-    expect(tasks).toHaveLength(0);
   });
 
   test("resolved inbox queries return resolved review items", async () => {
@@ -1194,16 +1090,12 @@ describe("autopilot regressions", () => {
     expect(doc?.publishedAt).toBeUndefined();
   });
 
-  test("completion status only marks work done after a merge is observed", () => {
-    expect(resolveCompletionStatus({ merged: true })).toBe("done");
-    expect(resolveCompletionStatus({ merged: false })).toBe("in_review");
-    expect(resolveCompletionStatus({})).toBe("in_review");
-  });
-
   test("execution retries use bounded exponential backoff", () => {
-    expect(resolveRetryDelayMs({ retryCount: 0 })).toBe(5 * 60 * 1000);
-    expect(resolveRetryDelayMs({ retryCount: 1 })).toBe(10 * 60 * 1000);
-    expect(resolveRetryDelayMs({ retryCount: 3 })).toBeNull();
+    expect(resolveExecutionRetryDelayMs({ retryCount: 0 })).toBe(5 * 60 * 1000);
+    expect(resolveExecutionRetryDelayMs({ retryCount: 1 })).toBe(
+      10 * 60 * 1000
+    );
+    expect(resolveExecutionRetryDelayMs({ retryCount: 3 })).toBeNull();
   });
 
   test("manual retry sends cancelled tasks to the dispatchable queue", async () => {
@@ -1224,7 +1116,7 @@ describe("autopilot regressions", () => {
     expect(item?.status).toBe("todo");
   });
 
-  test("recorded agent costs stop the next guarded wake", async () => {
+  test("recorded role-skill costs stop the next guarded wake", async () => {
     const t = createTestContext();
     const organizationId = await createOrg(t);
     await createAutopilotConfig(t, organizationId, {
@@ -1238,66 +1130,10 @@ describe("autopilot regressions", () => {
 
     const guard = await t.query(internal.autopilot.guards.checkGuards, {
       organizationId,
-      agent: "pm",
+      role: "pm",
     });
 
     expect(guard.allowed).toBe(false);
     expect(guard.reason).toContain("Daily cost cap reached");
-  });
-
-  test("cancel task records provider cancellation failures", async () => {
-    const t = createTestContext();
-    const organizationId = await createOrg(t);
-    await createAutopilotConfig(t, organizationId);
-    const taskId = await createWorkItem(t, {
-      organizationId,
-      status: "in_progress",
-    });
-    const runId = await t.mutation(
-      internal.autopilot.task_mutations.createRun,
-      {
-        organizationId,
-        taskId,
-        adapter: "builtin",
-      }
-    );
-    await t.mutation(internal.autopilot.task_mutations.updateRun, {
-      runId,
-      status: "queued",
-      externalRef: "builtin:owner/repo#12",
-    });
-    await t.mutation(
-      internal.autopilot.config_mutations.upsertAdapterCredentials,
-      {
-        organizationId,
-        adapter: "builtin",
-        credentials: JSON.stringify({ githubToken: "ghp_test" }),
-      }
-    );
-    const originalFetch = globalThis.fetch;
-    const failingFetch: typeof fetch = async () =>
-      new Response("GitHub unavailable", { status: 500 });
-    globalThis.fetch = failingFetch;
-
-    try {
-      await t.action(internal.autopilot.execution_lifecycle.cancelTask, {
-        organizationId,
-        taskId,
-      });
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
-
-    const activity = await t.run((ctx) =>
-      ctx.db.query("autopilotActivityLog").collect()
-    );
-    expect(
-      activity.some(
-        (entry) =>
-          entry.level === "warning" &&
-          entry.message === "Provider cancellation failed" &&
-          entry.details?.includes("Failed to close PR #12: 500")
-      )
-    ).toBe(true);
   });
 });

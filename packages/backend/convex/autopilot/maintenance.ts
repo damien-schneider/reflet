@@ -1,5 +1,5 @@
 /**
- * Maintenance — periodic cleanup routines for the autopilot system.
+ * Maintenance — periodic cleanup jobs for the autopilot system.
  *
  * Handles document review expiration, stale document cleanup,
  * and knowledge staleness checks.
@@ -106,7 +106,7 @@ export const runKnowledgeStalenessCheck = internalMutation({
         if (isStale) {
           await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
             organizationId: config.organizationId,
-            agent: "system",
+            role: "system",
             level: "warning",
             message: `Knowledge doc "${doc.title}" (${doc.docType}) is stale — last updated ${doc.stalenessAlertDays}+ days ago`,
             action: "knowledge.stale",
@@ -158,7 +158,7 @@ export const cleanupOldActivityLogs = internalMutation({
 
 /**
  * Archive old documents that are in draft/published status and older than 60 days.
- * Archived documents are excluded from agent context queries.
+ * Archived documents are excluded from role-skill context queries.
  */
 export const archiveStaleDocuments = internalMutation({
   args: {},

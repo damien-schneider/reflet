@@ -29,7 +29,7 @@ function readRuntime(context: ToolContext): CodebaseRuntime {
     | undefined;
   if (!value) {
     throw new Error(
-      "Codebase request context missing. Set 'codebase' before invoking the agent."
+      "Codebase request context missing. Set 'codebase' before invoking the explorer."
     );
   }
   return value;

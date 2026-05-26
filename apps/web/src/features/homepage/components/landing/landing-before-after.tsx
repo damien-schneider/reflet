@@ -32,12 +32,12 @@ const BEFORE_ITEMS = [
 
 const AFTER_ITEMS = [
   {
-    label: "7 AI agents cost a fraction of one hire — and start in 5 minutes",
+    label: "7 role skills cost a fraction of one hire — and start in 5 minutes",
     icon: "⚡",
   },
   {
     label:
-      "PM creates initiatives, CTO writes specs, Dev ships PRs — all autonomous",
+      "PM creates initiatives, CTO writes specs, Validator blocks unsafe work",
     icon: "🤖",
   },
   {
@@ -45,7 +45,7 @@ const AFTER_ITEMS = [
     icon: "👑",
   },
   {
-    label: "Agents work 24/7 — your product improves while you sleep",
+    label: "The chain runs from real conditions while you sleep",
     icon: "🌙",
   },
   {
@@ -82,7 +82,7 @@ export default function LandingBeforeAfter() {
               <H2 className="mb-6" variant="landing">
                 {isAfter ? (
                   <>
-                    7 agents.{" "}
+                    7 role skills.{" "}
                     <span className="text-olive-600 dark:text-olive-400">
                       Zero employees.
                     </span>
@@ -132,7 +132,7 @@ export default function LandingBeforeAfter() {
                 transition={{ duration: 0.3 }}
               >
                 {isAfter
-                  ? "Reflet Autopilot provides 7 AI agents that run your product autonomously — from market research to shipped code to sales outreach. You stay in control as President."
+                  ? "Reflet Autopilot provides 7 role skills in one visible chain — from market research to validated delivery to sales outreach. You stay in control as President."
                   : "Building a product alone means wearing every hat. Hiring a team costs $600K+ and takes months. Most founders burn out before finding product-market fit."}
               </m.p>
             </m.div>

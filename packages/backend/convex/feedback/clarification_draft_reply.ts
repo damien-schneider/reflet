@@ -7,7 +7,7 @@ import {
   mutation,
   query,
 } from "../_generated/server";
-import { feedbackClarificationAgent } from "../ai/agent";
+import { feedbackClarificationRuntime } from "../ai/runtimes";
 import { getAuthUser } from "../shared/utils";
 
 // ============================================
@@ -151,7 +151,7 @@ export const clearDraftReply = mutation({
 // ============================================
 
 /**
- * Generate AI draft reply using the agent
+ * Generate AI draft reply using the AI runtime
  */
 export const generateDraftReplyAction = internalAction({
   args: { feedbackId: v.id("feedback") },
@@ -184,8 +184,8 @@ export const generateDraftReplyAction = internalAction({
     const contextString =
       contextParts.length > 0 ? `\n\n${contextParts.join("\n\n")}` : "";
 
-    // Generate draft reply using the agent
-    const result = await feedbackClarificationAgent.generateText(
+    // Generate draft reply using the AI runtime
+    const result = await feedbackClarificationRuntime.generateText(
       ctx,
       { userId: "system" },
       {

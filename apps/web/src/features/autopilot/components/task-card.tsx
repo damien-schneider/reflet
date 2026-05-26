@@ -92,7 +92,7 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
 
   const labelIds = (labelLinks ?? []).map((label) => label._id);
   const hasAssignee =
-    task.assignedAgent !== undefined || task.assigneeUserId !== undefined;
+    task.assignedRole !== undefined || task.assigneeUserId !== undefined;
 
   return (
     <div className="group relative grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-2 py-1.5">
@@ -124,7 +124,7 @@ export function TaskCard({ task }: { task: Doc<"autopilotWorkItems"> }) {
           />
           {hasAssignee ? (
             <InlineAssigneePopover
-              assignedAgent={task.assignedAgent}
+              assignedRole={task.assignedRole}
               assigneeUserId={task.assigneeUserId}
               organizationId={task.organizationId}
               workItemId={task._id}

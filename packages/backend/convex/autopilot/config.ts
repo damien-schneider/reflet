@@ -1,5 +1,5 @@
 /**
- * Autopilot configuration — core queries for config and agents.
+ * Autopilot configuration — core queries for config and role skills.
  *
  * Mutations live in mutations/config.ts, task cap queries in config_task_caps.ts.
  */
@@ -17,17 +17,19 @@ import { autonomyLevel, autonomyMode } from "./schema/validators";
 const autopilotConfigValidator = v.object({
   _creationTime: v.number(),
   _id: v.id("autopilotConfig"),
-  activationOverrides: v.optional(v.string()),
   autonomyLevel,
   autonomyMode: v.optional(autonomyMode),
   budgetHardStop: v.optional(v.boolean()),
   budgetWarnPercent: v.optional(v.number()),
   ceoChatThreadId: v.optional(v.string()),
   chainEnabled: v.optional(v.boolean()),
+  costUsedThisWeekUsd: v.optional(v.number()),
   costUsedTodayUsd: v.optional(v.number()),
   createdAt: v.number(),
   ctoEnabled: v.optional(v.boolean()),
   dailyCostCapUsd: v.optional(v.number()),
+  weekResetAt: v.optional(v.number()),
+  weeklyCostCapUsd: v.optional(v.number()),
   emailBlocklist: v.optional(v.array(v.string())),
   emailDailyLimit: v.optional(v.number()),
   enabled: v.boolean(),
@@ -36,13 +38,13 @@ const autopilotConfigValidator = v.object({
   intelligenceEnabled: v.optional(v.boolean()),
   maxActiveInitiatives: v.optional(v.number()),
   maxActiveStoriesPerInitiative: v.optional(v.number()),
-  maxPendingTasksPerAgent: v.optional(v.number()),
+  maxPendingTasksPerRole: v.optional(v.number()),
   maxPendingTasksTotal: v.optional(v.number()),
   maxSignalsPerDay: v.optional(v.number()),
   maxTasksPerDay: v.number(),
   organizationId: v.id("organizations"),
   orgEmailAddress: v.optional(v.string()),
-  perAgentDailyCapUsd: v.optional(v.string()),
+  perRoleDailyCapUsd: v.optional(v.string()),
   pmEnabled: v.optional(v.boolean()),
   requireArchitectReview: v.boolean(),
   salesEnabled: v.optional(v.boolean()),
@@ -60,7 +62,6 @@ const autopilotConfigValidator = v.object({
       utility: v.number(),
     })
   ),
-  wakeThresholdOpenTasks: v.optional(v.number()),
 });
 
 /**
@@ -110,12 +111,12 @@ export const canDispatchTask = internalQuery({
 });
 
 /**
- * Check if a specific agent is enabled for an org.
+ * Check if a specific role skill is enabled for an org.
  */
-export const isAgentEnabled = internalQuery({
+export const isRoleSkillEnabled = internalQuery({
   args: {
     organizationId: v.id("organizations"),
-    agent: v.string(),
+    role: v.string(),
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
@@ -130,14 +131,14 @@ export const isAgentEnabled = internalQuery({
       return false;
     }
 
-    return isAgentEnabledInConfig(args.agent, config);
+    return isRoleSkillEnabledInConfig(args.role, config);
   },
 });
 
 /**
- * All agent names and their corresponding config fields.
+ * All role-skill names and their corresponding config fields.
  */
-const AGENT_CONFIG_FIELDS = [
+const ROLE_CONFIG_FIELDS = [
   { name: "pm", field: "pmEnabled" },
   { name: "cto", field: "ctoEnabled" },
   { name: "growth", field: "growthEnabled" },
@@ -161,8 +162,8 @@ async function isOrgAutopilotAllowed(
   return tier === "pro";
 }
 
-export function isAgentEnabledInConfig(
-  agent: string,
+export function isRoleSkillEnabledInConfig(
+  role: string,
   config: {
     ctoEnabled?: boolean;
     growthEnabled?: boolean;
@@ -171,7 +172,7 @@ export function isAgentEnabledInConfig(
     supportEnabled?: boolean;
   }
 ): boolean {
-  switch (agent) {
+  switch (role) {
     case "pm":
       return config.pmEnabled !== false;
     case "cto":
@@ -187,7 +188,7 @@ export function isAgentEnabledInConfig(
   }
 }
 
-async function fetchEnabledAgents(
+async function fetchEnabledRoleSkills(
   ctx: { db: QueryCtx["db"] },
   organizationId: Id<"organizations">
 ): Promise<string[]> {
@@ -200,20 +201,20 @@ async function fetchEnabledAgents(
     return [];
   }
 
-  return AGENT_CONFIG_FIELDS.filter(({ name }) =>
-    isAgentEnabledInConfig(name, config)
+  return ROLE_CONFIG_FIELDS.filter(({ name }) =>
+    isRoleSkillEnabledInConfig(name, config)
   ).map(({ name }) => name);
 }
 
 /**
- * Get the list of currently enabled agent names for an org.
+ * Get the list of currently enabled role skills for an org.
  * Returns an empty array if autopilot is disabled.
  */
-export const getEnabledAgents = internalQuery({
+export const getEnabledRoleSkills = internalQuery({
   args: { organizationId: v.id("organizations") },
   returns: v.array(v.string()),
   handler: async (ctx, args) => {
-    return await fetchEnabledAgents(ctx, args.organizationId);
+    return await fetchEnabledRoleSkills(ctx, args.organizationId);
   },
 });
 

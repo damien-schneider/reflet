@@ -1,0 +1,483 @@
+/**
+ * CEO coordination tools — enables the CEO skill to take real actions, not just talk.
+ *
+ * Factory function creates org-scoped tools that can call Convex
+ * mutations and queries via the Convex AI runtime tool context.
+ */
+
+import { createTool, type ToolCtx } from "@convex-dev/agent";
+import { v } from "convex/values";
+import { z } from "zod";
+import { internal } from "../../_generated/api";
+import type { DataModel, Id } from "../../_generated/dataModel";
+import { internalMutation, type MutationCtx } from "../../_generated/server";
+
+type CeoCtx = ToolCtx<DataModel>;
+type ReviewDecision = "approved" | "rejected";
+interface ScopedApprovalArgs {
+  ctx: MutationCtx;
+  decision: ReviewDecision;
+  itemId: string;
+  now: number;
+  organizationId: Id<"organizations">;
+}
+
+const reviewItemType = v.union(
+  v.literal("work_item"),
+  v.literal("document"),
+  v.literal("report")
+);
+
+const reviewDecision = v.union(v.literal("approved"), v.literal("rejected"));
+
+const assertScopedOrganization = (
+  itemOrganizationId: Id<"organizations">,
+  organizationId: Id<"organizations">
+) => {
+  if (itemOrganizationId !== organizationId) {
+    throw new Error("Review item does not belong to this organization");
+  }
+};
+
+function resolveApprovedWorkStatus(item: {
+  reviewType?: string;
+  status: string;
+}): "done" | "todo" {
+  if (item.status === "in_review" && item.reviewType === "pr_review") {
+    return "done";
+  }
+  return "todo";
+}
+
+const approveWorkItemForOrg = async ({
+  ctx,
+  organizationId,
+  itemId,
+  decision,
+  now,
+}: ScopedApprovalArgs) => {
+  const workItemId = ctx.db.normalizeId("autopilotWorkItems", itemId);
+  if (!workItemId) {
+    throw new Error("Invalid work item ID");
+  }
+
+  const item = await ctx.db.get(workItemId);
+  if (!item) {
+    throw new Error("Work item not found");
+  }
+  assertScopedOrganization(item.organizationId, organizationId);
+
+  const status =
+    decision === "rejected" ? "cancelled" : resolveApprovedWorkStatus(item);
+  await ctx.db.patch(workItemId, {
+    needsReview: false,
+    reviewedAt: now,
+    reviewType: undefined,
+    status,
+    updatedAt: now,
+  });
+
+  await ctx.db.insert("autopilotActivityLog", {
+    organizationId,
+    workItemId,
+    role: "ceo",
+    level: decision === "rejected" ? "warning" : "success",
+    message: `CEO ${decision} work item: ${item.title}`,
+    createdAt: now,
+  });
+};
+
+const approveDocumentForOrg = async ({
+  ctx,
+  organizationId,
+  itemId,
+  decision,
+  now,
+}: ScopedApprovalArgs) => {
+  const documentId = ctx.db.normalizeId("autopilotDocuments", itemId);
+  if (!documentId) {
+    throw new Error("Invalid document ID");
+  }
+
+  const document = await ctx.db.get(documentId);
+  if (!document) {
+    throw new Error("Document not found");
+  }
+  assertScopedOrganization(document.organizationId, organizationId);
+
+  await ctx.db.patch(documentId, {
+    needsReview: false,
+    reviewedAt: now,
+    status: decision === "rejected" ? "archived" : "published",
+    updatedAt: now,
+  });
+
+  await ctx.db.insert("autopilotActivityLog", {
+    organizationId,
+    role: "ceo",
+    level: decision === "rejected" ? "warning" : "success",
+    message: `CEO ${decision} document: ${document.title}`,
+    createdAt: now,
+  });
+};
+
+const approveReportForOrg = async ({
+  ctx,
+  organizationId,
+  itemId,
+  decision,
+  now,
+}: ScopedApprovalArgs) => {
+  const reportId = ctx.db.normalizeId("autopilotReports", itemId);
+  if (!reportId) {
+    throw new Error("Invalid report ID");
+  }
+
+  const report = await ctx.db.get(reportId);
+  if (!report) {
+    throw new Error("Report not found");
+  }
+  assertScopedOrganization(report.organizationId, organizationId);
+
+  await ctx.db.patch(reportId, {
+    archived: decision === "rejected",
+    needsReview: false,
+    reviewedAt: now,
+    acknowledgedAt: decision === "approved" ? now : undefined,
+    updatedAt: now,
+  });
+
+  await ctx.db.insert("autopilotActivityLog", {
+    organizationId,
+    role: "ceo",
+    level: decision === "rejected" ? "warning" : "success",
+    message: `CEO ${decision} report: ${report.title}`,
+    createdAt: now,
+  });
+};
+
+export const approveInboxItemForOrg = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    itemId: v.string(),
+    itemType: reviewItemType,
+    decision: reviewDecision,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const approval = {
+      ctx,
+      organizationId: args.organizationId,
+      itemId: args.itemId,
+      decision: args.decision,
+      now: Date.now(),
+    };
+
+    if (args.itemType === "work_item") {
+      await approveWorkItemForOrg(approval);
+      return null;
+    }
+
+    if (args.itemType === "document") {
+      await approveDocumentForOrg(approval);
+      return null;
+    }
+
+    await approveReportForOrg(approval);
+    return null;
+  },
+});
+
+/**
+ * Create org-scoped CEO tools. The organizationId is captured in the
+ * closure so tools don't need it from the LLM.
+ */
+export const makeCeoToolsForOrg = (organizationId: Id<"organizations">) => ({
+  createTask: createTool<
+    {
+      title: string;
+      description: string;
+      priority: "critical" | "high" | "medium" | "low";
+      assignedRole: "pm" | "cto" | "growth" | "support" | "sales";
+    },
+    string,
+    CeoCtx
+  >({
+    description:
+      "Create a new autopilot task assigned to a specific role skill. Use when the user asks to create work, fix something, or take action.",
+    inputSchema: z.object({
+      title: z.string().describe("Short, descriptive task title"),
+      description: z
+        .string()
+        .describe("Detailed description of what needs to be done"),
+      priority: z
+        .enum(["critical", "high", "medium", "low"])
+        .describe("Task priority"),
+      assignedRole: z
+        .enum(["pm", "cto", "growth", "support", "sales"])
+        .describe("Role skill to assign this task to"),
+    }),
+    execute: async (ctx, input) => {
+      const taskId = await ctx.runMutation(
+        internal.autopilot.task_mutations.createTask,
+        {
+          organizationId,
+          title: input.title,
+          description: input.description,
+          priority: input.priority,
+          assignedRole: input.assignedRole,
+          createdBy: "ceo_chat",
+        }
+      );
+      return `Task created: "${input.title}" (${input.priority} priority, assigned to ${input.assignedRole} role skill). ID: ${taskId}`;
+    },
+  }),
+
+  getRoleSkillStatuses: createTool<Record<string, never>, string, CeoCtx>({
+    description:
+      "Get the current status of all autopilot role skills: enabled/disabled, activity counts, pending tasks.",
+    inputSchema: z.object({}),
+    execute: async (ctx) => {
+      const statuses = await ctx.runQuery(
+        internal.autopilot.context.getAllRoleSkillStatus,
+        { organizationId }
+      );
+      const lines = statuses.map(
+        (s: {
+          role: string;
+          enabled: boolean;
+          recentActivityCount: number;
+          activeTaskCount: number;
+          pendingInboxCount: number;
+        }) =>
+          `${s.role}: ${s.enabled ? "enabled" : "disabled"} | ${s.recentActivityCount} recent | ${s.activeTaskCount} tasks | ${s.pendingInboxCount} inbox`
+      );
+      return `Role Skill Statuses:\n${lines.join("\n")}`;
+    },
+  }),
+
+  getRecentTasks: createTool<
+    {
+      status:
+        | "backlog"
+        | "cancelled"
+        | "done"
+        | "in_progress"
+        | "in_review"
+        | "todo"
+        | null;
+    },
+    string,
+    CeoCtx
+  >({
+    description: "Get recent autopilot tasks, optionally filtered by status.",
+    inputSchema: z.object({
+      status: z
+        .enum([
+          "backlog",
+          "todo",
+          "in_progress",
+          "in_review",
+          "done",
+          "cancelled",
+        ])
+        .nullable()
+        .describe("Filter by task status, or null for all statuses"),
+    }),
+    execute: async (ctx, input) => {
+      const tasks = await ctx.runQuery(
+        internal.autopilot.task_queries.getTasksByOrg,
+        {
+          organizationId,
+          status: input.status ?? undefined,
+        }
+      );
+      if (tasks.length === 0) {
+        return input.status
+          ? `No ${input.status} tasks found.`
+          : "No tasks found.";
+      }
+      const lines = tasks
+        .slice(0, 20)
+        .map(
+          (t: {
+            status: string;
+            title: string;
+            priority: string;
+            assignedRole?: string;
+          }) =>
+            `- [${t.status}] ${t.title} (${t.priority}, ${t.assignedRole ?? "unassigned"})`
+        );
+      return `Tasks (${tasks.length} total):\n${lines.join("\n")}`;
+    },
+  }),
+
+  triggerPMAnalysis: createTool<Record<string, never>, string, CeoCtx>({
+    description:
+      "Trigger an immediate PM analysis to scan feedback and generate new tasks. Use when role skills are idle or when tasks are needed.",
+    inputSchema: z.object({}),
+    execute: async (ctx) => {
+      await ctx.runAction(
+        internal.autopilot.role_skills.pm.analysis.runPMAnalysis,
+        {
+          organizationId,
+        }
+      );
+      return "PM analysis triggered. New tasks will be created based on current feedback and intelligence data.";
+    },
+  }),
+
+  getRecentActivity: createTool<{ limit: number | null }, string, CeoCtx>({
+    description:
+      "Get recent activity log entries showing what role skills have been doing.",
+    inputSchema: z.object({
+      limit: z
+        .number()
+        .min(1)
+        .max(50)
+        .nullable()
+        .describe("Number of entries (default 15, null for default)"),
+    }),
+    execute: async (ctx, input) => {
+      const activities = await ctx.runQuery(
+        internal.autopilot.task_queries.getRecentActivity,
+        { organizationId, limit: input.limit ?? 15 }
+      );
+      if (activities.length === 0) {
+        return "No recent activity found.";
+      }
+      const lines = activities.map(
+        (a: {
+          level: string;
+          role: string;
+          message: string;
+          createdAt: number;
+        }) => {
+          const ago = Math.round((Date.now() - a.createdAt) / 60_000);
+          return `[${a.level}] ${a.role}: ${a.message} (${ago}m ago)`;
+        }
+      );
+      return `Recent Activity:\n${lines.join("\n")}`;
+    },
+  }),
+
+  approveInboxItem: createTool<
+    {
+      itemId: string;
+      itemType: "document" | "report" | "work_item";
+      decision: "approved" | "rejected";
+    },
+    string,
+    CeoCtx
+  >({
+    description:
+      "Approve or reject a pending review item (work item or document). Use when items need human decision.",
+    inputSchema: z.object({
+      itemId: z.string().describe("The work item or document ID to act on"),
+      itemType: z
+        .enum(["work_item", "document", "report"])
+        .describe("Whether this is a work item, document, or report"),
+      decision: z
+        .enum(["approved", "rejected"])
+        .describe("Approve or reject the item"),
+    }),
+    execute: async (ctx, input) => {
+      await ctx.runMutation(
+        internal.autopilot.role_skills.ceo_tools.approveInboxItemForOrg,
+        {
+          organizationId,
+          itemId: input.itemId,
+          itemType: input.itemType,
+          decision: input.decision,
+        }
+      );
+      return `Review item ${input.decision}.`;
+    },
+  }),
+
+  toggleRoleSkill: createTool<
+    { enabled: boolean; role: string },
+    string,
+    CeoCtx
+  >({
+    description: "Enable or disable a specific role skill.",
+    inputSchema: z.object({
+      role: z
+        .enum(["pm", "cto", "growth", "support", "sales"])
+        .describe("Role skill to toggle"),
+      enabled: z.boolean().describe("Enable (true) or disable (false)"),
+    }),
+    execute: async (ctx, input) => {
+      const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
+        organizationId,
+      });
+      if (!config) {
+        return "Error: Autopilot not configured.";
+      }
+      const field = `${input.role}Enabled`;
+      await ctx.runMutation(internal.autopilot.config_mutations.updateConfig, {
+        configId: config._id,
+        [field]: input.enabled,
+      });
+      return `${input.role} role skill ${input.enabled ? "enabled" : "disabled"}.`;
+    },
+  }),
+
+  setAutonomyMode: createTool<
+    { mode: "supervised" | "full_auto" | "stopped" },
+    string,
+    CeoCtx
+  >({
+    description:
+      "Change the autonomy mode. 'supervised' requires approval for external actions, 'full_auto' executes with delay, 'stopped' pauses everything.",
+    inputSchema: z.object({
+      mode: z
+        .enum(["supervised", "full_auto", "stopped"])
+        .describe("The autonomy mode to set"),
+    }),
+    execute: async (ctx, input) => {
+      await ctx.runMutation(internal.autopilot.autonomy.setAutonomyMode, {
+        organizationId,
+        mode: input.mode,
+      });
+      return `Autonomy mode set to ${input.mode}.`;
+    },
+  }),
+
+  getPendingInbox: createTool<Record<string, never>, string, CeoCtx>({
+    description:
+      "Get pending review items that need approval. Shows items waiting for human review.",
+    inputSchema: z.object({}),
+    execute: async (ctx) => {
+      const detailed = await ctx.runQuery(
+        internal.autopilot.role_skills.ceo.queries.getDetailedCEOContext,
+        { organizationId }
+      );
+      if (detailed.reviewSummaries.length === 0) {
+        return "No pending review items.";
+      }
+      const lines = detailed.reviewSummaries.map(
+        (item: { title: string; type: string; priority: string }) =>
+          `- [${item.priority}] ${item.title} (${item.type})`
+      );
+      return `Pending Review (${detailed.reviewSummaries.length}):\n${lines.join("\n")}`;
+    },
+  }),
+
+  getCosts: createTool<Record<string, never>, string, CeoCtx>({
+    description: "Get current cost usage, limits, and task quotas.",
+    inputSchema: z.object({}),
+    execute: async (ctx) => {
+      const config = await ctx.runQuery(internal.autopilot.config.getConfig, {
+        organizationId,
+      });
+      if (!config) {
+        return "Autopilot not configured.";
+      }
+      const costLine = config.dailyCostCapUsd
+        ? `$${config.costUsedTodayUsd ?? 0} / $${config.dailyCostCapUsd}`
+        : `$${config.costUsedTodayUsd ?? 0} (no cap)`;
+      return `Cost today: ${costLine} | Tasks: ${config.tasksUsedToday}/${config.maxTasksPerDay}`;
+    },
+  }),
+});

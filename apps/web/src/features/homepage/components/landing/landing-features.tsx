@@ -2,7 +2,7 @@
 
 /*
  * Features bento grid — visual-first, interaction-rich cards.
- * Showcasing Autopilot's autonomous AI agent capabilities.
+ * Showcasing Autopilot's visible role-skill runtime.
  */
 
 import {
@@ -21,35 +21,35 @@ import { cn } from "@/lib/utils";
 
 const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
-// ─── Mini UI: Agent Grid ─────────────────────────────────────────────────────
+// ─── Mini UI: Role Skill Grid ─────────────────────────────────────────────────
 
-const AGENT_ROLES = [
+const ROLE_SKILL_ITEMS = [
   { name: "CEO", color: "bg-violet-500" },
   { name: "PM", color: "bg-blue-500" },
   { name: "CTO", color: "bg-sky-500" },
-  { name: "Dev", color: "bg-emerald-500" },
+  { name: "Validator", color: "bg-emerald-500" },
   { name: "Growth", color: "bg-amber-500" },
   { name: "Sales", color: "bg-rose-500" },
   { name: "Support", color: "bg-teal-500" },
 ] as const;
 
-function MiniAgentGrid() {
+function MiniRoleSkillGrid() {
   return (
     <div className="grid grid-cols-4 gap-1.5">
-      {AGENT_ROLES.map((agent, i) => (
+      {ROLE_SKILL_ITEMS.map((roleSkill, i) => (
         <div
-          className="group/agent flex flex-col items-center gap-1 rounded-lg bg-muted/40 px-1 py-1.5 transition-all duration-300 hover:bg-muted/60 dark:bg-sidebar/50 dark:hover:bg-sidebar/70"
-          key={agent.name}
+          className="group/role-skill flex flex-col items-center gap-1 rounded-lg bg-muted/40 px-1 py-1.5 transition-all duration-300 hover:bg-muted/60 dark:bg-sidebar/50 dark:hover:bg-sidebar/70"
+          key={roleSkill.name}
           style={{ transitionDelay: `${i * 30}ms` }}
         >
           <div
             className={cn(
               "size-2 rounded-full transition-transform duration-500 group-hover:scale-110",
-              agent.color
+              roleSkill.color
             )}
           />
-          <span className="font-medium text-[7px] text-muted-foreground transition-colors group-hover/agent:text-foreground">
-            {agent.name}
+          <span className="font-medium text-[7px] text-muted-foreground transition-colors group-hover/role-skill:text-foreground">
+            {roleSkill.name}
           </span>
         </div>
       ))}
@@ -63,18 +63,22 @@ function MiniSharedBoard() {
   return (
     <div className="space-y-2">
       {[
-        { agent: "PM", action: "Created initiative", color: "bg-blue-500" },
-        { agent: "CTO", action: "Wrote spec", color: "bg-sky-500" },
-        { agent: "Dev", action: "Opened PR #42", color: "bg-emerald-500" },
+        { role: "PM", action: "Created initiative", color: "bg-blue-500" },
+        { role: "CTO", action: "Wrote spec", color: "bg-sky-500" },
+        {
+          role: "Validator",
+          action: "Blocked risky delivery",
+          color: "bg-emerald-500",
+        },
       ].map((item, i) => (
         <div
           className="flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-1.5 transition-transform duration-300 group-hover:translate-x-0.5 dark:bg-sidebar/50"
-          key={item.agent}
+          key={item.role}
           style={{ transitionDelay: `${i * 60}ms` }}
         >
           <div className={cn("size-1.5 rounded-full", item.color)} />
           <span className="font-medium text-[9px] text-foreground">
-            {item.agent}
+            {item.role}
           </span>
           <span className="text-[9px] text-muted-foreground">
             {item.action}
@@ -150,7 +154,7 @@ function MiniKnowledgeBase() {
       </div>
       <div className="flex items-center gap-1.5 rounded-lg border border-emerald-200/50 bg-emerald-50/50 px-2.5 py-1.5 dark:border-emerald-500/10 dark:bg-emerald-500/5">
         <span className="text-[8px] text-emerald-600 dark:text-emerald-400">
-          ↻ Change cascaded to 4 agents
+          Change cascaded to 4 branches
         </span>
       </div>
     </div>
@@ -163,14 +167,14 @@ function MiniCostGuards() {
   return (
     <div className="space-y-2">
       {[
-        { agent: "Dev", used: 75, limit: "$50/day" },
-        { agent: "Growth", used: 30, limit: "$20/day" },
-        { agent: "Sales", used: 90, limit: "$30/day" },
+        { role: "CTO", used: 75, limit: "$50/day" },
+        { role: "Growth", used: 30, limit: "$20/day" },
+        { role: "Sales", used: 90, limit: "$30/day" },
       ].map((item) => (
-        <div className="space-y-1" key={item.agent}>
+        <div className="space-y-1" key={item.role}>
           <div className="flex items-center justify-between">
             <span className="font-medium text-[9px] text-foreground">
-              {item.agent}
+              {item.role}
             </span>
             <span className="text-[8px] text-muted-foreground">
               {item.limit}
@@ -195,11 +199,11 @@ function MiniCostGuards() {
 
 const FEATURES = [
   {
-    id: "agents",
+    id: "role-skills",
     icon: Robot,
     accent: "text-violet-500",
     accentBg: "bg-violet-500/10 dark:bg-violet-500/15",
-    title: "7 AI Agents",
+    title: "7 Role Skills",
     span: "sm:col-span-2",
   },
   {
@@ -237,7 +241,7 @@ const FEATURES = [
 ] as const;
 
 const MINI_UI_MAP: Record<string, () => JSX.Element> = {
-  agents: MiniAgentGrid,
+  "role-skills": MiniRoleSkillGrid,
   board: MiniSharedBoard,
   autonomy: MiniAutonomyModes,
   knowledge: MiniKnowledgeBase,
@@ -265,10 +269,8 @@ export default function LandingFeatures() {
               Your autonomous AI company
             </Text>
             <H2 className="mb-4" variant="landing">
-              7 agents.{" "}
-              <span className="text-muted-foreground">
-                Zero employees needed.
-              </span>
+              7 role skills.{" "}
+              <span className="text-muted-foreground">One visible chain.</span>
             </H2>
           </m.div>
 

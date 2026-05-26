@@ -145,7 +145,8 @@ export function CeoChatPanel({
                   Your strategic AI advisor
                 </p>
                 <p className="max-w-[200px] text-muted-foreground/60 text-xs leading-relaxed">
-                  Ask about strategy, metrics, agent performance, or next steps
+                  Ask about strategy, metrics, role-skill performance, or next
+                  steps
                 </p>
               </div>
             </div>

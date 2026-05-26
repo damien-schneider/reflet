@@ -9,7 +9,7 @@ export const createKnowledgeDoc = internalMutation({
   args: {
     organizationId: v.id("organizations"),
     docType: knowledgeDocType,
-    ownerAgent: v.string(),
+    ownerRole: v.string(),
     title: v.string(),
     contentFull: v.string(),
     contentSummary: v.string(),
@@ -32,7 +32,7 @@ export const createKnowledgeDoc = internalMutation({
     const docId = await ctx.db.insert("autopilotKnowledgeDocs", {
       organizationId: args.organizationId,
       docType: args.docType,
-      ownerAgent: args.ownerAgent,
+      ownerRole: args.ownerRole,
       title: args.title,
       contentFull: args.contentFull,
       contentSummary: args.contentSummary,
@@ -47,8 +47,8 @@ export const createKnowledgeDoc = internalMutation({
       docId,
       version: 1,
       content: args.contentFull,
-      editedBy: "agent",
-      editingAgent: args.ownerAgent,
+      editedBy: "role_skill",
+      editingRole: args.ownerRole,
       createdAt: now,
     });
 
@@ -62,7 +62,7 @@ export const updateKnowledgeDoc = internalMutation({
     contentFull: v.string(),
     contentSummary: v.string(),
     editedBy: knowledgeEditedBy,
-    editingAgent: v.optional(v.string()),
+    editingRole: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -73,7 +73,7 @@ export const updateKnowledgeDoc = internalMutation({
     }
 
     if (
-      args.editedBy === "agent" &&
+      args.editedBy === "role_skill" &&
       doc.userEditProtectedUntil &&
       doc.userEditProtectedUntil > now
     ) {
@@ -100,7 +100,7 @@ export const updateKnowledgeDoc = internalMutation({
       version: newVersion,
       content: args.contentFull,
       editedBy: args.editedBy,
-      editingAgent: args.editingAgent,
+      editingRole: args.editingRole,
       createdAt: now,
     });
 

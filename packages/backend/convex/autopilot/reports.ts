@@ -4,7 +4,7 @@
 
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
-import { assignedAgent, priority } from "./schema/validators";
+import { assignedRole, priority } from "./schema/validators";
 
 const reportType = v.union(
   v.literal("daily"),
@@ -41,7 +41,7 @@ export const createReport = internalMutation({
         priority,
       })
     ),
-    sourceAgent: v.optional(assignedAgent),
+    sourceRole: v.optional(assignedRole),
     tags: v.optional(v.array(v.string())),
     needsReview: v.optional(v.boolean()),
   },
@@ -56,7 +56,7 @@ export const createReport = internalMutation({
       healthScore: args.healthScore,
       sections: args.sections,
       recommendations: args.recommendations,
-      sourceAgent: args.sourceAgent,
+      sourceRole: args.sourceRole,
       tags: args.tags ?? [],
       needsReview: args.needsReview ?? false,
       archived: false,

@@ -262,7 +262,7 @@ export const setAutonomyMode = internalMutation({
 
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
-        agent: "system",
+        role: "system",
         level: "warning",
         message: `Autopilot stopped — ${inProgressItems.length} work items paused`,
       });
@@ -292,7 +292,7 @@ export const setAutonomyMode = internalMutation({
 
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
-        agent: "system",
+        role: "system",
         level: "success",
         message: `Autopilot resumed in ${args.mode} mode — ${backlogItems.length} work items resumed`,
       });
@@ -309,7 +309,7 @@ export const setAutonomyMode = internalMutation({
 
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      agent: "system",
+      role: "system",
       level: "info",
       message: `Autonomy mode changed to ${args.mode}`,
     });

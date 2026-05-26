@@ -44,8 +44,8 @@ describe("HealthBanner — chain blocker surfacing", () => {
         },
       ],
       lastActivity: null,
-      enabledAgentCount: 3,
-      totalAgentCount: 6,
+      enabledRoleCount: 3,
+      totalRoleCount: 6,
       pendingApprovalCount: 0,
     });
 
@@ -73,8 +73,8 @@ describe("HealthBanner — chain blocker surfacing", () => {
         },
       ],
       lastActivity: null,
-      enabledAgentCount: 3,
-      totalAgentCount: 6,
+      enabledRoleCount: 3,
+      totalRoleCount: 6,
       pendingApprovalCount: 0,
     });
 
@@ -89,8 +89,8 @@ describe("HealthBanner — chain blocker surfacing", () => {
       status: "healthy",
       issues: [],
       lastActivity: Date.now(),
-      enabledAgentCount: 6,
-      totalAgentCount: 6,
+      enabledRoleCount: 6,
+      totalRoleCount: 6,
       pendingApprovalCount: 0,
     });
 

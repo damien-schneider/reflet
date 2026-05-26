@@ -8,7 +8,7 @@ import { getAuthUser } from "../../shared/utils";
 import { allocateWorkItemIdentifier } from "../lib/identifier";
 import { requireOwnedWorkItem } from "../ownership";
 import {
-  assignedAgent,
+  assignedRole,
   priority,
   workItemStatus,
   workItemType,
@@ -23,7 +23,7 @@ export const createWorkItem = mutation({
     description: v.string(),
     priority,
     parentId: v.optional(v.id("autopilotWorkItems")),
-    assignedAgent: v.optional(assignedAgent),
+    assignedRole: v.optional(assignedRole),
     assigneeUserId: v.optional(v.string()),
     dueDate: v.optional(v.number()),
     targetDate: v.optional(v.number()),
@@ -62,7 +62,7 @@ export const createWorkItem = mutation({
       description: args.description,
       status: args.status ?? "backlog",
       priority: args.priority,
-      assignedAgent: args.assignedAgent,
+      assignedRole: args.assignedRole,
       assigneeUserId: args.assigneeUserId,
       dueDate: args.dueDate,
       targetDate: args.targetDate,
@@ -86,7 +86,7 @@ export const createWorkItem = mutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: args.organizationId,
       workItemId,
-      agent: "system",
+      role: "system",
       level: "info",
       message: `User created ${args.type}: ${args.title}`,
       details: `Priority: ${args.priority} • ${identifier}`,
@@ -104,7 +104,7 @@ export const updateWorkItem = mutation({
     description: v.optional(v.string()),
     status: v.optional(workItemStatus),
     priority: v.optional(priority),
-    assignedAgent: v.optional(assignedAgent),
+    assignedRole: v.optional(assignedRole),
     assigneeUserId: v.optional(v.string()),
     dueDate: v.optional(v.number()),
     targetDate: v.optional(v.number()),
@@ -172,7 +172,7 @@ export const deleteWorkItem = mutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: item.organizationId,
       workItemId: args.workItemId,
-      agent: "system",
+      role: "system",
       level: "warning",
       message: `Work item cancelled: ${item.title}`,
       createdAt: Date.now(),
@@ -186,9 +186,9 @@ export const assignWorkItem = mutation({
   args: {
     workItemId: v.id("autopilotWorkItems"),
     assigneeUserId: v.optional(v.string()),
-    assignedAgent: v.optional(assignedAgent),
+    assignedRole: v.optional(assignedRole),
     clearAssigneeUser: v.optional(v.boolean()),
-    clearAssignedAgent: v.optional(v.boolean()),
+    clearAssignedRole: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -209,10 +209,10 @@ export const assignWorkItem = mutation({
       updates.assigneeUserId = undefined;
     }
 
-    if (args.assignedAgent !== undefined) {
-      updates.assignedAgent = args.assignedAgent;
-    } else if (args.clearAssignedAgent === true) {
-      updates.assignedAgent = undefined;
+    if (args.assignedRole !== undefined) {
+      updates.assignedRole = args.assignedRole;
+    } else if (args.clearAssignedRole === true) {
+      updates.assignedRole = undefined;
     }
 
     await ctx.db.patch(args.workItemId, updates);
@@ -228,7 +228,7 @@ export const bulkUpdateWorkItems = mutation({
     workItemIds: v.array(v.id("autopilotWorkItems")),
     status: v.optional(workItemStatus),
     priority: v.optional(priority),
-    assignedAgent: v.optional(assignedAgent),
+    assignedRole: v.optional(assignedRole),
     assigneeUserId: v.optional(v.string()),
     dueDate: v.optional(v.number()),
     isPublicRoadmap: v.optional(v.boolean()),
@@ -271,8 +271,8 @@ export const bulkUpdateWorkItems = mutation({
     if (args.priority !== undefined) {
       patch.priority = args.priority;
     }
-    if (args.assignedAgent !== undefined) {
-      patch.assignedAgent = args.assignedAgent;
+    if (args.assignedRole !== undefined) {
+      patch.assignedRole = args.assignedRole;
     }
     if (args.assigneeUserId !== undefined) {
       patch.assigneeUserId = args.assigneeUserId;

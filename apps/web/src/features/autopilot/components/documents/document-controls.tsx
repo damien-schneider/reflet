@@ -10,8 +10,8 @@ import {
 } from "@/components/ui/select";
 import { H2 } from "@/components/ui/typography";
 import {
-  AGENT_LABELS,
   DOCUMENT_REVIEW_TYPE_OPTIONS,
+  ROLE_SKILL_LABELS,
 } from "@/features/autopilot/lib/document-labels";
 import { cn } from "@/lib/utils";
 import type { StatusPreset } from "./types";
@@ -28,10 +28,10 @@ interface DocumentsHeaderProps {
 }
 
 interface DocumentFiltersProps {
-  filterAgent: string;
   filteredCount: number;
+  filterRole: string;
   filterType: string;
-  onAgentChange: (agent: string) => void;
+  onRoleChange: (role: string) => void;
   onSearchChange: (query: string) => void;
   onStatusChange: (status: StatusPreset) => void;
   onTypeChange: (type: string) => void;
@@ -52,10 +52,10 @@ export function DocumentsHeader({ onCreate }: DocumentsHeaderProps) {
 }
 
 export function DocumentFilters({
-  filterAgent,
+  filterRole,
   filterType,
   filteredCount,
-  onAgentChange,
+  onRoleChange,
   onSearchChange,
   onStatusChange,
   onTypeChange,
@@ -119,17 +119,17 @@ export function DocumentFilters({
       <Select
         onValueChange={(value) => {
           if (value) {
-            onAgentChange(value);
+            onRoleChange(value);
           }
         }}
-        value={filterAgent}
+        value={filterRole}
       >
         <SelectTrigger className="w-36">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All agents</SelectItem>
-          {Object.entries(AGENT_LABELS).map(([value, label]) => (
+          <SelectItem value="all">All role skills</SelectItem>
+          {Object.entries(ROLE_SKILL_LABELS).map(([value, label]) => (
             <SelectItem key={value} value={value}>
               {label}
             </SelectItem>

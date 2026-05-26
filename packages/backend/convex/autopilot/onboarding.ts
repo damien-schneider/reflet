@@ -6,7 +6,7 @@
  * 1. Config initialization
  * 2. Repository analysis
  * 3. Primary task generation based on repo analysis
- * 4. Agent activation
+ * 4. Role-skill activation
  */
 
 import { v } from "convex/values";
@@ -59,7 +59,7 @@ export const initAutopilot = internalMutation({
 
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      agent: "system",
+      role: "system",
       level: "success",
       message: "Autopilot initialized with V6 defaults (supervised mode)",
       details: args.repoUrl
@@ -91,22 +91,14 @@ export const analyzeRepo = internalAction({
 
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      agent: "system",
+      role: "system",
       level: "action",
       message: `Analyzing repository: ${args.repoUrl}`,
     });
 
-    // Step 1: Create repo analysis record
-    await ctx.runMutation(internal.autopilot.repo_analysis.createRepoAnalysis, {
-      organizationId: args.organizationId,
-      repoUrl: args.repoUrl,
-    });
-
-    // Step 2: Company brief is now generated automatically after the product
-    // exploration completes (triggered by product_exploration.ts).
-    // No need to schedule it here — it would race and produce sparse results.
-
-    // Step 3: Create initial PM analysis task
+    // Repo analysis is owned by the GitHub integration. It writes to
+    // `repoAnalysis` and triggers product_exploration on its own; the chain
+    // consumes that result directly. Nothing to seed here.
     await ctx.runMutation(
       internal.autopilot.onboarding_tasks.createAnalysisTask,
       {
@@ -118,7 +110,7 @@ export const analyzeRepo = internalAction({
 
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      agent: "system",
+      role: "system",
       level: "success",
       message:
         "Onboarding pipeline complete — company brief generation scheduled",
@@ -158,7 +150,7 @@ export const bootstrapAutopilot = internalAction({
         );
         await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
           organizationId: args.organizationId,
-          agent: "system",
+          role: "system",
           level: "action",
           message:
             "No knowledge yet — starting repo analysis. Chain will produce product_profile next.",
@@ -169,7 +161,7 @@ export const bootstrapAutopilot = internalAction({
       }
     }
 
-    // Start agents regardless of brief status — they work with available data
+    // Start role skills regardless of brief status; they work with available data.
     const activeTasks = await ctx.runQuery(
       internal.autopilot.onboarding.getActiveTaskCount,
       { organizationId: args.organizationId }
@@ -193,13 +185,13 @@ export const bootstrapAutopilot = internalAction({
 
     await ctx.scheduler.runAfter(
       0,
-      internal.autopilot.agents.pm.analysis.runPMAnalysis,
+      internal.autopilot.role_skills.pm.analysis.runPMAnalysis,
       { organizationId: args.organizationId }
     );
 
     await ctx.scheduler.runAfter(
       0,
-      internal.autopilot.agents.ceo.reports.generateCEOReport,
+      internal.autopilot.role_skills.ceo.reports.generateCEOReport,
       {
         organizationId: args.organizationId,
         reportType: "daily",
@@ -208,7 +200,7 @@ export const bootstrapAutopilot = internalAction({
 
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      agent: "system",
+      role: "system",
       level: "success",
       message:
         activeTasks === 0

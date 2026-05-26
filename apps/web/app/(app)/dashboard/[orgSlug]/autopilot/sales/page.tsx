@@ -136,8 +136,8 @@ function SalesInsightsTab() {
         <div className="text-center">
           <IconFileText className="mx-auto mb-2 size-8" />
           <p>
-            No prospect insights yet. The Sales Agent will create briefs during
-            prospecting.
+            No prospect insights yet. The Sales role skill will create briefs
+            during prospecting.
           </p>
         </div>
       </div>
@@ -292,7 +292,8 @@ function SalesPipelineTab() {
               <div>
                 <IconUserSearch className="mx-auto mb-2 size-8 text-muted-foreground" />
                 <p className="text-muted-foreground text-sm">
-                  No leads yet. The Sales Agent will start discovering leads.
+                  No leads yet. The Sales role skill will start discovering
+                  leads.
                 </p>
               </div>
             </div>

@@ -21,13 +21,13 @@ export const triggerLeadDiscovery = mutation({
 
     await ctx.scheduler.runAfter(
       0,
-      internal.autopilot.agents.sales_prospecting.runSalesProspecting,
+      internal.autopilot.role_skills.sales_prospecting.runSalesProspecting,
       { organizationId: args.organizationId }
     );
 
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: args.organizationId,
-      agent: "sales",
+      role: "sales",
       level: "action",
       action: "manual_lead_discovery",
       message: "Manual lead discovery triggered by user",

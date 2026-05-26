@@ -3,7 +3,10 @@
 import { describe, expect, test } from "vitest";
 import { internal } from "../../../_generated/api";
 import type { Id } from "../../../_generated/dataModel";
-import { fetchContentWithExa, searchWithExa } from "../../agents/shared_exa";
+import {
+  fetchContentWithExa,
+  searchWithExa,
+} from "../../role_skills/shared_exa";
 import {
   createAutopilotConfig,
   createOrg,
@@ -105,7 +108,7 @@ async function createApprovedSocialContent(
       title: "Approved social post",
       content: "Launch update",
       tags: [],
-      sourceAgent: "growth",
+      sourceRole: "growth",
       status: "published",
       needsReview: false,
       createdAt: now,

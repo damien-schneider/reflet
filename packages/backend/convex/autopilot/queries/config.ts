@@ -15,9 +15,12 @@ export const getConfig = query({
       _creationTime: v.number(),
       autonomyLevel: v.string(),
       ceoChatThreadId: v.optional(v.string()),
+      costUsedThisWeekUsd: v.optional(v.number()),
       costUsedTodayUsd: v.optional(v.number()),
       createdAt: v.number(),
       dailyCostCapUsd: v.optional(v.number()),
+      weekResetAt: v.optional(v.number()),
+      weeklyCostCapUsd: v.optional(v.number()),
       emailBlocklist: v.optional(v.array(v.string())),
       emailDailyLimit: v.optional(v.number()),
       enabled: v.boolean(),
@@ -30,16 +33,15 @@ export const getConfig = query({
       autonomyMode: v.optional(v.string()),
       stoppedAt: v.optional(v.number()),
       fullAutoDelay: v.optional(v.number()),
-      maxPendingTasksPerAgent: v.optional(v.number()),
+      maxPendingTasksPerRole: v.optional(v.number()),
       maxPendingTasksTotal: v.optional(v.number()),
       maxTasksPerDay: v.number(),
       maxActiveInitiatives: v.optional(v.number()),
       maxActiveStoriesPerInitiative: v.optional(v.number()),
       maxSignalsPerDay: v.optional(v.number()),
-      activationOverrides: v.optional(v.string()),
       budgetWarnPercent: v.optional(v.number()),
       budgetHardStop: v.optional(v.boolean()),
-      perAgentDailyCapUsd: v.optional(v.string()),
+      perRoleDailyCapUsd: v.optional(v.string()),
       organizationId: v.id("organizations"),
       orgEmailAddress: v.optional(v.string()),
       requireArchitectReview: v.boolean(),
@@ -61,20 +63,5 @@ export const getConfig = query({
       .unique();
 
     return config;
-  },
-});
-
-export const listRoutines = query({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-    await requireOrgMembership(ctx, args.organizationId, user._id);
-
-    return ctx.db
-      .query("autopilotRoutines")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
   },
 });

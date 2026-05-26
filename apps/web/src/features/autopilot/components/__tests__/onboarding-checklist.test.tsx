@@ -20,7 +20,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
           getConfig: "autopilot.config.getConfig",
         },
         dashboard: {
-          getAgentReadiness: "autopilot.dashboard.getAgentReadiness",
+          getRoleReadiness: "autopilot.dashboard.getRoleReadiness",
           getDashboardStats: "autopilot.dashboard.getDashboardStats",
         },
       },
@@ -40,7 +40,7 @@ describe("OnboardingChecklist", () => {
           growthEnabled: false,
         };
       }
-      if (queryName === "autopilot.dashboard.getAgentReadiness") {
+      if (queryName === "autopilot.dashboard.getRoleReadiness") {
         return {};
       }
       if (queryName === "autopilot.dashboard.getDashboardStats") {

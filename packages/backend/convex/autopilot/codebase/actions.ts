@@ -1,6 +1,6 @@
 "use node";
 
-import type { Agent } from "@mastra/core/agent";
+import type { Agent as MastraExplorerRuntime } from "@mastra/core/agent";
 import { RequestContext } from "@mastra/core/request-context";
 import { generateText, type LanguageModel } from "ai";
 import { v } from "convex/values";
@@ -9,12 +9,12 @@ import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import { type ActionCtx, internalAction } from "../../_generated/server";
 import {
-  createCodebaseAgent,
+  createCodebaseExplorer,
   createSynthesisModel,
   DEFAULT_CODEBASE_MODEL,
   FALLBACK_CODEBASE_MODELS,
   SYNTHESIS_MODEL,
-} from "./agent";
+} from "./explorer";
 import { getInstallationOctokit } from "./octokit_helpers";
 import {
   EXPLORATION_INSTRUCTIONS,
@@ -40,8 +40,8 @@ interface CollectedEvidence {
 }
 
 export interface DeepAnalysisDeps {
-  agentForModel: (modelId: string) => Agent;
   exploreModels: readonly string[];
+  explorerForModel: (modelId: string) => MastraExplorerRuntime;
   octokitFor: (ctx: ActionCtx, installationId: string) => Promise<Octokit>;
   synthesisModelFor: (modelId: string) => LanguageModel;
   synthesisModels: readonly string[];
@@ -53,7 +53,7 @@ const DEFAULT_SYNTHESIS_MODELS: readonly string[] = [
 ];
 
 const DEFAULT_DEPS: DeepAnalysisDeps = {
-  agentForModel: (modelId) => createCodebaseAgent(modelId),
+  explorerForModel: (modelId) => createCodebaseExplorer(modelId),
   exploreModels: FALLBACK_CODEBASE_MODELS,
   octokitFor: getInstallationOctokit,
   synthesisModelFor: (modelId) => createSynthesisModel(modelId),
@@ -113,7 +113,7 @@ async function logProgress(
   try {
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId,
-      agent: "system",
+      role: "system",
       level,
       message,
       details,
@@ -154,7 +154,7 @@ function buildEvidenceText(steps: ToolStep[]): string {
     .map((step) => step.text)
     .filter((text): text is string => Boolean(text?.trim()));
   const noteBlock = finalNotes.length
-    ? `\n\n## Agent notes during exploration\n${finalNotes.join("\n\n")}`
+    ? `\n\n## Explorer notes during analysis\n${finalNotes.join("\n\n")}`
     : "";
   return `${sections.join("\n\n")}${noteBlock}`;
 }
@@ -195,9 +195,9 @@ async function runExplorationWithFallbacks(
   let lastError: unknown;
 
   for (const modelId of deps.exploreModels) {
-    const agent = deps.agentForModel(modelId);
+    const explorer = deps.explorerForModel(modelId);
     try {
-      const result = await agent.generate(
+      const result = await explorer.generate(
         `Explore the repository "${args.repoFullName}" thoroughly. Follow the mandatory exploration order in the instructions. Read full files for README, AGENTS.md/CLAUDE.md, package manifests, landing/pricing pages, and primary route/page files. Capture enough evidence for a marketing-ready product brief.`,
         {
           requestContext: args.requestContext,
@@ -394,7 +394,7 @@ export async function runDeepAnalysisCore(
   const installationId = connection.installationId;
 
   const runId = await ctx.runMutation(
-    internal.autopilot.codebase.mutations.startAgentRun,
+    internal.autopilot.codebase.mutations.startAnalysisRun,
     {
       organizationId: args.organizationId,
       repoFullName,
@@ -417,7 +417,7 @@ export async function runDeepAnalysisCore(
       ctx,
       args.organizationId,
       "action",
-      `Phase 1/2 — Exploring ${repoFullName} with Mastra agent`
+      `Phase 1/2 - Exploring ${repoFullName} with the codebase explorer`
     );
 
     const exploration = await runExplorationWithFallbacks(
@@ -435,7 +435,7 @@ export async function runDeepAnalysisCore(
       const msg = `Exploration gathered insufficient evidence (${exploration.evidence.text.length} chars)`;
       await logProgress(ctx, args.organizationId, "error", msg);
       await ctx.runMutation(
-        internal.autopilot.codebase.mutations.failAgentRun,
+        internal.autopilot.codebase.mutations.failAnalysisRun,
         { runId, error: msg }
       );
       await ctx.runMutation(
@@ -479,7 +479,7 @@ export async function runDeepAnalysisCore(
       const msg = `Synthesis output too short (${brief.length} chars)`;
       await logProgress(ctx, args.organizationId, "error", msg);
       await ctx.runMutation(
-        internal.autopilot.codebase.mutations.failAgentRun,
+        internal.autopilot.codebase.mutations.failAnalysisRun,
         { runId, error: msg }
       );
       await ctx.runMutation(
@@ -508,7 +508,7 @@ export async function runDeepAnalysisCore(
       );
 
     await ctx.runMutation(
-      internal.autopilot.codebase.mutations.completeAgentRun,
+      internal.autopilot.codebase.mutations.completeAnalysisRun,
       {
         runId,
         assistantText: brief,
@@ -545,10 +545,13 @@ export async function runDeepAnalysisCore(
       "error",
       `Deep analysis failed: ${msg}`
     );
-    await ctx.runMutation(internal.autopilot.codebase.mutations.failAgentRun, {
-      runId,
-      error: msg,
-    });
+    await ctx.runMutation(
+      internal.autopilot.codebase.mutations.failAnalysisRun,
+      {
+        runId,
+        error: msg,
+      }
+    );
     await ctx.runMutation(
       internal.integrations.github.repo_analysis.updateAnalysisStatus,
       {

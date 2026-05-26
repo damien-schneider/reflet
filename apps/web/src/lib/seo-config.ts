@@ -6,28 +6,27 @@ export const SITE_NAME = "Reflet";
 const DEFAULT_TITLE =
   "Reflet — The Autonomous AI Company That Runs Your Product";
 export const DEFAULT_DESCRIPTION =
-  "7 AI agents — CEO, PM, CTO, Dev, Growth, Sales, Support — autonomously discover opportunities, build features, ship code, find leads, and handle support. Connect your GitHub repo. Your AI company starts in 5 minutes.";
+  "One visible Autopilot chain with CEO, PM, CTO, Growth, Sales, Support, and Validator role skills. Connect your GitHub repo and start from a Company Brief in 5 minutes.";
 
 const DEFAULT_KEYWORDS = [
   "autonomous AI company",
-  "AI employees",
-  "AI agents",
-  "AI workforce",
-  "AI digital workers",
+  "AI role skills",
+  "AI runtime chain",
+  "AI product operations",
   "agentic AI",
   "AI run company",
-  "autonomous AI agents",
+  "autonomous AI workflow",
   "AI company in a box",
   "zero employee company",
   "AI CEO",
   "AI product manager",
   "AI developer",
-  "AI sales agent",
-  "AI growth agent",
-  "AI support agent",
+  "AI sales workflow",
+  "AI growth workflow",
+  "AI support workflow",
   "AI CTO",
   "autonomous product development",
-  "AI team automation",
+  "AI chain automation",
   "AI SaaS operations",
   "Devin alternative",
   "Artisan alternative",

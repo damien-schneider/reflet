@@ -35,8 +35,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import {
-  TASK_AGENTS,
   TASK_PRIORITIES,
+  TASK_ROLES,
   TASK_STATUSES,
 } from "./use-tasks-filters";
 
@@ -57,12 +57,11 @@ const PRIORITY_LABELS: Record<string, string> = {
   low: "Low",
 };
 
-const AGENT_LABELS: Record<string, string> = {
+const ROLE_SKILL_LABELS: Record<string, string> = {
   ceo: "CEO",
   pm: "PM",
   cto: "CTO",
   growth: "Growth",
-  orchestrator: "Orchestrator",
   sales: "Sales",
   support: "Support",
   system: "System",
@@ -208,24 +207,24 @@ export function BulkActionsBar({
               variant="ghost"
             >
               <IconRobot className="size-3.5" />
-              Agent
+              Role Skill
             </Button>
           }
         />
         <DropdownMenuContent align="start">
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Assign agent</DropdownMenuLabel>
-            {TASK_AGENTS.map((agent) => (
+            <DropdownMenuLabel>Assign role skill</DropdownMenuLabel>
+            {TASK_ROLES.map((role) => (
               <DropdownMenuItem
-                key={agent}
+                key={role}
                 onClick={() =>
                   runBulk(
-                    { assignedAgent: agent },
-                    `Assigned to ${AGENT_LABELS[agent] ?? agent}`
+                    { assignedRole: role },
+                    `Assigned to ${ROLE_SKILL_LABELS[role] ?? role} role skill`
                   )
                 }
               >
-                {AGENT_LABELS[agent] ?? agent}
+                {ROLE_SKILL_LABELS[role] ?? role}
               </DropdownMenuItem>
             ))}
           </DropdownMenuGroup>

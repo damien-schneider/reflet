@@ -1,7 +1,7 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
-  assignedAgent,
+  assignedRole,
   priority,
   workItemStatus,
   workItemType,
@@ -16,7 +16,7 @@ export const workTables = {
     description: v.string(),
     status: workItemStatus,
     priority,
-    assignedAgent: v.optional(assignedAgent),
+    assignedRole: v.optional(assignedRole),
 
     // Human assignee (string user id from better-auth)
     assigneeUserId: v.optional(v.string()),
@@ -66,7 +66,7 @@ export const workTables = {
     .index("by_organization", ["organizationId"])
     .index("by_org_type", ["organizationId", "type"])
     .index("by_org_status", ["organizationId", "status"])
-    .index("by_org_agent", ["organizationId", "assignedAgent"])
+    .index("by_org_role", ["organizationId", "assignedRole"])
     .index("by_org_assignee", ["organizationId", "assigneeUserId"])
     .index("by_org_review", ["organizationId", "needsReview"])
     .index("by_org_public", ["organizationId", "isPublicRoadmap"])

@@ -1,19 +1,14 @@
 "use client";
 
-import { IconHierarchy3, IconList } from "@tabler/icons-react";
-import { useState } from "react";
-
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ActivityPanel } from "@/features/autopilot/components/activity-panel";
 import { useAutopilotContext } from "@/features/autopilot/components/autopilot-context";
-import { ChainStatus } from "@/features/autopilot/components/chain-status";
+import { ChainBlockersBanner } from "@/features/autopilot/components/chain-blockers-banner";
 import { ChainTechTree } from "@/features/autopilot/components/chain-tech-tree";
-
-type ChainView = "tree" | "list";
+import { ChainRuntimeView } from "@/features/autopilot/components/runtime/chain-runtime-view";
 
 export default function AutopilotChainPage() {
-  const { organizationId, isAdmin } = useAutopilotContext();
-  const [view, setView] = useState<ChainView>("tree");
+  const { organizationId, isAdmin, orgSlug } = useAutopilotContext();
+  const baseUrl = `/dashboard/${orgSlug}/autopilot`;
 
   if (!isAdmin) {
     return (
@@ -25,41 +20,34 @@ export default function AutopilotChainPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <ToggleGroup size="sm" variant="outline">
-          <ToggleGroupItem
-            aria-label="Tech tree view"
-            onPressedChange={(p) => p && setView("tree")}
-            pressed={view === "tree"}
-            value="tree"
-          >
-            <IconHierarchy3 className="size-3.5" />
-            Tree
-          </ToggleGroupItem>
-          <ToggleGroupItem
-            aria-label="List view"
-            onPressedChange={(p) => p && setView("list")}
-            pressed={view === "list"}
-            value="list"
-          >
-            <IconList className="size-3.5" />
-            List
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div>
-      {view === "tree" ? (
-        <ChainTechTree organizationId={organizationId} />
-      ) : (
-        <ChainStatus organizationId={organizationId} />
-      )}
+    <div className="space-y-6">
+      <ChainRuntimeView
+        baseUrl={baseUrl}
+        isAdmin={isAdmin}
+        organizationId={organizationId}
+      />
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="font-semibold text-lg">Dependency graph</h2>
+          <p className="text-muted-foreground text-xs">
+            Canonical deliverables and the dependency order that wakes each role
+            skill.
+          </p>
+        </div>
+        <ChainBlockersBanner
+          organizationId={organizationId}
+          orgSlug={orgSlug}
+        />
+        <ChainTechTree isAdmin={isAdmin} organizationId={organizationId} />
+      </section>
 
       <section className="space-y-3 pt-2">
         <div>
-          <h2 className="font-semibold text-lg">Activity log</h2>
+          <h2 className="font-semibold text-lg">Audit log</h2>
           <p className="text-muted-foreground text-xs">
-            Every agent action, filterable and searchable. Click a row to see
-            full details.
+            Raw runtime events remain searchable, but scheduling truth comes
+            from execution records.
           </p>
         </div>
         <ActivityPanel organizationId={organizationId} />

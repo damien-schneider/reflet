@@ -31,14 +31,14 @@ const SHOWCASE_TABS = [
     label: "Feedback Board",
     icon: ChatCircleDots,
     description:
-      "See what your AI agents have discovered. Feedback from users and market research — all triaged and prioritized automatically.",
+      "See what the chain has discovered. Feedback from users and market research are triaged and prioritized automatically.",
   },
   {
     id: "roadmap",
     label: "Roadmap",
     icon: Kanban,
     description:
-      "Watch initiatives flow from discovery to shipped. PM creates, CTO specs, Dev builds — all visible on your board.",
+      "Watch initiatives flow from discovery to delivery. PM creates, CTO specs, Validator checks — all visible on your board.",
   },
   {
     id: "changelog",
@@ -83,8 +83,9 @@ export default function LandingShowcase() {
               <span className="text-muted-foreground">One AI company.</span>
             </H2>
             <Lead size="sm">
-              Watch your AI agents discover opportunities, plan initiatives,
-              ship code, and announce releases, all through familiar views.
+              Watch role skills discover opportunities, plan initiatives,
+              validate delivery, and announce releases, all through familiar
+              views.
             </Lead>
           </m.div>
 

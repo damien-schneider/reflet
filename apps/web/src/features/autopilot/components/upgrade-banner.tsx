@@ -27,7 +27,7 @@ export function UpgradeBanner({
             Upgrade to Pro for full Autopilot
           </p>
           <p className="text-muted-foreground text-xs">
-            Unlock higher limits, all agents, and priority execution.
+            Unlock higher limits, all role skills, and priority execution.
           </p>
         </div>
       </div>

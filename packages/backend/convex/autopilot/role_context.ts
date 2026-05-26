@@ -1,0 +1,82 @@
+/**
+ * Role-skill context loader — builds prompt context from knowledge base,
+ * recent artifacts, and active initiatives before LLM calls.
+ */
+
+import { v } from "convex/values";
+import { internalQuery } from "../_generated/server";
+import { assignedRole } from "./schema/validators";
+
+export const loadRoleSkillContext = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    role: assignedRole,
+  },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    const sections: string[] = [];
+
+    const knowledgeDocs = await ctx.db
+      .query("autopilotKnowledgeDocs")
+      .withIndex("by_org_docType", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    if (knowledgeDocs.length > 0) {
+      const docSummaries = knowledgeDocs
+        .map((doc) => `- [${doc.docType}] ${doc.title}: ${doc.contentSummary}`)
+        .join("\n");
+      sections.push(`KNOWLEDGE BASE:\n${docSummaries}`);
+    }
+
+    const recentDocs = (
+      await ctx.db
+        .query("autopilotDocuments")
+        .withIndex("by_organization", (q) =>
+          q.eq("organizationId", args.organizationId)
+        )
+        .order("desc")
+        .take(50)
+    )
+      .filter((d) => d.createdAt > Date.now() - 48 * 60 * 60 * 1000)
+      .slice(0, 10);
+
+    if (recentDocs.length > 0) {
+      const docSummaries = recentDocs
+        .map(
+          (d) =>
+            `- [${d.type}/${d.status}] ${d.title} (source: ${d.sourceRole ?? "unknown"})`
+        )
+        .join("\n");
+      sections.push(`RECENT DOCUMENTS:\n${docSummaries}`);
+    }
+
+    const initiatives = await ctx.db
+      .query("autopilotWorkItems")
+      .withIndex("by_org_status", (q) =>
+        q.eq("organizationId", args.organizationId).eq("status", "in_progress")
+      )
+      .collect();
+
+    const activeInitiatives = initiatives.filter(
+      (i) => i.type === "initiative"
+    );
+
+    if (activeInitiatives.length > 0) {
+      const initiativeSummaries = activeInitiatives
+        .map(
+          (i) =>
+            `- ${i.title} (${i.completionPercent ?? 0}% complete, priority: ${i.priority})`
+        )
+        .join("\n");
+      sections.push(`ACTIVE INITIATIVES:\n${initiativeSummaries}`);
+    }
+
+    if (sections.length === 0) {
+      return "";
+    }
+
+    return `\n--- ROLE SKILL CONTEXT (${args.role}) ---\n${sections.join("\n\n")}\n--- END CONTEXT ---`;
+  },
+});

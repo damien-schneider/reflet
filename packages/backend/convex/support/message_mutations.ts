@@ -116,7 +116,7 @@ export const send = mutation({
       ) {
         await ctx.scheduler.runAfter(
           0,
-          internal.autopilot.agents.support.runSupportTriage,
+          internal.autopilot.role_skills.support.runSupportTriage,
           { organizationId: conversation.organizationId }
         );
       }

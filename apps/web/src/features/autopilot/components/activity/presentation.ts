@@ -2,29 +2,22 @@ import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
 
 export type ActivityLogEntry = Pick<
   Doc<"autopilotActivityLog">,
-  | "_id"
-  | "agent"
-  | "createdAt"
-  | "details"
-  | "level"
-  | "message"
-  | "targetAgent"
+  "_id" | "role" | "createdAt" | "details" | "level" | "message" | "targetRole"
 >;
 
-export type ActivityAgent = ActivityLogEntry["agent"];
+export type ActivityRole = ActivityLogEntry["role"];
 export type ActivityLevel = ActivityLogEntry["level"];
 
-export const ACTIVITY_AGENTS = [
+export const ACTIVITY_ROLES = [
   "pm",
   "cto",
   "growth",
-  "orchestrator",
   "system",
   "support",
   "sales",
   "ceo",
   "validator",
-] as const satisfies readonly ActivityAgent[];
+] as const satisfies readonly ActivityRole[];
 
 export const ACTIVITY_LEVELS = [
   "info",
@@ -34,29 +27,27 @@ export const ACTIVITY_LEVELS = [
   "error",
 ] as const satisfies readonly ActivityLevel[];
 
-export const ACTIVITY_AGENT_LABELS = {
+export const ACTIVITY_ROLE_LABELS = {
   pm: "PM",
   cto: "CTO",
   growth: "Growth",
-  orchestrator: "CEO",
   system: "System",
   support: "Support",
   sales: "Sales",
   ceo: "CEO",
   validator: "Validator",
-} satisfies Record<ActivityAgent, string>;
+} satisfies Record<ActivityRole, string>;
 
-export const ACTIVITY_AGENT_BADGE_STYLES = {
+export const ACTIVITY_ROLE_BADGE_STYLES = {
   pm: "border-blue-500/30 bg-blue-500/10 text-blue-500",
   cto: "border-purple-500/30 bg-purple-500/10 text-purple-500",
   growth: "border-pink-500/30 bg-pink-500/10 text-pink-500",
-  orchestrator: "border-cyan-500/30 bg-cyan-500/10 text-cyan-500",
   system: "border-border bg-muted text-muted-foreground",
   support: "border-teal-500/30 bg-teal-500/10 text-teal-500",
   sales: "border-rose-500/30 bg-rose-500/10 text-rose-500",
   ceo: "border-cyan-500/30 bg-cyan-500/10 text-cyan-500",
   validator: "border-amber-500/30 bg-amber-500/10 text-amber-500",
-} satisfies Record<ActivityAgent, string>;
+} satisfies Record<ActivityRole, string>;
 
 export const ACTIVITY_LEVEL_DOT_STYLES = {
   info: "bg-muted-foreground/40",
@@ -66,6 +57,14 @@ export const ACTIVITY_LEVEL_DOT_STYLES = {
   error: "bg-red-500",
 } satisfies Record<ActivityLevel, string>;
 
-export const getActivityAgentLabel = (agent: ActivityAgent): string => {
-  return ACTIVITY_AGENT_LABELS[agent];
+export function isActivityRole(value: string): value is ActivityRole {
+  return ACTIVITY_ROLES.some((role) => role === value);
+}
+
+export function isActivityLevel(value: string): value is ActivityLevel {
+  return ACTIVITY_LEVELS.some((level) => level === value);
+}
+
+export const getActivityRoleLabel = (role: ActivityRole): string => {
+  return ACTIVITY_ROLE_LABELS[role];
 };

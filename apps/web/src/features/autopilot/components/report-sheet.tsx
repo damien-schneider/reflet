@@ -20,7 +20,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AGENT_LABELS } from "@/features/autopilot/lib/document-labels";
+import { ROLE_SKILL_LABELS } from "@/features/autopilot/lib/document-labels";
 import { cn } from "@/lib/utils";
 
 type Report = Doc<"autopilotReports">;
@@ -146,10 +146,10 @@ function ReportPropertyGrid({ report }: { report: Report }) {
         </Badge>
       </ReportPropertyRow>
 
-      {report.sourceAgent && (
-        <ReportPropertyRow label="Agent">
+      {report.sourceRole && (
+        <ReportPropertyRow label="Role skill">
           <Badge variant="secondary">
-            {AGENT_LABELS[report.sourceAgent] ?? report.sourceAgent}
+            {ROLE_SKILL_LABELS[report.sourceRole] ?? report.sourceRole}
           </Badge>
         </ReportPropertyRow>
       )}

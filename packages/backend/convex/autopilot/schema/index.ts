@@ -1,5 +1,4 @@
 import { activityTables } from "./activity.tables";
-import { agentsTables } from "./agents.tables";
 import { codebaseTables } from "./codebase.tables";
 import { communityPostsTables } from "./community_posts.tables";
 import { competitorsTables } from "./competitors.tables";
@@ -8,7 +7,6 @@ import { dataTables } from "./data.tables";
 import { documentsTables } from "./documents.tables";
 import { knowledgeTables } from "./knowledge.tables";
 import { labelsTables } from "./labels.tables";
-import { memoryTables } from "./memory.tables";
 import { personasTables } from "./personas.tables";
 import { productProfileTables } from "./product_profile.tables";
 import { reportsTables } from "./reports.tables";
@@ -20,7 +18,6 @@ export const autopilotTables = {
   ...configTables,
   ...activityTables,
   ...knowledgeTables,
-  ...agentsTables,
   ...dataTables,
   ...documentsTables,
   ...competitorsTables,
@@ -28,7 +25,6 @@ export const autopilotTables = {
   ...labelsTables,
   ...viewsTables,
   ...reportsTables,
-  ...memoryTables,
   ...personasTables,
   ...useCasesTables,
   ...communityPostsTables,

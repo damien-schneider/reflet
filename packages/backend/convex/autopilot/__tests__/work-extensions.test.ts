@@ -246,7 +246,7 @@ describe("migrateNeedsReviewToTriage", () => {
 });
 
 describe("assignWorkItem", () => {
-  test("sets agent and user assignee independently", async () => {
+  test("sets role and user assignee independently", async () => {
     const t = createTestContext();
     const organizationId = await createOrg(t);
     const authed = await createMemberSession(t, organizationId);
@@ -254,20 +254,20 @@ describe("assignWorkItem", () => {
 
     await authed.mutation(api.autopilot.mutations.work.assignWorkItem, {
       workItemId: id,
-      assignedAgent: "cto",
+      assignedRole: "cto",
       assigneeUserId: "user_123",
     });
 
     const doc = await t.run((ctx) => ctx.db.get(id));
-    expect(doc?.assignedAgent).toBe("cto");
+    expect(doc?.assignedRole).toBe("cto");
     expect(doc?.assigneeUserId).toBe("user_123");
 
     await authed.mutation(api.autopilot.mutations.work.assignWorkItem, {
       workItemId: id,
-      clearAssignedAgent: true,
+      clearAssignedRole: true,
     });
     const cleared = await t.run((ctx) => ctx.db.get(id));
-    expect(cleared?.assignedAgent).toBeUndefined();
+    expect(cleared?.assignedRole).toBeUndefined();
     expect(cleared?.assigneeUserId).toBe("user_123");
   });
 });

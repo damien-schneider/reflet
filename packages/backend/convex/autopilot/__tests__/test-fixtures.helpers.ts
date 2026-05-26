@@ -127,6 +127,7 @@ export const createAutopilotConfig = async (
     dailyCostCapUsd?: number;
     enabled?: boolean;
     growthEnabled?: boolean;
+    supportEnabled?: boolean;
     maxTasksPerDay?: number;
     tasksResetAt?: number;
     tasksUsedToday?: number;
@@ -188,7 +189,7 @@ export const createParentTask = async (
       title: options.title,
       description: options.description,
       priority: options.priority,
-      assignedAgent: "cto",
+      assignedRole: "cto",
       createdBy: "test",
     })
   );

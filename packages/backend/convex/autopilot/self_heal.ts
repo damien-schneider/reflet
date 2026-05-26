@@ -3,7 +3,7 @@
  *
  * Runs every 10 minutes via cron. Handles:
  *   1. Work items stuck in_progress > 1 hour with no activity → cancel
- *   2. Work items assigned to disabled agents in todo > 1 hour → cancel
+ *   2. Work items assigned to disabled role skills in todo > 1 hour -> cancel
  */
 
 import { v } from "convex/values";
@@ -35,7 +35,7 @@ export const getStuckInProgressTasks = internalQuery({
     v.object({
       _id: v.id("autopilotWorkItems"),
       title: v.string(),
-      assignedAgent: v.optional(v.string()),
+      assignedRole: v.optional(v.string()),
       updatedAt: v.number(),
     })
   ),
@@ -54,14 +54,14 @@ export const getStuckInProgressTasks = internalQuery({
       .map((t) => ({
         _id: t._id,
         title: t.title,
-        assignedAgent: t.assignedAgent,
+        assignedRole: t.assignedRole,
         updatedAt: t.updatedAt,
       }));
   },
 });
 
 /**
- * Find todo work items assigned to disabled agents that have been waiting > threshold.
+ * Find todo work items assigned to disabled role skills that have been waiting > threshold.
  */
 export const getOrphanedPendingTasks = internalQuery({
   args: {
@@ -72,17 +72,17 @@ export const getOrphanedPendingTasks = internalQuery({
     v.object({
       _id: v.id("autopilotWorkItems"),
       title: v.string(),
-      assignedAgent: v.optional(v.string()),
+      assignedRole: v.optional(v.string()),
     })
   ),
   handler: async (ctx, args) => {
     const cutoff = Date.now() - args.thresholdMs;
 
-    const enabledAgents: string[] = await ctx.runQuery(
-      internal.autopilot.config.getEnabledAgents,
+    const enabledRoles: string[] = await ctx.runQuery(
+      internal.autopilot.config.getEnabledRoleSkills,
       { organizationId: args.organizationId }
     );
-    const enabledSet = new Set<string>(enabledAgents);
+    const enabledSet = new Set<string>(enabledRoles);
 
     const todoItems = await ctx.db
       .query("autopilotWorkItems")
@@ -94,14 +94,14 @@ export const getOrphanedPendingTasks = internalQuery({
     return todoItems
       .filter(
         (t) =>
-          t.assignedAgent &&
-          !enabledSet.has(t.assignedAgent) &&
+          t.assignedRole &&
+          !enabledSet.has(t.assignedRole) &&
           t.createdAt < cutoff
       )
       .map((t) => ({
         _id: t._id,
         title: t.title,
-        assignedAgent: t.assignedAgent,
+        assignedRole: t.assignedRole,
       }));
   },
 });
@@ -134,7 +134,7 @@ export const cancelTaskWithReason = internalMutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: item.organizationId,
       workItemId: args.taskId,
-      agent: item.assignedAgent ?? "system",
+      role: item.assignedRole ?? "system",
       level: "error",
       message: `Self-heal cancelled work item: ${item.title}`,
       details: args.reason,
@@ -169,7 +169,7 @@ export const failTaskWithReason = internalMutation({
     await ctx.db.insert("autopilotActivityLog", {
       organizationId: item.organizationId,
       workItemId: args.taskId,
-      agent: item.assignedAgent ?? "system",
+      role: item.assignedRole ?? "system",
       level: "error",
       message: `Self-heal failed work item: ${item.title}`,
       details: args.reason,
@@ -187,7 +187,7 @@ export const failTaskWithReason = internalMutation({
 export const hasRecentTaskActivity = internalQuery({
   args: {
     organizationId: v.id("organizations"),
-    agent: v.string(),
+    role: v.string(),
     taskId: v.id("autopilotWorkItems"),
     windowMs: v.number(),
   },
@@ -202,7 +202,7 @@ export const hasRecentTaskActivity = internalQuery({
     return taskLogs.some(
       (log) =>
         log.organizationId === args.organizationId &&
-        log.agent === args.agent &&
+        log.role === args.role &&
         log.createdAt > cutoff
     );
   },
@@ -229,11 +229,11 @@ async function healStuckTasks(
   let healed = 0;
 
   for (const item of stuckItems) {
-    if (item.assignedAgent) {
+    if (item.assignedRole) {
       const taskActive = await ctx.runQuery(
         internal.autopilot.self_heal.hasRecentTaskActivity,
         {
-          agent: item.assignedAgent,
+          role: item.assignedRole,
           organizationId,
           taskId: item._id,
           windowMs: RECENT_ACTIVITY_WINDOW,
@@ -251,7 +251,7 @@ async function healStuckTasks(
       taskId: item._id,
     });
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-      agent: item.assignedAgent ?? "system",
+      role: item.assignedRole ?? "system",
       details: reason,
       level: "error",
       message: `Self-heal cancelled work item: ${item.title}`,
@@ -279,7 +279,7 @@ async function healOrphanedTasks(
 
   for (const item of orphanedItems) {
     await ctx.runMutation(internal.autopilot.self_heal.cancelTaskWithReason, {
-      reason: `Auto-cancelled: ${item.assignedAgent ?? "unknown"} agent is disabled`,
+      reason: `Auto-cancelled: ${item.assignedRole ?? "unknown"} role skill is disabled`,
       taskId: item._id,
     });
     healed++;
@@ -313,7 +313,7 @@ export const runSelfHealing = internalAction({
         if (healed > 0) {
           await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
             organizationId: org.organizationId,
-            agent: "system",
+            role: "system",
             level: "success",
             message: `Self-healing: cleaned up ${healed} work items`,
             details: `Stuck: ${stuck.scanned}, Orphaned: ${orphaned.scanned}`,
@@ -324,7 +324,7 @@ export const runSelfHealing = internalAction({
           error instanceof Error ? error.message : "Unknown self-healing error";
         await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
           organizationId: org.organizationId,
-          agent: "system",
+          role: "system",
           level: "error",
           message: "Self-healing failed",
           details: message,

@@ -2,7 +2,7 @@
 
 import { IconCurrencyDollar } from "@tabler/icons-react";
 
-import { PerAgentBudgets } from "@/features/autopilot/components/settings/per-agent-budgets";
+import { RoleSkillBudgets } from "@/features/autopilot/components/settings/role-skill-budgets";
 import { SectionHeader } from "@/features/autopilot/components/settings/section-header";
 
 export function BudgetSettings({
@@ -17,12 +17,12 @@ export function BudgetSettings({
   return (
     <section className="space-y-5">
       <SectionHeader
-        description="Set individual daily cost caps per agent"
+        description="Set individual daily cost caps per role skill"
         icon={IconCurrencyDollar}
-        title="Per-Agent Budgets"
+        title="Role-Skill Budgets"
       />
 
-      <PerAgentBudgets
+      <RoleSkillBudgets
         disabled={disabled}
         key={storedValue ?? "empty"}
         onSave={onSave}

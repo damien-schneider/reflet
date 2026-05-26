@@ -1,7 +1,7 @@
 "use client";
 
 import type {
-  assignedAgent,
+  assignedRole,
   priority,
   workItemStatus,
   workItemType,
@@ -13,12 +13,11 @@ import {
   parseAsStringLiteral,
   useQueryStates,
 } from "nuqs";
-import { useCallback, useMemo } from "react";
 
 export type TaskStatus = Infer<typeof workItemStatus>;
 export type TaskType = Infer<typeof workItemType>;
 export type TaskPriority = Infer<typeof priority>;
-export type TaskAgent = Infer<typeof assignedAgent>;
+export type TaskRole = Infer<typeof assignedRole>;
 
 export const TASK_STATUSES = [
   "triage",
@@ -45,17 +44,16 @@ export const TASK_PRIORITIES = [
   "low",
 ] as const satisfies readonly TaskPriority[];
 
-export const TASK_AGENTS = [
+export const TASK_ROLES = [
   "ceo",
   "pm",
   "cto",
   "growth",
-  "orchestrator",
   "sales",
   "support",
   "system",
   "validator",
-] as const satisfies readonly TaskAgent[];
+] as const satisfies readonly TaskRole[];
 
 export const TASK_GROUP_BY = [
   "none",
@@ -90,7 +88,7 @@ const filtersParser = {
   type: parseAsArrayOf(parseAsString).withDefault([]),
   priority: parseAsArrayOf(parseAsString).withDefault([]),
   assigneeUserId: parseAsString.withDefault(""),
-  assignedAgent: parseAsString.withDefault(""),
+  assignedRole: parseAsString.withDefault(""),
   labelIds: parseAsArrayOf(parseAsString).withDefault([]),
   q: parseAsString.withDefault(""),
   groupBy: parseAsStringLiteral(TASK_GROUP_BY).withDefault(DEFAULT_GROUP_BY),
@@ -99,13 +97,13 @@ const filtersParser = {
     parseAsStringLiteral(TASK_VIEW_MODES).withDefault(DEFAULT_VIEW_MODE),
 };
 
-const DEFAULT_FILTERS = {
-  status: [] as string[],
-  type: [] as string[],
-  priority: [] as string[],
+const DEFAULT_FILTERS: TaskFilters = {
+  status: [],
+  type: [],
+  priority: [],
   assigneeUserId: "",
-  assignedAgent: "",
-  labelIds: [] as string[],
+  assignedRole: "",
+  labelIds: [],
   q: "",
   groupBy: DEFAULT_GROUP_BY,
   sortKey: DEFAULT_SORT_KEY,
@@ -113,7 +111,7 @@ const DEFAULT_FILTERS = {
 };
 
 export interface TaskFilters {
-  assignedAgent: string;
+  assignedRole: string;
   assigneeUserId: string;
   groupBy: TaskGroupBy;
   labelIds: string[];
@@ -131,7 +129,7 @@ function isFilterDefault(filters: TaskFilters): boolean {
     filters.type.length === 0 &&
     filters.priority.length === 0 &&
     filters.assigneeUserId === "" &&
-    filters.assignedAgent === "" &&
+    filters.assignedRole === "" &&
     filters.labelIds.length === 0 &&
     filters.q === "" &&
     filters.groupBy === DEFAULT_GROUP_BY &&
@@ -154,28 +152,22 @@ export function useTasksFilters(): UseTasksFiltersResult {
     history: "replace",
   });
 
-  const filters = rawFilters as TaskFilters;
+  const filters: TaskFilters = rawFilters;
 
-  const setFilters = useCallback(
-    (
-      update:
-        | Partial<TaskFilters>
-        | ((prev: TaskFilters) => Partial<TaskFilters>)
-    ) => {
-      if (typeof update === "function") {
-        return setRawFilters((prev) => update(prev as TaskFilters));
-      }
-      return setRawFilters(update);
-    },
-    [setRawFilters]
-  );
+  function setFilters(
+    update: Partial<TaskFilters> | ((prev: TaskFilters) => Partial<TaskFilters>)
+  ) {
+    if (typeof update === "function") {
+      return setRawFilters((prev) => update(prev));
+    }
+    return setRawFilters(update);
+  }
 
-  const reset = useCallback(
-    () => setRawFilters(DEFAULT_FILTERS),
-    [setRawFilters]
-  );
+  function reset() {
+    return setRawFilters(DEFAULT_FILTERS);
+  }
 
-  const isDefault = useMemo(() => isFilterDefault(filters), [filters]);
+  const isDefault = isFilterDefault(filters);
 
   return { filters, setFilters, reset, isDefault };
 }

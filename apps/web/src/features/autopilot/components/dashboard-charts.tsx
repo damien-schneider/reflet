@@ -79,7 +79,9 @@ function ActivityTimelineChart({
     <Card>
       <CardHeader>
         <CardTitle className="text-sm">Activity (7 days)</CardTitle>
-        <CardDescription>Agent actions, successes, and errors</CardDescription>
+        <CardDescription>
+          Role-skill actions, successes, and errors
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer

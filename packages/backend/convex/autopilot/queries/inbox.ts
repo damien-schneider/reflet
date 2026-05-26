@@ -10,7 +10,7 @@ import { getAuthUser } from "../../shared/utils";
 import { reportType } from "../schema/reports.tables";
 import { validatorScoreObject } from "../schema/use_cases.tables";
 import {
-  assignedAgent,
+  assignedRole,
   documentStatus,
   documentType,
   impactLevel,
@@ -44,7 +44,7 @@ const workInboxItemValidator = v.object({
   description: v.string(),
   status: workItemStatus,
   priority,
-  assignedAgent: v.optional(assignedAgent),
+  assignedRole: v.optional(assignedRole),
   needsReview: v.boolean(),
   reviewType: v.optional(v.string()),
   reviewedAt: v.optional(v.number()),
@@ -71,7 +71,7 @@ const documentInboxItemValidator = v.object({
   title: v.string(),
   content: v.string(),
   tags: v.array(v.string()),
-  sourceAgent: v.optional(assignedAgent),
+  sourceRole: v.optional(assignedRole),
   status: documentStatus,
   dependsOnDocIds: v.optional(v.array(v.id("autopilotDocuments"))),
   validation: v.optional(validatorScoreObject),
@@ -104,7 +104,7 @@ const reportInboxItemValidator = v.object({
   reviewType: v.literal("ceo_report"),
   type: reportType,
   priority,
-  sourceAgent: v.optional(assignedAgent),
+  sourceRole: v.optional(assignedRole),
   needsReview: v.boolean(),
   status: v.union(v.literal("pending_review"), v.literal("acknowledged")),
   createdAt: v.number(),
@@ -251,7 +251,7 @@ export const listInboxItems = query({
           }
           return "low" as const;
         })(),
-        sourceAgent: report.sourceAgent,
+        sourceRole: report.sourceRole,
         needsReview: report.needsReview,
         status: report.needsReview
           ? ("pending_review" as const)

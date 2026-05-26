@@ -39,10 +39,9 @@ describe("autopilot budget caps", () => {
     ).toBe(JSON.stringify({ cto: 3, pm: 1.25, support: 2 }));
   });
 
-  it("creates input values for every budgeted agent", () => {
+  it("creates input values for every budgeted role skill", () => {
     expect(createBudgetInputValues(JSON.stringify({ pm: 1 }))).toEqual({
       cto: "",
-      dev: "",
       growth: "",
       pm: "1",
       sales: "",

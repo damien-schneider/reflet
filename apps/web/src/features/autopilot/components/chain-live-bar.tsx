@@ -62,24 +62,15 @@ function resolveHeadline({
 
 function resolveSubline({
   actionableOwner,
-  gatedByOpenTasks,
   isLive,
   liveMessage,
-  openTaskCount,
-  wakeThreshold,
 }: {
   actionableOwner: string | undefined;
-  gatedByOpenTasks: boolean;
   isLive: boolean;
   liveMessage: string | null;
-  openTaskCount: number;
-  wakeThreshold: number;
 }): string {
   if (isLive) {
     return liveMessage ?? "";
-  }
-  if (gatedByOpenTasks) {
-    return `Gated · ${openTaskCount}/${wakeThreshold} open tasks`;
   }
   if (actionableOwner) {
     return `Ready · ${actionableOwner.toUpperCase()}`;
@@ -98,7 +89,7 @@ function resolveBadgeLabel({
     return "Live";
   }
   if (hasActionable) {
-    return "Idle";
+    return "Queued";
   }
   return "Done";
 }
@@ -148,11 +139,8 @@ export function ChainLiveBar({
   });
   const subline = resolveSubline({
     actionableOwner: actionableMeta?.owner,
-    gatedByOpenTasks: overview.gatedByOpenTasks,
     isLive,
     liveMessage: activeWork.message,
-    openTaskCount: overview.openTaskCount,
-    wakeThreshold: overview.wakeThreshold,
   });
   const badgeLabel = resolveBadgeLabel({
     hasActionable: Boolean(actionable),

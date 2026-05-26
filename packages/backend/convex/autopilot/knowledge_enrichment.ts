@@ -1,8 +1,8 @@
 /**
- * Knowledge Auto-Enrichment — extracts key findings from agent outputs
+ * Knowledge Auto-Enrichment — extracts key findings from role-skill outputs
  * and updates the knowledge base to keep it fresh and accurate.
  *
- * Scheduled after agent runs to distill useful information into
+ * Scheduled after role-skill runs to distill useful information into
  * persistent knowledge docs without manual president intervention.
  */
 
@@ -28,7 +28,7 @@ export const getRecentInsights = internalQuery({
       type: v.string(),
       title: v.string(),
       keyFindings: v.array(v.string()),
-      sourceAgent: v.optional(v.string()),
+      sourceRole: v.optional(v.string()),
     })
   ),
   handler: async (ctx, args) => {
@@ -55,7 +55,7 @@ export const getRecentInsights = internalQuery({
         type: d.type,
         title: d.title,
         keyFindings: d.keyFindings ?? [],
-        sourceAgent: d.sourceAgent ?? undefined,
+        sourceRole: d.sourceRole ?? undefined,
       }));
   },
 });
@@ -108,7 +108,7 @@ export const enrichKnowledgeBase = internalAction({
 
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      agent: "system",
+      role: "system",
       level: "info",
       message: `Knowledge enriched with ${targetAudienceFindings.length} findings from ${insights.length} recent documents`,
     });
@@ -152,7 +152,7 @@ async function appendToKnowledgeDoc(
     docId: existing._id,
     contentFull: updatedContent,
     contentSummary: updatedSummary,
-    editedBy: "agent",
-    editingAgent: "system",
+    editedBy: "role_skill",
+    editingRole: "system",
   });
 }

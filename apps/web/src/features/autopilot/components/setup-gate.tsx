@@ -18,13 +18,13 @@ const STEPS = [
   },
   {
     icon: BotIcon,
-    title: "Enable Agents",
-    description: "Turn on the agents you want working for you",
+    title: "Enable Role Skills",
+    description: "Turn on the role skills you want in the chain",
   },
   {
     icon: RocketIcon,
     title: "Enable Autopilot",
-    description: "Flip the switch and let your AI team take over",
+    description: "Flip the switch and let the chain runtime work",
   },
 ] as const;
 
@@ -39,8 +39,8 @@ export function SetupGate() {
         </div>
         <h2 className="mb-2 font-semibold text-xl">Welcome to Autopilot</h2>
         <p className="mb-8 text-muted-foreground text-sm">
-          Set up your autonomous AI team in a few steps. Head to Settings to get
-          started.
+          Set up your autonomous chain runtime in a few steps. Head to Settings
+          to get started.
         </p>
 
         <ol className="mb-8 space-y-4 text-left">

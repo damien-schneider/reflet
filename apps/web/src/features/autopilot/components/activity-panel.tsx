@@ -35,13 +35,15 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ACTIVITY_AGENT_BADGE_STYLES,
-  ACTIVITY_AGENT_LABELS,
-  ACTIVITY_AGENTS,
   ACTIVITY_LEVELS,
-  type ActivityAgent,
+  ACTIVITY_ROLE_BADGE_STYLES,
+  ACTIVITY_ROLE_LABELS,
+  ACTIVITY_ROLES,
   type ActivityLevel,
-  getActivityAgentLabel,
+  type ActivityRole,
+  getActivityRoleLabel,
+  isActivityLevel,
+  isActivityRole,
 } from "@/features/autopilot/components/activity/presentation";
 import { cn } from "@/lib/utils";
 
@@ -64,9 +66,9 @@ const LEVEL_LABELS = {
   error: "Error",
 } satisfies Record<ActivityLevel, string>;
 
-const AGENT_OPTIONS = ACTIVITY_AGENTS.map((agent) => ({
-  label: ACTIVITY_AGENT_LABELS[agent],
-  value: agent,
+const ROLE_OPTIONS = ACTIVITY_ROLES.map((role) => ({
+  label: ACTIVITY_ROLE_LABELS[role],
+  value: role,
 }));
 
 const LEVEL_OPTIONS = ACTIVITY_LEVELS.map((level) => ({
@@ -74,7 +76,7 @@ const LEVEL_OPTIONS = ACTIVITY_LEVELS.map((level) => ({
   value: level,
 }));
 
-type AgentFilter = ActivityAgent | "all";
+type RoleFilter = ActivityRole | "all";
 type LevelFilter = ActivityLevel | "all";
 
 interface ActivityPanelProps {
@@ -82,7 +84,7 @@ interface ActivityPanelProps {
 }
 
 export function ActivityPanel({ organizationId }: ActivityPanelProps) {
-  const [agentFilter, setAgentFilter] = useState<AgentFilter>("all");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [levelFilter, setLevelFilter] = useState<LevelFilter>("all");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -91,7 +93,7 @@ export function ActivityPanel({ organizationId }: ActivityPanelProps) {
     api.autopilot.queries.activity.listActivityPaginated,
     {
       organizationId,
-      agent: agentFilter === "all" ? undefined : agentFilter,
+      role: roleFilter === "all" ? undefined : roleFilter,
       level: levelFilter === "all" ? undefined : levelFilter,
     },
     { initialNumItems: PAGE_SIZE }
@@ -136,11 +138,11 @@ export function ActivityPanel({ organizationId }: ActivityPanelProps) {
   return (
     <div className="space-y-4">
       <ActivityFilters
-        agentFilter={agentFilter}
         levelFilter={levelFilter}
-        onAgentChange={setAgentFilter}
         onLevelChange={setLevelFilter}
+        onRoleChange={setRoleFilter}
         onSearchChange={setSearch}
+        roleFilter={roleFilter}
         search={search}
       />
       <ActivityResults
@@ -181,18 +183,18 @@ export function ActivityPanel({ organizationId }: ActivityPanelProps) {
 }
 
 interface ActivityFiltersProps {
-  agentFilter: AgentFilter;
   levelFilter: LevelFilter;
-  onAgentChange: (value: AgentFilter) => void;
   onLevelChange: (value: LevelFilter) => void;
+  onRoleChange: (value: RoleFilter) => void;
   onSearchChange: (value: string) => void;
+  roleFilter: RoleFilter;
   search: string;
 }
 
 function ActivityFilters({
-  agentFilter,
+  roleFilter,
   levelFilter,
-  onAgentChange,
+  onRoleChange,
   onLevelChange,
   onSearchChange,
   search,
@@ -212,16 +214,22 @@ function ActivityFilters({
         <IconFilter className="size-4 text-muted-foreground" />
         <Select
           onValueChange={(value) =>
-            onAgentChange(value === "all" ? "all" : (value as ActivityAgent))
+            onRoleChange(
+              typeof value !== "string" ||
+                value === "all" ||
+                !isActivityRole(value)
+                ? "all"
+                : value
+            )
           }
-          value={agentFilter}
+          value={roleFilter}
         >
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Agent" />
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="Role skill" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Agents</SelectItem>
-            {AGENT_OPTIONS.map(({ label, value }) => (
+            <SelectItem value="all">All role skills</SelectItem>
+            {ROLE_OPTIONS.map(({ label, value }) => (
               <SelectItem key={value} value={value}>
                 {label}
               </SelectItem>
@@ -230,7 +238,13 @@ function ActivityFilters({
         </Select>
         <Select
           onValueChange={(value) =>
-            onLevelChange(value === "all" ? "all" : (value as ActivityLevel))
+            onLevelChange(
+              typeof value !== "string" ||
+                value === "all" ||
+                !isActivityLevel(value)
+                ? "all"
+                : value
+            )
           }
           value={levelFilter}
         >
@@ -254,14 +268,14 @@ function ActivityFilters({
 interface ActivityEntry {
   _id: string;
   action?: string;
-  agent: ActivityAgent;
   createdAt: number;
   details?: string;
   entityId?: string;
   entityType?: string;
   level: ActivityLevel;
   message: string;
-  targetAgent?: ActivityAgent;
+  role: ActivityRole;
+  targetRole?: ActivityRole;
   workItemId?: string;
 }
 
@@ -321,7 +335,7 @@ interface ActivityRowProps {
 
 function ActivityRow({ entry, isExpanded, onToggle }: ActivityRowProps) {
   const LevelIcon = LEVEL_ICONS[entry.level];
-  const agentColor = ACTIVITY_AGENT_BADGE_STYLES[entry.agent];
+  const roleColor = ACTIVITY_ROLE_BADGE_STYLES[entry.role];
 
   return (
     <div className="overflow-hidden rounded-xl border bg-card">
@@ -334,19 +348,19 @@ function ActivityRow({ entry, isExpanded, onToggle }: ActivityRowProps) {
         <div
           className={cn(
             "mt-0.5 inline-flex shrink-0 rounded-full p-1",
-            agentColor
+            roleColor
           )}
         >
           <LevelIcon className="size-3" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <Badge className={cn("text-[10px]", agentColor)} variant="outline">
-              {getActivityAgentLabel(entry.agent)}
+            <Badge className={cn("text-[10px]", roleColor)} variant="outline">
+              {getActivityRoleLabel(entry.role)}
             </Badge>
-            {entry.targetAgent && (
+            {entry.targetRole && (
               <Badge className="text-[10px]" variant="secondary">
-                → {getActivityAgentLabel(entry.targetAgent)}
+                → {getActivityRoleLabel(entry.targetRole)}
               </Badge>
             )}
             <span className="ml-auto text-[11px] text-muted-foreground/60">
@@ -377,12 +391,12 @@ function ActivityRow({ entry, isExpanded, onToggle }: ActivityRowProps) {
 function ActivityDetails({ entry }: { entry: ActivityEntry }) {
   const metaRows: Array<{ label: string; value: string }> = [
     { label: "Level", value: LEVEL_LABELS[entry.level] },
-    { label: "Agent", value: getActivityAgentLabel(entry.agent) },
+    { label: "Role skill", value: getActivityRoleLabel(entry.role) },
   ];
-  if (entry.targetAgent) {
+  if (entry.targetRole) {
     metaRows.push({
       label: "Target",
-      value: getActivityAgentLabel(entry.targetAgent),
+      value: getActivityRoleLabel(entry.targetRole),
     });
   }
   if (entry.action) {

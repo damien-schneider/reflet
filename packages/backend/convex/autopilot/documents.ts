@@ -11,7 +11,7 @@ import { internalMutation, internalQuery } from "../_generated/server";
 import { requireOwnedDocumentRelations } from "./ownership";
 import { autopilotDocumentRecord } from "./schema/documents.tables";
 import {
-  assignedAgent,
+  assignedRole,
   documentStatus,
   documentType,
   impactLevel,
@@ -158,7 +158,7 @@ export const createDocument = internalMutation({
     title: v.string(),
     content: v.string(),
     tags: v.optional(v.array(v.string())),
-    sourceAgent: v.optional(assignedAgent),
+    sourceRole: v.optional(assignedRole),
     status: v.optional(documentStatus),
     needsReview: v.optional(v.boolean()),
     reviewType: v.optional(v.string()),
@@ -191,7 +191,7 @@ export const createDocument = internalMutation({
       title: args.title,
       content: args.content,
       tags: args.tags ?? [],
-      sourceAgent: args.sourceAgent,
+      sourceRole: args.sourceRole,
       status,
       needsReview: reviewState.needsReview,
       reviewedAt: reviewState.reviewedAt,

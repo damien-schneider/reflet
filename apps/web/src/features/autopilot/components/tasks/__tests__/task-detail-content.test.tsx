@@ -97,7 +97,7 @@ const orgId = toId("organizations", "o".repeat(32));
 interface FakeTask {
   _id: ReturnType<typeof toId<"autopilotWorkItems">>;
   acceptanceCriteria?: string[];
-  assignedAgent?: string;
+  assignedRole?: string;
   assigneeUserId?: string;
   completionPercent?: number;
   createdAt: number;

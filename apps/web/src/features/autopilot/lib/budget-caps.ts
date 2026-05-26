@@ -1,9 +1,8 @@
 import { z } from "zod";
 
-export const BUDGET_AGENT_OPTIONS = [
+export const BUDGET_ROLE_OPTIONS = [
   { id: "pm", label: "PM" },
   { id: "cto", label: "CTO" },
-  { id: "dev", label: "Dev" },
   { id: "growth", label: "Growth" },
   { id: "support", label: "Support" },
   { id: "sales", label: "Sales" },
@@ -11,8 +10,8 @@ export const BUDGET_AGENT_OPTIONS = [
 
 const storedBudgetCapsSchema = z.record(z.string(), z.unknown());
 
-function isBudgetAgentId(key: string): boolean {
-  return BUDGET_AGENT_OPTIONS.some((agent) => agent.id === key);
+function isBudgetRoleId(key: string): boolean {
+  return BUDGET_ROLE_OPTIONS.some((role) => role.id === key);
 }
 
 export function parseBudgetCapsJson(
@@ -36,7 +35,7 @@ export function parseBudgetCapsJson(
 
     for (const [key, value] of entries) {
       if (
-        isBudgetAgentId(key) &&
+        isBudgetRoleId(key) &&
         typeof value === "number" &&
         Number.isFinite(value) &&
         value > 0
@@ -57,9 +56,9 @@ export function createBudgetInputValues(
   const parsed = parseBudgetCapsJson(storedValue);
   const values: Record<string, string> = {};
 
-  for (const agent of BUDGET_AGENT_OPTIONS) {
-    values[agent.id] =
-      parsed[agent.id] === undefined ? "" : String(parsed[agent.id]);
+  for (const role of BUDGET_ROLE_OPTIONS) {
+    values[role.id] =
+      parsed[role.id] === undefined ? "" : String(parsed[role.id]);
   }
 
   return values;
@@ -67,14 +66,14 @@ export function createBudgetInputValues(
 
 export function formatBudgetCapsJson(values: Record<string, string>): string {
   const result: Record<string, number> = {};
-  const sortedAgentOptions = [...BUDGET_AGENT_OPTIONS].sort((left, right) =>
+  const sortedRoleOptions = [...BUDGET_ROLE_OPTIONS].sort((left, right) =>
     left.id.localeCompare(right.id)
   );
 
-  for (const agent of sortedAgentOptions) {
-    const numericValue = Number.parseFloat(values[agent.id] ?? "");
+  for (const role of sortedRoleOptions) {
+    const numericValue = Number.parseFloat(values[role.id] ?? "");
     if (Number.isFinite(numericValue) && numericValue > 0) {
-      result[agent.id] = numericValue;
+      result[role.id] = numericValue;
     }
   }
 

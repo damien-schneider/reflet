@@ -209,9 +209,9 @@ const TOUR_SECTIONS = [
   {
     id: "ai-features",
     badge: "Autonomous AI Company",
-    title: "7 agents that run your product",
+    title: "7 role skills that run your product",
     description:
-      "CEO sets strategy, PM creates initiatives, CTO writes specs, Dev ships code, Growth finds leads, Sales contacts prospects, Support handles users — all autonomous.",
+      "CEO coordinates, PM creates initiatives, CTO writes specs, Validator checks delivery, Growth finds channels, Sales contacts prospects, and Support triages users.",
     reverse: true,
     mockup: "ai" as const,
   },

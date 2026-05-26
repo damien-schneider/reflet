@@ -5,7 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  AGENT_LABELS,
+  ROLE_SKILL_LABELS,
   TYPE_COLOR_MAP,
   TYPE_LABELS,
 } from "@/features/autopilot/lib/document-labels";
@@ -94,12 +94,12 @@ export function DocumentList({
             {doc.title}
           </span>
 
-          {doc.sourceAgent && (
+          {doc.sourceRole && (
             <Badge
               className="hidden shrink-0 sm:inline-flex"
               variant="secondary"
             >
-              {AGENT_LABELS[doc.sourceAgent] ?? doc.sourceAgent}
+              {ROLE_SKILL_LABELS[doc.sourceRole] ?? doc.sourceRole}
             </Badge>
           )}
 

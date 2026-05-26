@@ -1,5 +1,5 @@
 /**
- * Competitors — structured competitor tracking for Growth and Sales agents.
+ * Competitors — structured competitor tracking for Growth and Sales role skills.
  */
 
 import { v } from "convex/values";

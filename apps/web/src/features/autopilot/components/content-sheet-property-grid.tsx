@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import {
-  AGENT_LABELS,
   PLATFORM_CONFIG,
+  ROLE_SKILL_LABELS,
   STATUS_COLOR_MAP,
   STATUS_LABELS,
   TYPE_LABELS,
@@ -41,10 +41,10 @@ export function ContentPropertyGrid({
         </span>
       </PropertyRow>
 
-      {document.sourceAgent && (
-        <PropertyRow label="Agent">
+      {document.sourceRole && (
+        <PropertyRow label="Role skill">
           <Badge variant="secondary">
-            {AGENT_LABELS[document.sourceAgent] ?? document.sourceAgent}
+            {ROLE_SKILL_LABELS[document.sourceRole] ?? document.sourceRole}
           </Badge>
         </PropertyRow>
       )}

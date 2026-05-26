@@ -85,7 +85,7 @@ export const updateProductProfile = mutation({
     const profileId = await ctx.db.insert("autopilotProductProfile", {
       organizationId: args.organizationId,
       ...snapshot,
-      ownerAgent: "cto",
+      ownerRole: "cto",
       generatedBy: "user",
       version: 1,
       userEdited: true,

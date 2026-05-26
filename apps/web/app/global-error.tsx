@@ -1,6 +1,9 @@
 "use client";
 
-import { ArrowClockwise, House, Warning } from "@phosphor-icons/react";
+import { ArrowClockwise, Copy, House, Warning } from "@phosphor-icons/react";
+import { useCallback } from "react";
+
+import { isDevEnv, serializeError } from "@/lib/dev-error";
 
 interface GlobalErrorProps {
   error: Error & { digest?: string };
@@ -8,6 +11,14 @@ interface GlobalErrorProps {
 }
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
+  const payload = serializeError(error);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(payload).catch(() => {
+      // ignore — best-effort copy
+    });
+  }, [payload]);
+
   return (
     <html lang="en">
       <body>
@@ -65,21 +76,59 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             </p>
           </div>
 
-          {process.env.NODE_ENV === "development" && error?.message && (
-            <code
+          {isDevEnv() && (
+            <div
               style={{
+                position: "relative",
                 marginTop: "1rem",
-                padding: "0.5rem 1rem",
+                width: "100%",
+                maxWidth: "40rem",
+                borderRadius: "0.5rem",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
                 backgroundColor: "#f5f5f5",
-                borderRadius: "0.375rem",
-                fontSize: "0.875rem",
-                color: "#737373",
-                maxWidth: "32rem",
-                overflow: "auto",
+                overflow: "hidden",
+                textAlign: "left",
               }}
             >
-              {error.message}
-            </code>
+              <button
+                aria-label="Copy error details"
+                onClick={handleCopy}
+                style={{
+                  position: "absolute",
+                  top: "0.5rem",
+                  right: "0.5rem",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "1.75rem",
+                  height: "1.75rem",
+                  borderRadius: "0.375rem",
+                  border: "1px solid #e5e5e5",
+                  backgroundColor: "white",
+                  color: "#737373",
+                  cursor: "pointer",
+                }}
+                type="button"
+              >
+                <Copy style={{ width: "0.875rem", height: "0.875rem" }} />
+              </button>
+              <pre
+                style={{
+                  margin: 0,
+                  padding: "0.75rem",
+                  paddingRight: "3rem",
+                  maxHeight: "18rem",
+                  overflow: "auto",
+                  fontSize: "0.75rem",
+                  lineHeight: 1.6,
+                  color: "#525252",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}
+              >
+                {payload}
+              </pre>
+            </div>
           )}
 
           <div

@@ -6,7 +6,7 @@ import {
   mutation,
   query,
 } from "../_generated/server";
-import { feedbackClarificationAgent } from "../ai/agent";
+import { feedbackClarificationRuntime } from "../ai/runtimes";
 import { getAuthUser } from "../shared/utils";
 
 // Regex to extract JSON from AI response (may include markdown code blocks)
@@ -108,7 +108,7 @@ export const saveDifficultyEstimate = internalMutation({
 // ============================================
 
 /**
- * Generate AI difficulty estimate using the agent
+ * Generate AI difficulty estimate using the AI runtime
  */
 export const generateDifficultyEstimate = internalAction({
   args: { feedbackId: v.id("feedback") },
@@ -150,8 +150,8 @@ Project Context:
     const contextString =
       contextParts.length > 0 ? `\n\n${contextParts.join("\n\n")}` : "";
 
-    // Generate difficulty estimate using the agent
-    const result = await feedbackClarificationAgent.generateText(
+    // Generate difficulty estimate using the AI runtime
+    const result = await feedbackClarificationRuntime.generateText(
       ctx,
       { userId: "system" },
       {

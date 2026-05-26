@@ -13,7 +13,6 @@ export default function OrgPageError({ error, reset }: ErrorProps) {
       description="We encountered an error loading this page. Please try again."
       error={error}
       onRetry={reset}
-      showError={process.env.NODE_ENV === "development"}
       title="Page error"
     />
   );

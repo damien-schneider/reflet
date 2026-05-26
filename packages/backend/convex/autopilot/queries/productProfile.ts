@@ -31,8 +31,8 @@ const productProfileShape = v.object({
   primaryUserVerbs: v.array(v.string()),
   targetAudienceTags: v.array(v.string()),
   pricingModel: v.union(pricingModelValidator, v.null()),
-  ownerAgent: v.string(),
-  generatedBy: v.union(v.literal("agent"), v.literal("user")),
+  ownerRole: v.string(),
+  generatedBy: v.union(v.literal("role_skill"), v.literal("user")),
   version: v.number(),
   userEdited: v.boolean(),
   userEditedAt: v.union(v.number(), v.null()),
@@ -57,7 +57,6 @@ export const getProductProfile = query({
     if (!profile) {
       return null;
     }
-
     return {
       _id: profile._id,
       _creationTime: profile._creationTime,
@@ -72,7 +71,7 @@ export const getProductProfile = query({
       primaryUserVerbs: profile.primaryUserVerbs,
       targetAudienceTags: profile.targetAudienceTags,
       pricingModel: profile.pricingModel ?? null,
-      ownerAgent: profile.ownerAgent,
+      ownerRole: profile.ownerRole,
       generatedBy: profile.generatedBy,
       version: profile.version,
       userEdited: profile.userEdited,

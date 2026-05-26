@@ -280,7 +280,7 @@ export const verifyDocument = internalAction({
 
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      agent: "system",
+      role: "system",
       level: status === "failed" ? "warning" : "info",
       message: `Document verified: "${doc.title}" — ${status} (${passedCount}/${totalChecks} checks passed)`,
     });
@@ -297,7 +297,7 @@ export const verifyLead = internalAction({
   },
   handler: async (ctx, args) => {
     const lead = await ctx.runQuery(
-      internal.autopilot.agents.sales_queries.getLeadById,
+      internal.autopilot.role_skills.sales_queries.getLeadById,
       { leadId: args.leadId }
     );
 
@@ -324,7 +324,7 @@ export const verifyLead = internalAction({
 
     await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
       organizationId: args.organizationId,
-      agent: "system",
+      role: "system",
       level: status === "failed" ? "warning" : "info",
       message: `Lead verified: "${lead.name}"${lead.company ? ` at ${lead.company}` : ""} — ${status} (${result.reason})`,
     });
@@ -377,7 +377,7 @@ export const updateLeadVerification = internalMutation({
 
 /**
  * Verify all unverified documents for an organization.
- * Scheduled after each agent run that creates content.
+ * Scheduled after each role-skill run that creates content.
  */
 export const verifyRecentDocuments = internalAction({
   args: { organizationId: v.id("organizations") },
@@ -410,7 +410,7 @@ export const verifyRecentLeads = internalAction({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     const recentLeads = await ctx.runQuery(
-      internal.autopilot.agents.sales_queries.getUnverifiedLeads,
+      internal.autopilot.role_skills.sales_queries.getUnverifiedLeads,
       { organizationId: args.organizationId }
     );
 

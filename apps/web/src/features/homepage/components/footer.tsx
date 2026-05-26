@@ -22,7 +22,7 @@ const PRODUCT_LINKS = [
 
 const COMPANY_LINKS = [
   { label: "Features", href: "/features", internal: true },
-  { label: "Agents", href: "/agents", internal: true },
+  { label: "Autopilot", href: "/autopilot", internal: true },
   { label: "Pricing", href: "/pricing", internal: true },
   { label: "Integrations", href: "/integrations", internal: true },
   { label: "Security", href: "/security", internal: true },

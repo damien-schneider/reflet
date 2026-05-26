@@ -2,7 +2,7 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import { validatorScoreObject } from "./use_cases.tables";
 import {
-  assignedAgent,
+  assignedRole,
   documentStatus,
   documentType,
   impactLevel,
@@ -14,7 +14,7 @@ const autopilotDocumentFields = {
   title: v.string(),
   content: v.string(),
   tags: v.array(v.string()),
-  sourceAgent: v.optional(assignedAgent),
+  sourceRole: v.optional(assignedRole),
   status: documentStatus,
   dependsOnDocIds: v.optional(v.array(v.id("autopilotDocuments"))),
   validation: v.optional(validatorScoreObject),
@@ -47,7 +47,7 @@ export const documentsTables = {
   autopilotDocuments: defineTable(autopilotDocumentFields)
     .index("by_organization", ["organizationId"])
     .index("by_org_type", ["organizationId", "type"])
-    .index("by_org_agent", ["organizationId", "sourceAgent"])
+    .index("by_org_role", ["organizationId", "sourceRole"])
     .index("by_org_review", ["organizationId", "needsReview"])
     .index("by_org_status", ["organizationId", "status"])
     .index("by_linked_work", ["linkedWorkItemId"]),

@@ -177,7 +177,7 @@ const detectRevenueAlerts = async (
     type: "note",
     title: `Revenue ${direction}: ${direction === "increase" ? "+" : "-"}$${changeAmount}`,
     content: `Daily revenue snapshot detected a significant change in MRR. Previous: $${prev.mrr}, Current: $${metrics.mrr}. Active subscriptions: ${metrics.activeSubscriptions}. Churn rate: ${metrics.churnRate}%.`,
-    sourceAgent: "system",
+    sourceRole: "system",
     needsReview: true,
     reviewType: "revenue_alert",
     tags: ["revenue"],
@@ -185,7 +185,7 @@ const detectRevenueAlerts = async (
 
   await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
     organizationId,
-    agent: "system",
+    role: "system",
     level: "warning",
     message: `Revenue alert: MRR ${direction} by ${Math.round(mrrChangePercent * 10) / 10}%`,
     details: `Previous: $${prev.mrr}, Current: $${metrics.mrr}`,
@@ -226,7 +226,7 @@ export const captureRevenueSnapshot = internalAction({
       // No subscription found, skip snapshot
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
-        agent: "system",
+        role: "system",
         level: "info",
         message:
           "No subscription found for organization — skipping revenue snapshot",
@@ -287,7 +287,7 @@ export const captureRevenueSnapshot = internalAction({
       // Log successful snapshot
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
-        agent: "system",
+        role: "system",
         level: "success",
         message: "Revenue snapshot captured",
         details: `MRR: $${metrics.mrr}, ARR: $${metrics.arr}, Active: ${metrics.activeSubscriptions}, Churn: ${metrics.churnRate}%`,
@@ -297,7 +297,7 @@ export const captureRevenueSnapshot = internalAction({
 
       await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
         organizationId: args.organizationId,
-        agent: "system",
+        role: "system",
         level: "error",
         message: "Failed to capture revenue snapshot",
         details: msg,
@@ -346,7 +346,7 @@ export const runRevenueSnapshotCron = internalAction({
 
         await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
           organizationId,
-          agent: "system",
+          role: "system",
           level: "error",
           message: "Revenue snapshot cron failed",
           details: msg,

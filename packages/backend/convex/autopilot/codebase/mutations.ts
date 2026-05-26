@@ -88,7 +88,7 @@ export const upsertRepoMetadata = internalMutation({
   },
 });
 
-export const startAgentRun = internalMutation({
+export const startAnalysisRun = internalMutation({
   args: {
     organizationId: v.id("organizations"),
     repoFullName: v.string(),
@@ -96,7 +96,7 @@ export const startAgentRun = internalMutation({
     userQuestion: v.optional(v.string()),
   },
   handler: async (ctx, args) =>
-    await ctx.db.insert("codebaseAgentRuns", {
+    await ctx.db.insert("codebaseAnalysisRuns", {
       organizationId: args.organizationId,
       repoFullName: args.repoFullName,
       purpose: args.purpose,
@@ -108,7 +108,7 @@ export const startAgentRun = internalMutation({
 });
 
 export const incrementToolCallCount = internalMutation({
-  args: { runId: v.id("codebaseAgentRuns"), delta: v.number() },
+  args: { runId: v.id("codebaseAnalysisRuns"), delta: v.number() },
   handler: async (ctx, args) => {
     const run = await ctx.db.get(args.runId);
     if (!run) {
@@ -120,9 +120,9 @@ export const incrementToolCallCount = internalMutation({
   },
 });
 
-export const completeAgentRun = internalMutation({
+export const completeAnalysisRun = internalMutation({
   args: {
-    runId: v.id("codebaseAgentRuns"),
+    runId: v.id("codebaseAnalysisRuns"),
     assistantText: v.string(),
     inputTokens: v.optional(v.number()),
     outputTokens: v.optional(v.number()),
@@ -140,8 +140,8 @@ export const completeAgentRun = internalMutation({
   },
 });
 
-export const failAgentRun = internalMutation({
-  args: { runId: v.id("codebaseAgentRuns"), error: v.string() },
+export const failAnalysisRun = internalMutation({
+  args: { runId: v.id("codebaseAnalysisRuns"), error: v.string() },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.runId, {
       status: "failed",
