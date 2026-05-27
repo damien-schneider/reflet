@@ -171,13 +171,14 @@
       "name": "@reflet/bridge",
       "version": "0.1.0",
       "bin": {
-        "reflet-bridge": "./dist/index.js",
+        "reflet-bridge": "./dist/cli.js",
       },
       "dependencies": {
-        "@reflet/harness": "workspace:*",
+        "zod": "catalog:",
       },
       "devDependencies": {
         "@reflet/config": "workspace:*",
+        "@reflet/harness": "workspace:*",
         "@types/node": "^25.5.0",
         "tsup": "^8.5.1",
         "typescript": "catalog:",

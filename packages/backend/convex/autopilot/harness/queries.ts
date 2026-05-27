@@ -33,6 +33,13 @@ const overviewValidator = v.object({
       repoFullName: v.string(),
       status: bridgeInstallationStatus,
       claudeAvailable: v.boolean(),
+      doctorChecks: v.array(
+        v.object({
+          label: v.string(),
+          message: v.optional(v.string()),
+          passed: v.boolean(),
+        })
+      ),
       lastHeartbeatAt: v.number(),
     })
   ),
@@ -43,8 +50,11 @@ const overviewValidator = v.object({
       recipeId: v.string(),
       status: bridgeJobStatus,
       title: v.string(),
+      blockerMessage: v.union(v.null(), v.string()),
+      commitSha: v.union(v.null(), v.string()),
       worktreeBranch: v.union(v.null(), v.string()),
       prUrl: v.union(v.null(), v.string()),
+      runtimeMs: v.union(v.null(), v.number()),
       updatedAt: v.number(),
     })
   ),
@@ -52,11 +62,15 @@ const overviewValidator = v.object({
     v.object({
       id: v.id("refletArtifacts"),
       artifactKind: harnessArtifactKind,
+      evidenceHashes: v.record(v.string(), v.string()),
+      inputArtifactHashes: v.record(v.string(), v.string()),
       path: v.string(),
+      promptHash: v.string(),
       recipeId: v.string(),
       title: v.string(),
       validationScore: v.number(),
       validationStatus: harnessValidationStatus,
+      validatorMessages: v.array(v.string()),
       updatedAt: v.number(),
     })
   ),
@@ -118,6 +132,7 @@ async function buildHarnessOverview(
           repoFullName: bridge.repoFullName,
           status: bridge.status,
           claudeAvailable: bridge.claudeAvailable,
+          doctorChecks: bridge.doctorChecks ?? [],
           lastHeartbeatAt: bridge.lastHeartbeatAt,
         }
       : null,
@@ -127,18 +142,25 @@ async function buildHarnessOverview(
       recipeId: job.recipeId,
       status: job.status,
       title: job.title,
+      blockerMessage: job.blockerMessage ?? null,
+      commitSha: job.commitSha ?? null,
       worktreeBranch: job.worktreeBranch ?? null,
       prUrl: job.prUrl ?? null,
+      runtimeMs: job.runtimeMs ?? null,
       updatedAt: job.updatedAt,
     })),
     artifacts: artifacts.map((artifact) => ({
       id: artifact._id,
       artifactKind: artifact.artifactKind,
+      evidenceHashes: artifact.evidenceHashes,
+      inputArtifactHashes: artifact.inputArtifactHashes,
       path: artifact.path,
+      promptHash: artifact.promptHash,
       recipeId: artifact.recipeId,
       title: artifact.title,
       validationScore: artifact.validationScore,
       validationStatus: artifact.validationStatus,
+      validatorMessages: artifact.validatorMessages,
       updatedAt: artifact.updatedAt,
     })),
     events: events.map((event) => ({

@@ -16,67 +16,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface RecipeOutput {
-  artifactKind: string;
-  path: string;
-}
-
-interface HarnessRecipeView {
-  dependsOn: string[];
-  id: string;
-  outputs: RecipeOutput[];
-  productMapLifecycle: string;
-  productMapTopic: string;
-  subagents: string[];
-  title: string;
-  validations: string[];
-  version: number;
-}
-
-interface HarnessBridgeView {
-  claudeAvailable: boolean;
-  lastHeartbeatAt: number;
-  name: string;
-  repoFullName: string;
-  status: "online" | "offline" | "blocked";
-}
-
-interface HarnessJobView {
-  id: string;
-  prUrl: string | null;
-  recipeId: string;
-  status: "queued" | "running" | "succeeded" | "failed" | "blocked";
-  title: string;
-  updatedAt: number;
-  worktreeBranch: string | null;
-}
-
-interface HarnessArtifactView {
-  artifactKind: string;
-  id: string;
-  path: string;
-  recipeId: string;
-  title: string;
-  updatedAt: number;
-  validationScore: number;
-  validationStatus: "passed" | "warning" | "failed";
-}
-
-interface HarnessEventView {
-  createdAt: number;
-  id: string;
-  level: string;
-  message: string;
-}
-
-interface HarnessOverview {
-  artifacts: HarnessArtifactView[];
-  bridge: HarnessBridgeView | null;
-  events: HarnessEventView[];
-  jobs: HarnessJobView[];
-  recipes: HarnessRecipeView[];
-}
+import { HarnessSetupPanel } from "./setup-panel";
+import type {
+  HarnessArtifactView,
+  HarnessBridgeView,
+  HarnessEventView,
+  HarnessJobView,
+  HarnessOverview,
+  HarnessRecipeView,
+} from "./types";
 
 interface HarnessDashboardProps {
   organizationId: Id<"organizations">;
@@ -197,6 +145,16 @@ function JobsList({ jobs }: { jobs: HarnessJobView[] }) {
               <div className="mt-1 truncate font-mono text-muted-foreground text-xs">
                 {job.worktreeBranch ?? "waiting for bridge claim"}
               </div>
+              {job.blockerMessage ? (
+                <div className="mt-1 text-destructive text-xs">
+                  Blocked: {job.blockerMessage}
+                </div>
+              ) : null}
+              {job.commitSha ? (
+                <div className="mt-1 truncate font-mono text-muted-foreground text-xs">
+                  {job.commitSha}
+                </div>
+              ) : null}
             </div>
             {job.prUrl ? (
               <a
@@ -243,6 +201,19 @@ function ArtifactsList({ artifacts }: { artifacts: HarnessArtifactView[] }) {
             <div className="mt-2 truncate font-mono text-muted-foreground text-xs">
               {artifact.path}
             </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <Badge variant="outline">
+                {Object.keys(artifact.evidenceHashes).length} evidence
+              </Badge>
+              <Badge variant="outline">
+                {Object.keys(artifact.inputArtifactHashes).length} inputs
+              </Badge>
+            </div>
+            {artifact.validatorMessages.length > 0 ? (
+              <div className="mt-2 text-muted-foreground text-xs">
+                {artifact.validatorMessages[0]}
+              </div>
+            ) : null}
           </div>
         ))}
       </div>
@@ -289,6 +260,10 @@ export function HarnessDashboard({ organizationId }: HarnessDashboardProps) {
       organizationId,
     }
   );
+  const githubConnection = useQuery(
+    api.integrations.github.queries.getConnectionStatus,
+    { organizationId }
+  );
   const enqueueProductBrain = useMutation(
     api.autopilot.harness.mutations.enqueueProductBrain
   );
@@ -320,6 +295,15 @@ export function HarnessDashboard({ organizationId }: HarnessDashboardProps) {
       <BridgeSummary
         bridge={overview.bridge}
         onRunProductBrain={handleRunProductBrain}
+      />
+      <HarnessSetupPanel
+        bridge={overview.bridge}
+        organizationId={organizationId}
+        repoFullName={
+          githubConnection?.repositoryFullName ??
+          overview.bridge?.repoFullName ??
+          null
+        }
       />
       <RecipesGrid recipes={overview.recipes} />
       <JobsList jobs={overview.jobs} />

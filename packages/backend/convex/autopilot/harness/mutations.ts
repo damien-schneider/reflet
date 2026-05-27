@@ -15,14 +15,19 @@ import {
 } from "../schema/validators";
 
 const artifactInput = v.object({
+  downstreamInvalidations: v.optional(v.array(v.string())),
+  evidenceHashes: v.optional(v.record(v.string(), v.string())),
   artifactKind: harnessArtifactKind,
+  inputArtifactHashes: v.optional(v.record(v.string(), v.string())),
   outputHash: v.string(),
   path: v.string(),
+  promptHash: v.optional(v.string()),
   recipeId: v.string(),
   recipeVersion: v.number(),
   title: v.string(),
   validationScore: v.number(),
   validationStatus: harnessValidationStatus,
+  validatorMessages: v.optional(v.array(v.string())),
 });
 
 const bridgeJobValidator = v.object({
@@ -47,13 +52,18 @@ const bridgeJobValidator = v.object({
 
 interface ArtifactInput {
   artifactKind: Doc<"refletArtifacts">["artifactKind"];
+  downstreamInvalidations?: string[];
+  evidenceHashes?: Record<string, string>;
+  inputArtifactHashes?: Record<string, string>;
   outputHash: string;
   path: string;
+  promptHash?: string;
   recipeId: string;
   recipeVersion: number;
   title: string;
   validationScore: number;
   validationStatus: Doc<"refletArtifacts">["validationStatus"];
+  validatorMessages?: string[];
 }
 
 const buildBranch = (recipeId: string, jobId: string): string =>
@@ -300,9 +310,14 @@ async function upsertArtifact(
     title: args.artifact.title,
     recipeId: args.artifact.recipeId,
     recipeVersion: args.artifact.recipeVersion,
+    promptHash: args.artifact.promptHash ?? args.artifact.outputHash,
+    inputArtifactHashes: args.artifact.inputArtifactHashes ?? {},
+    evidenceHashes: args.artifact.evidenceHashes ?? {},
     outputHash: args.artifact.outputHash,
     validationStatus: args.artifact.validationStatus,
     validationScore: args.artifact.validationScore,
+    validatorMessages: args.artifact.validatorMessages ?? [],
+    downstreamInvalidations: args.artifact.downstreamInvalidations ?? [],
     updatedAt: now,
   };
   if (existing) {

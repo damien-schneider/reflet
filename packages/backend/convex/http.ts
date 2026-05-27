@@ -9,6 +9,7 @@ import { registerAdminContentSurveyRoutes } from "./http/admin_content_surveys";
 import { registerAdminFeedbackRoutes } from "./http/admin_feedback";
 import { registerAdminManagementRoutes } from "./http/admin_management";
 import { registerAiApiRoutes } from "./http/ai_api";
+import { registerBridgeApiRoutes } from "./http/bridge_api";
 import { registerGithubApiRoutes } from "./http/github_api";
 import { registerGithubWebhookRoutes } from "./http/github_webhook";
 import { registerPublicApiRoutes } from "./http/public_api";
@@ -89,6 +90,7 @@ registerAdminFeedbackRoutes(http);
 registerAdminContentRoutes(http);
 registerAdminContentSurveyRoutes(http);
 registerAdminManagementRoutes(http);
+registerBridgeApiRoutes(http);
 
 // MCP server (JSON-RPC 2.0 over HTTP)
 http.route({ path: "/mcp", method: "POST", handler: mcpHandler });

@@ -1,16 +1,24 @@
 {
   "name": "@reflet/bridge",
   "version": "0.1.0",
-  "private": true,
+  "description": "Local Reflet Bridge CLI for running repo-native product harness jobs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/reflet-app/reflet.git",
+    "directory": "packages/bridge"
+  },
   "type": "module",
   "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
     "reflet-bridge": "./dist/cli.js"
   },
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "types": "./src/index.ts"
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "files": [
@@ -19,13 +27,15 @@
   "scripts": {
     "build": "tsup",
     "check-types": "tsc --noEmit",
+    "prepublishOnly": "bun run build",
     "test": "vitest run"
   },
   "dependencies": {
-    "@reflet/harness": "workspace:*"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@reflet/config": "workspace:*",
+    "@reflet/harness": "workspace:*",
     "@types/node": "^25.5.0",
     "tsup": "^8.5.1",
     "typescript": "catalog:",

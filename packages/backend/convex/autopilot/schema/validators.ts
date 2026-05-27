@@ -188,6 +188,12 @@ export const bridgeJobStatus = v.union(
   v.literal("blocked")
 );
 
+export const bridgeDoctorCheck = v.object({
+  label: v.string(),
+  message: v.optional(v.string()),
+  passed: v.boolean(),
+});
+
 export const harnessArtifactKind = v.union(
   v.literal("product_brain"),
   v.literal("codebase_map"),

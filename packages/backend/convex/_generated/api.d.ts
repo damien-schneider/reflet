@@ -51,6 +51,7 @@ import type * as autopilot_documents from "../autopilot/documents.js";
 import type * as autopilot_execution_lifecycle from "../autopilot/execution_lifecycle.js";
 import type * as autopilot_gate from "../autopilot/gate.js";
 import type * as autopilot_guards from "../autopilot/guards.js";
+import type * as autopilot_harness_bridge from "../autopilot/harness/bridge.js";
 import type * as autopilot_harness_mutations from "../autopilot/harness/mutations.js";
 import type * as autopilot_harness_queries from "../autopilot/harness/queries.js";
 import type * as autopilot_health from "../autopilot/health.js";
@@ -250,6 +251,7 @@ import type * as http_admin_content_surveys from "../http/admin_content_surveys.
 import type * as http_admin_feedback from "../http/admin_feedback.js";
 import type * as http_admin_management from "../http/admin_management.js";
 import type * as http_ai_api from "../http/ai_api.js";
+import type * as http_bridge_api from "../http/bridge_api.js";
 import type * as http_github_api from "../http/github_api.js";
 import type * as http_github_api_helpers from "../http/github_api_helpers.js";
 import type * as http_github_api_reads from "../http/github_api_reads.js";
@@ -408,6 +410,7 @@ declare const fullApi: ApiFromModules<{
   "autopilot/execution_lifecycle": typeof autopilot_execution_lifecycle;
   "autopilot/gate": typeof autopilot_gate;
   "autopilot/guards": typeof autopilot_guards;
+  "autopilot/harness/bridge": typeof autopilot_harness_bridge;
   "autopilot/harness/mutations": typeof autopilot_harness_mutations;
   "autopilot/harness/queries": typeof autopilot_harness_queries;
   "autopilot/health": typeof autopilot_health;
@@ -607,6 +610,7 @@ declare const fullApi: ApiFromModules<{
   "http/admin_feedback": typeof http_admin_feedback;
   "http/admin_management": typeof http_admin_management;
   "http/ai_api": typeof http_ai_api;
+  "http/bridge_api": typeof http_bridge_api;
   "http/github_api": typeof http_github_api;
   "http/github_api_helpers": typeof http_github_api_helpers;
   "http/github_api_reads": typeof http_github_api_reads;

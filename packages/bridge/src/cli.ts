@@ -1,33 +1,54 @@
-import { spawnSync } from "node:child_process";
-import { parseBridgeCommand } from "./index";
+import { createBridgeApiClient } from "./runtime/api";
+import { parseBridgeCommand } from "./runtime/command";
+import { runDoctor } from "./runtime/doctor";
+import { runBridgeLoop, runBridgeOnce } from "./runtime/runner";
 
-function commandSucceeds(command: string, args: string[]): boolean {
-  const result = spawnSync(command, args, { stdio: "ignore" });
-  return result.status === 0;
-}
-
-function printDoctor(): void {
-  const report = {
-    git: commandSucceeds("git", ["--version"]),
-    repo: commandSucceeds("git", ["rev-parse", "--is-inside-work-tree"]),
-    claude: commandSucceeds("claude", ["--version"]),
-  };
+function printDoctor(repoPath: string): void {
+  const report = runDoctor(repoPath);
   process.stdout.write(
-    [
-      `Git CLI: ${report.git ? "ok" : "missing"}`,
-      `Git repository: ${report.repo ? "ok" : "missing"}`,
-      `Claude Code: ${report.claude ? "ok" : "missing"}`,
-    ].join("\n")
+    report.checks
+      .map((check) => `${check.label}: ${check.passed ? "ok" : "missing"}`)
+      .join("\n")
   );
   process.stdout.write("\n");
-  if (!(report.git && report.repo && report.claude)) {
+  if (!report.ready) {
     process.exitCode = 1;
   }
 }
 
+function requireValue(value: string | null | undefined, label: string): string {
+  if (!value) {
+    throw new Error(`Missing ${label}`);
+  }
+  return value;
+}
+
 const command = parseBridgeCommand(process.argv.slice(2));
 if (command.kind === "doctor") {
-  printDoctor();
+  printDoctor(".");
 } else {
-  process.stdout.write(`Reflet Bridge watching ${command.repoPath}\n`);
+  const secretKey = requireValue(
+    process.env.REFLET_SECRET_KEY,
+    "REFLET_SECRET_KEY"
+  );
+  const siteUrl = requireValue(command.siteUrl, "--site-url");
+  const repoFullName = requireValue(command.repoFullName, "--repo-full-name");
+  const api = createBridgeApiClient({ secretKey, siteUrl });
+  if (command.kind === "run-once") {
+    await runBridgeOnce({
+      api,
+      bridgeName: "Reflet Bridge",
+      repoFullName,
+      repoPath: command.repoPath,
+    });
+  } else {
+    process.stdout.write(`Reflet Bridge watching ${command.repoPath}\n`);
+    await runBridgeLoop({
+      api,
+      bridgeName: "Reflet Bridge",
+      intervalMs: command.intervalMs,
+      repoFullName,
+      repoPath: command.repoPath,
+    });
+  }
 }
