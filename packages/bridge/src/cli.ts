@@ -35,12 +35,13 @@ if (command.kind === "doctor") {
   const repoFullName = requireValue(command.repoFullName, "--repo-full-name");
   const api = createBridgeApiClient({ secretKey, siteUrl });
   if (command.kind === "run-once") {
-    await runBridgeOnce({
+    const result = await runBridgeOnce({
       api,
       bridgeName: "Reflet Bridge",
       repoFullName,
       repoPath: command.repoPath,
     });
+    process.exit(result.kind === "blocked" ? 1 : 0);
   } else {
     process.stdout.write(`Reflet Bridge watching ${command.repoPath}\n`);
     await runBridgeLoop({

@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/reflet-app/reflet.git",
+    "url": "git+https://github.com/reflet-app/reflet.git",
     "directory": "packages/bridge"
   },
   "type": "module",
@@ -13,7 +13,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "reflet-bridge": "./dist/cli.js"
+    "reflet-bridge": "dist/cli.js"
   },
   "exports": {
     ".": {
@@ -31,7 +31,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "zod": "catalog:"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@reflet/config": "workspace:*",

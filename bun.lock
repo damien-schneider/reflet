@@ -174,7 +174,7 @@
         "reflet-bridge": "./dist/cli.js",
       },
       "dependencies": {
-        "zod": "catalog:",
+        "zod": "^4.3.6",
       },
       "devDependencies": {
         "@reflet/config": "workspace:*",
