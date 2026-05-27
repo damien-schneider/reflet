@@ -12,6 +12,7 @@ build
 .env
 .env*.local
 .env.production
+.reflet.local/
 
 # IDEs and editors
 .vscode/*
