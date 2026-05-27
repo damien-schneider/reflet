@@ -9,7 +9,7 @@ import { createDoctorReport } from "./runtime/doctor";
 import { buildClaudeCommand, buildClaudeRecipePrompt } from "./runtime/prompt";
 import { runBridgeOnce } from "./runtime/runner";
 import { validateHarnessArtifacts } from "./runtime/validation";
-import { buildWorktreePlan } from "./runtime/worktree";
+import { buildWorktreePlan, runCommand } from "./runtime/worktree";
 
 function runGit(args: string[]): void {
   execFileSync("git", args, { stdio: "ignore" });
@@ -54,6 +54,26 @@ describe("Reflet Bridge", () => {
       branch: "reflet/product-brain/job-123",
       path: "/repo/acme/.reflet.local/worktrees/job-123",
     });
+  });
+
+  it("times out commands that exceed their runtime cap", async () => {
+    const root = await mkdtemp(join(tmpdir(), "reflet-command-timeout-"));
+    const bin = join(root, "bin");
+    try {
+      await mkdir(bin, { recursive: true });
+      await writeFile(join(bin, "slow-command"), "#!/bin/sh\nsleep 2\n");
+      await chmod(join(bin, "slow-command"), 0o755);
+
+      expect(() =>
+        runCommand("slow-command", [], {
+          cwd: root,
+          env: { PATH: `${bin}:${process.env.PATH ?? ""}` },
+          timeoutMs: 10,
+        })
+      ).toThrow("slow-command timed out after 10ms");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
   });
 
   it("builds Claude prompts around the ProductMap TASK harness", () => {

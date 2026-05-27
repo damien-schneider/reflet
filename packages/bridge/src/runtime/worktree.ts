@@ -17,6 +17,12 @@ export interface CommandResult {
   stdout: string;
 }
 
+export interface RunCommandOptions {
+  cwd: string;
+  env?: Record<string, string>;
+  timeoutMs?: number;
+}
+
 function slugify(value: string): string {
   const slug = value
     .trim()
@@ -41,13 +47,30 @@ export function buildWorktreePlan({
 export function runCommand(
   command: string,
   args: string[],
-  options: { cwd: string; env?: Record<string, string> }
+  options: RunCommandOptions
 ): CommandResult {
   const result = spawnSync(command, args, {
     cwd: options.cwd,
     env: { ...process.env, ...options.env },
     encoding: "utf8",
+    timeout: options.timeoutMs,
   });
+  if (
+    options.timeoutMs !== undefined &&
+    result.error?.message.includes("ETIMEDOUT")
+  ) {
+    throw new Error(`${command} timed out after ${options.timeoutMs}ms`);
+  }
+  if (
+    options.timeoutMs !== undefined &&
+    result.status === null &&
+    result.signal === "SIGTERM"
+  ) {
+    throw new Error(`${command} timed out after ${options.timeoutMs}ms`);
+  }
+  if (result.error) {
+    throw result.error;
+  }
   if (result.status !== 0) {
     const stderr = result.stderr.trim();
     throw new Error(stderr || `${command} failed with status ${result.status}`);

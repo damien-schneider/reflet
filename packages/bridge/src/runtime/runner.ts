@@ -22,6 +22,8 @@ export type BridgeRunOnceResult =
   | { kind: "completed" }
   | { kind: "idle" };
 
+const CLAUDE_COMMAND_TIMEOUT_MS = 15 * 60 * 1000;
+
 export interface BridgeRunInput {
   api: BridgeApi;
   bridgeName: string;
@@ -109,6 +111,7 @@ export async function runBridgeOnce({
     const claude = runCommand(command.command, command.args, {
       cwd: plan.path,
       env,
+      timeoutMs: CLAUDE_COMMAND_TIMEOUT_MS,
     });
     const validation = await validateHarnessArtifacts({
       baseSha,
