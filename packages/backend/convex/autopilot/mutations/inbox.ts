@@ -3,7 +3,6 @@
  */
 
 import { v } from "convex/values";
-import { internal } from "../../_generated/api";
 import { mutation } from "../../_generated/server";
 import { getAuthUser } from "../../shared/utils";
 import { requireAutopilotAccess, requireOrgAdmin } from "./auth";
@@ -109,12 +108,6 @@ export const approveDocument = mutation({
       message: `Approved document: ${doc.title}`,
       createdAt: now,
     });
-
-    await ctx.scheduler.runAfter(
-      0,
-      internal.autopilot.heartbeat.runHeartbeat,
-      {}
-    );
 
     return null;
   },

@@ -5,6 +5,7 @@ import { competitorsTables } from "./competitors.tables";
 import { configTables } from "./config.tables";
 import { dataTables } from "./data.tables";
 import { documentsTables } from "./documents.tables";
+import { harnessTables } from "./harness.tables";
 import { knowledgeTables } from "./knowledge.tables";
 import { labelsTables } from "./labels.tables";
 import { personasTables } from "./personas.tables";
@@ -18,6 +19,7 @@ export const autopilotTables = {
   ...configTables,
   ...activityTables,
   ...knowledgeTables,
+  ...harnessTables,
   ...dataTables,
   ...documentsTables,
   ...competitorsTables,

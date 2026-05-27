@@ -51,6 +51,8 @@ import type * as autopilot_documents from "../autopilot/documents.js";
 import type * as autopilot_execution_lifecycle from "../autopilot/execution_lifecycle.js";
 import type * as autopilot_gate from "../autopilot/gate.js";
 import type * as autopilot_guards from "../autopilot/guards.js";
+import type * as autopilot_harness_mutations from "../autopilot/harness/mutations.js";
+import type * as autopilot_harness_queries from "../autopilot/harness/queries.js";
 import type * as autopilot_health from "../autopilot/health.js";
 import type * as autopilot_health_checks from "../autopilot/health_checks.js";
 import type * as autopilot_heartbeat from "../autopilot/heartbeat.js";
@@ -406,6 +408,8 @@ declare const fullApi: ApiFromModules<{
   "autopilot/execution_lifecycle": typeof autopilot_execution_lifecycle;
   "autopilot/gate": typeof autopilot_gate;
   "autopilot/guards": typeof autopilot_guards;
+  "autopilot/harness/mutations": typeof autopilot_harness_mutations;
+  "autopilot/harness/queries": typeof autopilot_harness_queries;
   "autopilot/health": typeof autopilot_health;
   "autopilot/health_checks": typeof autopilot_health_checks;
   "autopilot/heartbeat": typeof autopilot_heartbeat;

@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: IconDashboard, path: "" },
   { id: "inbox", label: "Inbox", icon: IconInbox, path: "/inbox" },
   { id: "chain", label: "Chain", icon: IconGitBranch, path: "/chain" },
+  { id: "harness", label: "Harness", icon: IconGitBranch, path: "/harness" },
   { id: "knowledge", label: "Product", icon: IconBook, path: "/knowledge" },
   {
     id: "documents",

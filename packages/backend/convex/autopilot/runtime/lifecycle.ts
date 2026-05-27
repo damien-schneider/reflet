@@ -222,11 +222,6 @@ export const runExecutionFromRecord = internalAction({
           { executionId: args.executionId }
         );
       }
-      await ctx.scheduler.runAfter(
-        0,
-        internal.autopilot.heartbeat.runHeartbeat,
-        {}
-      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await ctx.runMutation(internal.autopilot.runtime.lifecycle.markFailed, {

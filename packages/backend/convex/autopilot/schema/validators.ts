@@ -174,6 +174,42 @@ export const chainNodeStatus = v.union(
   v.literal("published")
 );
 
+export const bridgeInstallationStatus = v.union(
+  v.literal("online"),
+  v.literal("offline"),
+  v.literal("blocked")
+);
+
+export const bridgeJobStatus = v.union(
+  v.literal("queued"),
+  v.literal("running"),
+  v.literal("succeeded"),
+  v.literal("failed"),
+  v.literal("blocked")
+);
+
+export const harnessArtifactKind = v.union(
+  v.literal("product_brain"),
+  v.literal("codebase_map"),
+  v.literal("market_map"),
+  v.literal("audience_research"),
+  v.literal("use_case_map"),
+  v.literal("product_gap_analysis"),
+  v.literal("posthog_audit"),
+  v.literal("bug_report"),
+  v.literal("task_plan"),
+  v.literal("pull_request_draft"),
+  v.literal("pull_request_review"),
+  v.literal("changelog"),
+  v.literal("growth_draft")
+);
+
+export const harnessValidationStatus = v.union(
+  v.literal("passed"),
+  v.literal("warning"),
+  v.literal("failed")
+);
+
 export const documentStatus = v.union(
   v.literal("draft"),
   v.literal("pending_review"),

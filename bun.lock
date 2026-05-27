@@ -140,6 +140,7 @@
         "@openrouter/ai-sdk-provider": "^2.3.3",
         "@react-email/render": "^2.0.4",
         "@reflet/email": "workspace:*",
+        "@reflet/harness": "workspace:*",
         "@t3-oss/env-core": "^0.13.11",
         "ai": "^6.0.138",
         "better-auth": "catalog:",
@@ -163,6 +164,23 @@
         "tsx": "^4.21.0",
         "typescript": "catalog:",
         "vite": "^8.0.3",
+        "vitest": "^4.1.1",
+      },
+    },
+    "packages/bridge": {
+      "name": "@reflet/bridge",
+      "version": "0.1.0",
+      "bin": {
+        "reflet-bridge": "./dist/index.js",
+      },
+      "dependencies": {
+        "@reflet/harness": "workspace:*",
+      },
+      "devDependencies": {
+        "@reflet/config": "workspace:*",
+        "@types/node": "^25.5.0",
+        "tsup": "^8.5.1",
+        "typescript": "catalog:",
         "vitest": "^4.1.1",
       },
     },
@@ -219,6 +237,20 @@
         "terser": "^5.46.1",
         "typescript": "catalog:",
         "vite": "^8.0.3",
+      },
+    },
+    "packages/harness": {
+      "name": "@reflet/harness",
+      "version": "0.1.0",
+      "dependencies": {
+        "zod": "catalog:",
+      },
+      "devDependencies": {
+        "@reflet/config": "workspace:*",
+        "@types/node": "^25.5.0",
+        "tsup": "^8.5.1",
+        "typescript": "catalog:",
+        "vitest": "^4.1.1",
       },
     },
     "packages/mcp-server": {
@@ -946,6 +978,8 @@
 
     "@reflet/backend": ["@reflet/backend@workspace:packages/backend"],
 
+    "@reflet/bridge": ["@reflet/bridge@workspace:packages/bridge"],
+
     "@reflet/changelog-widget": ["@reflet/changelog-widget@workspace:packages/changelog-widget"],
 
     "@reflet/config": ["@reflet/config@workspace:packages/config"],
@@ -955,6 +989,8 @@
     "@reflet/env": ["@reflet/env@workspace:packages/env"],
 
     "@reflet/feedback-widget": ["@reflet/feedback-widget@workspace:packages/feedback-widget"],
+
+    "@reflet/harness": ["@reflet/harness@workspace:packages/harness"],
 
     "@reflet/mcp-server": ["@reflet/mcp-server@workspace:packages/mcp-server"],
 
