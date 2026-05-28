@@ -23,6 +23,24 @@ function allowedTools(recipe: HarnessRecipe): string {
   return [...tools].join(",");
 }
 
+function buildOutputContract(recipe: HarnessRecipe): string {
+  return recipe.outputs
+    .map((output) =>
+      [
+        `File: ${output.path}`,
+        `# ${recipe.title}`,
+        "",
+        "## Summary",
+        "- Write the durable product knowledge for this recipe.",
+        "",
+        "## Evidence",
+        "- Source: <repo path or URL>; Claim: <specific claim supported by that source>.",
+        "- Assumption: <only when no direct source exists>.",
+      ].join("\n")
+    )
+    .join("\n\n");
+}
+
 export function hashText(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -52,6 +70,13 @@ export function buildClaudeRecipePrompt(recipe: HarnessRecipe): string {
     "",
     "Validators:",
     validations,
+    "",
+    "Output contract:",
+    "For every required output, write the exact file path and include this markdown structure:",
+    buildOutputContract(recipe),
+    "",
+    "Do not finish until every required output has a visible `## Evidence` heading.",
+    "Before committing, verify each required output with `grep -n '^## Evidence' <path>`.",
     "",
     "Write all durable product knowledge under .reflet/.",
     "Never create a users folder inside .reflet. Audience research belongs in .reflet/audience and .reflet/user-research.",

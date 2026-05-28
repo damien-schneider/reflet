@@ -14,6 +14,7 @@ import { z } from "zod";
 
 const REPO_FULL_NAME = "acme/reflet";
 const SECRET_KEY = "fb_sec_e2e";
+const BRANCH_REF = "refs/heads/reflet/product-brain/job-123";
 const objectBodySchema = z.record(z.string(), z.unknown());
 
 interface BridgeApiState {
@@ -148,6 +149,9 @@ function listenServer(server: Server): Promise<void> {
 }
 
 function closeServer(server: Server): Promise<void> {
+  if (!server.listening) {
+    return Promise.resolve();
+  }
   server.closeAllConnections();
   return new Promise((resolve, reject) => {
     server.close((error) => {
@@ -218,11 +222,12 @@ async function createTempRepo(
 
 function runBridgeProcess(input: {
   args: string[];
+  command: string;
   cwd: string;
   env: NodeJS.ProcessEnv;
 }): Promise<BridgeProcessResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("bun", input.args, {
+    const child = spawn(input.command, input.args, {
       cwd: input.cwd,
       env: input.env,
     });
@@ -247,6 +252,42 @@ function runBridgeProcess(input: {
       });
     });
   });
+}
+
+function expectSuccessfulBridgeRun({
+  branch,
+  bridge,
+  remote,
+  state,
+}: {
+  branch: string;
+  bridge: BridgeProcessResult;
+  remote: string;
+  state: BridgeApiState;
+}): void {
+  expect({
+    completedPrUrls: state.completedPrUrls,
+    events: state.events,
+    failures: state.failures,
+    signal: bridge.signal,
+    status: bridge.status,
+    stderr: bridge.stderr,
+    stdout: bridge.stdout,
+  }).toEqual({
+    completedPrUrls: ["https://github.com/acme/reflet/pull/42"],
+    events: [
+      "Claimed Build Product Brain",
+      "Draft PR ready: https://github.com/acme/reflet/pull/42",
+    ],
+    failures: [],
+    signal: null,
+    status: 0,
+    stderr: "",
+    stdout: "",
+  });
+
+  const branchRef = runGit(["--git-dir", remote, "show-ref", branch]);
+  expect(branchRef).toContain(branch);
 }
 
 describe("Reflet Bridge CLI E2E", () => {
@@ -279,6 +320,7 @@ describe("Reflet Bridge CLI E2E", () => {
           "--repo-full-name",
           REPO_FULL_NAME,
         ],
+        command: "bun",
         cwd: repo,
         env: {
           ...process.env,
@@ -288,34 +330,64 @@ describe("Reflet Bridge CLI E2E", () => {
         },
       });
 
-      expect({
-        completedPrUrls: state.completedPrUrls,
-        events: state.events,
-        failures: state.failures,
-        signal: bridge.signal,
-        status: bridge.status,
-        stderr: bridge.stderr,
-        stdout: bridge.stdout,
-      }).toEqual({
-        completedPrUrls: ["https://github.com/acme/reflet/pull/42"],
-        events: [
-          "Claimed Build Product Brain",
-          "Draft PR ready: https://github.com/acme/reflet/pull/42",
-        ],
-        failures: [],
-        signal: null,
-        status: 0,
-        stderr: "",
-        stdout: "",
+      expectSuccessfulBridgeRun({ branch: BRANCH_REF, bridge, remote, state });
+    } finally {
+      await closeServer(server);
+      await rm(root, { force: true, recursive: true });
+    }
+  }, 60_000);
+
+  it("runs the web-hosted Bridge tarball through the same autonomous loop", async () => {
+    const root = await mkdtemp(join(tmpdir(), "reflet-bridge-tarball-e2e-"));
+    const bin = join(root, "bin");
+    const prState = join(root, "pr-created");
+    const tarballPath = join(
+      process.cwd(),
+      "../../apps/web/public/downloads/reflet-bridge-0.1.0.tgz"
+    );
+    const state: BridgeApiState = {
+      completedPrUrls: [],
+      events: [],
+      failures: [],
+    };
+    const server = createBridgeApiServer(state);
+
+    try {
+      execFileSync("bun", ["run", "build"], {
+        cwd: process.cwd(),
+        stdio: "pipe",
       });
 
-      const branchRef = runGit([
-        "--git-dir",
-        remote,
-        "show-ref",
-        "refs/heads/reflet/product-brain/job-123",
-      ]);
-      expect(branchRef).toContain("refs/heads/reflet/product-brain/job-123");
+      await mkdir(bin, { recursive: true });
+      const { remote, repo } = await createTempRepo(root);
+      await createFakeGh(bin);
+      await createFakeClaude(bin);
+      await listenServer(server);
+
+      const bridge = await runBridgeProcess({
+        args: [
+          "--package",
+          `file://${tarballPath}`,
+          "reflet-bridge",
+          "run-once",
+          "--site-url",
+          serverUrl(server),
+          "--repo",
+          repo,
+          "--repo-full-name",
+          REPO_FULL_NAME,
+        ],
+        command: "bunx",
+        cwd: repo,
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH ?? ""}`,
+          REFLET_PR_STATE: prState,
+          REFLET_SECRET_KEY: SECRET_KEY,
+        },
+      });
+
+      expectSuccessfulBridgeRun({ branch: BRANCH_REF, bridge, remote, state });
     } finally {
       await closeServer(server);
       await rm(root, { force: true, recursive: true });

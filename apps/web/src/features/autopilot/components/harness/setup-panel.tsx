@@ -24,10 +24,27 @@ interface HarnessSetupPanelProps {
   repoFullName: string | null;
 }
 
-function buildBridgeCommand(secretKey: string, repoFullName: string): string {
+const BRIDGE_DOWNLOAD_PATH = "/downloads/reflet-bridge-0.1.0.tgz";
+const DEFAULT_SITE_URL = "https://www.reflet.app";
+const TRAILING_SLASH_PATTERN = /\/+$/;
+
+function trimTrailingSlash(value: string): string {
+  return value.replace(TRAILING_SLASH_PATTERN, "");
+}
+
+function buildBridgeCommand({
+  repoFullName,
+  secretKey,
+  siteUrl,
+}: {
+  repoFullName: string;
+  secretKey: string;
+  siteUrl: string;
+}): string {
+  const packageUrl = `${trimTrailingSlash(siteUrl)}${BRIDGE_DOWNLOAD_PATH}`;
   return [
     `REFLET_SECRET_KEY=${secretKey}`,
-    "bunx @reflet/bridge start",
+    `bunx --package ${packageUrl} reflet-bridge start`,
     `--site-url ${env.NEXT_PUBLIC_CONVEX_SITE_URL}`,
     "--repo .",
     `--repo-full-name ${repoFullName}`,
@@ -54,32 +71,45 @@ export function HarnessSetupPanel({
   const generateApiKeys = useMutation(api.feedback.api_admin.generateApiKeys);
   const [secretKey, setSecretKey] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const command = buildBridgeCommand(
-    secretKey ?? "fb_sec_your_bridge_key",
-    repoFullName ?? "owner/repo"
-  );
+  const command = buildBridgeCommand({
+    repoFullName: repoFullName ?? "owner/repo",
+    secretKey: secretKey ?? "fb_sec_your_bridge_key",
+    siteUrl: env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL,
+  });
 
-  const handleGenerateBridgeKey = async () => {
+  const handleGenerateBridgeKey = () => {
     setIsGenerating(true);
-    try {
-      const result = await generateApiKeys({
-        organizationId,
-        name: "Reflet Bridge",
+    generateApiKeys({
+      organizationId,
+      name: "Reflet Bridge",
+    })
+      .then((result) => {
+        setSecretKey(result.secretKey);
+        toast.success("Bridge key generated");
+      })
+      .catch((error: unknown) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Could not generate Bridge key"
+        );
+      })
+      .finally(() => {
+        setIsGenerating(false);
       });
-      setSecretKey(result.secretKey);
-      toast.success("Bridge key generated");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not generate Bridge key"
-      );
-    } finally {
-      setIsGenerating(false);
-    }
   };
 
-  const handleCopyCommand = async () => {
-    await navigator.clipboard.writeText(command);
-    toast.success("Bridge command copied");
+  const handleCopyCommand = () => {
+    navigator.clipboard
+      .writeText(command)
+      .then(() => {
+        toast.success("Bridge command copied");
+      })
+      .catch((error: unknown) => {
+        toast.error(
+          error instanceof Error ? error.message : "Could not copy command"
+        );
+      });
   };
 
   return (

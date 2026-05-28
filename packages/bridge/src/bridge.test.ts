@@ -128,6 +128,8 @@ describe("Reflet Bridge", () => {
     expect(prompt).toContain("Topics, Agents, Skills, Knowledge");
     expect(prompt).toContain("product-strategist");
     expect(prompt).toContain(".reflet/strategy/product-brain.md");
+    expect(prompt).toContain("## Evidence");
+    expect(prompt).toContain("grep -n '^## Evidence'");
     expect(prompt).not.toContain(".reflet/users");
   });
 

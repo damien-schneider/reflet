@@ -43,6 +43,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 vi.mock("@reflet/env/web", () => ({
   env: {
     NEXT_PUBLIC_CONVEX_SITE_URL: "https://example.convex.site",
+    NEXT_PUBLIC_SITE_URL: "https://app.reflet.test",
   },
 }));
 
@@ -158,5 +159,11 @@ describe("HarnessDashboard", () => {
     expect(
       screen.getByText(/REFLET_SECRET_KEY=fb_sec_your_bridge_key/)
     ).toBeVisible();
+    expect(
+      screen.getByText(
+        /bunx --package https:\/\/app\.reflet\.test\/downloads\/reflet-bridge-0\.1\.0\.tgz/
+      )
+    ).toBeVisible();
+    expect(screen.queryByText(/bunx @reflet\/bridge/)).not.toBeInTheDocument();
   });
 });
