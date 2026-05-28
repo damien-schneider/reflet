@@ -28,13 +28,13 @@ describe("repo-native harness bridge lifecycle", () => {
     const organizationId = await createOrg(t);
 
     const bridgeInstallationId = await t.mutation(
-      internal.autopilot.harness.mutations.upsertBridgeInstallation,
+      internal.autopilot.harness.bridge.upsertBridgeForRepo,
       {
         organizationId,
         repoFullName: REPO,
         bridgeName: "Damien MacBook",
         claudeAvailable: true,
-        bridgeOnline: true,
+        doctorChecks: [{ label: "Claude Code", passed: true }],
       }
     );
 
@@ -47,8 +47,8 @@ describe("repo-native harness bridge lifecycle", () => {
     });
 
     const claimed = await t.mutation(
-      internal.autopilot.harness.mutations.claimNextBridgeJob,
-      { bridgeInstallationId }
+      internal.autopilot.harness.bridge.claimNextBridgeJobForRepo,
+      { bridgeInstallationId, organizationId, repoFullName: REPO }
     );
 
     expect(claimed?.recipeId).toBe("product-brain");
@@ -58,29 +58,36 @@ describe("repo-native harness bridge lifecycle", () => {
       throw new Error("Expected bridge job to be claimed");
     }
 
-    await t.mutation(
-      internal.autopilot.harness.mutations.appendBridgeRunEvent,
-      {
-        organizationId,
-        jobId: claimed._id,
-        level: "action",
-        message: "Claude generated Product Brain",
-      }
-    );
+    await t.mutation(internal.autopilot.harness.bridge.appendBridgeJobEvent, {
+      organizationId,
+      jobId: claimed.id,
+      level: "action",
+      message: "Claude generated Product Brain",
+    });
 
-    await t.mutation(internal.autopilot.harness.mutations.completeBridgeJob, {
-      jobId: claimed._id,
+    await t.mutation(internal.autopilot.harness.bridge.completeBridgeJobRun, {
+      jobId: claimed.id,
+      organizationId,
       prUrl: "https://github.com/acme/reflet-demo/pull/1",
+      claudeSessionId: "claude-session",
+      commitSha: "commit-sha",
+      promptHash: "prompt_123",
+      runtimeMs: 1200,
       artifacts: [
         {
           artifactKind: "product_brain",
+          downstreamInvalidations: [],
+          evidenceHashes: { "README.md": "evidence-hash" },
+          inputArtifactHashes: { "README.md": "input-hash" },
           outputHash: "out_123",
           path: ".reflet/strategy/product-brain.md",
+          promptHash: "prompt_123",
           recipeId: "product-brain",
           recipeVersion: 1,
           title: "Product Brain",
           validationScore: 92,
           validationStatus: "passed",
+          validatorMessages: ["Validated by Reflet Bridge"],
         },
       ],
     });

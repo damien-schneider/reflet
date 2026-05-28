@@ -4,7 +4,6 @@ import { join } from "node:path";
 import type { DoctorCheck, DoctorReport } from "./types";
 
 const SECRET_PATTERN = /fb_sec_[A-Za-z0-9_-]+|REFLET_SECRET_KEY\s*=/;
-const LINE_BREAK_PATTERN = /\r?\n/;
 
 export interface DoctorStatusInput {
   claudeCodeAvailable: boolean;
@@ -31,11 +30,6 @@ function commandSucceeds(
   return result.status === 0;
 }
 
-function readGitignore(repoRoot: string): string {
-  const path = join(repoRoot, ".gitignore");
-  return existsSync(path) ? readFileSync(path, "utf8") : "";
-}
-
 function hasSecret(value: string): boolean {
   return SECRET_PATTERN.test(value);
 }
@@ -50,10 +44,16 @@ function collectFiles(root: string): string[] {
   });
 }
 
-function refletLocalIgnored(repoRoot: string): boolean {
-  return readGitignore(repoRoot)
-    .split(LINE_BREAK_PATTERN)
-    .includes(".reflet.local/");
+function refletLocalIgnored(
+  repoRoot: string,
+  env?: Record<string, string>
+): boolean {
+  return commandSucceeds(
+    "git",
+    ["check-ignore", "-q", ".reflet.local/"],
+    repoRoot,
+    env
+  );
 }
 
 function refletSecretsClean(repoRoot: string): boolean {
@@ -96,11 +96,11 @@ export function runDoctor(
       repoRoot,
       env
     ),
-    refletLocalIgnored: refletLocalIgnored(repoRoot),
+    refletLocalIgnored: refletLocalIgnored(repoRoot, env),
     refletSecretsClean: refletSecretsClean(repoRoot),
     remotePushAvailable: commandSucceeds(
       "git",
-      ["remote", "get-url", "--push", "origin"],
+      ["push", "--dry-run", "origin", "HEAD"],
       repoRoot,
       env
     ),

@@ -25,7 +25,7 @@ function requireValue(value: string | null | undefined, label: string): string {
 
 const command = parseBridgeCommand(process.argv.slice(2));
 if (command.kind === "doctor") {
-  printDoctor(".");
+  printDoctor(command.repoPath);
 } else {
   const secretKey = requireValue(
     process.env.REFLET_SECRET_KEY,

@@ -9,7 +9,11 @@ import { createDoctorReport } from "./runtime/doctor";
 import { buildClaudeCommand, buildClaudeRecipePrompt } from "./runtime/prompt";
 import { runBridgeOnce } from "./runtime/runner";
 import { validateHarnessArtifacts } from "./runtime/validation";
-import { buildWorktreePlan, runCommand } from "./runtime/worktree";
+import {
+  assertRemoteBranchPushed,
+  buildWorktreePlan,
+  runCommand,
+} from "./runtime/worktree";
 
 function runGit(args: string[]): void {
   execFileSync("git", args, { stdio: "ignore" });
@@ -17,7 +21,14 @@ function runGit(args: string[]): void {
 
 describe("Reflet Bridge", () => {
   it("parses supported commands without a CLI framework", () => {
-    expect(parseBridgeCommand(["doctor"])).toEqual({ kind: "doctor" });
+    expect(parseBridgeCommand(["doctor"])).toEqual({
+      kind: "doctor",
+      repoPath: ".",
+    });
+    expect(parseBridgeCommand(["doctor", "--repo", "/tmp/acme"])).toEqual({
+      kind: "doctor",
+      repoPath: "/tmp/acme",
+    });
     expect(parseBridgeCommand(["start", "--repo", "/tmp/acme"])).toEqual({
       kind: "start",
       repoPath: "/tmp/acme",
@@ -75,6 +86,34 @@ describe("Reflet Bridge", () => {
       await rm(root, { force: true, recursive: true });
     }
   });
+
+  it("requires generated branches to exist on the remote", async () => {
+    const root = await mkdtemp(join(tmpdir(), "reflet-remote-branch-"));
+    const remote = join(root, "remote.git");
+    const repo = join(root, "repo");
+    const branch = "reflet/product-brain/job-123";
+    try {
+      runGit(["init", "--bare", remote]);
+      runGit(["init", repo]);
+      runGit(["-C", repo, "config", "user.email", "bridge@example.com"]);
+      runGit(["-C", repo, "config", "user.name", "Reflet Bridge"]);
+      await writeFile(join(repo, "README.md"), "Reflet test repo\n");
+      runGit(["-C", repo, "add", "README.md"]);
+      runGit(["-C", repo, "commit", "-m", "init"]);
+      runGit(["-C", repo, "remote", "add", "origin", remote]);
+
+      expect(() => assertRemoteBranchPushed(repo, branch)).toThrow(
+        "missing_pushed_branch"
+      );
+
+      runGit(["-C", repo, "checkout", "-b", branch]);
+      runGit(["-C", repo, "push", "-u", "origin", "HEAD"]);
+
+      expect(() => assertRemoteBranchPushed(repo, branch)).not.toThrow();
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  }, 15_000);
 
   it("builds Claude prompts around the ProductMap TASK harness", () => {
     const recipe = DEFAULT_HARNESS_RECIPES.find(

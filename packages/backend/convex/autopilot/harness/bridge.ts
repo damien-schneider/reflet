@@ -8,6 +8,7 @@ import {
   harnessArtifactKind,
   harnessValidationStatus,
 } from "../schema/validators";
+import { readHarnessGuardState } from "./guards";
 
 const bridgeJobReturn = v.object({
   id: v.id("autopilotBridgeJobs"),
@@ -34,14 +35,6 @@ const artifactInput = v.object({
 });
 
 type ArtifactInput = typeof artifactInput.type;
-
-const VALIDATION_FAILURE_REASONS = [
-  "missing_required_artifact",
-  "missing_evidence",
-  "private_user_folder",
-  "local_state_tracked",
-  "secret_detected",
-] as const;
 
 function buildBranch(recipeId: string, jobId: string): string {
   return `reflet/${recipeId}/${jobId}`;
@@ -104,81 +97,19 @@ async function upsertArtifact(
   });
 }
 
-async function countPendingApprovals(
-  ctx: { db: MutationCtx["db"] },
-  organizationId: Id<"organizations">
-): Promise<number> {
-  const documents = await ctx.db
-    .query("autopilotDocuments")
-    .withIndex("by_org_review", (q) =>
-      q.eq("organizationId", organizationId).eq("needsReview", true)
-    )
-    .collect();
-  const workItems = await ctx.db
-    .query("autopilotWorkItems")
-    .withIndex("by_org_review", (q) =>
-      q.eq("organizationId", organizationId).eq("needsReview", true)
-    )
-    .collect();
-  return documents.length + workItems.length;
-}
-
-async function listRepoJobs(
-  ctx: { db: MutationCtx["db"] },
-  organizationId: Id<"organizations">,
-  repoFullName: string
-): Promise<Doc<"autopilotBridgeJobs">[]> {
-  const jobs = await ctx.db
-    .query("autopilotBridgeJobs")
-    .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
-    .collect();
-  return jobs.filter((job) => job.repoFullName === repoFullName);
-}
-
-function countOpenRefletPrs(jobs: Doc<"autopilotBridgeJobs">[]): number {
-  return jobs.filter((job) => Boolean(job.prUrl) && job.status === "succeeded")
-    .length;
-}
-
-function countLeadingFailures(
-  jobs: Doc<"autopilotBridgeJobs">[],
-  reasons: readonly string[]
-): number {
-  const sorted = [...jobs].sort(
-    (left, right) => right.createdAt - left.createdAt
-  );
-  let count = 0;
-  for (const job of sorted) {
-    if (job.failureReason && reasons.includes(job.failureReason)) {
-      count += 1;
-      continue;
-    }
-    return count;
-  }
-  return count;
-}
-
 async function bridgeClaimAllowed(
   ctx: { db: MutationCtx["db"] },
   bridge: Doc<"autopilotBridgeInstallations">
 ): Promise<boolean> {
-  const jobs = await listRepoJobs(
-    ctx,
-    bridge.organizationId,
-    bridge.repoFullName
+  const guard = evaluateHarnessGuards(
+    await readHarnessGuardState(ctx, {
+      organizationId: bridge.organizationId,
+      repoFullName: bridge.repoFullName,
+      worktreeClean: true,
+      bridgeOnline: bridge.status === "online",
+      claudeAvailable: bridge.claudeAvailable,
+    })
   );
-  const guard = evaluateHarnessGuards({
-    bridgeOnline: bridge.status === "online",
-    claudeAvailable: bridge.claudeAvailable,
-    consecutiveNoopRuns: countLeadingFailures(jobs, ["noop_output"]),
-    consecutiveValidatorFailures: countLeadingFailures(
-      jobs,
-      VALIDATION_FAILURE_REASONS
-    ),
-    openRefletPrs: countOpenRefletPrs(jobs),
-    pendingApprovals: await countPendingApprovals(ctx, bridge.organizationId),
-    worktreeClean: true,
-  });
   return guard.allowed;
 }
 

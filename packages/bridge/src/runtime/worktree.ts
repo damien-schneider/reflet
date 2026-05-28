@@ -121,6 +121,25 @@ export function findDraftPrUrl(
   return url;
 }
 
+export function assertRemoteBranchPushed(
+  cwd: string,
+  branch: string,
+  env?: Record<string, string>
+): void {
+  try {
+    runCommand(
+      "git",
+      ["ls-remote", "--exit-code", "--heads", "origin", branch],
+      {
+        cwd,
+        env,
+      }
+    );
+  } catch {
+    throw new Error("missing_pushed_branch");
+  }
+}
+
 export function hasRefletDiff(cwd: string, baseSha: string): boolean {
   const result = runCommand(
     "git",

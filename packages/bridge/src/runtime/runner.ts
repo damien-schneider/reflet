@@ -10,6 +10,7 @@ import {
 import type { BridgeApi } from "./types";
 import { validateHarnessArtifacts } from "./validation";
 import {
+  assertRemoteBranchPushed,
   buildWorktreePlan,
   createWorktree,
   findDraftPrUrl,
@@ -124,6 +125,7 @@ export async function runBridgeOnce({
       return await failJob(api, claim.job.id, startedAt, validation.reason);
     }
 
+    assertRemoteBranchPushed(plan.path, plan.branch, env);
     const prUrl = findDraftPrUrl(plan.path, plan.branch, env);
     await api.completeJob({
       artifacts: validation.artifacts,

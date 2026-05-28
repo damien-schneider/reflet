@@ -1,7 +1,7 @@
 const DEFAULT_INTERVAL_MS = 15_000;
 
 export type BridgeCommand =
-  | { kind: "doctor" }
+  | { kind: "doctor"; repoPath: string }
   | {
       intervalMs: number;
       kind: "start";
@@ -52,5 +52,5 @@ export function parseBridgeCommand(args: string[]): BridgeCommand {
       siteUrl: readOption(args, "--site-url"),
     };
   }
-  return { kind: "doctor" };
+  return { kind: "doctor", repoPath: readOption(args, "--repo") ?? "." };
 }
