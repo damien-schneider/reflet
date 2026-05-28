@@ -68,14 +68,14 @@ export async function runBridgeOnce({
   const doctor = runDoctor(repoPath, env);
   const registration = await api.register({
     bridgeName,
-    claudeAvailable: doctor.ready,
+    claudeAvailable: doctor.claudeCodeAvailable,
     doctorChecks: doctor.checks,
     repoFullName,
   });
   await api.heartbeat({
     bridgeInstallationId: registration.bridgeInstallationId,
     bridgeName,
-    claudeAvailable: doctor.ready,
+    claudeAvailable: doctor.claudeCodeAvailable,
     doctorChecks: doctor.checks,
     repoFullName,
   });

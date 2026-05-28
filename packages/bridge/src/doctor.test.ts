@@ -3,7 +3,7 @@ import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { runDoctor } from "./runtime/doctor";
+import { createDoctorReport, runDoctor } from "./runtime/doctor";
 
 function runGit(args: string[]): void {
   execFileSync("git", args, { stdio: "ignore" });
@@ -49,7 +49,6 @@ describe("Bridge doctor", () => {
       expect(
         runDoctor(repo, { PATH: `${bin}:${process.env.PATH ?? ""}` })
       ).toEqual({
-        ready: true,
         checks: [
           { label: "Git CLI", passed: true },
           { label: "Git repository", passed: true },
@@ -60,9 +59,29 @@ describe("Bridge doctor", () => {
           { label: ".reflet.local ignored", passed: true },
           { label: ".reflet secrets clean", passed: true },
         ],
+        claudeCodeAvailable: true,
+        ready: true,
       });
     } finally {
       await rm(root, { force: true, recursive: true });
     }
   }, 15_000);
+
+  it("keeps Claude availability separate from full doctor readiness", () => {
+    expect(
+      createDoctorReport({
+        claudeCodeAvailable: true,
+        ghAuthenticated: false,
+        ghAvailable: true,
+        gitAvailable: true,
+        insideGitRepo: true,
+        refletLocalIgnored: true,
+        refletSecretsClean: true,
+        remotePushAvailable: true,
+      })
+    ).toMatchObject({
+      claudeCodeAvailable: true,
+      ready: false,
+    });
+  });
 });

@@ -87,5 +87,6 @@ export interface DoctorCheck {
 
 export interface DoctorReport {
   checks: DoctorCheck[];
+  claudeCodeAvailable: boolean;
   ready: boolean;
 }

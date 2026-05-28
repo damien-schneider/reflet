@@ -73,7 +73,11 @@ export function createDoctorReport(input: DoctorStatusInput): DoctorReport {
     { label: ".reflet.local ignored", passed: input.refletLocalIgnored },
     { label: ".reflet secrets clean", passed: input.refletSecretsClean },
   ];
-  return { checks, ready: checks.every((check) => check.passed) };
+  return {
+    checks,
+    claudeCodeAvailable: input.claudeCodeAvailable,
+    ready: checks.every((check) => check.passed),
+  };
 }
 
 export function runDoctor(

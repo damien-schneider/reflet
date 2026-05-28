@@ -40,6 +40,12 @@ function buildBranch(recipeId: string, jobId: string): string {
   return `reflet/${recipeId}/${jobId}`;
 }
 
+function bridgeStatusFromDoctor(
+  doctorChecks: { passed: boolean }[]
+): "blocked" | "online" {
+  return doctorChecks.every((check) => check.passed) ? "online" : "blocked";
+}
+
 async function assertJob(
   ctx: { db: MutationCtx["db"] },
   jobId: Id<"autopilotBridgeJobs">
@@ -124,9 +130,7 @@ export const upsertBridgeForRepo = internalMutation({
   returns: v.id("autopilotBridgeInstallations"),
   handler: async (ctx, args) => {
     const now = Date.now();
-    const status: "blocked" | "online" = args.claudeAvailable
-      ? "online"
-      : "blocked";
+    const status = bridgeStatusFromDoctor(args.doctorChecks);
     const existing = await ctx.db
       .query("autopilotBridgeInstallations")
       .withIndex("by_org_repo", (q) =>
@@ -168,9 +172,7 @@ export const heartbeatBridgeForRepo = internalMutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const now = Date.now();
-    const status: "blocked" | "online" = args.claudeAvailable
-      ? "online"
-      : "blocked";
+    const status = bridgeStatusFromDoctor(args.doctorChecks);
     const bridge = await ctx.db.get(args.bridgeInstallationId);
     if (
       !bridge ||

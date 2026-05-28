@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { defineConfig } from "tsup";
 
@@ -8,6 +9,7 @@ const bridgeDownloadDir = resolve(
   "../../apps/web/public/downloads"
 );
 const bridgeTarballPath = resolve(bridgeDownloadDir, "reflet-bridge-0.1.0.tgz");
+const bridgeNpmCacheDir = resolve(tmpdir(), "reflet-npm-cache");
 
 export default defineConfig({
   entry: { cli: "src/cli.ts", index: "src/index.ts" },
@@ -20,10 +22,17 @@ export default defineConfig({
   banner: { js: "#!/usr/bin/env node" },
   onSuccess() {
     mkdirSync(bridgeDownloadDir, { recursive: true });
+    mkdirSync(bridgeNpmCacheDir, { recursive: true });
     rmSync(bridgeTarballPath, { force: true });
     const pack = spawnSync(
       "npm",
-      ["pack", "--pack-destination", bridgeDownloadDir],
+      [
+        "pack",
+        "--cache",
+        bridgeNpmCacheDir,
+        "--pack-destination",
+        bridgeDownloadDir,
+      ],
       {
         cwd: import.meta.dirname,
         stdio: "inherit",

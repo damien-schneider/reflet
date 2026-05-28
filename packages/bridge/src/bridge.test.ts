@@ -156,6 +156,7 @@ describe("Reflet Bridge", () => {
         { label: ".reflet.local ignored", passed: true },
         { label: ".reflet secrets clean", passed: true },
       ],
+      claudeCodeAvailable: false,
       ready: false,
     });
   });
