@@ -43,7 +43,9 @@ function buildBranch(recipeId: string, jobId: string): string {
 function bridgeStatusFromDoctor(
   doctorChecks: { passed: boolean }[]
 ): "blocked" | "online" {
-  return doctorChecks.every((check) => check.passed) ? "online" : "blocked";
+  return doctorChecks.length > 0 && doctorChecks.every((check) => check.passed)
+    ? "online"
+    : "blocked";
 }
 
 async function assertJob(

@@ -261,6 +261,42 @@ describe("repo-native harness bridge lifecycle", () => {
     expect(overview.bridge?.status).toBe("blocked");
   });
 
+  test("blocks a bridge when the doctor report is empty", async () => {
+    const t = convexTest(schema, modules);
+    const organizationId = await createOrg(t);
+
+    const bridgeInstallationId = await t.mutation(
+      internal.autopilot.harness.bridge.upsertBridgeForRepo,
+      {
+        organizationId,
+        repoFullName: REPO,
+        bridgeName: "Damien MacBook",
+        claudeAvailable: true,
+        doctorChecks: [],
+      }
+    );
+
+    await t.mutation(internal.autopilot.harness.mutations.enqueueBridgeJob, {
+      organizationId,
+      repoFullName: REPO,
+      recipeId: "product-brain",
+      recipeVersion: 1,
+      title: "Blocked by empty doctor",
+    });
+
+    const claimed = await t.mutation(
+      internal.autopilot.harness.bridge.claimNextBridgeJobForRepo,
+      { bridgeInstallationId, organizationId, repoFullName: REPO }
+    );
+    const overview = await t.query(
+      internal.autopilot.harness.queries.getHarnessOverviewInternal,
+      { organizationId }
+    );
+
+    expect(claimed).toBeNull();
+    expect(overview.bridge?.status).toBe("blocked");
+  });
+
   test("does not claim more work when Reflet PR cap is reached", async () => {
     const t = convexTest(schema, modules);
     const organizationId = await createOrg(t);

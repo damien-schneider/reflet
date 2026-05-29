@@ -65,7 +65,7 @@ const artifactSchema = z.object({
 const registrationSchema = z.object({
   bridgeName: z.string().min(1),
   claudeAvailable: z.boolean(),
-  doctorChecks: z.array(doctorCheckSchema),
+  doctorChecks: z.array(doctorCheckSchema).min(1),
   repoFullName: z.string().min(1),
 });
 
@@ -105,12 +105,16 @@ function jobId(value: string): Id<"autopilotBridgeJobs"> {
   return parseId(value, "jobId");
 }
 
+export function parseBridgeRegistrationInput(body: unknown) {
+  return registrationSchema.parse(body);
+}
+
 export function registerBridgeApiRoutes(http: Router): void {
   http.route({
     path: "/api/v1/admin/bridge/register",
     method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) => {
-      const input = registrationSchema.parse(body);
+      const input = parseBridgeRegistrationInput(body);
       const bridgeInstallationId = await ctx.runMutation(
         internal.autopilot.harness.bridge.upsertBridgeForRepo,
         { organizationId, ...input }

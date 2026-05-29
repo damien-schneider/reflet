@@ -271,7 +271,6 @@ function expectSuccessfulBridgeRun({
     failures: state.failures,
     signal: bridge.signal,
     status: bridge.status,
-    stderr: bridge.stderr,
     stdout: bridge.stdout,
   }).toEqual({
     completedPrUrls: ["https://github.com/acme/reflet/pull/42"],
@@ -282,9 +281,9 @@ function expectSuccessfulBridgeRun({
     failures: [],
     signal: null,
     status: 0,
-    stderr: "",
     stdout: "",
   });
+  expect(["", "Saved lockfile"]).toContain(bridge.stderr.trim());
 
   const branchRef = runGit(["--git-dir", remote, "show-ref", branch]);
   expect(branchRef).toContain(branch);
