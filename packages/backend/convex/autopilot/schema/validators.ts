@@ -207,7 +207,8 @@ export const harnessArtifactKind = v.union(
   v.literal("pull_request_draft"),
   v.literal("pull_request_review"),
   v.literal("changelog"),
-  v.literal("growth_draft")
+  v.literal("growth_draft"),
+  v.literal("community_drafts")
 );
 
 export const harnessValidationStatus = v.union(

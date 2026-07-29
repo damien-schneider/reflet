@@ -83,59 +83,6 @@ export const getConfig = internalQuery({
 });
 
 /**
- * Check if the daily task throttle has been reached.
- */
-export const canDispatchTask = internalQuery({
-  args: { organizationId: v.id("organizations") },
-  returns: v.boolean(),
-  handler: async (ctx, args) => {
-    const config = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    if (!isConfigActive(config)) {
-      return false;
-    }
-
-    // Reset counter if it's a new day
-    const now = Date.now();
-    if (now > config.tasksResetAt) {
-      return true; // Will reset on next dispatch
-    }
-
-    return config.tasksUsedToday < config.maxTasksPerDay;
-  },
-});
-
-/**
- * Check if a specific role skill is enabled for an org.
- */
-export const isRoleSkillEnabled = internalQuery({
-  args: {
-    organizationId: v.id("organizations"),
-    role: v.string(),
-  },
-  returns: v.boolean(),
-  handler: async (ctx, args) => {
-    const config = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    if (!isConfigActive(config)) {
-      return false;
-    }
-
-    return isRoleSkillEnabledInConfig(args.role, config);
-  },
-});
-
-/**
  * All role-skill names and their corresponding config fields.
  */
 const ROLE_CONFIG_FIELDS = [

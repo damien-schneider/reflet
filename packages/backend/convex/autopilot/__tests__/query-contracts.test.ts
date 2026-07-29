@@ -1,7 +1,5 @@
 /// <reference types="vite/client" />
 import { describe, expect, it } from "vitest";
-import { canDispatchTask } from "../config";
-import { reserveTaskExecution } from "../config_mutations";
 import { cancelTask } from "../execution_lifecycle";
 import { getSystemHealth } from "../health";
 import {
@@ -64,7 +62,6 @@ const INTERNAL_MUTATION_CONTRACTS = [
   ["completeRoleTasks", completeRoleTasks, "number"],
   ["updateTaskPriority", updateTaskPriority, '"type":"null"'],
   ["logActivity", logActivity, '"type":"null"'],
-  ["reserveTaskExecution", reserveTaskExecution, "allowed"],
 ] as const;
 
 const INTERNAL_ACTION_CONTRACTS = [
@@ -74,7 +71,6 @@ const INTERNAL_ACTION_CONTRACTS = [
 ] as const;
 
 const INTERNAL_QUERY_CONTRACTS = [
-  ["canDispatchTask", canDispatchTask, "boolean"],
   ["getDispatchableTasks", getDispatchableTasks, "autopilotWorkItems"],
   ["getOrganization", getOrganization, "organizations"],
   ["getPendingTasks", getPendingTasks, "autopilotWorkItems"],

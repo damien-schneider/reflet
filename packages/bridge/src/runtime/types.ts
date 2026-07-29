@@ -23,20 +23,31 @@ export interface BridgeEventInput {
 
 export interface BridgeArtifactInput {
   artifactKind: HarnessArtifactKind;
+  content?: string;
   metadata: ArtifactMetadata;
   outputHash: string;
   path: string;
   recipeId: string;
   recipeVersion: number;
+  structuredOutput?: unknown;
   title: string;
   validationScore: number;
   validationStatus: "passed" | "warning" | "failed";
+}
+
+export interface BridgeCompletionDocument {
+  content: string;
+  platform?: string;
+  targetUrl?: string;
+  title: string;
+  type: string;
 }
 
 export interface BridgeCompletionInput {
   artifacts: BridgeArtifactInput[];
   claudeSessionId: string | null;
   commitSha: string;
+  documents?: BridgeCompletionDocument[];
   jobId: string;
   promptHash: string;
   prUrl: string;
@@ -65,6 +76,11 @@ export interface BridgeClaimResult {
   job: BridgeJob | null;
 }
 
+export interface BridgeSeedArtifact {
+  content: string;
+  path: string;
+}
+
 export interface BridgeApi {
   appendEvent(input: BridgeEventInput): Promise<void>;
   claimJob(input: {
@@ -73,6 +89,7 @@ export interface BridgeApi {
   }): Promise<BridgeClaimResult>;
   completeJob(input: BridgeCompletionInput): Promise<void>;
   failJob(input: BridgeFailureInput): Promise<void>;
+  fetchSeedArtifacts(repoFullName: string): Promise<BridgeSeedArtifact[]>;
   heartbeat(
     input: BridgeRegistrationInput & { bridgeInstallationId: string }
   ): Promise<void>;

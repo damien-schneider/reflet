@@ -5,6 +5,7 @@ import {
   parseHarnessRecipe,
   REFLET_KNOWLEDGE_PATHS,
   resolveRecipeRunDecision,
+  resolveRecipeSink,
 } from "./index";
 
 describe("repo-native product harness", () => {
@@ -16,6 +17,31 @@ describe("repo-native product harness", () => {
     expect(recipe.subagents).toContain("product-strategist");
     expect(recipe.subagents).toContain("critic-validator");
     expect(recipe.validations).toContain("evidence_required");
+  });
+
+  it("routes knowledge recipes to artifacts, drafts to documents, and code to the PR sink", () => {
+    const productBrain = parseHarnessRecipe(
+      DEFAULT_HARNESS_RECIPES.find((recipe) => recipe.id === "product-brain")
+    );
+    // product-brain is now a knowledge recipe: its body is harvested into
+    // refletArtifacts rather than pushed as a draft PR.
+    expect(productBrain.sink).toBe("artifacts");
+    expect(resolveRecipeSink(productBrain)).toBe("artifacts");
+
+    // pr-builder still ships real code changes, so it keeps the PR sink and
+    // its unset (default) sink must resolve to "pr".
+    const prBuilder = parseHarnessRecipe(
+      DEFAULT_HARNESS_RECIPES.find((recipe) => recipe.id === "pr-builder")
+    );
+    expect(prBuilder.sink).toBeUndefined();
+    expect(resolveRecipeSink(prBuilder)).toBe("pr");
+
+    const marketingReddit = parseHarnessRecipe(
+      DEFAULT_HARNESS_RECIPES.find((recipe) => recipe.id === "marketing-reddit")
+    );
+    expect(resolveRecipeSink(marketingReddit)).toBe("documents");
+    expect(marketingReddit.allowedTools).toContain("Bash(curl *)");
+    expect(marketingReddit.outputs[0]?.artifactKind).toBe("community_drafts");
   });
 
   it("keeps audience research out of a users folder", () => {

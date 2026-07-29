@@ -5,8 +5,6 @@
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { internalMutation } from "../_generated/server";
-import { getEffectiveTier } from "../billing/effective_tier";
-import { DEFAULT_DAILY_COST_CAP_USD } from "./config_task_caps";
 import { autonomyLevel, autonomyMode } from "./schema/validators";
 
 type InternalConfigPatch = Partial<
@@ -27,50 +25,6 @@ type InternalConfigPatch = Partial<
     | "supportEnabled"
   >
 > & { updatedAt: number };
-
-/**
- * Create default autopilot config for an org.
- */
-export const createDefaultConfig = internalMutation({
-  args: { organizationId: v.id("organizations") },
-  returns: v.id("autopilotConfig"),
-  handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    if (existing) {
-      return existing._id;
-    }
-
-    const now = Date.now();
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-    return ctx.db.insert("autopilotConfig", {
-      organizationId: args.organizationId,
-      enabled: false,
-      intelligenceEnabled: false,
-      pmEnabled: true,
-      ctoEnabled: true,
-      growthEnabled: false,
-      supportEnabled: false,
-      salesEnabled: false,
-      autonomyLevel: "review_required",
-      autonomyMode: "stopped",
-      fullAutoDelay: 5 * 60 * 1000,
-      maxTasksPerDay: 10,
-      tasksUsedToday: 0,
-      tasksResetAt: now + TWENTY_FOUR_HOURS,
-      dailyCostCapUsd: DEFAULT_DAILY_COST_CAP_USD,
-      requireArchitectReview: true,
-      createdAt: now,
-      updatedAt: now,
-    });
-  },
-});
 
 /**
  * Update autopilot config.
@@ -137,99 +91,5 @@ export const updateConfig = internalMutation({
 
     await ctx.db.patch(args.configId, updates);
     return null;
-  },
-});
-
-/**
- * Increment the daily task counter.
- */
-export const incrementTaskCounter = internalMutation({
-  args: { organizationId: v.id("organizations") },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const config = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    if (!config) {
-      return null;
-    }
-
-    const now = Date.now();
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-    // Reset counter if it's a new day
-    if (now > config.tasksResetAt) {
-      await ctx.db.patch(config._id, {
-        tasksUsedToday: 1,
-        tasksResetAt: now + TWENTY_FOUR_HOURS,
-        updatedAt: now,
-      });
-    } else {
-      await ctx.db.patch(config._id, {
-        tasksUsedToday: config.tasksUsedToday + 1,
-        updatedAt: now,
-      });
-    }
-    return null;
-  },
-});
-
-export const reserveTaskExecution = internalMutation({
-  args: { organizationId: v.id("organizations") },
-  returns: v.object({
-    allowed: v.boolean(),
-    reason: v.optional(v.string()),
-  }),
-  handler: async (ctx, args) => {
-    const tier = await getEffectiveTier(ctx, args.organizationId);
-    if (tier !== "pro") {
-      return {
-        allowed: false,
-        reason: "Autopilot requires a Pro subscription.",
-      };
-    }
-
-    const config = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    if (
-      !config?.enabled ||
-      (config?.autonomyMode ?? "supervised") === "stopped"
-    ) {
-      return { allowed: false, reason: "Autopilot is not active" };
-    }
-
-    const now = Date.now();
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-    if (now > config.tasksResetAt) {
-      await ctx.db.patch(config._id, {
-        tasksUsedToday: 1,
-        tasksResetAt: now + TWENTY_FOUR_HOURS,
-        updatedAt: now,
-      });
-      return { allowed: true };
-    }
-
-    if (config.tasksUsedToday >= config.maxTasksPerDay) {
-      return {
-        allowed: false,
-        reason: `Daily task limit reached (${config.tasksUsedToday} / ${config.maxTasksPerDay})`,
-      };
-    }
-
-    await ctx.db.patch(config._id, {
-      tasksUsedToday: config.tasksUsedToday + 1,
-      updatedAt: now,
-    });
-    return { allowed: true };
   },
 });

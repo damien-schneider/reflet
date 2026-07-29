@@ -1,4 +1,7 @@
-import { evaluateHarnessGuards } from "@reflet/harness";
+import {
+  DEFAULT_HARNESS_RECIPES,
+  evaluateHarnessGuards,
+} from "@reflet/harness";
 import { v } from "convex/values";
 import type { Doc, Id } from "../../_generated/dataModel";
 import {
@@ -22,6 +25,56 @@ async function getLatestBridge(
     )
     .order("desc")
     .first();
+}
+
+async function enqueueHarnessJobForRecipe(
+  ctx: MutationCtx,
+  args: {
+    organizationId: Id<"organizations">;
+    recipeId: string;
+    repoFullName: string;
+  }
+): Promise<Id<"autopilotBridgeJobs">> {
+  const recipe = DEFAULT_HARNESS_RECIPES.find(
+    (candidate) => candidate.id === args.recipeId
+  );
+  if (!recipe) {
+    throw new Error(`Unknown harness recipe: ${args.recipeId}`);
+  }
+
+  const user = await getAuthUser(ctx);
+  await requireOrgAdmin(ctx, args.organizationId, user._id);
+  await requireAutopilotAccess(ctx, args.organizationId);
+
+  const bridge = await getLatestBridge(
+    ctx,
+    args.organizationId,
+    args.repoFullName
+  );
+  const guard = evaluateHarnessGuards(
+    await readHarnessGuardState(ctx, {
+      organizationId: args.organizationId,
+      repoFullName: args.repoFullName,
+      worktreeClean: true,
+      bridgeOnline: bridge?.status === "online",
+      claudeAvailable: bridge?.claudeAvailable ?? false,
+    })
+  );
+  if (!guard.allowed) {
+    throw new Error(`Harness blocked: ${guard.reason}`);
+  }
+
+  const now = Date.now();
+  return await ctx.db.insert("autopilotBridgeJobs", {
+    organizationId: args.organizationId,
+    repoFullName: args.repoFullName,
+    recipeId: recipe.id,
+    recipeVersion: recipe.version,
+    title: recipe.title,
+    status: "queued",
+    createdAt: now,
+    updatedAt: now,
+  });
 }
 
 export const enqueueBridgeJob = internalMutation({
@@ -54,39 +107,25 @@ export const enqueueProductBrain = mutation({
     repoFullName: v.string(),
   },
   returns: v.id("autopilotBridgeJobs"),
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-    await requireOrgAdmin(ctx, args.organizationId, user._id);
-    await requireAutopilotAccess(ctx, args.organizationId);
-
-    const bridge = await getLatestBridge(
-      ctx,
-      args.organizationId,
-      args.repoFullName
-    );
-    const guard = evaluateHarnessGuards(
-      await readHarnessGuardState(ctx, {
-        organizationId: args.organizationId,
-        repoFullName: args.repoFullName,
-        worktreeClean: true,
-        bridgeOnline: bridge?.status === "online",
-        claudeAvailable: bridge?.claudeAvailable ?? false,
-      })
-    );
-    if (!guard.allowed) {
-      throw new Error(`Harness blocked: ${guard.reason}`);
-    }
-
-    const now = Date.now();
-    return await ctx.db.insert("autopilotBridgeJobs", {
+  handler: async (ctx, args) =>
+    await enqueueHarnessJobForRecipe(ctx, {
       organizationId: args.organizationId,
-      repoFullName: args.repoFullName,
       recipeId: "product-brain",
-      recipeVersion: 1,
-      title: "Build Product Brain",
-      status: "queued",
-      createdAt: now,
-      updatedAt: now,
-    });
+      repoFullName: args.repoFullName,
+    }),
+});
+
+export const enqueueHarnessJob = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    recipeId: v.string(),
+    repoFullName: v.string(),
   },
+  returns: v.id("autopilotBridgeJobs"),
+  handler: async (ctx, args) =>
+    await enqueueHarnessJobForRecipe(ctx, {
+      organizationId: args.organizationId,
+      recipeId: args.recipeId,
+      repoFullName: args.repoFullName,
+    }),
 });

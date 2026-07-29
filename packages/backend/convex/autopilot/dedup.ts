@@ -17,8 +17,6 @@ import { internalQuery } from "../_generated/server";
 const NON_ALPHANUM_REGEX = /[^a-z0-9\s]/g;
 const WHITESPACE_SPLIT_REGEX = /\s+/;
 
-import { documentType } from "./schema/validators";
-
 // ============================================
 // SIMILARITY THRESHOLD
 // ============================================
@@ -146,75 +144,8 @@ const hybridSimilarity = (a: string, b: string): number => {
 };
 
 // ============================================
-// TASK DEDUPLICATION
+// DOCUMENT DEDUPLICATION
 // ============================================
-
-/**
- * Check if a similar task already exists for this organization.
- * Returns the existing task ID if found, null if safe to create.
- */
-export const findSimilarTask = internalQuery({
-  args: {
-    organizationId: v.id("organizations"),
-    title: v.string(),
-  },
-  returns: v.union(v.id("autopilotWorkItems"), v.null()),
-  handler: async (ctx, args) => {
-    const existingItems = await ctx.db
-      .query("autopilotWorkItems")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .take(500);
-
-    const activeItems = existingItems.filter(
-      (t) => t.status !== "done" && t.status !== "cancelled"
-    );
-
-    for (const item of activeItems) {
-      const similarity = hybridSimilarity(args.title, item.title);
-      if (similarity >= SIMILARITY_THRESHOLD) {
-        return item._id;
-      }
-    }
-
-    return null;
-  },
-});
-
-/**
- * Check if a similar document already exists (draft/pending_review).
- * Returns the existing document ID if found, null if safe to create.
- */
-export const findSimilarInboxItem = internalQuery({
-  args: {
-    organizationId: v.id("organizations"),
-    title: v.string(),
-    type: documentType,
-  },
-  returns: v.union(v.id("autopilotDocuments"), v.null()),
-  handler: async (ctx, args) => {
-    const existingDocs = await ctx.db
-      .query("autopilotDocuments")
-      .withIndex("by_org_type", (q) =>
-        q.eq("organizationId", args.organizationId).eq("type", args.type)
-      )
-      .take(500);
-
-    const activeDocs = existingDocs.filter(
-      (doc) => doc.status === "draft" || doc.status === "pending_review"
-    );
-
-    for (const doc of activeDocs) {
-      const similarity = hybridSimilarity(args.title, doc.title);
-      if (similarity >= SIMILARITY_THRESHOLD) {
-        return doc._id;
-      }
-    }
-
-    return null;
-  },
-});
 
 /**
  * Check if a document with similar title already exists.

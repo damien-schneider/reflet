@@ -60,24 +60,11 @@ crons.interval(
 // ============================================
 // AUTOPILOT CRONS
 // ============================================
-
-crons.interval(
-  "autopilot heartbeat",
-  { minutes: 3 },
-  internal.autopilot.heartbeat.runHeartbeat
-);
-
-crons.interval(
-  "autopilot self-healing",
-  { minutes: 10 },
-  internal.autopilot.self_heal.runSelfHealing
-);
-
-crons.daily(
-  "autopilot cost reset",
-  { hourUTC: 0, minuteUTC: 0 },
-  internal.autopilot.cost_guard.resetDailyCounters
-);
+// Pivot: the legacy OpenRouter "server brain" role-runtime crons
+// (heartbeat / self-healing / cost reset) were removed. The company now advances
+// via bridge-triggered recipe jobs on the user's Claude subscription, not a
+// server-side heartbeat. Re-add those three crons to re-enable the legacy engine.
+// Maintenance crons below are engine-agnostic and stay.
 
 crons.daily(
   "autopilot review expiration",

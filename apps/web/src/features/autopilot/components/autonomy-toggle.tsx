@@ -20,27 +20,27 @@ import { useAutopilotContext } from "./autopilot-context";
 const MODES = [
   {
     value: "supervised",
-    label: "Supervised",
+    label: "Needs approval",
     icon: IconPlayerPlay,
-    description: "Asks before acting",
+    description: "Asks before any action with concrete impact",
     activeClass:
       "bg-green-500/10 text-green-600 dark:text-green-400 shadow-[inset_0_0_0_1px_rgba(34,197,94,0.3)]",
     dotClass: "bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]",
   },
   {
     value: "full_auto",
-    label: "Full Auto",
+    label: "Fully automated",
     icon: IconRobot,
-    description: "Autonomous with delay",
+    description: "Autonomous — risky, acts without approval",
     activeClass:
       "bg-orange-500/10 text-orange-600 dark:text-orange-400 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.3)]",
     dotClass: "bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.5)]",
   },
   {
     value: "stopped",
-    label: "Off",
+    label: "Paused",
     icon: IconPlayerPause,
-    description: "All role skills stopped",
+    description: "All agents paused",
     activeClass:
       "bg-muted text-muted-foreground shadow-[inset_0_0_0_1px_rgba(128,128,128,0.2)]",
     dotClass: "bg-muted-foreground/50",

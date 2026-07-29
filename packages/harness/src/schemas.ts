@@ -37,6 +37,8 @@ export const stopConditionSchema = z.enum([
   "dirty_worktree",
 ]);
 
+export const sinkSchema = z.enum(["pr", "documents", "artifacts"]);
+
 export const harnessOutputSchema = z.object({
   artifactKind: harnessArtifactKindSchema,
   path: z.string().min(1),
@@ -57,6 +59,7 @@ export const harnessRecipeSchema = z.object({
   outputs: z.array(harnessOutputSchema).min(1),
   validations: z.array(harnessValidationSchema).min(1),
   stopConditions: z.array(stopConditionSchema).min(1),
+  sink: sinkSchema.optional(),
   approvalPolicy: approvalPolicySchema,
   rerunPolicy: z.object({
     triggers: z.array(rerunTriggerSchema).min(1),
@@ -86,9 +89,18 @@ export const artifactMetadataSchema = z.object({
 export type ArtifactMetadata = z.infer<typeof artifactMetadataSchema>;
 export type HarnessArtifactKind = z.infer<typeof harnessArtifactKindSchema>;
 export type HarnessRecipe = z.infer<typeof harnessRecipeSchema>;
+export type HarnessSink = z.infer<typeof sinkSchema>;
 export type HarnessSubagent = z.infer<typeof harnessSubagentSchema>;
 export type ProductMapLifecycle = z.infer<typeof productMapLifecycleSchema>;
 export type ProductMapTopic = z.infer<typeof productMapTopicSchema>;
+
+const DEFAULT_SINK: HarnessSink = "pr";
+
+export function resolveRecipeSink(
+  recipe: Pick<HarnessRecipe, "sink">
+): HarnessSink {
+  return recipe.sink ?? DEFAULT_SINK;
+}
 
 export function parseHarnessRecipe(input: unknown): HarnessRecipe {
   return harnessRecipeSchema.parse(input);

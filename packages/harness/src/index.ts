@@ -22,6 +22,7 @@ import type {
   ArtifactMetadata as ArtifactMetadataType,
   HarnessArtifactKind as HarnessArtifactKindType,
   HarnessRecipe as HarnessRecipeType,
+  HarnessSink as HarnessSinkType,
   HarnessSubagent as HarnessSubagentType,
   ProductMapLifecycle as ProductMapLifecycleType,
   ProductMapTopic as ProductMapTopicType,
@@ -31,6 +32,8 @@ import {
   harnessRecipeSchema as harnessRecipeSchemaImpl,
   parseArtifactMetadata as parseArtifactMetadataImpl,
   parseHarnessRecipe as parseHarnessRecipeImpl,
+  resolveRecipeSink as resolveRecipeSinkImpl,
+  sinkSchema as sinkSchemaImpl,
 } from "./schemas";
 
 export const HARNESS_ARTIFACT_KINDS = harnessArtifactKinds;
@@ -42,8 +45,10 @@ export const REFLET_KNOWLEDGE_PATHS = refletKnowledgePaths;
 export const DEFAULT_HARNESS_RECIPES = defaultHarnessRecipes;
 export const artifactMetadataSchema = artifactMetadataSchemaImpl;
 export const harnessRecipeSchema = harnessRecipeSchemaImpl;
+export const sinkSchema = sinkSchemaImpl;
 export const parseArtifactMetadata = parseArtifactMetadataImpl;
 export const parseHarnessRecipe = parseHarnessRecipeImpl;
+export const resolveRecipeSink = resolveRecipeSinkImpl;
 export const evaluateHarnessGuards = evaluateHarnessGuardsImpl;
 export const resolveRecipeRunDecision = resolveRecipeRunDecisionImpl;
 
@@ -53,6 +58,7 @@ export type HarnessGuardInput = HarnessGuardInputType;
 export type HarnessGuardReason = HarnessGuardReasonType;
 export type HarnessGuardResult = HarnessGuardResultType;
 export type HarnessRecipe = HarnessRecipeType;
+export type HarnessSink = HarnessSinkType;
 export type HarnessSubagent = HarnessSubagentType;
 export type ProductMapLifecycle = ProductMapLifecycleType;
 export type ProductMapTopic = ProductMapTopicType;

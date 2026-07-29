@@ -71,23 +71,3 @@ export const checkoutTask = internalMutation({
     return true;
   },
 });
-
-export const releaseTask = internalMutation({
-  args: {
-    taskId: v.id("autopilotWorkItems"),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const item = await ctx.db.get(args.taskId);
-    if (!item) {
-      return null;
-    }
-
-    await ctx.db.patch(args.taskId, {
-      status: "todo",
-      updatedAt: Date.now(),
-    });
-
-    return null;
-  },
-});

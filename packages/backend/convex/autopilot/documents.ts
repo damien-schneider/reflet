@@ -347,34 +347,3 @@ export const getDocumentById = internalQuery({
     return await ctx.db.get(args.documentId);
   },
 });
-
-/**
- * Get documents without verification metadata (for batch verification).
- */
-export const getUnverifiedDocuments = internalQuery({
-  args: { organizationId: v.id("organizations") },
-  returns: v.array(autopilotDocumentRecord),
-  handler: async (ctx, args) => {
-    const docs = await ctx.db
-      .query("autopilotDocuments")
-      .withIndex("by_org_status", (q) =>
-        q
-          .eq("organizationId", args.organizationId)
-          .eq("status", "pending_review")
-      )
-      .order("desc")
-      .take(50);
-
-    return docs.filter((d) => {
-      if (!d.metadata) {
-        return true;
-      }
-      try {
-        const meta = JSON.parse(d.metadata);
-        return !meta.verificationStatus;
-      } catch {
-        return true;
-      }
-    });
-  },
-});

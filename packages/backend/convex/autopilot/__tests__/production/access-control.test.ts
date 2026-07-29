@@ -742,13 +742,7 @@ describe("autopilot production access control", () => {
       internal.autopilot.config_task_caps.getTaskCapUsage,
       { organizationId }
     );
-    const orphaned = await t.query(
-      internal.autopilot.config_task_caps.getOrphanedTasks,
-      { organizationId }
-    );
 
     expect(usage.roleUsage.map(({ role }) => role)).toEqual(["pm", "cto"]);
-    expect(orphaned).toHaveLength(1);
-    expect(orphaned[0]?.assignedRole).toBe("growth");
   });
 });

@@ -42,7 +42,10 @@ const artifactSchema = z.object({
     "pull_request_review",
     "changelog",
     "growth_draft",
+    "community_drafts",
   ]),
+  content: z.string().optional(),
+  structuredOutput: z.unknown().optional(),
   downstreamInvalidations: z.array(z.string()),
   evidenceHashes: z.record(z.string(), z.string()),
   inputArtifactHashes: z.record(z.string(), z.string()),
@@ -60,6 +63,32 @@ const artifactSchema = z.object({
   validationScore: z.number().min(0).max(100),
   validationStatus: z.enum(["passed", "warning", "failed"]),
   validatorMessages: z.array(z.string()),
+});
+
+const documentInputSchema = z.object({
+  content: z.string().min(1),
+  platform: z.string().min(1).optional(),
+  targetUrl: z.string().min(1).optional(),
+  title: z.string().min(1),
+  type: z.enum([
+    "blog_post",
+    "market_research",
+    "note",
+    "email",
+    "support_thread",
+    "battlecard",
+    "changelog",
+    "reddit_reply",
+    "linkedin_post",
+    "twitter_post",
+    "hn_comment",
+    "adr",
+    "prospect_brief",
+    "codebase_understanding",
+    "app_description",
+    "target_definition",
+    "persona_brief",
+  ]),
 });
 
 const registrationSchema = z.object({
@@ -84,8 +113,9 @@ const completeSchema = z.object({
   artifacts: z.array(artifactSchema),
   claudeSessionId: z.union([z.string().min(1), z.null()]),
   commitSha: z.string().min(1),
+  documents: z.array(documentInputSchema).optional(),
   jobId: z.string().min(1),
-  prUrl: z.string().min(1),
+  prUrl: z.string().optional(),
   promptHash: z.string().min(1),
   runtimeMs: z.number().nonnegative(),
 });

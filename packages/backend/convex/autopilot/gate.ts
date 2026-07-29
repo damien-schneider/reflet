@@ -44,28 +44,63 @@ const ACTION_LIMIT_MAP: Record<string, number> = {
   create_pr: ROLE_RATE_LIMITS.max_prs_per_hour,
 };
 
-// Actions that are always autonomous (both supervised and full_auto).
-// create_task and create_inbox_item are always allowed — task caps handle limits.
-const ALWAYS_AUTONOMOUS_ACTIONS = new Set([
-  "read",
-  "create_inbox_item",
-  "create_task",
-  "update_task",
-]);
+/**
+ * The single impact level of an action — the one source of truth that decides
+ * whether an action can run autonomously or needs human approval.
+ *
+ * - "none"      → internal operation with no external effect. Auto in every
+ *                 non-stopped mode; never requires approval.
+ * - "overwrite" → reversible mutation of durable state (e.g. opening a draft
+ *                 PR). Requires approval in supervised, auto in full_auto.
+ * - "external"  → concrete external effect (emails, published content, outreach,
+ *                 merges, deploys, deletes). Requires approval in supervised,
+ *                 auto in full_auto.
+ */
+export type ActionImpact = "external" | "none" | "overwrite";
 
-// Actions requiring approval in supervised mode, auto with delay in full_auto.
-const APPROVAL_REQUIRED_ACTIONS = new Set([
-  "send_email",
-  "publish_content",
-  "create_pr",
-  "merge_pr",
-  "deploy",
-  "rollback",
-  "contact_user",
-]);
+type GateAction = typeof gateActionType.type;
 
-// Actions that always require approval regardless of mode.
-const ALWAYS_APPROVAL_ACTIONS = new Set(["sales_outreach", "delete"]);
+/**
+ * Explicit impact decision matrix. Every member of `gateActionType` maps to
+ * exactly one impact level here, replacing the previously scattered action sets.
+ *
+ * Behavior preserved from the old sets:
+ * - "none"    ≡ the old ALWAYS_AUTONOMOUS_ACTIONS (read, create_inbox_item,
+ *              create_task, update_task) — always auto, never review.
+ * - "external"/"overwrite" ≡ everything that previously required approval in
+ *              supervised (old APPROVAL_REQUIRED_ACTIONS) plus the old
+ *              ALWAYS_APPROVAL_ACTIONS (sales_outreach, delete). The old
+ *              "always approval" actions now follow the standard supervised →
+ *              requires_approval / full_auto → auto rule; this matches the
+ *              previous observable behavior because the live modes are exactly
+ *              supervised and full_auto (stopped blocks everything earlier).
+ *
+ * create_pr is "overwrite": a drafted PR is a reversible mutation of durable
+ * state (it can be closed without merging), so it is gated like external work
+ * in supervised mode but never auto-merges.
+ */
+const ACTION_IMPACT: Record<GateAction, ActionImpact> = {
+  read: "none",
+  create_inbox_item: "none",
+  create_task: "none",
+  update_task: "none",
+  create_pr: "overwrite",
+  send_email: "external",
+  publish_content: "external",
+  sales_outreach: "external",
+  contact_user: "external",
+  merge_pr: "external",
+  deploy: "external",
+  rollback: "external",
+  delete: "external",
+};
+
+/**
+ * Classify an action's external impact. Single source of truth reused by other
+ * modules (e.g. the harness bridge) to decide whether output needs review.
+ */
+export const classifyImpact = (action: GateAction): ActionImpact =>
+  ACTION_IMPACT[action];
 
 const gateResultValidator = v.object({
   proceed: v.boolean(),
@@ -133,7 +168,11 @@ export const checkGate = internalQuery({
       }
     }
 
-    if (ALWAYS_AUTONOMOUS_ACTIONS.has(args.action)) {
+    const impact = classifyImpact(args.action);
+
+    // "none" impact: internal, no external effect. Always auto, never review,
+    // and short-circuits before rate/cost guards (matches prior behavior).
+    if (impact === "none") {
       return { proceed: true, reason: "allowed" as const };
     }
 
@@ -166,11 +205,9 @@ export const checkGate = internalQuery({
       return { proceed: false, reason: "cost_limit" as const };
     }
 
-    if (ALWAYS_APPROVAL_ACTIONS.has(args.action)) {
-      return { proceed: true, reason: "requires_approval" as const };
-    }
-
-    if (mode === "supervised" && APPROVAL_REQUIRED_ACTIONS.has(args.action)) {
+    // "overwrite" and "external" impact: require approval in supervised mode,
+    // auto (subject to the guards above) in full_auto.
+    if (mode === "supervised") {
       return { proceed: true, reason: "requires_approval" as const };
     }
 

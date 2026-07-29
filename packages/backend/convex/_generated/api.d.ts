@@ -43,7 +43,6 @@ import type * as autopilot_competitors from "../autopilot/competitors.js";
 import type * as autopilot_config from "../autopilot/config.js";
 import type * as autopilot_config_mutations from "../autopilot/config_mutations.js";
 import type * as autopilot_config_task_caps from "../autopilot/config_task_caps.js";
-import type * as autopilot_content_quality from "../autopilot/content_quality.js";
 import type * as autopilot_context from "../autopilot/context.js";
 import type * as autopilot_cost_guard from "../autopilot/cost_guard.js";
 import type * as autopilot_dedup from "../autopilot/dedup.js";
@@ -60,9 +59,6 @@ import type * as autopilot_health_checks from "../autopilot/health_checks.js";
 import type * as autopilot_heartbeat from "../autopilot/heartbeat.js";
 import type * as autopilot_integrations_email from "../autopilot/integrations/email.js";
 import type * as autopilot_integrations_social from "../autopilot/integrations/social.js";
-import type * as autopilot_integrations_stripe_webhook from "../autopilot/integrations/stripe_webhook.js";
-import type * as autopilot_knowledge from "../autopilot/knowledge.js";
-import type * as autopilot_knowledge_enrichment from "../autopilot/knowledge_enrichment.js";
 import type * as autopilot_lib_identifier from "../autopilot/lib/identifier.js";
 import type * as autopilot_maintenance from "../autopilot/maintenance.js";
 import type * as autopilot_mutations_auth from "../autopilot/mutations/auth.js";
@@ -79,7 +75,6 @@ import type * as autopilot_mutations_reports from "../autopilot/mutations/report
 import type * as autopilot_mutations_use_cases from "../autopilot/mutations/use_cases.js";
 import type * as autopilot_mutations_views from "../autopilot/mutations/views.js";
 import type * as autopilot_mutations_work from "../autopilot/mutations/work.js";
-import type * as autopilot_onboarding from "../autopilot/onboarding.js";
 import type * as autopilot_onboarding_tasks from "../autopilot/onboarding_tasks.js";
 import type * as autopilot_ownership from "../autopilot/ownership.js";
 import type * as autopilot_priorities from "../autopilot/priorities.js";
@@ -109,7 +104,6 @@ import type * as autopilot_revenue_actions from "../autopilot/revenue_actions.js
 import type * as autopilot_revenue_queries from "../autopilot/revenue_queries.js";
 import type * as autopilot_role_context from "../autopilot/role_context.js";
 import type * as autopilot_role_schedule from "../autopilot/role_schedule.js";
-import type * as autopilot_role_scoring from "../autopilot/role_scoring.js";
 import type * as autopilot_role_skills_ceo_coordination from "../autopilot/role_skills/ceo/coordination.js";
 import type * as autopilot_role_skills_ceo_queries from "../autopilot/role_skills/ceo/queries.js";
 import type * as autopilot_role_skills_ceo_reports from "../autopilot/role_skills/ceo/reports.js";
@@ -162,7 +156,6 @@ import type * as autopilot_schema_validators from "../autopilot/schema/validator
 import type * as autopilot_self_heal from "../autopilot/self_heal.js";
 import type * as autopilot_task_mutations from "../autopilot/task_mutations.js";
 import type * as autopilot_task_queries from "../autopilot/task_queries.js";
-import type * as autopilot_verification from "../autopilot/verification.js";
 import type * as billing_actions from "../billing/actions.js";
 import type * as billing_effective_tier from "../billing/effective_tier.js";
 import type * as billing_internal from "../billing/internal.js";
@@ -403,7 +396,6 @@ declare const fullApi: ApiFromModules<{
   "autopilot/config": typeof autopilot_config;
   "autopilot/config_mutations": typeof autopilot_config_mutations;
   "autopilot/config_task_caps": typeof autopilot_config_task_caps;
-  "autopilot/content_quality": typeof autopilot_content_quality;
   "autopilot/context": typeof autopilot_context;
   "autopilot/cost_guard": typeof autopilot_cost_guard;
   "autopilot/dedup": typeof autopilot_dedup;
@@ -420,9 +412,6 @@ declare const fullApi: ApiFromModules<{
   "autopilot/heartbeat": typeof autopilot_heartbeat;
   "autopilot/integrations/email": typeof autopilot_integrations_email;
   "autopilot/integrations/social": typeof autopilot_integrations_social;
-  "autopilot/integrations/stripe_webhook": typeof autopilot_integrations_stripe_webhook;
-  "autopilot/knowledge": typeof autopilot_knowledge;
-  "autopilot/knowledge_enrichment": typeof autopilot_knowledge_enrichment;
   "autopilot/lib/identifier": typeof autopilot_lib_identifier;
   "autopilot/maintenance": typeof autopilot_maintenance;
   "autopilot/mutations/auth": typeof autopilot_mutations_auth;
@@ -439,7 +428,6 @@ declare const fullApi: ApiFromModules<{
   "autopilot/mutations/use_cases": typeof autopilot_mutations_use_cases;
   "autopilot/mutations/views": typeof autopilot_mutations_views;
   "autopilot/mutations/work": typeof autopilot_mutations_work;
-  "autopilot/onboarding": typeof autopilot_onboarding;
   "autopilot/onboarding_tasks": typeof autopilot_onboarding_tasks;
   "autopilot/ownership": typeof autopilot_ownership;
   "autopilot/priorities": typeof autopilot_priorities;
@@ -469,7 +457,6 @@ declare const fullApi: ApiFromModules<{
   "autopilot/revenue_queries": typeof autopilot_revenue_queries;
   "autopilot/role_context": typeof autopilot_role_context;
   "autopilot/role_schedule": typeof autopilot_role_schedule;
-  "autopilot/role_scoring": typeof autopilot_role_scoring;
   "autopilot/role_skills/ceo/coordination": typeof autopilot_role_skills_ceo_coordination;
   "autopilot/role_skills/ceo/queries": typeof autopilot_role_skills_ceo_queries;
   "autopilot/role_skills/ceo/reports": typeof autopilot_role_skills_ceo_reports;
@@ -522,7 +509,6 @@ declare const fullApi: ApiFromModules<{
   "autopilot/self_heal": typeof autopilot_self_heal;
   "autopilot/task_mutations": typeof autopilot_task_mutations;
   "autopilot/task_queries": typeof autopilot_task_queries;
-  "autopilot/verification": typeof autopilot_verification;
   "billing/actions": typeof billing_actions;
   "billing/effective_tier": typeof billing_effective_tier;
   "billing/internal": typeof billing_internal;

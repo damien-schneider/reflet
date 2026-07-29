@@ -7,59 +7,10 @@
 
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { internalMutation, internalQuery } from "../_generated/server";
+import { internalMutation } from "../_generated/server";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 export const DEFAULT_WEEKLY_COST_CAP_USD = 5;
-
-/**
- * Check whether the org has budget remaining for task execution.
- *
- * Returns `true` if the task can proceed, `false` if the cap has been reached.
- */
-export const canExecute = internalQuery({
-  args: { organizationId: v.id("organizations") },
-  returns: v.boolean(),
-  handler: async (ctx, args) => {
-    const config = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    if (
-      !config?.enabled ||
-      (config.autonomyMode ?? "supervised") === "stopped"
-    ) {
-      return false;
-    }
-
-    // Check task-per-day limit
-    if (config.tasksUsedToday >= config.maxTasksPerDay) {
-      return false;
-    }
-
-    // Check daily cost cap (if configured)
-    const dailyCap = config.dailyCostCapUsd ?? 0;
-    if (dailyCap > 0) {
-      const costUsed = config.costUsedTodayUsd ?? 0;
-      if (costUsed >= dailyCap) {
-        return false;
-      }
-    }
-
-    const weeklyCap = config.weeklyCostCapUsd ?? DEFAULT_WEEKLY_COST_CAP_USD;
-    if (weeklyCap > 0) {
-      const weeklyUsed = config.costUsedThisWeekUsd ?? 0;
-      if (weeklyUsed >= weeklyCap) {
-        return false;
-      }
-    }
-
-    return true;
-  },
-});
 
 /**
  * Record cost for a completed task run.
@@ -115,63 +66,6 @@ export const recordCost = internalMutation({
         role: "system",
         level: "warning",
         message: `Weekly cost cap reached ($${newWeeklyCost.toFixed(2)} / $${weeklyCap.toFixed(2)}). Pausing task execution until next week.`,
-      });
-    }
-
-    return null;
-  },
-});
-
-/**
- * Evaluate budget thresholds after a cost record.
- *
- * Checks soft (warn) and hard (stop) thresholds. Logs warnings via activity log.
- */
-export const evaluateBudget = internalMutation({
-  args: {
-    organizationId: v.id("organizations"),
-    role: v.string(),
-    costUsd: v.number(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const config = await ctx.db
-      .query("autopilotConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    if (!config) {
-      return null;
-    }
-
-    const dailyCap = config.dailyCostCapUsd ?? 0;
-    if (dailyCap <= 0) {
-      return null;
-    }
-
-    const costUsed = config.costUsedTodayUsd ?? 0;
-    const warnPercent = config.budgetWarnPercent ?? 80;
-    const warnThreshold = dailyCap * (warnPercent / 100);
-
-    if (costUsed >= warnThreshold && costUsed < dailyCap) {
-      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-        organizationId: args.organizationId,
-        role: "system",
-        level: "warning",
-        message: `Budget warning: ${warnPercent}% of daily cap used ($${costUsed.toFixed(2)} / $${dailyCap.toFixed(2)})`,
-        action: "budget.warn_threshold",
-      });
-    }
-
-    if (costUsed >= dailyCap) {
-      await ctx.runMutation(internal.autopilot.task_mutations.logActivity, {
-        organizationId: args.organizationId,
-        role: "system",
-        level: "error",
-        message: `Budget cap reached ($${costUsed.toFixed(2)} / $${dailyCap.toFixed(2)}). Role skills paused until counter resets.`,
-        action: "budget.cap_reached",
       });
     }
 

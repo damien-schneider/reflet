@@ -5,12 +5,6 @@ import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
-import {
-  createParentTask,
-  createAutopilotConfig as createProAutopilotConfig,
-  createOrg as createProOrg,
-  createTestContext as createProTestContext,
-} from "./test-fixtures.helpers";
 
 const createTestContext = () => convexTest(schema, modules);
 type TestContext = ReturnType<typeof createTestContext>;
@@ -277,49 +271,5 @@ describe("autopilot review items", () => {
     const doc = await t.run(async (ctx) => ctx.db.get(docId));
     expect(doc?.status).toBe("pending_review");
     expect(doc?.needsReview).toBe(true);
-  });
-});
-
-describe("autopilot config", () => {
-  test("createDefaultConfig creates config with defaults", async () => {
-    const t = createTestContext();
-    const orgId = await createOrg(t);
-
-    await t.mutation(internal.autopilot.config_mutations.createDefaultConfig, {
-      organizationId: orgId,
-    });
-
-    const config = await t.query(internal.autopilot.config.getConfig, {
-      organizationId: orgId,
-    });
-
-    expect(config).not.toBeNull();
-    expect(config?.enabled).toBe(false);
-    expect(config?.autonomyLevel).toBe("review_required");
-  });
-});
-
-describe("autopilot dispatch caps", () => {
-  test("reserveTaskExecution refuses when daily task limit reached", async () => {
-    const t = createProTestContext();
-    const organizationId = await createProOrg(t);
-    await createProAutopilotConfig(t, organizationId, {
-      maxTasksPerDay: 1,
-      tasksUsedToday: 1,
-    });
-    await createParentTask(t, {
-      organizationId,
-      title: "Queued after daily cap",
-      description: "Do not churn in the heartbeat dispatch queue.",
-      priority: "medium",
-    });
-
-    const reservation = await t.mutation(
-      internal.autopilot.config_mutations.reserveTaskExecution,
-      { organizationId }
-    );
-
-    expect(reservation.allowed).toBe(false);
-    expect(reservation.reason).toMatch(/Daily task limit reached/);
   });
 });

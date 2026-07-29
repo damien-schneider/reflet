@@ -1,10 +1,16 @@
 import { evaluateHarnessGuards } from "@reflet/harness";
 import { v } from "convex/values";
+import { internal } from "../../_generated/api";
 import type { Doc, Id } from "../../_generated/dataModel";
-import { internalMutation, type MutationCtx } from "../../_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  type MutationCtx,
+} from "../../_generated/server";
 import {
   activityLogLevel,
   bridgeDoctorCheck,
+  documentType,
   harnessArtifactKind,
   harnessValidationStatus,
 } from "../schema/validators";
@@ -20,6 +26,8 @@ const bridgeJobReturn = v.object({
 
 const artifactInput = v.object({
   artifactKind: harnessArtifactKind,
+  content: v.optional(v.string()),
+  structuredOutput: v.optional(v.any()),
   downstreamInvalidations: v.array(v.string()),
   evidenceHashes: v.record(v.string(), v.string()),
   inputArtifactHashes: v.record(v.string(), v.string()),
@@ -35,6 +43,14 @@ const artifactInput = v.object({
 });
 
 type ArtifactInput = typeof artifactInput.type;
+
+const documentInput = v.object({
+  content: v.string(),
+  platform: v.optional(v.string()),
+  targetUrl: v.optional(v.string()),
+  title: v.string(),
+  type: documentType,
+});
 
 function buildBranch(recipeId: string, jobId: string): string {
   return `reflet/${recipeId}/${jobId}`;
@@ -79,6 +95,8 @@ async function upsertArtifact(
     .unique();
   const patch = {
     artifactKind: args.artifact.artifactKind,
+    content: args.artifact.content,
+    structuredOutput: args.artifact.structuredOutput,
     downstreamInvalidations: args.artifact.downstreamInvalidations,
     evidenceHashes: args.artifact.evidenceHashes,
     inputArtifactHashes: args.artifact.inputArtifactHashes,
@@ -195,6 +213,34 @@ export const heartbeatBridgeForRepo = internalMutation({
   },
 });
 
+export const getSeedArtifactsForRepo = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    repoFullName: v.string(),
+  },
+  returns: v.array(
+    v.object({
+      content: v.string(),
+      path: v.string(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const artifacts = await ctx.db
+      .query("refletArtifacts")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+    return artifacts.flatMap((artifact) =>
+      artifact.repoFullName === args.repoFullName &&
+      artifact.content &&
+      artifact.content.length > 0
+        ? [{ content: artifact.content, path: artifact.path }]
+        : []
+    );
+  },
+});
+
 export const claimNextBridgeJobForRepo = internalMutation({
   args: {
     bridgeInstallationId: v.id("autopilotBridgeInstallations"),
@@ -275,9 +321,10 @@ export const completeBridgeJobRun = internalMutation({
     artifacts: v.array(artifactInput),
     claudeSessionId: v.union(v.null(), v.string()),
     commitSha: v.string(),
+    documents: v.optional(v.array(documentInput)),
     jobId: v.id("autopilotBridgeJobs"),
     organizationId: v.id("organizations"),
-    prUrl: v.string(),
+    prUrl: v.optional(v.string()),
     promptHash: v.string(),
     runtimeMs: v.number(),
   },
@@ -291,7 +338,7 @@ export const completeBridgeJobRun = internalMutation({
       claudeSessionId: args.claudeSessionId ?? undefined,
       commitSha: args.commitSha,
       finishedAt: Date.now(),
-      prUrl: args.prUrl,
+      prUrl: args.prUrl ? args.prUrl : undefined,
       promptHash: args.promptHash,
       runtimeMs: args.runtimeMs,
       status: "succeeded",
@@ -302,6 +349,21 @@ export const completeBridgeJobRun = internalMutation({
         artifact,
         organizationId: job.organizationId,
         repoFullName: job.repoFullName,
+      });
+    }
+    for (const document of args.documents ?? []) {
+      // Bridge documents are drafts (e.g. reddit_reply) that are NOT yet
+      // published — their impact is "none" per gate.ts `classifyImpact`, so
+      // needsReview stays false here. Review/approval happens later, at the
+      // publish step, which routes through `checkGate` for the external action.
+      await ctx.runMutation(internal.autopilot.documents.createDocument, {
+        content: document.content,
+        needsReview: false,
+        organizationId: job.organizationId,
+        platform: document.platform,
+        targetUrl: document.targetUrl,
+        title: document.title,
+        type: document.type,
       });
     }
     return null;

@@ -74,6 +74,11 @@ export const harnessTables = {
     inputArtifactHashes: v.record(v.string(), v.string()),
     evidenceHashes: v.record(v.string(), v.string()),
     outputHash: v.string(),
+    // Harvested artifact body (the .reflet/*.md or .reflet/out/*.json content)
+    // so the UI can render artifacts without fetching from git. Optional/
+    // widen-only so existing rows (written before harvesting) still validate.
+    content: v.optional(v.string()),
+    structuredOutput: v.optional(v.any()),
     validationStatus: harnessValidationStatus,
     validationScore: v.number(),
     validatorMessages: v.array(v.string()),

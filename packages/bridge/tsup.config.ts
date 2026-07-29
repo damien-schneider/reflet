@@ -28,6 +28,9 @@ export default defineConfig({
       "npm",
       [
         "pack",
+        // Skip lifecycle scripts so `npm pack` does not re-run prepublishOnly
+        // (which runs this same build) and recurse into a broken tarball.
+        "--ignore-scripts",
         "--cache",
         bridgeNpmCacheDir,
         "--pack-destination",

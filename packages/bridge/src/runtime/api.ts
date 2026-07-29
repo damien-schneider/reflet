@@ -7,6 +7,7 @@ import type {
   BridgeFailureInput,
   BridgeRegistrationInput,
   BridgeRegistrationResult,
+  BridgeSeedArtifact,
 } from "./types";
 
 const bridgeJobSchema = z.object({
@@ -23,6 +24,15 @@ const registrationResultSchema = z.object({
 
 const claimResultSchema = z.object({
   job: z.union([bridgeJobSchema, z.null()]),
+});
+
+const seedArtifactsResultSchema = z.object({
+  artifacts: z.array(
+    z.object({
+      content: z.string(),
+      path: z.string(),
+    })
+  ),
 });
 
 const RETRY_DELAYS_MS = [100, 300] as const;
@@ -104,6 +114,12 @@ export function createBridgeApiClient({
     failJob: async (input: BridgeFailureInput) => {
       await post("/api/v1/admin/bridge/fail", input);
     },
+    fetchSeedArtifacts: async (
+      repoFullName: string
+    ): Promise<BridgeSeedArtifact[]> =>
+      seedArtifactsResultSchema.parse(
+        await post("/api/v1/admin/bridge/seed-artifacts", { repoFullName })
+      ).artifacts,
     heartbeat: async (input) => {
       await post("/api/v1/admin/bridge/heartbeat", input);
     },

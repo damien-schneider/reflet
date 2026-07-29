@@ -68,7 +68,15 @@ function BridgeSummary({
   );
 }
 
-function RecipesGrid({ recipes }: { recipes: HarnessRecipeView[] }) {
+function RecipesGrid({
+  canRun,
+  onRunRecipe,
+  recipes,
+}: {
+  canRun: boolean;
+  onRunRecipe: (recipeId: string) => void;
+  recipes: HarnessRecipeView[];
+}) {
   return (
     <section className="space-y-3">
       <div>
@@ -117,6 +125,17 @@ function RecipesGrid({ recipes }: { recipes: HarnessRecipeView[] }) {
                     {dependency}
                   </Badge>
                 ))}
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  disabled={!canRun}
+                  onClick={() => onRunRecipe(recipe.id)}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Play className="size-4" />
+                  Run
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -267,10 +286,16 @@ export function HarnessDashboard({ organizationId }: HarnessDashboardProps) {
   const enqueueProductBrain = useMutation(
     api.autopilot.harness.mutations.enqueueProductBrain
   );
+  const enqueueHarnessJob = useMutation(
+    api.autopilot.harness.mutations.enqueueHarnessJob
+  );
 
   if (!overview) {
     return <HarnessSkeleton />;
   }
+
+  const bridgeReady =
+    overview.bridge?.status === "online" && overview.bridge.claudeAvailable;
 
   const handleRunProductBrain = async () => {
     if (!overview.bridge) {
@@ -283,6 +308,25 @@ export function HarnessDashboard({ organizationId }: HarnessDashboardProps) {
         repoFullName: overview.bridge.repoFullName,
       });
       toast.success("Product Brain job queued");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not queue harness job"
+      );
+    }
+  };
+
+  const handleRunRecipe = async (recipeId: string) => {
+    if (!overview.bridge) {
+      toast.error("Connect the Bridge before starting a harness run.");
+      return;
+    }
+    try {
+      await enqueueHarnessJob({
+        organizationId,
+        recipeId,
+        repoFullName: overview.bridge.repoFullName,
+      });
+      toast.success("Harness job queued");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not queue harness job"
@@ -305,7 +349,11 @@ export function HarnessDashboard({ organizationId }: HarnessDashboardProps) {
           null
         }
       />
-      <RecipesGrid recipes={overview.recipes} />
+      <RecipesGrid
+        canRun={bridgeReady}
+        onRunRecipe={handleRunRecipe}
+        recipes={overview.recipes}
+      />
       <JobsList jobs={overview.jobs} />
       <ArtifactsList artifacts={overview.artifacts} />
       <EventsList events={overview.events} />

@@ -44,6 +44,7 @@ export const HARNESS_ARTIFACT_KINDS = [
   "pull_request_review",
   "changelog",
   "growth_draft",
+  "community_drafts",
 ] as const;
 
 export const HARNESS_VALIDATIONS = [
