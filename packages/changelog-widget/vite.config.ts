@@ -14,9 +14,7 @@ export default defineConfig({
       formats: ["iife"],
       name: "RefletChangelogWidget",
     },
-    minify: "terser",
     outDir: "dist",
-    rolldownOptions: {},
   },
   define: {
     __CONVEX_URL__: JSON.stringify(CONVEX_URL),

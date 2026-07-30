@@ -10,7 +10,7 @@
     "ultracite": "7.9.4"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": "^22.18.0 || >=24.11.0"
   },
   "overrides": {
     "prosemirror-model": "^1.25.11",
@@ -44,6 +44,9 @@
       "dotenv": "^17.4.2",
       "zod": "^4.4.3",
       "typescript": "^7.0.2",
+      "tsdown": "^0.22.14",
+      "vite": "^8.2.0",
+      "vitest": "^4.1.10",
       "convex": "^1.42.3",
       "better-auth": "~1.6.25",
       "@convex-dev/better-auth": "^0.12.5"

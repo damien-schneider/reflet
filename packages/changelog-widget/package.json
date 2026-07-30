@@ -11,9 +11,8 @@
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
-    "terser": "^5.49.0",
     "typescript": "catalog:",
-    "vite": "^8.1.5"
+    "vite": "catalog:"
   },
   "repository": {
     "type": "git",

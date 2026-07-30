@@ -17,8 +17,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "check-types": "tsc --noEmit",
     "lint": "cd ../.. && bun x ultracite check packages/mcp-server",
     "test:unit": "vitest run"
@@ -29,9 +29,10 @@
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
-    "tsup": "^8.5.1",
-    "typescript": "6.0.3",
-    "vitest": "^4.1.10"
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=18.0.0"

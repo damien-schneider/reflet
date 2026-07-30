@@ -1,4 +1,4 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 
 export default defineConfig({
   banner: { js: "#!/usr/bin/env node" },
@@ -6,6 +6,7 @@ export default defineConfig({
   dts: true,
   entry: { index: "src/index.ts" },
   format: ["esm"],
+  outExtensions: () => ({ dts: ".d.ts", js: ".js" }),
   sourcemap: true,
   target: "es2022",
 });

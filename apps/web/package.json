@@ -103,6 +103,7 @@
     "agentation": "^3.0.2",
     "jsdom": "^30.0.1",
     "typescript": "catalog:",
-    "vitest": "^4.1.10"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }
